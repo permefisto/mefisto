@@ -168,7 +168,7 @@ ccc      PARAMETER         (ITERMX=16)
       LOGICAL           COMP
 
       REAL              COORDP(30)
-      REAL              DT, DTSTOC
+      REAL              DT, DTSTOC, TPSINI, TPSFIN
 
       INTEGER           NUMIOB(4), NUMAOB(4), MNDOEL(4)
       INTEGER           NOOBVC,    NOOBSF(6), NOOBLA(12), NOOBPS(8)

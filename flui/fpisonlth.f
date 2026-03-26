@@ -178,7 +178,7 @@ C
       INTEGER           NUMIOB(4), NUMAOB(4), MNDOEL(4)
       INTEGER           NOOBVC(1), NOOBSF(6), NOOBLA(12), NOOBPS(8)
       INTEGER           NOSOEF(4), NONOTE(10)
-      REAL              DT, DTSTOC, XYZEF(30)
+      REAL              DT, DTSTOC, TPSINI, TPSFIN, XYZEF(30)
       DOUBLE PRECISION  RELMIN, CoBOUS
       DOUBLE PRECISION  DELTAT, Rho, Mhu, UnSRho, UnSdt, MhuSRho, CoGrPr
       DOUBLE PRECISION  AE(55)

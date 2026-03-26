@@ -27,7 +27,8 @@ C AUTEUR : ALAIN PERRONNET LJLL UPMC & St Pierre du Perray  Fevrier 2013
 C MODIFS : ALAIN PERRONNET Saint Pierre du Perray          Decembre 2022
 C23456---------------------------------------------------------------012
       include"./incl/langue.inc"
-      DOUBLE PRECISION  VPMIMX(N1VPMIMX,0:NBPAST), TPSINI, TPSFIN
+      DOUBLE PRECISION  VPMIMX(N1VPMIMX,0:NBPAST)
+      REAL              TPSINI, TPSFIN
       DOUBLE PRECISION  VMAXMAX, VMOYMOY, PMXIMXI, PMOYMOY,
      %                  FLUMMOY, FLUPMOY, FLUPMMOY,
      %                  TMOYMOY, TMINMIN, TMAXMAX

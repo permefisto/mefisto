@@ -183,7 +183,7 @@ ccc      PARAMETER         (ITERMX=16)
 ccc      LOGICAL           COMP
       CHARACTER*4       NOMELE(2)
 
-      REAL              DT, DTSTOC, COORDP(30)
+      REAL              DT, DTSTOC, TPSINI, TPSFIN, COORDP(30)
       INTEGER           NUMIOB(4), NUMAOB(4), MNDOEL(4)
       INTEGER           NOOBVC(1), NOOBSF(6), NOOBLA(12), NOOBPS(8)
       INTEGER           NONOEF(10), NOGLDL(34)
