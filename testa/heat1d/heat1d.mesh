@@ -1,0 +1,51 @@
+{ ==================================================================== }
+{ MEFISTO Software     : Version May 29-th 2009                        }
+{ USER's Name          : Alain Perronnet                               }
+{ Project Name         : heat1d   Test Mefisto for 1-dimension FE      }
+{ Date                 : 11/06/2009                                    }
+{ ==================================================================== }
+ 1;{ POINTS vertices of the object }
+ 1;{ TYPING of VALUES }
+   { NAME of the POINT or ESCAPE? }
+ a; i; 1; 0; 0; 0;{ in LEXICON ~>TRANSFO }
+   { X Y Z COORDINATES }
+   { COORPO 'X Y Z of a point' xyz ; }
+   { NAME of the POINT or ESCAPE? }
+ b; i; 1; 1; 0; 0; { in LEXICON ~>TRANSFO }
+   { X Y Z COORDINATES }
+   { COORPO 'X Y Z of a point' xyz ; }
+   { NAME of the POINT or ESCAPE? }
+ @;
+
+ 2;{ LINES edges of the object }
+   { NAME of the LINE or ESCAPE? }
+ ab;
+ i; { NAME of TRANSFORMATION }
+ 2; { STRAIGHT LINE }
+ 10;{ NBARLI 'number of edges of the line' entier ; }
+ 1; { RAIGEO 'geometrical ratio between the edges' reel ; }
+ A; { NAME of POINT }
+ B; { NAME of POINT }
+    { NAME of the LINE or ESCAPE? }
+ @;
+
+ 5;  { OBJECTS parts of the object }
+ AB; { NAME of the OBJECT or ESCAPE? }
+ 0;  { 1D or 2D or 3D classic }
+ 3;  { NBDOBJ 'number of Points Lines Surfaces Volumes Objects of the object' }
+ l; ab; { name of type PLSVO & PLSVO''s name }
+ p; a;  { name of type PLSVO & PLSVO''s name }
+ p; b;  { name of type PLSVO & PLSVO''s name }
+ @;
+
+ 7;  { INTERPOLATION nodes of the mesh }
+ ab; { NAME of the OBJECT to be INTERPOLATED? }
+  4; { LAGRANGE of DEGREE 2 }
+ @;
+
+ 10; { DRAWING of PLSVO meshes }
+ 5;  { OBJECT or OBJECTS }
+ 1;  { ALL OBJECTS 1 by 1 }
+ 90; { Continue the DRAWING }
+
+CLOSE;

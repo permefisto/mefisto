@@ -1,0 +1,24 @@
+{ ================================================ }
+{ MEFISTO Version Juin 1999        PROJET: xnynzn  }
+{ Utilisateur: Perronnet Alain     Date:   15/6/99 }
+{ ================================================ }
+DefFonc x2y2z2(x,y,z);
+  x2y2z2=x*x+y*y+z*z;
+FinFonc;
+
+DefFonc x3y3z3(x,y,z);
+  x3y3z3=abs(x**3+y**3+z**3);
+FinFonc;
+
+DefFonc x4y4z4(x,y,z);
+  x4y4z4=x**4+y**4+z**4;
+FinFonc;
+
+11;{ DESSIN des ISO-SURFACES f(x,y,z)=Ctes }
+  x3y3z3; { NOM DE LA FONCTION F(X,Y,Z) }
+  1;      { Nombre d ISOTHERMES }
+  4;      { DEFINIR VALEURS des ISOTHERMES }
+  1;      { VALEUR DE L ISOTHERME }
+ 90;      { EXECUTER le TRACE }
+@;
+FERMER;

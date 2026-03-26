@@ -1,0 +1,140 @@
+{ ============================================================ }
+{ MEFISTO Version Octobre 1999     PROJET: gourde              }
+{ Utilisateur: Michael Guillao     Date:   9/6/99              }
+{ ============================================================ }
+1;{ NOM de l OBJET a TRAITER }
+  gourde;
+
+2;{ ENTREE des DONNEES du PROBLEME }
+
+{ VOLUME: AIR }
+  1;     { Rot la densite de MASSE }
+  1;     { constante }
+  1.293; { DMASSE 'densite de masse'         reel   ; }
+
+  2;     { [A] tenseur CONDUCTIVITE THERMIQUE }
+  1;     { materiau 3D homogene isotrope }
+  0.02;  { CONDUC  'conductivite du materiau'  reel   ; }
+
+  7;     { C la CHALEUR MASSIQUE }
+  1;     { constante }
+  1004;  { CHAMAS 'chaleur massique'   reel   ; }
+
+  8;     { TEMPERATURE INITIALE }
+  1;     { constante }
+  20;    { VATEM0 'temperature initiale constante'   reel   ; }
+  @;
+
+{ VOLUME: CYLINDRE_AIR }
+  1;     { Rot la densite de MASSE }
+  1;     { constante }
+  1.293; { DMASSE 'densite de masse'         reel   ; }
+
+  2;     { [A] tenseur CONDUCTIVITE THERMIQUE }
+  1;     { materiau 3D homogene isotrope }
+  0.02;  { CONDUC  'conductivite du materiau'  reel   ; }
+
+  7;     { C la CHALEUR MASSIQUE }
+  1;     { constante }
+  1004;  { CHAMAS 'chaleur massique'   reel   ; }
+
+  8;     { TEMPERATURE INITIALE }
+  1;     { constante }
+  20;    { VATEM0 'temperature initiale constante'   reel   ; }
+  @;
+
+ { VOLUME: EAU }
+   1;     { Rot la densite de MASSE }
+   1;     { constante }
+   1000;  { DMASSE 'densite de masse'         reel   ; }
+
+   2;     { [A] tenseur CONDUCTIVITE THERMIQUE }
+   1;     { materiau 3D homogene isotrope }
+   0.55;  { CONDUC  'conductivite du materiau'  reel   ; }
+
+   7;     { C la CHALEUR MASSIQUE }
+   1;     { constante }
+   4227;  { CHAMAS 'chaleur massique'   reel   ; }
+
+   8;     { TEMPERATURE INITIALE }
+   1;     { constante }
+  80;     { VATEM0 'temperature initiale constante'   reel   ; }
+@;
+ 
+{ VOLUME: PLASTIQUE }
+   1;     { Rot la densite de MASSE }
+   1;     { constante }
+   900;   { DMASSE 'densite de masse'         reel   ; } 
+ 
+   2;     { [A] tenseur CONDUCTIVITE THERMIQUE }
+   1;     { materiau 3D homogene isotrope }
+   0.15;  { CONDUC  'conductivite du materiau'  reel   ; }
+
+   7;     { C la CHALEUR MASSIQUE }
+   1;     { constante }
+   1456;  { CHAMAS 'chaleur massique'   reel   ; }
+
+   8;     { TEMPERATURE INITIALE }
+   1;     { constante }
+   20;    { VATEM0 'temperature initiale constante'   reel   ; }
+@;
+
+{ VOLUME: BOUCHON }
+   1;     { Rot la densite de MASSE }
+   1;     { constante }
+   900;   { DMASSE 'densite de masse'         reel   ; } 
+ 
+   2;     { [A] tenseur CONDUCTIVITE THERMIQUE }
+   1;     { materiau 3D homogene isotrope }
+   0.15;  { CONDUC  'conductivite du materiau'  reel   ; }
+
+   7;     { C la CHALEUR MASSIQUE }
+   1;     { constante }
+   1456;  { CHAMAS 'chaleur massique'   reel   ; }
+
+   8;     { TEMPERATURE INITIALE }
+   1;     { constante }
+   20;    { VATEM0 'temperature initiale constante'   reel   ; }
+@;
+
+ { SURFACE: TABLE }
+  1;   { ECHANGE coefficient d echange avec le fluide a la paroi }
+  1;   { constant }
+ 10;   { ECHANG 'coefficient d''echange'   reel   ; }
+
+  2;   { SOURCE source de chaleur ou flux impose a la frontiere }
+  1;   { constante }
+ 10*2; { SOURCE 'valeur de la source' reel ; }
+
+  8;   { TEMPERATURE INITIALE }
+  1;   { constante }
+  20;  { VATEM0 'temperature initiale constante'   reel   ; }
+@;
+ 
+{ SURFACE: PLASTIQUE }
+  1;   { ECHANGE coefficient d echange avec le fluide a la paroi }
+  1;   { constant }
+ 10;   { ECHANG 'coefficient d''echange'   reel   ; }
+
+  2;   { SOURCE source de chaleur ou flux impose a la frontiere }
+  1;   { constante }
+-10*10;{ SOURCE Temperature fluide * Echange }
+
+  8;   { TEMPERATURE INITIALE }
+  1;   { constante }
+  20;  { VATEM0 'temperature initiale constante'   reel   ; }
+@;
+
+4; { CALCUL THERMIQUE INSTATIONNAIRE d/dt - div A grad temperature}
+ 1;{ CHALEUR MASSIQUE CONDUCTIVITE ECHANGE NE dependent PAS du TEMPS }
+ 0;{ TEMPS INITIAL }
+ 1;{ Temperature initiale constante de l'objet }
+ 5;{ VATEM0 temperature initiale constante }
+ 3600*10; { TEMPS FINAL  10 heures }
+ 3600/2;  { PAS DE TEMPS 1/2 heure }
+     20;  { NOMBRE DE VECTEURS TEMPERATURES A STOCKER EN PLUS }
+ 2;{ GRADIENT CONJUGUE PRECONDITIONNE }
+ 0;{ NIVEAU FACTORISATION INCOMPLETE 0,1,... }
+ 1;{ 1/2 <= THETA de la METHODE <=1 +STABLE? }
+@;
+FERMER;

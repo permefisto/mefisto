@@ -1,0 +1,17 @@
+# Dans le repertoire $HOME ce fichier bashrc est a CONCATENER avec .bashrc
+export MEFISTO=$HOME/mefistosource
+export MEFISTOX=$HOME/mefistox
+
+export PATH=.:$PATH:$MEFISTO/bin
+export CDPATH=.:$HOME:$MEFISTO:$MEFISTOX
+
+# Pour que OpenMP utilise 10 threads
+export OMP_NUM_THREADS=10
+
+alias ll='ls -l'
+alias la='ls -a'
+alias lla='ll -a'
+alias lrt='ls -rtl'
+
+export PS1="$(hostname):"'${PWD#}-bash-> '
+echo "OMP_NUM_THREADS=$OMP_NUM_THREADS"

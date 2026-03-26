@@ -1,0 +1,11 @@
+variable COEFTHER 'Donnees Operateur divAgrad' entier
+( 1 : 'Rot Densite de MASSE'
+, 2 : '[A] Tenseur CONDUCTIVITE THERMIQUE'
+, 3 : 'DILATATION et TEMPERATURE REFERENCE'
+, 4 : 'FOmega SOURCE interne de CHALEUR'
+, 5 : 'Vf VITESSE du FLUIDE pour TRANSPORT'
+, 6 : 'CT Coefficient devant TEMPERATURE'
+, 7 : 'Cp CHALEUR MASSIQUE'
+, 8 : 'To TEMPERATURE INITIALE'
+, 9 : 'Vo VITESSE INITIALE de l''ONDE'
+,10 : 'CoBOUS BOUSSINESQ DILATATION THERMIQUE' ) ;

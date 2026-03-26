@@ -1,0 +1,137 @@
+This MENU define the CHARACTERISTICS of the DRAWING in 3D
+Notably the visible rectangle on display
+
+19: REDUCTION % of FACES
+to see better the position of edges of faces
+
+22: GROW by 2 MOUSE clicks at Min MAX
+With the mouse, click the corner MINIMUM and MAXIMUM
+All PSLVO which are in this frame will be drawn on display
+
+23: REDUCE by 2 MOUSE clicks
+With the mouse, click 2 points such that the totality of
+the actual window will occupy in the future window.
+
+24: TRANSLATE by 2 MOUSE clicks
+With the mouse, define a first  point P1
+With the mouse, define a second point P2
+The drawing is translated of a vector P1P2
+
+25: 2D WINDOW [Xmin MAX] [Ymin MAX]
+Define the 2D object WINDOW for the future drawings.
+
+26: RE-DEFINITION of EXTREMAL XYZ
+Define the new extremal coordinates MIN MAX of PLSVO
+to draw on the display.
+Give ZMIN=ZMAX=0 in 2D
+Only the PLSVO interior of this hexahedron will be drawn
+
+27: Total SCENE from EXTREMAL XYZ
+Only the PLSVO interior of the actual MIN MAX hexahedron
+will be drawn
+
+30: LONGITUDE & LATITUDE in degrees
+The drawing uses a trimetric axonometrie to conserve the distances
+The SEEN POINT is unchanged.
+By default, it is the barycentre of the MIN MAX hexahedron.
+The X-AXIS which pass by the SEEN POINT define the ANGLE
+of NULL LONGITUDE in the plane XY.
+The LONGITUDE belongs to [-180,180] degrees.
+The LATITUDE is the ANGLE between the XY PLANE and the line
+SEEN POINT-EYE and belongs to [-90,90] degrees.
+Default values are: 40 degrees of LONGITUDE
+                and 20 degrees of LATITUDE
+
+31: XYZ of the SEEN POINT & the EYE
+to define the direction of view
+
+32: Half WIDTH & HEIGHT of the SCENE
+
+33: PLANE Behind Front of SEEN POINT
+Give the distance >0 or <0 from the seen point of 2 planes
+orthogonal to the view direction. 
+Only FE between these 2 planes will be drawn.
+Thus you can see at the interior of a closed surface!
+
+34: ZOOMING of the Drawing
+Give the growing factor of the drawing
+If this value = 2, the width and heigth of SCENE reduces to half
+    >1 => growing   of the drawing object
+    <1 => reduction of the drawing object
+
+35: ROTATION around Z-axis in degrees
+Give the LONGITUDE around the vertical Z-axis
+  
+36: CHANGE the PALETTE of COLORS
+Give the number from 1 to 16 to define the palette of colors
+1: The COLORS vary quickly and darken. The intensity decreases
+2: Les COLORS vary quickly and darken.
+3: RAINBOW Palette
+4: Palette from CYAN    to BLUE  then to BLUE  BLACK.
+5: Palette from YELLOW  to RED   then to RED   BLACK.
+6: Palette from YELLOW  to GREEN then to GREEN BLACK.
+7: Palette from MAGENTA to RED   then to RED   BLACK.
+8: Palette from MAGENTA to BLUE  then to BLUE  BLACK. 
+9: Palette from CYAN    to GREEN then to GREEN BLACK.
+10:Palette of 256 GRAYS         
+11:Palette RAINBOW LIGHT WITHOUT GREEN for COLOR ISOVALUES ZONES
+12:Palette from BLUE to RED by GREEN YELLOW ORANGE
+   to the FE qualities
+13:Palette from RED to YELLOW to GREEN with BLACK ADDED to COLORS
+14:Palette    CONTINUOUS RAINBOW for COLOR ISOVALUES ZONES
+15:Palette DISCONTINUOUS RAINBOW for COLOR ISOVALUES ZONES
+16:Palette CONTINUOUS BLUE WHITE RED for COLOR ISOVALUES ZONES
+
+38: BACK to the DEFAULT COLORS
+All default colors, palette, ... are imposed.
+
+39: BACKGROUND COLOR
+Give the new color of the window background
+
+44: DRAW a TEXT on the SCREEN
+Click a point and type a text
+
+47: 3 FAR FACES of GLOBAL HEXAEDRON
+The 3 farest FACES of the MIN-MAX coordinate HEXAHEDRON
+will be drawn and completed with the options:
+
+  0: NO DRAWING
+     Suppress this type of drawings
+
+  1: Only 8 GLOBAL EDGES are drawn
+
+  2: QUADRILATERAL GRIDS
+     The 3 faces are drawn with quadrilateral grids
+     without background color
+
+  3: BACKGROUND of 3 FACES has the same color
+
+  4: CHESS-BOARD with 2 COLORS on the 3 FACES
+     The 3 faces are drawn with quadrangles of alternated colors
+     The edge greatest length is cut into 10 + 2 margins
+     The 2 other dimensions are adjusted to an integer number
+
+48: 3 SEEN EDGES of GLOBAL HEXAEDRON
+The 3 nearest edges of the global hexahedron for the eye
+will be drawn immediately.
+
+49: REFERENCE SYSTEM AXIS of PLSVO
+Some different representations of the reference axis are possible
+
+50: ERASE the WINDOW
+
+60: FRAME a drawing to improve the scene
+by 2 clicks at MIN and MAX corners.
+
+75: Activate TRANSLATION ORBIT ZOOM
+permit to use the buttons of the mouse after the option 90;
+left   button => Translation
+middle button => @ in 2D, rotations in 3d
+right  button => Zoom + or -
+
+76: Stop the TRANSLATION ORBIT ZOOM
+suppress the effect of option 75;
+
+90: EXECUTE the DRAWING
+Draw with the drawing characteristics defined before
+colors, type of lines, ...

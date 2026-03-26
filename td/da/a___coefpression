@@ -1,0 +1,12 @@
+deftms ~>>>COEFPRESSION 'Pressure Coefficient of a fluid'
+variable muet DATE 'date of creation of the TMS'   reel2  ;
+variable muet NUTD 'number of the descriptor array TD' entier ; 
+variable      LTCPRE 'Type of Pressure Coefficient' entier
+( 1 : 'Constant Pressure Coefficient'
+,-1 : 'Function Pressure Coefficient'
+, 0 : 'Delete the Pressure Coefficient' ) ;
+cas LTCPRE
+ 1: variable CPRESS 'Pressure Coefficient Value of fluid'  reel ;
+-1: variable NFCPRE 'Name of Coefficient Pressure Function' ^~>FONCTION ;
+fincas ;   
+fintms ;

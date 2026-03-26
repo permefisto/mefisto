@@ -1,0 +1,90 @@
+      SUBROUTINE MAGCVX( NTDL, NPDLFX, LPLIGN, LPCOLO, AG, X,  Y )
+C ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+C BUT:     Y=AG*X avec Y,X VECTEURS (NTDL)  AG MATRICE MORSE SYMETRIQUE
+C ----     VARIANTE DE magcve.f AVEC CHAQUE LIGNE D'UN DEGRE DE LIBERTE
+C          CONSIDEREE COMME LA LIGNE DE LA MATRICE UNITE MAIS STOCKEE
+C          SANS MODIFICATION POUR PRENDRE EN COMPTE LE STOCKAGE
+C          SYMETRIQUE DE LA MATRICE
+C
+C
+C ENTREES:
+C --------
+C NTDL   : NOMBRE DE LIGNES DE LA MATRICE ET DU VECTEUR
+C NPDLFX : NPDLFX(N)=0 SI LE DL N EST LIBRE, >0 SI LE DL N EST FIXE
+C          NO TEMOIN D'UN DEGRE DE LIBERTE FIXE'
+C LPLIGN : LES POINTEURS SUR LES LIGNES DE LA MATRICE MORSE AG
+C LPCOLO : LES NUMEROS DES COLONNES DES COEFFICIENTS DE LA MATRICE MORSE
+C AG     : LES COEFFICIENTS DE LA MATRICE MORSE AG
+C X      : VECTEUR DE NTDL COMPOSANTES
+C
+C SORTIE ou MODIFIE:
+C ------------------
+C Y      : VECTEUR DE NTDL COMPOSANTES
+C          ATTENTION Y DOIT ETRE DIFFERENT DE X A L'APPEL
+C+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+C AUTEUR : Alain PERRONNET LJLL UPMC & St Pierre du Perray     MARS 2009
+C23456---------------------------------------------------------------012
+      DOUBLE PRECISION  AG(1:*), X(NTDL), Y(NTDL), S
+      INTEGER           NPDLFX(NTDL), LPLIGN(0:NTDL), LPCOLO(1:*)
+C
+C     LA MATRICE MORSE EST SYMETRIQUE
+C     ===============================
+      NODIAG0 = 1
+      DO I=1,NTDL
+C
+C        NUMERO DU COEFFICIENT DIAGONAL I
+         NODIAG = LPLIGN(I)
+C
+         IF( NPDLFX(I) .EQ. 0 ) THEN
+C
+C           LIGNE D'UN DEGRE DE LIBERTE LIBRE
+            Y(I) = 0D0
+C
+C           PARCOURS DES COLONNES AVANT LA DIAGONALE DE LA LIGNE I DE AG
+            DO J = NODIAG0, NODIAG - 1
+C
+C              NO DE LA COLONNE DU COEFFICIENT J
+               NOCOL = LPCOLO(J)
+C
+C              COEFFICIENT J DE LA MATRICE AG
+               S = AG(J)
+C
+C              CONTRIBUTION DU COEFFICIENT AVANT LA DIAGONALE
+               Y(I) = Y(I) + S * X(NOCOL)
+C
+C              CONTRIBUTION DU COEFFICIENT APRES LA DIAGONALE PAR SYMETRIE
+               IF( NPDLFX(NOCOL) .EQ. 0 ) THEN
+C                 COLONNE ET LIGNE D'UN DEGRE DE LIBERTE LIBRE
+                  Y(NOCOL) = Y(NOCOL) + S * X(I)
+               ENDIF
+C
+            ENDDO
+C
+C           CONTRIBUTION DU COEFFICIENT DIAGONAL SUPPOSE 1 SI DL FIXE
+            Y(I) = Y(I) + AG(NODIAG) * X(I)
+C
+         ELSE
+C
+C           LIGNE D'UN DEGRE DE LIBERTE FIXE
+            DO J = NODIAG0, NODIAG - 1
+C
+C              NO DE LA COLONNE DU COEFFICIENT J
+               NOCOL = LPCOLO(J)
+C
+               IF( NPDLFX(NOCOL) .EQ. 0 ) THEN
+C                 COLONNE D'UN DEGRE DE LIBERTE LIBRE
+                  Y(NOCOL) = Y(NOCOL) + AG(J) * X(I)
+               ENDIF
+C
+            ENDDO
+C
+C           LA LIGNE I DU DL FIXE EST EN FAIT LA LIGNE IDENTITE
+            Y(I) = X(I)
+         ENDIF
+C
+         NODIAG0 = NODIAG + 1
+C
+      ENDDO
+C
+      RETURN
+      END

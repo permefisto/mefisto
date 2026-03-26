@@ -1,0 +1,380 @@
+      SUBROUTINE TR3LAG( NUTYEL, X,      PENALI, NBJEUX, JEU,
+     %                   NBSOMT, NOOBPS, NUMIPO, NUMAPO, LTDEPO,
+     %                   NBCOTE, NOOBLA, NUMILI, NUMALI, LTDELI,
+     %                   NBPOTR, NPITR,  POIDTR, POLYTR, DPOLTR,
+     %                   NBPOQU, NPIQU,  POIDQU, POLYQU, DPOLQU,
+     %                   NBFACE, NOOBSF, NUMISU, NUMASU, LTDESU,
+     %                   NBPOLY, NPI,    POLY,
+     %                   NOOBVO, NUMIVO, NUMAVO, LTDEVO,
+     %                   F,      POIDEL, DP,
+     %                   COND,   COEFTE, CONDUC)
+C ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+C BUT :    CALCUL DE LA MATRICE DE CONDUCTIVITE D'UN EF 3D
+C -----    LAGRANGE ISOPARAMETRIQUE
+C
+C ENTREES:
+C --------
+C NUTYEL : NUMERO DU TYPE DE L'EF LAGRANGE ISOPARAMETRIQUE
+C X      : LES 3 COORDONNEES DES NBPOLY POINTS DE L'EF A TRAITER
+C PENALI : COEFFICIENT DE PENALISATION DE LA CONDITION DE DIRICHLET
+C NBJEUX : NOMBRE DE JEUX DE DONNEES
+C JEU    : NUMERO DU JEU  DE DONNEES POUR CE CALCUL DE LA MATRICE ELEMENTAIRE
+C
+C NBSOMT : NOMBRE DE SOMMETS DE L'EF
+C NOOBPS : NUMERO DE POINT DES SOMMETS
+C NUMIPO : NUMERO MINIMAL DES OBJETS POINTS
+C NUMAPO : NUMERO MAXIMAL DES OBJETS POINTS
+C LTDEPO : TABLEAU DES ADRESSES DU TABLEAU DES DONNEES THERMIQUES DES POINTS
+C
+C NBCOTE : NOMBRE DES COTES DE L ELEMENT FINI
+C NOOBLA : NUMERO DES OBJETS LIGNES DES ARETES DE L'ELEMENT
+C NUMILI : NUMERO MINIMAL DES OBJETS LIGNES
+C NUMALI : NUMERO MAXIMAL DES OBJETS LIGNES
+C LTDELI : TABLEAU DES ADRESSES DU TABLEAU DES DONNEES THERMIQUES DES LIGNES
+C
+C NBPOTR : NOMBRE DE POLYNOMES DE BASE POUR UNE FACE TRIANGULAIRE DE L'EF
+C NPITR  : NOMBRE DE POINTS D INTEGRATION POUR UNE FACE TRIANGULAIRE
+C POIDTR : POIDS DES POINTS D INTEGRATION  POUR UNE FACE TRIANGULAIRE
+C POLYTR : VALEUR DES POLYNOMES DE BASE AUX POINTS D INTEGRATION
+C          D'UNE FACE TRIANGULAIRE
+C DPOLTR : VALEUR DU GRADIENT DE CES MEMES POLYNOMES AUX POINTS ...
+C
+C NBPOQU : NOMBRE DE POLYNOMES DE BASE POUR UNE FACE QUADRANGULAIRE
+C NPIQU  : NOMBRE DE POINTS D INTEGRATION POUR UNE FACE QUADRANGULAIRE
+C POIDQU : POIDS DES POINTS D INTEGRATION  POUR UNE FACE QUADRANGULAIRE
+C POLYQU : VALEUR DES POLYNOMES DE BASE AUX POINTS D INTEGRATION
+C          D'UNE FACE QUADRANGULAIRE
+C DPOLQU : VALEUR DU GRADIENT DE CES MEMES POLYNOMES AUX POINTS ...
+C
+C NBFACE : NOMBRE DES FACES DE L'EF
+C NOOBSF : NUMERO DE LA SURFACE DE CHAQUE FACE DE L'EF
+C NUMISU : NUMERO MINIMAL DES OBJETS SURFACES
+C NUMASU : NUMERO MAXIMAL DES OBJETS SURFACES
+C LTDESU : TABLEAU DES ADRESSES DU TABLEAU DES DONNEES THERMIQUES
+C          DES OBJETS SURFACES
+C
+C NBPOLY : NOMBRE DE POLYNOMES DE L'EF VOLUME
+C NPI    : NOMBRE DE POINTS D INTEGRATION NUMERIQUE DE L'EF VOLUME
+C POLY   : VALEUR DES POLYNOMES DE BASE AUX POINTS D'INTEGRATION
+C          POLY(I,L)=P(I) (XL)
+C
+C NOOBVO : NUMERO DE L'OBJET VOLUME DE CET EF
+C NUMIVO : NUMERO MINIMAL DES OBJETS VOLUMES
+C NUMAVO : NUMERO MAXIMAL DES OBJETS VOLUMES
+C LTDEVO : TABLEAU DES ADRESSES DU TABLEAU DES DONNEES CONDUCTIVITE
+C          DES OBJETS VOLUMES
+C
+C F      : COORDONNEES XX YY ZZ DES NPI POINTS D INTEGRATION DE L'EF
+C POIDEL : DELTA * POIDS(NPI) DES NPI POINTS D INTEGRATION
+C DP     : GRADIENT DES POLYNOMES DE BASE AUX POINTS D'INTEGRATION SUR
+C          L'EF COURANT
+C
+C SORTIES:
+C --------
+C COND   : TENSEUR SYMETRIQUE  DE CONDUCTIVITE
+C COEFTE : COEFFICIENT DE LA TEMPERATURE AUX POINTS D'INTEGRATION
+C CONDUC : MATRICE ELEMENTAIRE DE CONDUCTIVITE
+C ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+C AUTEUR : ALAIN PERRONNET ANALYSE NUMERIQUE UPMC PARIS     OCTOBRE 1994
+C AJOUTS : ALAIN PERRONNET LJLL UPMC & Saint Pierre du Perray  Mars 2014
+C23456---------------------------------------------------------------012
+      include"./incl/donthe.inc"
+      include"./incl/ponoel.inc"
+      include"./incl/cthet.inc"
+      include"./incl/cnonlin.inc"
+      include"./incl/ctemps.inc"
+C
+      include"./incl/pp.inc"
+      COMMON            MCN(MOTMCN)
+      REAL              RMCN(1)
+      DOUBLE PRECISION  DMCN(1)
+      EQUIVALENCE      (MCN(1), RMCN(1), DMCN(1))
+C
+      DOUBLE PRECISION  POIDTR(NPITR),
+     %                  POLYTR(NBPOTR,NPITR),
+     %                  DPOLTR(2,NBPOTR,NPITR)
+      DOUBLE PRECISION  POIDQU(NPIQU),
+     %                  POLYQU(NBPOQU,NPIQU),
+     %                  DPOLQU(2,NBPOQU,NPIQU)
+      DOUBLE PRECISION  POLY(NBPOLY,NPI),
+     %                  F(NPI,3),
+     %                  POIDEL(NPI)
+      DOUBLE PRECISION  DP(3,NBPOLY,NPI),
+     %                  CONDUC(NBPOLY*(NBPOLY+1)/2)
+      DOUBLE PRECISION  PENALI, COND(6), CONDP(3,3), COEFTE(NPI)
+      DOUBLE PRECISION  Rho
+      DOUBLE PRECISION  PROSCD, S, XYZPI(3)
+      REAL              X(NBPOLY,3)
+      INTEGER           LTDEPO(1:MXDOTH, 1:NBJEUX, NUMIPO:NUMAPO)
+      INTEGER           LTDELI(1:MXDOTH, 1:NBJEUX, NUMILI:NUMALI)
+      INTEGER           LTDESU(1:MXDOTH, 1:NBJEUX, NUMISU:NUMASU)
+      INTEGER           LTDEVO(1:MXDOTH, 1:NBJEUX, NUMIVO:NUMAVO)
+      INTEGER           NOOBPS(1:NBSOMT),
+     %                  NOOBLA(1:NBCOTE),
+     %                  NOOBSF(1:NBFACE)
+      INTEGER           NONOFK(8)
+      DOUBLE PRECISION  AUX(45)
+C
+C     INITIALISATION A ZERO DE LA MATRICE DE CONDUCTIVITE ELEMENTAIRE
+C     ---------------------------------------------------------------
+      CALL AZEROD( NBPOLY*(NBPOLY+1)/2, CONDUC )
+C
+C     ======================
+C     CONTRIBUTION DU VOLUME
+C     ======================
+      IF( TESTNL .GT. 0 ) CALL NLDATA0( NBPOLY )
+C     RECUPERATION DE LA TEMPERATURE AUX NBPOLY DL DE L ELEMENT FINI ou
+C     RECUPERATION DE L'ONDE COMPLEXE AU TEMPS ACTUEL et INITIAL
+C
+C     SI LA CONDUCTIVITE N'EST PAS DECLAREE, SAUT DU CALCUL DE LA CONDUCTIVITE
+      IF( LTDEVO(LPCOND,JEU,NOOBVO) .EQ. 0 ) GOTO 40
+C
+C     CONTRIBUTION DE LA CONDUCTIVITE
+C     -------------------------------
+      DO 30 L=1,NPI
+C
+         IF( TESTNL .GT. 0 ) THEN
+C           CALCUL DE LA TEMPERATURE AU POINT D'INTEGRATION L
+            TEMPEL=PROSCD( POLY(1,L), MCN(MNTHDL), NBPOLY )
+         ENDIF
+C
+C        RECHERCHE DU TENSEUR SYMETRIQUE DE CONDUCTIVITE AU POINT
+C        D'INTEGRATION L
+         XYZPI(1) = F(L,1)
+         XYZPI(2) = F(L,2)
+         XYZPI(3) = F(L,3)
+         CALL RECOND( 4, NOOBVO, 3, XYZPI,
+     %                LTDEVO(LPCOND,JEU,NOOBVO), COND )
+C        si Gross-Pitaevskii: COND = -1/2 [Identite]
+
+         IF( TESTNL .EQ. 9 ) THEN
+C           [KG] = [Rho/PasTemps -N(V0**2+W0**2) + Alfa LAPLACIEN]
+            COND(1) = -COND(1)
+            COND(2) = -COND(2)
+            COND(3) = -COND(3)
+            COND(4) = -COND(4)
+         ENDIF
+C
+C        COND = CONDUCTIVITE * (POIDS * DELTA)
+         CONDP(1,1) = COND(1) * POIDEL(L)
+C
+         CONDP(2,1) = COND(2) * POIDEL(L)
+         CONDP(1,2) = COND(2) * POIDEL(L)
+         CONDP(2,2) = COND(3) * POIDEL(L)
+C
+         CONDP(3,1) = COND(4) * POIDEL(L)
+         CONDP(1,3) = COND(4) * POIDEL(L)
+         CONDP(3,2) = COND(5) * POIDEL(L)
+         CONDP(2,3) = COND(5) * POIDEL(L)
+         CONDP(3,3) = COND(6) * POIDEL(L)
+C
+C        CONDUC = CONDUC + T(DP) * CONDP * (DP)
+         M = 0
+         DO 25 I=1,NBPOLY
+            DO 20 J=1,I
+               S = 0D0
+               DO 10 K=1,3
+                  S = S + DP(K,I,L) * ( CONDP(K,1) * DP(1,J,L)
+     %                                + CONDP(K,2) * DP(2,J,L)
+     %                                + CONDP(K,3) * DP(3,J,L) )
+ 10            CONTINUE
+               M = M + 1
+               CONDUC(M) = CONDUC(M) + S
+ 20         CONTINUE
+ 25      CONTINUE
+C
+ 30   CONTINUE
+C
+C     CONTRIBUTION DU COEFFICIENT DEVANT LA TEMPERATURE
+C     -------------------------------------------------
+ 40   MNLT = LTDEVO(LPCOET,JEU,NOOBVO)
+      IF( MNLT .GT. 0 ) THEN
+C
+         DO 60 L=1,NPI
+C
+            IF( TESTNL .GT. 0 ) CALL NLDATA1( NBPOLY, POLY(1,L) )
+C           PB NON LINEAIRE:
+C           TEMPEL: TEMPERATURE   ACTUELLE AU POINT D'INTEGRATION L ou
+C           TEMPEL: PARTIE REELLE ACTUELLE AU POINT D'INTEGRATION L de L'ONDE
+C           IF( TESTNL .GE. 6 ) THEN  ONDE NLSE COMPLEXE
+C           ONDEPI: PARTIE IMAGINAIRE ACTUELLE AU POINT D'INTEGRATION L de L'OND
+C           TEMPEL0:PARTIE REELLE     INITIALE AU POINT D'INTEGRATION L de L'OND
+C           ONDEPI0:PARTIE IMAGINAIRE INITIALE AU POINT D'INTEGRATION L de L'OND
+C
+C           RECHERCHE DU COEFFICIENT DE LA TEMPERATURE AU POINT D'INTEGRATION L
+            XYZPI(1) = F(L,1)
+            XYZPI(2) = F(L,2)
+            XYZPI(3) = F(L,3)
+
+            IF( TESTNL .LT. 5 ) THEN
+C              COEFFICIENT DEVANT LA TEMPERATURE
+               CALL RECOET( 4, NOOBVO, 3, XYZPI, MNLT, COEFTE(L) )
+            ELSE
+
+C              NLSE COEFFICIENT N(V**2+W**2) DEVANT L'ONDE U = V +iW A L'INSTANT TEMPS
+C              EXEMPLE: Gross-Pitaevskii => -V - Beta |V**2+W**2|
+               CALL RENLSE( 4, NOOBVO,3, XYZPI, TEMPS, TEMPEL, ONDEPI,
+     %                      MNLT, COEFTE(L) )
+
+               IF( TESTNL .EQ. 9 ) THEN
+C                 [KG] = [Rho/PasTemps -N(V0**2+W0**2) + Alfa LAPLACIEN]
+                  COEFTE(L) = -COEFTE(L)
+               ENDIF
+
+               IF( TESTNL .EQ. 6 .OR. TESTNL .EQ. 9 ) THEN
+C                 GROSS-PITAEVSKI DEMANDE LA DENSITE DE MASSE Rho
+                  MN = LTDEVO(LPMAST,JEU,NOOBVO)
+                  IF( MN .GT. 0 ) THEN
+                     CALL REMASS( 4, NOOBVO, 3, XYZPI, MN, Rho )
+                     COEFTE(L) = Rho/PasTemps + COEFTE(L)
+                  ENDIF
+               ENDIF
+
+            ENDIF
+C
+C           COEF TEMPERATURE = COEFTE * POIDS * DELTA
+            COEFTE(L) = COEFTE(L) * POIDEL(L)
+C
+ 60      CONTINUE
+C
+C        SOMMATION AVEC LA MATRICE ELEMENTAIRE
+         M = 0
+         DO 90 J=1,NBPOLY
+            DO 80 I=1,J
+               S = 0.D0
+               DO 70 L=1,NPI
+                  S = S + COEFTE(L) * POLY(J,L) * POLY(I,L)
+ 70            CONTINUE
+               M = M + 1
+               CONDUC(M) = CONDUC(M) + S
+ 80         CONTINUE
+ 90      CONTINUE
+      ENDIF
+C
+C     ======================
+C     CONTRIBUTION DES FACES
+C     ======================
+      DO 200 K=1,NBFACE
+C
+C        NO DE SURFACE DE LA FACE K
+         NOOB = NOOBSF(K)
+         IF( NOOB .GT. 0 ) THEN
+C
+C           LA FACE EST SUR UNE SURFACE SUPPORT D'ECHANGE OU CONTACT PENALISE?
+            IECHAN = 0
+            IF( LTDESU(LPECHA,JEU,NOOB) .GT. 0  ) IECHAN = 1
+            IF( LTDESU(LPCONT,JEU,NOOB) .GT. 0 .AND.
+     %          PENALI .NE. 0D0                 ) IECHAN = 2
+C
+            IF( IECHAN .EQ. 0 ) GOTO 200
+C
+C           UN TABLEAU ECHANGE OU CONTACT EXISTE POUR CETTE SURFACE
+C           CALCUL DE LA CONTRIBUTION A LA MATRICE DE CONDUCTIVITE
+C           -------------------------------------------------------
+C           RECHERCHE DU NUMERO DES POINTS=NOEUDS DE LA FACE K
+            CALL ELNOFA( NUTYEL, K, NBNOFK, NONOFK )
+C           NONOFK(I) LES NUMEROS DES NOEUDS DE LA FACE K
+C
+            IF( NBSOFA(K) .EQ. 3 ) THEN
+C
+C              FACE TRIANGULAIRE
+               CALL T33LAG( NBPOLY, NBNOFK, NONOFK,
+     %                      POLYTR, DPOLTR, X,
+     %                      NPITR,  POIDTR,
+     %                      NOOB,   NUMISU, NUMASU, NBJEUX, JEU, LTDESU,
+     %                      IECHAN, PENALI, AUX )
+            ELSE
+C
+C              FACE QUADRANGULAIRE
+               CALL T33LAG( NBPOLY, NBNOFK, NONOFK,
+     %                      POLYQU, DPOLQU, X,
+     %                      NPIQU,  POIDQU,
+     %                      NOOB,   NUMISU, NUMASU, NBJEUX, JEU, LTDESU,
+     %                      IECHAN, PENALI, AUX )
+            ENDIF
+C
+C           SOMMATION AVEC LA MATRICE ELEMENTAIRE
+C           -------------------------------------
+            KK = 0
+            DO 180 I=1,NBNOFK
+               NOE = NONOFK(I)
+               DO 160 J=1,I
+C                 LE STOCKAGE SYMETRIQUE IMPOSE NO LIGNE>= NO COLONNE
+                  IF( NONOFK(I) .GE. NONOFK(J) ) THEN
+C                    LE NUMERO DU POINT=NOEUD I DE LA FACE K
+                     NI = NONOFK(I)
+                     NJ = NONOFK(J)
+                  ELSE
+                     NI = NONOFK(J)
+                     NJ = NONOFK(I)
+                  ENDIF
+                  NJ = NI * (NI - 1) / 2 + NJ
+                  KK = KK + 1
+                  CONDUC(NJ) = CONDUC(NJ) + AUX(KK)
+ 160           CONTINUE
+ 180        CONTINUE
+         ENDIF
+ 200  CONTINUE
+C
+C     ====================================================
+C     CONTRIBUTION DES ARETES A LA PENALISATION DU CONTACT
+C     ====================================================
+      IF( PENALI .NE. 0D0 ) THEN
+         DO 250 K=1,NBCOTE
+C
+C           NO DE LIGNE DE L'ARETE K
+            NOOB = NOOBLA(K)
+            IF( NOOB .GT. 0 ) THEN
+C
+C              LE COTE K EST SUR UNE LIGNE. EST IL SUPPORT D'UN CONTACT PENALISE
+               IF( LTDELI(LPCONT,JEU,NOOB) .GT. 0 ) THEN
+C
+C                 OUI: UN TABLEAU CONTACT PENALISE EXISTE POUR CE COTE
+C                 RECHERCHE DES NUMEROS LOCAUX DES NOEUDS DE L'ARETE K
+                  NONOFK(1) = NOSOAR(1,K)
+                  NONOFK(2) = NOSOAR(2,K)
+                  IF( NBNOAR(K) .GT. 0 ) NONOFK(3) = NONOAR(1,K)
+C
+                  DO 220 I=1,2+NBNOAR(K)
+C
+C                    LE NUMERO DU I-EME NOEUD DE L'ARETE K
+                     NI = NONOFK(I)
+C
+C                    CALCUL DU COEFFICIENT D'ECHANGE = CONTACT PENALISE
+C                    COEFFICIENT DIAGONAL NI DE LA MATRICE DE CONDUCTIVITE ELEME
+                     NJ = NI * ( NI + 1 ) / 2
+                     CONDUC(NJ) = CONDUC(NJ) + PENALI
+C
+ 220              CONTINUE
+C
+               ENDIF
+            ENDIF
+ 250     CONTINUE
+C
+C     =====================================================
+C     CONTRIBUTION DES SOMMETS A LA PENALISATION DU CONTACT
+C     =====================================================
+         DO 300 K=1,NBSOMT
+C
+C           NO DE POINT DU SOMMET K
+            NOOB = NOOBPS(K)
+            IF( NOOB .GT. 0 ) THEN
+C
+C              LE SOMMET K EST UN POINT. EST IL SUPPORT D'UN CONTACT PENALISE?
+               IF( LTDEPO(LPCONT,JEU,NOOB) .GT. 0 ) THEN
+C
+C                 OUI: UN TABLEAU CONTACT PENALISE EXISTE POUR CE POINT
+C                 LES SOMMETS SONT NUMEROTES EN PREMIER
+C                 PUIS, VIENNENT LES EVENTUELS MILIEUX DES COTES
+C                 CALCUL DU COEFFICIENT D'ECHANGE = CONTACT PENALISE
+C                 COEFFICIENT DIAGONAL NI DE LA MATRICE DE CONDUCTIVITE ELEMENTA
+                  NJ = K * ( K + 1 ) / 2
+                  CONDUC(NJ) = CONDUC(NJ) + PENALI
+C
+               ENDIF
+            ENDIF
+ 300     CONTINUE
+      ENDIF
+C
+      RETURN
+      END

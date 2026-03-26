@@ -1,0 +1,60 @@
+{ ================================================================================ }
+{ MEFISTO Software     : May 3, 2023 version                                       }
+{ USER's  Name         : Alain Perronnet                                           }
+{ Project Name         : PAN   temperature ABMIDDLE=200 degrees TemperatureInit=20 }
+{ Date                 : 2023/05/03  19h 35m                                       }
+{ ================================================================================ }
+
+20;    { PRECISION DATA  to STOP the CONJUGATE GRADIENT ITERATIONS }
+ 1e-8; { EPSILON   VALUE to STOP the CONJUGATE GRADIENT ITERATIONS }
+@;
+
+9;  { UNSTEADY BOUSSINESQ HEAT NAVIER-STOKES SOLVER ==================== }
+           { 1; CROUT L D tL }
+    2; 1;  { CONJUGATE GRADIENT CONDENSED MATRIX }
+
+DefVar InitTime,        FinalTime;
+       InitTime=30;     FinalTime=60;
+DefVar StepTime,        StoreStepTime;
+       StepTime=0.01;
+       StoreStepTime=10*StepTime; { computed vectors are stored on files}
+
+   InitTime;  { INITIAL TIME }
+   FinalTime; { FINAL   TIME }
+   StepTime;  { CONSTANT STEP of TIME (seconds) }
+  (FinalTime-InitTime)/StoreStepTime; { NUMBER of STORED SOLUTION VECTORS }
+@;
+@;
+@;
+
+10; { DRAWING of VELOCITIES PRESSURES ===========================}
+
+ 2;   { INITIAL and FINAL TIME of SOLUTIONS VECTORS to DRAW }
+ InitTime;   { INITIAL TIME }
+ FinalTime;  { FINAL   TIME }
+
+ 5; { The TEMPERATURE drawings }
+ 2;   { ZONES of ISOTHERMAL COLORS }
+ 90;  { Drawing of ZONES of COLORS }
+ 90;  { Continue the DRAWING }
+ @;
+ @;
+ @;
+
+ 1; { The PRESSURE drawings }
+ 2;   { ISO-PRESSURES COLOR ZONES }
+ 90;  { Drawing of ZONES of COLORS }
+ 90;  { Continue the DRAWING }
+ @;
+ @;
+ @;
+
+ 2;  { The VELOCITY is drawn with ARROWS }
+ 90;   { DRAWING of VELOCITY ARROWS }
+ 90;   { Continue the DRAWING }
+ @;
+ @;
+ @;
+ @;
+
+CLOSE;

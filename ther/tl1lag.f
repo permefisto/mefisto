@@ -1,0 +1,49 @@
+      SUBROUTINE TL1LAG( EXPO,   NBPOLY, NPI,  POLY, POIDEL,
+     &                   NDSM,   TEMPEF,
+     &                   VOLUME, INTEGP )
+C ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+C BUT :    CALCUL DE LA NORME L1 DES NDSM TEMPERATURES**EXPO
+C -----    LAGRANGE DE DEGRE 1 OU 2 ISOPARAMETRIQUES
+C
+C ENTREES:
+C --------
+C EXPO   : EXPOSANT DE LA TEMPERATURE A CALCULER
+C NBPOLY : NOMBRE DE POLYNOMES DE L'ELEMENT FINI VOLUMIQUE
+C NPI    : NOMBRE DE POINTS D INTEGRATION NUMERIQUE DANS LE VOLUME
+C POLY   : VALEUR DES POLYNOMES DE BASE AUX POINTS D'INTEGRATION
+C           POLY(I, L)= P(I) (XL)
+C POIDEL : DELTA * POIDS(NPI) DES NPI POINTS D'INTEGRATION DE L'EF
+C TEMPEF : NDSM TEMPERATURES AUX NBPOLY NOEUDS DE L'EF
+C
+C SORTIES:
+C --------
+C VOLUME : Som    Omegal Delta(bl)  =>   VOLUME DE L'EF
+C         l=1...,L
+C INTEGP : Som Omegal  (û**EXPO)(bl) Delta(bl)
+C         l=1...,L
+C ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+C AUTEUR: ALAIN PERRONNET  LJLL UPMC & SAINT PIERRE DU PERRAY   MAI 2009
+C23456---------------------------------------------------------------012
+      DOUBLE PRECISION  EXPO, TEMPEF(NBPOLY,NDSM), INTEGP(NDSM), VOLUME
+      DOUBLE PRECISION  POLY(NBPOLY,NPI), POIDEL(NPI), PROSCD, TEMP
+C
+C     VOLUME DE L'EF
+      VOLUME = 0D0
+      DO 10 L=1,NPI
+         VOLUME = VOLUME + POIDEL(L)
+ 10   CONTINUE
+C
+      DO 30 N=1, NDSM
+         DO 20 L=1,NPI
+C
+C           CALCUL DE LA TEMPERATURE AU POINT D'INTEGRATION L
+            TEMP = PROSCD( POLY(1,L), TEMPEF(1,N), NBPOLY )
+C
+C           NORME L1 DE U**EXPO
+            INTEGP(N) = INTEGP(N) + POIDEL(L) * TEMP**EXPO
+C
+ 20      CONTINUE
+ 30   CONTINUE
+C
+      RETURN
+      END

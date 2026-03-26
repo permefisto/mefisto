@@ -1,0 +1,77 @@
+SUBROUTINE MOYP12D( NBNOVI,  XYZNOE, NBELEM, NBNOEF, NUNOEF, NUNOSO, &
+                    NBSOM,   P1SOLU, &
+                    SURFACE, INTP1 )
+! ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+! BUT:     CALCULER LA SURFACE DU MAILLAGE ET
+! ----     L'INTEGRALE DE L'INTERPOLATION P1 (PRESSION) SUR LE MAILLAGE
+
+! ENTREES:
+! --------
+! NBNOVI : NOMBRE DE NOEUDS VITESSE SOMMETS et MILIEUX DES ARETES DES EF
+! XYZNOE : XYZNOE(3,NBNOVI)  3 COORDONNEES DES NOEUDS DU MAILLAGE
+! NBELEM : NOMBRE DE TRIANGLES P2 DU MAILLAGE
+! NBNOEF : NOMBRE DE NOEUDS D'UN TRIANGLE (P1B=>3, P2=>6)
+! NUNOEF : NO DES NBNOEF NOEUDS DES NBELEM TRIANGLES
+! NUNOSO : NUNOSO(I) = NUMERO DU SOMMET 1 A NBSOM DU NOEUD GLOBAL I
+! P1SOLU : INTERPOLATION P1 AUX SOMMETS DE LA TRIANGULATION
+
+! SORTIES:
+! --------
+! SURFAC: SURFACE DU MAILLAGE 3D
+! INTP1  : INTEGRALE DE P1SOLU SUR LE MAILLAGE
+!+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+! AUTEUR : ALAIN PERRONNET LJLL UPMC & St Pierre du Perray Decembre 2012
+!23456---------------------------------------------------------------012
+!$ USE OMP_LIB
+   IMPLICIT NONE
+      INTEGER           NBSOM, NBNOVI, NBELEM, NBNOEF, &
+                        NUNOEF(NBELEM,NBNOEF), NUNOSO(NBNOVI)
+      REAL              XYZNOE(3,NBNOVI)
+      DOUBLE PRECISION  P1SOLU(NBSOM), SURFACE, INTP1, DET, X, Y
+      INTEGER           NUELEM, I, J, K
+
+      SURFACE = 0D0
+      INTP1   = 0D0
+
+!///////////////////////////////////////////////////////////////////////
+!$OMP PARALLEL DEFAULT(SHARED) PRIVATE(NUELEM, I, J, K, DET, X, Y)
+!     BOUCLE SUR LES TRIANGLES
+!$OMP DO REDUCTION(+:SURFACE) REDUCTION(+:INTP1)
+      DO NUELEM = 1, NBELEM
+
+!        NUMERO DES 3 NOEUDS-SOMMETS DU TRIANGLE NUELEM
+         I = NUNOEF(NUELEM,1)
+         J = NUNOEF(NUELEM,2)
+         K = NUNOEF(NUELEM,3)
+
+!        CALCUL DE LA MATRICE JACOBIENNE ET DE SON INVERSE
+         X = XYZNOE(1,I)
+         Y = XYZNOE(2,I)
+
+!        CALCUL DU DETERMINANT DE LA JACOBIENNE DFe
+         DET = ABS( (XYZNOE(1,J) - X) * (XYZNOE(2,K) - Y) &
+                  - (XYZNOE(1,K) - X) * (XYZNOE(2,J) - Y) )
+
+!        SURFACE DU TRIANGLE * 2
+         SURFACE = SURFACE + DET
+
+         X = 0D0
+         DO I=1,3
+            K = NUNOEF(NUELEM,I)
+            IF( NBNOEF .EQ. 6 ) K = NUNOSO( K )
+            X = X + P1SOLU( K )
+         ENDDO
+         INTP1 = INTP1 + DET * X / 6D0
+
+      ENDDO   ! FIN DE LA BOUCLE DES TRIANGLES DU MAILLAGE
+!$OMP END DO
+!$OMP END PARALLEL
+!///////////////////////////////////////////////////////////////////////
+
+      SURFACE = SURFACE / 2D0
+
+ print *,'moyp12d.f95: SURFACE du MAILLAGE=',SURFACE, &
+ ' INTEGRALE Pression=',INTP1,' INTEGRALE Pression/SURFACE=',INTP1/SURFACE
+
+      RETURN
+END SUBROUTINE MOYP12D

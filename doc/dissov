@@ -1,0 +1,11 @@
+INTERIOR POINTS may be given to adjust the length of 
+tetrahedra edges around theses points as vertices.
+The WISHED LENGTH of tetrahedra edges around the POINT
+is an upper BOUND.
+
+Example:
+PTI1; PTI2; {the interior points}
+0.01; 0.5;  {the lengths around each interior points}
+
+The tetrahedra edges from PT1 will have a length<0.01
+The tetrahedra edges from PT2 will have a length<0.5

@@ -1,0 +1,66 @@
+      SUBROUTINE XYZBST( X, Y,
+     %                   DEGREX, LRX, RX,
+     %                   DEGREY, LRY, RY, SPLINE,
+     %                   XYZSOM )
+C+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+C BUT :    CALCULER LES 3 COORDONNEES DU SOMMET (X,Y) DU RECTANGLE PLAN
+C -----    D'UNE SURFACE B-SPLINE D'INTERPOLATION POLYNOMIALE
+C
+C ENTREES:
+C --------
+C X,Y    : 2 COORDONNEES DU POINT DU RECTANGLE PLAN
+C DEGREX : DEGRE DES POLYNOMES DE LA B-SPLINE
+C LRX    : NOMBRE DE POINTS-1 DE CONTROLE (R) DE LA LIGNE
+C RX     : LES EXTREMITES DES INTERVALLES DU PARAMETRE EN X
+C DEGREY : DEGRE DES POLYNOMES DE LA B-SPLINE
+C LRY    : NOMBRE DE POINTS-1 DE CONTROLE (R) DE LA LIGNE
+C RY     : LES EXTREMITES DES INTERVALLES DU PARAMETRE EN Y
+C SPLINE : LES COEFFICIENTS DES POLYNOMES SUR CHAQUE INTERVALLE
+C
+C SORTIES:
+C --------
+C XYZSOM : LES 3 COORDONNEES DU SOMMET SUR LA SURFACE B-SPLINE
+C+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+C AUTEUR : ALAIN PERRONNET ANALYSE NUMERIQUE UPMC PARIS     FEVRIER 1997
+C2345X7..............................................................012
+      INTEGER  DEGREX, DEGREY
+      REAL     RX(0:LRX), RY(0:LRY),
+     %         SPLINE(0:DEGREX,0:DEGREY,0:LRX-1,0:LRY-1,1:3),
+     %         XYZSOM(1:3)
+C
+C     RECHERCHE DU IX DE [RX(IX),RX(IX-1)[ CONTENANT X
+      IX   = 0
+ 10   IF( X .GE. RX(IX+1) ) THEN
+C        PASSAGE A L'INTERVALLE SUIVANT DE RX
+         IX = IX + 1
+         IF( IX .LT. LRX ) GOTO 10
+C        LE DERNIER SOMMET EST CALCULE PAR PROLONGEMENT
+         IX = LRX - 1
+      ENDIF
+      RRX = X - RX(IX)
+C
+C     RECHERCHE DU IY DE [RY(IY),RY(IY-1)[ CONTENANT Y
+      IY   = 0
+ 30   IF( Y .GE. RY(IY+1) ) THEN
+C        PASSAGE A L'INTERVALLE SUIVANT DE RY
+         IY = IY + 1
+         IF( IY .LT. LRY ) GOTO 30
+C        LE DERNIER SOMMET EST CALCULE PAR PROLONGEMENT
+         IY = LRY - 1
+      ENDIF
+      RRY = Y - RY(IY)
+C
+C     LES 3 COORDONNEES DU SOMMET (X,Y) DU RECTANGLE
+      DO 80 J=1,3
+         AA = 0
+         DO 70 M=DEGREY,0,-1
+            A = SPLINE(DEGREX,M,IX,IY,J)
+            DO 60 L=DEGREX-1,0,-1
+C              DOUBLE METHODE DE HORNER
+               A = A * RRX + SPLINE(L,M,IX,IY,J)
+ 60         CONTINUE
+            AA = AA * RRY + A
+ 70      CONTINUE
+         XYZSOM(J) = AA
+ 80   CONTINUE
+      END

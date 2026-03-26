@@ -1,0 +1,84 @@
+!!Mefisto*bitmapPath:    /users/perronne/nef/bin/bitmaps
+Mefisto*iconImage:      mefisto
+Mefisto*documentation*iconImage:  mefisto.doc
+
+Mefisto*background: grey
+Mefisto*foreground: white
+Mefisto*TopShadowColor: white
+Mefisto*BottomShadowColor: black
+Mefisto*fontList: -adobe-times-bold-r-normal-*-12-*-*-*-*-*-*
+
+Mefisto.erreur*geometry:  +0-0
+Mefisto.erreur*background: grey
+Mefisto.erreur*fontList:  -adobe-courier-bold-r-normal-*-18-*-*-*-m-*-*
+Mefisto.erreur*rowcol*text*background: red
+Mefisto.erreur*rowcol*text*foreground: white
+Mefisto.erreur*rowcol*form*background: grey
+Mefisto.erreur*rowcol*form*button*background: pink
+Mefisto.erreur*rowcol*form*button*foreground: black
+Mefisto.erreur*rowcol*form*button*TopShadowColor: white
+Mefisto.erreur*rowcol*form*button*BottomShadowColor: black
+Mefisto.erreur*rowcol*form*button*fontlist:  -adobe-times-bold-i-normal-*-16-*-*-*-*-*-*
+
+Mefisto*documentation*geometry:  +0+0
+Mefisto*documentation*background: grey
+Mefisto*documentation*fontList:  -adobe-courier-bold-r-normal-*-14-*-*-*-m-*-*
+Mefisto*documentation*pane*text*background: grey
+Mefisto*documentation*pane*text*foreground: white
+Mefisto*documentation*pane*form*background: grey
+Mefisto*documentation*pane*form*button*background: pink
+Mefisto*documentation*pane*form*button*foreground: black
+Mefisto*documentation*pane*form*button*TopShadowColor: white
+Mefisto*documentation*pane*form*button*BottomShadowColor: black
+Mefisto*documentation*pane*form*button*fontlist: -adobe-times-bold-i-normal-*-14-*-*-*-*-*-*
+
+Mefisto*menu*geometry: -0+0
+!!Mefisto*menu*background: Grey90
+Mefisto*menu*background: LightGrey
+Mefisto*menu*pane*TopShadowColor: white
+Mefisto*menu*pane*BottomShadowColor: black
+Mefisto*menu*pane*frame_ad*fontlist: -adobe-times-bold-r-normal-*-16-*-*-*-*-*-*
+Mefisto*menu*pane*frame_ad*background: grey
+Mefisto*menu*pane*frame_ad*form_ad*button_a*background: cyan
+Mefisto*menu*pane*frame_ad*form_ad*button_a*foreground: blue
+Mefisto*menu*pane*frame_ad*form_ad*button_d*background: blue
+Mefisto*menu*pane*frame_ad*form_ad*button_d*foreground: cyan
+
+Mefisto*menu*pane*scrolledw*background: grey
+Mefisto*menu*pane*scrolledw*frame_menu*background: grey
+Mefisto*menu*pane*scrolledw*frame_menu*button_m*TopShadowColor:    white
+Mefisto*menu*pane*scrolledw*frame_menu*button_m*BottomShadowColor: black
+Mefisto*menu*pane*scrolledw*frame_menu*button_m*background: grey
+Mefisto*menu*pane*scrolledw*frame_menu*button_m*foreground: white
+Mefisto*menu*pane*scrolledw*frame_menu*button_m*fontList: -adobe-times-bold-r-normal-*-14-*-*-*-*-*-*
+
+Mefisto*menu*pane*frame_menu*background: grey
+Mefisto*menu*pane*frame_menu*button_m*TopShadowColor:    white
+Mefisto*menu*pane*frame_menu*button_m*BottomShadowColor: black
+Mefisto*menu*pane*frame_menu*button_m*background: grey
+Mefisto*menu*pane*frame_menu*button_m*foreground: white
+Mefisto*menu*pane*frame_menu*button_m*fontList: -adobe-times-bold-r-normal-*-14-*-*-*-*-*-*
+
+Mefisto*menu*pane*text_l1*TopShadowColor:    black
+Mefisto*menu*pane*text_l1*BottomShadowColor: white
+Mefisto*menu*pane*text_l1*background: blue
+Mefisto*menu*pane*text_l1*foreground: white
+Mefisto*menu*pane*text_l1*fontList: -adobe-times-bold-i-normal-*-14-*-*-*-*-*-*
+
+Mefisto*menu*pane*text_in*TopShadowColor:    black
+Mefisto*menu*pane*text_in*BottomShadowColor: white
+Mefisto*menu*pane*text_in*background: blue
+Mefisto*menu*pane*text_in*foreground: white
+Mefisto*menu*pane*text_in*fontList: -adobe-courier-bold-r-normal-*-12-*-*-*-m-*-*
+
+Mefisto*menu*pane*text_lu*TopShadowColor:    black
+Mefisto*menu*pane*text_lu*BottomShadowColor: white
+Mefisto*menu*pane*text_lu*background: violet
+Mefisto*menu*pane*text_lu*foreground: white
+Mefisto*menu*pane*text_lu*fontList: -adobe-times-bold-i-normal-*-12-*-*-*-*-*-*
+
+Mefisto*menu*pane*text_sa*TopShadowColor:    red
+Mefisto*menu*pane*text_sa*BottomShadowColor: red
+Mefisto*menu*pane*text_sa*background: black
+Mefisto*menu*pane*text_sa*foreground: white
+Mefisto*menu*pane*text_sa*fontList: -adobe-courier-bold-r-normal-*-12-*-*-*-m-*-*

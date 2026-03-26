@@ -1,0 +1,40 @@
+#!/bin/bash
+cblg <<%
+util
+nomjob
+%
+cblg <<%
+util
+ouvrms
+%
+cblg <<%
+util
+suitms
+%
+cblg <<%
+util
+tamcdc
+%
+cblg <<%
+util
+tamcds
+%
+cblg <<%
+util
+tamsou
+%
+cblg <<%
+util
+tuer
+%
+cblg <<%
+flui
+tfluide
+%
+cbginit
+cbgmail
+cbgelas
+cbgther
+cbgflui
+cbgnlse
+cbgpoba

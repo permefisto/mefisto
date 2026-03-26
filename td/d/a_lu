@@ -1,0 +1,16 @@
+deftms ~>LU 'sauvegarde entre 2 executions des constantes et variables de LU'
+ variable muet DATE 'date de creation du tableau'   reel2  ;
+ variable muet NUTD 'numero du tableau descripteur' entier ; 
+ variable NBCTE  'nombre actuel  de constantes declarees'   entier ;
+ variable NBVARU 'nombre actuel  de variables utilisateur'  entier ;
+ variable MXCAVA 'un nom de variable a au plus mxcava*4 caracteres' entier ;
+ variable NBVATS 'nombre actuel  de variables utilisateur'  entier ;
+ variable MXCATS 'un nom de variable a au plus mxcats*4 caracteres' entier ;  
+ variable NBPACH 'nombre actuel  de parametres chaines'  entier ;
+ variable MXCACH 'un parametre chaine a au plus mxcats*4 caracteres' entier ;
+ tableau  DCTE(1..NBCTE)  'les constantes actuelles' reel2 ;
+ tableau DVARU(1..NBVARU) 'les valeurs des variables utilisateur' reel2 ;
+ tableau KVARU(1..MXCAVA,1..NBVARU) 'les noms des variables' caractere ;  
+ tableau KVATS(1..MXCATS,1..NBVATS) 'les noms des variables tms' caractere ;
+ tableau KPACH(1..MXCACH,1..NBPACH) 'les noms des parametres chaines' caractere;
+fintms ;

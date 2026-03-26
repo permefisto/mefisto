@@ -1,0 +1,72 @@
+      SUBROUTINE TM3P1D( X, DELTA, NBJEUX, JEU,
+     &                   NOOBVO, NUMIVO, NUMAVO, LTDEVO,
+     &                   NCODSM, CAPAEF )
+C ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+C BUT :    CALCUL DE LA MATRICE DE CAPACITE CALORIFIQUE
+C -----    POUR UN TETRAEDRE DE TYPE 3P1D
+C
+C ENTREES:
+C --------
+C X      : LES 2 COORDONNEES DES 3 POINTS DE L'ELEMENT FINI
+C DELTA  : JACOBIEN DE LA TRANSFORMATION EF REFERENCE -> EF
+C NBJEUX : NOMBRE DE JEUX DE DONNEES
+C JEU    : NUMERO DU JEU  DE DONNEES POUR CE CALCUL DE LA MATRICE ELEMENTAIRE
+C NOOBVO : NUMERO DU VOLUME DE L'EF
+C NUMIVO : NUMERO MINIMAL DES OBJETS VOLUMES UTILISES
+C NUMAVO : NUMERO MAXIMAL DES OBJETS VOLUMES UTILISES
+C LTDEVO : TABLEAU DES ADRESSES DU TABLEAU DES DONNEES CAPACITE
+C          DES OBJETS VOLUMES
+C SORTIE :
+C --------
+C NCODSM : CODE DE STOCKAGE DE LA MATRICE DE CAPACITE ELEMENTAIRE
+C          0 CAR DIAGONALE
+C CAPAEF : MATRICE DE CAPACITE STOCKEE SOUS FORME DIAGONALE
+C          (1,1) (2,2) (3,3) (4,4)
+C ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+C AUTEUR : ALAIN PERRONNET ANALYSE NUMERIQUE UPMC PARIS    NOVEMBRE 1994
+C23456---------------------------------------------------------------012
+      include"./incl/donthe.inc"
+      include"./incl/cthet.inc"
+      include"./incl/cnonlin.inc"
+C
+      include"./incl/pp.inc"
+      COMMON            MCN(MOTMCN)
+      REAL              RMCN(1)
+      DOUBLE PRECISION  DMCN(1)
+      EQUIVALENCE      (MCN(1), RMCN(1), DMCN(1))
+C
+      DOUBLE PRECISION  CAPAEF(4)
+      REAL              X(4,3)
+      INTEGER           LTDEVO( 1:MXDOTH, 1:NBJEUX, NUMIVO:NUMAVO )
+      DOUBLE PRECISION  DELTA, XYZPI(3)
+C
+C     CONTRIBUTION DU VOLUME
+C     ======================
+      ONDEPI = 0D0
+      DO L=1,4
+C
+         IF( TESTNL .GE. 1 .AND. MNTHET .GT. 0 ) THEN
+C           RECHERCHE DE LA TEMPERATURE AU POINT D'INTEGRATION L
+            TEMPEL=DMCN((MNTHET-1)/2+MCN(MNNODL+L-1))
+         ELSE
+            TEMPEL = 0D0
+         ENDIF
+C
+C        RECHERCHE DE LA CAPACITE AU POINT D'INTEGRATION L
+         XYZPI(1) = X(L,1)
+         XYZPI(2) = X(L,2)
+         XYZPI(3) = X(L,3)
+         CALL RECAPA( 4, NOOBVO, 3, XYZPI,
+     %                LTDEVO(LPMAST,JEU,NOOBVO),
+     %                LTDEVO(LPCHMA,JEU,NOOBVO),
+     %                CAPAEF(L) )
+C
+C        CAPACITE  = CAPACITE  * DELTA * POIDS
+         CAPAEF(L) = CAPAEF(L) * DELTA / 24D0
+C
+      ENDDO
+C
+C     MATRICE DE CAPACITE ELEMENTAIRE DIAGONALE
+      NCODSM = 0
+      RETURN
+      END

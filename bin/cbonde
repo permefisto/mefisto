@@ -1,0 +1,48 @@
+#
+#  compilation et edition de liens de pponde.f 
+#  Alain Perronnet        Janvier 1999
+# 
+echo     
+echo =======================================================
+echo MEFISTO-LINUX: Compilation Edition de liens de pponde.f
+echo =======================================================
+cd $MEFISTO
+
+#Creation du repertoire pp s'il n'existe pas
+if test -d pp
+then
+   echo pp existe
+else 
+   mkdir pp
+fi
+#  
+# compilation conditionnelle de xvuelc.c 
+if test -f xvue/xvuelc.o
+then
+   echo "xvue/xvuelc.o NON recompile"
+else 
+   bin/ccxvue
+fi
+
+nompp=pp/pponde
+if test -f $nompp
+then
+  rm $nompp
+fi
+ 
+echo "Un peu de patience: Compilation pponde et Edition de liens en cours ..."
+
+g77  -O3 -I. prpr/pponde.f onde/lib ther/lib elas/lib reso/lib mail/lib util/lib xvue/lib xvue/xvuelc.o \
+     -L/usr/X11R6/lib -lX11 \
+     -o $nompp
+
+rm pponde.o
+if test -f $nompp
+then 
+   chmod 755 $nompp
+   ls -l $MEFISTO/pp 
+   echo "$MEFISTO/$nompp est PRET a l'emploi" 
+else
+   echo "$MEFISTO/$nompp est INCORRECT"
+fi  
+

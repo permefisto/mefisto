@@ -1,0 +1,11 @@
+Le degre des polynomes doit etre strictement positif et
+strictement inferieur au nombre de points de controle ou
+interpolation definis dans cette direction.
+Demander un degre 4 pour un polynome passant par 4 points
+d'interpolation est IMPOSSIBLE.  
+
+ATTENTION:
+Plus le degre est eleve et plus les polynomes peuvent
+presenter des OSCILLATIONS, mais INVERSEMENT, la classe de 
+CONTINUITE de la fonction definie par MORCEAUX peut etre 
+ELEVEE.

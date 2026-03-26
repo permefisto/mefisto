@@ -1,0 +1,81 @@
+{ ==================================================================== }
+{ Logiciel MEFISTO     : Version March 2009                            }
+{ Nom de l'Utilisateur : Goong CHEN & Alain PERRONNET                  }
+{                        Saint Pierre du Perray                        }
+{ Nom du Projet        : Non Linear Problem with u**5                  }
+{ Date                 : 26/3/2009                                     }
+{ ==================================================================== }
+DefVar EXPONENT;  EXPONENT=5;
+defVar EXPONENT1; EXPONENT1=EXPONENT-1;
+
+1;    { OBJECT NAME to treat }
+ obj; { NAME of OBJECT }
+@;
+
+2;    { HEAT TRANSFER INPUT DATA }
+{----------------------------------------------------------------------}
+
+ { VOLUME: VA }
+ 2;    { [A] THERMAL CONDUCTIVITY }
+ 1;    { 3D homogenous isotropic material }
+ 1;    { CONDUC material conductivity }
+
+ 4;    { FOmega INTERNAL HEAT SOURCE }
+ -1;   { function source }
+       { NAME of FUNCTION }
+ DefFunc up(t,x,y,z,n1,n2,u);
+   up=(abs(u)**EXPONENT1)*u;
+ EndFunc;
+ up; { DANS LE LEXIQUE ~>FONCTION }
+
+ 8;    { INITIAL TEMPERATURE of the volume VA }
+ -1;   { INITIAL TEMPERATURE is given by a function }
+DefFunc temperature0( t, x, y, z, nty, nuob );
+  temperature0 = 0;
+  if y>y4 then temperature0 = 1.0; endif;
+EndFunc;
+temperature0; { NAME of the initial temperature function}
+ @;
+
+ { SURFACE: VA.SF }
+ 3;    { CONTACT  imposed temperature }
+ 1;    { constant imposed temperature }
+ 0.0;  { CONTAC   imposed temperature value }
+ @;
+
+ { POINT: CSL }
+ 8;      { INITIAL TEMPERATURE }
+ 1;      { INITIAL TEMPERATURE is CONSTANT }
+ 0.0;    { VATEM0 VALUE of the CONSTANT }
+ @;
+
+ { POINT: CSR }
+ 8;      { INITIAL TEMPERATURE }
+ 1;      { INITIAL TEMPERATURE is CONSTANT }
+ 1.00001;{ VATEM0 VALUE of the CONSTANT }
+         { Value>1 in order to this point has the max value }
+         { => This point is the node N0 of reference }
+ @;
+
+3;  { STATIONNARY HEAT TRANSFER solver }
+{----------------------------------------------------------------------}
+ 3; { Coefficients are DEPENDENTS of TEMPERATURE ZHOU's method}
+ EXPONENT; { EXPONENT of U as SECOND MEMBER}
+ 2; { PRECONDITIONNED CONJUGATE GRADIENT }
+ 1; { LEVEL of INCOMPLETE FACTORISATION }
+@;
+
+8;  { DRAWING of TEMPERATURES and FLUX }
+{----------------------------------------------------------------------}
+  2;{ TEMPERATURE to be DRAWN }
+  3;{ ZONES by CUTTING PLANES  X or Y or Z=CTE }
+  1;{ CHOIX X=CTE }
+ 11;{ INITIALIZE the NUMBER of PLANES }
+  1;{ NUMBER of PLANES }
+ 14;{ TYPE of VALUE of the COORDINATE of PLANE SECTIONS }
+ 1E-5;{ VALUE of the COORDINATE of PLANE SECTIONS }
+ 90;{ EXECUTE the DRAWING }
+ 50;{ ERASE the WINDOW }
+ 90;{ EXECUTE the DRAWING }
+
+CLOSE;

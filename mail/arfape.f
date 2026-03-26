@@ -1,0 +1,198 @@
+      SUBROUTINE ARFAPE( NBSOMM, PTXYZD, MXFAPE, NBFAPE, NOFAPE,
+     %                   MXFACO, LEFACO, N1TETS, NOTETR,
+     %                   MXTE1S, NOTE1S, MXTE1A, NOTE1A,
+     %                   IERR )
+C+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+C BUT :   RECUPERATION DES ARETES PUIS DES FACES PERDUES DE LA FRONTIERE
+C -----
+C ENTREES:
+C --------
+C NBSOMM : NOMBRE DE SOMMETS INITIAUX
+C PTXYZD : TABLEAU DES COORDONNEES DES POINTS
+C          PAR POINT : X  Y  Z DISTANCE_SOUHAITEE
+C NF     : NUMERO DANS LEFACO DE LA FACE PERDUE A TRAITER
+C MXFACO : MAX DE FACES DECLARABLES DANS LEFACO
+C LEFACO : FACE=TRIANGLE DE LA PEAU OU DES INTERFACES ENTRE VOLUMES
+C          IL CONTIENT DANS CET ORDRE
+C          NUMERO (DANS PTXYZD) DU SOMMET 1, SOMMET 2, SOMMET 3
+C          NUMERO (DANS NUVOPA 0 SINON) DU VOLUME1, VOLUME2 DE LA FACE
+C          NUMERO (DANS LEFACO) DE LA FACE ADJACENTE PAR L'ARETE 1 2 3
+C
+C          ATTENTION: UNE ARETE PEUT APPARTENIR A PLUS DE 2 FACES
+C          => CHAINAGE CIRCULAIRE DE CES FACES DANS LEFACO
+C          LEFACO(9,*)  -> FACE SUIVANTE (*=0:VIDE, *<>0:NON VIDE)
+C          HACHAGE AVEC LA SOMME DES 3 SOMMETS MODULO MXFACO
+C          LF = MOD( NOSOFA(1)+NOSOFA(2)+NOSOFA(3) , MXFACO ) + 1
+C          NF = LEFACO( 10, LF ) LE NUMERO DE LA 1-ERE FACE DANS LEFACO
+C          SI LA FACE NE CONVIENT PAS. PASSAGE A LA SUIVANTE
+C          NF  = LEFACO( 9, NF )  ...
+C          LEFACO(10,*) PREMIERE FACE DANS LE HACHAGE
+C          LEFACO(11,.) = NO NOTETR D'UN TETRAEDRE AYANT CETTE FACE, 0 SINON
+cccC          LEFACO(12,.) = NO FACEOC DE 1 A NBFACES D'OC
+C N1FASC : N1FASC(I) NUMERO D'UN TRIANGLE DE LEFACO DE SOMMET I
+C N1TETS : N1TETS(I) NUMERO D'UN TETRAEDRE AYANT POUR SOMMET I
+C NOTETR : LISTE DES TETRAEDRES
+C          SOMMET1,    SOMMET2,    SOMMET3,    SOMMET4,
+C          TETRAEDRE1, TETRAEDRE2, TETRAEDRE3, TETRAEDRE4
+C          DE L'AUTRE COTE DE LA FACE
+C          1: 123      2: 234      3: 341      4: 412
+C
+C MXTE1S : NOMBRE MAX DE TETRAEDRES D'UN SOMMET DE LA TETRAEDRISATION
+C NOTE1S : NO DES TETRAEDRES D'UN SOMMET DE LA TETRAEDRISATION
+C MXTE1A : NOMBRE D'ENTIERS DU TABLEAU NOTE1A
+C NOTE1A : NOTE1A(I) = NUMERO DU TETRAEDRE I DE SOMMETS NS1 et NS2
+
+C SORTIES :
+C ---------
+C NBSOMM  : NOMBRE DE SOMMETS FINAUX DANS PTXYZD
+C IERR    : 0 SI PAS D'ERREUR , 1 SATURATION D'UN TABLEAU
+C+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+C AUTEUR : ALAIN PERRONNET LJLL UPMC & VEULETTES SUR MER    OCTOBRE 2014
+C2345X7..............................................................012
+      COMMON / UNITES / LECTEU,IMPRIM,INTERA,NUNITE(29)
+      DOUBLE PRECISION  PTXYZD(1:4,1:NBSOMM)
+      INTEGER           NOTETR(8,1:*), N1TETS(1:*)
+      INTEGER           NOFAPE(MXFAPE),
+     %                  LEFACO(11,0:MXFACO)
+      INTEGER           NOTE1S(MXTE1S), NOTE1A(MXTE1A), NOSTAR(2,3)
+      DOUBLE PRECISION  PTIN(3,1000)
+C
+C     NOMBRE D'ARETES RETROUVEES
+      NBARE = 0
+C     NOMBRE DE FACES RETROUVEES
+      NBFRE = 0
+C
+C     BOUCLE SUR LES FACES PERDUES
+C     ============================
+      NFP  = 0
+
+ 1    IERR = 0
+      NFP  = NFP + 1
+      IF( NFP .LE. NBFAPE ) THEN
+C
+C        NF0 NUMERO DE LA FACE PERDUE DANS LEFACO A TRAITER
+         NF0 = NOFAPE( NFP )
+
+         IF( NF0 .LE. 0 ) GOTO 1
+C
+         PRINT *
+         PRINT *,'ARFAPE: FACE PERDUE',NFP,
+     % ' EST LEFACO(',NF0,'):',(LEFACO(I,NF0),I=1,3),
+     % ' a retrouver dans la tetraedrisation'
+
+         NBTEIN = 0
+         NBPTIN = 0
+         NBTE1A = 0
+
+         DO I=1,3
+
+C           L'ARETE I DE LA FACE NF0
+            IF( I .EQ. 3 ) THEN
+               I1 = 1
+            ELSE
+               I1 = I+1
+            ENDIF
+
+C           LES NUMEROS DES 2 SOMMETS DE L'ARETE I DE LA FACE PERDUE NFPE
+            NS1 = LEFACO(I ,NF0)
+            NS2 = LEFACO(I1,NF0)
+            NOSTAR(1,I) = NS1
+            NOSTAR(2,I) = NS2
+C
+C           LES NBTEA TETRAEDRES D'ARETE I  NS1-NS2
+            CALL TETR1A( NS1,   NS2,   N1TETS, NOTETR,
+     %                   NBTEA, MXTE1A-NBTE1A, NOTE1A(NBTE1A+1), IER )
+            NBTE1A = NBTE1A + NBTEA
+
+C           NBTEA>0 NOMBRE DE TETRAEDRES DE NOTETR AYANT CETTE ARETE NS1-NS2
+C                =0 SI AUCUN TETRAEDRE DE NOTETR NE CONTIENT CETTE ARETE
+
+            IF( NBTEA .LE. 0 ) THEN
+C
+C              L'ARETE NS1-NS2 N'EST PAS DANS LA TETRAEDRISATION
+C              -------------------------------------------------
+               print *,'ARETE',NS1,'-',NS2,
+     %                 ' PERDUE => A retrouver dans les'
+               CALL TEINAR( NS1, NS2, PTXYZD, N1TETS, NOTETR,
+     %                      MXTE1S, NBTEIN1, NOTE1S(NBTEIN+1),
+     %                      NBPTIN1, PTIN(1,NBPTIN+1) )
+C              NOTE1S: NO DES NBTEIN1 TETRAEDRES DE NOTETR
+C                         DE FACES INTERSECTEES PAR L'ARETE NS1 NS2
+               IF( NBTEIN1 .LE. 0 ) THEN
+                  GOTO 1
+               ELSE
+                  NBTEIN = NBTEIN + NBTEIN1
+                  NBPTIN = NBPTIN + NBPTIN1
+               ENDIF
+
+            ELSE
+C
+C              L'ARETE EST DANS LA TETRAEDRISATION
+C              -----------------------------------
+ccc               CALL TETR1A( NS1,   NS2,   N1TETS, NOTETR,
+ccc     %                      NBTEA, MXTE1A-NBTE1A, NOTE1A(NBTE1A+1), IERR )
+ccc               NBTE1A = NBTE1A + NBTEA
+cccC              NBTE1A : EN ENTREE NOMBRE DE TETRAEDRES DEJA RANGES DANS NOTE1A
+cccC                       EN SORTIE AJOUT DES TETRAEDRES AYANT NS1 et NS2 COMME SOMMETS
+cccC                       = 0 SI SATURATION DU TABLEAU NOTE1A
+cccC                       =-1 SI UN SOMMET NS N'EST PAS UN SOMMET DE N1TETS(NS)
+cccC                       > 0 SINON
+
+C              UNICITE DES NO DE TETRAEDRES DU TABLEAU NOTE1A
+               CALL UNITABL( NOTE1A, NBTE1A )
+
+               IF( NBTE1A .LE. 0 ) THEN
+                  GOTO 1
+               ENDIF
+
+            ENDIF
+
+         ENDDO
+
+C        IDENTIFICATION DES TETRAEDRES DES 2 LISTES NOTE1S et NOTE1A
+         NBTEFAPE = 0
+         DO 40 I = 1, NBTEIN
+
+C           LE TETRAEDRE DE FACE INTERSECTANT UNE ARETE
+            NT = NOTE1S( I )
+
+            DO N = 1, NBTEFAPE
+               IF( NT .EQ. NOTE1S(N) ) GOTO 40
+            ENDDO
+
+            NBTEFAPE = NBTEFAPE + 1
+            NOTE1S( NBTEFAPE ) = NT
+
+ 40      CONTINUE
+
+         DO 50 I = 1, NBTE1A
+
+C           LE TETRAEDRE S'ENROULANT AUTOUR D'UNE ARETE
+            NT = NOTE1A( I )
+
+            DO N = 1, NBTEFAPE
+               IF( NT .EQ. NOTE1S(N) ) GOTO 50
+            ENDDO
+
+            NBTEFAPE = NBTEFAPE + 1
+            NOTE1S( NBTEFAPE ) = NT
+
+ 50      CONTINUE
+
+C        NBTEIN  : NOMBRE DE TETRAEDRES INTERSECTES PAR LES ARETES PERDUES
+C        NBTEFAPE: NOMBRE DE TETRAEDRES ISSUS DES 3 ARETES D'UNE FACE PERDUE
+         DO I = 1, NBTEFAPE
+            N = NOTE1S(I)
+            print *,' tetra',N,' St:',(NOTETR(K,N),K=1,4)
+         ENDDO
+         print *,' Pt intersection=',NBPTIN
+
+         CALL TRATEAR( PTXYZD, 3, NOSTAR, NBPTIN, PTIN,
+     %                 NBTEFAPE, NOTE1S, NOTETR )
+
+C        PASSAGE A LA FACE PERDUE SUIVANTE
+         GOTO 1
+      ENDIF
+
+      RETURN
+      END

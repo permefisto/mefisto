@@ -1,0 +1,11 @@
+variable EXPORTER 'a MESH to a SOFTWARE' entier
+( 1 : 'a File Mefisto xyznsef of a PLSV',
+  2 : 'a File Mefisto xyznpef of an OBJECT',
+  3 : 'a File NEKTON of an OBJECT',
+  4 : 'a File FIDAP of an OBJECT',
+  5 : 'a File FREEFEM of an OBJECT',
+  6 : 'a File OpenFOAM of an OBJECT',
+  7 : 'a File Modulef NOPO of an OBJECT',
+  8 : 'a File LS-DYNA a SURFACE+ a VOLUME',
+  9 : 'a FILE STL a CLOSED SURFACE TRIANGULATION'
+) ;

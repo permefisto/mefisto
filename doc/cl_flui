@@ -1,0 +1,23 @@
+The boundary conditions on the Surfaces, on the Lines, on the Points in 3d,
+or on Lines, on Points in 2d, of the FLUID may be defined here.
+
+1 : BOUNDARY EXTERNAL FORCE Density on SL
+2 : BLOCKING-UP the IMPOSED VELOCITY on SLP
+3 : BLOCKING-UP the IMPOSED PRESSURE on SLP
+
+4 : INITIAL VELOCITIES on SLP
+5 : INITIAL PRESSURES on SLP
+For the unsteady problem, the INITIAL velocities or/and pressures may be defined from
+- the last computed velocities_pressures;
+- the constant values or functions on the objet (the fluid)
+- the constant values or functions on the VSLP (the volumes, surfaces, lines or points
+  of the fluid)
+with a priority to the Points, then after, the lines, then after the surfaces,
+then after the volumes and finally, the object.
+
+Type @; or escape to quit the actual Surface or Line or Point and to pass to the next.
+
+Attention:
+A given boundary or initial condition is always stored.
+If this value must not used after, it is necessary to delete it!
+If not this value will be used in the next computation.

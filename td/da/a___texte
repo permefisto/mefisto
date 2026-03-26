@@ -1,0 +1,7 @@
+deftms ~>>>TEXTE  'texte of lines of characters'
+variable muet DATE 'date of creation of the TMS' reel2  ;
+variable muet NUTD 'number of the descriptor array TD' entier ; 
+variable NBCLTX 'number of 4 characters by line' entier ;
+variable NBLITX 'number of lines of the text' entier ;
+tableau  LECATX(1..NBCLTX,1..NBLITX) 'lines of the text' caractere ;
+fintms ;

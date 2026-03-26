@@ -1,0 +1,5 @@
+variable VALZONE 'Values of ZONES' entier
+( 1 : 'Drawing of ZONES of COLORS'
+, 5 : 'COLOR of MESH''s EDGES'
+, 6 : 'TYPE of LINES of  MESH''s EDGES'
+,90 : 'Drawing of ZONES of COLORS' ) ;

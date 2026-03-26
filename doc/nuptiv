@@ -1,0 +1,10 @@
+A list of INTERIOR POINTS may be given.
+Every POINT will become a vertex of the tetrahedrization
+The distance to the neighboring vertices will be
+inferior to the WISHED DISTANCES given.
+
+Example:  P1; P2;  {The INTERIOR POINTS}
+          1; 2.5;  {The WISHED DISTANCES around}
+Create a tetrahedrization with
+edges from P1 at a distance < 1
+edges from P2 at a distance < 2.5

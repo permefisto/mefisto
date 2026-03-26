@@ -1,0 +1,8 @@
+Donner le NOM des 2 TRIANGLES STRUCTURES et 3 QUADRANGLES STRUCTURES 
+qui forment les 5 faces du PENTAEDRE.
+Les TRIANGLES et QUADRANGLES MAILLES doivent exister pour que
+leur nom soit accepte.
+
+Si M est le nombre CONSTANT de segments des aretes des 2 triangles
+et N le nombre de segments des 3 autres aretes
+alors M x M x N sub-pentaedres will be created

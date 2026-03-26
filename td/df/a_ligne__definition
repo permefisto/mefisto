@@ -1,0 +1,151 @@
+deftms ~>LIGNE>>DEFINITION 'Definition d''une LIGNE' 
+variable muet DATE   'date de creation du tableau'   reel2 ;
+variable muet NUTD   'numero du tableau descripteur' entier ;  
+variable NTYTRL 'transformation (I pour IDENTITE)' ^~>TRANSFO ;
+variable NUTYLI 'numero du type de la ligne'    entier 
+( 2  : 'SEGMENT de DROITE' 
+, 3  : 'ARC de CERCLE PASSANT PAR 3 POINTS de R**3'
+, 4  : 'ARC de CERCLE PASSANT PAR 2+1 POINTS+RAYON'
+, 5  : 'ARC d''ELLIPSE de R2 PAR CENTRE ET DEMI-AXES'
+, 6  : 'LISTE de POINTS NOMMES PAR L''UTILISATEUR'
+, 7  : 'LISTE de SOMMETS DEFINIS PAR LEURS X Y Z'
+, 8  : 'CERCLE COMPLET de R3'
+, 9  : 'ELLIPSE COMPLETE de R2'
+, 10 : 'DONNEE TABLEAUX XYZSOMMET ET NSEF'
+, 11 : 'B-SPLINE OUVERTE PAR POINTS d''INTERPOLATION'       
+, 12 : 'B-SPLINE OUVERTE PAR POINTS de CONTROLE'
+, 20 : 'LIGNES EXTRUDEES A PARTIR d''un POLYGONE'
+, 21 : 'B-SPLINE FERMEE  PAR POINTS d''INTERPOLATION'       
+, 22 : 'B-SPLINE FERMEE  PAR POINTS de CONTROLE'
+, 24 : 'INTERSECTION un PLAN un TRONC de CONE'
+, 25 : 'INTERSECTION un PLAN un ELLIPSOIDE'
+, 26 : 'INTERSECTION de 2 TRONCS de CONES'
+, 27 : 'INTERSECTION 2 CYLINDRES d''AXES Z (X OU Y)'
+, 28 : 'LIGNE AVEC un CONGE'
+, 30 : 'AMELIORATION de LA QUALITE DES ARETES d''une LIGNE'
+, 35 : 'ARETES EXTRAITES d''une LIGNE PAR NUMEROS'
+, 36 : 'ARETES EXTRAITES d''une LIGNE SELON CRITERE(x,y,z)' 
+, 37 : 'ARETES INTERNES OU FRONTIERES d''une SURFACE' 
+, 40 : 'RESTRUCTURATION d''une LIGNE NON STRUCTUREE'    
+, 43 : 'INVERSER LES SOMMETS d''une LIGNE STRUCTUREE'
+, 48 : 'POINTS IMPOSES COMME PLUS PROCHE SOMMET de la LIGNE'
+, 50 : 'TRANSFORMATION d''une LIGNE EXISTANTE'
+, 51 : 'UNION de PLUSIEURS LIGNES' 
+, 81 : 'RENOMMER une LIGNE'
+, 82 : 'TUER CETTE LIGNE' );
+ cas NUTYLI 
+  2: variable NBARLI 'nombre d''aretes de la ligne' entier ;
+     variable RAIGEO 'raison geometrique espacant les sommets' reel ;
+     variable NUPTIN 'nom point initial de la ligne' ^~>POINT ;
+     variable NUPTFI 'nom point final   de la ligne' ^~>POINT ;
+  3: variable NBARLI 'nombre d''aretes de la ligne' entier ;
+     variable RAIGEO 'raison geometrique espacant les sommets' reel ;
+     variable NUPTIN 'nom point initial de l''arc' ^~>POINT ;
+     variable NUPTFI 'nom point final   de l''arc' ^~>POINT ;
+     variable NUPTEN 'nom point sur l''arc entre les 2 extremites' ^~>POINT ;
+  4: variable NBARLI 'nombre d''aretes de la ligne' entier ;
+     variable RAIGEO 'raison geometrique espacant les sommets' reel ;
+     variable NUPTIN 'nom point initial de l''arc' ^~>POINT ;
+     variable NUPTFI 'nom point final   de l''arc' ^~>POINT ;
+     variable NUPTAR 'nom point du plan et plus proche du centre' ^~>POINT ;
+     variable RAYARC 'rayon du cercle passant par les 2 points' reel ;
+  5: variable NBARLI 'nombre d''aretes de la ligne' entier ;
+     variable NUCELL 'nom point centre de l ellipse' ^~>POINT ;
+     variable AXXELL 'longueur du demi-axe en X' reel;
+     variable AXYELL 'longueur du demi-axe en Y' reel;
+     variable ANGLEI 'angle [-180,180] du premier point de l''arc' reel ;
+     variable ANGLEF 'angle [-180,180] du dernier point de l''arc' reel ;
+  6: variable NBPOLI 'nombre de points de la ligne extremites comprises' 
+              entier ;
+     tableau  NUPOLI(1..NBPOLI) 'noms des points de la ligne' ^~>POINT ;
+  7: variable NBPOLI 'nombre de sommets de la ligne extremites comprises' 
+              entier ;
+     tableau  XYZPLI(1..NBPOLI) 'x y z de chaque sommet de la ligne' xyz ;
+  8: variable NBARLI 'nombre d''aretes de la ligne' entier ;  
+     variable NUTYCI 'numero du type du cercle' entier
+  ( 1: 'cercle defini par 3 points sur le cercle'
+  , 2: 'cercle defini par le centre, un point du cercle, un point du plan'
+  , 3: 'cercle defini par le centre, le rayon, le plan a X ou Y ou Z=Cte' ) ;
+  cas NUTYCI 
+   1: variable NUPT1C 'nom 1-er  point sur le cercle' ^~>POINT ;
+      variable NUPT2C 'nom 2-eme point sur le cercle' ^~>POINT ;
+      variable NUPT3C 'nom 3-eme point sur le cercle' ^~>POINT ;
+   2: variable NUPTCE 'nom du point centre du cercle' ^~>POINT ;
+      variable NUPTSC 'nom du point sur le cercle'    ^~>POINT ;
+      variable NUPDPL 'nom du point pour definir le plan du cercle' ^~>POINT ;
+   3: variable NUPTCE 'nom du point centre du cercle' ^~>POINT ;
+      variable RAYDCI 'rayon du cercle' reel ;
+      variable NUPLCT 'numero du plan X ou Y ou Z=Cte' entier
+    ( 1: 'cercle dans le plan YZ avec X=centre(1)=Cte'
+    , 2: 'cercle dans le plan ZX avec Y=centre(2)=Cte'
+    , 3: 'cercle dans le plan XY avec Z=centre(3)=Cte' ) ;
+  fincas ; 
+  9: variable NBARLI 'nombre d''aretes de la ligne' entier ;
+     variable NUCELL 'nom point centre de l ellipse' ^~>POINT ;
+     variable AXXELL 'demi-axe en X' reel;
+     variable AXYELL 'demi-axe en Y' reel;
+ 10 : variable NUTSOL 'tableau XYZSOMMET des sommets'  tms ~>>>XYZSOMMET ;
+     variable NUTSSL 'tableau NSEF no des sommets des aretes' tms ~>>>NSEF ;
+ 11..12 : variable NBARLI 'nombre d''aretes de la ligne B-spline' entier ;
+      variable RAGEBL 'raison geometrique espacant les sommets' reel ;
+      variable NDEGBL 'degre des polynomes de la B-spline' entier ;
+      variable NBPCBL 'nombre de points de controle (>degre)' entier ;
+      tableau  NUPCBL(1..NBPCBL) 'nom des points de controle'   ^~>POINT ;
+ 20 : tableau  NUPTVT(1..2) 'nom 2 points du vecteur translation' ^~>POINT ;
+      variable OUFEEX 'POLYGONE OUVERT(0) ou FERME(1)' entier ;
+      variable NBPTEX 'nombre>2 de points sommets du polygone' entier;
+      tableau  NUPTEX(1..NBPTEX) 'nom des points du polygone' ^~>POINT ;
+ 21..22 : variable NBARLI 'nombre d''aretes de la ligne B-spline' entier ;
+      variable RAGEBL 'raison geometrique espacant les sommets' reel ;
+      variable NDEGBL 'degre des polynomes de la B-spline' entier ;
+      variable NBPCBL 'nombre de points de controle (>degre)' entier ;
+      tableau  NUPCBF(1..NBPCBL) 'nom des points de controle'   ^~>POINT ;
+ 24 : variable NBARLI 'nombre d''aretes de la ligne intersection' entier ;
+      tableau  NPPTCN(1..3) 'nom 3 points definition du plan'    ^~>POINT ;  
+      tableau  NAXTCN(1..2) 'nom 2 points axe du tronc de cone' ^~>POINT ;
+      tableau  RAYTCN(1..2) 'rayon du cone aux 2 points de l''axe' reel ; 
+ 25 : variable NBARLI 'nombre d''aretes de la ligne intersection' entier ;
+      tableau  NUPTPL(1..3) 'nom 3 points definition du plan'    ^~>POINT ;  
+      tableau  NUPTEL(1..4) 'nom 4 points definition ellipsoide' ^~>POINT ;
+ 26 : variable NBARLI 'nombre d''aretes de la ligne intersection' entier ;
+      tableau  NAXCN1(1..2) 'nom 2 points axe du tronc de cone 1' ^~>POINT ;
+      tableau  RYCON1(1..2) 'rayon du cone 1 aux 2 points de l''axe' reel ; 
+      tableau  NAXCN2(1..2) 'nom 2 points axe du tronc de cone 2' ^~>POINT ;
+      tableau  RYCON2(1..2) 'rayon du cone 2 aux 2 points de l''axe' reel ; 
+ 27 : variable NBARLI 'nombre d''aretes de la ligne intersection' entier ; 
+      variable NOAXCY 'axe du cylindre de plus grand rayon' entier
+                      ( 1 : 'axe des X'
+                      , 2 : 'axe des Y' ) ; 
+      variable RAYCAY 'grand rayon cylindre d''AXE X ou Y' reel ;     
+      variable RAYCAZ 'petit rayon cylindre d''AXE Z'      reel ;  
+      variable AL0CAZ 'longitude initiale en degres'       reel ;
+      variable AL1CAZ 'longitude finale   en degres'       reel ; 
+      variable COTCAZ 'cote z>0 ou z<0 (1 ou -1)'          reel ;
+ 28 : variable NBARLI 'nombre d''aretes de la ligne' entier ; 
+      variable RAYCOL 'rayon du cercle tangent' reel ; 
+      variable NUP1CL 'nom du point initial'        ^~>POINT ; 
+      variable NUP2CL 'nom du point intermediaire'  ^~>POINT ;
+      variable NUP3CL 'nom du point final'          ^~>POINT ;
+ 30 : variable NULIIN 'nom de la ligne initiale'              ^~>LIGNE ; 
+ 35 : variable NULIIN 'nom de la ligne initiale'              ^~>LIGNE ; 
+      variable NU1ARX 'numero de la premiere arete >0' entier ;
+      variable NUDARX 'numero de la derniere arete'    entier ;
+ 36 : variable NULIIN 'nom de la ligne initiale'              ^~>LIGNE ;
+      variable NUFOCL 'nom de la fonction critere'            ^~>FONCTION ;  
+ 37 : variable NUSULE 'nom de la surface de ligne a extraire' ^~>SURFACE ;
+      variable NUFOCL 'nom de la fonction critere'            ^~>FONCTION ; 
+      variable NTYFLE 'type de la ligne a extraire'  entier 
+                      ( 1  : 'aretes frontalieres'
+                      , 2  : 'aretes internes' 
+                      , 3  : 'aretes quelconques' ) ;
+ 40 : variable NULIIN 'nom de la ligne initiale'  ^~>LIGNE ;  
+ 43 : variable NULIIN 'nom ligne structuree de sommets a inverser' ^~>LIGNE ;
+ 48 : variable NULIIN 'nom de la ligne initiale' ^~>LIGNE ;
+      variable NBPOSL 'nombre de points imposes sommets' entier ;
+      tableau  NUPOSL(1..NBPOSL) 'nom des points devenant sommets' ^~>POINT ;
+ 50 : variable NULIIN 'nom de la ligne initiale'      ^~>LIGNE ;
+ 51 : variable NBLIUN 'nombre de lignes de l''union' entier ;
+      tableau  NULIUN(1..NBLIUN) 'nom des lignes de l''union' ^~>LIGNE ; 
+ 81 : variable NLAVAN 'nom de l''ancienne ligne a renommer' ^~>LIGNE ;
+fincas ;
+fintms ;

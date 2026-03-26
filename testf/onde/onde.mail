@@ -1,0 +1,42 @@
+{ ========================================================= }
+{ MEFISTO Version Octobre 1999     PROJET: TEST DES ONDES   }
+{ Utilisateur: Alain Perronnet     Date:   25/2/99          }
+{ ========================================================= }
+DefVar a,b;
+a=20;
+b=14;
+
+DefFonc critere(x,y,z);
+  critere=1;
+finfonc;
+
+3; {SURFACES faces de l objet}
+s; i; 11; {rectangle structure plan }
+   a;     {NBINQX 'nombre d''aretes en x}
+   b;     {NBINQY 'nombre d''aretes en y}
+@;
+
+2; {LIGNES aretes de l objet }
+ contour; i; 37; {aretes internes ou frontieres d une surface}
+          s;     {DANS LE LEXIQUE ~>SURFACE}
+      critere;   {NOM DE FONCTION}
+          1;     {aretes frontalieres}
+@;
+
+5; {OBJETS parties de l OBJET}
+ membrane; 0;  {classique 2D ou 3D}
+           2;  {NBDOBJ nombre de PLSVO}
+     SURFACE;  S;
+       LIGNE;  CONTOUR;
+@;
+
+7; {INTERPOLATION DE L'OBJET}
+membrane;
+       4; {Lagrange degre 2}
+@;
+
+10; {TRACE du MAILLAGE des PLSVO}
+  5;{Tous les OBJETS}
+ 90;{EXECUTION du TRACE}
+@;
+FERMER;

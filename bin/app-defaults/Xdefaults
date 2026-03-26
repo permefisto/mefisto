@@ -1,0 +1,569 @@
+!!
+!! general customization
+!!
+XTerm*savelines:        10000
+XTerm*background:       black
+XTerm*foregound:        white
+XTerm*cursorColor:      red
+XTerm*Scrollbar*background:	blue
+XTerm*ScrollbarBackground:	LightBlue
+XTerm*Scrollbar*width:		15
+XTerm.JoinSession:	False
+
+xterm*savelines:        10000
+xterm*background:       black
+xterm*foreground:       white
+
+*0*ColorPalette:        Metro.vp
+*Banner*foreground:     #ffffff
+*Box.background:        white
+*Command*background:    white
+*DMForm*fontList:       -bitstream-prestige-medium-r-normal--16-120-72-72-m-80-hp-roman8
+*DMForm*foreground:     #000000
+*Font:  -bitstream-prestige-medium-r-normal--16-120-72-72-m-80-hp-roman8
+*FontList:      -bitstream-swiss*742-bold-r-normal--16-120-72-72-p-94-hp-roman8
+*Form.background:       blue
+*Grip*background:       LightBlue
+*Label*foreground:      red3
+*List*background:       LightSlateGrey
+*Paned*InternalBorderColor:     SteelBlue
+*Scrollbar*background:  white
+*Scrollbar*foreground:  aquamarine
+*Toggle*background:     white
+*Toggle*foreground:     SlateBlue4
+*XmText*FontList:       -bitstream-prestige-medium-r-normal--16-120-72-72-m-80-hp-roman8
+*XmTextField*FontList:  -bitstream-prestige-medium-r-normal--16-120-72-72-m-80-hp-roman8
+*background:            black
+*font:  -*-fixed-bold-r-*-*-13-*-*-*-*-*-*-*
+*foreground:            white
+*iconGeometry:          +0+0
+*keyboardFocusPolicy:   Pointer
+*main*geometry:         -0+0
+*sessionVersion:        3.0
+*systemFont:    -bitstream-swiss*742-bold-r-normal--16-120-72-72-p-94-hp-roman8
+*ttyModes:      erase ^H intr ^C kill ^U start ^Q stop ^S swtch ^@
+*userFont:      -bitstream-prestige-medium-r-normal--16-120-72-72-m-80-hp-roman8
+
+DMinput*background:     #ffffe6
+DMoutput*background:    #ffffe6
+Dmx.addLastNewLine:      True
+Dmx.autoSaveOnByDefault: False
+Dmx.autoSaveTime:        10
+Dmx.backgroundIsSelect:  True
+Dmx.basePadName:         Dmx
+Dmx.bitmapPath:          /usr/dmx/lib/bitmaps
+Dmx.cycleModulo:         4
+Dmx.cyclePads:           True
+Dmx.dMinputName:         DMinput
+Dmx.dMoutputName:        DMoutput
+Dmx.disableRestart:      False
+Dmx.dmInputOccupyAll:    True
+Dmx.editBitmap:          edit_pad
+Dmx.hidePassword:        True
+Dmx.isItVUE:             True
+Dmx.preserveColumn:      True
+Dmx.raiseDMInput:        True
+Dmx.replaceNonPrintableChars:   False
+Dmx.sessionSave:         True
+Dmx.shellBitmap:         process_pad
+Dmx.traversePartial:     True
+Dmx.uNIXtmRegExp:        False
+Dmx.useLastClosedWindow: False
+Dmx1*Banner*background:  cyan
+Dmx1*background:         white
+Dmx2*Banner*background:  LightBlue
+Dmx2*background:         white
+Dmx3*Banner*background:  yellow
+Dmx3*background:         white
+Dmx4*Banner*background:  magenta
+Dmx4*background:         white
+
+!! HPterm*saveLines:          8s
+HPterm*scrollBar:          True
+Hpterm*backgroundIsSelect: True
+Hpterm*makeColors:         shadow
+
+!!
+!! applications
+!!
+xcalc*shapeStyle:	  Rectangle
+	
+axe*background:           white
+axe*Scrollbar*foreground: red3
+
+DDE*background: grey
+DDE*foreground: white
+DDE*geometry:   615x517+0+0
+DDE*lines*fontList:     dde-motif-symbols-12
+DDE*sourcePopup.geometry:       622x1024+636+0
+DDE*sourcePopup.iconX:  +51
+DDE*sourcePopup.iconY:  +0
+DDE*text*fontList:      -adobe-courier-bold-r-normal--12-120-75-75-m-70-*
+DDE.geometry:   615x517+0+0
+DDE.iconX:      +0
+DDE.iconY:      +0
+
+!!Mefisto*bitmapPath:   $MEFISTO/bin/bitmaps
+Mefisto*iconImage:      mefisto
+Mefisto*documentation*iconImage:  mefisto.doc
+
+Mefisto*background: grey
+Mefisto*foreground: white
+Mefisto*TopShadowColor: white
+Mefisto*BottomShadowColor: black
+Mefisto*fontList: -adobe-times-bold-r-normal-*-12-*-*-*-*-*-*
+
+Mefisto.erreur*geometry:  +0-0
+Mefisto.erreur*background: grey
+Mefisto.erreur*fontList:  -adobe-courier-bold-r-normal-*-18-*-*-*-m-*-*
+Mefisto.erreur*rowcol*text*background: red
+Mefisto.erreur*rowcol*text*foreground: white
+Mefisto.erreur*rowcol*form*background: grey
+Mefisto.erreur*rowcol*form*button*background: pink
+Mefisto.erreur*rowcol*form*button*foreground: black
+Mefisto.erreur*rowcol*form*button*TopShadowColor: white
+Mefisto.erreur*rowcol*form*button*BottomShadowColor: black
+Mefisto.erreur*rowcol*form*button*fontlist:  -adobe-times-bold-i-normal-*-16-*-*-*-*-*-*
+
+Mefisto*documentation*geometry:  +0+0
+Mefisto*documentation*background: grey
+Mefisto*documentation*fontList:  -adobe-courier-bold-r-normal-*-14-*-*-*-m-*-*
+Mefisto*documentation*pane*text*background: grey
+Mefisto*documentation*pane*text*foreground: white
+Mefisto*documentation*pane*form*background: grey
+Mefisto*documentation*pane*form*button*background: pink
+Mefisto*documentation*pane*form*button*foreground: black
+Mefisto*documentation*pane*form*button*TopShadowColor: white
+Mefisto*documentation*pane*form*button*BottomShadowColor: black
+Mefisto*documentation*pane*form*button*fontlist: -adobe-times-bold-i-normal-*-14-*-*-*-*-*-*
+
+Mefisto*menu*geometry: -0+0
+!!Mefisto*menu*background: Grey90
+Mefisto*menu*background: LightGrey
+Mefisto*menu*pane*TopShadowColor: white
+Mefisto*menu*pane*BottomShadowColor: black
+Mefisto*menu*pane*frame_ad*fontlist: -adobe-times-bold-r-normal-*-16-*-*-*-*-*-*
+Mefisto*menu*pane*frame_ad*background: grey
+Mefisto*menu*pane*frame_ad*foreground: white
+Mefisto*menu*pane*frame_ad*form_ad*button_a*background: cyan
+Mefisto*menu*pane*frame_ad*form_ad*button_a*foreground: blue
+Mefisto*menu*pane*frame_ad*form_ad*button_d*background: blue
+Mefisto*menu*pane*frame_ad*form_ad*button_d*foreground: cyan
+
+Mefisto*menu*pane*scrolledw*background: grey
+Mefisto*menu*pane*scrolledw*frame_menu*background: grey
+Mefisto*menu*pane*scrolledw*frame_menu*foreground: white
+Mefisto*menu*pane*scrolledw*frame_menu*button_m*TopShadowColor:    white
+Mefisto*menu*pane*scrolledw*frame_menu*button_m*BottomShadowColor: black
+Mefisto*menu*pane*scrolledw*frame_menu*button_m*background: grey
+Mefisto*menu*pane*scrolledw*frame_menu*button_m*foreground: white
+Mefisto*menu*pane*scrolledw*frame_menu*button_m*fontList: -adobe-times-bold-r-normal-*-14-*-*-*-*-*-*
+
+Mefisto*menu*pane*frame_menu*background: grey
+Mefisto*menu*pane*frame_menu*foreground: white
+Mefisto*menu*pane*frame_menu*button_m*TopShadowColor:    white
+Mefisto*menu*pane*frame_menu*button_m*BottomShadowColor: black
+Mefisto*menu*pane*frame_menu*button_m*background: grey
+Mefisto*menu*pane*frame_menu*button_m*foreground: white
+Mefisto*menu*pane*frame_menu*button_m*fontList: -adobe-times-bold-r-normal-*-14-*-*-*-*-*-*
+
+Mefisto*menu*pane*text_l1*TopShadowColor:    black
+Mefisto*menu*pane*text_l1*BottomShadowColor: white
+Mefisto*menu*pane*text_l1*background: green
+Mefisto*menu*pane*text_l1*foreground: black
+Mefisto*menu*pane*text_l1*fontList: -adobe-times-bold-i-normal-*-14-*-*-*-*-*-*
+
+Mefisto*menu*pane*text_in*TopShadowColor:    black
+Mefisto*menu*pane*text_in*BottomShadowColor: white
+Mefisto*menu*pane*text_in*background: blue
+Mefisto*menu*pane*text_in*foreground: white
+Mefisto*menu*pane*text_in*fontList: -adobe-courier-bold-r-normal-*-12-*-*-*-m-*-*
+
+Mefisto*menu*pane*text_lu*TopShadowColor:    black
+Mefisto*menu*pane*text_lu*BottomShadowColor: white
+Mefisto*menu*pane*text_lu*background: violet
+Mefisto*menu*pane*text_lu*foreground: white
+Mefisto*menu*pane*text_lu*fontList: -adobe-times-bold-i-normal-*-12-*-*-*-*-*-*
+
+Mefisto*menu*pane*text_sa*TopShadowColor:    red
+Mefisto*menu*pane*text_sa*BottomShadowColor: red
+Mefisto*menu*pane*text_sa*background: black
+Mefisto*menu*pane*text_sa*foreground: white
+Mefisto*menu*pane*text_sa*fontList: -adobe-courier-bold-r-normal-*-12-*-*-*-m-*-*
+
+*focusAutoRaise : True
+Vuewm*focusAutoRaise : True
+
+!-------------------------------------------------------------------------
+!  Xlatex
+!
+
+Xlatex*background:	cyan
+Xlatex*foreground:	black
+
+! Polices de caracteres
+! ---------------------
+Xlatex.inputFont:		-adobe-courier-bold-r-normal--12-*
+Xlatex.outputFont:		9x15bold
+Xlatex.commandFont:		-adobe-helvetica-bold-r-normal--14-*
+Xlatex.labelFont:		-adobe-courier-medium-o-normal--12-*
+!
+! Environnement de travail
+! ------------------------
+Xlatex.faconneur:               tex
+Xlatex.impression:              lpxlatex
+Xlatex.editeur:                 vi
+Xlatex.editeurAvecXterm:        false
+!Xlatex*statut:                 lpstat
+Xlatex.visionneursPS:		ghostview
+Xlatex.visionneurs:		xdvi
+!
+! Specification de tous les libelles
+! ----------------------------------
+!
+Xlatex*faconner.label:		Faconner
+Xlatex*visionner.label:		Visionner
+Xlatex*imprimer.label:		Imprimer
+Xlatex*postscript.label:	PostScript
+Xlatex*statut.label:		Statut imp.
+Xlatex*editer.label:		Editer
+Xlatex*quitter.label:		Quitter
+!
+! Pour ne pas avoir de bitmap dans les boutons de commande, commenter
+! les ressources qui suivent
+!
+Xlatex*faconner.bitmap:         xlatex.faconner
+Xlatex*visionner.bitmap:        xlatex.visionner
+Xlatex*postscript.bitmap:       xlatex.dvips
+Xlatex*imprimer.bitmap:         xlatex.imprimer
+Xlatex*editer.bitmap:           xlatex.editer
+Xlatex*statut.bitmap:           xlatex.statut
+Xlatex*quitter.bitmap:          xlatex.quitter
+!
+!
+Xlatex*repertoireLab.label:	Repertoire:
+Xlatex*documentLab.label:	Document:
+Xlatex*faconneurLab.label:	Commande:
+Xlatex*visionneursLab.label:	Visuel:
+Xlatex*editeurLab.label:	Editeur:
+Xlatex*impressionLab.label:	Impression:
+Xlatex*imprimanteLab.label:	Imprimante:
+Xlatex*toutesLab.label:		toutes les pages
+Xlatex*deLab.label:		de la page
+Xlatex*aLab.label:		a
+Xlatex*ok.label:		Ok
+Xlatex*annuler.label:		Annuler
+!
+! Accelerateurs
+! -------------
+Xlatex*input:			yes
+Xlatex.accelerators:		#override\n\
+                Meta<Key>e:	editer()\n\
+		Meta<Key>f:	faconner()\n\
+                Meta<Key>l:	faconner()\n\
+                Meta<Key>i:	imprimer()\n\
+		Meta<Key>p:	postscript()\n\
+                Meta<Key>q:	quitter()\n\
+                Meta<Key>s:	statut()\n\
+                Meta<Key>v:	visionner()
+!
+! Autres ressources
+! -----------------
+Xlatex*visionneurs.borderWidth: 0
+Xlatex*visionneurs.justify:	left
+Xlatex*menuVisionneurs*justify:	center
+Xlatex*Text.borderWidth:	2
+Xlatex*repertoire.insertPosition:	999999
+Xlatex*interaction.borderWidth:	1
+Xlatex*Text*Background:         floral white
+Xlatex*Command*Background:	white
+Xlatex*interaction*Background:	gray90
+Xlatex*resizable:		true
+Xlatex*Command.justify:		center
+Xlatex*Text.topMargin:		0
+Xlatex*Text.bottomMargin:	0
+Xlatex*Text.resize:		width
+Xlatex*Text*editType:		edit
+Xlatex*Text*useStringInPlace:	yes
+Xlatex*Text*displayCaret:	no
+Xlatex*Label.borderWidth:	0
+Xlatex*Label.justify:		right
+Xlatex*Toggle.label:		
+Xlatex*Toggle.shapeStyle:	ellipse
+Xlatex*interaction.resize:	never
+Xlatex*Text.translations:	#override\n\
+	<FocusIn>:		display-caret(on)\n\
+	<FocusOut>:		display-caret(off)\n\
+	<EnterWindow>:		Focaliser()\n\
+	<Key>Tab:		ChampSuivant()\n\
+	<Key>Return:		ChampSuivant()
+Xlatex*Toggle.translations:	#replace\n\
+	<EnterWindow>:		highlight(Always)\n\
+	<LeaveWindow>:		unhighlight()\n\
+	<Btn1Down>,<Btn1Up>:	set() notify()
+Xlatex*interaction.translations:	#override\n\
+	<EnterWindow>:		Focaliser(interaction)\n\
+    Ctrl<Key>C:			end-of-file() newline() Control()\n\
+    Ctrl<Key>D:			end-of-file() newline() Control()\n\
+	<Key>Delete:		end-of-file() delete-previous-character() Delete() \n\
+	<Key>BackSpace: 	end-of-file() delete-previous-character() Delete() \n\
+	<Key>Return:		end-of-file() newline() Send()\n\
+	<Key>:			Insert() end-of-file() insert-char()
+Xlatex*interaction.scrollHorizontal:	never
+Xlatex*interaction.scrollVertical:	always
+Xlatex*interaction.autoFill:		yes
+Xlatex*interaction.wrap:		never
+Xlatex*interaction.displayCaret:	yes
+
+!
+! Fichier /net/daim/usr/local/lib/X11/app-defaults/Ghostview
+!
+!  Ghostview.ad -- Application defaults file for ghostview.
+!  Copyright (C) 1992  Timothy O. Theisen
+! 
+!  This program is free software; you can redistribute it and/or modify
+!  it under the terms of the GNU General Public License as published by
+!  the Free Software Foundation; either version 2 of the License, or
+!  (at your option) any later version.
+! 
+!  This program is distributed in the hope that it will be useful,
+!  but WITHOUT ANY WARRANTY; without even the implied warranty of
+!  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+!  GNU General Public License for more details.
+! 
+!  You should have received a copy of the GNU General Public License
+!  along with this program; if not, write to the Free Software
+!  Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
+! 
+!    Author: Tim Theisen           Systems Programmer
+!  Internet: tim@cs.wisc.edu       Department of Computer Sciences
+!      UUCP: uwvax!tim             University of Wisconsin-Madison
+!     Phone: (608)262-0438         1210 West Dayton Street
+!       FAX: (608)262-9777         Madison, WI   53706
+
+! All of the button labels and actions are determined in this file.
+! It should be easy to adapt to any language.
+! To use a different version of ghostscript, you can add the resource
+! *Ghostview.interpreter: /my/very/own/gs
+
+*Ghostview.Background:  white
+*Ghostview.Foreground:  black
+*input:	True
+*allowShellResize:	True
+!*ShapeStyle:	Oval
+!*Font:	-adobe-new century schoolbook-medium-r-normal--*-140-*-*-p-*-iso8859-1
+*Text*Font:	-adobe-courier-medium-r-normal--*-140-*-*-m-*-iso8859-1
+*ghostviewButton.Label:	Ghostview
+*copyright.Label:	Copyright...
+*quit.Label:	Quit
+*fileButton.Label:	File
+*open.Label:	Open...
+*reopen.Label:	Reopen
+*printwhole.Label:	Print...
+*printmarked.Label:	Print marked pages...
+*save.Label:	Save marked pages...
+*pageButton.Label:	Page
+*next.Label:	Next
+*show.Label:	Redisplay
+*prev.Label:	Previous
+*center.Label:	Center
+*mark.Label:	Mark
+*unmark.Label:	Unmark
+*magstepButton.Label:	Magstep
+*orientationButton.Label:	Orientation
+*portrait.Label:	Portrait
+*landscape.Label:	Landscape
+*upsidedown.Label:	Upside-down
+*seascape.Label:	Seascape
+*swap.Label:	Swap Landscape
+*pagemediaButton.Label:	Media
+*pageMedia:	A4
+*PrintCommand:	lp -dlaserhp
+*pageview.useBottom:	True
+*pageview.useRight:	True
+!*MenuButton.baseTranslations:	#replace \n\
+!    <EnterWindow>:	highlight() \n\
+!    <LeaveWindow>:	reset() \n\
+!    !               <BtnDown>:		reset() PopupMenu() \n\
+!    !          Shift<BtnDown>:		reset() PopupMenu() \n\
+!    !     Lock      <BtnDown>:		reset() PopupMenu() \n\
+!    !     Lock Shift<BtnDown>:		reset() PopupMenu() \n\
+!    !Ctrl           <BtnDown>:		reset() PopupMenu() \n\
+!    !Ctrl      Shift<BtnDown>:		reset() PopupMenu() \n\
+!    !Ctrl Lock      <BtnDown>:		reset() PopupMenu() \n\
+!    !Ctrl Lock Shift<BtnDown>:		reset() PopupMenu()
+!*MenuButton.translations:	#replace \n\
+!    <EnterWindow>:	highlight() \n\
+!    <LeaveWindow>:	reset() \n\
+!    !               <BtnDown>:		reset() PopupMenu() \n\
+!    !          Shift<BtnDown>:		reset() PopupMenu() \n\
+!    !     Lock      <BtnDown>:		reset() PopupMenu() \n\
+!    !     Lock Shift<BtnDown>:		reset() PopupMenu() \n\
+!    !Ctrl           <BtnDown>:		reset() PopupMenu() \n\
+!    !Ctrl      Shift<BtnDown>:		reset() PopupMenu() \n\
+!    !Ctrl Lock      <BtnDown>:		reset() PopupMenu() \n\
+!    !Ctrl Lock Shift<BtnDown>:		reset() PopupMenu()
+!*SimpleMenu.baseTranslations:	#replace \n\
+!    <EnterWindow>:	highlight() \n\
+!    <LeaveWindow>:	unhighlight() \n\
+!    <BtnMotion>:	highlight() \n\
+!    !<Btn2Up>:	MenuPopdown() GhostviewForce() notify() unhighlight() \n\
+!    !<BtnUp>:	MenuPopdown() GhostviewDefault() notify() unhighlight()
+!*SimpleMenu.translations:	#replace \n\
+!    <EnterWindow>:	highlight() \n\
+!    <LeaveWindow>:	unhighlight() \n\
+!    <BtnMotion>:	highlight() \n\
+!    !<Btn2Up>:	MenuPopdown() GhostviewForce() notify() unhighlight() \n\
+!    !<BtnUp>:	MenuPopdown() GhostviewDefault() notify() unhighlight()
+!*okay.Label:	Okay
+!*cancel.Label:	Cancel
+!*dismiss.Label:	Dismiss
+!*Ghostview.busyCursor:	target
+!Ghostview.baseTranslations:	#replace \n\
+!    <MapNotify>:		GhostviewCheckFile() \n\
+!    <Message>WM_PROTOCOLS:	GhostviewDeleteWindow()
+!Ghostview.translations:		#replace \n\
+!    <MapNotify>:		GhostviewCheckFile() \n\
+!    <Message>WM_PROTOCOLS:	GhostviewDeleteWindow()
+!*TopLevelShell.baseTranslations:	#replace \n\
+!    <Message>WM_PROTOCOLS:	GhostviewDismiss()
+!*TopLevelShell.translations:	#replace \n\
+!    <Message>WM_PROTOCOLS:	GhostviewDismiss()
+!*TransientShell.baseTranslations:	#replace \n\
+!    <Message>WM_PROTOCOLS:	GhostviewDismiss()
+!*TransientShell.translations:	#replace \n\
+!    <Message>WM_PROTOCOLS:	GhostviewDismiss()
+!*zoom.form.baseTranslations:	#replace \n\
+!    <Key>Q:			GhostviewDeleteZoom()
+!*zoom.form.translations:	#replace \n\
+!    <Key>Q:			GhostviewDeleteZoom()
+!*zoom.baseTranslations:		#replace \n\
+!    <Message>WM_PROTOCOLS:	GhostviewDeleteWindow()
+!*zoom.translations:		#replace \n\
+!    <Message>WM_PROTOCOLS:	GhostviewDeleteWindow()
+!*Ghostview.baseTranslations:	#replace \n\
+!    <Message>:	message() \n\
+!    <EnterWindow>:	notify(0) \n\
+!    <LeaveWindow>:	GhostviewEraseLocator() \n\
+!    <MotionNotify>:	notify(0) \n\
+!    <Btn1Down>:	notify(180 180 200 200) \n\
+!    <Btn2Down>:	notify(120 120 300 300) \n\
+!    <Btn3Down>:	notify(90 90 400 400)
+!*Ghostview.translations:	#replace \n\
+!    <Message>:	message() \n\
+!    <EnterWindow>:	notify(0) \n\
+!    <LeaveWindow>:	GhostviewEraseLocator() \n\
+!    <MotionNotify>:	notify(0) \n\
+!    <Btn1Down>:	notify(180 180 200 200) \n\
+!    <Btn2Down>:	notify(120 120 300 300) \n\
+!    <Btn3Down>:	notify(90 90 400 400)
+!*toc.baseTranslations:	#replace \n\
+!    <FocusIn>:	focus-in() \n\
+!    <FocusOut>:	focus-out() \n\
+!    <Btn1Down>:	select-start() \n\
+!    <Btn1Motion>:	extend-adjust() \n\
+!    <Btn1Up>:	extend-end(PRIMARY, CUT_BUFFER0) \n\
+!    <Btn2Down>:	select-start() \n\
+!    <Btn2Motion>:	extend-adjust() \n\
+!    <Btn2Up>:	extend-end(PRIMARY, CUT_BUFFER0) GhostviewShow() \n\
+!    <Btn3Down>:	extend-start() \n\
+!    <Btn3Motion>:	extend-adjust() \n\
+!    <Btn3Up>:	extend-end(PRIMARY, CUT_BUFFER0)
+!*toc.translations:	#replace \n\
+!    <FocusIn>:	focus-in() \n\
+!    <FocusOut>:	focus-out() \n\
+!    <Btn1Down>:	select-start() \n\
+!    <Btn1Motion>:	extend-adjust() \n\
+!    <Btn1Up>:	extend-end(PRIMARY, CUT_BUFFER0) \n\
+!    <Btn2Down>:	select-start() \n\
+!    <Btn2Motion>:	extend-adjust() \n\
+!    <Btn2Up>:	extend-end(PRIMARY, CUT_BUFFER0) GhostviewShow() \n\
+!    <Btn3Down>:	extend-start() \n\
+!    <Btn3Motion>:	extend-adjust() \n\
+!    <Btn3Up>:	extend-end(PRIMARY, CUT_BUFFER0)
+!*Form.baseTranslations:	#replace \n\
+!    <Key>C:	GhostviewCenter() \n\
+!    <Key>Q:	GhostviewQuit() \n\
+!    <Key>O:	GhostviewOpen() \n\
+!    <Key>R:	GhostviewReopen() \n\
+!    <Key>S:	GhostviewSave() \n\
+!    Shift<Key>P:	GhostviewPrintWhole() \n\
+!    <Key>P:	GhostviewPrintMarked() \n\
+!    <Key>BackSpace:	GhostviewPrevious() \n\
+!    <Key>Delete:	GhostviewPrevious() \n\
+!    <Key>B:	GhostviewPrevious() \n\
+!    <Key>Prior:	GhostviewPrevious() \n\
+!    <Key>space:	GhostviewNext() \n\
+!    <Key>Return:	GhostviewNext() \n\
+!    <Key>F:	GhostviewNext() \n\
+!    <Key>Next:	GhostviewNext() \n\
+!    <Key>Tab:	GhostviewNext() \n\
+!    <Key>period:	GhostviewShow() \n\
+!    Ctrl<Key>L:	GhostviewShow() \n\
+!    <Key>M:	GhostviewMark() \n\
+!    <Key>N:	GhostviewUnmark() \n\
+!    <Key>0:	GhostviewSetMagstep(0) \n\
+!    <Key>1:	GhostviewSetMagstep(1) \n\
+!    <Key>2:	GhostviewSetMagstep(2) \n\
+!    <Key>3:	GhostviewSetMagstep(3) \n\
+!    <Key>4:	GhostviewSetMagstep(4) \n\
+!    <Key>5:	GhostviewSetMagstep(5) \n\
+!    <Key>+:	GhostviewIncreaseMagstep() \n\
+!    <Key>-:	GhostviewDecreaseMagstep() \n\
+!    <Key>U:	GhostviewScrollUp() \n\
+!    <Key>D:	GhostviewScrollDown() \n\
+!    <Key>K:	GhostviewScrollUp() \n\
+!    <Key>J:	GhostviewScrollDown() \n\
+!    <Key>H:	GhostviewScrollLeft() \n\
+!    <Key>L:	GhostviewScrollRight() \n\
+!    Shift<Key>Up:	GhostviewForce() GhostviewSetOrientation(portrait) \n\
+!    Shift<Key>Right:	GhostviewForce() GhostviewSetOrientation(landscape) \n\
+!    Shift<Key>Down: GhostviewForce() GhostviewSetOrientation(upside-down) \n\
+!    Shift<Key>Left:	GhostviewForce() GhostviewSetOrientation(seascape) \n\
+!    <Key>Up:	GhostviewDefault() GhostviewSetOrientation(portrait) \n\
+!    <Key>Right:	GhostviewDefault() GhostviewSetOrientation(landscape) \n\
+!    <Key>Down:	GhostviewDefault() GhostviewSetOrientation(upside-down) \n\
+!    <Key>Left:	GhostviewDefault() GhostviewSetOrientation(seascape)
+!*Form.translations:	#replace \n\
+!    <Key>C:	GhostviewCenter() \n\
+!    <Key>Q:	GhostviewQuit() \n\
+!    <Key>O:	GhostviewOpen() \n\
+!    <Key>R:	GhostviewReopen() \n\
+!    <Key>S:	GhostviewSave() \n\
+!    Shift<Key>P:	GhostviewPrintWhole() \n\
+!    <Key>P:	GhostviewPrintMarked() \n\
+!    <Key>BackSpace:	GhostviewPrevious() \n\
+!    <Key>Delete:	GhostviewPrevious() \n\
+!    <Key>B:	GhostviewPrevious() \n\
+!    <Key>Prior:	GhostviewPrevious() \n\
+!    <Key>space:	GhostviewNext() \n\
+!    <Key>Return:	GhostviewNext() \n\
+!    <Key>F:	GhostviewNext() \n\
+!    <Key>Next:	GhostviewNext() \n\
+!    <Key>Tab:	GhostviewNext() \n\
+!    <Key>period:	GhostviewShow() \n\
+!    Ctrl<Key>L:	GhostviewShow() \n\
+!    <Key>M:	GhostviewMark() \n\
+!    <Key>N:	GhostviewUnmark() \n\
+!    <Key>0:	GhostviewSetMagstep(0) \n\
+!    <Key>1:	GhostviewSetMagstep(1) \n\
+!    <Key>2:	GhostviewSetMagstep(2) \n\
+!    <Key>3:	GhostviewSetMagstep(3) \n\
+!    <Key>4:	GhostviewSetMagstep(4) \n\
+!    <Key>5:	GhostviewSetMagstep(5) \n\
+!    <Key>+:	GhostviewIncreaseMagstep() \n\
+!    <Key>-:	GhostviewDecreaseMagstep() \n\
+!    <Key>U:	GhostviewScrollUp() \n\
+!    <Key>D:	GhostviewScrollDown() \n\
+!    <Key>K:	GhostviewScrollUp() \n\
+!    <Key>J:	GhostviewScrollDown() \n\
+!    <Key>H:	GhostviewScrollLeft() \n\
+!    <Key>L:	GhostviewScrollRight() \n\
+!    Shift<Key>Up:	GhostviewForce() GhostviewSetOrientation(portrait) \n\
+!    Shift<Key>Right:	GhostviewForce() GhostviewSetOrientation(landscape) \n\
+!    Shift<Key>Down: GhostviewForce() GhostviewSetOrientation(upside-down) \n\
+!    Shift<Key>Left:	GhostviewForce() GhostviewSetOrientation(seascape) \n\
+!    <Key>Up:	GhostviewDefault() GhostviewSetOrientation(portrait) \n\
+!    <Key>Right:	GhostviewDefault() GhostviewSetOrientation(landscape) \n\
+!    <Key>Down:	GhostviewDefault() GhostviewSetOrientation(upside-down) \n\
+!    <Key>Left:	GhostviewDefault() GhostviewSetOrientation(seascape)

@@ -1,0 +1,80 @@
+      SUBROUTINE LIRENT( NCVALS , ENTIER )
+C+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+C BUT : LIRE UNE CHAINE DE CARACTERES REPRESENTANT UN ENTIER TERMINE PAR ;
+C ----- RETOURNER LA VALEUR DE L'ENTIER
+C
+C       LA DEMANDE EST TOUJOURS SATISFAITE CAR PAS DE RETOUR TANT QUE
+C       LA VALEUR DE L' ENTIER EST INCORRECTE SAUF @ DEMANDANT L'ABANDON
+C
+C       CF ~/td/g/grammaire_lu DE DEFINITION DU LANGAGE UTILISATEUR
+C
+C ENTREE ET SORTIE :
+C ------------------
+C NCVALS : EN ENTREE :  4 L'ENTIER EST INITIALISE EN ENTREE
+C                       0 SINON
+C          EN SORTIE :  1 L'ENTIER EST INITIALISE
+C                      -1 ABANDON DE LA LECTURE PAR ENTREE DE @
+C
+C SORTIE :
+C --------
+C ENTIER : LA VALEUR DE L' ENTIER LU
+C+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+C AUTEUR : PERRONNET ALAIN  ANALYSE NUMERIQUE UPMC PARIS    JANVIER 1990
+C23456---------------------------------------------------------------012
+      include"./incl/td.inc"
+      include"./incl/lu.inc"
+      include"./incl/langue.inc"
+      include"./incl/gsmenu.inc"
+      COMMON / UNITES /  LECTEU,IMPRIM,INTERA,NFDOCU,NFFRAP,NUNITE(27)
+      INTEGER            ENTIER
+      DOUBLE PRECISION   D
+      CHARACTER*1        KCHAIN
+C
+C     DEMANDE DE LECTURE D'UNE CHAINE DE CARACTERES
+      IF( NCVALS .NE. 0 ) THEN
+         NOTYP = 4
+         D     = ENTIER
+      ELSE
+         NOTYP = 0
+      ENDIF
+CCCC
+CCCC     L'INVITE EST COMPLETEE
+CCC      IF( NBLGRC(NRINVI) .LT. MXLGIN ) THEN
+CCC          NBLGRC(NRINVI) = NBLGRC(NRINVI) + 1
+CCC      ENDIF
+CCC      IF( NUIDEN .GT. 0 .AND. NUIDEN .LE. MXIDEN ) THEN
+CCCC        AJOUT DE L'IDENTIFICATEUR DE VALEUR DEMANDEE
+CCC         I = NUDCNB( KIDENT(NUIDEN) )
+CCC         KINVI(NBLGRC(NRINVI)) = 'L''ENTIER ' //
+CCC     %                            KIDENT(NUIDEN)(1:I) // '=?'
+CCC      ELSE
+CCC         KINVI(NBLGRC(NRINVI)) = 'L''ENTIER=?'
+CCC      ENDIF
+CCC      MDLGRC(NRINVI) = MXCANB( NBLGRC(NRINVI) , KINVI )
+CCC      MDRECT(NRINVI) = MDLGRC(NRINVI)
+CCCC
+C
+C     LECTURE OU INTERPRETATION DIRECTE
+ 50   CALL DONNMF( NOTYP , 4 , NCVALS , D , KCHAIN )
+      IF( NCVALS .EQ. -1 ) GOTO 100
+      IF( NCVALS .NE.  1 ) GOTO  50
+C
+C     ARRONDI DU REEL DOUBLE PRECISION EN ENTIER
+      IF( ABS(D) .GT. IINFO('GRAND') ) THEN
+C        VALEUR INCORRECTE
+         IF( LANGAG .EQ. 0 ) THEN
+            WRITE(IMPRIM,*)'ENTIER TROP GRAND EN VALEUR ABSOLUE =',D
+         ELSE
+            WRITE(IMPRIM,*)'TOO LARGE ABSOLUTE VALUE of INTEGER=',D
+         ENDIF
+         GOTO 50
+      ENDIF
+C
+C     VALEUR CORRECTE
+      ENTIER = NINT( D )
+C
+C     INVITE EFFACEE
+ 100  NBLGRC( NRINVI ) = 0
+C
+CCC 100  CALL CLAVIS
+      END

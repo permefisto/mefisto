@@ -1,0 +1,263 @@
+      SUBROUTINE REEFEX( NUTYOB, NTLXOB, NBSOEF, NBTGEF,
+     %                   NBSOM0, NBTGS0, MNXYZ0,
+     %                   NBEFEX, MNAVST, MNAVTG, MNAVCG,
+     %                   NTNSEF, MNNSEF, NTXYZS, MNXYZS, IERR )
+C+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+C BUT :    RENUMEROTER LES EF EXTRAITS D'UN MAILLAGE
+C -----
+C
+C ENTREES:
+C --------
+C NUTYOB : NUMERO DU TYPE D'OBJET (1:POINT, 2:LIGNE, 3:SURFACE, 4:VOLUME)
+C NTLXOB : NUMERO DU TABLEAU TS DU LEXIQUE DU PLSV A MAILLER
+C NBSOEF : NOMBRE DE SOMMETS   PAR EF EXTRAIT
+C NBSOM0 : NOMBRE DE SOMMETS   DU MAILLAGE AVANT EXTRACTION
+C NBTGS0 : NOMBRE DE TANGENTES DU MAILLAGE AVANT EXTRACTION
+C MNXYZ0 : ADRESSE MCN DU TABLEAU XYZSOMMET DU MAILLAGE AVANT EXTRACTION
+C
+C NBEFEX : NOMBRE D'EF EXTRAITS ET DE SOMMETS ET TANGENTES A RENUMEROTER
+C MNAVST : ADRESSE MCN DU TABLEAU DES NUMEROS DES NBSOEF SOMMETS   DES NBEFEX EF
+C MNAVTG : ADRESSE MCN DU TABLEAU DES NUMEROS DES NBTGEF TANGENTES DES NBEFEX EF
+C MNAVCG : ADRESSE MCN DU TABLEAU DES NUMEROS DU CODE GEOMETRIQUE  DES NBEFEX EF
+C
+C MODIFIE:
+C --------
+C NBTGEF : EN ENTREE NOMBRE MAXIMAL DE TANGENTES PAR EF EXTRAIT
+C         (PEUT ETRE >0 EN ENTREE ET 0 EN SORTIE SI PAS DE EF A TG)
+C
+C SORTIES:
+C --------
+C NTNSEF : NUMERO      DU TMS 'NSEF' DU MAILLAGE
+C MNNSEF : ADRESSE MCN DU TMS 'NSEF' DU MAILLAGE
+C          CF ~/td/d/a___nsef
+C NTXYZS : NUMERO      DU TMS 'XYZSOMMET' DU MAILLAGE
+C MNXYZS : ADRESSE MCN DU TMS 'XYZSOMMET' DU MAILLAGE
+C          CF ~/td/d/a___xyzsommet
+C IERR   : 0 SI PAS D'ERREUR
+C          4 SI AUCUN SOMMET D'EF EXTRAIT
+C+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+C AUTEUR : ALAIN PERRONNET ANALYSE NUMERIQUE UPMC PARIS   SEPTEMBRE 1996
+C2345X7..............................................................012
+      IMPLICIT          INTEGER(W)
+      COMMON / UNITES / LECTEU, IMPRIM, INTERA, NUNITE(29)
+      include"./incl/a_ligne__definition.inc"
+      include"./incl/a___xyzsommet.inc"
+      include"./incl/a___nsef.inc"
+      include"./incl/ntmnlt.inc"
+      include"./incl/gsmenu.inc"
+      include"./incl/pp.inc"
+      COMMON            MCN(MOTMCN)
+      REAL              RMCN(1)
+      EQUIVALENCE      (MCN(1),RMCN(1))
+C
+      NTXYZS = 0
+      MNXYZS = 0
+      NTNSEF = 0
+      MNNSEF = 0
+C
+C     RECENSEMENT DES SOMMETS DES EF EXTRAITS
+C     =======================================
+      MNNEWS = 0
+      CALL TNMCDC( 'ENTIER', NBSOM0+NBTGS0+2, MNNEWS )
+      CALL AZEROI( NBSOM0+NBTGS0+2, MCN(MNNEWS) )
+C
+C     LE NOUVEAU NUMERO DES SOMMETS RECENSES
+      NBXYZS = 0
+      DO 10 I=MNAVST,MNAVST-1+NBEFEX*NBSOEF
+C        LE NUMERO DU SOMMET EST RECENSE
+         N = MCN(I)
+         MCN(MNNEWS+N) = N
+ 10   CONTINUE
+      DO 20 I=1,NBSOM0
+         IF( MCN(MNNEWS+I) .NE. 0 ) THEN
+            NBXYZS = NBXYZS + 1
+            MCN(MNNEWS+I) = NBXYZS
+         ENDIF
+ 20   CONTINUE
+      IF( NBXYZS .EQ. 0 ) THEN
+         NBLGRC(NRERR) = 1
+         KERR(1) = 'AUCUN SOMMET D''EF EXTRAIT'
+         CALL LEREUR
+         IERR = 4
+         GOTO 9000
+      ENDIF
+C
+C     RECENSEMENT DES TANGENTES DES EF EXTRAITS
+C     =========================================
+      MNNEWT = 0
+      NBTGS1 = 0
+      IF( NBTGS0 .GT. 0 ) THEN
+C        LE NOUVEAU NUMERO DES TANGENTES RECENSEES
+         MNNEWT = MNNEWS + 1 + NBSOM0
+         DO 30 I=MNAVTG,MNAVTG-1+NBEFEX*NBTGEF
+C           LE NUMERO DE LA TANGENTE EST RECENSE
+            N = ABS( MCN(I) )
+            MCN(MNNEWT+N) = N
+ 30      CONTINUE
+         DO 40 I=1,NBTGS0
+C           LE NUMERO ANCIEN DE LA TANGENTE
+            N = MCN(MNNEWT+I)
+            IF( N .NE. 0 ) THEN
+C              LE NUMERO NOUVEAU DE LA TANGENTE
+               NBTGS1 = NBTGS1 + 1
+               MCN(MNNEWT+I) = NBTGS1
+            ENDIF
+ 40      CONTINUE
+      ENDIF
+C
+C     CONSTRUCTION DU TABLEAU 'XYZSOMMET'
+C     -----------------------------------
+      NBCOOR = 3
+      CALL LXTNDC( NTLXOB, 'XYZSOMMET', 'MOTS',
+     %             WYZSOM+NBCOOR*(NBXYZS+NBTGS1) )
+      CALL LXTSOU( NTLXOB, 'XYZSOMMET', NTXYZS, MNXYZS )
+C
+C     LES NBCOOR COORDONNEES DES SOMMETS DU MAILLAGE
+      MN0 = MNXYZ0 + WYZSOM - NBCOOR
+      MN1 = MNXYZS + WYZSOM
+      DO 50 I=1,NBSOM0
+         N = MCN(MNNEWS+I)
+         IF( N .NE. 0 ) THEN
+            MN  = MN0 + NBCOOR * I
+            RMCN(MN1  ) = RMCN(MN  )
+            RMCN(MN1+1) = RMCN(MN+1)
+            RMCN(MN1+2) = RMCN(MN+2)
+            MN1 = MN1 + NBCOOR
+         ENDIF
+ 50   CONTINUE
+C
+C     LES NBCOOR COMPOSANTES DES TANGENTES DU MAILLAGE
+      IF( NBTGS0 .GT. 0 ) THEN
+         MN0 = MNXYZ0 + WYZSOM - NBCOOR + NBCOOR * NBSOM0
+         MN1 = MNXYZS + WYZSOM + NBCOOR * NBXYZS
+         DO 60 I=1,NBTGS0
+            N = MCN(MNNEWT+I)
+            IF( N .NE. 0 ) THEN
+               MN = MN0 + NBCOOR * I
+               RMCN(MN1  ) = RMCN(MN  )
+               RMCN(MN1+1) = RMCN(MN+1)
+               RMCN(MN1+2) = RMCN(MN+2)
+               MN1 = MN1 + NBCOOR
+            ENDIF
+ 60      CONTINUE
+      ENDIF
+C
+C     AJOUT DE LA DATE
+      CALL ECDATE( MCN(MNXYZS) )
+C     AJOUT DU NUMERO DU TABLEAU DESCRIPTEUR
+      MCN( MNXYZS + MOTVAR(6) ) = NONMTD( '~>>>XYZSOMMET' )
+C     LE NOMBRE DE SOMMETS DE CE MAILLAGE
+      MCN( MNXYZS + WNBSOM ) = NBXYZS
+C     LE NOMBRE DE TANGENTES DE CE MAILLAGE
+      MCN( MNXYZS + WNBTGS ) = NBTGS1
+C     LE NOMBRE DE COORDONNEES PAR SOMMET
+      MCN( MNXYZS + WBCOOR ) = NBCOOR
+C
+C     CONSTRUCTION DU TABLEAU 'NSEF'
+C     ------------------------------
+      L = WUSOEF + NBEFEX * NBSOEF
+      IF( NBTGS1 .LE. 0 ) THEN
+C        PAS DE TG
+         NBTGEF = 0
+         NBEFTG = 0
+         NBEFAP = 0
+      ELSE
+C        IL EXISTE DES EF A TG
+         NBEFAP = NBEFEX
+C        CALCUL DU NOMBRE D'EF A TG
+         NBEFTG = 0
+         DO 65 I=MNAVTG,MNAVTG-1+NBEFEX*NBTGEF,NBTGEF
+            DO 62 N=0,NBTGEF-1
+               IF( MCN(I+N) .NE. 0 ) THEN
+C                 EF A TG
+                  NBEFTG = NBEFTG + 1
+                  GOTO 65
+               ENDIF
+ 62         CONTINUE
+ 65      CONTINUE
+         L = L + NBEFAP + NBEFTG * ( 1 + NBTGEF )
+      ENDIF
+      CALL LXTNDC( NTLXOB, 'NSEF', 'MOTS', L )
+      CALL LXTSOU( NTLXOB, 'NSEF',  NTNSEF, MNNSEF )
+C
+C     LE TYPE DE L'OBJET
+      MCN( MNNSEF + WUTYOB ) = NUTYOB
+C     LE TYPE DU MAILLAGE: ICI NON STRUCTURE
+      MCN( MNNSEF + WUTYMA ) = 0
+C     LE NOMBRE D'EF DU MAILLAGE
+      MCN( MNNSEF + WBEFOB ) = NBEFEX
+C     LE NOMBRE DE SOMMETS DES EF
+      MCN( MNNSEF + WBSOEF ) = NBSOEF
+C     LE NOMBRE DE TANGENTES DES EF
+      MCN( MNNSEF + WBTGEF ) = NBTGEF
+C     LE NOMBRE D EF POINT'ES
+      MCN( MNNSEF + WBEFAP ) = NBEFAP
+C     LE NOMBRE D EF A TG
+      MCN( MNNSEF + WBEFTG ) = NBEFTG
+C
+C     LE CHANGEMENT DE NUMERO DES SOMMETS
+      MN1 = MNNSEF + WUSOEF
+      DO 70 I=MNAVST, MNAVST-1+NBEFEX*NBSOEF
+C        L'ANCIEN NUMERO DU SOMMET
+         N = MCN(I)
+C        LE NOUVEAU NUMERO DU SOMMET
+         MCN(MN1) = MCN(MNNEWS+N)
+         MN1 = MN1 + 1
+ 70   CONTINUE
+C
+C     LES POINTEURS SUR LES EF A TG
+      K   = 0
+      MN2 = MN1 + NBEFAP
+      MN3 = MN2 + NBEFTG
+      MN0 = MNAVTG - NBTGEF
+      DO 100 I=1,NBEFAP
+C
+C        EF AVEC OU SANS TG?
+         MN0 = MN0 + NBTGEF
+         DO 80 L=0,NBTGEF-1
+            IF( MCN(MN0+L) .NE. 0 ) GOTO 85
+ 80      CONTINUE
+C
+C        EF SANS TG
+C        LE POINTEUR SUR LES EF A TG
+         MCN(MN1) = 0
+         MN1 = MN1 + 1
+         GOTO 100
+C
+C        EF AVEC TG
+C        LE POINTEUR SUR LES EF A TG
+ 85      K = K + 1
+         MCN(MN1) = K
+         MN1 = MN1 + 1
+C
+C        LE CODE GEOMETRIQUE
+         MCN(MN2) = MCN(MNAVCG-1+I)
+         MN2 = MN2 + 1
+C
+C        +- LE NUMERO DES NBTGEF TG
+         DO 90 L=0,NBTGEF-1
+C           +- L'ANCIEN NUMERO DE LA TG
+            N = MCN(MN0+L)
+            IF( N .LT. 0 ) THEN
+               LESIGN = -1
+               N      = -N
+            ELSE
+               LESIGN = 1
+            ENDIF
+C           +- LE NOUVEAU NUMERO DE LA TG
+            MCN(MN3) = LESIGN * MCN(MNNEWT+N)
+            MN3 = MN3 + 1
+ 90      CONTINUE
+ 100  CONTINUE
+C
+C     LE TYPE INCONNU DE FERMETURE DU MAILLAGE
+      MCN( MNNSEF + WUTFMA ) = -1
+C     AJOUT DE LA DATE
+      CALL ECDATE( MCN(MNNSEF) )
+C     AJOUT DU NUMERO DU TABLEAU DESCRIPTEUR
+      MCN( MNNSEF + MOTVAR(6) ) = NONMTD( '~>>>NSEF' )
+C
+C     DESTRUCTION DES TABLEAUX AUXILIAIRES
+ 9000 CALL TNMCDS( 'ENTIER', NBSOM0+NBTGS0+2, MNNEWS )
+      RETURN
+      END

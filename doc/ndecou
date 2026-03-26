@@ -1,0 +1,12 @@
+Every quadrangle S4------S3
+                 |       |
+                 S1------S2
+of the surface mesh is cut into 2 triangles as the option 
+1: S1-S2-S3   and   S1-S3-S4
+2: S1-S2-S4   and   S2-S3-S4
+3: the greatest angle of the future cut quadrangle
+4: the maximum of minimum of 2 triangle qualities
+(4 is the best choice to improve the mesh quality)
+
+Example:
+S31_TRIANGULATION;  I;  31;  QUADRANGULATION;  4;

@@ -1,0 +1,30 @@
+{ ==================================================================== }
+{ MEFISTO Software     : February 7-th, 2011 Version                   }
+{ USER's Name          : ap                                            }
+{ Project Name         : vvpt2d                                        }
+{ Date                 :  7/02/11   09h 32m 37s                        }
+{ ==================================================================== }
+ readf vvpt2d.meshp1;
+
+{##############################################################################}
+{DETECTED ERROR: VERIFY THE LAST INPUT DATA                                    }
+{UNKNOWN FILE or ALREADY OPENED                                                }
+{vvpt2d.meshp1                                                                 }
+{Type again READF CORRECT_NAME_FILE ;                                          }
+{##############################################################################}
+
+ { NAME of the FILE? }
+ readf vvpt2d.mailp1;
+
+{##############################################################################}
+{DETECTED ERROR: VERIFY THE LAST INPUT DATA                                    }
+{TRACOBJE=          90                                                         }
+{INCORRECT VALUE. GIVE AGAIN                                                   }
+{##############################################################################}
+
+ @;
+ @;
+ @;
+ @;
+ 99;
+ { SAVE DATA and QUIT }

@@ -1,0 +1,201 @@
+      SUBROUTINE HACHAG( NVALEU, VALEUR, L1, L2, LISTE, LIEN,
+     %                   LIBRE,  NOCOLO )
+C ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+C BUT :    RECHERCHER LES NVALEU ENTIERS CROISSANTS DU TABLEAU VALEUR
+C -----    PARMI LES NVALEU-ERES VALEURS DES COLONNES DU TABLEAU LISTE
+C          S ILS N Y SONT PAS STOCKES LES AJOUTER
+C          LA METHODE EMPLOYEE ICI EST CELLE DU HACHAGE
+C          ADRESSAGE SUR LA SOMME DES VALEURS MODULO L2
+
+C ATTENTION : AVANT LE 1-ER APPEL LA 1-ERE LIGNE ET LA LIGNE LIEN
+C =========== DU TABLEAU LISTE DOIVENT ETRE NULLES  ET
+C             LIBRE DOIT ETRE EGAL A L2
+
+C PARAMETRES D ENTREE :
+C ---------------------
+C NVALEU : NOMBRE DES VALEURS A IDENTIFIER OU AJOUTER
+C VALEUR : TABLEAU DE NVALEU ENTIERS DES VALEURS A RETROUVER OU AJOUTER
+C          POUR LA COMPARAISON L'ORDRE DOIT ETRE LE MEME (CROISSANT,...)
+C L1     : NOMBRE DE LIGNES DU TABLEAU LISTE (>NVALEU)
+C L2     : NOMBRE DE COLONNES DU TABLEAU LISTE
+C LISTE  : TABLEAU CONTENANT LES VALEURS DEJA AJOUTEES
+C LIEN   : NUMERO DE LA LIGNE CONTENANT LE CHAINAGE SUR LE SUIVANT
+C          ET SANS SUIVANT OU NON UTILISEE  : LA VALEUR 0
+
+C PARAMETRE D ENTREE ET RESULTAT :
+C --------------------------------
+C LIBRE  : NO COLONNE DE LA DERNIERE COLONNE SUSCEPTIBLE D'ETRE LIBRE
+C          AU DEBUT VALEUR L2  PUIS DECREMENTATION DE 1
+
+C ATTENTION : UNE COLONNE LIBRE EST RECHERCHEE EN SUPPOSANT QU'ELLE DEBUTE PAR 0
+C =========== C-A-D LISTE(1,*) = 0
+
+C PARAMETRE RESULTAT :
+C --------------------
+C NOCOLO : NO DE LA COLONNE DU TABLEAU VALEUR RETROUVEE OU
+C             DE LA COLONNE AYANT SERVIE A LA MISE A JOUR
+C          =0 SI SATURATION DU TABLEAU LISTE
+C          >0 SI LE TABLEAU VALEUR A ETE RETROUVE
+C          <0 SI LE TABLEAU VALEUR A ETE AJOUTE
+
+C REMARQUE : CE SP SERT A LISTER LES ARETES
+C ---------- ET LES FACES DES ELEMENTS
+C            POUR LES ARETES : NVALEU = 2 (2 SOMMETS PAR ARETE)
+C                              VALEUR = NO DES 2 SOMMETS
+C            POUR LES FACES  : NVALEU = 4 (4 SOMMETS POUR UN QUADRANGLE)
+C                              VALEUR = NO DES 4 SOMMETS
+C            LES LIGNES LIEN+1,...,L1 SERVENT A STOCKER LES EF LES CONTENANT
+C ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+C AUTEUR : ALAIN PERRONNET  ANALYSE NUMERIQUE UPMC PARIS      AVRIL 1989
+C ......................................................................
+      include"./incl/langue.inc"
+      INTEGER  VALEUR(NVALEU), LISTE(L1,L2), NUMER1(5), NUMER2(5)
+      COMMON / UNITES / LECTEU, IMPRIM, NUNITE(30)
+
+C     LA FONCTION D ADRESSAGE
+C     =======================
+      GOTO( 101, 102, 103, 104, 105, 106, 107, 108 ), NVALEU
+
+C     CAS NVALEU NEGATIF OU SUPERIEUR A 8
+      NOCOLO = 0
+      DO I=1,NVALEU
+         NOCOLO = NOCOLO + VALEUR(I)
+      ENDDO
+      GOTO 200
+
+ 101  NOCOLO = VALEUR(1)
+      GOTO 200
+
+ 102  NOCOLO = VALEUR(1) + VALEUR(2)
+      GOTO 200
+
+ 103  NOCOLO = VALEUR(1) + VALEUR(2) + VALEUR(3)
+      GOTO 200
+
+ 104  NOCOLO = VALEUR(1) + VALEUR(2) + VALEUR(3) + VALEUR(4)
+      GOTO 200
+
+
+C     CAS SPECIAL DU A LA PYRAMIDE DONT LES 5 SOMMETS
+C     NE PEUVENT ETRE PERMUTES: TRI CROISSANT DES 5 NUMEROS
+C     -----------------------------------------------------
+ 105  DO I=1,5
+         NUMER1(I) = VALEUR(I)
+      ENDDO
+      CALL TRIENT( 5, NUMER1 )
+C     CHAINAGE INITIAL POSSIBLE
+      NOCOLO = VALEUR(1) + VALEUR(2) + VALEUR(3) + VALEUR(4) +
+     %         VALEUR(5)
+      NOCOLO = MOD( ABS(NOCOLO), L2 )
+      IF( NOCOLO .EQ. 0 ) NOCOLO = L2
+
+ 113  DO J=1,5
+         NUMER2(J) = LISTE(J,NOCOLO)
+      ENDDO
+      CALL TRIENT( 5, NUMER2 )
+      DO J=1,5
+         IF( NUMER1(J) .NE. NUMER2(J) ) GOTO 120
+      ENDDO
+C     LE TABLEAU VALEUR TRIE EST RETROUVE
+      GOTO 9999
+
+C     TABLEAU VALEUR RECHERCHE PARMI LES COLONNES CHAINEES A NOCOLO
+ 120  I = LISTE( LIEN, NOCOLO )
+      IF( I .GT. 0 ) THEN
+         NOCOLO = I
+         GOTO 113
+      ENDIF
+C     TABLEAU NON RETROUVE => IL EST AJOUTE
+      GOTO 215
+
+
+ 106  NOCOLO = VALEUR(1) + VALEUR(2) + VALEUR(3) + VALEUR(4) +
+     %         VALEUR(5) + VALEUR(6)
+      GOTO 200
+
+ 107  NOCOLO = VALEUR(1) + VALEUR(2) + VALEUR(3) + VALEUR(4) +
+     %         VALEUR(5) + VALEUR(6) + VALEUR(7)
+      GOTO 200
+
+ 108  NOCOLO = VALEUR(1) + VALEUR(2) + VALEUR(3) + VALEUR(4) +
+     %         VALEUR(5) + VALEUR(6) + VALEUR(7) + VALEUR(8)
+
+
+C     PREMIERE ESTIMATION DE LA COLONNE DANS LISTE DE VALEUR
+C     ------------------------------------------------------
+ 200  NOCOLO = MOD( ABS(NOCOLO), L2 )
+      IF( NOCOLO .EQ. 0 ) NOCOLO = L2
+
+C     L'IDENTIFICATION DU TABLEAU VALEUR SUR CETTE COLONNE NOCOLO DE LISTE
+C     ====================================================================
+ 205  DO I = 1, NVALEU
+         IF( VALEUR(I) .NE. LISTE(I,NOCOLO) ) GOTO 210
+      ENDDO
+C     LE TABLEAU VALEUR EST RETROUVE SUR LA COLONNE NOCOLO DE LISTE
+C     -------------------------------------------------------------
+      GOTO 9999
+
+C     TABLEAU VALEUR RECHERCHE PARMI LES COLONNES CHAINEES A NOCOLO
+C     -------------------------------------------------------------
+ 210  I = LISTE( LIEN, NOCOLO )
+      IF( I .GT. 0 ) THEN
+C        NOUVELLE ESTIMATION DU NO DE COLONNE DE VALEUR
+         NOCOLO = I
+         GOTO 205
+      ENDIF
+
+C     LE TABLEAU VALEUR N'EST PAS DANS LA LISTE. IL EST AJOUTE
+C     ========================================================
+ 215  IF( LISTE(1,NOCOLO) .NE. 0 ) THEN
+
+C        LA COLONNE NOCOLO N'EST PAS LIBRE
+C        RECHERCHE D'UNE COLONNE LIBRE DANS LISTE
+ 220     IF( LIBRE .GT. 0 ) THEN
+
+            IF( LISTE(1,LIBRE) .NE. 0 ) THEN
+C              PASSAGE A LA COLONNE PRECEDENTE
+               LIBRE = LIBRE - 1
+               GOTO 220
+            ELSE
+C              LA COLONNE LIBRE EST LIBRE
+C              MISE A JOUR DU CHAINAGE
+               LISTE( LIEN, NOCOLO ) = LIBRE
+               NOCOLO = LIBRE
+               LIBRE  = LIBRE - 1
+            ENDIF
+
+         ELSE
+
+C           LE TABLEAU LISTE EST IL VRAIMENT SATURE?
+C           RECHERCHE D'UNE COLONNE LIBRE DANS LISTE
+            DO LIBRE = L2, 1, -1
+               IF( LISTE(1,LIBRE) .EQ. 0 ) THEN
+                  GOTO 220
+               ENDIF
+            ENDDO
+            LIBRE = 0
+
+            IF( LANGAG .EQ. 0 ) THEN
+               PRINT*,'hachag: LISTE SATUREE. AUGMENTER SA TAILLE',L2
+            ELSE
+             PRINT*,'hachag: SATURATED LIST. AUGMENT its DECLARATION',L2
+            ENDIF
+            NOCOLO = 0
+            GOTO 9999
+
+         ENDIF
+
+      ENDIF
+
+C     LA COLONNE NOCOLO EST REMPLIE AVEC LE TABLEAU VALEUR
+C     ----------------------------------------------------
+      DO I=1,NVALEU
+         LISTE( I, NOCOLO ) = VALEUR( I )
+      ENDDO
+
+C     LE TABLEAU VALEUR A ETE AJOUTE DANS LA COLONNE NOCOLO
+C     -----------------------------------------------------
+      NOCOLO = - NOCOLO
+
+ 9999 RETURN
+      END

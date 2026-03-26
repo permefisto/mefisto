@@ -1,0 +1,60 @@
+      SUBROUTINE QUAPEN( NOSOEL, XYZSOM,  QUALIT )
+C+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+C BUT :    CALCUL DE LA QUALITE D'UN PENTAEDRE COMME
+C -----    QUALITE MINIMALE DE SES 5 FACES
+C
+C ENTREES:
+C --------
+C NOSOEL : NUMERO DES 6 SOMMETS DANS XYZSOM DES SOMMETS DU PENTAEDRE
+C XYZSOM : 3 COORDONNEES DES SOMMETS DU MAILLAGE
+C
+C SORTIE :
+C --------
+C QUALIT : QUALITE DU PENTAEDRE (VALEUR COMPRISE ENTRE 0 ET 1)
+C+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+C AUTEUR : ALAIN PERRONNET ANALYSE NUMERIQUE PARIS UPMC       AVRIL 1998
+C2345X7..............................................................012
+      INTEGER   NOSOEL(1:6)
+      REAL      XYZSOM(3,*), QUALIT
+C
+      INTEGER   NOSOFA(4)
+C
+C     FACE 1
+      NOSOFA(1) = NOSOEL(1)
+      NOSOFA(2) = NOSOEL(3)
+      NOSOFA(3) = NOSOEL(2)
+      CALL QUATRI( NOSOFA, XYZSOM,  QUALIT )
+C
+C     FACE 2
+      NOSOFA(1) = NOSOEL(1)
+      NOSOFA(2) = NOSOEL(4)
+      NOSOFA(3) = NOSOEL(6)
+      NOSOFA(4) = NOSOEL(3)
+      CALL QUAQUA( NOSOFA, XYZSOM, Q )
+      QUALIT = MIN( QUALIT, Q )
+C
+C     FACE 3
+      NOSOFA(1) = NOSOEL(1)
+      NOSOFA(2) = NOSOEL(2)
+      NOSOFA(3) = NOSOEL(5)
+      NOSOFA(4) = NOSOEL(4)
+      CALL QUAQUA( NOSOFA, XYZSOM, Q )
+      QUALIT = MIN( QUALIT, Q )
+C
+C     FACE 4
+      NOSOFA(1) = NOSOEL(4)
+      NOSOFA(2) = NOSOEL(5)
+      NOSOFA(3) = NOSOEL(6)
+      CALL QUATRI( NOSOFA, XYZSOM, Q )
+      QUALIT = MIN( QUALIT, Q )
+C
+C     FACE 5
+      NOSOFA(1) = NOSOEL(2)
+      NOSOFA(2) = NOSOEL(3)
+      NOSOFA(3) = NOSOEL(6)
+      NOSOFA(4) = NOSOEL(5)
+      CALL QUAQUA( NOSOFA, XYZSOM, Q )
+      QUALIT = MIN( QUALIT, Q )
+C
+      RETURN
+      END

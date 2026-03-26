@@ -1,0 +1,35 @@
+-----------------------------------------------
+Logiciel MEFISTO Version Francaise Juillet 2006
+-----------------------------------------------
+Version de mise au point de la resolution de
+l'equation de SCHRODINGER en dimension 6 pour
+l'atome d'Helium neutre a Texas A&M University
+(2 protons + 2 electrons => Charge nulle)
+
+Attention: Les anciens fichiers de maillage
+ne peuvent etre relus. Il est NECESSAIRE de les
+RECONSTRUIRE.
+
+Les traces comportent l'option 75; qui permet
+un emploi dynamique de la souris en cliquant
+- le bouton 1 pour translater le dessin;
+- le bouton 2 pour parcourir une orbite en 3d;
+(abandon par frappe de toute touche du clavier)
+- le bouton 3 pour faire un zoom.
+Le trace des axes 3d offre plusieurs options.
+Les traces de la temperature ont ete enrichis
+par profils (valeur dans la direction orthogo-
+nale au plan de section) et valeur le long d'
+une droite definie par 2 points.
+Le calcul des valeurs et vecteurs propres par
+la methode des sous-espaces a ete amelioree.
+Le coefficient de translation de la matrice de
+masse n'est plus demande.
+L'affichage des contraintes elastiques a ete
+enrichi par la donnee possible de la fonction
+logique utilisateur DefFonc region(temps,x,y,z)
+-----------------------------------------------
+En cas de probleme, prevenir Alain PERRONNET
+E-mail  : perronnet@ann.jussieu.fr
+Internet: http://www.ann.jussieu.fr/~perronnet
+-----------------------------------------------

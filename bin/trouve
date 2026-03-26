@@ -1,0 +1,10 @@
+#
+#  TROUVE les FICHIERS dans L'arborescence a partir d'un REPERTOIRE
+#  lecture et mise sous le directory
+   echo REPERTOIRE de depart\?
+   read REP
+   echo NOM de FICHIER a trouver\?
+   read FICHIER
+   find $REP -name $FICHIER -print
+#
+  echo TOUS les NOMS de FICHIERS ont ete COMPARES

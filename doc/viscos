@@ -1,0 +1,10 @@
+For Mefisto, nu is the value of the coefficient of Delta u_i, for any i,
+where u_i is the i-th component of the velocity.
+
+Cf http://hypertextbook.com/physics/matter/viscosity/
+
+The simple viscosity is noted eta in pascal second [Pa.s]
+or millipascal second  [mPa.s]
+
+The kinematic viscosity, noted nu, is the ratio between eta and rho
+in square meter per second [m^2/s]

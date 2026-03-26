@@ -1,0 +1,9 @@
+deftms ~>>>XYZPOINT '3 coordinates of points of an interpolated object'
+variable muet DATE 'date of creation of the TMS'   reel2  ;
+variable muet NUTD 'number of the descriptor array TD' entier ; 
+variable      NBPOI       'number of points'      entier ;
+variable      NBTGP       'number of tangents'    entier ;
+variable      NBCOOP      'number of point coordinates' entier ;
+tableau  XYZPOI(1..NBPOI) 'X Y Z of each point'   xyz ;
+tableau  XYZTGP(1..NBTGP) 'X Y Z of each tangent' xyz ;
+fintms ;

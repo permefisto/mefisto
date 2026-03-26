@@ -1,0 +1,141 @@
+Les TRANSFORMATIONS sur les 3 coordonnees des sommets
+d'un maillage peuvent etre de l'un des 4 types suivants
+
+1: identite de R3 -> R3 
+----------------------- 
+C'est la fonction qui redonne selon le contexte la meme
+valeur que l'un des parametres X ou Y ou Z
+
+2: transformation de R3 -> R3 definie par 3 fonctions  
+-----------------------------------------------------
+(x,y,z) du sommet ou point sont transformees en
+(ABSCISSE(x,y,z), ORDONNEE(x,y,z), COTE(x,y,z))
+Ici la donnee est celle du nom de ces 3 fonctions.
+La fonction utilisateur (de nom quelconque a choisir)
+donne, par exemple, une valeur reelle a l'ABSCISSE finale
+du POINT de coordonnees initiales x,y,z. 
+Elle doit comprendre dans cet ordre les 3 parametres  X Y Z
+et etre programmee selon la grammaire du langage LU
+(cf documentation et exemples du menu de depart ) 
+A l'execution, les parametres X Y Z sont initialises.
+Ils peuvent ou non servir a calculer la valeur de l'abscisse
+Exemple:
+TRANSFO_2; 2;         {definition des fonctions}
+deffonc ABSCISSE( x , y , z ) ; 
+   si    (1<=x) et (x<100)
+   alors  ABSCISSE = log(x) ;
+   sinon  ABSCISSE = abs( x*y-z ) ;
+   finsi;  
+finfonc;  
+deffonc YY( x, y, z); YY=y+3; finfonc;
+deffonc ZZ( x, y, z); ZZ=z;   finfonc;  
+ABSCISSE; YY; ZZ; {les noms des fonctions dans la transformation}
+
+3: isometrie de R3 -> R3  
+------------------------
+Il y a 7 types d'isometries (au sens large) : 
+
+0: translation definie par un vecteur de R3  
+Donnee des 3 composantes reelles du vecteur translation.   
+Exemple: TR_3_0; 3; 0; 1; 2; 3;
+Translation de vecteur(1,2,3)
+
+1: translation+rotation+dilatation definies par 2 points et 7 reels 
+Exemple: TR_3_1; 3; 1;
+P1_AXE_ROTATION; P2_AXE_ROTATION; {axe de rotation defini par 2 POINTS}
+ 90.0     {degres de rotation autour de cet axe};
+ 1;2;3;   {les 3 composantes du vecteur translation}
+ 2;1;0.5; {les 3 coefficients de dilatation dans les directions x y z}
+
+2: translation+rotation+dilatation definies par 4 images de 4 points 
+Les 4 premiers points definissent un repere avant transformation
+Le 1-er  point P1 est l'origine du repere
+Le 2-eme point P2 definit l'axe E1 = P1 P2  vecteur normalise a 1
+Le 3-eme point P3 definit la droite P1 P3  et donc le plan E1 E2  
+ E3 = P1P2 vectoriel P1P3  normalise a 1 
+ E2 = E3   vectoriel E1   
+Les 4 derniers points definissent un repere apres transformation
+Le 1-er  point PP1 est l'origine du repere
+Le 2-eme point PP2 definit l'axe EE1 = PP1 PP2  vecteur normalise a 1
+Le 3-eme point PP3 definit la droite PP1 PP3  et donc le plan EE1 EE2  
+ EE3 = PP1PP2 vectoriel PP1PP3  normalise a 1 
+ EE2 = EE3    vectoriel EE1 
+Les DILATATIONS sont les RAPPORTS des DISTANCES
+ || PPi - PP1 || / || Pi - P1 ||   pour i=2,3,4  
+Ainsi, il est possible de calculer la matrice et le vecteur de
+la transformation.
+Le 4-eme et 8-eme POINTS SERVENT UNIQUEMENT a definir la DILATATION
+selon le 3-eme axe.
+ATTENTION: Si les 8 points ne forment pas 2 reperes orthogonaux 
+alors          PP1 =  T( P1 )
+mais           PPi <> T( Pi )  i=2,3,4  .
+Exemple:
+TRANSFO_3_2; 3; 2;  R1_ORIGINE; R1_X; R1_Y; R1_Z; {repere avant}
+                    R2_ORIGINE; R2_X; R2_Y; R2_Z; {repere apres}
+
+3: translation+rotation definies par 3 images de 3 points
+IDEM precedemment mais SANS les DILATATIONS 
+Exemple:
+TRANSFO_3_3; 3; 3;  R1_ORIGINE; R1_X; R1_Y; {repere avant}
+                    R2_ORIGINE; R2_X; R2_Y; {repere apres}
+ 
+4: symetrie par rapport a un plan defini par 3 points 
+La donnee des 3 POINTS non alignes suffit. 
+Exemple:
+TRANSFO_3_4; 3; 4; P1_PLAN; P2_PLAN; P3_PLAN;
+
+5: symetrie par rapport a une droite definie par 2 points 
+La donnee des 2 POINTS non identiques suffit. 
+Exemple:
+TRANSFO_3_5; 3; 5; P1_DROITE_SYMETRIE;  P2_DROITE_SYMETRIE;
+
+6: symetrie par rapport a un point 
+La donnee d'un POINT suffit. 
+Exemple:
+TRANSFO_3_6; 3; 6; POINT_DE_SYMETRIE;
+
+4: projection dans R3 
+---------------------  
+La SURFACE ou le SOMMET ou POINT doit etre PROJETE est DEFINIE par
+une FONCTION  F( x , y , z ) = 0 . Le nom est a choisir.
+La fonction est a definir.
+Exemple:
+deffonc sphere(x,y,z); sphere=x*x+y**2+z*z-25; finfonc;
+Definit une sphere centree a l'origine, de rayon 5.
+
+Le POINT de PROJECTION est l'intersection d'une droite avec
+cette surface. La recherche du zero est faite par DICHOTOMIE apres
+ENCADREMENT de 2 POINTS sur la droite tels que F(P1) * F(P2)<=0
+Un SENS de PROJECTION est privilegie et s'il n'y a pas convergence
+alors il est inverse.
+
+Il y a 9 types de projections : 
+ 1: projection parallele a +oX et vers les X   croissants  
+-1: projection parallele a -oX et vers les X decroissants    
+ 2: projection parallele a +oY et vers les Y   croissants  
+-2: projection parallele a -oY et vers les Y decroissants
+ 3: projection parallele a +oZ et vers les Z   croissants  
+-3: projection parallele a -oZ et vers les Z decroissants  
+ 4: projection selon le centre et le point a projeter 
+ 5: projection orthogonale au   plan   defini  par 3 points
+ 6: projection orthogonale a la droite definie par 2 points 
+ATTENTION: Le point ou sommet a projeter NE DOIT PAS ETRE
+sur la DROITE
+
+Exemples:
+PROJ1;  4;  1;  {projection +oX}
+PROJM1; 4; -1;  {projection -oX}    
+PROJ2;  4;  2;  {projection +oY}
+PROJM2; 4; -2;  {projection -oY}    
+PROJ3;  4;  3;  {projection +oY}
+PROJM3; 4; -3;  {projection -oY}    
+PROJ4;  4;  4;  POINT_CENTRE_PROJECTION;
+PROJ5;  4;  5;  P1_PLAN_PROJECTION; P2_PLAN_PROJECTION;
+ P3_PLAN_PROJECTION;      
+PROJ6;  4;  6;  P1_DROITE_ORTHOGONALE; P2_DROITE_ORTHOGONALE;
+
+
+
+
+
+

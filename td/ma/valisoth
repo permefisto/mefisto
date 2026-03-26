@@ -1,0 +1,10 @@
+variable VALISOTH 'Types of ISO-VALUES' entier
+( 1 : 'Number of ISO-VALUES'
+, 2 : 'REGULAR ISO between MIN MAX'
+, 3 : 'DEFINE MIN MAX of ISO'
+, 4 : 'DEFINE VALUES of ISO'
+, 5 : 'COLOR of MESH EDGES'
+, 6 : 'LINE TYPE of  MESH EDGES'
+, 7 : 'EDGE COLOR on ISO'
+, 8 : 'LINE TYPE of EDGES on ISO'
+,19 : 'REDUCTION % of FACES' ) ;

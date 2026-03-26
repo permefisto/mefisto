@@ -1,0 +1,3 @@
+variable ResoFLUI 'Type RESOLUTION FLUIDE STATIONNAIRE' entier
+(1: 'Coefficients INDEPENDANTS de la VITESSE',
+ 2: 'Coefficients   DEPENDANTS de la VITESSE' ) ;

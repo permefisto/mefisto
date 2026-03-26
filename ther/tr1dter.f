@@ -1,0 +1,354 @@
+      SUBROUTINE TR1DTER( KNOMOB, MODECO, NDIM,
+     %                    NBTYEL, MNELEM, MNPOGE, NDPGST,
+     %                    NDSM,   NTDL, TEMPSS, ERRTEM, ERRMIN, ERRMAX )
+C+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+C BUT :  TRACE DE L'ERREUR ABSOLUE SUR LES TEMPERATURES
+C -----  SOUS FORME DE COURBES Z=TEMPERATURE(t,x) ou Y EST LE TEMPS
+C        A PARTIR DE LA FONCTION UTILISATEUR TEMPERATURE_EXACTE(t,x,y,z)
+C
+C ENTREES:
+C --------
+C KNOMOB : NOM DE L'OBJET
+C MODECO : MODE DE TRACE DES ERREURS DES TEMPERATURES TEMPER(NTDL,NDSM)
+C          =1 CE SONT DES ISO-SOLUTIONS
+C          =2 CE SONT DES MODES PROPRES
+C          =3 CE SONT DES PRESSIONS P1 A PARTIR D'UNE INTERPOLATION
+C             SOIT en 2D P2 SOIT P1+BULLE P3 OU en 3D P1 OU en 3D P2
+C          =4 CE SONT DES ERREURS AUX NOEUDS D'UN MAILLAGE
+C          =5 CE SONT DES SOLUTIONS
+C NDIM   : DIMENSION DE L'OBJET (1 OU 2 OU 3)
+C NBTYEL : LE NOMBRE DE TYPES D'ELEMENTS DANS CET OBJET
+C MNELEM : ADRESSE MCN DES TABLEAUX ELEMENTS DE CET OBJET
+C MNPOGE : ADRESSE MCN DU TABLEAU POINTS GEOMETRIQUES DE L'OBJET
+C NDPGST : CODE TRAITEMENT DES SOMMETS POINTS NOEUDS DU MAILLAGE
+C          0 : NOEUDS=POINTS=SOMMETS
+C          1 : NOEUDS=POINTS#SOMMETS
+C          2 : NOEUDS#POINTS=SOMMETS
+C          3 : NOEUDS#POINTS#SOMMETS
+C NDSM   : NOMBRE DE CAS OU SECONDS MEMBRES DU SYSTEME LINEAIRE
+C NTDL   : NOMBRE TOTAL DE DEGRES DE LIBERTE
+C TEMPSS : TEMPS DES NDSM VECTEURS
+C ERRTEM : ERREUR ABSOLUE EN TOUT NOEUD ET TOUT TEMPS
+C ERRMIN : ERREUR ABSOLUE  MINIMALE SUR TEMPERATURE DES NDSM CAS
+C ERRMAX : ERREUR ABSOLUE  MAXIMALE SUR TEMPERATURE DES NDSM CAS
+C+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+C AUTEUR:ALAIN PERRONNET LJLL UPMC PARIS & St Pierre du Perray JUIN 2009
+C MODIF :ALAIN PERRONNET LJLL UPMC PARIS & St Pierre Perray JUILLET 2011
+C23456---------------------------------------------------------------012
+      PARAMETER   ( LIGCON=0, LIGTIR=1 )
+      IMPLICIT INTEGER (W)
+      include"./incl/langue.inc"
+      include"./incl/gsmenu.inc"
+      include"./incl/a___npef.inc"
+      include"./incl/a___vecteur.inc"
+      include"./incl/a___xyzpoint.inc"
+      include"./incl/a___xyznoeud.inc"
+      include"./incl/ponoel.inc"
+      include"./incl/donele.inc"
+      include"./incl/trvari.inc"
+      include"./incl/xyzext.inc"
+      include"./incl/mecoit.inc"
+      include"./incl/ctemps.inc"
+C
+      COMMON / UNITES / LECTEU,IMPRIM,INTERA,NUNITE(29)
+      include"./incl/pp.inc"
+      COMMON            MCN(MOTMCN)
+      REAL              RMCN(1)
+      EQUIVALENCE      (MCN(1),RMCN(1))
+      CHARACTER*(*)     KNOMOB
+      DOUBLE PRECISION  ERRTEM(NTDL,NDSM)
+      REAL              TEMPSS(NDSM)
+C
+      CHARACTER*100     KNOM
+      REAL              COULN(3), XYZ(3,3)
+      INTEGER           NONOEF(3)
+C
+      IF( LANGAG .EQ. 0 ) THEN
+       WRITE(IMPRIM,*)'TRACE de',NDSM,' VECTEURS de',NTDL,' COMPOSANTES'
+      ELSE
+       WRITE(IMPRIM,*)'DRAWING of',NDSM,' VECTORS of',NTDL,' COMPONENTS'
+      ENDIF
+C
+      MOREE2 = MOTVAR(6)
+C
+C     NOMBRE DE COULEURS DISPONIBLES
+      NBCOUL = NDCOUL - N1COUL + 1
+C
+C     LA PALETTE 2 : LES COULEURS VARIENT RAPIDEMENT ET S'ASSOMBRISSENT
+C     LA PALETTE 11: ARC EN CIEL
+      CALL PALCDE(11)
+C
+C     LES ARETES SONT TRACEES AVEC 2 EPAISSEURS
+      CALL XVEPAISSEUR( 2 )
+C
+C     NBPOI  NOMBRE DE POINTS DU MAILLAGE DE L'OBJET
+      NBPOI  = MCN(MNPOGE+WNBPOI)
+C
+C     NBCOOR NOMBRE DE COORDONNEES D'UN POINT
+      NBCOOR = MCN(MNPOGE+WBCOOP)
+C
+C     MIN ET MAX DES COORDONNEES DES POINTS DU MAILLAGE DE L'OBJET
+      CALL MAJEXT( MNPOGE )
+      CALL MIMXPT( NBCOOR, NBPOI, RMCN(MNPOGE+WYZPOI), COOEXT )
+      XMIN = COOEXT(1,1)
+      XMAX = COOEXT(1,2)
+C
+      EMIN = ERRMIN
+      EMAX = ERRMAX
+C
+C     L'HEXAEDRE DE TRACE EST COMPLETE
+C     EN ORDONNEE PAR LE TEMPS
+      COOEXT(2,1) = TEMPSS(1)
+      COOEXT(2,2) = TEMPSS(NDSM)
+C     EN COTE PAR L'ERREUR
+      COOEXT(3,1) = EMIN
+      COOEXT(3,2) = EMAX
+C
+C     AMPLIFICATION DES COORDONNEES X Y Z POUR QUE LE TRACE
+C     SOIT HOMOGENE DANS LES 3 DIRECTIONS MALGRE DES ECHELLES DIFFERENTES
+      CALL AMPXYZ
+C     COOEXT EST MODIFIE EN SORTIE
+      EMIN = COOEXT(3,1)
+      EMAX = COOEXT(3,2)
+      EX   = (EMAX - EMIN) / 20
+      EMIN0 = EMIN - EX/2
+C
+C     UNE MARGE EN Z ET XYZ
+      COOEXT(3,1) = EMIN - EX
+      COOEXT(3,2) = EMAX + EX
+      DO K=1,5
+         EX = ( COOEXT(K,2) - COOEXT(K,1) ) / 10
+         COOEXT(K,1) = COOEXT(K,1) - EX
+         COOEXT(K,2) = COOEXT(K,2) + EX
+      ENDDO
+C
+C     LA VISEE 3D A PARTIR DE COOEXT
+      CALL VISEE0
+C
+C     LONGITUDE ET LATITUDE DE LA DIRECTION DE VISEE
+      IF( NDSM .GT. 1 ) THEN
+         CALL LONLAT( -70.0, 35.0 )
+      ELSE
+         CALL LONLAT( -89.0, 0.0 )
+      ENDIF
+C
+C     -------------------
+C     OPTIONS DE LA VISEE
+C     -------------------
+ 10   CALL VISE3D( NMTCL )
+      IF( NMTCL .LT. 0 ) GOTO 9000
+C
+C     INITIALISATION DE L'ORBITE ZOOM DEPLACEMENT
+      IF( LORBITE .NE. 0 ) THEN
+         CALL ORBITE0( NOTYEV )
+         IF( NOTYEV .EQ. 0 ) GOTO 10
+      ENDIF
+C
+C     LE TRACE DES AXES 2D
+ 20   CALL TRAXE3
+C
+C     LA COULEUR DE LA TEMPERATURE EMIN
+      COULMIN = N1COUL
+C
+C     BOUCLE SUR LES TEMPS DU FINAL A L'INITIAL
+C     =========================================
+      DO 100 NCAS = NDSM, 1, -1
+C
+C        LE TEMPS DU VECTEUR SOLUTION NCAS
+         TEMPS = TEMPSS( NCAS )
+C
+C        BOUCLE SUR LES DIFFERENTS TYPES D'ELEMENTS FINIS DU MAILLAGE
+         DO 90 NTEF = 0, NBTYEL-1
+C
+C           L'ADRESSE MCN DU DEBUT DU TABLEAU NPEF DE CE TYPE D'EF
+            MNELE = MCN( MNELEM + NTEF )
+C
+C           LE NUMERO DU TYPE DES ELEMENTS FINIS
+            NUTYEL = MCN( MNELE + WUTYEL )
+C
+C           LE NOMBRE DE TELS ELEMENTS FINIS
+            NBELEM = MCN(MNELE + WBELEM )
+C
+C           LES CARACTERISTIQUES DE L'ELEMENT FINI
+            CALL ELTYCA( NUTYEL )
+C
+C           L'ADRESSE MCN DU TABLEAU 'NPEF' POUR CE TYPE D'EF
+            MNPGEL = MNELE + WUNDEL
+            IF( NDPGST .GE. 2 ) THEN
+               MNPGEL = MNPGEL + NBELEM * MCN(MNELE+WBNDEL)
+            ENDIF
+C
+            DO 50 NUELEM = 1 , NBELEM
+C
+C              LE NUMERO DES NOEUDS DE L'EF
+               CALL EFNOEU( MNELE, NUELEM,  NBNOEF, NONOEF )
+C
+C              TRACE DU SEGMENT
+               CALL XVTYPETRAIT( NTLAPL )
+C
+C              LA COULEUR DES NBNOEF NOEUDS
+               DO 30 I=1,NBNOEF
+C
+C                 LA COORDONNEE X DU NOEUD I
+                  XYZ(1,I) = RMCN(MNPOGE+WYZPOI+(NONOEF(I)-1)*NBCOOR)
+     %                     * XYZAMPLI(1)
+C
+C                 LE TEMPS EST AMPLIFIE
+                  XYZ(2,I) = TEMPS * XYZAMPLI(2)
+C
+C                 L'ERREUR ABSOLUE AU NOEUD I
+                  XYZ(3,I) = REAL( ERRTEM( NONOEF(I), NCAS ) )
+C
+C                 LA COULEUR AU NOEUD I
+                COULN(I)=(XYZ(3,I)-ERRMIN)/(ERRMAX-ERRMIN)*NBCOUL+N1COUL
+                  IF( COULN(I) .GT. NDCOUL ) COULN(I)=NDCOUL
+                  IF( COULN(I) .LT. N1COUL ) COULN(I)=N1COUL
+C
+C                 LA TEMPERATURE AU NOEUD I EST AMPLIFIEE
+                  XYZ(3,I) = XYZ(3,I) * XYZAMPLI(3)
+C
+ 30            CONTINUE
+C
+               IF( NBNOEF .EQ. 2 ) THEN
+C
+C                 NOEUDS = 2 SOMMETS
+ccc                  CALL TRAITCOUL3D( XYZ, COULN )
+                  NC = NINT( COULN(1) )
+                  CALL TRAIT3D( NC, XYZ(1,1), XYZ(1,2) )
+C                 POSITION DU SOMMET 2 DANS XYZ
+                  NS2 = 2
+C
+               ELSE
+C
+C                 NOEUDS = 2 SOMMETS SUIVI DU MILIEU DU SEGMENT
+C                 PERMUTATION DU SOMMET2 ET DU MILIEU
+                  DO 40 K=1,3
+                     S        = XYZ(K,2)
+                     XYZ(K,2) = XYZ(K,3)
+                     XYZ(K,3) = S
+ 40               CONTINUE
+                  S        = COULN(2)
+                  COULN(2) = COULN(3)
+                  COULN(3) = S
+C
+C                 TRACE SOMMET1-MILIEU
+ccc                  CALL TRAITCOUL3D( XYZ(1,1), COULN(1) )
+                  NC = NINT( COULN(1) )
+                  CALL TRAIT3D( NC, XYZ(1,1), XYZ(1,2) )
+C                 TRACE MILIEU-SOMMET2
+ccc                  CALL TRAITCOUL3D( XYZ(1,2), COULN(2) )
+                  NC = NINT( COULN(3) )
+                  CALL TRAIT3D( NC, XYZ(1,2), XYZ(1,3) )
+C                 POSITION DU SOMMET 2 DANS XYZ
+                  NS2 = 3
+C
+               ENDIF
+C
+C              TRACE DU SYMBOLE DES 2 SOMMETS ET DE L'ARETE
+               XYZ(3,  1) = EMIN0
+               XYZ(3,NS2) = EMIN0
+               CALL SYMBOLE3D( NCGRIS, XYZ(1,1),   'I' )
+               CALL SYMBOLE3D( NCGRIS, XYZ(1,NS2), 'I' )
+               CALL TRAIT3D(   NCGRIS, XYZ(1,1), XYZ(1,NS2) )
+C
+ 50         CONTINUE
+ 90      CONTINUE
+ 100  CONTINUE
+C
+C     RETOUR AU TRACE CONTINU DES LIGNES
+      CALL XVTYPETRAIT( LIGCON )
+C
+C     EFFACEMENT DE LA LEGENDE SUR POSTSCRIPT
+      IF ( LASOPS .NE. 0 ) THEN
+        IF ( LASOPS .EQ. 1 ) THEN
+          LASOPS = -11
+        ELSE
+          IF ( LASOPS .EQ. 2 ) THEN
+            LASOPS = -12
+          ELSE
+            LASOPS = 0
+            NBLGRC(NRERR) = 2
+            IF( LANGAG .EQ. 0 ) THEN
+               KERR(1) = 'TR1DTER: MAUVAISE VALEUR de LASOPS'
+               KERR(2) = '         ARRET du TRACE POSTSCRIPT'
+            ELSE
+               KERR(1) = 'TR1DTER: BAD VALUE of LASOPS'
+               KERR(2) = '         STOP of POSTSCRIPT DRAWING'
+            ENDIF
+            CALL LEREUR
+            GOTO 10
+          ENDIF
+        ENDIF
+        CALL XVPOSTSCRIPT(LASOPS)
+        LASOPS = - LASOPS
+        CALL XVPOSTSCRIPT(LASOPS)
+      ENDIF
+C
+C     LE TRACE DU TITRE FINAL
+C     =======================
+      KNOM = 'OBJET: ' // KNOMOB
+      I    = NUDCNB( KNOM )
+      CALL XVCOULEUR( NCNOIR )
+      CALL XVTEXTE( KNOM(1:I), I, 50, 30 )
+C
+C     LE TRACE DE LA LEGENDE : COULEURS => VALEURS
+      NBCOUL = NDCOUL - N1COUL
+      NCPAS  = NBCOUL / 10
+      EPAS   = (EMAX-EMIN) / 10
+      E      = EMIN
+C
+C     TRACE DE 11 VALEURS
+      NCOUL = N1COUL
+      NX    = LAPXFE - 160
+      NY    = LHPXFE - 50
+      DO 600 I=0,10
+         CALL XVCOULEUR( NCOUL )
+         CALL XVRECTANGLE( NX, NY, 30, 10 )
+         WRITE( KNOM(1:10), '(G10.3)' ) E
+         CALL XVTEXTE( KNOM(1:10), 10, NX+40, NY+10 )
+         NCOUL = NCOUL + NCPAS
+         E     = E  + EPAS
+         NY    = NY - 15
+ 600  CONTINUE
+C
+C     RETOUR AU TRACE NORMAL POUR POSTSCRIPT
+      IF ( LASOPS.NE.0 ) THEN
+        LASOPS = LASOPS - 10
+        CALL XVPOSTSCRIPT(LASOPS)
+      ENDIF
+C
+C     RETOUR AUX PARAMETRES INITIAUX
+      CALL XVEPAISSEUR( 1 )
+      CALL XVTYPETRAIT( LIGCON )
+C
+C     DEFINITION DU TITRE ET FIN DU TRACE
+      CALL LETITR( NOPROJ, MODECO, NDSM, TEMPS, KNOM )
+C
+C     RETOUR POUR UNE NOUVELLE VISEE
+      IF( LORBITE .NE. 0 ) THEN
+         CALL ORBITE1( NOTYEV )
+         IF( NOTYEV .EQ. 0 ) GOTO 10
+         GOTO 20
+      ENDIF
+C
+      CALL CLICSO
+      GOTO 10
+C
+C     SORTIE DU TRACE de la TEMPERATURE AVEC
+C     REMISE A JOUR DES VALEURS INITIALES
+ 9000 NDIM = 1
+      COOEXT(1,1) = XMIN
+      COOEXT(1,2) = XMAX
+      COOEXT(2,1) = 0
+      COOEXT(2,2) = 0
+      COOEXT(3,1) = 0
+      COOEXT(3,2) = 0
+      INIEXT = 1
+      MOAXYZ = 0
+      XYZAMPLI(1) = 1
+      XYZAMPLI(2) = 1
+      XYZAMPLI(3) = 1
+      TEMPS = TEMPSS( NDSM )
+C
+      RETURN
+      END

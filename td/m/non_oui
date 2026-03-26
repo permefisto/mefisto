@@ -1,0 +1,2 @@
+variable NON_OUI 'REPONSE par OUI ou par NON' entier
+ ( 0 : 'NON' , 1 : 'OUI' ) ;

@@ -1,0 +1,54 @@
+deftms ~>>>NSEF 'Numbers of vertices & tangents of FE of a PLSV'
+variable muet DATE 'date of creation of the TMS' reel2 ;
+variable muet NUTD 'number of the descriptor array TD' entier ;
+variable NUTYOB 'Type of PLSV' entier
+( 1 : 'point' , 2 : 'line' , 3 : 'surface' , 4 : 'volume' )  ;
+variable NUTFMA 'closed or not Line or Surface (P V are unknown)' entier
+( -1 : 'unknown' , 0 : 'not-closed' , 1 : 'closed line or surface' ) ;
+variable NBSOEF 'number of vertices by FE' entier
+( 1 : 'vertex' , 2 : 'edge' , 4 : 'face' , 8 : 'cube' , 64 : '6cubes' ) ;
+variable NBTGEF 'number of tangents by FE' entier
+( 0 : '0 tg by FE' , 1 : '1 tg by vertex' , 2 : '2 tg by edge' ,
+  8 : '8 tg by face' ,  24 : '24 tg by cube' )  ;
+variable NBEFOB 'number of PLSV''s FE' entier ;
+variable NBEFTG 'number of FE with tangents' entier ;
+variable NBEFAP 'number of FE with pointer on FE with TG' entier ;
+variable NUTYMA 'type of mesh' entier
+( 0 : 'unstructured' ,
+  1 : 'structured node vertex' , 2 : 'structured segment' ,
+  3 : 'structured triangle'    , 4 : 'structured quadrangle' ,
+  5 : 'structured tetrahedron' , 6 : 'structured pentahedron' ,
+  7 : 'structured hexahedron'  , 8 : 'structured 6-cube' ) ;
+cas NUTYMA
+ 0: tableau  NUSOEF(1..NBSOEF,1..NBEFOB) 'numbers of vertices of FE' entier ;
+ 1: variable NBARNS 'number of node vertex' entier ;
+ 2: variable NBARSE 'number of edges of the structured segment' entier ;    
+ 3: variable NBARTR 'number of subedges of edges of the structured triangle'
+                     entier ;    
+ 4: variable NBARXQ
+   'number of subedges of edges 1 3 of the structured quadrangle' entier ;
+    variable NBARYQ
+   'number of subedges of edges 2 4 of the structured quadrangle' entier ;
+ 5: variable NBARTE
+   'number of subedges of edges of the structured tetrahedron' entier ;
+ 6: variable NBARTP
+   'number of subedges of edges of the triangles of the pentahedron' entier ;
+    variable NBARZP
+   'number of subedges of the other edges of the pentahedron' entier ;
+ 7: variable NBARXH
+   'number of subedges of X-edges of the hexahedron' entier ;
+    variable NBARYH
+   'number of subedges of Y-edges of the hexahedron' entier ;
+    variable NBARZH
+   'number of subedges of Z-edges of the hexahedron' entier ;
+ 8: variable NANCUB 'number of edges for one 6-cube direction' entier ;
+    variable NDNCUB '6-cube dimension=>6' entier;  
+fincas ;
+tableau LPEFTG(1..NBEFAP) 'number>0 of the FE with TG else 0' entier ;
+tableau NGEFTG(1..NBEFTG) 'geometric number of the FE with TG' entier
+( 0 : 'C1 degree 3' ,
+  1 : 'CIRCLE' ,     2 : 'ELLIPSE' ,      3 : 'B-SPLINE CURVE' ,
+ 11 : 'SPHERE' ,    12 : 'ELLIPSOID' ,   13 : 'CYLINDER' ,  14 : 'CONE' ,
+ 15 : 'TORE'   ,    16 : 'TRANSFINITE' , 17 : 'B-SPLINE SURFACE') ;
+tableau NUTGEF(1..NBTGEF,1..NBEFTG) '+-Nb of TG of the FE with TG' entier ;
+fintms ;

@@ -1,0 +1,3 @@
+Le nombre de POINTS de CONTROLE du TRIANGLE de BEZIER
+est egal, pour N le degre des polynomes, a
+    (N+1) * (N+2) / 2

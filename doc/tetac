@@ -1,0 +1,17 @@
+The 3 cylindrical coordinates of the point P(x,y,z) are:
+the RADIUS    : square root of x*x + y*y of the point P = distance o-M
+the LONGITUDE : angle in degrees between the oX axis and the line
+                o Origin - M Projection of the point P onto 
+                the XoY plane
+the COTE Z    : height or distance PM
+
+              Z     P
+              |   / |
+              |  /  |
+              | /   |
+            o |/____|_y___Y
+             /      |/
+           x/-------|M
+          X/
+
+Give here the LONGITUDE between 0 and 360 degrees

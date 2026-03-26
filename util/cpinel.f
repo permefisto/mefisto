@@ -1,0 +1,46 @@
+      SUBROUTINE CPINEL( NBELEM, NUELEM, NBPIEF, NDIMES,
+     %                   F1, F2, F3, COPIEF )
+C+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+C BUT :    RANGER LES COORDONNEES DES POINTS D'INTEGRATION NUMERIQUE
+C -----    DE L'ELEMENT FINI NUELEM DU TABLEAU NPEF"TYPE_EF
+C
+C ENTREES:
+C --------
+C NBELEM : NOMBRE D'EF DU TABLEAU NPEF"TYPE_EF
+C NUELEM : NUMERO DE L'ELEMENT FINI TRAITE DANS NPEF"TYPE_EF
+C NBPIEF : NOMBRE DE POINTS D'INTEGRATION NUMERIQUE DE CE TYPE D'ELEMENT
+C NDIMES : DIMENSION DE L'ESPACE ( 1 OU 2 OU 3 )
+C
+C MODIFIES:
+C ---------
+C COPIEF : LES COORDONNEES DES POINTS D'INTEGRATION NUMERIQUE DES EF
+C+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+C AUTEUR : ALAIN PERRONNET ANALYSE NUMERIQUE UPMC PARIS     OCTOBRE 1994
+C23456---------------------------------------------------------------012
+      DOUBLE PRECISION  F1(NBPIEF), F2(NBPIEF), F3(NBPIEF)
+      REAL              COPIEF(NBELEM,NBPIEF,NDIMES)
+      INTRINSIC         REAL
+C
+C     LE TRANSFERT
+      IF( NDIMES .EQ. 1 ) THEN
+C        DIMENSION 1
+         DO 10 L=1,NBPIEF
+            COPIEF(NUELEM,L,1) = REAL( F1(L) )
+ 10      CONTINUE
+      ELSE IF( NDIMES .EQ. 2 ) THEN
+C        DIMENSION 2
+         DO 20 L=1,NBPIEF
+            COPIEF(NUELEM,L,1) = REAL( F1(L) )
+            COPIEF(NUELEM,L,2) = REAL( F2(L) )
+ 20      CONTINUE
+      ELSE
+C        DIMENSION 3
+         DO 30 L=1,NBPIEF
+            COPIEF(NUELEM,L,1) = REAL( F1(L) )
+            COPIEF(NUELEM,L,2) = REAL( F2(L) )
+            COPIEF(NUELEM,L,3) = REAL( F3(L) )
+ 30      CONTINUE
+      ENDIF
+C
+      RETURN
+      END

@@ -1,0 +1,54 @@
+      SUBROUTINE CHMTLU( MOT , NLMIN  , NCMIN  , NLMAX  , NCMAX ,
+     %                   NLD , NCD )
+C+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+C BUT : RECHERCHE DE MOT ENTRE NLMIN,NCMIN ET NLMAX,NCMAX DANS KLG
+C -----
+C
+C ENTREES :
+C ---------
+C MOT         : LE MOT A RETROUVER
+C               (IL NE PEUT ETRE A CHEVAL SUR 2 LIGNES)
+C NLMIN,NCMIN : POSITION DANS KLG DU PREMIER CARACTERE A TRAITER
+C NLMAX,NCMAX : POSITION DANS KLG DU DERNIER CARACTERE A TRAITER
+C
+C SORTIES :
+C ---------
+C NLD     : NUMERO DE LIGNE   DU 1-ER CARACTERE DE MOT S'IL EST RETROUVE
+C           =0 SINON
+C NCD     : NUMERO DE COLONNE DU 1-ER CARACTERE DE MOT S'IL EST RETROUVE
+C+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+C AUTEUR : PERRONNET ALAIN  ANALYSE NUMERIQUE UPMC PARIS    FEVRIER 1990
+C23456---------------------------------------------------------------012
+      include"./incl/lu.inc"
+      COMMON / UNITES / LECTEU,IMPRIM,INTERA,NUNITE(29)
+      CHARACTER*(*)     MOT
+C
+      NLD = NLMIN
+      NCD = NCMIN
+C
+C     LE DERNIER CARACTERE A ANALYSER DANS LA LIGNE
+ 10   IF( NLD .EQ. NLMAX ) THEN
+         NCF = NCMAX
+      ELSE IF( NLD .GT. NLMAX ) THEN
+         GOTO 9900
+      ELSE
+         NCF = NBCALI
+      ENDIF
+C
+C     RECHERCHE DU MOT
+      I = INDEX( KLG(NLD)(NCD:NCF) , MOT )
+      IF( I .EQ. 0 ) THEN
+C        LA LIGNE SUIVANTE
+         IF( NLD .GE. NLMAX ) GOTO 9900
+         NLD = NLD + 1
+         NCD = 1
+         GOTO 10
+      ENDIF
+C
+C     LE PREMIER CARACTERE DE MOT DANS KLG
+      NCD = NCD + I - 1
+      RETURN
+C
+C     NON RETROUVE
+ 9900 NLD = 0
+      END

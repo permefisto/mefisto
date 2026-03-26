@@ -1,0 +1,64 @@
+       SUBROUTINE SETRQU( NBS, XYZS )
+C+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+C BUT :    FORMER A PARTIR DE NBS SOMMETS LA LISTE DES NBS DIFFERENTS
+C -----
+C
+C ENTREES:
+C --------
+C NBS    : NOMBRE DE SOMMETS DANS R**3
+C XYZS   : LES 3 COORDONNEES DES NBS SOMMETS
+C
+C SORTIES:
+C --------
+C NBS    : NOMBRE DE SOMMETS DU TRIANGLE (3) OU QUADRANGLE (4)
+C          0 SI PAS DE TRIANGLE OU QUADRANGLE FORMABLE
+C XYZS   : LES 3 COORDONNEES DES NBS SOMMETS DU TRIANGLE OU QUADRANGLE
+C+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+C AUTEUR : PERRONNET ALAIN UPMC ANALYSE NUMERIQUE PARIS         MAI 1999
+C2345X7..............................................................012
+      PARAMETER       ( RECONU=-1E28 )
+      DOUBLE PRECISION  XYZS(3,NBS)
+C
+C     RECENSEMENT DES POINTS SANS DUPLICATION
+      DO 20 K=1,NBS-1
+C
+         IF( XYZS(1,K) .EQ. RECONU ) GOTO 20
+C
+C        RECHERCHE D'UN SOMMET IDENTIQUE AU SOMMET K NON RECONNU
+         DO 10 I=K+1,NBS
+C
+            IF( XYZS(1,I) .EQ. RECONU ) GOTO 10
+C
+C           LE SOMMET I N'EST PAS RECONNU
+            CALL XYZIDD( XYZS(1,K), XYZS(1,I), IDENT )
+            IF( IDENT .NE. 0 ) THEN
+C              LE SOMMET K EST LE SOMMET I => IL EST MARQUE
+               XYZS(1,I) = RECONU
+            ENDIF
+ 10      CONTINUE
+C
+ 20   CONTINUE
+C
+C     COMPRESSION DES SOMMETS NON RECONNUS
+      NB = 1
+      DO 40 K=1,NBS
+C
+         IF( XYZS(1,K) .NE. RECONU ) THEN
+C
+C           LE SOMMET K N'EST PAS RECONNU => IL EST TRANSLATE
+            DO 30 I=1,3
+               XYZS(I,NB) = XYZS(I,K)
+ 30         CONTINUE
+C
+C           LE PROCHAIN XYZS A REMPLIR
+            NB = NB + 1
+C
+         ENDIF
+C
+ 40   CONTINUE
+C
+C     LE NOMBRE FINAL DE SOMMETS DIFFERENTS
+      NBS = NB - 1
+C
+      RETURN
+      END

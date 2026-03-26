@@ -1,0 +1,74 @@
+#!/bin/bash
+#  Execution du solveur de l'EQUATION NON LINEAIRE de SCHRODINGER
+#            de Mefisto par le script NLSER
+#  Alain Perronnet Mars 2013 Version LINUX 64 bits + Fortran95 + OpenMP + Batch
+#  Appel:
+#  NLSER Nom du fichier des donnees de NLSER  (AVEC Nom =>Batch ou SANS   =>Interactif)
+#  NLSER Data File Name of NLSER              (WITH Name=>Batch ou WITHOUT=>Interactif)
+
+if test -f $MEFISTO/td/m/anglais
+then
+  LANGAGE=1
+  LANGUE=ANGLAISE
+  echo "Arguments Number=$#"
+  echo "arg0=$0"
+  echo "arg1=$1"
+  echo "NLSER data file NAME=$*"
+  echo
+  echo '==========================================================================='
+  echo 'MEFISTO-NLSER: Solver of NONLINEAR SCHRODINGER EQUATION under LINUX 64 bits'
+  echo '==========================================================================='
+  echo 'Project (low case) name' \?
+else
+  LANGAGE=0
+  LANGUE=FRANCAISE
+  echo "Nombre Arguments=$#"
+  echo "arg0=$0"
+  echo "arg1=$1"
+  echo "Nom du Fichier des Donnees de NLSER=$*"
+  echo
+  echo '=================================================================================='
+  echo 'MEFISTO-NLSER: Resoudre l''EQUATION NON LINEAIRE de SCHRODINGER sous LINUX 64 bits'
+  echo '=================================================================================='
+  echo 'nom (en minuscules) du projet' \?
+fi
+read nomproj
+
+echo
+# Demande du nombre de threads
+#if [ $LANGAGE = 0 ]
+#then
+#   echo 'Nombre de threads en execution de NLSER' \?
+#else
+#   echo 'Number of threads on NLSER execution' \?
+#fi
+#read   OMP_NUM_THREADS
+#export OMP_NUM_THREADS
+echo OMP_NUMBER_THREADS=$OMP_NUM_THREADS
+
+direxec=$MEFISTOX/$nomproj
+echo
+if [ $LANGAGE = 0 ]
+then
+  echo "Execution MEFISTO NLSER dans le repertoire $direxec"
+else
+  echo "Execution MEFISTO NLSER in the directory $direxec"
+fi
+
+if test -d $direxec
+then
+  cd  $direxec 
+  $MEFISTO/pp/ppnlse $*
+else  
+  if [ $LANGAGE = 0 ]
+  then
+    echo Commande INITIER NON executee au prealable
+    echo "avec ce nom de projet $nomproj"
+    echo Executer INITIER puis MAILLER
+  else
+    echo Command INITIER NOT EXECUTED BEFORE
+    echo "with this project name $nomproj"
+    echo Execute INITIER and after MESHER
+  fi
+fi
+echo

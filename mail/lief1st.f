@@ -1,0 +1,53 @@
+      SUBROUTINE LIEF1ST( NOST,   NBSOEF, NBEF,   NOSOEF,
+     %                    MXEF1S, NBEF1S, NOEF1S, IERR )
+C+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+C BUT :    LISTER EXHAUSTIVEMENT DANS NOEF1S LE NUMERO dans NOSOEF DES
+C -----    NBEF1S EF DE SOMMET NOST
+
+C ENTREES:
+C --------
+C NOST   : NUMERO DU SOMMET COMMUN A TOUS LES EFANGLES
+C NBSOEF : NOMBRE D'ENTIERS POUR STOCKER LES SOMMETS DES QUAD-TRIANGLES
+C NBEF   : NOMBRE DE QUAD-TRIANGLES STOCKES DANS NOSOEF
+C NOSOEF : SOMMET1, SOMMET2, ... , SOMMET NBSOEF>=4
+C MXEF1S : NOMBRE D'ENTIERS DECLARE DU TABLEAU NOEF1S
+
+C SORTIES:
+C --------
+C NBEF1S : NOMBRE DE EFANGLES DE SOMMET NOST SI IERR=0
+C NOEF1S : NOEF1S(I) >0 NUMERO DU EFANGLE DE SOMMET NOST DANS NOSOEF
+C IERR   : = 0 PAS D'ERREUR DETECTEE
+C          = 1 TABLEAU NOEF1S SATURE. AUGMENTER MXEF1S
+C+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+C AUTEUR : ALAIN PERRONNET St PIERRE du PERRAY              Octobre 2019
+C2345X7..............................................................012
+      INTEGER NOSOEF( NBSOEF, NBEF ), NOEF1S( MXEF1S )
+
+      IERR   = 0
+      NBEF1S = 0
+
+C     METHODE EN FORCE POUR EVITER LES CAS AVEC TROUS AU SOMMET
+      DO 10 NEF = 1, NBEF
+
+         DO K = 1, NBSOEF
+
+            IF( NOSOEF(K,NEF) .EQ. NOST ) THEN
+
+               IF( NBEF1S .GE. MXEF1S ) THEN
+                  PRINT*,'lief1st: TABLEAU NOEF1S SATURE MXEF1S=',MXEF1S
+                  IERR = 1
+                  GOTO 9999
+               ENDIF
+
+               NBEF1S = NBEF1S + 1
+               NOEF1S( NBEF1S ) = NEF
+               GOTO 10
+
+            ENDIF
+
+         ENDDO
+
+ 10   ENDDO
+
+ 9999 RETURN
+      END

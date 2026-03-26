@@ -1,0 +1,14 @@
+deftms ~>>>VITESSEANGULAIRE 'Domain Angular Velocity Vector'
+variable muet DATE 'Date de creation du tableau'   reel2  ;
+variable muet NUTD 'Numero du tableau descripteur' entier ; 
+variable LTVIAN 'Type of Angular Velocity' entier 
+(  1 : 'ANGULAR VELOCITY VECTOR is CONSTANT'
+, -1 : 'ANGULAR VELOCITY VECTOR is a FUNCTION'
+,  0 : 'DELETE the ANGULAR VELOCITY' ) ;
+cas LTVIAN
+ 1 : variable NBVIAN 'Number of ANGULAR VELOCITY COMPONENTS' entier ;
+     tableau  VAVIAN(1..NBVIAN) 'Angular Velocity CONSTANT Vector' reel ; 
+-1 : variable NBVIA0 'Component Number of ANGULAR VELOCITY' entier ;
+     variable NFVIAN 'Angular Velocity FUNCTION Name' ^~>FONCTION ;
+fincas ;   
+fintms ;

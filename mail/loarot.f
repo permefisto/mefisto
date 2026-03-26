@@ -1,0 +1,92 @@
+      SUBROUTINE LOAROT( NUOT, LARBRO, LARBRT, PTXYZD, TAILAR )
+C+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+C BUT :    LONGUEUR DES ARETES DE L'OT NUOT
+C -----
+C
+C ENTREES:
+C --------
+C NUOT   : NUMERO DE L'OT (<0 DANS LARBRT ET >0 DANS LARBRO)
+C LARBRO : ARBRE-14 DES OCTAEDRES ( FOND DE LA TETRAEDRISATION )
+C      LARBRO(0,0) : NO DU 1-ER OCTAEDRE VIDE DANS LARBRO
+C      LARBRO(1,0) : MAXIMUM DU 1-ER INDICE DE LARBRO (ICI -1:20)
+C      LARBRO(2,0) : MAXIMUM DECLARE DU 2-EME INDICE DE LARBRO
+C                    (ICI = MXARBO)
+C
+C      LARBRO(-1:20,1) : RACINE DE L'ARBRE (OCTAEDRE SANS PERE)
+C
+C      LARBRO(-1,J) : NO DU PERE DE L'OCTAEDRE J DANS UN DES 2 ARBRES
+C                     >0 => DANS LARBRO
+C                     <0 => DANS LARBRT
+C      LARBRO(0,J)  : 1 A 14 NO DE FILS DE L'OCTAEDRE J POUR SON PERE
+C                     + 100 * NO TYPE DE L'OT J
+C                     NO TYPE DE L'OT : 0 SI OCTAEDRE
+C                                       1 SI TETRAEDRE T RONDE (T1)
+C                                       2 SI TETRAEDRE T       (T2)
+C   SI LARBRO(0,J)>0 ALORS J EST UN OCTAEDRE OCCUPE
+C      SI LARBRO(1,.)>0 ALORS
+C         LARBRO(1:14,J): NO (>0) LARBRO DES 14 SOUS-OCTA-TETRAEDRES
+C      SINON
+C         LARBRO(1:14,J):-NO PTXYZD DES 0 A 14 POINTS INTERNES DE L'OCTA J
+C                         0  SI PAS DE POINT
+C                        ( J EST ALORS UNE FEUILLE DE L'ARBRE )
+C
+C      LARBRO(15:20,J) : NO PTXYZD DES 6 SOMMETS DE L'OCTAEDRE J
+C   SINON
+C      LARBRO(0,J): -ADRESSE DANS LARBRO DE L'OCTAEDRE VIDE SUIVANT
+C
+C LARBRT : ARBRE-5 DES TETRAEDRES ( FOND DE LA TETRAEDRISATION )
+C      LARBRT(0,0) : NO DU 1-ER TETRAEDRE VIDE DANS LARBRT
+C      LARBRT(1,0) : MAXIMUM DU 1-ER INDICE DE LARBRT (ICI -1:9)
+C      LARBRT(2,0) : MAXIMUM DECLARE DU 2-EME INDICE DE LARBRT
+C                     (ICI = MXARBT)
+C
+C      LARBRT(-1,J) : NO DU PERE DU TETRAEDRE J DANS UN DES 2 ARBRES
+C                     >0 => DANS LARBRO
+C                     <0 => DANS LARBRT
+C      LARBRT(0,J) : 0 A 4 NO DE FILS DU TETRAEDRE J POUR SON PERE
+C                    + 100 * NO TYPE DE L'OT J
+C                     NO TYPE DE L'OT : 0 SI OCTAEDRE
+C                                       1 SI TETRAEDRE T RONDE (T1)
+C                                       2 SI TETRAEDRE T       (T2)
+C
+C   SI LARBRT(0,J)>0 ALORS J EST UN TETRAEDRE OCCUPE
+C      SI LARBRT(1,J)>0 ALORS
+C         LARBRT(1:5,J): NO (>0) LARBRT DES 5 SOUS-OCTA-TETRAEDRES
+C      SINON
+C         LARBRT(1:5,J):-NO PTXYZD DES 0 A 5 POINTS INTERNES AU TETRA J
+C                         0  SI PAS DE POINT
+C                        ( J EST ALORS UNE FEUILLE DU ARBRE )
+C
+C      LARBRT(6:9,J) : NO PTXYZD DES 4 SOMMETS DU TETRAEDRE J
+C   SINON
+C      LARBRT(0,J): ADRESSE DANS LARBRT DU TETRAEDRE VIDE SUIVANT
+C
+C PTXYZD : X Y Z DISTANCE SOUHAITEE DES POINTS
+C
+C SORTIES:
+C --------
+C TAILAR : CARRE DE LA LONGUEUR DES ARETES DE L'OT NUOT
+C+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+C AUTEUR : ALAIN PERRONNET  ANALYSE NUMERIQUE PARIS UPMC   NOVEMBRE 1992
+C2345X7..............................................................012
+      INTEGER           LARBRO(-1:20,0:*),
+     &                  LARBRT(-1:9 ,0:*)
+      DOUBLE PRECISION  PTXYZD(4,*)
+C
+      IF( NUOT .GT. 0 ) THEN
+C        OCTAEDRE  2 NUMEROS DE SOMMETS
+         NS1    = LARBRO( 15, NUOT )
+         NS2    = LARBRO( 16, NUOT )
+      ELSE
+C        OCTAEDRE  2 NUMEROS DE SOMMETS
+         NS1    = LARBRT( 6, -NUOT )
+         NS2    = LARBRT( 7, -NUOT )
+      ENDIF
+C
+C     CARRE DE LA LONGUEUR DES ARETES
+      TAILAR = REAL( ( PTXYZD(1,NS2) - PTXYZD(1,NS1) ) ** 2
+     %             + ( PTXYZD(2,NS2) - PTXYZD(2,NS1) ) ** 2
+     %             + ( PTXYZD(3,NS2) - PTXYZD(3,NS1) ) ** 2 )
+C
+      RETURN
+      END

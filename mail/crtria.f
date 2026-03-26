@@ -1,0 +1,128 @@
+      SUBROUTINE CRTRIA( NTLXSU, MXPTA,  NBPTA,  XYZPTA,
+     %                           MXTRA,  NBTRA,  NUSTRA,
+     %                   NTNSEF, MNNSEF, NTXYZS, MNXYZS, IERR )
+C+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+C BUT :    CONSTRUIRE LES TMS XYZSOMMET ET NSEF DE LA TRIANGULATION
+C -----    D'UNE SURFACE DEFINIE PAR NUSTRA ET XYZST
+C
+C ENTREES:
+C --------
+C NTLXSU : NUMERO DU TABLEAU TMS DU LEXIQUE DE LA SURFACE FINALE
+C MXPTA  : NOMBRE MAXIMAL DE XYZ DES SOMMETS DECLARABLES DANS XYZPTA
+C NBPTA  : NOMBRE DE  SOMMET  DE LA TRIANGULATION
+C XYZPTA : 3 XYZ  DES SOMMETS DE LA TRIANGULATION
+C MXTRA  : NOMBRE MAXIMAL DE TRIANGLES DECLARABLES DANS NUSTRA
+C NBTRA  : NOMBRE DE TRIANGLES DE LA TRIANGULATION
+C NUSTRA : (3,NBTRA) NO XYZPTA DES 3 SOMMETS DES NBTRA TRIANGLES
+C
+C SORTIES:
+C --------
+C NTNSEF: NUMERO      DU TMS 'NSEF' DES NUMEROS DES FACES DE LA SURFACE
+C MNNSEF: ADRESSE MCN DU TMS 'NSEF' DES NUMEROS DES FACES DE LA SURFACE
+C          CF ~td/d/a___nsef
+C NTXYZS: NUMERO      DU TMS 'XYZSOMMET' DE LA SURFACE
+C MNXYZS: ADRESSE MCN DU TMS 'XYZSOMMET' DE LA SURFACE
+C          CF ~td/d/a___xyzsommet
+C IERR   : =0 SI PAS D'ERREUR
+C          >0 SINON
+C+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+C AUTEUR : PERRONNET Alain LJLL UPMC & St Pierre du Perray  Octobre 2011
+C2345X7..............................................................012
+      INCLUDE "./incl/a___xyzsommet.inc"
+      INCLUDE "./incl/a___nsef.inc"
+      include"./incl/gsmenu.inc"
+      include"./incl/langue.inc"
+C
+      include"./incl/pp.inc"
+      COMMON             MCN(MOTMCN)
+      REAL              RMCN(1)
+      DOUBLE PRECISION  DMCN(1)
+      EQUIVALENCE (MCN(1), RMCN(1), DMCN(1))
+      COMMON / UNITES / LECTEU, IMPRIM, NUNITE(30)
+C
+      DOUBLE PRECISION  XYZPTA(3,MXPTA)
+      INTEGER           NUSTRA(3,MXTRA), NTNSEF, NTXYZS
+C
+      IF( NBTRA .LE. 0 .OR. NBTRA .LE. 0 ) THEN
+         IERR = 1
+         RETURN
+      ENDIF
+C
+C     CONSTRUCTION DU TABLEAU 'XYZSOMMET' DE CETTE SURFACE
+C     ----------------------------------------------------
+      CALL LXTNDC ( NTLXSU, 'XYZSOMMET', 'MOTS', WYZSOM+3*NBPTA )
+      CALL LXTSOU ( NTLXSU, 'XYZSOMMET', NTXYZS, MNXYZS )
+C
+C     NBSOM 'NOMBRE DE SOMMETS'
+      MCN( MNXYZS + WNBSOM ) = NBPTA
+C
+C     LE NOMBRE DE TANGENTES DU MAILLAGE
+      MCN( MNXYZS + WNBTGS ) = 0
+C
+C     LE NOMBRE DE COORDONNEES PAR SOMMET
+      MCN( MNXYZS + WBCOOR ) = 3
+C
+      MN = MNXYZS + WYZSOM - 1
+      DO K = 1, NBPTA
+         DO M = 1, 3
+            MN = MN + 1
+            RMCN(MN) = REAL( XYZPTA(M,K) )
+         ENDDO
+      ENDDO
+C
+C     LE NOM DU TABLEAU DESCRIPTEUR
+      MCN( MNXYZS + MOTVAR(6) ) = NONMTD( '~>>>XYZSOMMET' )
+C
+C     LA DATE DE CREATION
+      CALL ECDATE( MCN(MNXYZS) )
+C
+C     CONSTRUCTION DU TABLEAU 'NSEF' DE CETTE SURFACE
+C     -----------------------------------------------
+      CALL LXTNDC( NTLXSU, 'NSEF', 'MOTS',  WUSOEF+4*NBTRA )
+      CALL LXTSOU( NTLXSU, 'NSEF',  NTNSEF, MNNSEF )
+C
+C     TYPE DE L'OBJET SURFACE
+      MCN( MNNSEF + WUTYOB ) = 3
+C
+C     TYPE SURFACE -1:INCONNU, 0:NON-FERME ou 1:FERME
+C     MIS A JOUR DANS L'EXECUTION DE mailex.f
+      MCN( MNNSEF + WUTFMA ) = -1
+C
+C     NOMBRE DE SOMMETS PAR EF
+      MCN( MNNSEF + WBSOEF ) = 4
+C
+C     0 TANGENTES PAR EF
+      MCN( MNNSEF + WBTGEF ) = 0
+C
+C     Nombre des EF du PLSV
+      MCN( MNNSEF + WBEFOB ) = NBTRA
+C
+C     Nombre des EF avec TG
+      MCN( MNNSEF + WBEFTG ) = 0
+C
+C     AUCUN TRIANGLE NE POINTE SUR UN EF A TG
+      MCN( MNNSEF + WBEFAP ) = 0
+C
+C     NUMERO DU TYPE DE MAILLAGE: NON STRUCTURE
+      MCN( MNNSEF + WUTYMA ) = 0
+C
+C     LE NUMERO DES 3 SOMMETS + 0 DES NBTRA TRIANGLES
+      MN = MNNSEF + WUSOEF - 1
+      DO K = 1, NBTRA
+         DO M = 1, 3
+            MN = MN + 1
+            MCN(MN) = NUSTRA(M,K)
+         ENDDO
+         MN = MN + 1
+         MCN(MN) = 0
+      ENDDO
+C
+C     LE NUMERO DU TABLEAU DESCRIPTEUR
+      MCN ( MNNSEF + MOTVAR(6) ) = NONMTD ( '~>>>NSEF' )
+C
+C     LA DATE DE CREATION
+      CALL ECDATE ( MCN( MNNSEF ) )
+      IERR = 0
+C
+      RETURN
+      END

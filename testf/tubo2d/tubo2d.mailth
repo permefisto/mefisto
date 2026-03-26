@@ -1,0 +1,67 @@
+{ ================================================================= }
+{ Logiciel MEFISTO     : Version 21 Octobre 2022                    }
+{ Nom de l'Utilisateur : Perronnet Alain                            }
+{ Nom du Projet        : tubo2d                                     }
+{ Date                 : 2022/10/21 17h 43m                         }
+{ ================================================================= }
+ DefVar xmin, xmax, ymin, ymax, taille;
+ xmin=0; xmax=10; ymin=0; ymax=4;
+ taille=0.1;
+
+ 1;{ POINTS sommets de l objet }
+ 1;{ FRAPPE des valeurs }
+   { NOM du POINT }
+ A; i; 1; xmin; ymin; 0;
+ { DANS LE LEXIQUE ~>TRANSFO }
+ { coordonnees x y z }
+ { COORPO '3 coordonnees cartesiennes du point' xyz ; }
+ { NOM du POINT ou ABANDON? }
+ B; i; 1; xmax; ymin; 0;
+ C; i; 1; xmax; ymax; 0;
+ D; i; 1; xmin; ymax; 0;
+ BCMILIEU; i; 1; xmax; (ymin+ymax)/2; 0;     
+ @;
+
+ 2; {LIGNES}
+ AB; i; 2; (xmax-xmin)/taille; 1; A; B;
+ BC; i; 2; (ymax-ymin)/taille; 1; B; C;
+ CD; i; 2; (xmax-xmin)/taille; 1; C; D;
+ DA; i; 2; (ymax-ymin)/taille; 1; D; A;
+ @;
+
+ 3; { SURFACES faces de l objet }
+ ABCDQ; i;{ DANS LE LEXIQUE ~>TRANSFO }
+ 1;{ quadrangle transfini }
+ AB; BC; CD; DA;
+ 1; {maillage regulier}
+
+ ABCD; i; { NOM de TRANSFORMATION }
+ 31; { triangulation d une quadrangulation }
+ ABCDQ; { NOM de SURFACE initiale}
+ 1;  { creation d une ARETE S1 S3 }
+ @;
+
+ 5;{ OBJETS parties de l OBJET }
+ tubo2d; { NOM de l'OBJET }
+ 0; { classique 2D ou 3D }
+ 10;{ NBDOBJ 'nombre des Points Lignes Surfaces Volumes }
+    { POINT ou LIGNE ou SURFACE ou VOLUME ou OBJET? }
+ s; ABCD; 
+ l; AB; l; BC; l; CD; l; DA;
+ p;  A; p;  B; p;  C; p;  D; p; BCMILIEU;
+ { NTYOBJ(1..NBDOBJ) 'nom du type PLSVO et nom du PLSVO' typeobjet ; }
+ @;
+
+ 7;   { INTERPOLATION NOEUDS du maillage }
+ tubo2d;{ NOM de l'OBJET a INTERPOLER }
+{ 3;    LAGRANGE de DEGRE 1  => TRIANGLE FLUIDE BREZZI-FORTIN }
+  4;  { LAGRANGE de DEGRE 2  => TRIANGLE FLUIDE TAYLOR-HOOD }
+ @;
+ @;
+
+10;  { Dessin du tube }
+ 5;  { OBJET }
+ 1;  { Tous les OBJETS 1 par 1 }
+ 90; { Faire le TRACE }
+
+FERMER;

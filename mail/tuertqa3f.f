@@ -1,0 +1,100 @@
+      SUBROUTINE TUERTQA3F( L1ARFA, MNARFA, NBAR3F, MNAR3F,
+     %                      MNNSEF, IERR )
+C+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+C BUT :    DETRUIRE TOUTES LES FACES TRIANGLE ou QUADRANGLE AYANT
+C ------   UNE ARETE TRIPLE i.E. APPARTENANT A AU MOINS 3 FACES
+
+C ENTREES:
+C --------
+C L1ARFA : NOMBRE DE MOTS PAR ARFA DU TABLEAU NARFA
+C MNARFA : ADRESSE DANS MCN DU TABLEAU NARFA DES QTANGLES DU MAILLAGE
+C          NARFA(1,I)= NO DU 1-ER  SOMMET DE L'ARETE
+C          NARFA(2,I)= NO DU 2-EME SOMMET > 1-ER  SOMMET
+C          NARFA(3,I)= CHAINAGE HACHAGE SUR LE QTANGLE SUIVANT
+C          NARFA(4:L1ARFA,I)= NO NOSTQT DU QTANGLE CONTENANT L'ARETE
+C          SI UNE ARETE APPARTIENT A PLUS DE L1ARFA-3 QTANGLES, 
+C          LE DERNIER NUMERO DE QTANGLE EST RENDU NEGATIF POUR INDIQUER
+C          QUE LA LISTE DES QTANGLES EST INCOMPLETE
+C NBAR3F : NOMBRE D'ARETES APPARTENANT A AU MOINS 3 FACES
+C MNAR3F : >0 ADRESSE MCN DU TMC NAR3F NO NARFA DES ARETES TRIPLES
+C          =0 SI NBAR3F=0
+C MNNSEF : ADRESSE DU TABLEAU NSEF DE LA SURFACE
+
+C SORTIES:
+C --------
+C IERR   : 0 SI PAS D'ERREUR
+C          2 UNE ARETE NON RETROUVEE DANS LE TABLEAU NARFA
+C+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+C AUTEUR : Alain PERRONNET Saint PIERRE du PERRAY             Avril 2020
+C2345X7..............................................................012
+      include"./incl/a___nsef.inc"
+      include"./incl/pp.inc"
+      COMMON         MCN(MOTMCN)
+      REAL          RMCN(1)
+      EQUIVALENCE  (RMCN(1),MCN(1))
+
+      IERR = 0
+
+      IF( NBAR3F .LE. 0 ) GOTO 9999
+
+C     SUPPRESSION DES FACES DES NBAR3F ARETES TRIPLES
+      MNNOSOEF = MNNSEF + WUSOEF
+      MNAR3    = MNAR3F - 1
+      DO N = 1, NBAR3F
+
+C        LA N-EME ARETE TRIPLE
+         MNAR3 = MNAR3 + 1
+         NAR3F = MCN( MNAR3 )
+         MNAR  = MNARFA - L1ARFA + L1ARFA * NAR3F - 1
+
+C        NOMBRE DE FACES DE CETTE ARETE NAR3F
+         NBF  = 0
+         DO K = 4, L1ARFA
+            NOTQ = MCN( MNAR+K )
+            IF( NOTQ .NE. 0 ) THEN
+C              UNE FACE TQ DE PLUS
+               NBF = NBF + 1
+            ENDIF
+         ENDDO
+
+C        L'ARETE APPARTIENT APPARTIENT A NBF FACES
+C        DESTRUCTION DE CES NBF FACES
+         DO K = 4, 3+NBF
+            NOTQ = ABS( MCN( MNAR+K ) )
+            MN1  = MNNOSOEF + 4 * NOTQ - 5
+            DO L=1,4
+               MCN(MN1+L) = 0
+            ENDDO
+         ENDDO
+
+      ENDDO
+
+C     COMPRESSION PAR SUPPRESSION DES TQ VIDES
+      MNTQ0 = MNNOSOEF -1
+      MNTQ1 = MNNOSOEF -1
+      NBTQ1 = 0
+      DO N = 1, MCN(MNNSEF+WBEFOB)
+
+         IF( MCN( MNTQ0+1 ) .GT. 0 ) THEN
+            NBTQ1 = NBTQ1 + 1
+            DO K=1,4
+               MCN( MNTQ1 + K ) = MCN( MNTQ0 + K )
+            ENDDO
+            MNTQ1 = MNTQ1 + 4
+         ENDIF
+
+         MNTQ0 = MNTQ0 + 4
+
+      ENDDO
+
+C     MISE A JOUR DU NOMBRE DE TQ
+      MCN(MNNSEF+WBEFOB) = NBTQ1
+
+C     MISE A JOUR DU TMS NSEF
+      CALL ECDATE( MCN(MNNSEF) )
+      MCN(MNNSEF+MOTVAR(6))=NONMTD( '~>>>NSEF' )
+
+ 9999 PRINT*,'tuertqa3f:',NBAR3F,' ARETES APPARTENANT a AU MOINS 3 FACES
+     % ont ete SUPPRIMEES'
+      RETURN
+      END

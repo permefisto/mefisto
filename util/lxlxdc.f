@@ -1,0 +1,31 @@
+      SUBROUTINE LXLXDC( NTLX, KNOM, NBCANM, MXNOMS )
+C+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+C BUT :    DECLARER UN LEXIQUE DANS UN LEXIQUE
+C -----
+C ENTREES:
+C --------
+C NTLX   : NUMERO DU TABLEAU TAMS DU LEXIQUE PERE
+C KNOM   : NOM DU LEXIQUE FILS A DECLARER
+C NBCANM : NOMBRE DE CARACTERES AU PLUS D'UN NOM DU LEXIQUE FILS
+C MXNOMS : NOMBRE MAXIMAL DE NOMS DU LEXIQUE FILS
+C+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+C PROGRAMMEUR: ALAIN PERRONNET ANALYSE NUMERIQUE PARIS      OCTOBRE 1985
+C.......................................................................
+      CHARACTER*(*) KNOM
+      CHARACTER*4   KTYPE
+      include"./incl/pp.inc"
+      COMMON        MCN(MOTMCN)
+C
+C     LE NOMBRE DE CARACTERES <10000 EST TRANSFORME EN 4 CARACTERES
+      WRITE(KTYPE,'(I4)') NBCANM
+      CALL LXNMDC( NTLX, KNOM, 'LEXI', KTYPE, MXNOMS, NRETOU )
+C
+C     SI LE LEXIQUE EXISTE DEJA ALORS RETOUR
+      IF( NRETOU .GT. 0 ) RETURN
+C
+C     MISE A JOUR DU CHAINAGE SUR LE PERE
+      CALL LXNMOU( NTLX, KNOM, KTYPE, NTLXLX, MNLXLX )
+      MCN( MNLXLX + 4 ) = NTLX
+C
+      RETURN
+      END

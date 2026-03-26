@@ -1,0 +1,35 @@
+La fonction utilisateur donnant la valeur de la CONDUCTIVITE ANISOTROPE
+a l'instant TEMPS, au point X,Y,Z, 
+pour l'objet de numero de type NO_TYPE_SVO
+(3:SURFACE, 4:VOLUME, 5:OBJET )
+et de numero dans ce lexique   NO_SVO
+a la temperature TEMPER conue ou non (cas non lineaire)
+le NOCOEF du Coefficient de conductivite ANISOTROPE
+1:C11, 2:C12=C21, 3:C22, 4:C13=C31, 5:C23=C32, 6:C33
+
+doit comprendre dans cet ordre les 8 parametres 
+
+CONDUCTIVITE( TEMPS, X, Y, Z, NO_TYPE_SVO, NO_SVO, TEMPER, NOCOEF ) 
+
+et etre programmee selon la grammaire du langage LU
+(cf documentation et exemples du menu de depart )
+
+Ces parametres sont tous initialises en entree.
+Ils peuvent ou non servir a calculer la CONDUCTIVITE.
+ 
+EXEMPLE:
+deffonc conductivite( t, x, y, z, no_type_objet, materiau, temper, noc ) ;
+si    materiau=nuobjt( 'volume' , 'acier' )
+alors if nuc=1 then
+        conductivity= 20;
+     else
+        if nuc=2 then
+	   conductivity= 20;
+        finsi;
+     finsi;
+sinon si    materiau=nuobjt( 'volume' , 'cuivre' )
+      alors conductivite=52;
+      sinon conductivite=0 ;
+      finsi;  
+finsi;
+finfonc; 

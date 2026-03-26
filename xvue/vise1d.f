@@ -1,0 +1,766 @@
+      SUBROUTINE VISE1D( NMTCL0 )
+C ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+C BUT :  DEFINIR UNE VISEE 1D ET UN INTERVALLE DE FONCTION EN Y
+C -----  AGRANDISSEMENT OU UNE REDUCTION D'UN TRACE 1D ...
+C
+C SORTIE :
+C --------
+C NMTCL0 : NUMERO DU DERNIER MOT CLE ACTIVE DANS LA VISEE
+C          <0 DEMANDE UN ABANDON DU TRACE
+C ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+C AUTEUR:ALAIN PERRONNET LJLL UPMC PARIS & St Pierre du Perray JUIN 2009
+C23456---------------------------------------------------------------012
+      include"./incl/trvari.inc"
+      include"./incl/mecoit.inc"
+      include"./incl/gsmenu.inc"
+      include"./incl/xyzext.inc"
+      include"./incl/langue.inc"
+      COMMON / UNITES / LECTEU,IMPRIM,INTERA,NFDOCU,NFFRAP,NUNITE(27)
+      REAL              PT1(3),PT2(3),PT3(3)
+C
+C     PAR DEFAUT PAS DE TRANSLATION ZOOM
+      LORBITE = 0
+C
+ 10   CALL LIMTCL( 'visee1d' , NMTCL0 )
+      IF( NMTCL0 .LE.  0 ) GOTO 9900
+      IF( NMTCL0 .EQ. 49 ) GOTO 4900
+      IF( NMTCL0 .EQ. 50 ) GOTO 5000
+      IF( NMTCL0 .EQ. 60 ) GOTO 6000
+      IF( NMTCL0 .EQ. 75 ) GOTO 7500
+      IF( NMTCL0 .EQ. 76 ) GOTO 7600
+      IF( NMTCL0 .EQ. 90 ) GOTO 9900
+C     ACTIVATION DU TERMINAL GRAPHIQUE EN DIALOGUE
+      GOTO(  10,  10,  10,  10,  10,  10,  10,  10,  10,  10,
+     %       10,  10,  10,  10,  10,  10,  10,  10, 190,  10,
+     %       10,2200,2300,2400,2500,2600,2700,  10,  10,  10,
+     %       10,  10,  10,3400,  10,3600,  10,3800,3900,  10 ) , NMTCL0
+C
+C     POURCENTAGE de REDUCTION des FACES
+C     ==================================
+ 190  CALL INVITE( 130 )
+      CALL LIRRSP( NCVALS , R )
+      IF( NCVALS .LE. 0 ) GOTO 10
+      PREDUF = R
+      PREDUF = MIN( 100.0 , PREDUF )
+      PREDUF = MAX(   0.0 , PREDUF )
+      NBLGRC(NRERR) = 1
+      WRITE(KERR(MXLGER)(1:10),'(G10.2)' ) PREDUF
+      IF( LANGAG .EQ. 0 ) THEN
+         KERR(1) = '% de REDUCTION des FACES= ' // KERR(MXLGER)(1:10)
+      ELSE
+         KERR(1) = '% of REDUCTION of FACES= ' // KERR(MXLGER)(1:10)
+      ENDIF
+      CALL LERESU
+      GOTO 10
+C
+C     AGRANDISSEMENT par SOURIS du TRACE
+C     ==================================
+ 2200 IF( INTERA .LE. 1 ) THEN
+         IF( NDIMLI .LE. 2 ) THEN
+            GOTO 2500
+         ELSE
+            GOTO 2600
+         ENDIF
+      ENDIF
+C
+C     UNE SOURIS EST DISPONIBLE
+ 2202 IF( LANGAG .EQ. 0 ) THEN
+         CALL INVITR( 'CLIQUER au POINT min' )
+      ELSE
+         CALL INVITR( 'CLICK at the min POINT' )
+      ENDIF
+      CALL RECTEF( NRLGSA )
+C     SAISIE D'UN POINT PAR CLIC DE LA SOURIS OU PAR CLAVIER PHYSIQUE
+      CALL SAIPTC( NOTYEV, NX1, NY1, NOCHAR )
+      IF( NOTYEV .EQ. -1 .AND. CHAR(NOCHAR) .EQ. '@' ) GOTO 10
+      IF( NOTYEV .LE. 0 ) GOTO 2202
+C     TRACE DU POINT DESIGNE
+      CALL XVCOULEUR( NCJAUN )
+      CALL XVTEXTE( 'X', 1, NX1, NY1 )
+C
+ 2204 IF( LANGAG .EQ. 0 ) THEN
+         CALL INVITR( 'CLIQUER au POINT MAX' )
+      ELSE
+         CALL INVITR( 'CLICK at the MAX POINT' )
+      ENDIF
+      CALL RECTEF( NRLGSA )
+C     SAISIE D'UN POINT PAR CLIC DE LA SOURIS OU PAR CLAVIER PHYSIQUE
+      CALL SAIPTC( NOTYEV, NX2, NY2, NOCHAR )
+C     L'INVITE EST EFFACEE
+      CALL RECTEF( NRINVI )
+      IF( NOTYEV .EQ. -1 .AND. CHAR(NOCHAR) .EQ. '@' ) GOTO 10
+      IF( NOTYEV .EQ. 0 ) GOTO 10
+      IF( NOTYEV .LT. 0 ) GOTO 2204
+C     TRACE DU POINT DESIGNE
+      CALL XVCOULEUR( NCJAUN )
+      CALL XVTEXTE( 'X', 1, NX2, NY2 )
+C
+      IF( NX1 .EQ. NX2 .OR. NY1 .EQ. NY2 ) GOTO 2202
+C
+C     LES COORDONNEES DES POINTS CLIQUES  LES EXTREMA EN COORDONNEES AXONO
+      PT1(1) = XOB2PX( NX1 )
+      PT2(1) = XOB2PX( NX2 )
+      IF( PT1(1) .GT. PT2(1) ) THEN
+         R      = PT2(1)
+         PT2(1) = PT1(1)
+         PT1(1) = R
+      ENDIF
+C
+      PT1(2) = YOB2PX( NY1 )
+      PT2(2) = YOB2PX( NY2 )
+      IF( PT1(2) .GT. PT2(2) ) THEN
+         R      = PT2(2)
+         PT2(2) = PT1(2)
+         PT1(2) = R
+      ENDIF
+C
+      AXOLAR = ( PT2(1) - PT1(1) ) * 0.5
+      AXOHAU = ( PT2(2) - PT1(2) ) * 0.5
+C
+      IF( NDIMLI .LE. 2 ) THEN
+C        TRACE EN 2D
+C        L'ECRAN VU EN COORDONNEES OBJET 2D EN UNITES UTILISATEUR
+         AXOPTV(1) = ( PT1(1) + PT2(1) ) * 0.5
+         AXOPTV(2) = ( PT1(2) + PT2(2) ) * 0.5
+         CALL FENETRE( AXOPTV(1)-AXOLAR, AXOPTV(1)+AXOLAR,
+     %                 AXOPTV(2)-AXOHAU, AXOPTV(2)+AXOHAU )
+         NOTYVI = 1
+C
+C        SAUVEGARDE DU POINT SUR LE FICHIER FRAPPE
+         IF( LANGAG .EQ. 0 ) THEN
+            WRITE(NFFRAP,*) '{ FENETRE 2D XMIN XMAX YMIN YMAX } '
+         ELSE
+            WRITE(NFFRAP,*) '{ 2D WINDOW  XMIN XMAX YMIN YMAX } '
+         ENDIF
+         WRITE(NFFRAP,*)  AXOPTV(1)-AXOLAR, '; ',
+     %                    AXOPTV(1)+AXOLAR, '; '
+         WRITE(NFFRAP,*)  AXOPTV(2)-AXOHAU, '; ',
+     %                    AXOPTV(2)+AXOHAU, '; '
+         GOTO 10
+      ENDIF
+C
+C     TRACE EN 3D
+      AXODIS = SQRT( (AXOEIL(1)-AXOPTV(1)) ** 2 +
+     %               (AXOEIL(2)-AXOPTV(2)) ** 2 +
+     %               (AXOEIL(3)-AXOPTV(3)) ** 2 )
+C
+C     LES 3 COORDONNEES AXONOMETRIQUES DE PTV ET OEIL
+      PT1(1) = ( PT1(1) + PT2(1) ) * 0.5
+      PT1(2) = ( PT1(2) + PT2(2) ) * 0.5
+      PT1(3) = 0.0
+      PT2(1) = PT1(1)
+      PT2(2) = PT1(2)
+      PT2(3) = AXODIS
+C     RETOUR AUX COORDONNEES XYZ COURANTES DE PTV ET OEIL
+      CALL AXOXYZ( PT2, AXOEIL )
+C     ATTENTION NE PAS PERMUTER CES 2 APPELS
+      CALL AXOXYZ( PT1, AXOPTV )
+C
+C     ACTIVATION DE LA NOUVELLE AXONOMETRIE
+      CALL MATAXO
+      CALL FENETRE( -AXOLAR, AXOLAR, -AXOHAU, AXOHAU )
+      NOTYVI = 11
+C
+C     SAUVEGARDE DU POINT SUR LE FICHIER FRAPPE
+      IF( LANGAG .EQ. 0 ) THEN
+       WRITE(NFFRAP,*)'{ POINT VU OEIL LARGEUR HAUTEUR ARRIERE AVANT }'
+      ELSE
+       WRITE(NFFRAP,*)'{ SEEN POINT; EYE; WIDTH;  HEIGHT; BACK; AHEAD }'
+      ENDIF
+      WRITE(NFFRAP,*) (AXOPTV(I),'; ',I=1,3)
+      WRITE(NFFRAP,*) (AXOEIL(I),'; ',I=1,3)
+      IF( LANGAG .EQ. 0 ) THEN
+         WRITE(NFFRAP,*) '32; { Demi LARGEUR et HAUTEUR de la SCENE }'
+      ELSE
+         WRITE(NFFRAP,*) '32; { Half WIDTH and HEIGHT of the SCENE }'
+      ENDIF
+      WRITE(NFFRAP,*)  AXOLAR,'; ', AXOHAU,'; '
+      WRITE(NFFRAP,*)  AXOARR,'; ', AXOAVA,'; '
+      GOTO 10
+C
+C     REDUCTION par SOURIS du TRACE
+C     =============================
+ 2300 IF( INTERA .LE. 1 ) THEN
+         IF( NDIMLI .LE. 2 ) THEN
+            GOTO 2500
+         ELSE
+            GOTO 2600
+         ENDIF
+      ENDIF
+C
+C     UNE SOURIS EST DISPONIBLE
+ 2302 IF( LANGAG .EQ. 0 ) THEN
+         CALL INVITR( 'CLIQUER OU le COIN min ACTUEL SERA TRACE' )
+      ELSE
+         CALL INVITR( 'CLICK WHERE the min CORNER will be drawn' )
+      ENDIF
+      CALL RECTEF( NRLGSA )
+C     SAISIE D'UN POINT PAR CLIC DE LA SOURIS OU PAR CLAVIER PHYSIQUE
+      CALL SAIPTC( NOTYEV, NX1, NY1, NOCHAR )
+      IF( NOTYEV .EQ. -1 .AND. CHAR(NOCHAR) .EQ. '@' ) GOTO 10
+      IF( NOTYEV .EQ. 0 ) GOTO 10
+      IF( NOTYEV .LT. 0 ) GOTO 2302
+C     TRACE DU POINT DESIGNE
+      CALL XVCOULEUR( NCJAUN )
+      CALL XVTEXTE( 'X', 1, NX1, NY1 )
+C
+ 2304 IF( LANGAG .EQ. 0 ) THEN
+         CALL INVITR( 'CLIQUER OU le COIN MAX ACTUEL SERA TRACE' )
+      ELSE
+         CALL INVITR( 'CLICK WHERE the MAX CORNER will be drawn' )
+      ENDIF
+      CALL RECTEF( NRLGSA )
+C     SAISIE D'UN POINT PAR CLIC DE LA SOURIS OU PAR CLAVIER PHYSIQUE
+      CALL SAIPTC( NOTYEV, NX2, NY2, NOCHAR )
+C     L'INVITE EST EFFACEE
+      CALL RECTEF( NRINVI )
+      IF( NOTYEV .EQ. -1 .AND. CHAR(NOCHAR) .EQ. '@' ) GOTO 10
+      IF( NOTYEV .EQ. 0 ) GOTO 10
+      IF( NOTYEV .LT. 0 ) GOTO 2304
+C     TRACE DU POINT DESIGNE
+      CALL XVCOULEUR( NCJAUN )
+      CALL XVTEXTE( 'X', 1, NX2, NY2 )
+C
+      IF( NX1 .EQ. NX2 .OR. NY1 .EQ. NY2 ) GOTO 2302
+C
+C     LES COORDONNEES DES POINTS CLIQUES  LES EXTREMA EN COORDONNEES AXONO
+      PT1(1) = XOB2PX( NX1 )
+      PT2(1) = XOB2PX( NX2 )
+      IF( PT1(1) .GT. PT2(1) ) THEN
+         R      = PT2(1)
+         PT2(1) = PT1(1)
+         PT1(1) = R
+      ENDIF
+C
+      PT1(2) = YOB2PX( NY1 )
+      PT2(2) = YOB2PX( NY2 )
+      IF( PT1(2) .GT. PT2(2) ) THEN
+         R      = PT2(2)
+         PT2(2) = PT1(2)
+         PT1(2) = R
+      ENDIF
+C
+      XLAR = ( PT2(1) - PT1(1) ) * 0.5
+      YHAU = ( PT2(2) - PT1(2) ) * 0.5
+C
+C     RAPPORT LARGEUR FENETRE / HAUTEUR FENETRE
+      R = FLOAT(LAPXFE) / FLOAT(LHPXFE) * CYMMPX / CXMMPX
+C
+C     RECHERCHE DE LA PLUS GRANDE DES DIMENSIONS
+      IF( XLAR .GE. YHAU ) THEN
+C
+C        LARGEUR DESIGNEE PLUS GRANDE QUE LA HAUTEUR
+C        LA LARGEUR COINCIDE AVEC CELLE DE LA FENETRE
+         IF( XLAR/R .GT. YHAU ) THEN
+            YHAU = XLAR / R
+         ELSE
+            XLAR = YHAU * R
+         ENDIF
+C
+      ELSE
+C
+C        HAUTEUR DESIGNEE PLUS GRANDE QUE LA LARGEUR
+C        LA HAUTEUR COINCIDE AVEC CELLE DE LA FENETRE
+         IF( YHAU*R .GT. XLAR ) THEN
+            XLAR = YHAU * R
+         ELSE
+            YHAU = XLAR / R
+         ENDIF
+C
+      ENDIF
+C
+C     LES EXTREMA DU RECTANGLE D'AXONOMETRIE AVEC CETTE LARGEUR ET HAUTEUR
+      PT3(1) = ( PT1(1) + PT2(1) ) * 0.5
+      PT3(2) = ( PT1(2) + PT2(2) ) * 0.5
+      PT1(1) = PT3(1) - XLAR
+      PT1(2) = PT3(2) - YHAU
+      PT2(1) = PT3(1) + XLAR
+      PT2(2) = PT3(2) + YHAU
+C
+C     LE FUTUR CENTRE DE LA FENETRE AXONOMETRIQUE
+C     C'EST LE POINT QUI DANS LA REDUCTION A LES COORDONNEES DU CENTRE
+C     DE LA FENETRE ACTUELLE
+      PT3(1) = ( ( XOBMIN + XOBMAX ) * ( XOBMAX - XOBMIN ) * 0.5
+     %       + XOBMIN * PT2(1) - XOBMAX * PT1(1) ) / ( PT2(1) - PT1(1) )
+      PT3(2) = ( ( YOBMIN + YOBMAX ) * ( YOBMAX - YOBMIN ) * 0.5
+     %       + YOBMIN * PT2(2) - YOBMAX * PT1(2) ) / ( PT2(2) - PT1(2) )
+C
+C     SA LARGEUR ET HAUTEUR EN AXONOMETRIE
+      AXOLAR = AXOLAR * ( XOBMAX - XOBMIN ) / ( 2 * XLAR )
+      AXOHAU = AXOHAU * ( YOBMAX - YOBMIN ) / ( 2 * YHAU )
+C
+      IF( NDIMLI .LE. 2 ) THEN
+C
+C        TRACE EN DIMENSION 2
+C        LE CENTRE DU NOUVEAU CARRE DESIGNE EN AXONOMETRIE
+         AXOPTV(1) = PT3(1)
+         AXOPTV(2) = PT3(2)
+C
+C        L'ECRAN VU EN COORDONNEES OBJET 2D EN UNITES UTILISATEUR
+         CALL FENETRE( AXOPTV(1)-AXOLAR, AXOPTV(1)+AXOLAR,
+     %                 AXOPTV(2)-AXOHAU, AXOPTV(2)+AXOHAU )
+         NOTYVI = 1
+C
+C        SAUVEGARDE DU POINT SUR LE FICHIER FRAPPE
+         IF( LANGAG .EQ. 0 ) THEN
+            WRITE(NFFRAP,*) '{ FENETRE 2D XMIN XMAX YMIN YMAX } '
+         ELSE
+            WRITE(NFFRAP,*) '{ 2D WINDOW  XMIN XMAX YMIN YMAX } '
+         ENDIF
+         WRITE(NFFRAP,*)  AXOPTV(1)-AXOLAR, '; ',
+     %                    AXOPTV(1)+AXOLAR, '; '
+         WRITE(NFFRAP,*)  AXOPTV(2)-AXOHAU, '; ',
+     %                    AXOPTV(2)+AXOHAU, '; '
+         GOTO 10
+      ENDIF
+C
+C     TRACE EN DIMENSION 3
+C     LA DISTANCE PRECEDENTE PTV-OEIL
+      AXODIS = SQRT( (AXOEIL(1)-AXOPTV(1)) ** 2 +
+     %               (AXOEIL(2)-AXOPTV(2)) ** 2 +
+     %               (AXOEIL(3)-AXOPTV(3)) ** 2 )
+C
+C     AXOEIL(3) EST LA DISTANCE DE PTV A OEIL
+      PT3(3) = 0.0
+      PT2(1) = PT3(1)
+      PT2(2) = PT3(2)
+      PT2(3) = AXODIS
+C
+C     LES 3 COORDONNEES XYZ DE PTV ET OEIL
+      CALL AXOXYZ( PT2, AXOEIL )
+C     ATTENTION NE PAS PERMUTER CES 2 APPELS
+      CALL AXOXYZ( PT3, AXOPTV )
+C
+C     FORMATION DE L'AXONOMETRIE
+      CALL MATAXO
+      CALL FENETRE( -AXOLAR, AXOLAR, -AXOHAU, AXOHAU )
+      NOTYVI = 11
+      NOTYVI = 11
+C
+C     SAUVEGARDE DU POINT SUR LE FICHIER FRAPPE
+      IF( LANGAG .EQ. 0 ) THEN
+       WRITE(NFFRAP,*)'{ POINT VU OEIL LARGEUR HAUTEUR ARRIERE AVANT }'
+      ELSE
+       WRITE(NFFRAP,*)'{ SEEN POINT; EYE; WIDTH;  HEIGHT; BACK; AHEAD }'
+      ENDIF
+      WRITE(NFFRAP,*) (AXOPTV(I),'; ',I=1,3)
+      WRITE(NFFRAP,*) (AXOEIL(I),'; ',I=1,3)
+      IF( LANGAG .EQ. 0 ) THEN
+         WRITE(NFFRAP,*) '32; { Demi LARGEUR et HAUTEUR de la SCENE }'
+      ELSE
+         WRITE(NFFRAP,*) '32; { HALF WIDTH and HEIGHT of the SCENE }'
+      ENDIF
+      WRITE(NFFRAP,*)  AXOLAR,'; ', AXOHAU,'; '
+      WRITE(NFFRAP,*)  AXOARR,'; ', AXOAVA,'; '
+      GOTO 10
+C
+C     TRANSLATER par 2 clics de la SOURIS le TRACE ACTUEL
+C     ===================================================
+ 2400 IF( INTERA .LE. 1 ) THEN
+         IF( NDIMLI .LE. 2 ) THEN
+            GOTO 2500
+         ELSE
+            GOTO 2600
+         ENDIF
+      ENDIF
+C
+C     UNE SOURIS EST DISPONIBLE
+ 2402 IF( LANGAG .EQ. 0 ) THEN
+         CALL INVITR( 'CLIQUER en un POINT' )
+      ELSE
+         CALL INVITR( 'CLICK a POINT' )
+      ENDIF
+      CALL RECTEF( NRLGSA )
+C     SAISIE D'UN POINT PAR CLIC DE LA SOURIS OU PAR CLAVIER PHYSIQUE
+      CALL SAIPTC( NOTYEV, NX1, NY1, NOCHAR )
+      IF( NOTYEV .EQ. -1 .AND. CHAR(NOCHAR) .EQ. '@' ) GOTO 10
+      IF( NOTYEV .EQ. 0 ) GOTO 10
+      IF( NOTYEV .LT. 0 ) GOTO 2402
+C     TRACE DU POINT DESIGNE
+      CALL XVCOULEUR( NCJAUN )
+      CALL XVTEXTE( 'X', 1, NX1, NY1 )
+C
+ 2404 IF( LANGAG .EQ. 0 ) THEN
+         CALL INVITR( 'CLIQUER ou le POINT doit ETRE DEPLACE' )
+      ELSE
+         CALL INVITR( 'CLICK WHERE the POINT must be MOVED' )
+      ENDIF
+      CALL RECTEF( NRLGSA )
+C     SAISIE D'UN POINT PAR CLIC DE LA SOURIS OU PAR CLAVIER PHYSIQUE
+      CALL SAIPTC( NOTYEV, NX2, NY2, NOCHAR )
+C     L'INVITE EST EFFACEE
+      CALL RECTEF( NRINVI )
+      IF( NOTYEV .EQ. -1 .AND. CHAR(NOCHAR) .EQ. '@' ) GOTO 10
+      IF( NOTYEV .EQ. 0 ) GOTO 10
+      IF( NOTYEV .LT. 0 ) GOTO 2404
+C     TRACE DU POINT DESIGNE
+      CALL XVCOULEUR( NCJAUN )
+      CALL XVTEXTE( 'X', 1, NX2, NY2 )
+C
+      IF( NX1 .EQ. NX2 .OR. NY1 .EQ. NY2 ) GOTO 2402
+C
+C     LES COORDONNEES DES POINTS CLIQUES
+C     LE POINT AVANT DEPLACEMENT
+      PT1(1) = XOB2PX( NX1 )
+      PT1(2) = YOB2PX( NY1 )
+C     LE POINT APRES DEPLACEMENT
+      PT2(1) = XOB2PX( NX2 )
+      PT2(2) = YOB2PX( NY2 )
+C     LE VECTEUR DEPLACEMENT DANS LE PLAN AXONOMETRIE
+      PT2(1) = PT2(1) - PT1(1)
+      PT2(2) = PT2(2) - PT1(2)
+C
+      IF( NDIMLI .LE. 2 ) THEN
+C        TRACE EN 2D
+C        L'ECRAN VU EN COORDONNEES OBJET 2D EN UNITES UTILISATEUR
+         AXOPTV(1) = AXOPTV(1) - PT2(1)
+         AXOPTV(2) = AXOPTV(2) - PT2(2)
+         CALL FENETRE( AXOPTV(1)-AXOLAR, AXOPTV(1)+AXOLAR,
+     %                 AXOPTV(2)-AXOHAU, AXOPTV(2)+AXOHAU )
+         NOTYVI = 1
+C
+C        SAUVEGARDE DU POINT SUR LE FICHIER FRAPPE
+         IF( LANGAG .EQ. 0 ) THEN
+            WRITE(NFFRAP,*) '{ FENETRE 2D XMIN XMAX YMIN YMAX } '
+         ELSE
+            WRITE(NFFRAP,*) '{ 2D WINDOW  XMIN XMAX YMIN YMAX } '
+         ENDIF
+         WRITE(NFFRAP,*)  AXOPTV(1)-AXOLAR, '; ',
+     %                    AXOPTV(1)+AXOLAR, '; '
+         WRITE(NFFRAP,*)  AXOPTV(2)-AXOHAU, '; ',
+     %                    AXOPTV(2)+AXOHAU, '; '
+         GOTO 10
+      ENDIF
+C
+C     TRACE EN 3D
+      AXODIS = SQRT( (AXOEIL(1)-AXOPTV(1)) ** 2 +
+     %               (AXOEIL(2)-AXOPTV(2)) ** 2 +
+     %               (AXOEIL(3)-AXOPTV(3)) ** 2 )
+C
+C     LES 3 COORDONNEES AXONOMETRIQUES DE PTV ET OEIL
+      PT1(1) = -PT2(1)
+      PT1(2) = -PT2(2)
+      PT1(3) = 0.0
+      PT2(1) =-PT2(1)
+      PT2(2) =-PT2(2)
+      PT2(3) = AXODIS
+C
+C     RETOUR AUX COORDONNEES XYZ COURANTES DE PTV ET OEIL
+      CALL AXOXYZ( PT2, AXOEIL )
+C     ATTENTION NE PAS PERMUTER CES 2 APPELS
+      CALL AXOXYZ( PT1, AXOPTV )
+C
+C     ACTIVATION DE LA NOUVELLE AXONOMETRIE
+      CALL MATAXO
+      CALL FENETRE( -AXOLAR, AXOLAR, -AXOHAU, AXOHAU )
+      NOTYVI = 11
+C
+C     SAUVEGARDE DU POINT SUR LE FICHIER FRAPPE
+      IF( LANGAG .EQ. 0 ) THEN
+       WRITE(NFFRAP,*)'{ POINT VU OEIL LARGEUR HAUTEUR ARRIERE AVANT }'
+      ELSE
+       WRITE(NFFRAP,*)'{ SEEN POINT; EYE; WIDTH;  HEIGHT; BACK; AHEAD }'
+      ENDIF
+      WRITE(NFFRAP,*) (AXOPTV(I),'; ',I=1,3)
+      WRITE(NFFRAP,*) (AXOEIL(I),'; ',I=1,3)
+      IF( LANGAG .EQ. 0 ) THEN
+         WRITE(NFFRAP,*) '32; { Demi LARGEUR et HAUTEUR de la SCENE }'
+      ELSE
+         WRITE(NFFRAP,*) '32; { HALF WIDTH and HEIGHT of the SCENE }'
+      ENDIF
+      WRITE(NFFRAP,*)  AXOLAR,'; ', AXOHAU,'; '
+      WRITE(NFFRAP,*)  AXOARR,'; ', AXOAVA,'; '
+      GOTO 10
+C
+C     FENETRE 2D  [Xmin MAX] [Ymin MAX]
+C     =================================
+ 2500 CALL INVITE( 107 )
+      NCVALS = 5
+      R      = XOBMIN
+      CALL LIRRSP( NCVALS , R )
+      IF( NCVALS .LE. 0 ) GOTO 10
+      XOBMIN = R
+C
+      CALL INVITE( 105 )
+      NCVALS = 5
+      R      = XOBMAX
+      CALL LIRRSP( NCVALS , R )
+      IF( NCVALS .LE. 0 ) GOTO 10
+      XOBMAX = R
+C
+      IF( XOBMIN .GT. XOBMAX ) THEN
+         RR     = XOBMIN
+         XOBMIN = XOBMAX
+         XOBMAX = RR
+      ENDIF
+      AXOLAR = ( XOBMAX - XOBMIN ) * 0.5
+      AXOPTV(1) = ( XOBMIN + XOBMAX ) * 0.5
+C
+      CALL INVITE( 116 )
+      NCVALS = 5
+      R      = YOBMIN
+      CALL LIRRSP( NCVALS , R )
+      IF( NCVALS .LE. 0 ) GOTO 10
+      YOBMIN = R
+C
+      CALL INVITE( 114 )
+      NCVALS = 5
+      R      = YOBMAX
+      CALL LIRRSP( NCVALS , R )
+      IF( NCVALS .LE. 0 ) GOTO 10
+      YOBMAX = R
+C
+      IF( YOBMIN .GT. YOBMAX ) THEN
+         RR     = YOBMIN
+         YOBMIN = YOBMAX
+         YOBMAX = RR
+      ENDIF
+      AXOHAU = ( YOBMAX - YOBMIN ) * 0.5
+      AXOPTV(2) = ( YOBMIN + YOBMAX ) * 0.5
+C
+C     PROTECTION
+      IF( AXOLAR + AXOHAU .EQ. 0 ) THEN
+         AXOLAR = 1.0
+         AXOHAU = 1.0
+      ELSE IF( AXOLAR .LT. 0.01*AXOHAU ) THEN
+         AXOLAR = AXOHAU
+      ELSE IF( AXOHAU .LT. 0.01*AXOLAR ) THEN
+         AXOHAU = AXOLAR
+      ENDIF
+      NDIMLI = 2
+C
+C     L'ECRAN VU EN COORDONNEES OBJET 2D EN UNITES UTILISATEUR
+      CALL FENETRE( AXOPTV(1)-AXOLAR, AXOPTV(1)+AXOLAR,
+     %              AXOPTV(2)-AXOHAU, AXOPTV(2)+AXOHAU )
+      NOTYVI = 1
+      GOTO 10
+C
+C     RE-DEFINITION des XYZ EXTREMES
+C     ==============================
+ 2600 IF( LANGAG .EQ. 0 ) THEN
+         KERR(1) = 'REDEFINIR L''HEXAEDRE ACTUEL DE VISION :'
+      ELSE
+         KERR(1) = 'DEFINE AGAIN THE VIEW BOX :'
+      ENDIF
+12600 FORMAT(A1,' MIN: ',G13.6,T22,A1,' MAX: ',G13.6)
+      WRITE(KERR(2),12600) 'X',COOEXT(1,1),'X',COOEXT(1,2)
+      WRITE(KERR(3),12600) 'Y',COOEXT(2,1),'Y',COOEXT(2,2)
+      WRITE(KERR(4),12600) 'Z',COOEXT(3,1),'Z',COOEXT(3,2)
+      NBLGRC(NRERR) = 4
+      CALL LERESU
+C
+      CALL INVITE( 107 )
+      NCVALS = 5
+      CALL LIRRSP( NCVALS , COOEXT(1,1) )
+      IF( NCVALS .LE. 0 ) GOTO 10
+      CALL INVITE( 105 )
+      NCVALS = 5
+      CALL LIRRSP( NCVALS , COOEXT(1,2) )
+      IF( NCVALS .LE. 0 ) GOTO 10
+C
+      CALL INVITE( 116 )
+      NCVALS = 5
+      CALL LIRRSP( NCVALS , COOEXT(2,1) )
+      IF( NCVALS .LE. 0 ) GOTO 10
+      CALL INVITE( 114 )
+      NCVALS = 5
+      CALL LIRRSP( NCVALS , COOEXT(2,2) )
+      IF( NCVALS .LE. 0 ) GOTO 10
+C
+      CALL INVITE( 124 )
+      NCVALS = 5
+      CALL LIRRSP( NCVALS , COOEXT(3,1) )
+      IF( NCVALS .LE. 0 ) GOTO 10
+      CALL INVITE( 123 )
+      NCVALS = 5
+      CALL LIRRSP( NCVALS , COOEXT(3,2) )
+C
+C     VISION TOTALE des XYZ EXTREMES
+C     ==============================
+ 2700 NOTYVI = 0
+      CALL EFFACE
+      CALL ITEMS0
+      CALL VISEE1
+      GOTO 10
+C
+C     LOUPE >1 OU <1 ou GROSSISSEMENT du TRACE
+C     ========================================
+ 3400 CALL INVITE( 22 )
+      NCVALS = 5
+      CALL LIRRSP( NCVALS , GROSSI )
+      IF( NCVALS .LE. 0 ) GOTO 10
+      IF( GROSSI .LT. 0.01 ) GOTO 3400
+C
+      IF( ABS(GROSSI-1.0) .LT. 0.01 ) GOTO 10
+      AXOLAR = AXOLAR / GROSSI
+      AXOHAU = AXOHAU / GROSSI
+C
+      CALL FENETRE( AXOPTV(1)-AXOLAR, AXOPTV(1)+AXOLAR,
+     %              AXOPTV(2)-AXOHAU, AXOPTV(2)+AXOHAU )
+      NOTYVI = 1
+      GOTO 10
+C
+C     CHANGER LA PALETTE DES COULEURS
+C     ===============================
+ 3600 CALL INVITE( 83 )
+      N      = 12
+      NCVALS = 4
+      CALL LIRENT( NCVALS , N )
+      IF( NCVALS .LE. 0 ) GOTO 10
+      CALL PALCDE( N )
+      GOTO 10
+C
+C     RETOUR AUX COULEURS PAR DEFAUT
+C     ==============================
+ 3800 CALL PALCDE( 12 )
+      CALL COUDEF
+C     LA COULEUR DU FOND EST REGENEREE
+      GOTO 3910
+C
+C     COULEUR du FOND
+C     ===============
+ 3900 CALL INVITE( 17 )
+      CALL LIMTCL( 'couleurs' , N )
+      IF( N .LT. 0 ) THEN
+         GOTO 10
+      ELSE IF( N .EQ. 0 ) THEN
+C        LA COULEUR NOIRE
+         NCOFON = 0
+      ELSE
+         NCOFON = N1COEL + N
+      ENDIF
+C     LA COULEUR DU FOND EST REGENEREE
+ 3910 CALL XVFOND( NCOFON )
+      GOTO 5000
+C
+C     AXES DU REPERE DE L'OBJET
+C     =========================
+ 4900 CALL LIMTCL( 'tracaxes', NTRAXE )
+      IF( NTRAXE .GT. 0 ) THEN
+         CALL TRAXES
+      ELSE
+         NTRAXE = 0
+      ENDIF
+      GOTO 10
+C
+C     EFFACER LE TRACE ACTUEL
+C     =======================
+ 5000 CALL EFFACE
+C     PLUS D'ITEMS VISIBLES
+      CALL ITEMS0
+      GOTO 10
+C
+C     ENCADRER UNE FIGURE TRACEE
+C     ==========================
+ 6000 IF( INTERA .LE. 1 ) THEN
+         CALL INVITE( 108 )
+         CALL RECTEF( NRLGSA )
+         NCVALS = 0
+         CALL LIRRSP( NCVALS , PT1(1) )
+         CALL RECTEF( NRLGSA )
+         IF( NCVALS .LE. 0 ) GOTO 10
+         CALL INVITE( 117 )
+         CALL RECTEF( NRLGSA )
+         NCVALS = 0
+         CALL LIRRSP( NCVALS , PT1(2) )
+         IF( NCVALS .LE. 0 ) GOTO 10
+C
+         CALL INVITE( 106 )
+         CALL RECTEF( NRLGSA )
+         NCVALS = 0
+         CALL LIRRSP( NCVALS , PT2(1) )
+         IF( NCVALS .LE. 0 ) GOTO 10
+         CALL INVITE( 115 )
+         CALL RECTEF( NRLGSA )
+         NCVALS = 0
+         CALL LIRRSP( NCVALS , PT2(2) )
+         IF( NCVALS .LE. 0 ) GOTO 10
+      ENDIF
+C
+      IF( INTERA .LE. 1 ) GOTO 10
+C
+C     UNE SOURIS EST DISPONIBLE
+ 6002 IF( LANGAG .EQ. 0 ) THEN
+         CALL INVITR( 'CLIQUER au POINT min' )
+      ELSE
+         CALL INVITR( 'CLICK at the min POINT' )
+      ENDIF
+      CALL RECTEF( NRLGSA )
+C     SAISIE D'UN POINT PAR CLIC DE LA SOURIS OU PAR CLAVIER PHYSIQUE
+      CALL SAIPTC( NOTYEV , NX1, NY1, NOCHAR )
+      IF( NOTYEV .EQ. -1 .AND. CHAR(NOCHAR) .EQ. '@' ) GOTO 10
+      IF( NOTYEV .EQ. 0 ) GOTO 10
+      IF( NOTYEV .LT. 0 ) GOTO 6002
+C     TRACE DU POINT DESIGNE
+C     TRACE DU POINT DESIGNE
+      CALL XVTEXTE( 'X', 1, NX1, NY1 )
+C
+      IF( LANGAG .EQ. 0 ) THEN
+         CALL INVITR( 'CLIQUER au POINT MAX' )
+      ELSE
+         CALL INVITR( 'CLICK at the MAX POINT' )
+      ENDIF
+      CALL RECTEF( NRLGSA )
+C     SAISIE D'UN POINT PAR CLIC DE LA SOURIS OU PAR CLAVIER PHYSIQUE
+      CALL SAIPTC( NOTYEV , NX2, NY2, NOCHAR )
+C     L'INVITE EST EFFACEE
+      CALL RECTEF( NRINVI )
+      IF( NOTYEV .EQ. -1 .AND. CHAR(NOCHAR) .EQ. '@' ) GOTO 10
+      IF( NOTYEV .EQ. 0 ) GOTO 10
+      IF( NOTYEV .LT. 0 ) GOTO 6002
+C     TRACE DU POINT DESIGNE
+      CALL XVTEXTE( 'X', 1, NX2, NY2 )
+C
+      IF( NX1 .EQ. NX2 .OR. NY1 .EQ. NY2 )  GOTO 6000
+C
+C     LES COORDONNEES DES POINTS CLIQUES
+      PT1(1) = XOB2PX( NX1 )
+      PT1(2) = YOB2PX( NY1 )
+      PT2(1) = XOB2PX( NX2 )
+      PT2(2) = YOB2PX( NY2 )
+C
+C     SAUVEGARDE DU POINT SUR LE FICHIER FRAPPE
+      IF( LANGAG .EQ. 0 ) THEN
+        WRITE(NFFRAP,*) PT1(1),'; ',PT1(2),'; { MIN DE L''ENCADREMENT }'
+        WRITE(NFFRAP,*) PT2(1),'; ',PT2(2),'; { MAX DE L''ENCADREMENT }'
+      ELSE
+        WRITE(NFFRAP,*) PT1(1),'; ',PT1(2),'; { MIN of FRAME }'
+        WRITE(NFFRAP,*) PT2(1),'; ',PT2(2),'; { MAX of FRAME }'
+      ENDIF
+C
+C     TRACE DU CADRE EN MODE LIGNE EPAISSIES
+      CALL XVEPAISSEUR( 5 )
+      CALL TRAIT2D( NCBLAN, PT2(1), PT2(2), PT1(1), PT2(2) )
+      CALL TRAIT2D( NCBLAN, PT1(1), PT2(2), PT1(1), PT1(2) )
+      CALL TRAIT2D( NCBLAN, PT1(1), PT1(2), PT2(1), PT1(2) )
+      CALL TRAIT2D( NCBLAN, PT2(1), PT1(2), PT2(1), PT2(2) )
+      CALL XVEPAISSEUR( 0 )
+      GOTO 10
+C
+C     MODE DE TRACE en ORBITE ZOOM TRANSLATION
+ 7500 LORBITE=1
+      NBLGRC(NRERR) = 1
+      IF( LANGAG .EQ. 0 ) THEN
+         KERR(1) = 'TRACE avec TRANSLATION ZOOM'
+      ELSE
+         KERR(1) = 'DRAWING with TRANSLATION ZOOM'
+      ENDIF
+      CALL LERESU
+      GOTO 10
+C
+C     PLUS DE ORBITE TRANSLATION ZOOM
+ 7600 LORBITE=0
+      NBLGRC(NRERR) = 1
+      IF( LANGAG .EQ. 0 ) THEN
+         KERR(1) = 'TRACE sans TRANSLATION ZOOM'
+      ELSE
+         KERR(1) = 'DRAWING without TRANSLATION ZOOM'
+      ENDIF
+      CALL LERESU
+      GOTO 10
+C
+C     RETOUR AU MENU PRECEDENT
+ 9900 CALL VISEE1
+C
+      RETURN
+      END

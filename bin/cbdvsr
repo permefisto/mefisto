@@ -1,0 +1,26 @@
+#!/bin/bash
+#  compilation et edition de liens de ppdvsr.f
+#  Alain Perronnet    Mai 1996
+# 
+echo     
+echo MEFISTO-C1: Compilation Edition de liens de ppdvsr.f
+echo ====================================================
+cd $mefisto
+nompp=pp/ppdvsr
+#
+# destruction des anciens fichiers
+rm ./incl/fdvesa.inc
+rm $nompp    
+rm ppdvsr.o 
+#
+# compilation de ppvds.f
+f77 +ppu prpr/ppdvsr.f ./util/lib ./xvue/lib -o $nompp
+#
+# execution de ppdvsr
+chmod 770 $nompp
+$nompp
+rm $nompp
+#
+chmod 755 ./incl/fdvesa.inc
+rm ppdvsr.o
+

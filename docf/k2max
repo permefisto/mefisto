@@ -1,0 +1,17 @@
+Les coordonnees topologiques varient entre 1 et MAX
+Il faut choisir un min et un max pour chaque coordonnee.
+
+Remarque: Pour definir une surface dans un hexaedre
+structure, il est necessaire de definir un intervalle
+reduit a 1 point parmi les 3 possibilites.
+
+Exemple: S34; I; 34; HEXAEDRE_STRUCTURE;
+2;5;  4;8;  1;1;
+Extrait les quadrangles des 3 couches 2 a 5 en coordonnee I, 
+des 4 couches 4 a 8 en coordonnee J et obtenus pour K=1.
+
+Exemple: S35; I; 35; QUADRANGLE_STRUCTURE;
+2;5;  4;6;
+Extrait les quadrangles
+de 2 a 5 pour les coordonnees I,
+de 4 a 6 pour les coordonnees J.

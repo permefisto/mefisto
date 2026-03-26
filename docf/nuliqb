@@ -1,0 +1,9 @@
+Les LIGNES B-splines doivent toutes avoir
+-le meme nombre de points de controle ou interpolation  
+ lesquels doivent etre decrits dans le meme sens
+ (en X croissant pour la ligne 1 puis X decroissant
+  pour la ligne 2 est INTERDIT)
+-les memes bornes pour les noeuds 
+
+La demande ne cessera qu'avec l'entree d'un nombre
+suffisant de noms de LIGNES EXISTANTES.

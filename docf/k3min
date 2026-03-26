@@ -1,0 +1,12 @@
+Les coordonnees topologiques I J K varient entre 1 et MAX
+et sont celles des sommets.
+
+Pour definir un volume dans un hexaedre structure
+il est necessaire de definir 3 intervalles
+
+V35; I; 35; HEXAEDRE_STRUCTURE;
+2;5; 4;8;  1;3;
+Extrait les hexaedres des 
+3 couches 2 a 5 en coordonnee I, 
+4 couches 4 a 8 en coordonnee J,
+3 couches 1 a 3 en coordonnee K.

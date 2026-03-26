@@ -1,0 +1,108 @@
+{ =================================================================== }
+{ MEFISTO Software     : December 16-th 2010 Version                  }
+{ USER's  Name         : Alain Perronnet                              }
+{ Project Name         : Marche Flow in a tube with a step            }
+{ Date                 : 16/12/2010                                   }
+{ =================================================================== }
+
+DefVar Rho; Rho=1.23;    { Kg/m2 air }
+DEfVar Mhu; Mhu=1.79E-5; { m2/s  air }
+DefVar V0;  V0=0.544;    { m/s initial horizontal velocity }
+DefVar Reynolds; Reynolds=Rho*h*V0/Mhu;
+
+DefFunc FixedVelocity(t,x,y,z,ntyob,numob,nocomp);
+DefVar s;
+FixedVelocity=0;
+if nocomp=1 then
+   if x<0.001 then
+      s = (y-h)/h;
+      FixedVelocity = 6*s*(1-s) * V0;
+   endif
+EndIf;
+EndFunc;
+
+
+2;  { FLUID INPUT DATA }
+
+ { SURFACE: MARCHE }{ The Fluid Characteristics =======================}
+ 1;    { Rho MASS Density of FLUID }
+ 1;    { Mass Constant }
+ Rho;  { DMASSE Value of the constant mass density }
+
+ 2;    { FLUID DYNAMIC VISCOSITY }
+ 1;    { Constant Viscosity }
+ Mhu; { Constant Viscosity }
+
+ 8;    { PRESSURE Coefficient }
+ 1;    { PRESSURE Constant Coefficient }
+ 1;    { PRESSURE Constant Coefficient value }
+
+ 4;    { INITIAL VELOCITIES ==========================================}
+ 2;    { NBCOVI Number of Initial Velocity Components at a node }
+ 1;    { CONSTANT Initial Velocity }
+ 1; 2; { NUCOVI(1..NBCOVI) Number of Initial Velocity Components }
+ V0; 0.0; { initial constant velocity}
+
+ 5;    { INITIAL PRESSURE ============================================}
+ 1;    { CONSTANT INITIAL PRESSURE }
+ 0;    { Constant Initial Pressure Value }
+
+ @;
+
+ { LINE : AB } { The Boundary Conditions ===========================}
+ 2; { Fixation of the VELOCITY }
+ 1; { Constant Fixed Velocity }
+ 2; { NBCOBV number of components of the fixed Velocity }
+ 1; 2; { NUCOBV(1..NBCOBV) nb of each component of the fixed velocity}
+ 0.0; 0.0; {X & Y-Velocity }
+ @;
+
+ { LINE : BC } { The Boundary Conditions ===========================}
+ 2; { Fixation of the VELOCITY }
+ 1; { Constant Fixed Velocity }
+ 2; { NBCOBV number of components of the fixed Velocity }
+ 1; 2; { NUCOBV(1..NBCOBV) nb of each component of the fixed velocity}
+ 0.0; 0.0; {X & Y-Velocity }
+ @;
+
+ { LINE : CD } { The Boundary Conditions ===========================}
+ 2; { Fixation of the VELOCITY }
+ 1; { Constant Fixed Velocity }
+ 2; { NBCOBV number of components of the fixed Velocity }
+ 1; 2; { NUCOBV(1..NBCOBV) nb of each component of the fixed velocity}
+ 0.0; 0.0; {X & Y-Velocity }
+ @;
+
+ { LINE : DE } { The Boundary Conditions ===========================}
+ 3; { BLOCKING-UP the IMPOSED PRESSURE }
+ 1; { Fixed Pressure CONSTANT}
+ 0.0; {Pressure CONSTANT VALUE }
+ @;
+
+ { LINE : EF } { The Boundary Conditions ===========================}
+ 2; { Fixation of the VELOCITY }
+ 1; { Constant Fixed Velocity }
+ 2; { NBCOBV number of components of the fixed Velocity }
+ 1; 2; { NUCOBV(1..NBCOBV) nb of each component of the fixed velocity}
+ 0.0; 0.0; {X & Y-Velocity }
+ @;
+
+ { LINE : EA } { The Boundary Conditions ===========================}
+ 2; { Fixation of the VELOCITY }
+-1; { Fixed Velocity Function }
+ 2; { NBCOBV number of components of the fixed Velocity }
+ 1; 2; { NUCOBV(1..NBCOBV) nb of each component of the fixed velocity}
+ FixedVelocity; { Name of velocity function }
+ @;
+
+
+7;  { UNSTEADY IMPLICIT NAVIER-STOKES FLUID SOLVER ==================}
+   1;   { CROUT L D tL FACTORIZATION }
+   0.0; { INITIAL TIME }
+   1.0; { FINAL   TIME }
+  0.01; { STEP of TIME }
+    20; { NUMBER of ADDED SOLUTION VECTORS }
+@;
+@;
+
+CLOSE;

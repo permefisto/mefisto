@@ -1,0 +1,6 @@
+variable SuiviTMS 'TMS Printing or Modifications' entier
+ ( 1  : 'Print the values of a TMS (Tableau Memoire Secondaire)'  
+ , 2  : 'INPUT the values of a TMS'
+ , 3  : 'Print a TMS variable value'
+ , 4  : 'IMPOSE the VALUE of a variable of a TMS' 
+ , 5  : 'CHANGE a NAME in a Lexicon' );

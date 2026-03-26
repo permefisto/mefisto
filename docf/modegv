@@ -1,0 +1,5 @@
+La tetraedrisation DELAUNAY joint tous les sommets
+sur la surface frontiere du volume.
+Pour generer des POINTS a l'INTERIEUR du volume,
+donner le code 1 , sinon 0 (les tetraedres s'appuient
+seulement sur les sommets de la frontiere).

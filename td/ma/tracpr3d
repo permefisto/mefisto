@@ -1,0 +1,9 @@
+variable TRACPR3D 'PRESSURE 3D DRAWINGS' entier
+(  1 : 'ISO-PRESSURE SURFACES'
+ , 2 : 'ISO-PRESSURES COLOR ZONES'
+ , 3 : 'CROSS SECTIONS X or Y or Z=Const'
+ , 4 : 'PROFILE on CROSS SECTIONS X or Y or Z=Const'
+ , 5 : 'Pressure ALONG a LINE DEFINED by 2 POINTS'
+ , 6 : 'Pressure on a SURFACE or more of the OBJECT'
+ , 7 : 'Pressure on 3D BOUNDARY SURFACES'
+ , 8 : 'Compute Pressure INTEGRAL on OBJECT SURFACES' ) ;

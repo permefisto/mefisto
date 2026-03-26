@@ -1,0 +1,76 @@
+      SUBROUTINE TREEEF( NBELFI, XYZPOI, NUPGEL,
+     %                   NCAS,   NDSM,
+     %                   NBTTEF, ERTHEF, H1TEEF,
+     %                   H1TEMP, EEH1TH, NUEF )
+C+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+C BUT :    TRACER LES ARETES D'UN TYPE D'ELEMENTS FINIS
+C -----
+C
+C ENTREES :
+C ---------
+C NBELFI : NOMBRE D'ELEMENTS FINIS DU TYPE A TRAITER
+C XYZPOI : LES 3 COORDONNEES DES POINTS DE L'OBJET
+C NUPGEL : LE NUMERO DES POINTS DE CHAQUE ELEMENT FINI DE CE TYPE
+C NCAS   : NUMERO DU JEU DE TEMPERATURE A TRAITER
+C NDSM   : NOMBRE TOTAL DE CAS TRAITES
+C NBTTEF : NOMBRE TOTAL D'EF DU MAILLAGE
+C ERTHEF : ERREUR L2 A POSTERIORI SUR CHAQUE EF
+C H1TEEF : NORME H1 DE LA TEMPERATURE SUR CHAQUE EF ET POUR CHAQUE CAS
+C H1TEMP : NORME H1 DE LA TEMPERATURE POUR TOUS LES CAS
+C EEH1TH : MAX( ESTIMATEUR ERREUR 1 EF / NORME H1 TEMPERATURE SUR LE MAILLAGE)
+C
+C MODIFIE :
+C ---------
+C NUEF   : NUMERO DANS LA NUMEROTATION GLOBALE DES EF
+C          DE L'EF QUI PRECEDE LE PREMIER EF DE CE TYPE
+C+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+C AUTEUR : ALAIN PERRONNET ANALYSE NUMERIQUE UPMC PARIS         MAI 1995
+C23456---------------------------------------------------------------012
+      PARAMETER (LIGCON=0)
+      include"./incl/trvari.inc"
+      include"./incl/mecoit.inc"
+      include"./incl/ponoel.inc"
+C
+      REAL              XYZPOI(3,*)
+      INTEGER           NUPGEL(NBELFI,*)
+      DOUBLE PRECISION  ERTHEF(1:NBTTEF,1:NDSM),
+     %                  H1TEEF(1:NBTTEF,1:NDSM),
+     %                  H1TEMP(1:NDSM),
+     %                  EEH1TH(1:NDSM)
+      REAL              X(4), Y(4)
+C
+C     PALETTE ARC-EN-CIEL
+      CALL PALCDE( 11 )
+C     LE NOMBRE DE COULEURS DISPONIBLES DANS LA PALETTE
+      NBCOUL = NDCOUL - N1COUL
+C
+C     TRACE 2D DE L'ESTIMATEUR D'ERREUR DE CHAQUE EF
+C     ----------------------------------------------
+      CALL XVTYPETRAIT( NTLAFR )
+      DO 30 K=1,NBELFI
+C
+C        LE NUMERO GLOBAL DE L'EF
+         NUEF = NUEF + 1
+C
+C        LES 2 COORDONNEES DES NARET SOMMETS DE L'EF
+         DO 20 I=1,NARET
+            NS   = NUPGEL( K, I )
+            X(I) = XYZPOI(1,NS)
+            Y(I) = XYZPOI(2,NS)
+ 20      CONTINUE
+C
+C        LE TRACE DE LA FACE AVEC UNE COULEUR PROPORTIONNELLE
+C        A L'ESTIMATEUR D'ERREUR DE L'EF
+         IF( H1TEEF(NUEF,NCAS) .LT. 1D-20 ) THEN
+            NCF = N1COUL
+         ELSE
+CCC            NCF = ERTHEF(NUEF,NCAS) / H1TEEF(NUEF,NCAS) / EEH1TH(NCAS)
+CCC     %          * NBCOUL + N1COUL
+            NCF = NINT( ERTHEF(NUEF,NCAS) / H1TEMP(NCAS) / EEH1TH(NCAS)
+     %                  * NBCOUL + N1COUL )
+         ENDIF
+         CALL FACE2D( NCF, NCOUAF, NARET, X, Y )
+ 30   CONTINUE
+C
+      CALL XVTYPETRAIT( LIGCON )
+      END

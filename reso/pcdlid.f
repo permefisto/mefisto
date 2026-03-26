@@ -1,0 +1,130 @@
+      SUBROUTINE PCDLID( NTDL, NODLIB, NCODSA,  MU, A )
+C+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+C BUT :    COMPRIMER SUR EUX-MEMES LA MATRICE PROFIL ET SES POINTEURS MU
+C -----    EN SUPPRIMANT LES LIGNES ET COLONNES DES DEGRES DE LIBERTE
+C          BLOQUES DEFINIS PAR LE TABLEAU NODLIB
+C
+C ENTREES:
+C --------
+C NTDL   : NOMBRE TOTAL DE DL BLOQUES+LIBRES
+C NODLIB : NODLIB(I) = NUMERO DE 1 A NTDLIB DU DL LIBRE I(1 A NTDL)
+C                    -(INDICE DANS NODLBL) SI LE DL I EST BLOQUE
+C NCODSA : CODE DE STOCKAGE DE LA MATRICE A PROFIL
+C          1 SYMETRIQUE
+C          0 DIAGONALE
+C         -1 NON SYMETRIQUE
+C
+C MODIFIES:
+C ---------
+C MU     : MU(0)=0
+C          MU(I)=NUMERO DANS A DU I-EME COEFFICIENT DIAGONAL DE A
+C A      : MATRICE PROFIL EN MEMOIRE CENTRALE A COMPRIMER
+C++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++012
+C AUTEUR : ALAIN PERRONNET ANALYSE NUMERIQUE PARIS ET INRIA    JUIN 1989
+C MODIFS : ALAIN PERRONNET ANALYSE NUMERIQUE UPMC  PARIS       AOUT 1998
+C....67..............................................................012
+      include"./incl/langue.inc"
+      COMMON / UNITES / LECTEU,IMPRIM,NUNITE(30)
+      INTEGER           NODLIB(NTDL),MU(0:NTDL)
+      DOUBLE PRECISION  A(*)
+C
+      IF( LANGAG .EQ. 0 ) THEN
+         WRITE(IMPRIM,10000) MU(NTDL)
+10000    FORMAT('PCDLID: PROFIL INITIAL de la matrice =',I17)
+      ELSE
+         WRITE(IMPRIM,20000) MU(NTDL)
+20000    FORMAT('PCDLID: INITIAL SKYLINE of the MATRIX =',I17)
+      ENDIF
+      IF( NCODSA .LT. 0 ) THEN
+C
+C        LA MATRICE EST NON SYMETRIQUE
+C        -----------------------------
+         IF( LANGAG .EQ. 0 ) THEN
+            WRITE(IMPRIM,*)'PCDLID: PROFIL NON SYMETRIQUE NON PROGRAMME'
+         ELSE
+           WRITE(IMPRIM,*)'PCDLID: NOT SYMMETRIC SKYLINE NOT PROGRAMMED'
+         ENDIF
+         RETURN
+C
+      ELSE IF( NCODSA .EQ. 0 ) THEN
+C
+C        LA MATRICE EST DIAGONALE
+C        ------------------------
+         NTDLIB = 0
+         DO 5 I=1,NTDL
+            IF( NODLIB(I) .GT. 0 ) THEN
+C              DL LIBRE
+               NTDLIB = NTDLIB + 1
+               A(NTDLIB) = A(I)
+            ENDIF
+ 5       CONTINUE
+C        MISE A JOUR DU POINTEUR
+         MU(1) = NTDLIB
+         RETURN
+      ENDIF
+C
+C     LA MATRICE EST SYMETRIQUE
+C     -------------------------
+C     MU1 POINTE SUR LE COEFFICIENT DIAGONAL QUI PRECEDE
+C     MU2 POINTE SUR LE COEFFICIENT DIAGONAL DE LA LIGNE TRAITEE
+C     IA  EST LE NUMERO DU COEFFICIENT DE A A DECALER
+C     NDECAL EST LE NOMBRE DE VARIABLES A DECALER DANS LA COMPRESSION
+      NDECAL = 0
+      MU1    = 0
+      IA     = 0
+      NTDLIB = 0
+C
+      DO 20 I=1,NTDL
+C        LE NUMERO DU DL LIBRE OU BLOQUE
+         NODL = NODLIB(I)
+         MU2  = MU(I)
+C        LE NOMBRE DE COEFFICIENTS DE LA LIGNE
+         NBC  = MU2 - MU1
+C
+         IF( NODL .LT. 0 ) THEN
+C
+C           DL BLOQUE: TOUTE LA LIGNE EST SUPPRIMEE
+            NDECAL = NDECAL + NBC
+C
+         ELSE
+C
+C           DL LIBRE:
+            NTDLIB = NTDLIB + 1
+            IA     = MU1
+C
+C           COMPRESSION DES DL BLOQUES ENTRE MU1+1 ET MU2
+C           LE NUMERO NODL0 DE DL DU PREMIER COEFFICIENT DE LA LIGNE
+            NODL0 = I - NBC + 1
+C
+            DO 10 J=NODL0,I
+C              LE COEFFICIENT A TRAITER
+               IA = IA + 1
+C              LE DL J EST IL BLOQUE?
+               IF( NODLIB(J) .LT. 0 ) THEN
+C                 OUI DECALAGE DE 1 COEFFICIENT
+                  NDECAL = NDECAL + 1
+               ELSE
+C                 NON DL LIBRE DECALAGE DU COEFFICIENT
+                  A(IA-NDECAL) = A(IA)
+               ENDIF
+ 10         CONTINUE
+C
+C           MISE A JOUR DU POINTEUR DIAGONAL
+            MU(NTDLIB) = MU2 - NDECAL
+C
+         ENDIF
+C
+C        L'ANCIEN POINTEUR SUR LA MATRICE NON COMPRIMEE
+         MU1 = MU2
+ 20   CONTINUE
+C
+      IF( LANGAG .EQ. 0 ) THEN
+         WRITE(IMPRIM,10020) MU(NTDLIB)
+10020    FORMAT('PCDLID: PROFIL FINAL   de la matrice =',I17)
+      ELSE
+         WRITE(IMPRIM,20020) MU(NTDLIB)
+20020    FORMAT('PCDLID: FINAL   SKYLINE of the MATRIX =',I17)
+      ENDIF
+C
+      RETURN
+      END

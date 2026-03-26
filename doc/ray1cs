@@ -1,0 +1,21 @@
+This first radius must be >0 and reasonable from the
+2 segments which are tangent to the circle.
+
+                              P4--------------- .      *P5
+                                                   .
+                                                     .
+                        /              /              .
+             THICKNESS /              /                |
+                      /              /                 |
+                                                       |
+                                                    /  P6
+                P1--------------- .      *P2      
+                                      .           /   /
+                                        .       /
+                                    /         /     /
+                                  /      .        /
+                                /        |      /
+                         RADIUS1         |  
+                                         |
+                                         P3
+

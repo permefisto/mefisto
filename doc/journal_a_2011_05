@@ -1,0 +1,71 @@
+--------------------------------------------------------------
+MEFISTO software        English Version            May 2011
+--------------------------------------------------------------
+NEWS:
+MESHER
+- Option 19 of surfaces: a TRIANGULER by adding of
+  the barycentre of triangles with same data input as 9;
+- Option 26 of 2D or 3D surfaces: a MODIFIER of a mesh of
+  triangles or quadrangles by mouse clicks
+- Option 38 of surfaces to show into a rectangle defined by
+  2 clicks the triangles or quadrangles to extract
+- Option 39 subdivide any triangle or quadrangle of the
+  initial mesh into 4 sub elements of same type
+- Addition of MULTI-MATERIALS VOLUMES(one materiau=one volume)
+  An union of several volumes is a MULTI-MATERIALS VOLUME.
+  A type 9 volume with several type 8 volumes is a 
+  MULTI-MATERIALS VOLUME.
+  The surfaces, interfaces between 2 materials are drawn.
+- Volume 19 a TETRAHEDRIZER by adding of the barycentre
+  of triangles with same data input as volume 9;
+- Volume 16 a generator of pentahedra or hexahedra from the
+  triangles or quadrangles of a surface by displacement along
+  the normal vector at every vertex
+- Volume 31 the tetrahedrization cuts the pyramida (from
+  volume 15), the pentahedra and the hexahedra.
+  If the volume is MULTI-MATERIALS, the materials which
+  constitute it, are tetrahedrized and their previous meshes
+  with pyramids, pentahedra, hexahedra are replaced.
+  This replacement permits the compatibility of triangles
+  on the interfaces, the limit of 2 materials.
+- Volume 39 subdivide any tetrahedron into 8 sub-tetra
+  any pentahedron into 8 sub-penta, any hexahedron into 8
+  sub-hexa and pyramida into 6 sub-pyra and 4 sub-tetra
+- Volume 48 imposes the 3 coordinates of the given point to
+  the nearest vertex of the mesh
+- Volume 51 an union of volumes into one multi-material volume
+- Volume 53 a multi-material volume, union of volumes, is cut
+  as many separated mono-material volumes
+- Volume 54 a multi-material volume, union of volumes, becomes
+  only one mono-material volume
+- 1d OBJECT as several interval (1 per material) with 
+  2 boundary POINTS, extremities of the object, support of
+  future boundary conditions
+HEATER:
+- Computation of integral of solution**expo on the object
+- Computation of steady or not heat transfer on 1d object
+  with graphics of temperature, gradient, flux and error
+- Display of gradients at quadrature formula points
+- Display of fluxes at interface points between FE
+- Drawing of the solutions at all steps of time
+ELASTICER:
+- Visualization of eigenmodes movements
+FLUIDER
+- Solution of the steady or unsteady STOKES problem,
+  unsteady NAVIER-STOKES problem for an incompressible
+  2D or 3D fluid by Taylor-Hood or Brezzi-Fortin finite
+  elements with a skyline storage and CROUT factorization.
+- Solution of unsteady NAVIER-STOKES problem by fractional
+  steps by skyline Cholesky factorization or conjugate gradient
+  => lower size of used memory
+- Drawing of particles moving in a flow
+- Drawing of the 2d stream function
+- Drawing of the velocity norm inside the flow
+- Drawing of the pressure on some surfaces of the fluid
+- Drawing of the solutions at all steps of time
+- A User's Manual of Mefisto-FLUIDER is loadable
+--------------------------------------------------------------
+If you have a problem contact Alain PERRONNET
+E-mail  : perronnet@ann.jussieu.fr
+Internet: http://www.ann.jussieu.fr/~perronnet
+--------------------------------------------------------------

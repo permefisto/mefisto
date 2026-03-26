@@ -1,0 +1,307 @@
+      SUBROUTINE TRSTAT( NTLXSU, NUCOTE, NBTGS,
+     %                   NBSTCO, MNSOCT,
+     %                   NBARLI, MNXYTG, MNNTGL,
+     %                   NTFASU, MNFASU, NTSOFA, MNSOFA )
+C+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+C BUT :    GENERER LE MAILLAGE D'UN TRIANGLE ALGEBRIQUE STRUCTURE
+C -----    AVEC OU SANS TANGENTES
+C
+C ENTREES:
+C --------
+C NTLXSU : NUMERO DU TABLEAU TS DU LEXIQUE DU TRIANGLE
+C NUCOTE : NUCOTE(3) NUMERO DE 1 A 3 DU COTE 3 PARMI LES 3 LIGNES...
+C          SI NUCOTE(3)=-2 LE COTE 3 EST LA LIGNE 2 A PARCOURIR
+C                          EN SENS INVERSE DE SON RANGEMENT...
+C          POUR LE SENS C1:S1S2 C2:S2S3 C3:S3S1
+C
+C                S3
+C                |  \
+C                |    \
+C          C3   \/     /\ C2
+C                |         \
+C                |            \
+C                S1---->-------S2
+C                      C1
+C
+C NBTGS  : =0 SI PAS DE TANGENTES STOCKEES POUR LES 3 LIGNES COTES
+C          >0 SINON
+C NBSTCO : NOMBRE CONSTANT DE SOMMETS DES 3 COTES DU TRIANGLE
+C MNSOCT : ADRESSE MCN DU TABLEAU XYZSOMMET DES 3 LIGNES
+C MNARLI : ADRESSE MCN DU TABLEAU NSEF DES 3 LIGNES
+C NBARLI : NOMBRE D'ARETES DE LA LIGNE  (0 SI PROBLEME RENCONTRE)
+C MNXYTG : ADRESSE MCN DU TABLEAU DES 3 COMPOSANTES DES TANGENTES
+C MNNTGL : ADRESSE MCN DU TABLEAU DES 2 NUMEROS DES TANGENTES DES
+C          NBARLI ARETES DE LA LIGNE    (0 SI PROBLEME RENCONTRE)
+C          TABLEAU A DETRUIRE EN FIN D'UTILISATION
+C MNCGEF : ADRESSE MCN DU TABLEAU DU CODE GEOMETRIQUE DES NBARLI ARETES
+C
+C SORTIES:
+C --------
+C NTFASU : NUMERO      DU TMS 'NSEF' DES NUMEROS DES SOMMETS DES EF
+C MNFASU : ADRESSE MCN DU TMS 'NSEF' DES NUMEROS DES SOMMETS DES EF
+C          CF '~TD/DAT/A___NSEF'
+C NTSOFA : NUMERO      DU TMS 'XYZSOMMET' DE LA SURFACE
+C MNSOFA : ADRESSE MCN DU TMS 'XYZSOMMET' DE LA SURFACE
+C          CF '~TD/DAT/A___XYZSOMMET'
+C IERR   : 0 SI PAS D'ERREUR
+C        > 0 SINON
+C+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+C AUTEUR : ALAIN PERRONNET  ANALYSE NUMERIQUE PARIS         OCTOBRE 1996
+C234567..............................................................012
+      IMPLICIT INTEGER (W)
+      include"./incl/a___xyzsommet.inc"
+      include"./incl/a___nsef.inc"
+      include"./incl/a_surface__definition.inc"
+      include"./incl/pp.inc"
+      COMMON            MCN(MOTMCN)
+      REAL              RMCN(1)
+      EQUIVALENCE       (MCN(1),RMCN(1))
+C
+      INTEGER           MNSOCT(3),NUCOTE(3),NBSTCT(3),MNCUCT(3)
+      INTEGER           NBARLI(3),MNXYST(3),
+     %                  MNXYTG(3),MNNTGL(3)
+C
+C     NUMERO DU SOMMET (I,J)  SELON L'ORDRE ANTI-DIAGONALE
+      NOSOMT(I,J) = I * ( I-1) / 2 + J
+C
+C J=3     6
+C
+C J=2     3   5
+C
+C J=1     1   2   4   7 ...
+C          \   \
+C          I=1  I=2  ...
+C
+C     LE NOMBRE D'ARETES DE CHACUN DES 3 COTES
+      NBA   = NBSTCO - 1
+C     LE NOMBRE DE SOMMETS DU TRIANGLE
+      NBSOM = NOSOMT( NBSTCO, NBSTCO )
+C     LE NOMBRE DE TRIANGLES DU MAILLAGE STRUCTURE
+      NBEF  = NBA * NBA
+C     LE NOMBRE DE TANGENTES STOCKEES
+      IF( NBTGS .GT. 0 ) THEN
+         NBTGS  = 6 * NBEF
+         NBTGEF = 8
+         NBEFTG = NBEF
+      ELSE
+         NBTGS  = 0
+         NBTGEF = 0
+         NBEFTG = 0
+      ENDIF
+C
+C     CONSTRUCTION DU TABLEAU 'XYZSOMMET' DE CETTE SURFACE
+      CALL LXTNDC( NTLXSU, 'XYZSOMMET', 'MOTS',
+     %             WYZSOM + 3 * ( NBSOM + NBTGS ) )
+      CALL LXTSOU( NTLXSU, 'XYZSOMMET',  NTSOFA, MNSOFA )
+C     LE NOMBRE DE COORDONNEES D'UN SOMMET
+      MCN( MNSOFA + WBCOOR) = 3
+C     LE NOMBRE DE SOMMETS
+      MCN( MNSOFA + WNBSOM) = NBSOM
+C     LE NOMBRE DE TANGENTES
+      MCN( MNSOFA + WNBTGS ) = NBTGS
+C     LA DATE DE CREATION
+      CALL ECDATE( MCN(MNSOFA) )
+C     LE NUMERO DU TABLEAU DESCRIPTEUR
+      MCN( MNSOFA + MOTVAR(6) ) = NONMTD( '~>>>XYZSOMMET' )
+C
+C     L'ADRESSE DU DEBUT DES COORDONNEES DES SOMMETS
+      MNCOSO = MNSOFA + WYZSOM
+C
+C     DEBUT DU REMPLISSAGE DU TABLEAU 'XYZSOMMET' :
+C     LES 3 COORDONNEES DES SOMMETS DES 3 COTES DU TRIANGLE COURBE
+C     RANGEES SELON L'ORDRE DES SOMMETS D'UN TRIANGLE STRUCTURE
+C     ============================================================
+C     LE COTE 1  S1->S2
+      N = ABS( NUCOTE(1) )
+      DO 20 NP=1,NBSTCO-1
+         IF(NUCOTE(1).GE.0) THEN
+            MN = MNSOCT(N) + WYZSOM - 4 + 3 * NP
+         ELSE
+            MN = MNSOCT(N) + WYZSOM - 1 + 3 * (NBSTCO-NP)
+         ENDIF
+         IN  = MNCOSO - 4 + 3 * NOSOMT(NP,1)
+         DO 10 I=1,3
+            RMCN(IN+I) = RMCN(MN+I)
+ 10      CONTINUE
+ 20   CONTINUE
+C
+C     LE COTE 2  S2->S3
+      N = ABS( NUCOTE(2) )
+      DO 40 NP=1,NBSTCO-1
+         IF(NUCOTE(2).GE.0) THEN
+            MN = MNSOCT(N) + WYZSOM - 4 + 3 * NP
+         ELSE
+            MN = MNSOCT(N) + WYZSOM - 1 + 3 * (NBSTCO-NP)
+         ENDIF
+         IN  = MNCOSO - 4 + 3 * NOSOMT(NBSTCO,NP)
+         DO 30 I=1,3
+            RMCN(IN+I) = RMCN(MN+I)
+ 30      CONTINUE
+ 40   CONTINUE
+C
+C     LE COTE 3  S3->S1
+      N = ABS( NUCOTE(3) )
+      DO 60 NP=1,NBSTCO-1
+         IF(NUCOTE(3).GE.0) THEN
+            MN = MNSOCT(N) + WYZSOM - 4 + 3 * NP
+         ELSE
+            MN = MNSOCT(N) + WYZSOM - 1 + 3 * (NBSTCO-NP)
+         ENDIF
+         IN  = MNCOSO - 4 + 3 * NOSOMT(NBSTCO+1-NP,NBSTCO+1-NP)
+         DO 50 I=1,3
+            RMCN(IN+I) = RMCN(MN+I)
+ 50      CONTINUE
+ 60   CONTINUE
+C
+C     CONSTRUCTION DU TABLEAU 'NSEF' DE CETTE SURFACE
+C     ===============================================
+      CALL LXTNDC( NTLXSU, 'NSEF', 'ENTIER' ,
+     %             1 + WBARTR + NBEFTG * (2+NBTGEF) )
+      CALL LXTSOU( NTLXSU, 'NSEF',  NTFASU, MNFASU )
+C     TYPE DE L'OBJET : SURFACE
+      MCN ( MNFASU + WUTYOB ) = 3
+C     NUMERO DU TYPE DU MAILLAGE : TRIANGLE STRUCTURE
+      MCN ( MNFASU + WUTYMA ) = 3
+C     VARIABLE NBARTR: NOMBRE CONSTANT DE SEGMENTS PAR COTE DU TRIANGLE
+      MCN ( MNFASU + WBARTR ) = NBA
+C     LE TYPE NON-FERME DE FERMETURE DU MAILLAGE
+      MCN( MNFASU + WUTFMA ) = 0
+C     LE NOMBRE DE SOMMETS PAR FACE
+      MCN( MNFASU + WBSOEF ) = 4
+C     LE NOMBRE DE TANGENTES STOCKEES PAR EF : SURFACE C0 OU C1
+      MCN( MNFASU + WBTGEF ) = NBTGEF
+C     LE NOMBRE D'EF DE LA SURFACE
+      MCN( MNFASU + WBEFOB ) = NBEF
+C     LE NOMBRE D'EF AVEC POINTEUR
+      MCN( MNFASU + WBEFAP ) = NBEFTG
+C     LE NOMBRE D'EF AVEC TANGENTES
+      MCN( MNFASU + WBEFTG ) = NBEFTG
+C     LA DATE DE CREATION
+      CALL ECDATE( MCN(MNFASU) )
+C     LE NUMERO DU TABLEAU DESCRIPTEUR
+      MCN( MNFASU + MOTVAR(6) ) = NONMTD( '~>>>NSEF' )
+C
+C     RESERVATION DE LA PLACE NECESSAIRE AU TABLEAU TEMPORAIRE
+C     POXY = COORDONNEE CURVILIGNE HOMOGENE DES SOMMETS DE CHACUN DES 3 COTES
+      NBPOXY = NBSTCO * 3
+      MNCUCT(1) = 0
+      CALL TNMCDC( 'REEL', NBPOXY, MNCUCT(1) )
+      MNCUCT(2) = MNCUCT(1) + NBSTCO
+      MNCUCT(3) = MNCUCT(2) + NBSTCO
+C
+C     TRIANGULATION STRUCTUREE DU TRIANGLE DEFINI PAR SES BORDS
+C     =========================================================
+      IF( NBTGS .LE. 0 ) THEN
+C
+C        TRIANGLES SANS TANGENTES
+C        ........................
+C        CALCUL DES 3 COORDONNEES DES SOMMETS INTERNES DU TRIANGLE COURBE
+         CALL SUEXT2( NBSTCO,
+     S                RMCN(MNCUCT(1)), RMCN(MNCUCT(2)), RMCN(MNCUCT(3)),
+     S                RMCN(MNCOSO) )
+C
+      ELSE
+C
+C        TRIANGLES AVEC DES TANGENTES
+C        ............................
+C
+C        LE TMS 'NSEF' DU TRIANGLE COURBE EST COMPLETE DES NUMEROS DES TANGENTES
+C        -----------------------------------------------------------------------
+C        LE TABLEAU DES POINTEURS ET DES TANGENTES
+         MN = MNFASU + WBARTR
+         DO 81 N=1,NBEF
+            MN = MN + 1
+            MCN(MN) = N
+C           CODE GEOMETRIQUE 'INTERPOLATION TRANSFINIE'
+            MCN(MN+NBEF) = 16
+ 81      CONTINUE
+         MN = MN + NBEF
+         J  = 0
+         DO 85 N=1,NBEF
+C           LES 6 TANGENTES DU TRIANGLE N
+            DO 83 I=1,6
+               J  = J + 1
+               MCN(MN+I) = J
+ 83         CONTINUE
+C           LES 2 TANGENTES NULLES DU "4-EME" SOMMET DU TRIANGLE
+            MCN(MN+7) = 0
+            MCN(MN+8) = 0
+            MN = MN + 8
+ 85      CONTINUE
+C
+C        LE TMS 'XYZSOMMET' DU TRIANGLE COURBE EST COMPLETE DES COORDONNEES
+C        DES SOMMETS ET DES TANGENTES AUX ARETES
+C        ------------------------------------------------------------------
+C        CONSTRUCTION DES SOMMETS DE LA TRIANGULATION STRUCTUREE DU TRIANGLE UNI
+         CALL TRSTUN( NBSTCO,
+     S                RMCN(MNCUCT(1)), RMCN(MNCUCT(2)), RMCN(MNCUCT(3)),
+     S                RMCN(MNCOSO) )
+C
+C        PROTECTION DES 2 COORDONNEES DES SOMMETS INTERNES DU TRIANGLE UNITE
+         CALL TNMCDC( 'REEL', 2*NBSOM, MNSTTU )
+         MNL0 = MNCOSO
+         MNL1 = MNSTTU
+         DO 86 N=1,NBSOM
+            RMCN(MNL1  ) = RMCN(MNL0  )
+            RMCN(MNL1+1) = RMCN(MNL0+1)
+            MNL1 = MNL1 + 2
+            MNL0 = MNL0 + 3
+ 86      CONTINUE
+C
+C        RESERVATION DES COORDONNEES DES 2 DERIVEES EN CHAQUE SOMMET
+         CALL TNMCDC( 'REEL', 6*NBSOM, MN2DER )
+C
+C        L'ADRESSE DES SOMMETS DES 3 LIGNES=COTES DU TRIANGLE COURBE
+         CALL CRTGCT( 3, NUCOTE, MNSOCT, MNXYST, NBARLI, MNNTGL )
+C
+C        CALCUL DES 3 COORDONNEES DES SOMMETS DU TRIANGLE COURBE
+C        ET DES 3 COMPOSANTES DES 2 DERIVEES /Du ET /Dv
+         MNL1 = MNSTTU
+         MNL0 = MNSOFA + WYZSOM
+         MNC  = MN2DER
+         N1   = ABS( NUCOTE(1) )
+         N2   = ABS( NUCOTE(2) )
+         N3   = ABS( NUCOTE(3) )
+         NBSTCT(1) = NBSTCO
+         NBSTCT(2) = NBSTCO
+         NBSTCT(3) = NBSTCO
+C
+         DO 180 N=1,NBSOM
+C           LES 2 COORDONNEES DU SOMMET DANS LE TRIANGLE UNITE
+C           PERMETTENT LE CALCUL DES 3 COORDONNEES DU SOMMET DU
+C           TRIANGLE COURBE PAR L'INTERPOLATION TRANSFINIE
+            CALL TR1STG( RMCN(MNL1), RMCN(MNL1+1), NBSTCT,
+     S                   RMCN(MNCUCT(1)), RMCN(MNCUCT(2)),
+     S                   RMCN(MNCUCT(3)),
+     S                   MNXYST(N1), MNXYST(N2), MNXYST(N3),
+     S                   MNXYTG(N1), MNXYTG(N2), MNXYTG(N3),
+     S                   MNNTGL(N1), MNNTGL(N2), MNNTGL(N3),
+     S                   RMCN(MNL0), RMCN(MNC) )
+C           PASSAGE AU SOMMET SUIVANT
+            MNL1 = MNL1 + 2
+            MNL0 = MNL0 + 3
+            MNC  = MNC  + 6
+ 180     CONTINUE
+C
+C        LA TRANSFORMATION DES TANGENTES CALCULEES EN CHAQUE SOMMET
+C        DE LA TRIANGULATION DU TRIANGLE UNITE EN LES 6 TANGENTES SUR
+C        CHAQUE TRIANGLE DU MAILLAGE DU TRIANGLE UNITE
+C        ------------------------------------------------------------
+         CALL QTDETG( MNSTTU, MN2DER, MNSOFA, MNFASU )
+C
+C        DESTRUCTION DES TABLEAUX AUXILIAIRES
+C        ------------------------------------
+         CALL TNMCDS( 'REEL', 2*NBSOM, MNSTTU )
+         CALL TNMCDS( 'REEL', 6*NBSOM, MN2DER )
+         DO 190 N=1,3
+            CALL TNMCDS( 'REEL', 3*NBSTCO, MNXYST(N) )
+C           LES EVENTUELS TABLEAUX CREES DANS L'EXECUTION DU SP TGARLI
+            IF( MNNTGL(N) .GT. 0 ) THEN
+               CALL TNMCDS( 'ENTIER' , 3*NBARLI(N), MNNTGL(N) )
+            ENDIF
+ 190     CONTINUE
+      ENDIF
+C
+C     DESTRUCTION DU TABLEAU DES COORDONNEES POXY
+      CALL TNMCDS( 'REEL', NBPOXY, MNCUCT(1) )
+      END

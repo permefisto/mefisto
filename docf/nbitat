@@ -1,0 +1,6 @@
+Le nombre d'iterations pour ameliorer la
+tetraedrisation peut etre choisi de l'ordre 
+de QUELQUES UNITES. Par exemple: 5 
+
+EN effet, le cout d'une iteration peur etre
+eleve et tout depend de la qualite initiale

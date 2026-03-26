@@ -1,0 +1,5 @@
+variable IMPORTER 'un MAILLAGE de PLSVO' entier
+( 1 : 'Un Fichier xyznsef.plsv.nom',
+  2 : 'Un OBJET issu du logiciel NEF',
+  3 : 'Un fichier.obj (en minuscules)',
+  4 : 'LS-Dyna NomSurface.xyzlsd NomSurface.nselsd' ) ;

@@ -1,0 +1,45 @@
+      SUBROUTINE SGIIMPR( L1CHSGI, LCHSGI, NSTSGI )
+C+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+C BUT :    IMPRIMER LE CHAINAGE ET NO DES 2 SOMMETS DANS XYZPTA
+C -----
+C
+C ENTREES:
+C --------
+C L1CHSGI: INDICE DANS LCHSGI DU PREMIER SGI (SEGMENT INTERSECTION)
+C LCHSGI : NUMERO DU SGI et CHAINAGE SUR LE SUIVANT
+C NSTSGI : NUMERO DANS XYZPTA DES 2 POINTS EXTREMITES DU SEGMENT INTERSECTION
+C          NUMERO DU TRIANGLE DANS NUSTS1 ET DANS NUSTS2
+C+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+C AUTEUR : PERRONNET Alain LJLL UPMC & St Pierre du Perray  Octobre 2011
+C2345X7..............................................................012
+      INTEGER   NSTSGI(4,*), LCHSGI(2,*)
+C
+C     AFFICHAGE DES SGI CONTINUS
+      LCH = L1CHSGI
+C
+C     NUMERO DANS LCHSGI DU SGI
+ 10   NSGI = LCHSGI( 1, LCH )
+C
+C     NSG1 NUMERO DU SOMMET 1 DU SGI DANS XYZPTA
+      NSG1 = NSTSGI( 1, NSGI )
+C
+C     NSG2 NUMERO DU SOMMET 2 DU SGI DANS XYZPTA
+      NSG2 = NSTSGI( 2, NSGI )
+C
+C     NUMERO DANS NUSTS1 DU TRIANGLE NT1 DU SGI NSGI
+      NT1 = NSTSGI( 3, NSGI )
+C
+C     NUMERO DANS NUSTS2 DU TRIANGLE NT2 DU SGI NSGI
+      NT2 = NSTSGI( 4, NSGI )
+C
+      print *,'SGIIMPR: CH=',LCH,' NoSGI=',NSGI,
+     %        ' NoST1=',NSG1,' NoST2=',NSG2,
+     %        ' NT1=',NT1,' NT2=',NT2,
+     %        ' CH SUIVANT=',LCHSGI(2,LCH)
+C
+C     SGI SUIVANT
+      LCH = ABS( LCHSGI( 2, LCH ) )
+      IF( LCH .GT. 0 ) GOTO 10
+C
+      RETURN
+      END

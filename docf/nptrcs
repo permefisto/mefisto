@@ -1,0 +1,20 @@
+A la surface initiale est associe un repere orthonorme E0
+defini par 3 points P01 P02 P03 
+.P01 est l'origine
+.P01-P02 definit le vecteur E1
+.P01-P03 definit le vecteur E2
+ E3 = E1 PRODUIT VECTORIEL E2
+ E2 = E3 PRODUIT VECTORIEL E1
+Norme(E1)=Norme(E2)=Norme(E3)=1
+
+A tout deplacement I, sont associes les 3 points qui definissent
+de la meme maniere un repere EI.  
+
+La TRANSFORMATION de la surface initiale est alors celle 
+definie par le deplacement du repere E0 en le repere EI. 
+Les sommets des triangles ou quadrangles des surfaces 
+transformees sont relies 2 a 2. 
+
+Exemple: V14.0; I; 14; SURFACE_INITIALE; 0; 2; {nombre de tranches}
+         P01;P02;P03;  P11;P12;P13;   P21;P22;P23;
+        {les 3 points de definition des reperes}

@@ -1,0 +1,150 @@
+      SUBROUTINE AMTRIATI( NOFOTI, MXSOM,  NBSOM,  XYZSOM,
+     %                     MXTRIA, NBTRIA, NOTRIA,  IERR )
+C+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+C BUT :    SI FONCTION TAILLE_IDEALE ou DARETE DONNE VALEUR PAR DEFAUT
+C -----    AJOUTER LE BARYCENTRE DES TRIANGLES DONT UNE ARETE A UNE LONGUEUR
+C                  SUPERIEURE A LA TAILLE_IDEALE DE L'UN DE SES SOMMETS
+C ENTREES:
+C --------
+C NOFOTI : NUMERO DE LA FONCTION 'TAILLE_IDEALE' DES ARETES SINON 0
+C MXSOM  : NOMBRE MAXIMAL DE SOMMETS DE LA TRIANGULATION
+C NBSOM  : NOMBRE DE SOMMETS DE LA TRIANGULATION
+C XYZSOM : X Y Z LES 3 COORDONNEES DES SOMMETS DE LA TRIANGULATION
+C MXTRIA : NOMBRE MAXIMAL DE TRIANGLES DECLARABLES DANS NOTRIA
+C NBTRIA : NOMBRE DE TRIANGLES DE LA TRIANGULATION
+
+C MODIFIES :
+C ----------
+C NBSOM  : NOMBRE DE SOMMETS DE LA TRIANGULATION DANS XYZSOM
+C NOTRIA : NUMERO XYZSOM DES 3 SOMMETS ET 0 POUR CHACUN DES NBTRIA TRIANGLES
+C NBTRIA : NOMBRE DE TRIANGLES DE LA TRIANGULATION
+
+C SORTIE :
+C --------
+C IERR   : 0 SI PAS D'ERREUR DETECTEE
+C          1 SI TAILLE_IDEALE NON CALCULABLE EN UN SOMMET
+C          2 SI TABLEAU XYZSOM SATURE (AUGMENTER MXSOM)
+C          3 SI TABLEAU NOTRIA SATURE (AUGMENTER MXTRIA)
+C+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+C AUTEUR: ALAIN PERRONNET LJLL UPMC PARIS & VEULETTES SUR MER Avril 2017
+C....................................................................012
+      REAL              XYZSOM(3,MXSOM), LGARET
+      INTEGER           NOTRIA(4,NBTRIA)
+      DOUBLE PRECISION  D, XYZ(3,3), TI(3), XYZB(3)
+
+C  --------------------------------------------------------------------
+C     AJOUTER LE BARYCENTRE DES TRIANGLES DONT UNE ARETE A UNE LONGUEUR
+C     SUPERIEURE A LA TAILLE_IDEALE DE L'UN DE SES SOMMETS
+C  --------------------------------------------------------------------
+      NBSOM0  = NBSOM
+      NBTRIA0 = NBTRIA
+
+      DO 20 NTR = 1, NBTRIA0
+
+C        CALCUL DE LA LONGUEUR DES 3 ARETES DU TRIANGLE NTR
+         NBPLUS = 0
+         NS1    = NOTRIA( 3, NTR )
+         DO N = 1, 3
+
+            NS2 = NOTRIA( N, NTR )
+
+C           LONGUEUR DE L'ARETE N
+            LGARET = ( XYZSOM(1,NS2) - XYZSOM(1,NS1) ) ** 2
+     %             + ( XYZSOM(2,NS2) - XYZSOM(2,NS1) ) ** 2
+     %             + ( XYZSOM(3,NS2) - XYZSOM(3,NS1) ) ** 2
+            LGARET = SQRT( LGARET )
+
+C           XYZ DU SOMMET NS2
+            DO K = 1, 3
+               XYZ( K, N ) = XYZSOM( K, NS2 )
+            ENDDO
+
+C           CALCUL DE TAILLE_IDEALE(X,Y,Z) AU SOMMET NS2
+            CALL TAILIDEA( NOFOTI, XYZ(1,N),  NCODEV, TI(N) )
+            IF( NCODEV .EQ. 0 ) GOTO 9991
+
+            IF( TI(N)*2 .LE. LGARET ) NBPLUS=NBPLUS+1
+
+C           PASSAGE A L'ARETE SUIVANTE
+            NS1 = NS2
+
+         ENDDO
+
+C        UNE TAILLE_IDEALE AUX 3 SOMMETS DU TRIANGLE NTR
+C        EST ELLE INFERIEURE A LA LONGUEUR/2 D'UNE ARETE?
+         IF( NBPLUS .EQ. 0 ) GOTO 20
+
+C        OUI: CONSTRUCTION DU BARYCENTRE DES 3 SOMMETS DU TRIANGLE NTR
+C        -------------------------------------------------------------
+         IF( NBSOM .GE. MXSOM ) GOTO 9992
+         NBSOM = NBSOM + 1
+         DO K=1,3
+            XYZB(K) = 00
+         ENDDO
+C        POIDS = INVERSE DE LA TAILLE_IDEALE
+C        VRAI BARYCENTRE POUR EVITER AJOUT SUPPRESSION
+         TI(1) = 1D0
+         TI(2) = 1D0
+         TI(3) = 1D0
+         D = 0D0
+         DO N=1,3
+            D = D + 1D0 / TI(N)
+            DO K=1,3
+               XYZB(K) = XYZB(K) + XYZ(K,N) / TI(N)
+            ENDDO
+         ENDDO
+         DO K=1,3
+            XYZSOM(K,NBSOM) = REAL( XYZB(K) / D )
+         ENDDO
+
+C        DECOUPAGE EN 3 SOUS-TRIANGLES DE SOMMET LE BARYCENTRE DU TRIANGLE NTR
+C        MODIFICATION NS3 ->NBSOM DU TRIANGLE NTR NS1 NS2 NBSOM
+         NS1 = NOTRIA( 1, NTR )
+         NS2 = NOTRIA( 2, NTR )
+         NS3 = NOTRIA( 3, NTR )
+
+         NOTRIA( 3, NTR ) = NBSOM
+
+C        AJOUT DU NOUVEAU TRIANGLE NBTRIA: NS2 NS3 NBSOM
+         IF( NBTRIA .GE. MXTRIA ) GOTO 9993
+         NBTRIA = NBTRIA + 1
+         NOTRIA( 1, NBTRIA ) = NS2
+         NOTRIA( 2, NBTRIA ) = NS3
+         NOTRIA( 3, NBTRIA ) = NBSOM
+         NOTRIA( 4, NBTRIA ) = 0
+
+C        AJOUT DU NOUVEAU TRIANGLE NBTRIA: NS3 NS1 NBSOM
+         IF( NBTRIA .GE. MXTRIA ) GOTO 9993
+         NBTRIA = NBTRIA + 1
+         NOTRIA( 1, NBTRIA ) = NS3
+         NOTRIA( 2, NBTRIA ) = NS1
+         NOTRIA( 3, NBTRIA ) = NBSOM
+         NOTRIA( 4, NBTRIA ) = 0
+
+ 20   ENDDO
+
+      PRINT*
+      PRINT*,'amtriati:',NBSOM, ' SOMMETS  ',
+     %        NBSOM -NBSOM0,' SOMMETS-BARYCENTRES   AJOUTES'
+      PRINT*,'amtriati:',NBTRIA,' TRIANGLES',
+     %        NBTRIA-NBTRIA0,' TRIANGLES AJOUTES'
+
+      GOTO 9999
+
+C     PROBLEME
+ 9991 PRINT *,'amtriati: CALCUL INCORRECT de TAILLE_IDEALE() AU
+     % SOMMET', (XYZ(L,N),L=1,3),' TAILLE_IDEALE()=',TI(N)
+      IERR = 1
+      GOTO 9999
+
+C     TABLEAU XYZSOM SATURE
+ 9992 PRINT *,'amtriati: TABLEAU XYZSOM SATURE MXSOM=',MXSOM
+      IERR = 2
+      GOTO 9999
+
+C     TABLEAU NOTRIA SATURE
+ 9993 PRINT*,'amtriati: TABLEAU NOTRIA SATURE MXTRIA=',MXTRIA
+      IERR = 3
+
+ 9999 RETURN
+      END

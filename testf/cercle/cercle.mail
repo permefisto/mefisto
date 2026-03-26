@@ -1,0 +1,115 @@
+ { ============================================================= }
+ { MEFISTO Version Septembre 1997   PROJET: cercle               }
+ { test de l'option 10; avec des tangentes                       }
+ { Utilisateur: ap                  Date: 26/8/2006              }
+ { ============================================================= }
+ 1;{ POINTS sommets de l objet }
+   1;{ FRAPPE des valeurs }
+ origine; i; 1;
+ { DANS LE LEXIQUE ~>TRANSFO }
+ { coordonnees x y z }
+ 0;0;0;
+ { COORPO '3 coordonnees cartesiennes du point' xyz ; }
+ p1; i; 1; 1; 0; 0;
+ { DANS LE LEXIQUE ~>TRANSFO }
+ { coordonnees x y z }
+ { COORPO '3 coordonnees cartesiennes du point' xyz ; }
+ P2; i; 1; 0; 1; 0;
+ { DANS LE LEXIQUE ~>TRANSFO }
+ { coordonnees x y z }
+ { COORPO '3 coordonnees cartesiennes du point' xyz ; }
+ @;
+
+2;{ LIGNES aretes de l objet }
+ cercle; I; { DANS LE LEXIQUE ~>TRANSFO }
+ 8;         { cercle }
+ 100;       { NBARLI 'nombre d''aretes de la ligne' entier ; }
+ 2; {cercle defini par le centre, un point du cercle, un point du plan}
+ origine;{ DANS LE LEXIQUE ~>POINT }
+ p1;     { DANS LE LEXIQUE ~>POINT }
+ p2;     { DANS LE LEXIQUE ~>POINT }
+ @;
+@;
+
+3; { SURFACES contours de l objet }
+ cercleq; i;{ DANS LE LEXIQUE ~>TRANSFO }
+ 10;   { donnee des tableaux XYZSOMMET et NSEF }
+ 4;    { NBSOM  'nombre de sommets'     entier ; }
+ 2;    { NBTGS  'nombre de tangentes'   entier ; }
+ 3;    { NBCOOR 'nombre coordonnees par sommet 3 ou 6' entier ; }
+  0; -1;  0; { XYZSOM(1..NBSOM) 'x y z de chaque sommet' xyz; }
+  1;  0;  0;
+  0;  1;  0;
+ -1;  0;  0;
+ 
+ defvar pi2; pi2=atan(1)*2;
+ pi2; 0; 0; { XYZTGS(1..NBTGS) 'x y z de chaque tangente' xyz; }
+ 0; pi2; 0;
+
+ 3;  { surface }
+ 0;  { non-ferme }
+ 4;  { face }
+ 8;  { 8 tg par face }
+ 1;  { NBEFOB 'nombre des EF du PLSV' entier ; }
+ 1;  { NBEFTG 'nombre des EF avec TG' entier ; }
+ 1;  { NBEFAP 'nombre des EF avec POINTEUR sur EF a TG' entier ; }
+ 0;  { NUTYMA quadrangle non structure }
+ 1; 2; 3; 4; {NO des 4 Sommets du quadrangle}
+ 1;  { LPEFTG(1..NBEFAP) 'numero>0 de l''EF a TG sinon 0' entier ; }
+ 1;  { CERCLE }
+  1; -1; { NUTGEF(1..NBTGEF,1..NBEFTG) }
+  2; -2;
+ -1;  1;
+ -2;  2;
+@;
+
+3;   { SURFACES contours de l objet }
+ cerclet; i;  { DANS LE LEXIQUE ~>TRANSFO }
+ 10;  { donnee des tableaux XYZSOMMET et NSEF }
+ 4;   { NBSOM       'nombre de sommets'             entier ; }
+ 2;   { NBTGS       'nombre de tangentes'           entier ; }
+ 3;   { NBCOOR 'nombre coordonnees par sommet 3 ou 6' entier ; }
+  0; -1;  0; { XYZSOM(1..NBSOM) 'x y z de chaque sommet' xyz ; }
+  1;  0;  0;
+  0;  1;  0;
+ -1;  0;  0;
+
+ pi2; 0; 0;  { XYZTGS(1..NBTGS) 'x y z de chaque tangente' xyz ; }
+ 0; pi2; 0;
+
+ 3;  { surface }
+            0;
+ { non-ferme }
+            4;
+ { face }
+            8;
+ { 8 tg par face }
+ 2;
+ { NBEFOB 'nombre des EF du PLSV' entier ; }
+ 2;
+ { NBEFTG 'nombre des EF avec TG' entier ; }
+ 2;
+ { NBEFAP 'nombre des EF avec POINTEUR sur EF a TG' entier ; }
+            0;
+ { maillage surface non structure }
+ 1; 2; 3; 0; {NO des 4 Sommets du quadrangle} 
+ 1; 3; 4; 0; {NO des 4 Sommets du quadrangle}
+ 1; 2;
+ { LPEFTG(1..NBEFAP) 'numero>0 de l''EF a TG sinon 0' entier ; }
+ 1; 1;
+ { CERCLE }
+  1;  0;
+  2; -2;
+  0;  1;
+  0;  0;
+
+  0; -1;
+ -1;  0;
+ -2;  2;
+  0;  0;
+ { NUTGEF(1..NBTGEF,1..NBEFTG) }
+ @;
+
+8;
+3;  {TRACE DES SURFACES}
+FERMER;

@@ -1,0 +1,369 @@
+      SUBROUTINE LIEX11( NTLXLI, LADEFI, RADEFI,
+     %                   NTARLI, MNARLI, NTSOLI, MNSOLI, IERR )
+C++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+C BUT :    GENERER LES ARETES DE LA LIGNE B-SPLINE
+C -----    UNIFORME D'INTERPOLATION OUVERTE AVEC OU SANS TAILLE_IDEALE
+C
+C ENTREES:
+C --------
+C NTLXLI : NUMERO DU TABLEAU TS DU LEXIQUE DE LA LIGNE
+C LADEFI : TABLEAU ENTIER DE DEFINITION DE LA LIGNE
+C          CF ~/TD/D/A_LIGNE__DEFINITION
+C RADEFI : TABLEAU REEL   DE DEFINITION DE LA LIGNE
+C          CES 2 TABLEAUX LADEFI ET RADEFI ONT MEME ADRESSE A L'APPEL
+C
+C SORTIES:
+C --------
+C NTARLI : NUMERO      DU TMS 'NSEF' DES NUMEROS DES ARETES
+C MNARLI : ADRESSE MCN DU TMS 'NSEF' DES NUMEROS DES ARETES
+C          CF ~/TD/D/A___NSEF
+C NTSOLI : NUMERO      DU TMS 'XYZSOMMET' DE LA LIGNE
+C MNSOLI : ADRESSE MCN DU TMS 'XYZSOMMET' DE LA LIGNE
+C IERR   : =0 SI PAS D'ERREUR
+C          >0 SI ERREUR
+C+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+C AUTEUR : ALAIN PERRONNET ANALYSE NUMERIQUE UPMC PARIS        AOUT 1997
+C2345X7..............................................................012
+      IMPLICIT INTEGER (W)
+      include"./incl/gsmenu.inc"
+      COMMON / UNITES / LECTEU, IMPRIM, INTERA, NUNITE(29)
+      include"./incl/a_ligne__definition.inc"
+      include"./incl/a_ligne__bspline.inc"
+      include"./incl/a___tableau1r.inc"
+      include"./incl/a___xyzsommet.inc"
+      include"./incl/a___nsef.inc"
+      include"./incl/ntmnlt.inc"
+      include"./incl/pp.inc"
+      COMMON            MCN(MOTMCN)
+      REAL              RMCN(1)
+      EQUIVALENCE      (MCN(1),RMCN(1))
+      INTEGER           LADEFI(0:*)
+      REAL              RADEFI(0:*)
+C
+C     EXISTENCE OU NON DE LA FONCTION 'TAILLE_IDEALE(X,Y,Z)' DES ARETES
+C     =================================================================
+C     ICI LA CARTE EST SUPPOSEE ISOTROPE
+      NOFOTI = NOFOTIEL()
+      IF( NOFOTI .GT. 0 ) THEN
+C        LA FONCTION TAILLE_IDEALE(XYZ) EXISTE
+         WRITE(IMPRIM,10000) 'AVEC'
+         CALL LBSOTI( NTLXLI, LADEFI, NOFOTI,
+     %                NTARLI, MNARLI, NTSOLI, MNSOLI, IERR )
+         RETURN
+      ENDIF
+10000 FORMAT(' CONSTRUCTION DE LA LIGNE B-SPLINE ',A4,
+     %       ' TAILLE_IDEALE(X,Y,Z)')
+C
+C     ICI, LA FONCTION TAILLE_IDEALE N'EXISTE PAS
+C     ===========================================
+      WRITE(IMPRIM,10000) 'SANS'
+C
+C     VERIFICATIONS
+C     -------------
+C     LE DEGRE DES POLYNOMES DE LA B-SPLINE
+      NDEGBL = LADEFI(WDEGBL)
+      IF( NDEGBL .LT. 1 ) THEN
+         NBLGRC(NRERR) = 1
+         KERR(1) = 'LE DEGRE DOIT ETRE >0'
+         CALL LEREUR
+         IERR = 4
+         GOTO 9999
+      ENDIF
+C
+C     LE NOMBRE DE POINTS DE CONTROLE
+      NBPCBL = LADEFI(WBPCBL)
+      IF( NDEGBL .GE. NBPCBL ) THEN
+         NBLGRC(NRERR) = 1
+         WRITE(KERR(MXLGER)(1:5),'(I5)') NBPCBL
+         KERR(1) = 'LE DEGRE DOIT ETRE >0 ET <'//KERR(MXLGER)(1:5)
+         CALL LEREUR
+         IERR = 5
+         GOTO 9999
+      ENDIF
+C
+C     LE NOMBRE D'ARETES ET DE SOMMETS DE LA LIGNE DOIT ETRE CORRECT
+      NBARLI = LADEFI(WBARLI)
+      IF( NBARLI .LE. 0 ) THEN
+         NBLGRC(NRERR) = 1
+         KERR(1) = 'NOMBRE INCORRECT D''ARETES'
+         CALL LEREUR
+         IERR = 2
+         GOTO 9999
+      ENDIF
+      NBSOLI = NBARLI + 1
+C
+C     LA RAISON DE LA PROGRESSION GEOMETRIQUE
+      RAGEBL = RADEFI(WAGEBL)
+      IF( RAGEBL .LE. 0. ) THEN
+         NBLGRC(NRERR) = 1
+         KERR(1) = 'RAISON GEOMETRIQUE=<0'
+         CALL LEREUR
+         IERR = 3
+         GOTO 9999
+      ENDIF
+      IF( ABS(RAGEBL-1.0) .LE. 0.001 ) RAGEBL=1.0
+C
+      MNSPLI = 0
+      MNR    = 0
+      MNU    = 0
+      MNXYPC = 0
+C
+C     LE NUMERO UTILISATEUR DES POINTS DE CONTROLE DE LA B-SPLINE
+C     GENERATION DU TABLEAU DES COORDONNEES DES POINTS D'INTERPOLATION
+      CALL TNMCDC( 'REEL', 3 * NBPCBL, MNXYPC )
+      MNP = MNXYPC
+      DO 3 I=0,NBPCBL-1
+         N = LADEFI( WUPCBL + I )
+C        RECUPERATION DES COORDONNEES DU POINT
+         CALL LXNLOU( NTPOIN, N, NTLXPO, MN )
+         IF( NTLXPO .LE. 0 ) THEN
+            NBLGRC(NRERR) = 1
+            WRITE(KERR(MXLGER)(1:4),'(I4)') I+1
+            KERR(1) = 'POINT ' // KERR(MXLGER)(1:4) //' INCONNU'
+            CALL LEREUR
+            IERR = 6
+            GOTO 9999
+         ENDIF
+         CALL LXTSOU( NTLXPO, 'XYZSOMMET', NT, MN )
+         MN = MN + WYZSOM
+         RMCN( MNP     ) = RMCN( MN )
+         RMCN( MNP + 1 ) = RMCN( MN + 1 )
+         RMCN( MNP + 2 ) = RMCN( MN + 2 )
+         MNP = MNP + 3
+ 3    CONTINUE
+C
+C     DECLARATION DU TABLEAU U PARAMETRE DES POINTS P
+      MOTU   = NBPCBL + 1
+      CALL TNMCDC( 'REEL', MOTU, MNU )
+C
+C     PARAMETRE UNIFORME A PRIORI MOINS BON QU'UNE APPROXIMATION
+C     DE LA COORDONNEE CURVILIGNE POUR PARAMETRE MAIS HOMOGENEITE
+C     RECHERCHEE AVEC LE QUADRANGLE B-SPLINE QUI A 2x2 LIGNES!
+      SS = NBPCBL
+      DO 5 I=0,NBPCBL
+         RMCN( MNU + I ) = I / SS
+ 5    CONTINUE
+CCCC
+CCCC     MISE A ZERO DE L'ABSCISSE CURVILIGNE ABSC
+CCC      ABSC = 0.
+CCC      RMCN( MNU ) = 0.
+CCCC     PRISE EN COMPTE DE LA DISTANCE ENTRE LES POINTS DANS LES PARAMETRES
+CCC      MNP  = MNXYPC
+CCC      DO 5 I=1,NBPCBL-1
+CCCC        CALCUL DE LA LONGUEUR DU SEGMENT I SUIVANT ET AJOUT DANS ABSC
+CCC         MN     = MNP
+CCC         MNP    = MNP + 3
+CCC         RNORME = ( RMCN(MNP  ) - RMCN(MN)   ) ** 2
+CCC     %          + ( RMCN(MNP+1) - RMCN(MN+1) ) ** 2
+CCC     %          + ( RMCN(MNP+2) - RMCN(MN+2) ) ** 2
+CCC         RNORME = SQRT( RNORME )
+CCC         ABSC   = ABSC + RNORME
+CCC         RMCN( MNU + I ) = ABSC
+CCC 5    CONTINUE
+CCCC     AFFECTATION DU DERNIER PARAMETRE
+CCC      RMCN( MNU + NBPCBL ) = ABSC + RNORME
+CCCC     INTERVALLE DU PARAMETRE IMPOSE A [0,1] POUR LA B-SPLINE D'INTERPOLATION
+CCC      DO 7 I=1,NBPCBL
+CCC         RMCN( MNU + I ) = RMCN( MNU + I ) / ABSC
+CCC 7    CONTINUE
+CCC      RMCN( MNU + NBPCBL - 1 ) = 1.0
+C
+C     RESERVATION DE LA MATRICE DES BJ,M(RI)
+      CALL TNMCDC( 'REEL2', NBPCBL*(NBPCBL+3), MNBMAT )
+C
+C     LE NOMBRE DE POINTS R
+      LR = NBPCBL - NDEGBL
+C
+C     LE TABLEAU SPLINE( 0:NDEGBL, 1:LR, 1:NBCOMP )
+      K      = NDEGBL + 1
+      MOSPLI = K*LR*3
+      CALL TNMCDC( 'REEL', MOSPLI, MNSPLI )
+C
+C     LE TABLEAU DES NOEUDS T
+      LT   = NBPCBL
+      MOTT = LT + K
+      CALL TNMCDC( 'REEL', MOTT, MNT )
+C
+C     LE TABLEAU DES B(J,M)
+      CALL TNMCDC( 'REEL', K * (NDEGBL+2), MNBJM )
+C
+C     LE TABLEAU DES A(J,M)
+      CALL TNMCDC( 'REEL', K * K, MNAJM )
+C
+C     LES 1/FACTORIELLES DE M
+      CALL TNMCDC( 'REEL', K, MNFACM )
+C
+C     LE TABLEAU DU PARAMETRE R
+      CALL TNMCDC( 'REEL', LR+1, MNR )
+C
+C     LE NUMERO DU DERNIER NOEUD T EN CHAQUE POINT R
+      CALL TNMCDC( 'ENTIER', LR+1, MNNORT )
+C
+C     LA CONSTRUCTION DES POLYNOMES SUR CHAQUE INTERVALLE DE LA B-SPLINE
+C     ==================================================================
+      CALL BSPINO( NDEGBL, NBPCBL, LR, LT,
+     %             RMCN(MNU), RMCN(MNT), RMCN(MNR),
+     %             RMCN(MNBJM) , RMCN(MNXYPC), RMCN(MNAJM),
+     %             RMCN(MNSPLI), RMCN(MNFACM), RMCN(MNBMAT),
+     %             MCN(MNNORT) , IERR )
+C
+C     DESTRUCTION DES TABLEAUX DEVENUS INUTILES
+      CALL TNMCDS( 'ENTIER', LR+1, MNNORT )
+      CALL TNMCDS( 'REEL', K, MNFACM )
+      CALL TNMCDS( 'REEL', MOTT, MNT )
+      CALL TNMCDS( 'REEL', K * (NDEGBL+2), MNBJM )
+      CALL TNMCDS( 'REEL', K * K, MNAJM )
+      CALL TNMCDS( 'REEL2', NBPCBL*(NBPCBL+3), MNBMAT )
+      IF( IERR .NE. 0 ) GOTO 9900
+C
+C     CONSTRUCTION DU TABLEAU BSPLINE
+C     -------------------------------
+      CALL LXTSOU( NTLXLI, 'BSPLINE',  NTBSPL, MNBSPL )
+      IF( NTBSPL .GT. 0 ) THEN
+         CALL LXTSDS( NTLXLI, 'BSPLINE' )
+      ENDIF
+      I = WARABS + LR + 1 + K*LR*3
+      CALL LXTNDC( NTLXLI, 'BSPLINE', 'MOTS' , I )
+      CALL LXTSOU( NTLXLI, 'BSPLINE',  NTBSPL, MNBSPL )
+C
+C     DEGRBS 'degre des polynomes de la BSPLINE'
+      MCN( MNBSPL + WEGRBS ) = NDEGBL
+C
+C     NBCOBS 'nombre de composantes de la BSPLINE 3 ou 4'
+      MCN( MNBSPL + WBCOBS ) = 3
+C
+C     NBINBS 'nombre d'intervalles de definition'
+      MCN( MNBSPL + WBINBS ) = LR
+C
+C     PARABS(0..NBINBS) 'valeurs du parametre de la BSPLINE'
+      CALL TRTATA( MCN(MNR), MCN(MNBSPL+WARABS), 1+LR )
+C
+C     SPLIBS(0..DEGRBS,1:NBINBS,1:NBCOBS) 'coefficients des polynomes'
+      I = MNBSPL + WARABS + 1 + LR
+      CALL TRTATA( MCN(MNSPLI), MCN(I),  K*LR*3 )
+C
+C     AJOUT DE LA DATE
+      CALL ECDATE( MCN(MNBSPL) )
+C
+C     AJOUT DU NUMERO DU TABLEAU DESCRIPTEUR
+      MCN( MNBSPL + MOTVAR(6) ) = NONMTD( '~>LIGNE>>BSPLINE' )
+C     CONSTRUCTION DU TABLEAU 'XYZSOMMET'
+C     -----------------------------------
+      IF( NDEGBL .GE. 2 ) THEN
+         NBTGS=2*NBARLI
+      ELSE
+         NBTGS=0
+      ENDIF
+C
+      CALL LXTNDC( NTLXLI, 'XYZSOMMET', 'ENTIER',
+     %             WYZSOM + 3*NBSOLI + 3*NBTGS )
+      CALL LXTSOU( NTLXLI, 'XYZSOMMET', NTSOLI , MNSOLI )
+C
+C     LE NOMBRE DE COORDONNEES D'UN SOMMET
+      MCN( MNSOLI + WBCOOR ) = 3
+C
+C     LE NOMBRE DE SOMMETS
+      MCN( MNSOLI + WNBSOM ) = NBSOLI
+C
+C     LE NOMBRE DE TANGENTES
+      MCN( MNSOLI + WNBTGS ) = NBTGS
+C
+C     LE CALCUL DES COORDONNEES DES SOMMETS ET TGS DES ARETES DE CETTE LIGNE
+      IF( RAGEBL .EQ. 1.0 .AND. MOD(NBARLI,NBPCBL-1) .EQ. 0 ) THEN
+         CALL BSPIAC( 0, NDEGBL, NBPCBL, LR,
+     %                NBSOLI,    RMCN(MNXYPC),
+     %                RMCN(MNR), RMCN(MNU), RMCN(MNSPLI),
+     %                RMCN(MNSOLI+WYZSOM),
+     %                RMCN(MNSOLI + 3*NBSOLI + WYZSOM), NBTGS )
+      ELSE
+         CALL BSPINA( 0, NDEGBL, NBPCBL, LR,
+     %                NBSOLI, RAGEBL, RMCN(MNXYPC),
+     %                RMCN(MNR), RMCN(MNSPLI),
+     %                RMCN(MNSOLI+WYZSOM),
+     %                RMCN(MNSOLI + 3*NBSOLI + WYZSOM), NBTGS )
+      ENDIF
+C
+C     AJOUT DE LA DATE
+      CALL ECDATE( MCN(MNSOLI) )
+C
+C     AJOUT DU NUMERO DU TABLEAU DESCRIPTEUR
+      MCN( MNSOLI + MOTVAR(6) ) = NONMTD( '~>>>XYZSOMMET' )
+C
+C     CONSTRUCTION DU TABLEAU 'NSEF' LIGNE STRUCTUREE
+C     -----------------------------------------------
+      K = 1 + WBARSE
+      IF ( NBTGS .GT. 0) THEN
+         K = K + 4 * NBARLI
+      ENDIF
+      CALL LXTNDC( NTLXLI, 'NSEF', 'ENTIER', K )
+      CALL LXTSOU( NTLXLI, 'NSEF',  NTARLI , MNARLI )
+C
+C     LE TYPE DE L'OBJET : ICI LIGNE
+      MCN( MNARLI + WUTYOB ) = 2
+C
+C     LIGNE OU SURFACE FERMEE OU NON FERMEE:ICI LIGNE OUVERTE
+      MCN( MNARLI + WUTFMA ) = 0
+C
+C     LE NOMBRE DE SOMMETS PAR EF
+      MCN( MNARLI + WBSOEF ) = 2
+C
+C     LE NOMBRE DE TANGENTES PAR EF
+      IF ( NBTGS .GT. 0 ) THEN
+         MCN( MNARLI + WBTGEF ) = 2
+         MCN( MNARLI + WBEFTG ) = NBARLI
+         MCN( MNARLI + WBEFAP ) = NBARLI
+      ELSE
+         MCN( MNARLI + WBTGEF ) = 0
+         MCN( MNARLI + WBEFTG ) = 0
+         MCN( MNARLI + WBEFAP ) = 0
+      ENDIF
+C
+C     LE NOMBRE DES EF DE LA LIGNE
+      MCN( MNARLI + WBEFOB ) = NBARLI
+C
+C     LE TYPE DU MAILLAGE:ICI SEGMENT STRUCTURE
+      MCN( MNARLI + WUTYMA ) = 2
+C
+C     LE NOMBRE D'ARETES DU SEGMENT STRUCTURE
+      MCN( MNARLI + WBARSE ) = NBARLI
+C
+      IF ( NBTGS .GT. 0 ) THEN
+C
+C        LES POINTEURS SUR LES EF A TG
+         MN= MNARLI + WBARSE
+         DO 10 J=1,NBARLI
+            MCN(MN+J) = J
+ 10      CONTINUE
+C
+C        LE CODE GEOMETRIQUE DES EF A TG
+         MN = MN + NBARLI
+         DO 20 J=1,NBARLI
+C           NUMERO GEOMETRIQUE 3=B-SPLINE
+            MCN(MN+J) = 3
+ 20      CONTINUE
+C
+C        LE NUMERO DES 2 TANGENTES DE CHAQUE ARETE
+         MN = MN + NBARLI
+         DO 40 J=1,NBTGS
+            MCN(MN+J) = J
+ 40      CONTINUE
+C
+      ENDIF
+C
+C     AJOUT DE LA DATE
+      CALL ECDATE( MCN(MNARLI) )
+C
+C     AJOUT DU NUMERO DU TABLEAU DESCRIPTEUR
+      MCN( MNARLI + MOTVAR(6) ) = NONMTD( '~>>>NSEF' )
+      IERR = 0
+C
+C     SUPPRESSION DES TABLEAUX AUXILIAIRES
+ 9900 CALL TNMCDS( 'REEL', MOSPLI, MNSPLI )
+      CALL TNMCDS( 'REEL', 3* NBPCBL, MNXYPC )
+      CALL TNMCDS( 'REEL', LR+1, MNR )
+      CALL TNMCDS( 'REEL', MOTU, MNU )
+C
+C     ERREUR
+C     ======
+ 9999 RETURN
+      END

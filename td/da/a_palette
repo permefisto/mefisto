@@ -1,0 +1,12 @@
+deftms ~>PALETTE 'A palette of colors'
+variable muet DATE 'date of creation of the TMS'    reel2  ;
+variable muet NUTD 'number of the descriptor array' entier ; 
+variable L1COUL 'number of the first color' entier ;
+variable LDCOUL 'numero of the last color' entier ;
+tableau  TEINTE(1..2,L1COUL..LDCOUL) 'the 2 COLORS of the tint' entier 
+ ( 1: 'red' , 2: 'green'    , 3: 'blue'  , 4: 'cyan'
+ , 5: 'yellow' , 6: 'magenta' , 7: 'white' , 8: 'black' , 9:'no tint') ;
+tableau  PTEINT(L1COUL..LDCOUL) 'percentage of the first color' reel ;
+tableau  PINTEN(L1COUL..LDCOUL) 'percentage of the intensity' reel ;
+tableau  PURETE(L1COUL..LDCOUL) 'percentage of the purity' reel ;
+fintms ;

@@ -1,0 +1,3 @@
+variable AFFICHE 'UNITE d''ECRITURE' entier
+( 1: 'ECRAN'
+, 2: 'FICHIER' ) ;

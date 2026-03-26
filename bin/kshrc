@@ -1,0 +1,13 @@
+#!/bin/bash
+export MEFISTO=/usr/local/mefisto
+export MEFISTOX=$HOME/mefistox
+export PATH=$PATH:$MEFISTO/bin
+export CDPATH=.:$HOME:$MEFISTO:$MEFISTOX
+export DISPLAY=ef.ann.jussieu.fr:0.0
+
+alias ll='ls -l'
+alias la='ls -a'
+alias lla='ll -a'
+alias lpq='lpstat -t'
+
+export PS1="$(hostname):"'${PWD#}-bash-> '

@@ -1,0 +1,50 @@
+      SUBROUTINE CHIDFO( NLD , NCD , NLF , NCF ,
+     %                   NOFONC )
+C+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+C BUT : RECHERCHE A PARTIR DU CARACTERE (NLD,NCD) DU NOM
+C ----- D'UNE FONCTION UTILISATEUR
+C       CE PEUT NE PAS ETRE UN IDENTIFICATEUR DE FONCTION
+C
+C ENTREES :
+C ---------
+C NLD,NCD : POSITION DANS KLG DU PREMIER CARACTERE A TRAITER
+C
+C SORTIES :
+C ---------
+C NLF,NCF : SI NOFONC>0 POSITION DANS KLG DU DERNIER CARACTERE
+C                       DE L'IDENTIFICATEUR DE FONCTION
+C           SINON NLF=0
+C NOFONC :  0 PAS DE NOM DE FONCTION RETROUVE
+C          >0 LE NUMERO  DE LA FONCTION DANS LE LEXIQUE DES FONCTIONS
+C+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+C AUTEUR : PERRONNET ALAIN  ANALYSE NUMERIQUE UPMC PARIS  OCTOBRE 1989
+C MODIF  : PERRONNET ALAIN  ANALYSE NUMERIQUE UPMC PARIS  JANVIER 1990
+C23456---------------------------------------------------------------012
+      include"./incl/lu.inc"
+      include"./incl/ntmnlt.inc"
+C
+C     RECHERCHE DE LA PREMIERE ( QUI DOIT SUIVRE LE NOM DE LA FONCTION
+      NBC = INDEX( KLG(NLD)(NCD:NBCALI) , '(' )
+      IF( NBC .EQ. 0 ) THEN
+          NBC = INDEX( KLG(NLD)(NCD:NBCALI) , ' ' )
+          IF( NBC .LE. 0 ) NBC = NBCALI - NCD + 2
+      ENDIF
+      NLF = NLD
+      NCF = NCD+NBC-2
+C
+C     L'EVENTUEL NOM DE FONCTION EST KLG(NLD)(NCD:NCD+NBC-2)
+      CALL LXNMNO( NTFONC , KLG(NLD)(NCD:NCF) , NOFONC , MNLXFO )
+      IF( NOFONC .GT. 0 ) THEN
+C        LA FONCTION EXISTE ET DOIT ETRE COMPILEE
+         CALL LXLXOU( NTFONC , KLG(NLD)(NCD:NCF) , NTLXFO , MNLXFO )
+         CALL LXTSOU( NTLXFO , 'ARBRE' , NT , MN )
+         IF( NT .LE. 0 ) GOTO 9000
+      ELSE
+         GOTO 9000
+      ENDIF
+      RETURN
+C
+C     FONCTION NON RETROUVEE OU NON COMPILEE
+ 9000 NOFONC = 0
+      NLF    = 0
+      END

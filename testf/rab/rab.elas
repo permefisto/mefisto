@@ -1,0 +1,399 @@
+{============================================================}
+{MEFISTO Octobre 1999           PROJET: Test RAB             }
+{Utilisateurs: Perronnet Alain  Date:   4/12/99              }
+{              Fernandes-Varela                              }
+{                                                            }
+{La resolution de l'elasticite instationnaire                }
+{Schema de Newmark a pas de temps constant   fichier rab.elas}
+{============================================================}
+DefVar a2b2; a2b2=a*a*b*b;
+DefVar dilatation,TempRef; dilatation=0.1; TempRef=3;
+DefVar cu1, cu2; {coefficient du deplacement}
+cu1=1; cu2=2;
+
+DefFonc defther(t,x,y);
+  defther = dilatation * (temperature_exacte(t,x,y,0) - TempRef);
+FinFonc;
+
+DefVar EYoung,nu,cont0; EYoung=10000; nu=0.3; cont0=1000;
+DefVar d1,d2,d3;
+d1 = EYoung * (1-nu) / ( (1+nu) * (1-2*nu) );
+d2 = EYoung * nu     / ( (1+nu) * (1-2*nu) );
+d3 = EYoung          / ( (1+nu) * 2 );
+
+DefFonc u1(t,x,y);
+  u1 = (t+t0) * (t+t0) * x * (a-x) * y * (b-y) / a2b2 + 0.6;
+FinFonc;
+
+DefFonc u2(t,x,y);
+  u2 = (t+t0) * (t+t0) * sin(Pisa*x) * sin(Pisb*y) + 0.5;
+FinFonc;
+
+DefFonc dtu1(t,x,y);
+  dtu1 = 2 * (t+t0) * x * (a-x) * y * (b-y) / a2b2;
+FinFonc;
+
+DefFonc dtu2(t,x,y);
+  dtu2 = 2 * (t+t0) * sin(Pisa*x) * sin(Pisb*y);
+FinFonc;
+
+DefFonc dttu1(t,x,y);
+  dttu1 = 2 * x * (a-x) * y * (b-y) / a2b2;
+FinFonc;
+
+DefFonc dttu2(t,x,y);
+  dttu2 = 2 * sin(Pisa*x) * sin(Pisb*y);
+FinFonc;
+
+DefFonc dxu1(t,x,y);
+  dxu1 = (t+t0) * (t+t0) * (a-2*x) * y * (b-y) / a2b2;
+FinFonc;
+
+DefFonc dyu1(t,x,y);
+  dyu1 = (t+t0) * (t+t0) * x * (a-x) * (b-2*y) / a2b2;
+FinFonc;
+
+DefFonc dxu2(t,x,y);
+  dxu2 = (t+t0) * (t+t0) * Pisa * cos(Pisa*x) * sin(Pisb*y);
+FinFonc;
+
+DefFonc dyu2(t,x,y);
+  dyu2 = (t+t0) * (t+t0) * sin(Pisa*x) * Pisb * cos(Pisb*y);
+FinFonc;
+
+DefFonc dxxu1(t,x,y);
+  dxxu1 = (t+t0) * (t+t0) * (-2) * y * (b-y) / a2b2;
+FinFonc;
+
+DefFonc dxyu1(t,x,y);
+  dxyu1 = (t+t0) * (t+t0) * (a-2*x) * (b-2*y) / a2b2;
+FinFonc;
+
+DefFonc dyyu1(t,x,y);
+  dyyu1 = (t+t0) * (t+t0) * x * (a-x) * (-2) / a2b2;
+FinFonc;
+
+DefFonc dxxu2(t,x,y);
+  dxxu2 = -(t+t0) * (t+t0) * Pisa * Pisa * sin(Pisa*x) * sin(Pisb*y);
+FinFonc;
+
+DefFonc dxyu2(t,x,y);
+  dxyu2 = (t+t0) * (t+t0) * Pisa * Pisb * cos(Pisa*x) * cos(Pisb*y);
+FinFonc;
+
+DefFonc dyyu2(t,x,y);
+  dyyu2 = -(t+t0)*(t+t0) * sin(Pisa*x) * Pisb * Pisb * sin(Pisb*y);
+FinFonc;
+
+DefFonc sig011(x,y);
+  sig011 = cont0 * x;
+FinFonc;
+
+DefFonc sig022(x,y);
+  sig022 = cont0 * y;
+FinFonc;
+
+DefFonc sig012(x,y);
+  sig012 = cont0 * x * y;
+FinFonc;
+
+DefFonc dxsig011(x,y);
+  dxsig011 = cont0;
+FinFonc;
+
+DefFonc dysig022(x,y);
+  dysig022 = cont0;
+FinFonc;
+
+DefFonc dxsig012(x,y);
+  dxsig012 = cont0 * y;
+FinFonc;
+
+DefFonc dysig012(x,y);
+  dysig012 = cont0 * x;
+FinFonc;
+
+DefFonc sig11(t,x,y);
+DefVar aux;
+  aux = defther(t,x,y);
+  sig11 = d1 * ( dxu1(t,x,y) - aux ) + d2 * ( dyu2(t,x,y) - aux )
+          + sig011(x,y);
+FinFonc;
+
+DefFonc sig22(t,x,y);
+DefVar aux;
+  aux = defther(t,x,y);
+  sig22 = d2 * ( dxu1(t,x,y) - aux ) + d1 * ( dyu2(t,x,y) - aux )
+          + sig022(x,y);
+FinFonc;
+
+DefFonc sig12(t,x,y);
+  sig12 = d3 * ( dyu1(t,x,y) + dxu2(t,x,y) ) + sig012(x,y);
+FinFonc;
+
+DefFonc dxsig11(t,x,y);
+DefVar aux;
+  aux = dilatation * dxtemperature(t,x,y);
+  dxsig11 = d1 * ( dxxu1(t,x,y) - aux ) + d2 * ( dxyu2(t,x,y) - aux )
+          + dxsig011(x,y);
+FinFonc;
+
+DefFonc dysig22(t,x,y);
+DefVar aux;
+  aux = dilatation * dytemperature(t,x,y);
+  dysig22 = d2 * ( dxyu1(t,x,y) - aux ) + d1 * ( dyyu2(t,x,y) - aux )
+          + dysig022(x,y);
+FinFonc;
+
+DefFonc dxsig12(t,x,y);
+  dxsig12 = d3 * ( dxyu1(t,x,y) + dxxu2(t,x,y) ) + dxsig012(x,y);
+FinFonc;
+
+DefFonc dysig12(t,x,y);
+  dysig12 = d3 * ( dyyu1(t,x,y) + dxyu2(t,x,y) ) + dysig012(x,y);
+FinFonc;
+
+{Forces sans l'acceleration pour le PB stationnaire}
+DefFonc force(t,x,y,z,nutype,nuobj,ncomp,xn,yn,zn);
+  si ncomp=1 alors
+    force = - dxsig11(t,x,y) - dysig12(t,x,y) + cu1 * u1(t,x,y);
+  sinon
+    force = - dxsig12(t,x,y) - dysig22(t,x,y) + cu2 * u2(t,x,y);
+  finsi;
+FinFonc;
+
+{sur BC n1=1 et n2=0}
+DefFonc pressionBC(t,x,y,ncomp);
+  si ncomp=1 alors
+    pressionBC = sig11(t,x,y);
+  sinon
+    pressionBC = sig12(t,x,y);
+  finsi;
+FinFonc;
+
+{sur CD n1=0 et n2=1}
+DefFonc pressionCD(t,x,y,ncomp);
+  si ncomp=1 alors
+    pressionCD = sig12(t,x,y);
+  sinon
+    pressionCD = sig22(t,x,y);
+  finsi;
+FinFonc;
+
+DefFonc pression(t,x,y,z,nutype,nuobj,ncomp,xn,yn,zn);
+  si nuobj=nuobjt( 'ligne', 'bc' ) alors
+    pression = pressionBC(t,x,y,ncomp);
+  sinon
+    pression = pressionCD(t,x,y,ncomp);
+  finsi;
+FinFonc;
+
+DefFonc fixation(t,x,y,z,nutype,nuobj,ncomp);
+  si ncomp=1 alors
+     fixation = u1(t,x,y);
+  sinon
+     fixation = u2(t,x,y);
+  finsi;
+FinFonc;
+
+DefFonc contrinit(t,x,y,z,nutype,nuobj,ncomp);
+  si ncomp=1 alors
+     contrinit = sig011(x,y);
+  sinon
+    si ncomp=2 alors
+      contrinit = sig022(x,y);
+    sinon
+      contrinit = sig012(x,y);
+    finsi;
+  finsi;
+FinFonc;
+
+DefFonc vitesseinit(t,x,y,z,nutype,nuobj,ncomp);
+  si ncomp=1 alors
+     vitesseinit = dtu1(t,x,y);
+  sinon
+     vitesseinit = dtu2(t,x,y);
+  finsi;
+FinFonc;
+
+DefFonc deplacement_exact(t,x,y,z,ncomp);
+  si ncomp=1 alors
+     deplacement_exact = u1(t,x,y);
+  sinon
+     deplacement_exact = u2(t,x,y);
+  finsi;
+FinFonc;
+
+@;
+@;
+              {===================}
+1; RECTANGLE; { Le NOM DE L'OBJET }
+              {===================}
+@;
+   {=============================================}
+2; { ENTREE des DONNEES du PROBLEME d ELASTICITE }
+   {=============================================}
+
+{====================}
+{ SURFACE: RECTANGLE }
+{====================}
+ 1; { densite de MASSE }
+   1; { constante }
+ Rot; { DMASSE  densite de masse }
+
+ 2; { module de YOUNG et coefficient de Poisson }
+   4;       { deformations planes }
+   EYoung;  { YOUNG module de YOUNG }
+   nu;      { POISON coefficient de POISSON }
+
+ 3;  { coefficient de DILATATION et TEMPERATURE de REFERENCE }
+   1;  { LTDILA le type de la donnee  constante }
+dilatation; { DILATA coefficient de dilatation thermique reel }
+TempRef;    { TEMPIN temperature de reference }
+
+ 4; { densite de FORCE volumique ou surfacique }
+  -1;       { fonction utilisateur }
+   2;       { NBCOFO le nombre de composantes de forces a definir }
+   1; 2;    { Numero des composantes de forces a definir }
+  force;    { DANS LE LEXIQUE ~>FONCTION }
+ 
+ 6; { COEFFICIENT du DEPLACEMENT }
+   1;       { Coefficients constants du Deplacement }
+   2;       { Nombre de composantes des coefficients }
+   1; 2;    { Numero des composantes des coefficients}
+  cu1; cu2; { Valeur des Coefficients du Deplacement }
+
+ 7; { densite de CONTRAINTES INITIALES }
+  -1;       { fonction utilisateur }
+   3;       { NBCOIN le nombre de composantes 3 ou 4 ou 6 }
+ contrinit; { DANS LE LEXIQUE ~>FONCTION }
+@;
+
+{===========}
+{ LIGNE: AB }
+{===========}
+ 2; { FIXATION valeur des deplacements imposes }
+  -1;     { fonction utilisateur }
+   2;     { NBCOFI le nombre de composantes de deplacements fixes }
+   1; 2;  { Numero des composantes de deplacements fixes }
+fixation; { DANS LE LEXIQUE ~>FONCTION }
+@;
+
+{===========}
+{ LIGNE: BC }
+{===========}
+ 1;  { FORCE force imposee a la frontiere }
+   -1;    { LTFORC le type des forces }
+    2;    { NBCOFO le nombre de composantes de forces a definir }
+    1; 2; { le numero de la composante des forces a definir }
+pression; { NFFORC le nom de la fonction FORCE  ^~>FONCTION }
+@;
+
+{===========}
+{ LIGNE: CD }
+{===========}
+ 1;  { FORCE force imposee a la frontiere }
+   -1;    { LTFORC le type des forces }
+    2;    { NBCOFO le nombre de composantes de forces a definir }
+    1; 2; { le numero de la composante des forces a definir }
+pression; { NFFORC le nom de la fonction FORCE  ^~>FONCTION }
+@;
+
+{===========}
+{ LIGNE: AD }
+{===========}
+ 2; { FIXATION valeur des deplacements imposes }
+  -1;     { fonction utilisateur }
+   2;     { NBCOFI le nombre de composantes de deplacements fixes }
+   1; 2;  { NUCOFI(1..NBCOFI) }
+fixation; { DANS LE LEXIQUE ~>FONCTION }
+@;
+
+{==========}
+{ POINT: A }
+{==========}
+ 2; { FIXATION valeur des deplacements imposes }
+  -1;     { fonction utilisateur }
+   2;     { NBCOFI le nombre de composantes de deplacements fixes }
+   1; 2;  { NUCOFI(1..NBCOFI) }
+fixation; { DANS LE LEXIQUE ~>FONCTION }
+@;
+
+{==========}
+{ POINT: B }
+{==========}
+ 2; { FIXATION valeur des deplacements imposes }
+  -1;     { fonction utilisateur }
+   2;     { NBCOFI le nombre de composantes de deplacements fixes }
+   1; 2;  { NUCOFI(1..NBCOFI) }
+fixation; { DANS LE LEXIQUE ~>FONCTION }
+@;
+
+{==========}
+{ POINT: D }
+{==========}
+ 2; { FIXATION valeur des deplacements imposes }
+  -1;     { fonction utilisateur }
+   2;     { NBCOFI le nombre de composantes de deplacements fixes }
+   1; 2;  { NUCOFI(1..NBCOFI) }
+fixation; { DANS LE LEXIQUE ~>FONCTION }
+@;
+
+@;
+     {==============================================}
+3;   { RESOUDRE pb ELASTICITE STATIONNAIRE LINEAIRE }
+     {==============================================}
+  1; { Coefficients INDEPENDANTS du TEMPS et des DEPLACEMENTS }
+  2; { THERMO-ELASTICITE }
+  1; { CHOLESKY PROFIL pour stocker les matrices globales }
+@;
+
+     {=====================================================================}
+4;   { RESOUDRE ELASTICITE INSTATIONNAIRE pour l'intervalle de TEMPS [0,1] }
+     {=====================================================================}
+{Retouche pour faire apparaitre l'acceleration dans la FORCE}
+DefFonc force(t,x,y,z,nutype,nuobj,ncomp,xn,yn,zn);
+  si ncomp=1 alors
+    force = Rot*dttu1(t,x,y) - dxsig11(t,x,y) - dysig12(t,x,y) + cu1*u1(t,x,y);
+  sinon
+    force = Rot*dttu2(t,x,y) - dxsig12(t,x,y) - dysig22(t,x,y) + cu2*u2(t,x,y);
+  finsi;
+FinFonc;
+{Les autres donnees restent inchangees pour le PB instationnaire}
+
+  1;          { M et K INDEPENDANTS du TEMPS f DEPEND du TEMPS }
+  2;          { THERMO-ELASTICITE }
+  0;          { COEFFICIENT AMORTISSEMENT DE LA MASSE   }
+  0;          { COEFFICIENT AMORTISSEMENT DE LA RAIDEUR }
+  0.0;        { TEMPS INITIAL }
+  2;          { DEPLACEMENT INITIAL a partir de la solution stationnaire }
+ -1;          { VITESSE INITIALE par fonction }
+ vitesseinit; { DANS LE LEXIQUE ~>FONCTION }
+nbpas*DeltaT; { TEMPS FINAL }
+ DeltaT;      { PAS DE TEMPS CONSTANT }
+ nbpas;       { NOMBRE DE VECTEURS deplacement A STOCKER => TOUS }
+  1;          { RESOLUTION PAR CHOLESKY PROFIL }
+  1;          { INTEGRATION en TEMPS par le schema de NEWMARK }
+@;
+
+     {=======================================================================}
+4;   { RESOUDRE ELASTICITE INSTATIONNAIRE pour l'intervalle de TEMPS [1,2]   }
+     {=======================================================================}
+  1;          { M et K INDEPENDANTS du TEMPS f DEPEND du TEMPS }
+  2;          { THERMO-ELASTICITE }
+  0;          { COEFFICIENT AMORTISSEMENT SUR LA MASSE   }
+  0;          { COEFFICIENT AMORTISSEMENT SUR LA RAIDEUR }
+nbpas*DeltaT; { TEMPS INITIAL de l'etude }
+  3;          { DEPLACEMENT INITIAL a partir du DEPLACEMENT a t=0.8 et t=1.0 }
+2*nbpas*DeltaT; { TEMPS FINAL de l'etude }
+ DeltaT;      { PAS DE TEMPS CONSTANT }
+ nbpas;       { NOMBRE DE VECTEURS deplacement A STOCKER TOUS }
+ 2; 1;        { RESOLUTION PAR GC PRECONDITIONNE NIVEAU 1 et MATRICE MORSE }
+  1;          { INTEGRATION en TEMPS par le schema de NEWMARK }
+@;
+@;
+
+8; {TRACES de la deformee ou des contraintes}
+ 1; 90; 90; {trace des contraintes}
+FERMER;
+

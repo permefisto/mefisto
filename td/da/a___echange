@@ -1,0 +1,12 @@
+deftms ~>>>ECHANGE 'heat transfer coefficient'
+variable muet DATE 'date of creation of the TMS'   reel2  ;
+variable muet NUTD 'number of the descriptor array TD' entier ; 
+variable      LTECHA 'type of the heat transfer coefficient' entier
+( 1 : 'constant heat transfer coefficient'
+,-1 : 'function heat transfer coefficient'
+, 0 : 'delete this heat transfer coefficient' ) ;
+cas LTECHA
+ 1 : variable  ECHANG 'heat transfer coefficient value' reel ; 
+-1 : variable  NFECHA 'name of the heat transfer function' ^~>FONCTION ;
+fincas ;   
+fintms ;

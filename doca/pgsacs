@@ -1,0 +1,5 @@
+A geometrical ratio on the  angular sector of value 1 gives
+edges of equal lengths.
+
+A 0<ratio<1 => small edges at the superior part of angle
+A   ratio>1 => small edges at the inferior part of angle.

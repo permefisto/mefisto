@@ -1,0 +1,80 @@
+      SUBROUTINE TIFACE3D( NCF, NCA, NCNF, NCNS, NOFACE, NOSOEF, XYZSOM)
+C+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+C BUT :    en 3D TRACE ITEM des CARACTERES '*NOFACE' au BARYCENTRE de la
+C -----    FACE (TRIANGLE ou QUADRANGLE) du TABLEAU NOSOEF
+
+C ENTREES:
+C --------
+C NCF    : NUMERO DE LA COULEUR DE REMPLISSAGE DE LA FACE A TRACER
+C          <0 PAS DE TRACE DU REMPLISSAGE DE LA FACE
+C NCA    : NUMERO DE LA COULEUR DU CONTOUR     DE LA FACE A TRACER
+C          <0 PAS DE TRACE DES ARETES DU CONTOUR DE LA FACE
+C NCNF   : NUMERO DE LA COULEUR DU NUMERO NOFACE SOUS FORME '*NOFACE'
+C NCNS   : NUMERO DE LA COULEUR DES NUMEROS DES SOMMETS SOUS FORME '+NoSt'
+
+C NOFACE : NUMERO NOSOEF de la FACE
+C NOSOEF : NUMERO XYZSOM DES 4 SOMMETS DE LA FACE
+C          SI LE 4-EME EST NUL ALORS LA FACE EST UN TRIANGLE
+C          SINON UN QUADRANGLE
+C XYZSOM : XYZ DES SOMMETS DU MAILLAGE
+C+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+C AUTEUR : Alain PERRONNET  Saint PIERRE du PERRAY            Avril 2020
+C2345X7..............................................................012
+      INTEGER        NOSOEF(4,*)
+      REAL           XYZSOM(3,*), XYZ(3,4), XYZA(3), BARY(3)
+      CHARACTER*12   CARSYM
+
+C     NOMBRE DE SOMMETS DE LA FACE (A PRIORI 3:TRIANGLE ou 4:QUADRANGLE)
+      IF( NOSOEF(4,NOFACE) .EQ. 0 ) THEN
+         NBS = 3
+      ELSE
+         NBS = 4
+      ENDIF
+
+      DO N = 1, NBS
+         NS = NOSOEF( N, NOFACE )
+         DO K=1,3
+            XYZ( K, N ) = XYZSOM( K, NS )
+         ENDDO
+      ENDDO
+
+C     TRACE DE LA FACE 3D
+      CALL FACE3D( NCF, NCA, NBS, XYZ )
+
+      IF( NCNS .GE. 0 ) THEN
+C        TRACE DES NBS NO DES SOMMETS
+         CARSYM = '+ '
+         DO N = 1, NBS
+            NS = NOSOEF( N, NOFACE )
+
+C           CONSTRUCTION DU MOT '+NS'
+            WRITE( CARSYM(2:11),'(I9)') NS
+
+C           SUPPRESSION DES BLANCS
+            CALL SANSBL( CARSYM, NBC )
+
+C           COORDONNEES AXONOMETRIQUES DU SOMMET NS
+            CALL XYZAXO( XYZSOM(1,NS), XYZA )
+
+C           TRACE en COULEUR NCNS du MOT '+NS'
+            CALL SYMBOLE2D( NCNS, XYZA(1), XYZA(2), CARSYM(1:NBC) )
+         ENDDO
+      ENDIF
+
+      IF( NCNF .GE. 0 ) THEN
+C        LE BARYCENTRE DE LA FACE NOFACE (en 3D)
+         CALL BARYFACE( NOFACE, NOSOEF, XYZSOM, BARY )
+
+C        CONSTRUCTION DU MOT '*NOFACE'
+         CARSYM = '* '
+         WRITE( CARSYM(2:11),'(I9)') NOFACE
+
+C        SUPPRESSION DES BLANCS
+         CALL SANSBL( CARSYM, NBC )
+
+C        TRACE en COULEUR NCNF du MOT '*NOFACE'
+         CALL SYMBOLE2D( NCNF, BARY(1), BARY(2), CARSYM(1:NBC) )
+      ENDIF
+
+      RETURN
+      END

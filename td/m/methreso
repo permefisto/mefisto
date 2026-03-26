@@ -1,0 +1,4 @@
+variable METHRESO 'choix de la methode de RESOLUTION' entier
+(1 : 'CHOLESKY ou CROUT avec MATRICE PROFIL',
+ 2 : 'GRADIENT CONJUGUE avec MATRICE CONDENSEE',
+ 3 : 'sur un MULTI-PROCESSEURS' ) ;

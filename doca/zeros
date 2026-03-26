@@ -1,0 +1,11 @@
+The PRECISION to IDENTIFY 2 POINTS is DIFFERENT
+if the POINTS are NEAR the ORIGIN or NOT.
+
+The 2 POINTS will be IDENTIFIED if
+either, the 3 coordinates <= EPZERO
+or      at least one of the 3 coordinates is > EPZERO and
+        abs(x2-x1) <= EPSXYZ abs(x1)      
+        abs(y2-y1) <= EPSXYZ abs(y1)
+        abs(z2-z1) <= EPSXYZ abs(z1)
+EPZERO (Default value=1e-6) is the accuracy around the ORIGIN
+EPSXYZ (Default value=1e-4) is the accuracy around a NO ORIGIN POINT

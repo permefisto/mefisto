@@ -1,0 +1,15 @@
+deftms ~>>>ONDEINIT 'Onde INITIALE'
+variable muet DATE 'Date de creation du tableau'   reel2  ;
+variable muet NUTD 'Numero du tableau descripteur' entier ; 
+variable    LTOND0 'Type de la Vitesse ou Onde INITIALE' entier 
+( -1 : 'FONCTION Onde INITIALE' 
+,  0 : 'Onde INITIALE a SUPPRIMER'
+,  1 : 'Onde INITIALE CONSTANTE'
+,  2 : 'Onde INITIALE EXISTANTE'
+,  3 : 'VECTEUR PROPRE EXISTANT' ) ;
+cas LTOND0
+-1 : variable NFOND0 'NOM FONCTION Onde INITIALE' ^~>FONCTION ;
+ 1 : tableau  VAOND0(1..2) 'Onde Complexe INITIALE constante' reel ; 
+ 3 : variable NUVPON 'Numero du VECTEUR PROPRE' entier ;
+fincas ;   
+fintms ;

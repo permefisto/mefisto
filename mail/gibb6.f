@@ -1,0 +1,56 @@
+      SUBROUTINE GIBB6( NOE,LVL1,IDPTH,
+     &                  LVL2,
+     &                  LVL,NACU )
+C ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+C BUT DU SP:
+C ----------
+C RENVERSER L'ORDRE DES NUMEROS DES NIVEAUX ET STOCKER LES DANS LA NOUV
+C LVL2,SUIVANT LE CRITERE:
+C SI LE NOEUD I EST DANS LE NIVEAU J ALORS I EST DANS IDPTH+1-J
+C
+C CONSTRUCTION DE LVL ET NACU
+C LVL(I)=1 si LVL1(I)=LVL2(I) DANS LA NOUVELLE NUMEROTATION? 0 SINON.
+C NACU(I)=NOMBRE DE NOEUDS j TQ I=LVL1(j)=LVL2(j)
+C
+C ENTREES :
+C ---------
+C  NOE   : NOMBRE TOTAL DE NOEUDS
+C  LVL1  : STRUCTURE DE NIVEAU EXTRAITE DE SND1.
+C  IDPTH : NOMBRE DE NIVEAU DE LA STRUCTURE DE NIVEAU EXTRAITE DE SND1
+C
+C MODIFIEES :
+C -----------
+C  LVL2 : STRUCTURE DE NIVEAU EXTRAITE DE SND2 QU'ON RENVERSE.
+C
+C  SORTIES :
+C  ---------
+C  LVL  : FONCTION CARACTERISTIQUE DE L'INTERSECTION DE LVL1
+C         ET LVL2 RENVERSEE
+C  NACU : NOMBRE D'ELEMENTS DE CETTE INTERSECTION PAR NIVEAU
+C ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+C PROGRAMMEUR   : BARGACH MOHAMED LAN189 PARIS    OCTOBRE  1980
+C MODIFICATIONS : DEFAIX THIERRY                  DECEMBRE 1989
+C23456---------------------------------------------------------------012
+      DIMENSION LVL(1),LVL1(1),LVL2(1),NACU(1)
+C
+C     INITIALISATION DE NACU
+C     ======================
+      DO 10 I=1,IDPTH
+         NACU(I)=0
+   10 CONTINUE
+C
+C     BOUCLE SUR LES NOEUDS
+C     =====================
+      DO 30 I=1,NOE
+         LVL(I)=1
+         LVL2(I)=IDPTH+1-LVL2(I)
+         ITEMP=LVL2(I)
+         IF(ITEMP.GT.IDPTH) GO TO 30
+         IF(ITEMP.NE.LVL1(I)) THEN
+            LVL(I)=0
+           ELSE
+            NACU(ITEMP)=NACU(ITEMP)+1
+         END IF
+   30 CONTINUE
+      RETURN
+      END

@@ -1,0 +1,188 @@
+      SUBROUTINE AJTEET( NS1TE,  NS2TE,  NS3TE,  NS4TE,
+     %                   NTEOPF1,NTEOPF2,NTEOPF3,NTEOPF4, 
+     %                   NBSOMM, PTXYZD, QUAMINEX,
+     %                   MXTETR, N1TEVI, NOTETR, NUDTETR, N1TETS,
+     %                   MXTETC, NBTETC, NOTETC, VOLETO,
+     %                   VOLTEC, QUATET, IERR )
+C+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+C BUT:     AJOUT DANS NOTETR DU TETRAEDRE FORME DE 4 SOMMETS ET DES
+C ----     4 TETRAEDRES OPPOSES AUX 4 FACES
+
+C ENTREES:
+C --------
+C NSiTE  : NUMERO PTXYZD du i-EME SOMMET DU TETRAEDRE A CREER
+C NTEOPFi: NUMERO NOTETR du TETRAEDRE OPPOSE A LA FACE i i=1,2,3,4
+C          DU TETRAEDRE A CREER
+
+C NBSOMM : NOMBRE DE SOMMETS CREES DANS PTXYZD
+C PTXYZD : TABLEAU DES COORDONNEES DES POINTS
+C          PAR POINT : X  Y  Z DISTANCE_SOUHAITEE
+C MXTETR : NOMBRE DE TETRAEDRES DECLARABLES DANS NOTETR
+C N1TEVI : NO DU PREMIER TETRAEDRE VIDE DANS NOTETR
+C NOTETR : LISTE DES TETRAEDRES
+C          SOMMET1,    SOMMET2,    SOMMET3,    SOMMET4,
+C          TETRAEDRE1, TETRAEDRE2, TETRAEDRE3, TETRAEDRE4
+C          DE L'AUTRE COTE DE LA FACE
+C          1: 123      2: 234      3: 341      4: 412
+C N1TETS : N1TETS(I) NUMERO NOTETR D'UN TETRAEDRE AYANT POUR SOMMET I
+C MXTETC : NOMBRE MAXIMAL DE TETRAEDRES CREABLES DANS NOTETC
+C QUAMINEX:QUALITE MINIMALE EXIGEE POUR CREER UN TETRAEDRE
+
+C MODIFIES:
+C ---------
+C NUDTETR: PLUS GRAND NUMERO DANS NOTETR DE TETRAEDRE OCCUPE
+C NBTETC : NOMBRE DE TETRAEDRES CREES AVANT ET APRES
+C NOTETC : NUMERO NOTETR DES NBTETC TETRAEDRES CREES
+C VOLETO : VOLUME DES NBTETC TETRAEDRES CREES DANS L'ETOILE
+C VOLTEC : VOLUME DU TETRAEDRE CREE
+C QUATET : QUALITE DU TETRAEDRE NOTETC(NBTETC)
+C IERR   : 0 SI PAS D'ERREUR
+C          2 SATURATION D'UN TABLEAU
+C          3 3 SOMMETS NON DANS UN TETRAEDRE
+C+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+C AUTEUR : ALAIN PERRONNET LJLL UPMC & St PIERRE du PERRAY     Aout 2015
+C2345X7..............................................................012
+      include"./incl/langue.inc"
+      include"./incl/gsmenu.inc"
+      COMMON / UNITES / LECTEU, IMPRIM, NUNITE(30)
+      DOUBLE PRECISION  PTXYZD(1:4,1:NBSOMM)
+      INTEGER           NOTETR(8,MXTETR), N1TETS(1:NBSOMM),
+     %                  NOTETC(MXTETC)
+      DOUBLE PRECISION  VOLETO, VOLTEC, CEBOCITE(4)
+      REAL              QUATET
+      INTRINSIC         ABS
+      INTEGER           NOSOTR(3)
+      INTEGER           NOSOFA(3,4)
+      DATA              NOSOFA / 1,3,2,  2,3,4,  3,1,4,  4,1,2 /
+C     => LA NORMALE A LA FACE EST ORIENTEE VERS L'EXTERIEUR DU TETRAEDRE
+
+C     LA PILE DES TETRAEDRES CREES DANS L'ETOILE EST ELLE SUFFISANTE?
+      IF( NBTETC .GE. MXTETC ) THEN
+C        SATURATION DES TETRAEDRES DE L'ETOILE
+         print *,'PB1 ajteet: MXTETC=',MXTETC,' < NBTETC=',NBTETC
+         NBLGRC(NRERR) = 2
+         IF( LANGAG .EQ. 0 ) THEN
+            KERR(1) = 'ajteet: SATURATION MXTETC DES TETRAEDRES DE L''ET
+     %OILE'
+         ELSE
+            KERR(1) ='ajteet: MXTETC SATURATION of the STAR TETRAHEDRA'
+         ENDIF
+         CALL LEREUR
+         IERR = 2
+         GOTO 9999
+      ENDIF
+
+      IF( N1TEVI .LE. 0 ) THEN
+C        SATURATION DU TABLEAU NOTETR DES TETRAEDRES
+         PRINT *,'PB2 ajteet: SATURATION de NOTETR  N1TEVI=',N1TEVI
+         NBLGRC(NRERR) = 2
+         IF( LANGAG .EQ. 0 ) THEN
+            KERR(1) = 'ajteet: SATURATION DES TETRAEDRES NOTETR'
+         ELSE
+            KERR(1) = 'ajteet: SATURATION of NOTETR TETRAHEDRA'
+         ENDIF
+         CALL LEREUR
+         IERR = 2
+         GOTO 9999
+      ENDIF
+
+C     VERIFIER SI TOUT TETRAEDRE VIDE A SON 1-ER NUMERO NUL
+C     VERIFIER SI LE CHAINAGE des TETRAEDRES VIDES N'EST PAS INFINI et
+C     SINON CORRIGER LE CHAINAGE DES TETRAEDRES VIDES
+      CALL VETEVIDE( N1TEVI, MXTETR, NOTETR, IERR )
+      IERR = 0
+
+C     RECUPERATION et MISE A JOUR DU 1-ER TETRAEDRE VIDE DANS NOTETR
+      NTE = N1TEVI
+
+      if( notetr(1,n1tevi) .ne. 0 ) then
+         print*
+         print*,'Probleme:  @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@'
+         print*,'ajteet: N1TEVI=',N1TEVI,' NOTETR(',N1TEVI,')=',
+     %                   (notetr(kk,n1tevi),kk=1,8)
+         print*,'ajteet: notetr(1,',n1tevi,') devrait ETRE =0!!!!'
+         print*,'Probleme:  @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@'
+         print*
+      endif
+
+C     LE TETRAEDRE VIDE SUIVANT
+      N1TEVI = NOTETR(5,N1TEVI)
+
+C     LE NOUVEAU TETRAEDRE NTE EST CREE DANS NOTETC ET NOTETR
+      NBTETC = NBTETC + 1
+      NOTETC( NBTETC ) = NTE
+
+      NUDTETR = MAX( NUDTETR, NTE )
+
+C     REMPLISSAGE DU NUMERO PTXYZD DU TETRAEDRE CREE
+      NOTETR( 1, NTE ) = NS1TE
+      NOTETR( 2, NTE ) = NS2TE
+      NOTETR( 3, NTE ) = NS3TE
+      NOTETR( 4, NTE ) = NS4TE
+
+C     MISE A JOUR DU TABLEAU SOMMET -> 1 TETRAEDRE
+      N1TETS( NS1TE ) = NTE
+      N1TETS( NS2TE ) = NTE
+      N1TETS( NS3TE ) = NTE
+      N1TETS( NS4TE ) = NTE
+
+C     LE TETRAEDRE OPPOSE AUX 4 FACES DU TETRAEDRE NTE
+C     LE TETRAEDRE EXTERIEUR A LA FACE AU DELA DE LA FACE
+C     ATTENTION: IL PEUT MOMENTANEMENT NE PAS EXISTER UN TEL TETRAEDRE = 0
+      NOTETR(5,NTE) = NTEOPF1
+      NOTETR(6,NTE) = NTEOPF2
+      NOTETR(7,NTE) = NTEOPF3
+      NOTETR(8,NTE) = NTEOPF4
+
+C     MISE A JOUR DU TETRAEDRE OPPOSE POUR LES 4 FACES DE NTE
+      DO K=1,4
+
+C        RECHERCHE DU NOF LOCAL A NTEOPFk DE LA FACE K DE NTE
+         NTEOP = NOTETR(4+K,NTE)
+         IF( NTEOP .GT. 0 ) THEN
+            DO M=1,3
+               NOSOTR(M) = NOTETR( NOSOFA(M,K), NTE )
+            ENDDO
+            CALL TRI3NO( NOSOTR, NOSOTR )
+            CALL NO1F1T( NOSOTR, NOTETR(1,NTEOP), NOF )
+            IF( NOF .LE. 0 ) THEN
+               IF( LANGAG .EQ. 0 ) THEN
+                  WRITE(IMPRIM,*) 'PB4 ajteet: 3 SOMMETS ', NOSOTR,
+     %                         ' NON DANS LE TETRAEDRE ',NTEOP,' :'
+               ELSE
+                  WRITE(IMPRIM,*) 'PB4 ajteet: 3 VERTICES ', NOSOTR,
+     %                          ' NOT in TETRAHEDRON ',NTEOP,' :'
+               ENDIF
+               WRITE(IMPRIM,*)'NOTETR(',NTEOP,')=',
+     %                        (NOTETR(J,NTEOP),J=1,8)
+               IERR = 3
+               GOTO 9999
+            ELSE
+               NOTETR(4+NOF,NTEOP) = NTE
+            ENDIF
+         ENDIF
+
+      ENDDO
+
+C     LES COORDONNEES DU CENTRE DE LA BOULE CIRCONSCRITE
+C     AU TETRAEDRE NTE ET CARRE DE SON RAYON, VOLUME ET QUALITE
+      CALL CEBOQU( 0.0, NOTETR(1,NTE), PTXYZD, CEBOCITE,
+     %             VOLTEC, QUATET )
+
+ccc      PRINT*,'ajteet: creation TETRAEDRE(',NTE,')=',
+ccc     %       (NOTETR(M,NTE),M=1,8),
+ccc     %       ' V=',VOLTEC, ' Qualite=',QUATET
+
+      IF( QUATET .LE. QUAMINEX ) THEN
+         PRINT*
+         PRINT*,'ajteet: Attention creation du TETRAEDRE(',NTE,') St:',
+     %           (NOTETR(M,NTE),M=1,8),
+     %          ' V=',VOLTEC, ' Qualite=',QUATET,' TRES FAIBLE!...'
+      ENDIF
+
+C     VOLUME DES NBTETC TETRAEDRES CREES
+ccc      VOLETO = VOLETO + ABS( VOLTEC )
+      VOLETO = VOLETO + VOLTEC
+
+ 9999 RETURN
+      END

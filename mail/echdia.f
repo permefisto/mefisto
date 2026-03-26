@@ -1,0 +1,87 @@
+       SUBROUTINE ECHDIA( NDIM,    NOSDI1,  NOSDI2, NOSTR1, NOSTR2,
+     %                    NOTRIA1, NOTRIA2, MNXYZS, MNNSEF, IERR )
+C+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+C BUT :    ECHANGER UNE DIAGONALE COMMUNE A 2 TRIANGLES 2D ou 3D
+C -----    LA DIAGONALE EST DESIGNEE A LA SOURIS
+C
+C ENTREES:
+C --------
+C NDIM   : DIMENSION (2 ou 3) DE L'ESPACE DE LA SURFACE
+C NOSDI1 : NO DU SOMMET 1 DE L'ARETE COMMUNE
+C NOSDI2 : NO DU SOMMET 2 DE L'ARETE COMMUNE
+C NOSTR1 : NO DU SOMMET DU TRIANGLE 1 N'APPARTENANT PAS A L'ARETE COMMUNE
+C NOSTR2 : NO DU SOMMET DU TRIANGLE 2 N'APPARTENANT PAS A L'ARETE COMMUNE
+C NOTRIA1: NO DU TRIANGLE 1 D'ARETE COMMUNE AVEC LE TRIANGLE 2
+C NOTRIA2: NO DU TRIANGLE 2 D'ARETE COMMUNE AVEC LE TRIANGLE 1
+C
+C MNXYZS : ADRESSE DU TABLEAU XYZSOMMET DE LA SURFACE
+C MNNSEF : ADRESSE DU TABLEAU NSEF      DE LA SURFACE
+C
+C SORTIES:
+C --------
+C IERR   : 0 SI PAS D'ERREUR
+C          1 SI ECHANGE REFUSE POUR QUADRANGLE NON CONVEXE OU DEGENERE
+C+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+C AUTEUR : Alain PERRONNET Labo J-L. LIONS  UPMC  PARIS   SEPTEMBRE 2007
+C2345X7..............................................................012
+      include"./incl/langue.inc"
+      include"./incl/gsmenu.inc"
+      include"./incl/a___xyzsommet.inc"
+      include"./incl/a___nsef.inc"
+      include"./incl/pp.inc"
+      COMMON         MCN(MOTMCN)
+      REAL          RMCN(1)
+      EQUIVALENCE  (RMCN(1),MCN(1))
+
+C     ICI L'ARETE NOSDI1 NOSDI2 EST UNE ARETE DES TRIANGLES NOTRIA1 et NOTRIA2
+      MNSOEL = MNNSEF + WUSOEF
+      MN1    = MNSOEL + 4*NOTRIA1 - 5
+      MN2    = MNSOEL + 4*NOTRIA2 - 5
+      MNXY   = MNXYZS + WYZSOM - 3
+
+C     LE QUADRANGLE FORME DES 2 TRIANGLES EST IL CONVEXE?
+      CALL QUADCXR( RMCN(MNXY+3*NOSDI2), RMCN(MNXY+3*NOSTR1),
+     %              RMCN(MNXY+3*NOSDI1), RMCN(MNXY+3*NOSTR2), NONOUI )
+      IF( NONOUI .EQ. 0 ) THEN
+         IERR = 1
+         GOTO 9999
+      ENDIF
+
+C     LES 2 TRIANGLES EXISTANTS
+      IF( NDIM .EQ. 2 ) THEN
+         SURF1 = SURTR2( RMCN(MNXY+3*NOSTR1),
+     %                   RMCN(MNXY+3*NOSDI1),
+     %                   RMCN(MNXY+3*NOSDI2) )
+      ELSE
+         SURF1 = SURTRR( RMCN(MNXY+3*NOSTR1),
+     %                   RMCN(MNXY+3*NOSDI1),
+     %                   RMCN(MNXY+3*NOSDI2) )
+      ENDIF
+
+C     ECHANGE EFFECTIF DES 2 DIAGONALES DU QUADRANGLE
+      MCN(MN1+1) = NOSTR1
+      MCN(MN1+4) = 0
+
+      MCN(MN2+1) = NOSTR1
+      MCN(MN2+4) = 0
+
+      IF( SURF1 .GT. 0 ) THEN
+         MCN(MN1+2) = NOSDI1
+         MCN(MN1+3) = NOSTR2
+
+         MCN(MN2+2) = NOSTR2
+         MCN(MN2+3) = NOSDI2
+      ELSE
+C        PERMUTATION DES SOMMETS 2 ET 3
+         MCN(MN1+2) = NOSTR2
+         MCN(MN1+3) = NOSDI1
+
+C        PERMUTATION DES SOMMETS 2 ET 3
+         MCN(MN2+2) = NOSDI2
+         MCN(MN2+3) = NOSTR2
+      ENDIF
+
+      IERR = 0
+
+ 9999 RETURN
+      END

@@ -1,0 +1,45 @@
+      SUBROUTINE BF2DMV( Rho, XYZEF, NONOEF, MDVG )
+C ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+C BUT :    CALCULER LES COEFFICIENTS ELEMENTAIRES ET LES ASSEMBLER
+C -----    DANS LA MATRICE GLOBALE DIAGONALE D'UNE COMPOSANTE DE LA VITESSE
+C          INTEGRATION NUMERIQUE AUX 3 SOMMETS ET AU BARYCENTRE DU TRIANGLE
+C          Integrale  Rho tP1B P1B dx
+C
+C ENTREES:
+C --------
+C Rho    : DENSITE VOLUMIQUE DE MASSE DU FLUIDE
+C XYZEF  : 2 COORDONNEES DES 3 SOMMETS DE L'EF
+C NONOEF : NUMERO DES 4 NOEUDS DU TRIANGLE BREZZI-FORTIN
+C
+C SORTIE :
+C --------
+C MDVG   : MATRICE GLOBALE DIAGONALE D'UNE COMPOSANTE DE LA VITESSE
+C+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+C AUTEUR : ALAIN PERRONNET LJLL UPMC & St Pierre du Perray Decembre 2010
+C23456---------------------------------------------------------------012
+      REAL               XYZEF(3,2)
+      DOUBLE PRECISION   Rho, DELTA, MDVG(1:*), S, X1, Y1
+      INTEGER            NONOEF(4)
+      INTRINSIC          ABS
+C
+C     CALCUL DU JACOBIEN DE CE TRIANGLE BREZZI-FORTIN
+      X1 = XYZEF(1,1)
+      Y1 = XYZEF(1,2)
+      DELTA = ABS( ( XYZEF(2,1)-X1 ) * ( XYZEF(3,2)-Y1 )
+     %           - ( XYZEF(2,2)-Y1 ) * ( XYZEF(3,1)-X1 ) )
+C
+C     CALCUL DE LA MATRICE ELEMENTAIRE DE MASSE AVEC POINTS
+C     D'INTEGRATION AUX 3 SOMMETS + BARYCENTRE
+C     ASSEMBLAGE DANS LA MATRICE DIAGONALE MDVG(1:NBNOVI)
+      S = Rho * DELTA / 24.D0
+      DO I=1,3
+         NS = NONOEF(I)
+         MDVG( NS ) = MDVG( NS ) + S
+      ENDDO
+C
+C     DE MEME AU BARYCENTRE DU TRIANGLE AVEC LE POIDS 9/24
+      NS = NONOEF(4)
+      MDVG( NS ) = MDVG( NS ) + S * 9.D0
+C
+      RETURN
+      END

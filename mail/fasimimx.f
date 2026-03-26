@@ -1,0 +1,73 @@
+      SUBROUTINE FASIMIMX( PTXYZD, N1FEOC, NFETOI,
+     %                     NBFETO, NFMIN,  SMIN,  NFMAX, SMAX )
+C+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+C  BUT :   RETROUVER LA FACE SIMPLE DE NFETOI DE SURFACE MINIMALE
+C ------   ET MAXIMALE
+
+C ENTREES:
+C --------
+C PTXYZD : TABLEAU DES COORDONNEES DES POINTS
+C          PAR POINT : X  Y  Z DISTANCE_SOUHAITEE
+C N1FEOC : POINTEUR SUR LA PREMIERE FACE DE L'ETOILE
+C          CHAINAGE SUIVANT DANS NFETOI(5,*)
+C NFETOI : LES FACES TRIANGULAIRES DE L'ETOILE en VERSION 2
+C          1: NUMERO DU TETRAEDRE DANS NOTETR OPPOSE A CETTE FACE
+C          2: NUMERO PTXYZD DU SOMMET 1 DE LA FACE
+C          3: NUMERO PTXYZD DU SOMMET 2 DE LA FACE
+C          4: NUMERO PTXYZD DU SOMMET 3 DE LA FACE
+C          S1S2 x S1S3 VERS L'INTERIEUR DE L'ETOILE
+
+C SORTIES:
+C --------
+C NBFETO : NOMBRE DE FACES DE L'ETOILE NFETOI A PARTIR DE N1FEOC
+C NFMIN  : NUMERO DANS NFETOI DE LA FACE DE SURFACE MINIMALE
+C SMIN   : VALEUR DE LA SURFACE MINIMALE DES FACES
+C NFMAX  : NUMERO DANS NFETOI DE LA FACE DE SURFACE MAXIMALE
+C SMAX   : VALEUR DE LA SURFACE MAXIMALE DES FACES
+C+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+C AUTEUR : ALAIN PERRONNET   St PIERRE du PERRAY                Mai 2018
+C2345X7..............................................................012
+      DOUBLE PRECISION  PTXYZD(4,*), SURTRD, S, SMIN, SMAX
+      INTEGER           NFETOI(5,*)
+
+C     CALCUL DE LA SURFACE DES FACES NFETOI
+      NBFETO = 0
+      SMIN   = 1D100
+      SMAX   =-1D100
+      NF1    = N1FEOC
+
+ 10   IF( NF1 .GT. 0 ) THEN
+
+C        UNE FACE DE L'ETOILE DE PLUS
+         NBFETO = NBFETO + 1
+
+C        LA SURFACE DE LA FACE SIMPLE NF1
+         S = SURTRD( PTXYZD( 1, ABS( NFETOI(2,NF1) ) ),
+     %               PTXYZD( 1,      NFETOI(3,NF1) ),
+     %               PTXYZD( 1,      NFETOI(4,NF1) ) )
+
+         IF( S .LT. SMIN ) THEN
+            SMIN  = S
+            NFMIN = NF1
+         ENDIF
+
+         IF( S .GT. SMAX ) THEN
+            SMAX  = S
+            NFMAX = NF1
+         ENDIF
+
+C        PASSAGE A LA FACE SUIVANTE DE L'ETOILE
+         NF1 = NFETOI(5,NF1)
+         GOTO 10
+
+      ENDIF
+
+      S = SMIN / SMAX
+      IF( S .LT. 1D-3 ) THEN
+         PRINT*,'fasimimx:',NBFETO,' FACES SIMPLES: face NFMIN=',NFMIN,
+     %   ' de Surf MIN=',SMIN,' face NFMAX=',NFMAX,' de Surf MAX=',SMAX,
+     %   ' SMIN/SMAX=',S
+      ENDIF
+
+      RETURN
+      END

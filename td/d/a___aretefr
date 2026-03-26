@@ -1,0 +1,16 @@
+deftms ~>>>ARETEFR 'Chainage des aretes des faces frontalieres d''un objet 3D'
+variable muet DATE 'date de creation du tableau'          reel2  ;
+variable muet NUTD 'numero du tableau descripteur'        entier ;
+variable MOARFR 'nombre d''entiers stockes par arete'     entier ;
+variable MXARFR 'nombre maximal d''aretes frontalieres'   entier ;
+variable NBARFR 'nombre d''aretes sur la frontiere'       entier;
+variable L1ARFR 'numero dans LAREFR de la premiere arete frontiere' entier;
+variable NBTSAF 'nombre total de sommets des aretes ou 0' entier ;
+tableau  LAREFR(1..MOARFR,1..MXARFR)
+'numero des 2 sommets de l''arete, suivante' entier ;  
+tableau  COSTAF(1..NBTSAF) 'x y z des sommets des aretes' xyz ;
+fintms ;
+            
+
+Pour memoire :
+NBTSAF=0 signifie que le tableau des coordonnees des sommets est absent

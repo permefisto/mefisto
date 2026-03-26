@@ -1,0 +1,309 @@
+      SUBROUTINE XYZDSTE( NBEF,   NBNOEF, NUNOTE,
+     %                    MOFACE, MXFACE, LFACES,
+     %                    XYZPOI, NEF00,  XPT, YPT, ZPT,
+     %                    NEF,    NOFAMX, IERR )
+C ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+C BUT :    RETROUVER, EN PARTANT DU TETRAEDRE NEF00, LE TETRAEDRE NEF
+C -----    CONTENANT LE POINT (XPT,YPT,ZPT) DANS UNE TETRAEDRISATION
+C          D'UN OBJET DEFINIE PAR LE TABLEAU NUNOTE(NBEF,NBNOEF)
+C          DES 4 NUMEROS DE SOMMETS DES NBEF TETRAEDRES
+C ENTREES:
+C --------
+C NBEF   : NOMBRE DE TETRAEDRES DU MAILLAGE
+C NBNOEF : NOMBRE DE NOEUDS D'UN TETRAEDRE
+C NUNOTE : NUMERO DES NBNOEF NOEUDS DE CHAQUE TETRAEDRE
+
+C MOFACE : NOMBRE DE MOTS DE CHAQUE FACE DU TABLEAU LFACES
+C MXFACE : NOMBRE MAXIMAL D'FACES DU TABLEAU LFACES
+C LFACES : TABLEAU DES FACES DU MAILLAGE  (cf hachag.f)
+C          LFACES(1,I)= NO DU 1-ER  SOMMET DE LA FACE
+C          LFACES(2,I)= NO DU 2-EME SOMMET > 1-ER  SOMMET
+C          LFACES(3,I)= NO DU 3-EME SOMMET DE LA FACE
+C          LFACES(4,I)= NO DU 4-EME SOMMET DE LA FACE
+C                       0 SI TRIANGLE
+C          LFACES(5,I)= CHAINAGE HACHAGE SUR FACE SUIVANTE
+C                       1 CUBE EST UN TETRA ou PENTA ou HEXAEDRE
+C          LFACES(6,I)= NUMERO DU 1-ER  CUBE CONTENANT CETTE FACE
+C                       0 SI PAS DE 1-ER  CUBE
+C          LFACES(7,I)= NUMERO DU 2-EME CUBE CONTENANT CETTE FACE
+C                       ou CHAINAGE SUR LA FACE FRONTALIERE SUIVANTE
+C          LFACES(8,I)= NUMERO DE LA FACE A TANGENTE DANS LE TABLEAU NUTGFA
+C          LFACES(9,I)= NUMERO DU TYPE DU DERNIER EF DE CETTE FACE
+C                       CETTE INFORMATION EXISTE SEULEMENT POUR UN OBJET
+C                       PAS POUR UNE SURFACE OU UN VOLUME!
+
+C XYZPOI : 3 COORDONNEES DES SOMMETS DES TETRAEDRES
+C NEF00  : NUMERO DE L'EF DE DEPART DE LA RECHERCHE DU TETRAEDRE CONTENANT PT
+C XPT,YPT,ZPT: COORDONNEES DU POINT DE TETRAEDRE NEF LE CONTENANT A RETROUVER
+
+C SORTIES:
+C --------
+C NEF    : SI IERR=0 NUMERO DU TETRAEDRE CONTENANT LE POINT XPT,YPT,ZPT
+C          SI IERR>0 NUMERO DU DERNIER TETRAEDRE PARCOURU
+C NOFAMX : NUMERO (1 a 4) DE LA FACE EN CAS DE POINT EXTERIEUR AU MAILLAGE
+C                  0 SINON
+C IERR   : 0 PAS D'ERREUR LE POINT XPT,YPT,ZPT EST DANS LE TETRAEDRE NEF
+C          1 POINT EXTERIEUR AU MAILLAGE
+C            PAS de TETRAEDRE derriere LA FACE NOFAMX de
+C            NEF LE DERNIER TETRAEDRE DU PARCOURS POUR ATTEINDRE XYZPT
+C          2 POINT PROCHE D'UNE FACE NON RETROUVEE DANS LE MAILLAGE
+C          3 FACE DANS 3 TETRAEDRES
+C          4 NOMBRE DE TETRAEDRES PARCOURUS TROP GRAND
+C          5 NEF<=0 EN SORTIE ce qui ne devrait pas etre!...
+C+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+C AUTEUR : ALAIN PERRONNET LJLL UPMC & St Pierre du Perray     Mars 2010
+C MODIFS : ALAIN PERRONNET LJLL UPMC & St Pierre du Perray     Aout 2012
+C MODIFS : ALAIN PERRONNET St Pierre du Perray              Octobre 2020
+C23456---------------------------------------------------------------012
+      include"./incl/langue.inc"
+      include"./incl/nctyef.inc"
+      INTEGER           LFACES(MOFACE,MXFACE)
+      INTEGER           NBEF, NBNOEF, NEF00, NEF, NUNOTE(NBEF,NBNOEF),
+     %                  NOFAMX, IERR, NOSOFATE(3,4), NGS(3),
+     %                  N1, N2, N3, N4, NEF1, NEF2
+      REAL              XYZPOI( 3, * )
+      DOUBLE PRECISION  XPT, YPT, ZPT
+      DOUBLE PRECISION  X1,X2,X3,X4, Y1,Y2,Y3,Y4, Z1,Z2,Z3,Z4,
+     %                  CS, DN, DBPT, DELTAe, DETM33,
+     %                  COSMAX, CB1,CB2,CB3,CB4, XB,YB,ZB, XN,YN,ZN
+      INTRINSIC         SQRT, ABS
+
+C     LE NUMERO DES 3 SOMMETS DES 4 FACES DU TETRAEDRE
+      DATA              NOSOFATE / 1,3,2,  2,3,4,  3,1,4,  4,1,2 /
+
+C     DEPART A PARTIR DU TETRAEDRE NEF00
+      IERR   = 0
+      NBTEMX = MIN( NBEF/5, 1000 )
+      NBTEPLUS = 0
+      NBTEPA = 0
+      NEF0   = 0
+      NEF    = NEF00
+      LIBREF = 0
+      NOFAMX = 0
+
+C     MODIFICATION DE XPT YPT ZPT POUR AMELIORER LE CALCUL DES 
+C     COORDONNEES BARYCENTRIQUES
+      IF( ABS(XPT) .LT. 1D-20 ) XPT=0D0
+      IF( ABS(YPT) .LT. 1D-20 ) YPT=0D0
+      IF( ABS(ZPT) .LT. 1D-20 ) ZPT=0D0
+
+C     CALCUL DES 4 COORDONNEES BARYCENTRIQUES DU
+C     POINT (XPT,YPT,ZPT) DANS LE TETRAEDRE NEF
+ 10   NBTEPA = NBTEPA + 1
+      N1 = NUNOTE( NEF, 1 )
+      X1 = XYZPOI( 1, N1 )
+      Y1 = XYZPOI( 2, N1 )
+      Z1 = XYZPOI( 3, N1 )
+
+      N2 = NUNOTE( NEF, 2 )
+      X2 = XYZPOI( 1, N2 )
+      Y2 = XYZPOI( 2, N2 )
+      Z2 = XYZPOI( 3, N2 )
+
+      N3 = NUNOTE( NEF, 3 )
+      X3 = XYZPOI( 1, N3 )
+      Y3 = XYZPOI( 2, N3 )
+      Z3 = XYZPOI( 3, N3 )
+
+      N4 = NUNOTE( NEF, 4 )
+      X4 = XYZPOI( 1, N4 )
+      Y4 = XYZPOI( 2, N4 )
+      Z4 = XYZPOI( 3, N4 )
+
+C     CALCUL DU JACOBIEN DE Fe POLYNOMIALE DE DEGRE 1 de NEF
+      DELTAe = DETM33( X2-X1, X3-X1, X4-X1,
+     %                 Y2-Y1, Y3-Y1, Y4-Y1,
+     %                 Z2-Z1, Z3-Z1, Z4-Z1 )
+
+C     CALCUL DES 4 COORDONNEES BARYCENTRIQUES DU POINT PT
+C     DANS LE TETRAEDRE NEF
+      CB1 = DETM33( X2-XPT, X3-XPT, X4-XPT,
+     %              Y2-YPT, Y3-YPT, Y4-YPT,
+     %              Z2-ZPT, Z3-ZPT, Z4-ZPT ) / DELTAe
+
+      CB2 = DETM33( X3-XPT, X1-XPT, X4-XPT,
+     %              Y3-YPT, Y1-YPT, Y4-YPT,
+     %              Z3-ZPT, Z1-ZPT, Z4-ZPT ) / DELTAe
+
+      CB3 = DETM33( X4-XPT, X1-XPT, X2-XPT,
+     %              Y4-YPT, Y1-YPT, Y2-YPT,
+     %              Z4-ZPT, Z1-ZPT, Z2-ZPT ) / DELTAe
+
+      CB4 = DETM33( X1-XPT, X3-XPT, X2-XPT,
+     %              Y1-YPT, Y3-YPT, Y2-YPT,
+     %              Z1-ZPT, Z3-ZPT, Z2-ZPT ) / DELTAe
+
+      IF( CB1 .GE. -0.000001D0 .AND. CB1 .LE. 1.000001D0 .AND.
+     %    CB2 .GE. -0.000001D0 .AND. CB2 .LE. 1.000001D0 .AND.
+     %    CB3 .GE. -0.000001D0 .AND. CB3 .LE. 1.000001D0 .AND.
+     %    CB4 .GE. -0.000001D0 .AND. CB4 .LE. 1.000001D0 ) THEN
+
+C        LE POINT (XPT,YPT,ZPT) EST DANS LE TETRAEDRE NEF => RETOUR
+C        ----------------------------------------------------------
+         IERR = 0
+         GOTO 9999
+
+      ENDIF
+
+C     LE POINT (XPT,YPT,ZPT) EST EXTERIEUR AU TETRAEDRE NEF
+C     -----------------------------------------------------
+C     RECHERCHE DE LA FACE DE L'EF NEF QUI VOIE LE POINT XPT,YPT,ZPT
+      COSMAX = -2D0
+      NOFAMX = 0
+C     BOUCLE SUR LES 4 FACES DU TETRAEDRE NEF FRONTALIER
+      DO K=1,4
+C
+C        FACE K DE NEF
+         N1 = NUNOTE( NEF, NOSOFATE(1,K) )
+         N2 = NUNOTE( NEF, NOSOFATE(2,K) )
+         N3 = NUNOTE( NEF, NOSOFATE(3,K) )
+C
+C        LES COORDONNEES DU BARYCENTRE DES 3 SOMMETS DE LA FACE K
+         X1 = XYZPOI( 1, N1 )
+         Y1 = XYZPOI( 2, N1 )
+         Z1 = XYZPOI( 3, N1 )
+C
+         X2 = XYZPOI( 1, N2 )
+         Y2 = XYZPOI( 2, N2 )
+         Z2 = XYZPOI( 3, N2 )
+C
+         X3 = XYZPOI( 1, N3 )
+         Y3 = XYZPOI( 2, N3 )
+         Z3 = XYZPOI( 3, N3 )
+
+C        LES COMPOSANTES DU VECTEUR BARYCENTRE DE LA FACE K -> PT
+         XB = XPT - ( X1 + X2 + X3 ) / 3D0
+         YB = YPT - ( Y1 + Y2 + Y3 ) / 3D0
+         ZB = ZPT - ( Z1 + Z2 + Z3 ) / 3D0
+
+C        CARRE DE LA LONGUEUR DU SEGMENT (BARYCENTRE) - (XPT,YPT,ZPT)
+         DBPT = XB**2 + YB**2 + ZB**2
+         IF( DBPT .LE. 0D0 ) THEN
+C           XPT YPT ZPT EST LE BARYCENTRE DE LA FACE K DU TETRAEDRE NEF
+            IERR = 0
+            GOTO 9999
+         ENDIF
+
+C        LES COMPOSANTES DU VECTEUR NORMAL A LA FACE K
+         XN = (Y2-Y1) * (Z3-Z1) - (Z2-Z1) * (Y3-Y1)
+         YN = (Z2-Z1) * (X3-X1) - (X2-X1) * (Z3-Z1)
+         ZN = (X2-X1) * (Y3-Y1) - (Y2-Y1) * (X3-X1)
+
+C        CARRE DE LA SURFACE*2 DE LA FACE OU DU VECTEUR NORMAL
+         DN = XN**2 + YN**2 + ZN**2
+
+C        COSINUS ANGLE (NORMALE A LA FACE,BARYCENTRE-PT)
+         CS = ( XN * XB + YN * YB + ZN * ZB ) / SQRT( DN * DBPT )
+         IF( CS .GT. COSMAX ) THEN
+            NOFAMX = K
+            COSMAX = CS
+         ENDIF
+
+      ENDDO
+
+C     RECHERCHE DU TETRAEDRE NEF DE L'AUTRE COTE DE LA FACE NOFAMX
+C     LE NUMERO DES SOMMETS DE LA FACE NOFAMX DE NEF
+      NGS(1) = NUNOTE( NEF, NOSOFATE(1,NOFAMX) )
+      NGS(2) = NUNOTE( NEF, NOSOFATE(2,NOFAMX) )
+      NGS(3) = NUNOTE( NEF, NOSOFATE(3,NOFAMX) )
+
+C     TRI CROISSANT DES NUMEROS DES 3 SOMMETS
+      CALL TRIENT( 3, NGS )
+
+C     HACHAGE POUR RETROUVER LA FACE DANS LA TRIANGULATION
+      CALL HACHAG( 3, NGS, MOFACE, MXFACE, LFACES, 5,
+     &             LIBREF, NOFA )
+
+      IF( NOFA .LE. 0 ) THEN
+C        FACE NON RETROUVEE PARMI LES FACES DES TETRAEDRES => PROBLEME!
+         IF( LANGAG .EQ. 0 ) THEN
+            PRINT*,'xyzdste: Erreur FACE',NGS,
+     %             ' NON RETROUVEE dans les TETRAEDRES'
+         ELSE
+            PRINT*,'xyzdste: ERROR FACE',NGS,
+     %             ' NOT FOUND in ALL TETRAHEDRA'
+         ENDIF
+         IERR = 2
+         GOTO 9900
+      ENDIF
+
+C     LE NUMERO DES EF QUI SE PARTAGENT LA FACE NOFA
+      NEF1 = ABS( LFACES(6,NOFA) )
+      NEF2 = ABS( LFACES(7,NOFA) )
+
+C     NEF0 EST LE DERNIER TETRAEDRE PARCOURU
+      NEF0 = NEF
+
+      IF( NEF1 .EQ. NEF ) THEN
+C        NEF2 EST LE TETRAEDRE DE L'AUTRE COTE DE LA FACE
+         NEF = NEF2
+      ELSE IF( NEF2 .EQ. NEF ) THEN
+C        NEF1 EST LE TETRAEDRE DE L'AUTRE COTE DE LA FACE
+         NEF = NEF1
+      ELSE
+C        PROBLEME: LA FACE NOFAMX DE NEF APPARTIENT A AU MOINS 3 TETRAEDRES
+         IF( LANGAG .EQ. 0 ) THEN
+            PRINT*,'xyzdste: ERREUR: UNE FACE DANS 3 TETRAEDRES',
+     %              NEF1, NEF2, NEF
+         ELSE
+            PRINT*,'xyzdste: ERROR: A FACE INTO 3 TETRAHEDRA',
+     %              NEF1, NEF2, NEF
+         ENDIF
+         NEF  = NEF0
+         IERR = 3
+         GOTO 9900
+      ENDIF
+
+      IF( NEF .LE. 0 ) THEN
+
+C        PAS DE TETRAEDRE ADJACENT => LE POINT XPT,YPT,ZPT EST EXTERIEUR
+C        AUX TETRAEDRES, DERRIERE LA FACE NOFAMX DU TETRAEDRE NEF
+C        ---------------------------------------------------------------
+C        NEF0 EST LE DERNIER EF PARCOURU
+C        PAS DE TETRAEDRE DERRIERE LA FACE NOFAMX DE NEF
+         NEF  = NEF0
+         IERR = 1
+         GOTO 9900
+
+      ENDIF
+
+C     TEST POUR TROP DE TETRAEDRES PARCOURUS
+      IF( NBTEPA .GT. NBTEMX ) THEN
+
+         IF( LANGAG .EQ. 0 ) THEN
+            PRINT*,'xyzdste:',NBTEPA,
+     %          ' TETRAEDRES PARCOURUS POUR REMONTER LA CARACTERISTIQUE'
+            PRINT*,'xyzdste:',XPT, YPT, ZPT,
+     %          ' NON RETROUVE. ARRET DU PARCOURS TETRAEDRE',NEF,
+     %          ' de VOLUME', DELTAe
+         ELSE
+            PRINT*,'xyzdste:',NBTEPA,
+     %' TOO MANY TETRAHEDRA IN the PATH TO INTEGRATE BACKWARD the CHARAC
+     %TERISTIC'
+            PRINT*,'xyzdste:',XPT, YPT, ZPT,
+     %             ' NOT FOUND.  The TRAVEL STOPS IN TETRAHEDRON',NEF,
+     %             ' de VOLUME',DELTAe
+         ENDIF
+
+C        POUR SAVOIR SI BOUCLE SUR TETRAEDRE DE VOLUME NUL
+         NBTEPLUS = NBTEPLUS + 1
+         IF( NBTEPLUS .LE. 16 ) GOTO 10
+
+C        SORTIE
+         IERR = 4
+         GOTO 9900
+
+      ENDIF
+
+C     SUITE DU PARCOURS PAR LE TETRAEDRE NEF SUIVANT
+      GOTO 10
+
+
+ 9900 IF( NEF .LE. 0 .OR. NEF .GT. NBEF ) THEN
+         print *,'xyzdste: Probleme NEF=',NEF,' <=0 ! pour le point',
+     %            XPT, YPT, ZPT,' NEF00=',NEF00
+         IERR = 5
+      ENDIF
+
+ 9999 RETURN
+      END

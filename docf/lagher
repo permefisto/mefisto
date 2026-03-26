@@ -1,0 +1,9 @@
+2 CAS POSSIBLES :  
+
+ 1. la quadrangulation est l'IMAGE du CARRE UNITE
+    maille regulierement (par des rectangles).   
+    
+ 2. la quadrangulation est l'IMAGE du CARRE UNITE
+    maille irregulierement en fonction de la coordonnee curviligne
+    des points de chaque ligne qui definit alors des quadrangles
+    (methode de COOK, GORDON, HALL)   

@@ -1,0 +1,9 @@
+deftms ~>>>XYZSOMMET 'XYZ des sommets et tangentes d''un PLSV'
+ variable muet DATE        'Date de creation du tableau'     reel2  ;
+ variable muet NUTD        'Numero du tableau descripteur'   entier ; 
+ variable      NBSOM       'Nombre de sommets'               entier ;
+ variable      NBTGS       'Nombre de tangentes'             entier ;
+ variable      NBCOOR      'Nombre coordonnees d''un sommet' entier ;
+ tableau  XYZSOM(1..NBSOM) 'X Y Z de chaque sommet'          xyz    ;
+ tableau  XYZTGS(1..NBTGS) 'X Y Z de chaque tangente'        xyz    ;
+fintms ;

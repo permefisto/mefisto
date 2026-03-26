@@ -1,0 +1,248 @@
+{ ================================================= }
+{ MEFISTO VERSION    Novembre 2004 PROJET: CYL22    }
+{ UTILISATEUR: ALAIN PERRONNET     DATE: 2/12/2004  }
+{ ================================================= }
+@;
+@;
+DefVar Pi;  Pi=atan(1)*4; {Les variables Utilisateur}
+DefVar eps; eps=1e-5;
+
+defvar rc1; rc1=0.1;     {rayon du cylindre 1}
+defvar rc2; rc2=0.035;   {rayon du cylindre 2}
+defvar ycd; ycd=0.825;   {ordonnee du cercle droit du cylindre 1}
+defvar yc2; yc2=0.175;   {ordonnee de l'axe du cylindre 2}
+defvar zc2; zc2=0.1;     {hauteur du cylindre 2}
+defvar ypl; ypl=yc2+yc2; {ordonnee du plan au dela du cylindre 2}
+
+
+6;     { Les TRANSFORMATIONS mathematiques sur les objets } 
+ deffonc idx(x,y,z);    idx=x;     finfonc;
+ deffonc idy(x,y,z);    idy=y;     finfonc;
+ deffonc idz(x,y,z);    idz=z;     finfonc;
+ deffonc moinsz(x,y,z); moinsz=-z; finfonc;
+
+ c1;  6;  { transformation de R3 -> R3 definie par 3 fonctions }
+          { du plan sur le cylindre 1 }
+ deffonc c1x(x,y,z); c1x=rc1*cos(z/rc1); finfonc;   c1x;
+ deffonc c1y(x,y,z); c1y=y;              finfonc;   c1y;
+ deffonc c1z(x,y,z); c1z=rc1*sin(z/rc1); finfonc;   c1z;
+
+ c1m1; 6; { transformation de R3 -> R3 definie par 3 fonctions }
+          { le cylindre 1 est deplie sur le plan }
+ deffonc c1m1x(x,y,z); c1m1x=0; finfonc;          c1m1x;
+ deffonc c1m1y(x,y,z); c1m1y=y; finfonc;          c1m1y;
+ deffonc c1m1z(x,y,z);
+    si x<1e-5          { traitement de la tangente infinie }
+    alors  si z>0 
+           alors c1m1z= rc1*Pi/2;
+           sinon c1m1z=-rc1*Pi/2;
+           finsi;
+    sinon  c1m1z=rc1*atan(z/x); 
+    finsi;
+ finfonc;                                                
+ c1m1z;        
+
+ c2;  6;  { transformation de R3 -> R3 definie par 3 fonctions }
+          { du plan sur le cylindre 2 }
+ deffonc c2x(x,y,z); c2x=rc2*cos((y-yc2)/rc2);     finfonc; c2x;
+ deffonc c2y(x,y,z); c2y=rc2*sin((y-yc2)/rc2)+yc2; finfonc; c2y;
+ deffonc c2z(x,y,z); c2z=z; finfonc;                        c2z;
+
+ c2m1; 6; { transformation de R3 -> R3 definie par 3 fonctions }
+          { le cylindre 2 est deplie sur le plan }
+ deffonc c2m1x(x,y,z); c2m1x=0; finfonc;             c2m1x;
+ deffonc c2m1y(x,y,z);
+    si abs(x)<1e-5
+    alors  si  y>=yc2
+           alors  c2m1y=yc2+rc2*Pi/2; 
+           sinon  c2m1y=yc2-rc2*Pi/2;
+           finsi;
+    sinon  c2m1y=yc2+rc2*atan((y-yc2)/x); 
+    finsi;
+ finfonc;                                               
+                                                     c2m1y;  
+ deffonc c2m1z(x,y,z); c2m1z=z; finfonc;             c2m1z;
+
+ TransInter; 3; { isometrie de R3 -> R3 }
+ 0;  { translation definie par un vecteur de R3 }
+ 0; yc2; 0; { TRAVEC(1..3) les 3 composantes du vecteur translation }
+@;
+
+1;  1;   { Les POINTS principaux de l objet } 
+ cg1; i; 1; 0;   0;       -rc1;      {Demi-cercle gauche}
+ cg2; i; 1; rc1; 0;          0; 
+ cg3; i; 1; 0;   0;        rc1;
+ 
+ cc1; i; 1; 0;   yc2-rc2;  rc1;      {Intersection des 2 demi-cylindres}
+ cc2; i; 1; 0;   yc2+rc2;  rc1;
+
+ ch1; i; 1; 0;   yc2-rc2;  rc1+zc2;  {Demi-cercle haut}
+ ch2; i; 1; rc2; yc2;      rc1+zc2; 
+ ch3; i; 1; 0;   yc2+rc2;  rc1+zc2;
+
+ cd1; i; 1; 0;   ycd;     -rc1;      {Demi-cercle droit}
+ cd2; i; 1; rc1; ycd;      0;
+ cd3; i; 1; 0;   ycd;      rc1;
+
+ pl1; i; 1; 0;   ypl;     -rc1;      {Plan entre le cylindre haut et cercle droit}
+ pl2; i; 1; 0;   ypl;      rc1; 
+@;
+
+
+{Definition du nombre d'aretes des lignes}
+DefVar aretriag; aretriag=rc1/4;
+DefVar aretriad; aretriad=aretriag*2;
+DefVar aretriah; aretriah=rc2/4;
+
+2; { Les LIGNES aretes de l objet avant taille_ideale pour forcer les aretes }
+   { sur la ligne d'intersection }
+ intersec; TransInter; 27; { intersection 2 demi-cylindres d axes Y Z }
+ Pi*rc2/aretriah; { NBARLI nombre d aretes de la ligne intersection } 
+   2;     { NOAXCY axe du plus grand cylindre: axe des Y }
+ rc1;     { RAYCY1 rayon du cylindre 1 (>R2) }
+ rc2;     { RAYCY2 rayon du cylindre 2 (<R1) }
+ -90;     { AL0CAZ longitude initiale en degres }
+  90;     { AL1CAZ longitude finale   en degres }
+   1;     { COTCAZ cote z>0 ou z<0 (1 ou -1) }
+@;     
+
+{La fonction taille_ideale l'emporte sur la definition des na nombre d'aretes}
+DefFonc taille_ideale(x,y,z);
+si y<ypl alors 
+   si z>(rc1*0.5) et z<=(rc1+zc2*1.1) et 
+     (abs(y-yc2)<=(rc2*2)) et x>-aretriag alors
+      taille_ideale=aretriah;
+   sinon
+      taille_ideale=aretriag;
+   finsi;
+sinon
+   taille_ideale=abs( (aretriad*(y-ypl)+aretriag*(ycd-y)) / (ycd-ypl) );
+finsi;
+finfonc;
+
+{Definition du nombre d'aretes des lignes}
+DefVar nacg;     nacg=Pi*rc1/aretriag;
+DefVar nacd;     nacd=Pi*rc1/aretriad;
+DefVar nach;     nach=nacg;
+DefVar nah;      nah=2*rc1/aretriag;
+DefVar nacgpl;   nacgpl=ypl/aretriag;
+DefVar naplcd;   naplcd=(ycd-ypl)/aretriad;
+
+2;   { Les LIGNES aretes de l objet }
+ cg1cg2cg3; i; 3;  {arc de cercle}  nacg;  1;  cg1; cg3; cg2; 
+ cd1cd2cd3; i; 3;  {arc de cercle}  nacd;  1;  cd1; cd3; cd2; 
+ ch1ch2ch3; i; 3;  {arc de cercle}  nach;  1;  ch1; ch3; ch2;
+
+ cg1cg3;    i; 2;  {segment de droite} nah;       1;     cg1; cg3; 
+ cd1cd3;    i; 2;  {segment de droite} nacd*2/Pi; 1;     cd1; cd3; 
+ cg3cc1;    i; 2;  {segment de droite} nah;       0.9;   cg3; cc1; 
+ cc1ch1;    i; 2;  {segment de droite} nah;       1;     cc1; ch1; 
+ cc2ch3;    i; 2;  {segment de droite} nah;       1;     cc2; ch3; 
+ ch1ch3;    i; 2;  {segment de droite} nach*2/Pi; 1;     ch1; ch3; 
+ cc1cc2;    i; 2;  {segment de droite} nacg;      1;     cc1; cc2; 
+ cc2pl2;    i; 2;  {segment de droite} nah;       1.02;  cc2; pl2; 
+ pl2cd3;    i; 2;  {segment de droite} naplcd;    1.02;  pl2; cd3; 
+ pl1cd1;    i; 2;  {segment de droite} naplcd;    1.02;  pl1; cd1;
+ cg1pl1;    i; 2;  {segment de droite} nacgpl;    1.02;  cg1; pl1;
+
+          {Attention a la transformation inverse de c1!} 
+ cyl1plan; c1m1; 51; 8; cg1pl1; pl1cd1; cd1cd2cd3; pl2cd3; 
+                        cc2pl2; intersec; cg3cc1; cg1cg2cg3;
+
+          {Attention a la transformation inverse de c2!} 
+ cyl2plan; c2m1; 51; 4; intersec;  cc2ch3;  ch1ch2ch3;  cc1ch1;
+ 
+ cercleg; i;  51;  2; cg1cg3; cg1cg2cg3;
+ cercled; i;  51;  2; cd1cd3; cd1cd2cd3;
+ plan;    i;  51; 10; cg1pl1; pl1cd1; cd1cd3; pl2cd3; cc2pl2;
+                      cc2ch3; ch1ch3; cc1ch1; cg3cc1; cg1cg3;
+ cercleh; i;  51;  2; ch1ch2ch3; ch1ch3; 
+@;   
+
+3;   { Les SURFACES contours de l objet }
+ cercleg;  i; 9; { triangulation d un contour de lignes fermees }
+    aretriag;    { ARETMX taille max des aretes des triangles equilateraux }
+    1;           { NBLFTR nombre de lignes fermees contour de la surface }
+    0;           { NBPTIT nombre de points internes futurs sommets }
+    cercleg;     { DANS LE LEXIQUE ~>LIGNE }          
+
+ cercled;   i;  9;  { triangulation d un contour de lignes fermees }
+         aretriad;  1;  0;   cercled;            
+
+ cercleh;   i;  9;  { triangulation d un contour de lignes fermees }
+         aretriah;  1;  0;   cercleh;        
+
+ plan;     i;  9;   { triangulation d un contour de lignes fermees }
+         aretriad;  1;  0;   plan;
+    
+                  {Attention a la transformation c1!}
+ cyl1; c1; 9;     { triangulation d un contour de lignes fermees }
+         aretriad;  1;  0;  cyl1plan;
+
+                  {Attention a la transformation c2!}   
+ cyl2; c2; 9;     { triangulation d un contour de lignes fermees }
+         aretriah;  1;  0;   cyl2plan;
+
+ cyl;   i; 51;  6;  cyl1; cercleg; cercled; plan; cyl2; cercleh;
+@;
+
+6;     { Les TRANSFORMATIONS mathematiques sur les objets } 
+ symyz; 3; 4; {symetrie par rapport a un plan defini par 3 points}
+   cg1; cd1; cg3;
+@;
+
+4;     { Les VOLUMES parties de l objet }
+ cyl8; i; 8; { un volume ferme d un volume pour option 9 }
+ 1;          { NBSF1V nombre de surfaces fermees contour du volume }
+ cyl;        { DANS LE LEXIQUE ~>SURFACE }
+
+ cyl9; i; 9; { le volume union de volumes fermes de type 8 }
+ 120000;     { MXSOVO nombre maximal de sommets de la tetraedrisation }
+ aretriag;   { ARETGR longueur de l'arete de la grille reguliere } 
+ 3.0;        { ANTE2P degres du petit angle de coplanearite }
+ 0;          { NBPTIV nombre de points internes fournis par lutilisateur }
+ 1;          { NBVOPA nombre de volumes de type 8 de la partition }
+ cyl8;       { DANS LE LEXIQUE ~>VOLUME } 
+
+ cyla; i; 30;  { amelioration d une tetraedrisation }
+        cyl9;  { DANS LE LEXIQUE ~>VOLUME }
+         0.5;  { QUTEMN qualite au dessous de laquelle ameliorer }
+         3.0;  { ANTE2P degres du petit angle de coplanearite }
+          10;  { NBITAT nombre des iterations pour ameliorer }
+ cylas; symyz; 50; cyla;
+ cyl;       i; 51; 2; cyla; cylas;
+@;
+
+3; {Surfaces extraites}
+cercleAgauche; i; 37; {surface extraite d'un volume sur critere logique}
+  cyl;                {nom du volume}
+  deffonc fg(x,y,z); fg=(y<eps); finfonc; fg;
+  1; {extraction limitee aux faces frontalieres}
+
+cercleAdroite; i; 37; {surface extraite d'un volume sur critere logique}
+  cyl;                {nom du volume}
+  deffonc fd(x,y,z); fd=(y>ycd-eps); finfonc; fd;
+  1; {extraction limitee aux faces frontalieres}
+
+cercleENhaut; i; 37; {surface extraite d'un volume sur critere logique}
+  cyl;               {nom du volume}
+  deffonc fh(x,y,z); fh=(z>rc1+zc2-eps); finfonc; fh;
+  1; {extraction limitee aux faces frontalieres}
+@;
+
+5; {Definition de l'objet}
+cyl; 0; {classique} 4;
+    volume;  cyl;
+    surface; cercleAgauche;
+    surface; cercleAdroite;
+    surface; cercleENhaut;
+@;
+
+7; {Definition d'une interpolation}
+cyl; 3; {Lagrange de degre 1}
+@;
+
+10;  { trace du maillage des plsvo }
+  5; { tous les objets }
+ 90; { execution du trace }
+FERMER;

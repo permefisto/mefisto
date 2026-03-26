@@ -1,0 +1,42 @@
+      SUBROUTINE ADTRTR( XYZST, NSNVTR, NUMTRI, NCTRIA, NCARET )
+C+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+C BUT :    TRACER LE TRIANGLE NUMTRI DANS LE CONTEXTE D'UNE
+C -----    TRIANGULATION ADAPTEE
+C ENTREES:
+C --------
+C XYZST  : X Y Z DES SOMMETS DE LA TRIANGULATION ADAPTEE
+C NSNVTR : LISTE DES 3 NUMEROS DES SOMMETS DES TRIANGLES
+C NUMTRI : NUMERO DANS NSNVTR DU TRIANGLE
+C NCTRIA : NUMERO DE LA COULEUR DU TRIANGLE A TRACER
+C NCARET : NUMERO DE LA COULEUR DES ARETES DU TRIANGLE
+C+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+C AUTEUR : ALAIN PERRONNET  ANALYSE NUMERIQUE PARIS UPMC    JANVIER 1995
+C....................................................................012
+      include"./incl/trvari.inc"
+      LOGICAL           TRATRI
+      COMMON / DV2DCO / TRATRI
+C     TRACE OU NON DES TRIANGLES GENERES DANS LA TRIANGULATION
+      INTEGER           NSNVTR(4,*)
+      REAL              XYZST(3,*)
+      REAL              X(3),Y(3)
+C
+C     TEST DE VALIDITE
+      IF( TRATRI ) THEN
+C        LE TRIANGLE DOIT ETRE TRACE
+         IF( NUMTRI .LE. 0 ) RETURN
+         IF( NSNVTR(1,NUMTRI) .LE. 0 ) RETURN
+C
+         DO 10 J=1,3
+            X(J) = XYZST(1,NSNVTR(J,NUMTRI))
+            Y(J) = XYZST(2,NSNVTR(J,NUMTRI))
+ 10      CONTINUE
+C
+C        LE TRACE DE LA FACE ET DES ARETES
+         CALL FACE2D( NCTRIA, NCARET, 3 , X , Y )
+C
+CCCC        TRACE DU NUMERO DES EXTREMITES
+CCC         DO 20 J=1,3
+CCC            CALL ENTIER2D( NCMAGE, X(J), Y(J), NSNVTR(J,NUMTRI) )
+CCC 20      CONTINUE
+      ENDIF
+      END

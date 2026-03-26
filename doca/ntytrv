@@ -1,0 +1,50 @@
+A MAPPING permits to transform the 3 coordinates of the VERTICES
+of the current PLSV ( Point or Line or Surface or Volume ).
+A MAPPING may be used on POINTS, LINES, SURFACES and/or VOLUMES.
+
+A MAPPING is identified by its NAME (up to 24 characters)
+The more current MAPPING is the IDENTITY noted I or i.
+All other MAPPINGS must be defined before the using of their names.
+
+Generally, an initial mesh is done in a plane.
+Thus, the MAPPING
+- transports the vertices on a curved surface
+- projects the vertices on a line or a surface
+- gives the symmetric mesh from a POINT, a LINE or a PLANE
+- modifies the coordinates, as you want, with 3 functions,
+  one for each coordinates directions...
+
+Example:
+6; {definition of mappings}
+ c3;  6;  { mapping to R3 -> R3 definied by 3 functions }
+ deffunc c3x(x,y,z); c3x=r3*sin(x/r3); endfunc;   c3x;
+ deffunc c3y(x,y,z); c3y=r3*cos(x/r3); endfunc;   c3y;
+ deffunc c3z(x,y,z); c3z=z;            endfunc;   c3z;
+
+ c3m1; 6; { mapping de R3 -> R3 definied by 3 functions }
+ deffunc c3m1x(x,y,z);
+    if y<1e-5          { traitment of the infinite tangent }
+    then  if y>0 
+           then c3m1x= r3*pis2;
+           else c3m1x=-r3*pis2;
+           endif;
+    else  c3m1x=r3*atan(x/y); 
+    endif;
+ endfunc;    
+ deffunc c3m1y(x,y,z); c3m1y=r3; endfunc;
+ deffunc c3m1z(x,y,z); c3m1z=z;  endfunc;
+ c3m1x;  c3m1y;  c3m1z;
+
+ proj_cyl3; 4; {projection on the cylinder of radius r3 with direction -oY}
+ deffunc cylindre3(x,y,z); 
+    cylindre3= x**2 + y**2 - r3**2;
+ endfunc;
+ cylindre3;
+ -2; {projection with direction -oY}
+@;
+
+2; {definition of lines}
+ intersec; proj_cyl3; 50; cdy3dm3dey3; {projection of the line cdy3dm3dey3}
+ cyl3;  i; 51; 4; cpgcm3cy3; cy3; epgem3ey3; cpgepg; {union of lines}
+ cyce3plan; c3m1; 50; cyl3;  {mapping of the line cyl3}
+@;

@@ -1,0 +1,136 @@
+      SUBROUTINE TOREDA( RAPCTO, NBARPC, RAGCTO, NBARGC,
+     %                   XYZCEN, XYZAXX, XYZAXY,
+     %                   NBSOM,  XYZSOM, NBEF,   NSEF,
+     %                   IERR )
+C+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+C BUT:     GENERER LE MAILLAGE DE LA SURFACE FERMEE D'UN TORE
+C -----    AVEC LA LONGUEUR PAR DEFAUT DES ARETES
+C ENTREES:
+C --------
+C RAPCTO : RAYON DU CERCLE INFERIEUR
+C NBARPC : NOMBRE D'ARETES SUR LE PETIT CERCLE
+C RAGCTO : RAYON DU CERCLE SUPERIEUR
+C NBARGC : NOMBRE D'ARETES SUR LE GRAND CERCLE
+C XYZCEN : XYZ DU CENTRE DU TORE
+C XYZAXX : XYZ DU POINT SUR L'AXE PROPRE X DU TORE
+C XYZAXY : XYZ DU POINT SUR L'AXE PROPRE Y DU TORE
+C MXSOM  : NOMBRE MAXIMAL DE SOMMETS DECLARES DANS XYZSOM
+C MXEF   : NOMBRE MAXIMAL DE EF DECLARES DANS NSEF
+C
+C SORTIES:
+C --------
+C NBSOM  : NOMBRE DE SOMMETS INITIALISES DANS XYZSOM
+C NBEF   : NOMBRE D'EF INITIALISES DANS XYZSOM
+C XYZSOM : TABLEAU DES COORDONNEES DES NBSOM SOMMETS DE LA QUADRANGULATION
+C NSEF   : TABLEAU DU NUMERO DES 4 SOMMETS DES NBEF EF DU MAILLAGE
+C IERR   : =0 SI PAS D'ERREUR
+C          >0 SINON
+C+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+C AUTEUR : ALAIN PERRONNET LJLL UPMC & LJUBLJANA Slovenie  Novembre 2011
+C2345X7..............................................................012
+      REAL              XYZCEN(3), XYZAXX(3), XYZAXY(3),
+     %                  XYZSOM(3,NBARPC,NBARGC)
+      INTEGER           NSEF(4,NBARPC,NBARGC)
+C
+      REAL              XYZ3PI(3,3), XYZ3PF(3,3), XYZ(3)
+      DOUBLE PRECISION  DMATRI(3,4), PI, ANGLGC, ANGLG, ANGLPC, ANGLP, R
+      INTRINSIC         COS, SIN
+C
+C     CONSTRUIRE LA MATRICE DE TRANSFORMATION DES COORDONNEES POUR
+C     PASSER D'UN REPERE DEFINI PAR 3 POINTS INITIAUX NON ALIGNES
+C                               A   3 POINTS FINAUX   NON ALIGNES
+C     ============================================================
+C     LE REPERE INITIAL
+      XYZ3PI(1,1) = 0.
+      XYZ3PI(2,1) = 0.
+      XYZ3PI(3,1) = 0.
+C
+      XYZ3PI(1,2) = RAGCTO
+      XYZ3PI(2,2) = 0.
+      XYZ3PI(3,2) = 0.
+C
+      XYZ3PI(1,3) = 0.
+      XYZ3PI(2,3) = RAGCTO
+      XYZ3PI(3,3) = 0.
+C
+C     LE REPERE FINAL AU CENTRE DU TORE
+      XYZ3PF(1,1) = XYZCEN(1)
+      XYZ3PF(2,1) = XYZCEN(2)
+      XYZ3PF(3,1) = XYZCEN(3)
+C
+C     AXES X et Y PROPRE DU TORE
+      XYZ3PF(1,2) = XYZAXX(1)
+      XYZ3PF(2,2) = XYZAXX(2)
+      XYZ3PF(3,2) = XYZAXX(3)
+C
+      XYZ3PF(1,3) = XYZAXY(1)
+      XYZ3PF(2,3) = XYZAXY(2)
+      XYZ3PF(3,3) = XYZAXY(3)
+C
+C     CONSTRUCTION DE LA MATRICE DE TRANSFORMATION QUI ENVOIE
+C     LES 3 POINTS INITIAUX SUR LES 3 POINTS FINAUX
+      CALL TR3P3P( XYZ3PI, XYZ3PF, DMATRI, IERR )
+      IF( IERR .NE. 0 ) GOTO 9999
+C
+C     CALCUL DES XYZ DES SOMMETS DES EF DANS LE REPERE PROPRE
+C     LA LONGUEUR>0 PAR DEFAUT DES ARETES EST ICI UTILISEE
+C     =======================================================
+      PI = ATAN(1.D0) * 4.D0
+C
+C     CALCUL DES COORDONNEES DES NBARPC*NBARGC SOMMETS DU TORE
+C     --------------------------------------------------------
+      ANGLGC = 2D0 * PI / NBARGC
+      ANGLPC = 2D0 * PI / NBARPC
+C
+      NBSOM  = 0
+      DO J=1,NBARGC
+C
+C        ANGLE SUR LE GRAND CERCLE
+         ANGLG = (J-1) * ANGLGC
+C
+         DO I=1,NBARPC
+C
+C           XYZ DANS LE REPERE PROPRE DU CONE D'AXE Z
+C           ANGLE SUR LE PETIT CERCLE
+            ANGLP = (I-1) * ANGLPC
+C
+            R      = RAGCTO + RAPCTO * COS( ANGLP )
+            XYZ(1) = REAL( R      * COS( ANGLG ) )
+            XYZ(2) = REAL( R      * SIN( ANGLG ) )
+            XYZ(3) = REAL( RAPCTO * SIN( ANGLP ) )
+C
+C           LE SOMMET APRES TRANSFORMATION
+C           PASSAGE DU REPERE PROPRE DU CYLINDRE AU REPERE GENERAL
+            NBSOM = NBSOM + 1
+            CALL ISOMVA( DMATRI, XYZ, XYZSOM(1,I,J) )
+C
+         ENDDO
+C
+      ENDDO
+C
+C     NUMEROTATION DES SOMMETS DES QUADRANGLES
+C     ----------------------------------------
+      J1 = 0
+      DO J=1,NBARGC
+         J0 = J1
+         IF( J .LT. NBARGC ) THEN
+            J1 = J0 + NBARPC
+         ELSE
+            J1 = 0
+         ENDIF
+         DO I=1,NBARPC
+            NSEF(1,I,J) = I   + J0
+            NSEF(2,I,J) = I   + J1
+            NSEF(3,I,J) = I+1 + J1
+            NSEF(4,I,J) = I+1 + J0
+         ENDDO
+         NSEF(3,NBARPC,J) = 1 + J1
+         NSEF(4,NBARPC,J) = 1 + J0
+      ENDDO
+C
+      NBSOM = NBARPC*NBARGC
+      NBEF  = NBARPC*NBARGC
+      print *,'FIN TORE NBSOM=',NBSOM,' NBEF=',NBEF
+C
+ 9999 RETURN
+      END

@@ -1,0 +1,42 @@
+{ ==================================================================== }
+{ Logiciel MEFISTO     : Version Juillet 2002                          }
+{ Nom de l'Utilisateur : alain                                         }
+{ Nom du Projet        : vp21                                          }
+{ Date                 : 15/10/2003                                    }
+{ Heure                : 15h 00m 23s                                   }
+{ Condition de NEUMANN sur la frontiere                                }
+{ ==================================================================== }
+DefVar Za, Zb;
+Za=2;  Zb=1;
+
+2;  { ENTREE des DONNEES du PROBLEME }
+
+{ VOLUME: SPHERE }
+ 1;   { Rot Densite de MASSE }
+ 1;   { Masse constante }
+ 1;   { DMASSE 'Densite de MASSE' reel ; }
+
+ 2;   { [A] Tenseur CONDUCTIVITE THERMIQUE }
+ 1;   { Materiau 3D homogene isotrope }
+ 1/2; { CONDUC 'Conductivite du materiau' reel ; }
+
+ 6;   { CT Coefficient devant TEMPERATURE }
+ -1;  { fonction Coefficient de la Temperature }
+ deffunc gama(temps, x,y,z, no_type_objet, materiau, temper);
+ defvar g1, g2;
+ g1=sqrt((x+a)**2+y*y+z*z);
+ g2=sqrt((x-a)**2+y*y+z*z);
+ gama=(Za*Zb)/(2*a)-Za/g1-Zb/g2;
+ endfunc;
+ gama; { DANS LE LEXIQUE ~>FONCTION }
+@;
+
+{ SURFACE: SURFSPHERE }
+ 2; { SOURCE IMPOSEE }
+ 1; { SOURCE constante }
+ 0; { VALEUR CONSTANTE }
+
+ 3; 0; { Suppression Temperature IMPOSEE }
+ @;
+
+fermer;

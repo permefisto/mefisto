@@ -1,0 +1,7 @@
+variable COEFNLSE 'Donnees Equations SCHRODINGER' entier
+( 1 : 'Rho     Densite de MASSE'
+, 2 : 'Alfa    Coefficient du LAPLACIEN'
+, 4 : 'FOmega  Force Complexe Second Membre'
+, 6 : 'Beta    Coefficient (ur**2+ui**2) ur OU ui'
+, 8 : 'U(t0,X) Valeur de l''Onde Complexe INITIALE'
+, 9 : 'Omega   Vitesse Angulaire de la rotation' ) ;

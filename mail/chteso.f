@@ -1,0 +1,65 @@
+      SUBROUTINE CHTESO( NT, NBSOTE, NSTETR, NO1TSO, N1TESO, NOTESO,
+     %                   IERR )
+C+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+C BUT :    AJOUTER LE TETRAEDRE NT DANS LE CHAINAGE DES TETRAEDRES
+C -----    DES 4 SOMMETS DU TETRAEDRE
+C
+C ENTREES:
+C --------
+C NT     : TETRAEDRE A AJOUTER AU CHAINAGE DES TETRAEDRES DES 4 SOMMETS
+C NBSOTE : VALEUR MAXIMALE DE DECLARATION DU PREMIER INDICE DE NSTETR(>3)
+C NSTETR : NUMERO DES 4 SOMMETS DE CHAQUE TETRAEDRE
+C
+C MODIFIES :
+C ----------
+C NO1TSO : NUMERO DU 1-ER TETRAEDRE DANS NOTESO DE CHAQUE SOMMET
+C N1TESO : NUMERO DE LA PREMIERE PLACE VIDE DANS NOTESO
+C NOTESO : NOTESO(1,*) NUMERO DANS NSTETR DU TETRAEDRE
+C          NOTESO(2,*) NUMERO DANS NOTESO DU TETRAEDRE SUIVANT
+C                      0 SI C'EST LE DERNIER
+C IERR   : =0 SI PAS D'ERREUR
+C          >0 SI SATURATION D'UN TABLEAU  => ERREUR DE TETRAEDRISATION
+C+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+C AUTEUR : ALAIN PERRONNET  ANALYSE NUMERIQUE PARIS UPMC   DECEMBRE 1991
+C....................................................................012
+      include"./incl/gsmenu.inc"
+      INTEGER           NSTETR(NBSOTE,*),
+     %                  NO1TSO(*),
+     %                  NOTESO(2,*)
+C
+C     AJOUT DE CE TETRAEDRE DANS LE CHAINAGE NOTESO DES TETRAEDRES
+C     DE SES 4 SOMMETS
+      DO I=1,4
+C
+C        NS LE NUMERO DU SOMMET I DU TETRAEDRE NT
+         NS = NSTETR(I,NT)
+C
+C        EXISTE T IL UNE PLACE LIBRE DANS NOTESO?
+         IF( N1TESO .LE. 0 ) THEN
+            NBLGRC(NRERR) = 1
+            KERR(1) = 'SATURATION NOTESO DES TETRAEDRES DE 1 SOMMET'
+            CALL LEREUR
+            IERR = 1
+            GOTO 9999
+         ENDIF
+C
+C        OUI: GESTION DES PLACES LIBRES DE NOTESO
+C        UN NO LIBRE DE TETRAEDRE
+         NTS    = N1TESO
+C        NO DU 1-ER NO LIBRE DE TETRAEDRE
+         N1TESO = NOTESO( 2, N1TESO )
+C
+C        LE TETRAEDRE NT EST CHAINE A L'ANCIEN PREMIER
+         NOTESO( 1, NTS ) = NT
+         NOTESO( 2, NTS ) = NO1TSO( NS )
+C        NTS DEVIENT LE PREMIER
+         NO1TSO(NS) = NTS
+C
+       call verifns( 'chteso', ns, nbsote, nstetr,
+     %                no1tso, noteso, nbtensv, ierr )
+C
+      ENDDO
+      IERR = 0
+C
+ 9999 RETURN
+      END

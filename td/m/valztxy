@@ -1,0 +1,10 @@
+variable VALZTXY 'Valeurs des SOLUTIONS en Z' entier
+( 1 : 'TRACE de la SOLUTION en Z'
+, 2 : 'TRACE ou NON ARETES des FACES'
+, 3 : '% REDUCTION des FACES'
+, 4 : 'TRACE ou NON des FACES'
+, 5 : 'COULEUR des ARETES du MAILLAGE'
+, 6 : 'TYPE TRAIT des ARETES du MAILLAGE'
+, 7 : 'COULEUR ARETES sur la SOLUTION en Z'
+, 8 : 'TYPE TRAIT des ARETES de la SOLUTION en Z'
+,90 : 'TRACE de la SOLUTION en Z' ) ;

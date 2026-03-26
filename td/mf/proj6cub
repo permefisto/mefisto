@@ -1,0 +1,6 @@
+variable PROJ6CUB 'Projection 6cube->3cube' entier  
+ ( 0 : 'DEFINIR 3 DIRECTIONS et COORDONNEES'
+ , 1 : 'X Y Z 0 0 0'
+ , 2 : 'X Y 0 U 0 0'
+ , 3 : 'X 0 0 U V 0'
+ , 4 : '0 0 0 U V W' ) ;

@@ -1,0 +1,310 @@
+      SUBROUTINE FADUCF1( COANPL, PTXYZD, N1TETS, NOTETR,
+     %                    NF0,    NBFAPE, NOFAPE, MXFACO, LEFACO,NO0FAR,
+     %                    MXTAUX, NOTAUX,
+     %                    MXTRCF, NBTRCF, NOTRCF, IERR )
+C+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+C BUT :    CONSTRUCTION DES FACES PERDUES DU CF LIMITEES PAR DES ARETES
+C -----    SIMPLES A PARTIR DE LA FACE NF0 DE LEFACO
+
+C          ATTENTION: LE PROGRAMME ACTUELLEMENT NE PREND PAS LE CAS
+C          OU 3 FACES FRONTIERE OU INTERFACE ONT UNE MEME ARETE,
+C          CAS POSANT UN PROBLEME DE SENS DE PARCOURS DANS L'ORIENTATION
+C          DES FACES DE LEUR CONTOUR FERME, PUIS DE LEUR ETOILE DE
+C          TETRAEDRES.  A TRAITER PLUS TARD SI NECESSAIRE...
+
+C ENTREES:
+C --------
+C COANPL : SEUIL DU COSINUS DE L'ANGLE FORME PAR LES NORMALES AUX
+C          2 FACES ET AU DESSUS DUQUEL LES FACES
+C          SONT CONSIDEREES COPLANAIRES
+C PTXYZD : TABLEAU DES COORDONNEES DES POINTS
+C          PAR POINT : X  Y  DISTANCE_SOUHAITEE
+C N1TETS : N1TETS(NS) NUMERO D'UN TETRAEDRE AYANT POUR SOMMET NS
+C NOTETR : LISTE DES TETRAEDRES
+C          SOMMET1,    SOMMET2,    SOMMET3,    SOMMET4,
+C          TETRAEDRE1, TETRAEDRE2, TETRAEDRE3, TETRAEDRE4
+C          DE L'AUTRE COTE DE LA FACE
+C          1: 123      2: 234      3: 341      4: 412
+C NF0    : NUMERO LEFACO DE LA FACE INITIALE
+C NBFAPE : NOMBRE DE  FACES PERDUES DE   LEFACO
+C NOFAPE : NUMERO DES FACES PERDUES DANS LEFACO
+C MXFACO : NOMBRE MAXIMAL DE TRIANGLES PERMIS POUR LA TRIANGULATION
+C LEFACO : ENSEMBLE DES FACES=TRIANGLES DE LA PEAU OU INTERFACES ENTRE VOLUMES
+C          IL CONTIENT DANS CET ORDRE
+C          123: NUMERO (DANS PTXYZD) DU SOMMET 1 < SOMMET 2 < SOMMET 3
+C          45 : NUMERO (DANS NUVOPA 0 SINON) DU VOLUME1, VOLUME2 DE LA FACE
+C          678: NUMERO (DANS LEFACO) DE LA FACE ADJACENTE PAR L'ARETE 1 2 3
+C               ATTENTION: UNE ARETE PEUT APPARTENIR A PLUS DE 2 FACES
+C                          => CHAINAGE CIRCULAIRE DE CES FACES DANS LEFACO
+C          9  : LEFACO(9,*)  -> FACE SUIVANTE (*=0:VIDE, *<>0:NON VIDE)
+C               HACHAGE AVEC LA SOMME DES 3 SOMMETS MODULO MXFACO
+C               LF = MOD( NOSOFA(1)+NOSOFA(2)+NOSOFA(3) , MXFACO ) + 1
+C               NF = LEFACO( 10, LF ) LE NUMERO DE LA 1-ERE FACE DANS LEFACO
+C               SI LA FACE NE CONVIENT PAS. PASSAGE A LA SUIVANTE
+C               NF  = LEFACO( 9, NF )  ...
+C          10 : LEFACO(10,*) PREMIERE FACE DANS LE HACHAGE
+C          11 : LEFACO(11,.) = NO NOTETR D'UN TETRAEDRE AYANT CETTE FACE, 0 SINON
+cccC          12 : LEFACO(12,.) = NO FACEOC DE 1 A NBFACES D'OpenCascade
+
+C NO0FAR : NUMERO DES 3 SOMMETS DE LA FACE AJOUTEE AU CF SANS ETRE LEFACO
+C MXTAUX : NOMBRE MAXIMAL DE VARIABLES DU TABLEAU NOTAUX
+C MXTRCF : NOMBRE MAXIMAL D'ENTIERS DU TABLEAU NOTRCF
+
+C SORTIES :
+C ---------
+C NOTAUX : TABLEAU AUXILIAIRE DE MXTAUX VARIABLES
+C NBTRCF : NOMBRE DE TRIANGLES DU TABLEAU NOTRCF SUR LEFACO
+C          C-A-D DU POLYGONE ENCORE DIT ENSUITE ETOILE
+C NOTRCF : TABLEAU DU NUMERO DANS LEFACO DES NBTRCF TRIANGLES DE L'ETOILE
+C IERR   : =0 SI PAS D'ERREUR
+C          =1 ANOMALIE 2 TETRAEDRES NON REELLEMENT OPPOSES PAR UNE FACE
+C          =3 NBTRCF>MXTRCF => TROP DE TRIANGLES PERDUS COAGULES
+C+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+C AUTEUR : ALAIN PERRONNET  ANALYSE NUMERIQUE PARIS UPMC    OCTOBRE 1991
+C MODIFS : ALAIN PERRONNET LJLL UPMC & St PIERRE DU PERRAY  OCTOBRE 2014
+C MODIFS : ALAIN PERRONNET LJLL UPMC & St PIERRE DU PERRAY  MAI     2017
+C MODIFS : ALAIN PERRONNET St PIERRE DU PERRAY & VEULETTES  Fevrier 2018
+C2345X7..............................................................012
+      include"./incl/gsmenu.inc"
+      include"./incl/trvari.inc"
+      include"./incl/mecoit.inc"
+      include"./incl/xyzext.inc"
+      COMMON / UNITES / LECTEU, IMPRIM, NUNITE(30)
+      COMMON / TRTETR / STOPTE,TRACTE
+      LOGICAL           STOPTE,TRACTE
+      LOGICAL                  TRACTE0
+      DOUBLE PRECISION  PTXYZD(4,*)
+      INTEGER           NOTETR(8,*), 
+     %                  N1TETS(*),
+     %                  LEFACO(11,0:MXFACO),
+     %                  NO0FAR(3,*),
+     %                  NOTRCF(MXTRCF),
+     %                  NOFAPE(NBFAPE),
+     %                  NOTAUX(MXTAUX)
+      CHARACTER*128     KTITRE
+
+      TRACTE0 = TRACTE
+
+C     PROTECTION DE NBFAPE INITIAL
+      NBFAP0 = NBFAPE
+
+C     LE PREMIER TRIANGLE PERDU A TRAITER
+C     IL DEFINIT AUSSI LA NORMALE AUX TRIANGLES DU CF
+C     NBTRCF : NOMBRE DE TRIANGLES DU CF A PARTIR DE NF0
+      LHTRIA = 1
+      NBTRCF = 1
+      NOTRCF( 1 ) = NF0
+
+C     LES VOLUMES DE LA FACE NF0
+      NV1 = LEFACO(4,NF0)
+      NV2 = LEFACO(5,NF0)
+
+C     PARCOURS DES TRIANGLES ADJACENTS A LA FACE NF0 DE LEFACO
+C     ========================================================
+ 8    IF( NBTRCF .GE. MXTRCF ) THEN
+C        TROP DE TRIANGLES PERDUS COAGULES
+         IERR = 3
+         GOTO 9999
+      ENDIF
+
+      IF( LHTRIA .LE. NBTRCF ) THEN 
+
+ccc 8    IF( LHTRIA .LE. NBTRCF ) THEN     27/8/2014
+ccc 8    IF( LHTRIA .LE. NBTRCF .AND. NBTRCF .LE. 128 ) THEN  21/10/2014
+
+C        LE NUMERO DANS LEFACO DU TRIANGLE A TRAITER
+         NTCF = NOTRCF( LHTRIA )
+
+C        LE TRIANGLE EST DEPILE
+         LHTRIA = LHTRIA + 1
+
+         IF( NTCF .LE. 0 ) GOTO 8
+
+C        CETTE FACE NTCF A T ELLE ETE AJOUTEE COMME FACE PERDUE ?
+         NFAPNT = 0
+         DO K = NBFAP0+1, NBFAPE
+            IF( NTCF .EQ. NOFAPE(K) ) THEN
+C              FACE ISOLEE AJOUTEE COMME FACE PERDUE
+               NFAPNT = 1
+               GOTO 10
+            ENDIF
+         ENDDO
+
+C        TRAITEMENT DES 3 ARETES DU TRIANGLE NTCF DE LEFACO
+ 10      DO 80 I=1,3
+
+C           LE TRIANGLE OPPOSE A NTCF PAR SON ARETE I
+            NTROP = LEFACO(5+I,NTCF)
+
+            IF( NTROP .LE. 0 ) GOTO 80
+
+C           LES 2 SOMMETS NS1 NS2 DE L'ARETE I DU TRIANGLE NTCF PERDU
+            IF( I .EQ. 3 ) THEN
+               II = 1
+            ELSE
+               II = I+1
+            ENDIF
+            NS1 = LEFACO(I, NTCF)
+            NS2 = LEFACO(II,NTCF)
+
+C           LA FACE NTROP EST ELLE PERDUE DANS LA TETRAEDRISATION ?
+            NTEOP = LEFACO(11,NTROP)
+            IF( NTEOP .GT. 0 ) THEN
+C              L'ARETE I: NS1-NS2 APPARTIENT ELLE ENCORE AU TETRAEDRE NTEOP?
+               DO K=1,4
+                  IF( NOTETR(K,NTEOP) .EQ. NS1 ) GOTO 12
+               ENDDO
+C              NS1 N'EST PAS UN SOMMET DE NTEOP
+               GOTO 14
+
+ 12            DO K=1,4
+                  IF( NOTETR(K,NTEOP) .EQ. NS2 ) GOTO 80
+               ENDDO
+C              NS2 N'EST PAS UN SOMMET DE NTEOP
+ 14            LEFACO(11,NTROP) = 0
+               GOTO 18
+            ENDIF
+
+C           L'ARETE I DE SOMMETS NS1-NS2 DU TRIANGLE NTCF
+C           EST ELLE DANS LA TETRAEDRISATION? 
+ccc         CALL VDARTE( NS1, NS2, N1TETS, NOTETR, MXTAUX, NOTAUX, NTA )
+ 18         CALL TETR1A( NS1,    NS2,    N1TETS, NOTETR,
+     %                   NBTE1A, MXTAUX, NOTAUX, IERR )
+
+C           NBTE1A>0 NOMBRE DE TETRAEDRE DE NOTETR AYANT CETTE ARETE NS1-NS2
+C                 =0 SI AUCUN TETRAEDRE DE NOTETR NE CONTIENT CETTE ARETE
+C           LE TABLEAU NOTAUX(MXTAUX) EST UN AUXILIAIRE MOMENTANE
+            IF( NBTE1A .GT. 0 ) GOTO 80
+
+C           NTROP A T IL DEJA ETE RANGE DANS NOTRCF?
+            DO J=1,NBTRCF
+               IF( NTROP .EQ. NOTRCF(J) ) GOTO 80
+            ENDDO
+
+ccc            DO NFP1=1,NBFAPE
+ccc               NTT = NOFAPE(NFP1)
+ccc               IF( NTT .EQ. NTROP ) GOTO 20
+ccc            ENDDO
+cccC           LE TRIANGLE NTROP N'EST PAS PERDU
+cccC           L'ARETE I DE NTCF DOIT ETRE TRAITEE DANS L'ETOILE
+ccc            GOTO 80
+
+C           NON: NTROP EST UNE FACE PERDUE NON DANS LA TETRAEDRISATION
+C           LES FACES PERDUES NTCF ET NTROP ONT L'ARETE NS1-NS2 COMMUNE
+C           LES VOLUMES DE CES 2 TRIANGLES SONT ILS LES MEMES ?
+            NW1 = LEFACO(4,NTROP)
+            NW2 = LEFACO(5,NTROP)
+            IF( NV1 .NE. NW1  .OR.  NV2 .NE. NW2 ) GOTO 80
+
+C           OUI : LES 2 VOLUMES SONT IDENTIQUES
+
+ccc  2020/01/02
+ccc  ===========================================================================
+ccc  MIS EN COMMENTAIRE CAR LEFACO(1,N) < LEFACO(2,N) < LEFACO(3,N) INCOMPATIBLE
+ccc  AVEC LE VECTOR NORMAL DONNANT UNE INFORMATION INTERNE OU EXTERNE
+ccc  DE PLUS UNE FACE D'UN INTERFACE LAQUELLE DES 2 NORMALES STOCKER?
+ccc  ===========================================================================
+cccC           L'ARETE COMMUNE NS1-NS2 EST ELLE PARCOURUE DANS
+cccC           DES SENS DIFFERENTS?
+ccc            DO K=1,3
+
+ccc               NSOP1 = LEFACO(K,NTROP)
+ccc               IF( K .EQ. 3 ) THEN
+ccc                  KK = 1
+ccc               ELSE
+ccc                  KK = K+1
+ccc               ENDIF
+ccc               NSOP2 = LEFACO(KK,NTROP)
+
+ccc               IF( NS1 .EQ. NSOP2 .AND. NS2 .EQ. NSOP1 ) THEN
+cccC                 LA NORMALE A NTCF ET NTROP SONT DANS LE MEME SENS
+ccc                  GOTO 20
+ccc               ENDIF
+
+ccc               IF( NS1 .EQ. NSOP1 .AND. NS2 .EQ. NSOP2 ) THEN
+cccC                 LA NORMALE A NTCF ET NTROP SONT DANS DES SENS DIFFERENTS
+cccC                 L'ORIENTATION DE NTROP DANS LEFACO EST MODIFIEE POUR
+cccC                 ASSURER UN VECTOR NORMAL DANS UNE MEME DIRECTION
+cccC                 VERS L'INTERIEUR DE LA FUTURE ETOILE
+ccc                  N               = LEFACO(2,NTROP)
+ccc                  LEFACO(2,NTROP) = LEFACO(3,NTROP) 
+ccc                  LEFACO(3,NTROP) = N
+ccc                  N               = LEFACO(6,NTROP)
+ccc                  LEFACO(6,NTROP) = LEFACO(8,NTROP) 
+ccc                  LEFACO(8,NTROP) = N
+ccc                  GOTO 20
+ccc               ENDIF
+
+ccc            ENDDO
+
+ccc            PRINT*,'???????????????????????????????????????????????????'
+ccc            PRINT*,'faducf1: PB ARETE',NS1,NS2,' NON ARETE DE LEFACO(',
+ccc     %              NTROP,') MAIS ARETE DE LEFACO(',NTCF,')'
+ccc            WRITE(IMPRIM,*)'LEFACO(',NTROP,')=',(LEFACO(J,NTROP),J=1,11)
+ccc            WRITE(IMPRIM,*)'LEFACO(',NTCF ,')=',(LEFACO(J,NTCF ),J=1,11)
+ccc            PRINT*,'???????????????????????????????????????????????????'
+
+C           CETTE FACE NTROP A T ELLE ETE AJOUTEE COMME FACE PERDUE ?
+ccc 20         NFAPNO = 0
+
+            NFAPNO = 0
+            DO K = NBFAP0+1, NBFAPE
+               IF( NTROP .EQ. NOFAPE(K) ) THEN
+C                 FACE ISOLEE AJOUTEE COMME FACE PERDUE
+                  NFAPNO = 1
+                  GOTO 25
+               ENDIF
+            ENDDO
+
+C           LES FACES NTCF ET NTROP SONT ELLES COPLANAIRES ?
+C           -----------------------------------------------
+ 25         IF( NFAPNT + NFAPNO .GT. 0 ) THEN
+C              AU MOINS UNE DES 2 FACES A ETE AJOUTEE PERDUE
+C              => LE TEST DE COPLANEARITE EST ABAISSE
+ccc               C = REAL( MIN( COANPL, 0.89D0 ) )
+               C = REAL( COANPL * 0.89D0 )
+            ELSE
+C              AUCUNE FACE N'A ETE AJOUTEE PERDUE:
+C              => TEST DE COPLANEARITE STANDARD
+               C = COANPL
+            ENDIF
+C           CE CHANGEMENT DE COANPL EST NECESSAIRE POUR EVITER
+C           UNE BOUCLE INFINIE
+            CALL VD2TPL( C, NTCF, NTROP, LEFACO, PTXYZD, NONOUI )
+            IF( NONOUI .EQ. 0 ) GOTO 80
+
+C           ICI LES 2 TRIANGLES NTCF ET NTROP SONT ADJACENTS COPLANAIRES ET PERDUS
+C           ---------------------------------------------------------------------
+C           AJOUT DU TRIANGLE OPPOSE NTROP DANS LA LISTE NOTRCF DES TRIANGLES
+C           DE L'ETOILE (NTROP NE S'Y TROUVE PAS Cf 20)
+            IF( NBTRCF .GE. MXTRCF ) THEN
+               GOTO 9990
+            ENDIF
+C           AJOUT DE NTROP A LA QUEUE DES TRIANGLES COPLANAIRES PERDUS DU CF
+            NBTRCF = NBTRCF + 1
+            NOTRCF( NBTRCF ) = NTROP
+
+ 80      ENDDO
+
+C        PASSAGE AU TRIANGLE SUIVANT NON TRAITE DE L'ETOILE
+         GOTO 8
+
+      ENDIF
+
+C     TRACE DES NBTRCF FACES TRIANGULAIRES DU CF
+      KTITRE='faducf1:         FACES PERDUES du CF'
+      WRITE(KTITRE(10:16),'(I7)') NBTRCF
+      CALL TRDUCF( KTITRE, PTXYZD, NBTRCF, NOTRCF, 0, NOTAUX,
+     %             LEFACO, NO0FAR )
+      TRACTE = TRACTE0
+      GOTO 9999
+
+
+C     TABLEAU NOTRCF DE TAILLE INSUFFISANTE
+ 9990 NBLGRC(NRERR) = 1
+      KERR(1)='faducf1: TROP DE FACES DANS LE CF. AUGMENTER MXTRCF'
+      CALL LEREUR
+      IERR = 3
+
+ 9999 RETURN
+      END

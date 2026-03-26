@@ -1,0 +1,125 @@
+      SUBROUTINE QUMESH( TEXT,   ITER,   GRAND,  XYZSOM,
+     %                   NBSOTE, MXTETR, NSTETR,
+     %                   VOLUMT, QUALIT, QUTEMN,
+     %                   NBTU,   VOLTOT, QUAMOY, QUAMIN,
+     %                   NBQINF, QUALII, NOSOET )
+C+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+C BUT :    CALCULER LA QUALITE D'UNE TETRAEDRISATION
+C -----    LISTER LES TETRAEDRES DE QUALITE INFERIEURE A QUTEMN
+C
+C ENTREES:
+C --------
+C TEXT   : A AFFICHER
+C ITER   : NO ITERATION A AFFICHER
+C GRAND  : VALEUR TEMOIN DE TETRAEDRE NON UTILISE
+C XYZSOM : 3 COORDONNEES DES SOMMETS
+C NBSOTE : VALEUR MAXIMALE DE DECLARATION DU PREMIER INDICE DE NSTETR(>3)
+C MXTETR : NOMBRE MAXIMAL DE TETRAEDRES DECLARES DANS LE MAILLAGE
+C NSTETR : NUMERO DES 4 SOMMETS DE CHAQUE TETRAEDRE
+C QUTEMN : VALEUR MAXIMALE DES TETRAEDRES DE QUALITE A AUGMENTER
+C
+C SORTIES:
+C --------
+C VOLUMT : VOLUME  DE CHAQUE TETRAEDRE DE LA TETRAEDRISATION
+C QUALIT : QUALITE DE CHAQUE TETRAEDRE DE LA TETRAEDRISATION
+C NBTU   : NOMBRE DE TETRAEDRES UTILISES PARMI LES MXTETR DE NSTETR
+C VOLTOT : VOLUME           DU MAILLAGE TOTAL
+C QUAMOY : QUALITE MOYENNE  DU MAILLAGE TOTAL
+C QUAMIN : QUALITE MINIMALE DU MAILLAGE TOTAL
+C NBQINF : NOMBRE DE TETRAEDRES DE QUALITE INFERIEURE A QUTEMN
+C QUALII : QUALITE DES NBQINF TETRAEDRES Q<QUTEMN DE LA TETRAEDRISATION
+C NOSOET : NUMERO NSTETR DE CHACUN DES NBQINF TETRAEDRES Q<QUTEMN
+C+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+C AUTEUR: ALAIN PERRONNET LJLL UPMC & St Pierre du Perray Septembre 2012
+C2345X7..............................................................012
+      include"./incl/langue.inc"
+      COMMON / UNITES / LECTEU,IMPRIM,NUNITE(30)
+      CHARACTER*(*)     TEXT
+      REAL              XYZSOM(3,*),      VOLUMT(MXTETR),
+     %                  QUALIT(MXTETR),   QUALII(MXTETR)
+      INTEGER           NSTETR(NBSOTE,*), NOSOET(MXTETR)
+      REAL              ARMIN, ARMAX, SURFTR(4)
+C
+      NBTQ0  = 0
+      VOLTOT = 0
+      QUAMIN = GRAND
+      QUAMOY = 0
+      NBQINF = 0
+      NBTU   = 0
+C
+      DO NT=1,MXTETR
+C
+         IF( NSTETR(1,NT) .GT. 0 ) THEN
+C
+C           UN TETRAEDRE UTILISE DE PLUS
+            NBTU = NBTU + 1
+C
+C           QUALITE DU TETRAEDRE NT
+            CALL QUATET( XYZSOM(1,NSTETR(1,NT)),
+     %                   XYZSOM(1,NSTETR(2,NT)),
+     %                   XYZSOM(1,NSTETR(3,NT)),
+     %                   XYZSOM(1,NSTETR(4,NT)),
+     %                   ARMIN, ARMAX, SURFTR, VOLUMT(NT),QUALIT(NT))
+C
+C           VOLUME DES TETRAEDRES DU MAILLAGE
+            VOLTOT = VOLTOT + VOLUMT(NT)
+C
+C           QUALITE MOYENNE DES TETRAEDRES DU MAILLAGE
+            QUAMOY = QUAMOY + QUALIT(NT)
+            IF( QUALIT(NT) .LT. QUAMIN ) QUAMIN = QUALIT(NT)
+C
+            IF( QUALIT(NT) .LE. 0 ) THEN
+               NBTQ0 = NBTQ0 + 1
+               print*,'QUMESH',ITER,': QUALIT(',NT,')=',QUALIT(NT),
+     %                ' VOLUMT(',NT,')=',VOLUMT(NT),' NS=',
+     %         (nstetr(kk,nt),kk=1,4)
+            ENDIF
+C
+            IF( QUALIT(NT) .LT. QUTEMN ) THEN
+C              UN MAUVAIS TETRAEDRE DE PLUS
+               NBQINF = NBQINF + 1
+C              SON NUMERO DANS NSTETR
+               NOSOET( NBQINF ) = NT
+C              PROTECTION DE LA QUALITE DES TETRAEDRES AVANT TRI
+               QUALII( NBQINF ) = QUALIT( NT )
+            ENDIF
+C
+         ELSE
+C
+C           TETRAEDRE VIDE
+            VOLUMT(NT) = 0.0
+            QUALIT(NT) = GRAND
+C
+         ENDIF
+      ENDDO
+C
+C     QUALITE MOYENNE DU MAILLAGE
+      QUAMOY = QUAMOY / NBTU
+C
+C     AFFICHAGE DE LA QUALITE MINIMALE DE L'ITERATION
+      IF( LANGAG .EQ. 0 ) THEN
+         WRITE(IMPRIM,11030) TEXT,ITER, NBTU, VOLTOT, QUAMOY, QUAMIN,
+     %                       NBQINF, NBTQ0
+      ELSE
+         WRITE(IMPRIM,21030) TEXT,ITER, NBTU, VOLTOT, QUAMOY, QUAMIN,
+     %                       NBQINF, NBTQ0
+      ENDIF
+C
+11030 FORMAT( A, ' Iteration',I3,
+     %        ' NOMBRE TETRAEDRES=',I8,
+     %        ' VOLUME MAILLAGE=',G15.6,
+     %        ' QUALITE MOYENNE=',G15.6,
+     %        ' QUALITE MINIMALE=',G15.6,
+     %        ' NB TETRAEDRES de PIETRE QUALITE=',I8,
+     %        ' NB TETRAEDRES de QUALITE NULLE=',I8)
+     %       
+21030 FORMAT( A, ' Iteration',I3,
+     %        ' TETRAHEDRA NUMBER=',I8,
+     %        ' MESH VOLUME=',G15.6,
+     %        ' MEAN QUALITY=',G15.6,
+     %        ' MINIMUM QUALITY=',G15.6,
+     %        ' NB of POOR QUALITY TETRAHEDRA=',I8,
+     %        ' NB of NULL QUALITY TETRAHEDRA=',I8)
+C
+      RETURN
+      END

@@ -1,0 +1,86 @@
+================================================================================
+     QUELQUES VALEURS DU MODULE de YOUNG E et du COEFFICIENT de POISSON nu
+================================================================================
+
+ Ro masse volumique kg/m3      E N/m2      nu         G N/m2          K  N/m2
+acier         7800          2.2  10**11   0.25     0.88  10**11     1.46  10**11
+fer ordinaire 7800          2.0  10**11   0.3      0.76  10**11     1.66  10**11
+cuivre        8900          1.1  10**11   0.35     0.37  10**11     0.523 10**11
+aluminium     2750          0.7  10**11   0.33     0.263 10**11     0.348 10**11
+bronze        8250          1.0  10**11   0.31     0.381 10**11     0.483 10**11
+caoutchouc    1000          0.01 10**11   0.5      0.003 10**11
+beton         2500          0.4  10**11   0.31
+altuglass     1100                        0.3
+
+                                                 limite d'elasticite
+                                                 contrainte MAX avant plasticite
+acier                       2.0  10**11   0.24     2.0 10**8 Pascal
+aluminium                   0.7  10**11   0.34     1.5 10**8
+cuivre                      1.0  10**11   0.33     1.8 10**8
+verre                       0.6  10**11   0.24     0.6 10**8
+
+
+Source: le livre de DUVAUT  Mecanique des milieux continus
+Valeurs fournies par les Directions des Structures et des Materiaux de l'ONERA
+
+Materiaux a 20 degres Celsius et temperature entre () sinon
+                    Ro masse volumique kg/m3   E 10**11 N/m2       nu
+Acier de construction          : 7800            2.1              0.285
+Acier a ressort                : 7800            2.2              0.29
+Acier Inox 18_10 et 18_12      : 7900            2.03             0.29
+Acier Inox 18_12 (600)         : 7700            1.44             0.35
+Invar                          : 8700            1.4              0.29
+Fonte grise                    : 7100 a 7200     0.9 a 1.2        0.29
+Fonte malleable                : 7200 a 7400     1.7 a 1.9        0.17
+
+Alliages pour disques de turbines
+aeronautiques TA6V             : 7800            1.05             0.25
+INCO 718 (600)                 : 7700            1.65             0.35
+
+Alliages pour aubes de turbines
+aeronautiques IN 100           : 7800            2.17             0.25
+IN 100 (600)                   : 7700            1.815            0.35
+IN 100 (1000)                  : 7600            1.15             0.42
+MARM 509                       : 8100            2                0.25
+MARM 509 (600)                 : 7950            1.6              0.35
+MARM 509 (1000)                : 7860            1.24             0.42
+CMSX_2(dir.cristallo.001)      : 8200            1.25             0.25
+CMSX_2(dir.cristallo.001)(600) : 8500            1.04             0.35
+CMSX_2(dir.cristallo.001)(1000): 7600            0.81             0.42
+
+Aluminium                      : 2600            0.71             0.34
+Aluminium R=0.3                : 2700            0.74             0.33
+Alliage 2618 (Concorde AUG2N)  : 2700            0.75             0.33
+Alliage 2024 (Duralumin AUG4N) : 2700 a 2800     0.725
+Alliage 7010 (Train atterrissageConcorde AUG2N): 0.7
+
+Zinc                           : 7150            0.78             0.21
+Cuivre                         : 8900            1                0.33
+Beryllium                      : 1850            3                0.5  !!!
+Bronze au beryllium            : 8250            1.3              0.34
+Titane                         : 4500            1.05             0.34
+
+Granite                        : 2300 a 3000     0.6              0.27
+Marbre                         : 2800            0.26             0.3
+Beton en compression           : 2000 a 2400     0.1 a 0.13       0.15
+Verre                          : 2700            0.6              0.25
+Plexiglass                     : 1800            0.029            0.4
+
+Caoutchouc                     : 1800            0.002            0.5 !!!
+
+Bois (Pin) (dir.cristallo.001)):  400            0.07             0.2
+
+Fibre de verre E,      d=5 a 20 R=3.4    : 2540  0.73             0.15
+Fibre de verre R et S, d=5 a 20 R=35.5   : 2500  0.87             0.15
+Fibre de bore,         d=199    R=3      : 2650  3.86             0.2
+Fibre de carbure de silicium, d=100 R=2.5: 2540  4.20             0.15
+Graphite haute resistance HT, d=8, R=2,8 : 1750  2.5              0.3 a 0.4
+Graphite haut  moment HM,     d=8, R=2   : 1920  3.5              0.4
+Kevlar haute resistance,     d=12, R=3   : 1450  0.84             0.4    
+Kevlar haut  moment,         d=12, R=2.7 : 1450  1.3              0.33
+
+Materiaux constituant les matrices
+Polyester R=0.6                : 1220            0.04             0.3
+Epoxyde R=0.8                  : 1150            0.038            0.31
+Polyimide                      : 1350            0.04             0.36
+Elastomere                     : 1000            0.002            0.5 !!!

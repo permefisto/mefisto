@@ -1,0 +1,27 @@
+#!/bin/bash
+
+# EMPLOI:
+# ap-VPCF13Z1E:/home/ap/PHOTOS/trav -bash-> chnomfich
+# Nom du MOT du fichier a CHANGER?
+# IMG
+# Nom a jouter devant le MOT?
+# J
+
+# IMG_2068.JPG -> JIMG_2068.JPG
+
+ echo Nom du MOT du fichier a CHANGER?
+ read motav
+ echo Nom a ajouter devant le MOT?
+ read motap
+#
+# boucle sur les fichiers
+ for i in `ls . | grep $motav`
+ do
+   nomfic=`basename $i $motav`
+   echo $nomfic
+   echo $motap$nomfic
+   mv $i $motap$nomfic
+
+ done
+
+

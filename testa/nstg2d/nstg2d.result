@@ -1,0 +1,304 @@
+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+Results on time interval [0,5] for the EXACT TAYLOR-GREEN VORTEX FLOW on the square [0,Pi]**2 of INCOMPRESSIBLE NAVIER-STOKES EQUATIONS
+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+Cf $MEFISTO/testa/nstg2d/nstg2d.DataFiles
+
+The Mesh is done with
+   nstg2d.meshth to create TAYLOR-HOOD   Finite Element Triangles on the square [0,Pi]**2
+or nstg2d.meshbf to create BREZZI-FORTIN Finite Element Triangles on the square [0,Pi]**2
+
+The Flow Solver Program Result Name is defined from 
+th    : TAYLOR-HOOD   Finite Element Type thanks to nstg2d.meshth
+bf    : BREZZI-FORTIN Finite Element TYpe thanks to nstg2d.meshbf
+ns    : Resolution of INCOMPRESSIBLE NAVIER-STOKES EQUATIONS
+5     : Option 5 of debuflui Menu: IMPLICIT   UNSTEADY NAVIER-STOKES SOLVER
+6     : Option 6 of debuflui Menu: FRACTIONAL UNSTEADY NAVIER-STOKES SOLVER
+cr    : Option 1 of methrecr Menu: Ax=b are SOLVED by SKYLINE CROUT FACTORIZATION A=L D tL
+cg    : Option 2 of methrecr Menu: Ax=b are SOLVED by CONDENSED CONJUGATE GRADIENT method
+EpsRGC: Value to STOP Conjugate Gradient Iterations
+
+All Flow Solver DataFiles contain
+    1;  { SKYLINE CROUT FACTORIZATION L D tL }
+or  2;  { CONDENSED MATRIX CONJUGATE GRADIENT }  1; { FACTORIZATION LEVEL VALUE (0 or 1 or 2) }
+
+  0.0;  { INITIAL TIME }
+  5.0;  { FINAL   TIME }
+ 0.01;  { STEP of TIME }
+   50;  { NUMBER of ADDED SOLUTION VECTOR FILES }
+
+ALL NUMERICAL RESULTS are DONE at TIME=5.0 :
+
+thns5cr: TOTAL EXECUTION COMPUTATION TIME= 160.02 CPU SECONDS
+Node      1319: X=1.6650 Y=0.94248E-01 Z=0. VELOCITY VX= 0.4506838E-04 VY= 0.4038145E-06
+Exact SOLUTION: X=1.6650 Y=0.94248E-01 Z=0. VELOCITY VX= 0.4499605E-04 VY= 0.4020631E-06                           V-ERROR=0.1608 %
+
+Node      1320: X=1.6336 Y=0.62832E-01 Z=0. VELOCITY VX= 0.4526904E-04 VY= 0.1800827E-06 PRESSURE= -0.4409077E-07
+Exact SOLUTION: X=1.6336 Y=0.62832E-01 Z=0. VELOCITY VX= 0.4521912E-04 VY= 0.1789890E-06 PRESSURE=  0.8532400E-17  V-ERROR=0.1104 %  P-ERROR=0.3772E+05%
+
+Node      1321: X=3.0473 Y=1.4765  Z=0. VELOCITY VX= 0.4038124E-06 VY= 0.4506838E-04
+Exact SOLUTION: X=3.0473 Y=1.4765  Z=0. VELOCITY VX= 0.4020609E-06 VY= 0.4499605E-04                               V-ERROR=0.1608 %
+
+Node      1322: X=3.0788 Y=1.5080  Z=0. VELOCITY VX= 0.1800801E-06 VY= 0.4526905E-04     PRESSURE= 0.4403126E-07
+Exact SOLUTION: X=3.0788 Y=1.5080  Z=0. VELOCITY VX= 0.1789876E-06 VY= 0.4521912E-04     PRESSURE= 0.2104198E-16   V-ERROR=0.1104 %  P-ERROR=0.3772E+05%
+
+Max|Velocity|Exact(Node)=0.453981E-04
+Max|Velocity|Error(Node)=0.260456E-06   Max|Velocity|Error(Node)/Max|Velocity|(Node)=0.573716 %   Sum|Velocity|Error(Node)/Sum|Velocity|(Node)=0.474571 %
+Max|VELOCITY|(Nodes)= 0.453981E-04 Max|VELOCITY|ERROR(Nodes)= 0.260456E-06 at node 2586 X=2.48186 Y=1.57080 Z=0.   
+Vx Exact=-0.121626E-11 Vy Exact= 0.358715E-04 Vz Exact= 0.   
+Vx Compu= 0.378989E-11 Vy Compu= 0.361320E-04 Vz Compu=
+
+Min Exact    PRESSURE= -0.103049E-08  Max Exact    PRESSURE= 0.103049E-08  Max-Min Exact PRESSURE= 0.206099E-08
+Min Computed PRESSURE= -0.388350E-06  Max Computed PRESSURE= 0.389310E-06  Max-Min Compu PRESSURE= 0.777660E-06
+Max PRESSURE ERROR=0.388831E-06  MaxPressureERROR/Max-MinPressure=  18866.2 % SumPressureERROR/SumPressure=  15896.7 %
+
+At Time 5.0 |VELOCITY|Mean= 0.308622E-04 |VELOCITY|Max= 0.454014E-04 at node 8924 XYZ=1.57080       3.11018       0.   
+At Time 5.0 PRESSURE  Mean=-0.446423E-11 PRESSURE  Min=-0.388350E-06 PRESSURE Max= 0.389310E-06 PRESSURE Max-Min= 0.777660E-06
+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+thns5cr: on [0,5] time : VELOCITY RELATIVE MEAN ERROR= 6.02788 %   PRESSURE RELATIVE MEAN ERROR= 1734.82 %
+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+
+
+bfns5cr: TOTAL EXECUTION COMPUTATION TIME= 107.86 CPU SECONDS
+Node      1307: X=1.9478 Y=1.9478 Z=0. VELOCITY VX= -0.1566303E-04 VY= 0.1566303E-04 PRESSURE= -0.7998352E-09
+Exact SOLUTION: X=1.9478 Y=1.9478 Z=0. VELOCITY VX= -0.1553858E-04 VY= 0.1553858E-04 PRESSURE= -0.7511979E-09  V-ERROR=0.8009 %  P-ERROR=0.2557E+05%
+
+Node      1308: X=2.0106 Y=2.0106 Z=0. VELOCITY VX= -0.1762585E-04 VY= 0.1762585E-04 PRESSURE= -0.7230797E-09
+Exact SOLUTION: X=2.0106 Y=2.0106 Z=0. VELOCITY VX= -0.1748992E-04 VY= 0.1748992E-04 PRESSURE= -0.6568620E-09  V-ERROR=0.7772 %  P-ERROR=0.2557E+05%
+
+Node      1309: X=2.0735 Y=2.0735 Z=0. VELOCITY VX= -0.1930914E-04 VY= 0.1930914E-04 PRESSURE= -0.5862011E-09
+Exact SOLUTION: X=2.0735 Y=2.0735 Z=0. VELOCITY VX= -0.1916545E-04 VY= 0.1916545E-04 PRESSURE= -0.5521662E-09  V-ERROR=0.7497 %  P-ERROR=0.2557E+05%
+
+Node      1310: X=2.1363 Y=2.1363 Z=0. VELOCITY VX= -0.2068630E-04 VY= 0.2068628E-04 PRESSURE= -0.4861667E-09
+Exact SOLUTION: X=2.1363 Y=2.1363 Z=0. VELOCITY VX= -0.2053873E-04 VY= 0.2053871E-04 PRESSURE= -0.4387630E-09  V-ERROR=0.7185 %  P-ERROR=0.2557E+05%
+
+Node      1311: X=2.1991 Y=2.1991 Z=0. VELOCITY VX= -0.2173565E-04 VY= 0.2173565E-04 PRESSURE= -0.3451454E-09
+Exact SOLUTION: X=2.1991 Y=2.1991 Z=0. VELOCITY VX= -0.2158808E-04 VY= 0.2158808E-04 PRESSURE= -0.3184404E-09  V-ERROR=0.6836 %  P-ERROR=0.2557E+05%
+
+Max|Velocity|Exact(Node)= 0.453981E-04
+Max|Velocity|Error(Node)= 0.236289E-06  Max|Velocity|Error(Node)/Max|Velocity|(Node)=0.520482 %  Sum|Velocity|Error(Node)/Sum|Velocity|(Node)=0.393032 %
+Max|VELOCITY|(Nodes)= 0.453981E-04 Max|VELOCITY|ERROR(Nodes)= 0.236289E-06 at node 1924 X=1.57080 Y=2.45044 Z=0.   
+Vx Exact= -0.349798E-04 Vy Exact= 0.126491E-11 Vz Exact= 0.0  
+Vx Compu= -0.352161E-04 Vy Compu=-0.175084E-08 Vz Compu=
+
+Min Exact    PRESSURE= -0.103049E-08  Max Exact    PRESSURE= 0.103049E-08  Max-Min Exact PRESSURE= 0.206099E-08
+Min Computed PRESSURE= -0.526563E-06  Max Computed PRESSURE= 0.527538E-06  Max-Min Compu PRESSURE= 0.105410E-05
+Max ERROR    PRESSURE= 0.527059E-06  MaxPressureERROR/Max-MinPressure=  25573.1 % SumPressureERROR/SumPressure=  15846.1 %
+
+At Time 5.0 |VELOCITY|Mean= 0.308461E-04 |VELOCITY|Max= 0.453982E-04 at node  326 XYZ=1.57080       0.      0.   
+At Time 5.0 PRESSURE  Mean= 0.185446E-11 PRESSURE  Min=-0.526563E-06 PRESSURE Max= 0.527538E-06 PRESSURE Max-Min= 0.105410E-05
+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+bfns5cr: on [0,5] time : VELOCITY RELATIVE MEAN ERROR= 5.98897 %   PRESSURE RELATIVE MEAN ERROR= 1729.77 %
+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+
+
+thns5cg: TOTAL EXECUTION COMPUTATION TIME= 124.77 CPU SECONDS    EpsRGC=1E-6
+Node      1319: X=1.6650 Y= 0.94248E-01 Z=0.   VELOCITY VX= 0.4330612E-04 VY=-0.4651014E-05
+Exact SOLUTION: X=1.6650 Y= 0.94248E-01 Z=0.   VELOCITY VX= 0.4499605E-04 VY= 0.4020631E-06                            V-ERROR= 11.84 %
+
+Node      1320: X=1.6336 Y= 0.62832E-01 Z=0.   VELOCITY VX= 0.4401285E-04 VY=-0.2810387E-05 PRESSURE= -0.4198322E-04
+Exact SOLUTION: X=1.6336 Y= 0.62832E-01 Z=0.   VELOCITY VX= 0.4521912E-04 VY= 0.1789890E-06  PRESSURE= 0.8532400E-17   V-ERROR= 7.129 %  P-ERROR=0.4199E+07%
+
+Node      1321: X=3.0473 Y=1.4765       Z=0.   VELOCITY VX= 0.5190728E-05 VY= 0.4272302E-04
+Exact SOLUTION: X=3.0473 Y=1.4765       Z=0.   VELOCITY VX= 0.4020609E-06 VY= 0.4499605E-04                            V-ERROR= 11.78 %
+
+Node      1322: X=3.0788 Y=1.5080       Z=0.   VELOCITY VX= 0.3058059E-05 VY= 0.4375174E-04  PRESSURE= -0.4042480E-04
+Exact SOLUTION: X=3.0788 Y=1.5080       Z=0.   VELOCITY VX= 0.1789876E-06 VY= 0.4521912E-04  PRESSURE=  0.2104198E-16  V-ERROR= 7.146 %  P-ERROR=0.4199E+07%
+
+Max|Velocity|Exact(Node)= 0.453981E-04
+Max|Velocity|Error(Node)= 0.328698E-04  Max|Velocity|Error(Node)/Max|Velocity|(Node)=72.4035 %  Sum|Velocity|Error(Node)/Sum|Velocity|(Node)=57.3205 %
+Max|VELOCITY|(Nodes)= 0.453981E-04 Max|VELOCITY|ERROR(Nodes)= 0.328698E-04 at node 3272 X=2.35619 Y=1.72788 Z=0.   
+Vx Exact=-0.502175E-05 Vy Exact= 0.317061E-04 Vz Exact=  0.   
+Vx Compu= 0.278344E-04 Vy Compu= 0.307577E-04 Vz Compu=
+
+Min Exact    PRESSURE= -0.103049E-08  Max Exact    PRESSURE= 0.103049E-08  Max-Min Exact PRESSURE= 0.206099E-08
+Min Computed PRESSURE= -0.435605E-04  Max Computed PRESSURE= 0.929025E-04  Max-Min Compu PRESSURE= 0.136463E-03
+Max PRESSURE ERROR=0.929035E-04  MaxPressureERROR/Max-MinPressure= 0.450772E+07% SumPressureERROR/SumPressure= 0.591167E+07%
+
+At Time 5.0 |VELOCITY|Mean= 0.328600E-04 |VELOCITY|Max= 0.453982E-04 at node 1324 XYZ=1.57080       0.      0.   
+At Time 5.0 PRESSURE  Mean= 0.703838E-06 PRESSURE  Min=-0.435605E-04 PRESSURE Max= 0.929025E-04 PRESSURE Max-Min= 0.136463E-03
+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+thns5cg: on [0,5] time : VELOCITY RELATIVE MEAN ERROR= 52.8055 %   PRESSURE RELATIVE MEAN ERROR= 948613. %
+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+
+
+thns5cg: TOTAL EXECUTION COMPUTATION TIME= 120.27 CPU SECONDS    EpsRGC=1E-3
+Node      1319: X=1.6650 Y= 0.94248E-01 Z=0. VELOCITY VX= 0.6966290E-04 VY= -0.1219467E-03
+Exact SOLUTION: X=1.6650 Y= 0.94248E-01 Z=0. VELOCITY VX= 0.4499605E-04 VY= 0.4020631E-06                           V-ERROR= 277.4 %
+
+Node      1320: X=1.6336 Y= 0.62832E-01 Z=0. VELOCITY VX= 0.5880643E-04 VY= -0.6656529E-04 PRESSURE= -0.7596865E-03
+Exact SOLUTION: X=1.6336 Y= 0.62832E-01 Z=0. VELOCITY VX= 0.4521912E-04 VY=  0.1789890E-06 PRESSURE=  0.8532400E-17 V-ERROR= 150.6 %  P-ERROR=0.7372E+08%
+
+Node      1321: X=3.0473 Y=1.4765 Z=0. VELOCITY VX= 0.1308662E-03 VY= 0.6277556E-04
+Exact SOLUTION: X=3.0473 Y=1.4765 Z=0. VELOCITY VX= 0.4020609E-06 VY= 0.4499605E-04                                 V-ERROR= 292.6 %
+
+Node      1322: X=3.0788 Y=1.5080 Z=0. VELOCITY VX= 0.7354258E-04 VY= 0.5806231E-04 PRESSURE= -0.7378450E-03
+Exact SOLUTION: X=3.0788 Y=1.5080 Z=0. VELOCITY VX= 0.1789876E-06 VY= 0.4521912E-04 PRESSURE=  0.2104198E-16        V-ERROR= 164.7 %  P-ERROR=0.7372E+08%
+
+Max|Velocity|Exact(Node)= 0.453981E-04
+Max|Velocity|Error(Node)= 0.995838E-03  Max|Velocity|Error(Node)/Max|Velocity|(Node)=2193.57 %  Sum|Velocity|Error(Node)/Sum|Velocity|(Node)=1565.85 %
+Max|VELOCITY|(Nodes)= 0.453981E-04 Max|VELOCITY|ERROR(Nodes)= 0.995838E-03 at node 6689 X= 0.848230 Y=1.41372 Z=0.   
+Vx Exact= 0.532716E-05 Vy Exact= -0.296527E-04 Vz Exact=  0.   
+Vx Compu=-0.975341E-03 Vy Compu= -0.202809E-03 Vz Compu=
+
+Min Exact    PRESSURE= -0.103049E-08  Max Exact    PRESSURE= 0.103049E-08  Max-Min Exact PRESSURE= 0.206099E-08
+Min Computed PRESSURE= -0.760660E-03  Max Computed PRESSURE= 0.176658E-02  Max-Min Compu PRESSURE= 0.252724E-02
+Max PRESSURE ERROR=0.176658E-02  MaxPressureERROR/Max-MinPressure= 0.857151E+08% SumPressureERROR/SumPressure= 0.111421E+09%
+
+At Time 5.0 |VELOCITY|Mean= 0.483153E-03 |VELOCITY|Max= 0.996204E-03 at node 6689 XYZ= 0.848230       1.41372       0.   
+At Time 5.0 PRESSURE  Mean= 0.139327E-04 PRESSURE  Min=-0.760660E-03 PRESSURE Max= 0.176658E-02 PRESSURE Max-Min= 0.252724E-02
+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+thns5cg: on [0,5] time : VELOCITY RELATIVE MEAN ERROR= 582.188 %   PRESSURE RELATIVE MEAN ERROR=0.213722E+08%
+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+
+
+bfns5cg: TOTAL EXECUTION COMPUTATION TIME= 105.18 CPU SECONDS        EpsRGC=1E-6
+Node      1308: X=2.0106 Y=2.0106 Z=0. VELOCITY VX= -0.1419601E-04 VY= 0.1593666E-04 PRESSURE= 0.4702898E-05
+Exact SOLUTION: X=2.0106 Y=2.0106 Z=0. VELOCITY VX= -0.1748992E-04 VY= 0.1748992E-04 PRESSURE= -0.6568620E-09  V-ERROR= 14.72 %  P-ERROR=0.8086E+06%
+
+Node      1309: X=2.0735 Y=2.0735 Z=0. VELOCITY VX= -0.1548180E-04 VY= 0.1756061E-04 PRESSURE= 0.4525657E-05
+Exact SOLUTION: X=2.0735 Y=2.0735 Z=0. VELOCITY VX= -0.1916545E-04 VY= 0.1916545E-04 PRESSURE= -0.5521662E-09  V-ERROR= 14.82 %  P-ERROR=0.8086E+06%
+
+Node      1310: X=2.1363 Y=2.1363 Z=0. VELOCITY VX= -0.1653804E-04 VY= 0.1890282E-04 PRESSURE= 0.3949766E-05
+Exact SOLUTION: X=2.1363 Y=2.1363 Z=0. VELOCITY VX= -0.2053873E-04 VY= 0.2053871E-04 PRESSURE= -0.4387630E-09  V-ERROR= 14.88 %  P-ERROR=0.8086E+06%
+
+Node      1311: X=2.1991 Y=2.1991 Z=0. VELOCITY VX= -0.1734573E-04 VY= 0.1990742E-04 PRESSURE= 0.3018137E-05
+Exact SOLUTION: X=2.1991 Y=2.1991 Z=0. VELOCITY VX= -0.2158808E-04 VY= 0.2158808E-04 PRESSURE= -0.3184404E-09  V-ERROR= 14.95 %  P-ERROR=0.8086E+06%
+
+Max|Velocity|Exact(Node)= 0.453981E-04
+Max|Velocity|Error(Node)= 0.487824E-05  Max|Velocity|Error(Node)/Max|Velocity|(Node)=10.7455 %  Sum|Velocity|Error(Node)/Sum|Velocity|(Node)=8.03729 %
+Max|VELOCITY|(Nodes)= 0.453981E-04 Max|VELOCITY|ERROR(Nodes)= 0.487824E-05 at node 4579 X= 0.774926 Y= 0.795870 Z=0.   
+Vx Exact= 0.222237E-04 Vy Exact= -0.231744E-04 Vz Exact=  0.   
+Vx Compu= 0.177208E-04 Vy Compu= -0.212980E-04 Vz Compu=
+
+Min Exact    PRESSURE= -0.103049E-08  Max Exact    PRESSURE= 0.103049E-08  Max-Min Exact PRESSURE= 0.206099E-08
+Min Computed PRESSURE= -0.166682E-04  Max Computed PRESSURE= 0.117143E-04  Max-Min Compu PRESSURE= 0.283825E-04
+Max ERROR    PRESSURE= 0.166688E-04  MaxPressureERROR/Max-MinPressure=  808778. % SumPressureERROR/SumPressure=  792029. %
+
+At Time 5.0 |VELOCITY|Mean= 0.285766E-04 |VELOCITY|Max= 0.453982E-04 at node  326 XYZ=1.57080       0.      0.   
+At Time 5.0 PRESSURE  Mean= 0.819726E-07 PRESSURE  Min=-0.166682E-04 PRESSURE Max= 0.117143E-04 PRESSURE Max-Min= 0.283825E-04
+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+bfns5cg: on [0,5] time : VELOCITY RELATIVE MEAN ERROR= 24.3965 %   PRESSURE RELATIVE MEAN ERROR= 214000. %
+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+
+
+thns6cr: TOTAL EXECUTION COMPUTATION TIME= 143.14 CPU SECONDS
+Node      1318: X=3.0159 Y=1.4451 Z=0. VELOCITY VX= 0.7450977E-06 VY= 0.4564012E-04 PRESSURE= -0.2399072E-05
+Exact SOLUTION: X=3.0159 Y=1.4451 Z=0. VELOCITY VX= 0.7131324E-06 VY= 0.4468498E-04 PRESSURE= 0.1120207E-16        V-ERROR= 2.138 %  P-ERROR=0.3898E+06%
+
+Node      1319: X=1.6650 Y= 0.94248E-01 Z=0. VELOCITY VX= 0.4549407E-04 VY= 0.4032822E-06
+Exact SOLUTION: X=1.6650 Y= 0.94248E-01 Z=0. VELOCITY VX= 0.4499605E-04 VY= 0.4020631E-06                          V-ERROR= 1.107 %
+
+Node      1320: X=1.6336 Y= 0.62832E-01 Z=0. VELOCITY VX= 0.4556024E-04 VY= 0.1677563E-06 PRESSURE= 0.1100276E-05
+Exact SOLUTION: X=1.6336 Y= 0.62832E-01 Z=0. VELOCITY VX= 0.4521912E-04 VY= 0.1789890E-06 PRESSURE= 0.8532400E-17  V-ERROR=0.7548 %  P-ERROR=0.3898E+06%
+
+Node      1321: X=3.0473 Y=1.4765 Z=0. VELOCITY VX= 0.4126239E-06 VY= 0.4575031E-04
+Exact SOLUTION: X=3.0473 Y=1.4765 Z=0. VELOCITY VX= 0.4020609E-06 VY= 0.4499605E-04                                V-ERROR= 1.676 %
+
+Node      1322: X=3.0788 Y=1.5080 Z=0. VELOCITY VX= 0.1401442E-06 VY= 0.4574722E-04 PRESSURE= -0.4859815E-05
+Exact SOLUTION: X=3.0788 Y=1.5080 Z=0. VELOCITY VX= 0.1789876E-06 VY= 0.4521912E-04 PRESSURE=  0.2104198E-16       V-ERROR= 1.171 %  P-ERROR=0.4716E+06%
+
+Max|Velocity|Exact(Node)= 0.453981E-04
+Max|Velocity|Error(Node)= 0.322954E-04  Max|Velocity|Error(Node)/Max|Velocity|(Node)=71.1383 %  Sum|Velocity|Error(Node)/Sum|Velocity|(Node)=5.99900 %
+Max|VELOCITY|(Nodes)= 0.453981E-04 Max|VELOCITY|ERROR(Nodes)= 0.322954E-04 at node 7974 X=1.94779 Y=3.01593 Z=0.   
+Vx Exact= -0.418773E-04 Vy Exact= 0.209459E-05 Vz Exact=  0.   
+Vx Compu= -0.741546E-04 Vy Compu= 0.317514E-05 Vz Compu=
+
+Min Exact    PRESSURE=-0.103049E-08  Max Exact    PRESSURE= 0.103049E-08  Max-Min Exact PRESSURE= 0.206099E-08
+Min Computed PRESSURE=-0.842597E-03  Max Computed PRESSURE= 0.880613E-03  Max-Min Compu PRESSURE= 0.172321E-02
+Max PRESSURE    ERROR= 0.880613E-03  MaxPressureERROR/Max-MinPressure= 0.427277E+08% SumPressureERROR/SumPressure= 0.221817E+07%
+
+At Time 5.0 |VELOCITY|Mean= 0.324622E-04 |VELOCITY|Max= 0.742226E-04 at node 7974 XYZ=1.94779       3.01593       0.   
+At Time 5.0 PRESSURE  Mean= 0.383968E-06 PRESSURE  Min=-0.842597E-03 PRESSURE Max= 0.880613E-03 PRESSURE Max-Min= 0.172321E-02
+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+thns6cr: on [0,5] time : VELOCITY RELATIVE MEAN ERROR= 9.88975 %   PRESSURE RELATIVE MEAN ERROR= 224043. %
+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+
+
+bfns6cr: TOTAL EXECUTION COMPUTATION TIME= 91.03 CPU SECONDS
+Node      1308: X=2.0106 Y=2.0106 Z=0. VELOCITY VX= -0.1637267E-04 VY= 0.1618628E-04 PRESSURE= -0.1601968E-02
+Exact SOLUTION: X=2.0106 Y=2.0106 Z=0. VELOCITY VX= -0.1748992E-04 VY= 0.1748992E-04 PRESSURE= -0.6568620E-09  V-ERROR= 6.941 %  P-ERROR=0.3339E+09%
+
+Node      1309: X=2.0735 Y=2.0735 Z=0. VELOCITY VX= -0.1747190E-04 VY= 0.1798305E-04 PRESSURE= -0.1594557E-02
+Exact SOLUTION: X=2.0735 Y=2.0735 Z=0. VELOCITY VX= -0.1916545E-04 VY= 0.1916545E-04 PRESSURE= -0.5521662E-09  V-ERROR= 7.621 %  P-ERROR=0.3339E+09%
+
+Node      1310: X=2.1363 Y=2.1363 Z=0. VELOCITY VX= -0.1904576E-04 VY= 0.2157755E-04 PRESSURE= -0.1329520E-02
+Exact SOLUTION: X=2.1363 Y=2.1363 Z=0. VELOCITY VX= -0.2053873E-04 VY= 0.2053871E-04 PRESSURE= -0.4387630E-09  V-ERROR= 6.262 %  P-ERROR=0.3339E+09%
+
+Node      1311: X=2.1991 Y=2.1991 Z=0. VELOCITY VX= -0.2065323E-04 VY= 0.2379148E-04 PRESSURE= -0.1326455E-02
+Exact SOLUTION: X=2.1991 Y=2.1991 Z=0. VELOCITY VX= -0.2158808E-04 VY= 0.2158808E-04 PRESSURE= -0.3184404E-09  V-ERROR= 7.840 %  P-ERROR=0.3339E+09%
+
+Max|Velocity|Exact(Node)= 0.453981E-04
+Max|Velocity|Error(Node)= 0.117513E-03  Max|Velocity|Error(Node)/Max|Velocity|(Node)=258.851 %  Sum|Velocity|Error(Node)/Sum|Velocity|(Node)=20.7971 %
+Max|VELOCITY|(Nodes)= 0.453981E-04 Max|VELOCITY|ERROR(Nodes)= 0.117513E-03 at node 2066 X=1.57080 Y=2.70177 Z=0.   
+Vx Exact=-0.410774E-04 Vy Exact= 0.844922E-12 Vz Exact=  0.   
+Vx Compu= 0.705151E-04 Vy Compu= -0.368305E-04 Vz Compu=
+
+Min Exact    PRESSURE= -0.103049E-08  Max Exact    PRESSURE= 0.103049E-08  Max-Min Exact PRESSURE= 0.206099E-08
+Min Computed PRESSURE= -0.148440E-01  Max Computed PRESSURE= 0.143094E-01  Max-Min Compu PRESSURE= 0.291534E-01
+Max ERROR    PRESSURE= 0.148440E-01  MaxPressureERROR/Max-MinPressure= 0.720239E+09% SumPressureERROR/SumPressure= 0.435282E+09%
+
+At Time 5.0 |VELOCITY|Mean= 0.310927E-04 |VELOCITY|Max= 0.985921E-04 at node 2032 XYZ=1.57080       2.63894       0.   
+At Time 5.0 PRESSURE  Mean=-0.158040E-02 PRESSURE  Min=-0.148440E-01 PRESSURE Max= 0.143094E-01 PRESSURE Max-Min= 0.291534E-01
+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+bfns6cr: on [0,5] time : VELOCITY RELATIVE MEAN ERROR= 9.78549 %   PRESSURE RELATIVE MEAN ERROR=0.296631E+08%
+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+
+
+thns6cg: TOTAL EXECUTION COMPUTATION TIME= 132.50 CPU SECONDS   EpsRGC=1E-6
+Node      1319: X=1.6650 Y= 0.94248E-01 Z=0. VELOCITY VX= 0.4550788E-04 VY= 0.4186790E-06
+Exact SOLUTION: X=1.6650 Y= 0.94248E-01 Z=0. VELOCITY VX= 0.4499605E-04 VY= 0.4020631E-06                          V-ERROR= 1.138 %
+
+Node      1320: X=1.6336 Y= 0.62832E-01 Z=0. VELOCITY VX= 0.4543742E-04 VY= 0.1922548E-06 PRESSURE=-0.9117871E-06
+Exact SOLUTION: X=1.6336 Y= 0.62832E-01 Z=0. VELOCITY VX= 0.4521912E-04 VY= 0.1789890E-06 PRESSURE= 0.8532400E-17  V-ERROR=0.4836 %  P-ERROR=0.7723E+06%
+
+Node      1321: X=3.0473 Y=1.4765       Z=0. VELOCITY VX= 0.4173316E-06 VY= 0.4550768E-04
+Exact SOLUTION: X=3.0473 Y=1.4765       Z=0. VELOCITY VX= 0.4020609E-06 VY= 0.4499605E-04                          V-ERROR= 1.138 %
+
+Node      1322: X=3.0788 Y=1.5080       Z=0. VELOCITY VX= 0.1913260E-06 VY= 0.4543700E-04 PRESSURE= 0.8818872E-06
+Exact SOLUTION: X=3.0788 Y=1.5080       Z=0. VELOCITY VX= 0.1789876E-06 VY= 0.4521912E-04 PRESSURE= 0.2104198E-16  V-ERROR=0.4826 %  P-ERROR=0.7723E+06%
+
+Max|Velocity|Exact(Node)= 0.453981E-04
+Max|Velocity|Error(Node)= 0.406072E-05  Max|Velocity|Error(Node)/Max|Velocity|(Node)=8.94469 %  Sum|Velocity|Error(Node)/Sum|Velocity|(Node)=6.88342 %
+Max|VELOCITY|(Nodes)= 0.453981E-04 Max|VELOCITY|ERROR(Nodes)= 0.406072E-05 at node 2731 X=1.53938 Y= 0.691150 Z=0.   
+Vx Exact= 0.349626E-04 Vy Exact= -0.908959E-06 Vz Exact=  0.   
+Vx Compu= 0.390218E-04 Vy Compu= -0.101818E-05 Vz Compu=
+
+Min Exact    PRESSURE= -0.103049E-08  Max Exact    PRESSURE= 0.103049E-08  Max-Min Exact PRESSURE= 0.206099E-08
+Min Computed PRESSURE= -0.795830E-05  Max Computed PRESSURE= 0.791683E-05  Max-Min Compu PRESSURE= 0.158751E-04
+Max ERROR    PRESSURE=  0.795878E-05  MaxPressureERROR/Max-MinPressure=  386163. % SumPressureERROR/SumPressure=  293057. %
+
+At Time 5.0 |VELOCITY|Mean= 0.328178E-04 |VELOCITY|Max= 0.462949E-04 at node 8581 XYZ=1.57080       2.95310       0.   
+At Time 5.0 PRESSURE  Mean=-0.975515E-08 PRESSURE  Min=-0.795830E-05 PRESSURE Max= 0.791683E-05 PRESSURE Max-Min= 0.158751E-04
+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+thns6cg: on [0,5] time : VELOCITY RELATIVE MEAN ERROR= 10.9481 %   PRESSURE RELATIVE MEAN ERROR= 31673.0 %
+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+
+
+bfns6cg: TOTAL EXECUTION COMPUTATION TIME= 97.80 CPU SECONDS   EpsRGC=1E-6
+Node      1308: X=2.0106 Y=2.0106 Z=0. VELOCITY VX= -0.2111579E-04 VY= 0.1821338E-04 PRESSURE= -0.1608452E-02
+Exact SOLUTION: X=2.0106 Y=2.0106 Z=0. VELOCITY VX= -0.1748992E-04 VY= 0.1748992E-04 PRESSURE= -0.6568620E-09  V-ERROR= 14.95 %  P-ERROR=0.3317E+09%
+
+Node      1309: X=2.0735 Y=2.0735 Z=0. VELOCITY VX= -0.2275511E-04 VY= 0.1982866E-04 PRESSURE= -0.1639732E-02
+Exact SOLUTION: X=2.0735 Y=2.0735 Z=0. VELOCITY VX= -0.1916545E-04 VY= 0.1916545E-04 PRESSURE= -0.5521662E-09  V-ERROR= 13.47 %  P-ERROR=0.3317E+09%
+
+Node      1310: X=2.1363 Y=2.1363 Z=0. VELOCITY VX= -0.2401129E-04 VY= 0.2163894E-04 PRESSURE= -0.1601970E-02
+Exact SOLUTION: X=2.1363 Y=2.1363 Z=0. VELOCITY VX= -0.2053873E-04 VY= 0.2053871E-04 PRESSURE= -0.4387630E-09  V-ERROR= 12.54 %  P-ERROR=0.3317E+09%
+
+Node      1311: X=2.1991 Y=2.1991 Z=0. VELOCITY VX= -0.2549753E-04 VY= 0.2301616E-04 PRESSURE= -0.1674905E-02
+Exact SOLUTION: X=2.1991 Y=2.1991 Z=0. VELOCITY VX= -0.2158808E-04 VY= 0.2158808E-04 PRESSURE= -0.3184404E-09  V-ERROR= 13.63 %  P-ERROR=0.3317E+09%
+
+Max|Velocity|Exact(Node)= 0.453981E-04
+Max|Velocity|Error(Node)= 0.256551E-04  Max|Velocity|Error(Node)/Max|Velocity|(Node)=56.5114 %  Sum|Velocity|Error(Node)/Sum|Velocity|(Node)=15.4699 %
+Max|VELOCITY|(Nodes)= 0.453981E-04 Max|VELOCITY|ERROR(Nodes)= 0.256551E-04 at node 3633 X=0.230383 Y=2.47139 Z=0.   
+Vx Exact= -0.812431E-05 Vy Exact= -0.274539E-04 Vz Exact=  0.   
+Vx Compu= -0.337782E-04 Vy Compu= -0.277012E-04 Vz Compu=
+
+Min Exact    PRESSURE= -0.103049E-08  Max Exact    PRESSURE= 0.103049E-08  Max-Min Exact PRESSURE= 0.206099E-08
+Min Computed PRESSURE= -0.743077E-02  Max Computed PRESSURE= 0.209867E-02  Max-Min Compu PRESSURE= 0.952944E-02
+Max ERROR    PRESSURE= 0.743077E-02  MaxPressureERROR/Max-MinPressure= 0.360544E+09% SumPressureERROR/SumPressure= 0.389132E+09%
+
+At Time 5.0 |VELOCITY|Mean= 0.329579E-04 |VELOCITY|Max= 0.458235E-04 at node 6832 XYZ=3.09970  1.67552  0.   
+At Time 5.0 PRESSURE  Mean=-0.156209E-02 PRESSURE  Min=-0.743077E-02 PRESSURE Max= 0.209867E-02 PRESSURE Max-Min=0.952944E-02
+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+bfns6cg: on [0,5] time : VELOCITY RELATIVE MEAN ERROR= 9.39077 %   PRESSURE RELATIVE MEAN ERROR=0.264145E+08 %
+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++

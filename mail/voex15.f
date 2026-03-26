@@ -1,0 +1,329 @@
+      SUBROUTINE VOEX15( NTLXVO , LADEFI , RADEFI ,
+     %                   NTCUVO , MNCUVO , NTSOCU , MNSOCU , IERR )
+C+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+C BUT :    GENERER LE MAILLAGE D'UN VOLUME PAR ROTATIONS D'UNE SURFACE
+c -----
+C ENTREES:
+C --------
+C NTLXVO : NUMERO DU TABLEAU TS DU LEXIQUE DU VOLUME A CREER
+C LADEFI : TABLEAU ENTIER DE DEFINITION DU VOLUME
+C RADEFI : TABLEAU REEL   DE DEFINITION DU VOLUME
+C          CF '~td/d/a_volume__definition'
+C
+C SORTIES:
+C --------
+C NTCUVO : NUMERO      DU TMS 'NSEF' DES NUMEROS DES CUBES
+C MNCUVO : ADRESSE MCN DU TMS 'NSEF' DES NUMEROS DES CUBES
+C          CF '~td/d/a___nsef'
+C NTSOCU : NUMERO      DU TMS 'XYZSOMMET' DU VOLUME
+C MNSOCU : ADRESSE MCN DU TMS 'XYZSOMMET' DU VOLUME
+C          CF '~td/d/a___xyzsommet'
+C IERR   : = 0 SI PAS D'ERREUR
+C          <>0 SI ERREUR
+C+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+C AUTEUR : PERRONNET ALAIN  ANALYSE NUMERIQUE UPMC PARIS  SEPTEMBRE 1990
+C MODIFS : PERRONNET ALAIN Laboratoire J-L. LIONS UPMC PARIS   Mars 2007
+C.......................................................................
+      IMPLICIT  INTEGER (W)
+      include"./incl/gsmenu.inc"
+      include"./incl/langue.inc"
+      COMMON / UNITES / LECTEU , IMPRIM , INTERA , NUNITE(29)
+      include"./incl/ntmnlt.inc"
+      include"./incl/a___xyzsommet.inc"
+      include"./incl/a___nsef.inc"
+      include"./incl/a_volume__definition.inc"
+      include"./incl/pp.inc"
+      COMMON            MCN(MOTMCN)
+      REAL              RMCN(1)
+      EQUIVALENCE       (MCN(1),RMCN(1))
+      INTEGER           LADEFI(0:*)
+      REAL              RADEFI(0:*)
+      LOGICAL           FERME
+C
+      IERR = 0
+C
+C     RESTAURATION DU MAILLAGE DE LA SURFACE INITIALE
+      CALL LXNLOU( NTSURF , LADEFI(WUSUAV) , NTSUAV , MN )
+      IF( NTSUAV .LE. 0 ) THEN
+         NBLGRC(NRERR) = 1
+         IF( LANGAG .EQ. 0 ) THEN
+            KERR(1) = 'SURFACE INCONNUE'
+         ELSE
+            KERR(1) = 'UNKNOWN SURFACE'
+         ENDIF
+         CALL LEREUR
+         IERR = 2
+         RETURN
+      ENDIF
+C     RESTAURATION DES TABLEAUX SOMMETS ET NSEF DE CETTE SURFACE
+      CALL LXTSOU( NTSUAV , 'XYZSOMMET' , NTSOSU , MNSOSU )
+      IF( NTSOSU .LE. 0 ) THEN
+         NBLGRC(NRERR) = 1
+         IF( LANGAG .EQ. 0 ) THEN
+            KERR(1) = 'SURFACE SANS SOMMETS'
+         ELSE
+            KERR(1) = 'SURFACE WITHOUT VERTICES'
+         ENDIF
+         CALL LEREUR
+         IERR = 3
+         RETURN
+      ENDIF
+      CALL LXTSOU( NTSUAV , 'NSEF' , NTFASU , MNFASU )
+      IF( NTFASU .LE. 0 ) THEN
+         NBLGRC(NRERR) = 1
+         IF( LANGAG .EQ. 0 ) THEN
+            KERR(1) = 'SURFACE SANS NSEF'
+         ELSE
+            KERR(1) = 'SURFACE WITHOUT NSEF'
+         ENDIF
+         CALL LEREUR
+         IERR = 4
+         RETURN
+      ENDIF
+C
+C     CONTROLE DU TABLEAU DES ANGLES
+      NBANAV = LADEFI(WBANAV)
+      NTYPAV = LADEFI(WTYPAV)
+      IF( NTYPAV .NE. 0 ) THEN
+         ANGLAV = RADEFI( WNGLAV )
+         DO 10 I=1,NBANAV-1
+            A = RADEFI(WNGLAV+I)
+            IF( A * ANGLAV .LE. 0 ) THEN
+               NBLGRC(NRERR) = 1
+               IF( LANGAG .EQ. 0 ) THEN
+                  KERR(1) = '2 ANGLES CONSECUTIFS DE SIGNES OPPOSES'
+               ELSE
+                  KERR(1) = '2 ANGLES WITH OPPOSED SIGNS'
+               ENDIF
+               CALL LEREUR
+               IERR = 5
+               RETURN
+            ENDIF
+            ANGLAV = ANGLAV + A
+ 10      CONTINUE
+      ELSE
+         ANGLAV = RADEFI( WNMXAV )
+      ENDIF
+      IF( ABS(ANGLAV) .GT. 360. ) THEN
+         NBLGRC(NRERR) = 1
+         IF( LANGAG .EQ. 0 ) THEN
+            KERR(1) = 'SOMME DES ANGLES AU DELA DE 360 DEGRES'
+         ELSE
+            KERR(1) = 'SUM of ANGLES BEYOND 360 DEGREES'
+         ENDIF
+         CALL LEREUR
+         IERR = 6
+         RETURN
+      ENDIF
+      FERME = ABS(ANGLAV) .EQ. 360.
+      IF( FERME .AND. NBANAV .LE. 2 ) THEN
+         NBLGRC(NRERR) = 1
+         IF( LANGAG .EQ. 0 ) THEN
+            KERR(1) = 'NOMBRE ANGLES<3'
+         ELSE
+            KERR(1) = 'ANGLES NUMBER>3'
+         ENDIF
+         CALL LEREUR
+         IERR = 6
+         RETURN
+      ENDIF
+C
+C     RESTAURATION DES 2 POINTS DE L'AXE
+      CALL LXNLOU( NTPOIN , LADEFI(WUP1AV) , NTP1 , MN )
+      IF( NTP1 .LE. 0 ) THEN
+         NBLGRC(NRERR) = 1
+         IF( LANGAG .EQ. 0 ) THEN
+            KERR(1) = 'POINT 1 DE L''AXE INCONNU'
+         ELSE
+            KERR(1) = 'UNKNOWN POINT 1 of THE AXIS'
+         ENDIF
+         CALL LEREUR
+         IERR = 5
+         RETURN
+      ENDIF
+      CALL LXTSOU( NTP1 , 'XYZSOMMET' , NTP1AV , MNP1AV )
+      IF( NTP1AV .LE. 0 ) THEN
+         NBLGRC(NRERR) = 1
+         IF( LANGAG .EQ. 0 ) THEN
+            KERR(1) = 'POINT 1 DE L''AXE INEXISTANT'
+         ELSE
+            KERR(1) = 'UNKNOWN POINT 1 of THE AXIS'
+         ENDIF
+         CALL LEREUR
+         IERR = 6
+         RETURN
+      ENDIF
+C
+      CALL LXNLOU( NTPOIN , LADEFI(WUP2AV) , NTP2 , MN )
+      IF( NTP2 .LE. 0 ) THEN
+         NBLGRC(NRERR) = 1
+         IF( LANGAG .EQ. 0 ) THEN
+            KERR(1) = 'POINT 2 DE L''AXE INCONNU'
+         ELSE
+            KERR(1) = 'UNKNOWN POINT 2 of THE AXIS'
+         ENDIF
+         CALL LEREUR
+         IERR = 7
+         RETURN
+      ENDIF
+      CALL LXTSOU( NTP2 , 'XYZSOMMET' , NTP2AV , MNP2AV )
+      IF( NTP2AV .LE. 0 ) THEN
+         NBLGRC(NRERR) = 1
+         IF( LANGAG .EQ. 0 ) THEN
+            KERR(1) = 'POINT 2 DE L''AXE INEXISTANT'
+         ELSE
+            KERR(1) = 'UNKNOWN POINT 2 of THE AXIS'
+         ENDIF
+         CALL LEREUR
+         IERR = 8
+         RETURN
+      ENDIF
+C
+C     LE TYPE DE MAILLAGE DE LA SURFACE
+      NUTYMS = MCN( MNFASU + WUTYMA )
+C     LE NOMBRE D'ARETES DE LA SURFACE
+      IF( NUTYMS .EQ. 0 ) THEN
+         NBFASU = MCN( MNFASU + WBEFOB )
+      ELSE IF( NUTYMS .EQ. 3 ) THEN
+         NBFASU = MCN( MNFASU + WBARTR ) ** 2
+      ELSE IF( NUTYMS .EQ. 4 ) THEN
+         NBFASU = MCN(MNFASU+WBARXQ) * MCN(MNFASU+WBARYQ)
+      ELSE
+         NBLGRC(NRERR) = 1
+         IF( LANGAG .EQ. 0 ) THEN
+            KERR(1) = 'TYPE INCORRECT DU MAILLAGE DE LA SURFACE'
+         ELSE
+            KERR(1) = 'INCORRECT TYPE of SURFACE MESH'
+         ENDIF
+         CALL LEREUR
+         IERR = 9
+         RETURN
+      ENDIF
+C
+C     LE NOMBRE DE SOMMETS DE LA SURFACE
+      NBSOSU = MCN( MNSOSU + WNBSOM )
+C
+C     RECHERCHE DU NOMBRE DE SOMMETS DE CETTE SURFACE PLACES SUR L'AXE
+      MNSOAX = 0
+      CALL TNMCDC( 'ENTIER' , 2*NBSOSU , MNSOAX )
+      CALL ROTAN1( RMCN(MNP1AV+WYZSOM) , RMCN(MNP2AV+WYZSOM) ,
+     %             NBSOSU , RMCN(MNSOSU+WYZSOM) ,
+     %             NBSOAX , MCN(MNSOAX) , IERR )
+      IF( IERR .NE. 0 ) RETURN
+      IF( NBSOAX .GT. 0 ) THEN
+         IF( LANGAG .EQ. 0 ) THEN
+            WRITE(IMPRIM,*) NBSOAX,' SOMMETS SUR L''AXE'
+         ELSE
+            WRITE(IMPRIM,*) NBSOAX,' VERTICES on the AXIS'
+         ENDIF
+      ENDIF
+C
+C     CALCUL DU NOMBRE DE SOMMETS DU MAILLAGE DU VOLUME
+      NBSOVO = NBSOSU + (NBSOSU-NBSOAX) * NBANAV
+      IF( FERME ) THEN
+         NBSOVO = NBSOSU + (NBSOSU-NBSOAX) * (NBANAV-1)
+      ELSE
+         NBSOVO = NBSOSU + (NBSOSU-NBSOAX) * NBANAV
+      ENDIF
+C
+C     DECLARATION DES SOMMETS DU VOLUME CREEE
+C     CONSTRUCTION DU TABLEAU 'XYZSOMMET' DE CE VOLUME
+      CALL LXTNDC( NTLXVO , 'XYZSOMMET' , 'MOTS' ,  WYZSOM+3*NBSOVO )
+      CALL LXTSOU( NTLXVO , 'XYZSOMMET' ,  NTSOCU , MNSOCU )
+C
+C     CONSTRUCTION DU TABLEAU 'NSEF' DE CE VOLUME
+C     CALCUL DE LA TAILLE DU TABLEAU
+C     A PRIORI VOLUME MAILLE NON STRUCTURE
+      NUTYMV = 0
+C     MAJORATION DU NOMBRE D'EF 3D
+      MXEF3D = ( NBFASU + NBSOAX ) * NBANAV
+      N      = WUSOEF + 8 * MXEF3D
+      IF( .NOT. FERME .AND. NBSOAX .EQ. 0 ) THEN
+         IF( NUTYMS .EQ. 3 ) THEN
+C           TRIANGLE STRUCTURE => PENTAEDRE STRUCTURE
+            NUTYMV = 6
+            N      = WBARZP + 1
+         ELSE IF( NUTYMS .EQ. 4 ) THEN
+C           QUADRANGLE STRUCTURE => HEXAEDRE STRUCTURE
+            NUTYMV = 7
+            N      = WBARZH + 1
+         ENDIF
+      ENDIF
+C
+C     DECLARATION DES NO SOMMET DES EF DU VOLUME
+      CALL LXTNDC( NTLXVO , 'NSEF' , 'ENTIER', N )
+      CALL LXTSOU( NTLXVO , 'NSEF' ,  NTCUVO , MNCUVO )
+C
+C     CALCUL DES ANGLES DE ROTATION DANS TOUS LES CAS
+      CALL TNMCDC( 'REEL' , NBANAV , MNANGL )
+      DO 20 I=1,NBANAV
+         IF( NTYPAV .EQ. 0 ) THEN
+            RMCN(MNANGL-1+I) = ANGLAV / NBANAV
+         ELSE
+            RMCN(MNANGL-1+I) = RADEFI(WNGLAV-1+I)
+         ENDIF
+ 20   CONTINUE
+C
+C     CALCUL DES COORDONNEES DES SOMMETS ET DES CUBES DU VOLUME
+      CALL ROTAN3( NBANAV, RMCN(MNANGL),
+     %             RMCN(MNP1AV+WYZSOM), RMCN(MNP2AV+WYZSOM), MNFASU,
+     %             FERME,  NBSOSU, RMCN(MNSOSU+WYZSOM),
+     %             MCN(MNSOAX), MCN(MNSOAX+NBSOSU),
+     %             NUTYMS, NBFASU,
+     %             NBSOVO,RMCN(MNSOCU+WYZSOM),NUTYMV,MCN(MNCUVO+WUSOEF),
+     %             NBPENT1, IERR )
+      IF( IERR .NE. 0 ) GOTO 9900
+C
+C     MISE A JOUR DU TABLEAU 'NSEF' DE CE VOLUME
+C     TYPE DE L'OBJET : VOLUME
+      MCN( MNCUVO + WUTYOB ) = 4
+      MCN( MNCUVO + WUTYMA ) = NUTYMV
+      IF (NUTYMV .EQ. 0) THEN
+         MCN( MNCUVO + WBSOEF ) = 8
+         MCN( MNCUVO + WBEFOB ) = NBFASU * NBANAV + NBPENT1
+      ELSE IF (NUTYMV .EQ. 6) THEN
+         MCN( MNCUVO + WBARTP ) = MCN( MNFASU + WBARTR )
+         MCN( MNCUVO + WBARZP ) = NBANAV
+C        LE NOMBRE DE SOMMETS PAR CUBE
+         MCN( MNCUVO + WBSOEF ) = 8
+C        LE NOMBRE D'EF DU VOLUME
+         MCN( MNCUVO + WBEFOB ) = NBANAV * ( MCN(MNFASU+WBARTR)**2 )
+      ELSE IF (NUTYMV .EQ. 7) THEN
+         MCN( MNCUVO + WBARXH ) = MCN( MNFASU + WBARXQ )
+         MCN( MNCUVO + WBARYH ) = MCN( MNFASU + WBARYQ )
+         MCN( MNCUVO + WBARZH ) = NBANAV
+C        LE NOMBRE DE SOMMETS PAR CUBE
+         MCN( MNCUVO + WBSOEF ) = 8
+C        LE NOMBRE D'EF DU VOLUME
+         MCN( MNCUVO + WBEFOB ) = MCN( MNFASU + WBARXQ ) *
+     %                            MCN( MNFASU + WBARYQ ) * NBANAV
+      ENDIF
+C     LE TYPE INCONNU DE FERMETURE DU MAILLAGE
+      MCN( MNCUVO + WUTFMA ) = -1
+C     PAS DE TANGENTES STOCKEES
+      MCN( MNCUVO + WBTGEF ) = 0
+      MCN( MNCUVO + WBEFAP ) = 0
+      MCN( MNCUVO + WBEFTG ) = 0
+C     LA DATE DE CREATION
+      CALL ECDATE( MCN(MNCUVO) )
+C     LE NUMERO DU TABLEAU DESCRIPTEUR
+      MCN( MNCUVO + MOTVAR(6) ) = NONMTD( '~>>>NSEF' )
+C
+C     MISE A JOUR DU TABLEAU 'XYZSOMMET' DE CE VOLUME
+C     LE NOMBRE DE SOMMETS
+      MCN( MNSOCU + WNBSOM) = NBSOVO
+C     LA DATE DE CREATION
+      CALL ECDATE( MCN(MNSOCU) )
+C     LE NUMERO DU TABLEAU DESCRIPTEUR
+      MCN( MNSOCU + WNBTGS ) = 0
+      MCN( MNSOCU + WBCOOR ) = 3
+      MCN( MNSOCU + MOTVAR(6) ) = NONMTD( '~>>>XYZSOMMET' )
+C
+C     VERIFICATION DU VOLUME POSITIF DES PENTAEDRES ET HEXAEDRES
+C     PERMUTATIONS DE SOMMETS POUR LE RENDRE POSITIF SINON
+      CALL VOLPLUS( MNSOCU, MNCUVO )
+C
+C     DESTRUCTION DES TABLEAUX INUTILES
+ 9900 CALL TNMCDS( 'ENTIER' , NBSOSU*2, MNSOAX )
+      CALL TNMCDS( 'REEL'   , NBANAV,   MNANGL )
+      END

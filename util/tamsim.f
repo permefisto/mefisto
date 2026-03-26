@@ -1,0 +1,141 @@
+      SUBROUTINE TAMSIM( NOTAMS , NMTAMS )
+C+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+C BUT : IMPRIMER LE TABLEAU MS DE NUMERO NOTAMS AVEC SON NOM NMTAMS
+C ----- SI LE NOMBRE DE VARIABLES EXCEDE 100 SEULES LES 100
+C       PREMIERES VARIABLES SONT IMPRIMEES
+C***********************************************************************
+C ATTENTION: SOUS-PROGRAMME DEPENDANT MACHINE ICI VERSION IBM
+C            LA DECLARATION DU TABLEAU MCK(MOTMCK) CHARACTER*(NC1MOT)
+C            DU SP MSIM DOIT ETRE HOMOGENE AVEC CELLE DE MCK ICI
+C            DE PLUS REVOIR L'IMPRESSION D'UNE CHAINE DE CARACTERES
+C            NOTAMMENT LE FORMAT
+C***********************************************************************
+C ENTREES :
+C ---------
+C NOTAMS : NUMERO DU TABLEAU MS A IMPRIMER
+C NMTAMS : NOM DU TABLEAU ( 48 CARACTERES )
+C+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+C PROGRAMMEUR : PERRONNET ALAIN ANALYSE NUMERIQUE PARIS    DECEMBRE 1983
+C.......................................................................
+      include"./incl/motmcg.inc"
+      include"./incl/msvaau.inc"
+      include"./incl/pp.inc"
+      COMMON            MCN(MOTMCN)
+      PARAMETER (NBCMOT=4,MOTMCK=12576)
+      CHARACTER*(NBCMOT) MCK
+      COMMON / MSMCK  /  MCK(MOTMCK)
+      COMMON / UNITES / LECTEU,IMPRIM,NUNITE(30)
+      COMMON / MSSFTA / NOFISF,NBPASF,MOPASF,MGBUSF,NSFLIB,
+     %                  M1FIMS,M2FIMS,MGFIMS,NSFIMS,LPFIMS,
+     %                  M1TAMS,M2TAMS,MGBUTA,NBBUTA,NPTAMS,NATAMS,
+     %                  NBCTMS,LLTAMS,LFTAMS,MGNPSF,NSFNPS,NPSNPS,
+     %                  MGZLMG,MGZLMK,MGZLMN,MOTSMG,MOTSMK,MOTSMN,NTADAM
+      LOGICAL           LMC(1)
+      REAL              XMC(1)
+      DOUBLE PRECISION  DMC(1)
+      EQUIVALENCE       (MCN,LMC,XMC,DMC)
+      CHARACTER*9       TYPNUM,KTYPE
+      CHARACTER*48      NMTAMS
+      CHARACTER*16      ERREUR
+      DATA              ERREUR / 'ERREUR TAMSIM :' /
+C
+C     LA MS EST ELLE OUVERTE ?
+C     ========================
+      IF( MGBUSF .LE. 0 ) THEN
+         WRITE(IMPRIM,10000) ERREUR
+10000 FORMAT(A16,'MS NON OUVERTE.RETOUR')
+         GOTO 9999
+      ENDIF
+C
+C     RECHERCHE DU TABLEAU MS NOTAMS
+C     ==============================
+      CALL TAMSRE( NOTAMS , MGTAMS )
+C
+C     CE TABLEAU EST-IL EN MC ?
+C     =========================
+      MCTAMS = MCG( MGTAMS + 4 )
+      IF( MCTAMS .EQ. 0 ) THEN
+C        NON . EXISTE-T-IL ?
+         IF( MCG(MGTAMS) .LE. 0 ) THEN
+C           NON . AVERTISSEMENT ET RETOUR SANS IMPRESSION
+            WRITE(IMPRIM,10005) NOTAMS
+10005 FORMAT(' LE TABLEAU',I9,' NE PEUT ETRE IMPRIME CAR NON DECLARE'/)
+            GOTO 9999
+         ELSE
+C           OUI . LE TABLEAU EST OUVERT
+            IETAMS = 0
+            CALL TAMSOU( NOTAMS , MCTAMS )
+         ENDIF
+      ELSE
+C        OUI . SON DRAPEAU EST MIS A 1
+         IETAMS = 1
+         MCTAMS = ABS( MCTAMS )
+      ENDIF
+C
+C     L'IMPRESSION PROPREMENT DITE
+C     ============================
+      NTTAMS = ABS( MCG( MGTAMS ) )
+      NVTAMS = MCG(MGTAMS+1)
+      KTYPE  = TYPNUM( NTTAMS )
+      WRITE(IMPRIM,10010) NOTAMS,NVTAMS,KTYPE,NMTAMS
+10010 FORMAT('0TABLEAU MS',I9,' DE',I9,' VARIABLES DE TYPE ',A9,' : ',
+     %       A48/1X,79(1H=))
+C
+      MCT = MCTAMS - 1
+      NVTMS = MIN( 100 , NVTAMS )
+      GOTO( 100,200, 90,400,500,600, 90,800,900 ),NTTAMS
+C
+C     TYPE NON IMPLEMENTE
+C     -------------------
+ 90   WRITE(IMPRIM,10090)
+10090 FORMAT(' IMPRESSION DE CE TYPE NON PROGRAMME.RETOUR'/)
+      GOTO 9900
+C
+C     TYPE LOGIQUE
+C     ------------
+ 100  WRITE(IMPRIM,10100) (I,LMC(MCT+I),I=1,NVTMS)
+10100 FORMAT(8(I4,':',L1,2X))
+      GOTO 9900
+C
+C     TYPE CARACTERE
+C     --------------
+ 200  WRITE(IMPRIM,10200) (MCK(MCT+I),I=1,NVTAMS/NBCHMO)
+C
+C     ATTENTION DANS LE FORMAT 4 CARACTERES PAR MOT
+C
+10200 FORMAT(1X,18A)
+      GOTO 9900
+C
+C     TYPE ENTIER
+C     -----------
+ 400  WRITE(IMPRIM,10400) (I,MCN(MCT+I),I=1,NVTMS)
+10400 FORMAT(5(I4,':',I11))
+      GOTO 9900
+C
+C     TYPE REEL
+C     ---------
+ 500  WRITE(IMPRIM,10500) (I,XMC(MCT+I),I=1,NVTMS)
+10500 FORMAT(4(I4,':',G13.6))
+      GOTO 9900
+C
+C     TYPE REEL2
+C     ----------
+ 600  MCT = MCT / 2
+      WRITE(IMPRIM,10500) (I,DMC(MCT+I),I=1,NVTMS)
+      GOTO 9900
+C
+C     TYPE COMPLEXE = 2 REEL
+C     ----------------------
+ 800  NVTMS = NVTMS * 2
+      GOTO 500
+C
+C     TYPE COMPLEXE2 = 2 REEL2
+C     ------------------------
+ 900  NVTMS = NVTMS * 2
+      GOTO 600
+C
+C     SI LE TABLEAU A ETE OUVERT DANS CE SOUS PROGRAMME , IL EST FERME
+ 9900 IF( IETAMS .EQ. 0 ) CALL TAMSFE( NOTAMS )
+C
+ 9999 RETURN
+      END

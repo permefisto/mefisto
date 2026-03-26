@@ -1,0 +1,58 @@
+Choose among the Line drawing types to define 
+the drawing characteristics:
+
+1 : BLACK and WHITE or COLORS
+Drawings with 2 or 256 colors
+
+3 : LINE EDGES COLOR
+To define the color of edges if the drawing is requested
+
+5 : REDUCTION % of EDGES
+To show the position of vertices of the line edges
+
+7 : LINE NAME COLOR
+To define the color of line name if the drawing is requested
+
+8 : DRAWING or NOT of LINE NAMES
+
+9 : DRAWING or NOT of the TITLE
+
+10: DRAWING or NOT of the VERTICES NUMBERS
+
+11: COLOR of the VERTICES NUMBERS
+
+12: DRAWING or NOT of the FE NUMBERS
+
+13: COLOR of FE NUMBERS
+
+14: SUBDIVISION MAX of an P3 EDGE
+
+15: DRAWING or NOT of TANGENTS
+at every vertex of a curved Finite Element
+
+16: COLOR of the TANGENTS
+To define the color of tangents if the drawing is requested
+
+17: TANGENTS Line Drawing Type
+either continue line or dotted line
+
+20: EDGES Line THICKNESS
+number of pixels into the thickness 0,1, ...
+
+49: AXES of LINES
+choose among differents drawings of coordinates axis
+ 
+50: ERASE the WINDOW
+
+75: Activate TRANSLATION ORBIT ZOOM
+permit to use the buttons of the mouse after the option 90;
+left   button => Translation
+middle button => @ in 2D, rotations in 3d
+right  button => Zoom + or -
+
+76: Stop the TRANSLATION ORBIT ZOOM
+suppress the effect of option 75;
+
+90: EXECUTE the DRAWING
+Draw with the drawing characteristics defined before
+colors, type of lines, ...

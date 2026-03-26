@@ -1,0 +1,5 @@
+NBCOBV is the number of velocity components to be fixed, imposed.
+Its value must be between 1 or 2 in 2d; 1 or 2 or 3 in 3d.
+
+After, it will be necessary to give the number of each imposed
+component with values either 1 2 in 2d, or 1 2 3 in 3d.

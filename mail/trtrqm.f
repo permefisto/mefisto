@@ -1,0 +1,277 @@
+      SUBROUTINE TRTRQM( KTITRE, QUALMN, M1TRIA, NBTRIA, NOTRIA,
+     %                   MXTRQM, NBTRQM, NOTRQM,
+     %                   NBSOMM, XYZSOM, QUAMOY, QUAMIN )
+C+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+C BUT :    CALCUL DES QUALITES MOYENNE ET MINIMALE DES NBTRIA TRIANGLES
+C -----    ET TRACE DES NBTRQM TRIANGLES DE QUALITE<QUALMN DES
+C          NBTRIA TRIANGLES DE NOTRIA, DE LEURS VOISINS et
+C          DE LEURS VOISINS DE VOISINS POUR VOIR LEUR ENVIRONNEMENT
+
+C ENTREES:
+C --------
+C KTITRE : TITRE DU TRACE
+C QUALMN : QUALITE AU DESSOUS DE LAQUELLE LA QUALITE D'UN TRIANGLE
+C          EST MAUVAISE ET LE TRIANGLE EST TRACE
+C M1TRIA : NOMBRE DE MOTS POUR CHAQUE TRIANGLE NOTRIA
+C          =6 ALORS TRACE DES TRIANGLES VOISINS ET VOISINS DE VOISINS
+C          =4 ALORS TRACE DES SEULS TRIANGLES DE QUALITE INFERIEURE
+C NBTRIA : NOMBRE DE TRIANGLES STOCKES DANS NOTRIA
+C NOTRIA : TABLEAU DU NUMERO DES 3 SOMMETS ET 3 TRIANGLES ADJACENTS
+C MXTRQM : NOMBRE MAXIMUM DE NO DE TRIANGLES DANS LE TABLEAU NOTRQM
+C NOTRQM : TABLEAU AUXILIAIRE DE MXTRQM ENTIERS
+C NBSOMM : NOMBRE DE SOMMETS DU TABLEAU XYZSOM
+C XYZSOM : X  Y  Z DES SOMMETS DU MAILLAGE
+
+C SORTIES:
+C --------
+C NBTRQM : NOMBRE DE TRIANGLES DE QUALITE INFERIEURE A QUALMN DONT
+C          LE NUMERO NOTRIA EST STOCKE DANS LE TABLEAU NOTRQM
+C          ATTENTION: AU DELA SONT STOCKES LES NO DES TRIANGLES VOISINS
+C                     ET VOISINS DE VOISINS SI M1TRIA=6
+C QTRMOY : QUALITE MOYENNE  DES NBTRIA TRIANGLES
+C QTRMIN : QUALITE MINIMALE DES NBTRIA TRIANGLES
+C+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+C AUTEUR : ALAIN PERRONNET  Saint PIERRE du PERRAY             Mars 2020
+C2345X7..............................................................012
+      include"./incl/trvari.inc"
+      include"./incl/mecoit.inc"
+      include"./incl/xyzext.inc"
+      COMMON / TRTETR / STOPTE,TRACTE
+      LOGICAL           STOPTE,TRACTE
+      CHARACTER*(*)     KTITRE
+      INTEGER           NOTRIA(M1TRIA,NBTRIA)
+      INTEGER           NOTRQM(MXTRQM)
+      REAL              XYZSOM(3,NBSOMM)
+      REAL              X(3), Y(3), Z(3), XYZ(3)
+
+      IF( .NOT. TRACTE  ) GOTO 9999
+
+C     FORMATION DU TABLEAU NOTRQM DES TRIANGLES DE QUALITE INFERIEURE A QUALMN
+C     ------------------------------------------------------------------------
+C     NBTRQM : NOMBRE DE TRIANGLES DE MAUVAISE QUALITE DU TABLEAU NOTRQM
+C     NOTRQM : LISTE DES NBTRQM NUMEROS DANS NOTRIA DES TRIANGLES A TRACER
+C             ( 1:NBTRQM ) TRIANGLE INITIAL
+C             (NBTRQM+1:NBTRV1) TRIANGLES OPPOSES SI M1TRIA=6
+C             (NBTRV1+1:NBTRV2) TRIANGLES OPPOSES OPPOSES SI M1TRIA=6
+C     NOTRIA : TABLEAU DU NUMERO DES 3 SOMMETS ET 3 TRIANGLES ADJACENTS
+
+      QUAMIN = 2.
+      QUAMOY = 0.
+      NBTRQM = 0
+      NBTR   = 0
+      DO NTR = 1,NBTRIA
+         IF( NOTRIA(1,NTR) .GT. 0 ) THEN
+            NBTR = NBTR + 1
+C           QUALITE DU TRIANGLE NTR
+            CALL QUATRI( NOTRIA(1,NTR), XYZSOM, Q )
+            QUAMOY = QUAMOY + Q
+            QUAMIN = MIN( QUAMIN, Q )
+            IF( Q .LT. QUALMN ) THEN
+C              TRIANGLE DE QUALITE INFERIEURE A LA QUALITE MINIMALE
+               NBTRQM = NBTRQM + 1
+               NOTRQM( NBTRQM ) = NTR
+            ENDIF
+         ENDIF
+      ENDDO
+      QUAMOY = QUAMOY / NBTR
+      PRINT*,'trtrqm: PARMI',NBTRIA,' TRIANGLES de QUALITE MIN=',QUAMIN,
+     %       ' et QUALITE MOYENNE=',QUAMOY,
+     %       ', il y a',NBTRQM,' TRIANGLES de QUALITE<',QUALMN
+
+      IF( NBTRQM .LE. 0 ) GOTO 9999
+
+
+C     AJOUT dans KTITRE DEJA INITIALISE
+ccc      KTITRE='suex30 0:          TRIANGLES de QUALITE<              '
+      WRITE(KTITRE(11:18),'(I8)') NBTRQM
+      CALL SANSDBL( KTITRE, NBC )
+
+C     CADRE DES NBTRQM TRIANGLES
+C     ==========================
+C     RECHERCHE DU MIN ET MAX DES NBTRQM TRIANGLES
+      RMAX = RINFO( 'GRAND' )
+C     MINIMUM
+      COOEXT(1,1) = RMAX
+      COOEXT(2,1) = RMAX
+      COOEXT(3,1) = RMAX
+C     MAXIMUM
+      COOEXT(1,2) = -RMAX
+      COOEXT(2,2) = -RMAX
+      COOEXT(3,2) = -RMAX
+
+      IF( M1TRIA .LT. 6 ) THEN
+C        PAS DE NO DES TRIANGLES VOISINS
+         NBTRV1 = NBTRQM
+         NBTRV2 = NBTRQM
+         GOTO 5
+      ENDIF
+
+C     AJOUT DES TRIANGLES VOISINS DES NBTRQM TRIANGLES INITIAUX
+      NBTRV1 = NBTRQM
+      DO I=1,NBTRQM
+         NT = NOTRQM(I)
+         IF( NT .GT. 0 .AND. NOTRIA(1,NT) .GT. 0 ) THEN
+         DO 1 J=1,3
+            NTOP = NOTRIA( 3+J, NT )
+            IF( NTOP .GT. 0 .AND. NOTRIA(1,NTOP) .GT. 0 ) THEN
+C              NTOP EST IL DEJA STOCKE?
+               DO K=1,NBTRV1
+                  IF( NTOP .EQ. NOTRQM( K ) ) GOTO 1
+               ENDDO
+               IF( NBTRV1 .GE. MXTRQM ) THEN
+                  NBTRV2 = NBTRV1
+                  GOTO 5
+               ENDIF
+               NBTRV1 = NBTRV1 + 1
+               NOTRQM( NBTRV1 ) = NTOP
+            ENDIF
+ 1       ENDDO
+         ENDIF
+      ENDDO
+
+C     AJOUT DES TRIANGLES VOISINS DES VOISINS DES NBTRQM TRIANGLES INITIAUX
+      NBTRV2 = NBTRV1
+      DO I=NBTRQM+1,NBTRV1
+         NT = NOTRQM(I)
+         DO 2 J=1,3
+            NTOP = NOTRIA( 3+J, NT )
+            IF( NTOP .GT. 0 .AND. NOTRIA(1,NTOP) .GT. 0 ) THEN
+C              NTOP EST IL DEJA STOCKE?
+               DO K=1,NBTRV2
+                  IF( NTOP .EQ. NOTRQM( K ) ) GOTO 2
+               ENDDO
+               IF( NBTRV2 .GE. MXTRQM ) THEN
+                  GOTO 5
+               ENDIF
+               NBTRV2 = NBTRV2 + 1
+               NOTRQM( NBTRV2 ) = NTOP
+            ENDIF
+ 2       ENDDO
+      ENDDO
+
+C     CALCUL DU MIN MAX DES XYZ DES SOMMETS DES NBTRV2 TRIANGLES
+ 5    DO I=1,NBTRV2
+         NT = NOTRQM(I)
+         IF( NT .GT. 0 .AND. NOTRIA(1,NT) .GT. 0 ) THEN
+         DO J=1,3
+C           LE J-EME SOMMET DE LA FACE NT
+            NS = NOTRIA( J, NT )
+            DO K=1,3
+               R = XYZSOM(K,NS)
+               COOEXT(K,1) = MIN( COOEXT(K,1), R )
+               COOEXT(K,2) = MAX( COOEXT(K,2), R )
+            ENDDO
+         ENDDO
+         ENDIF
+      ENDDO
+
+C     ELARGISSEMENT DU CADRE
+      DO K=1,3
+         R = ( COOEXT(K,2) - COOEXT(K,1) ) * 0.3
+         COOEXT(K,1) = COOEXT(K,1) - R
+         COOEXT(K,2) = COOEXT(K,2) + R
+      ENDDO
+
+C     LA MEMOIRE PIXELS EST EFFACEE
+      CALL EFFACEMEMPX
+
+C     PARAMETRES DE VISEE
+      AXOLAR = 0
+      DO K=1,3
+         AXOPTV(K) = ( COOEXT(K,1) + COOEXT(K,2) ) * 0.5
+         AXOEIL(K) = COOEXT(K,2)
+         AXOLAR = MAX( AXOLAR, COOEXT(K,2) - COOEXT(K,1) )
+      ENDDO
+
+      AXOLAR = AXOLAR * 0.5
+      AXOHAU = AXOLAR * 0.75
+C     PAS DE PLAN ARRIERE ET AVANT
+      AXOARR = 0
+      AXOAVA = 0
+      CALL AXONOMETRIE( AXOPTV, AXOEIL, AXOLAR, AXOHAU, AXOARR, AXOAVA )
+
+C     TRACE EN MODE 3 BOUTONS POUR DEPLACEMENT ROTATIONS ZOOM
+      PREDU0  = PREDUF
+      PREDUF  = 12.0
+      LORBITE = 1
+      IAVNSO0 = IAVNSO
+      IAVNSO  = 1
+
+      IF( LORBITE .EQ. 0 ) GOTO 20
+C
+C     INITIALISATION DE L'ORBITE
+C     ==========================
+      CALL ORBITE0( NOTYEV )
+      GOTO 20
+C
+C     TRACE SELON L'ORBITE OU ZOOM OU TRANSLATION ACTIFS
+C     ==================================================
+ 10   CALL ORBITE1( NOTYEV )
+      IF( NOTYEV .EQ. 0 ) GOTO 9000
+C
+C     TRACE DES AXES 3D
+ 20   CALL TRAXE3
+
+C     TRACE DES TRIANGLES ET DE LEURS TRIANGLES ADJACENTS
+C     ET DE LEURS TRIANGLES ADJACENT D'ADJACENTS
+C     DANS L'ORDRE INVERSE POUR MIEUX VOIR LES INITIAUX
+      DO 30 K=NBTRV2,1,-1
+
+C        TRACE DU TRIANGLE ET SES ADJACENTS D'ADJACENTS
+         NT = NOTRQM( K )
+         IF( NT .LE. 0 ) GOTO 30
+         IF( NOTRIA(1,NT) .LE. 0 ) GOTO 30
+
+         IF( K .LE. NBTRQM ) THEN
+C           TRIANGLE INITIAL
+            NCF = NCCYAN
+            NCA = NCBLEU
+            GOTO 25
+         ELSE IF( K .LE. NBTRV1 ) THEN
+C           TRIANGLE OPPOSE AU TRIANGLE INITIAL
+            NCF = NCORAN
+            NCA = NCROUG
+            GOTO 25
+         ELSE
+C           TRIANGLE OPPOSE AUX TRIANGLES OPPOSES
+            NCF = NCGRIM
+            NCA = NCGRIS
+            GOTO 25
+         ENDIF
+
+C        TRACE DU TRIANGLE NT
+ 25      DO I=1,3
+            NS = NOTRIA( I, NT )
+            X(I) = XYZSOM(1,NS)
+            Y(I) = XYZSOM(2,NS)
+            Z(I) = XYZSOM(3,NS)
+         ENDDO
+         CALL FAP13D( NCF, NCA, PREDUF, 3, X, Y, Z )
+
+C        TRACE DU NUMERO DES 3 SOMMETS DU TRIANGLE
+         DO I=1,3
+            NS = NOTRIA( I, NT )
+            CALL ENTIER3D( NCNOIR, XYZSOM(1,NS), NS )
+         ENDDO
+
+C        TRACE  DU NUMERO NT DU TRIANGLE EN SON BARYCENTRE
+         DO I=1,3
+            XYZ( I ) = ( XYZSOM( I, NOTRIA(1,NT) )
+     %                 + XYZSOM( I, NOTRIA(2,NT) )
+     %                 + XYZSOM( I, NOTRIA(3,NT) ) ) / 3
+         ENDDO
+         CALL ENTIER3D( NCMAGE, XYZ, NT )
+
+ 30   ENDDO
+
+      CALL TRFINS( KTITRE(1:NBC) )
+
+C     REPRISE DE L'ORBITE
+C     ===================
+      IF( LORBITE .NE. 0 ) GOTO 10
+
+ 9000 PREDUF = PREDU0
+      IAVNSO = IAVNSO0
+
+ 9999 RETURN
+      END

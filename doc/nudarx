@@ -1,0 +1,3 @@
+NUDARX is the number of the last edge to be extracted of the line.
+This number must be >NU1ARX and < number MXLIED of line edges.
+If this value exceeds MXLIED, its value is fixed to MXLIED.

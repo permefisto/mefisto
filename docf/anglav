@@ -1,0 +1,15 @@
+La surface generatrice subit N rotations qui creent autant de
+tranches. Les TRIANGLES deviennent des pentaedres et les quadrangles
+deviennent des hexaedres.
+ATTENTION: Aucun SOMMET de la SURFACE MAILLEE NE DOIT ETRE SUR L'AXE
+de ROTATION sous peine d'obtenir des EF INCORRECTS.
+L'angle total de rotation peut atteindre 360 degres. 
+
+Exemple: 
+V15.1; I; 15; SURFACE_INITIALE; P1_AXE; P2_AXE; 4; {rotations}
+1; {angles a preciser pour chaque rotation}
+20; 30; 40; 50;
+{les rotations s'ajoutent par rapport a la surface initiale} 
+Definit un volume par 4 rotations de 20 puis 50 puis 90
+puis 140 degres de la surface initiale autour de l'axe defini
+par les points P1_AXE et P2_AXE

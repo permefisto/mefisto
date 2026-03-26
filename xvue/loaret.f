@@ -1,0 +1,35 @@
+      SUBROUTINE LOARET( NP, AMPLI, SOMMET, NS1, NS2, NCARET )
+C+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+C BUT :    TRACE UNE ARETE DE SOMMETS (NS1, NS2) AVEC LA COULEUR NCARET
+C -----
+C ENTREES :
+C ---------
+C NP      : CENTRE EN PIXELS DU LOGO
+C AMPLI   : FACTEUR D'AMPLIFICATION DES COORDONNEES DU LOGO
+C SOMMET  : XY EN INTEGER*2 DES 7 SOMMETS DU LOGO
+C NS1,NS2 : LES NUMEROS DANS SOMMET DES 2 SOMMETS DE L'ARETE
+C NCARET  : NUMERO DE LA COULEUR DE L'ARETE  (SI <0 PAS DE TRACE)
+C+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+C AUTEUR : PERRONNET ALAIN ANALYSE NUMERIQUE UPMC  PARIS  SEPTEMBRE 1994
+C2345X7..............................................................012
+      INTEGER   NP(2)
+      REAL      AMPLI
+      INTEGER*2 SOMMET(2,7)
+      INTRINSIC INT
+C
+      NX1 = INT( NP(1) + AMPLI * SOMMET(1,NS1) )
+      NX2 = INT( NP(1) + AMPLI * SOMMET(1,NS2) )
+C
+      NY1 = INT( NP(2) - AMPLI * SOMMET(2,NS1) )
+      NY2 = INT( NP(2) - AMPLI * SOMMET(2,NS2) )
+C
+C     TRACE DE L'ARETE
+      IF( NCARET .GE. 0 ) THEN
+         CALL XVEPAISSEUR( 3 )
+         CALL XVCOULEUR( NCARET )
+         CALL XVTRAIT( NX1, NY1, NX2, NY2 )
+         CALL XVEPAISSEUR( 0 )
+      ENDIF
+C
+      RETURN
+      END

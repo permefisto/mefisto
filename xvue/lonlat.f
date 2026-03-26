@@ -1,0 +1,43 @@
+      SUBROUTINE LONLAT( DEGLON, DEGLAT )
+C ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+C BUT :  DEFINIR POINT VISE ET OEIL EN FONCTION DE LONGITUDE ET LATITUDE
+C -----  TRAITER LE CAS OU POINT VISE = OEIL
+C
+C ENTREES :
+C ---------
+C DEGLON : DEGRES DE LONGITUDE COMPRIS ENTRE   0 ET 360 DEGRES
+C DEGLAT : DEGRES DE LATITUDE  COMPRIS ENTRE -90 ET  90 DEGRES
+C ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+C AUTEUR : PERRONNET ALAIN ANALYSE NUMERIQUE UPMC PARIS        JUIN 1994
+C ......................................................................
+      include"./incl/trvari.inc"
+C
+C     LA DISTANCE ENTRE L'OEIL ET LE POINT VISE PTV
+      AXODIS = SQRT( (AXOEIL(1)-AXOPTV(1)) ** 2 +
+     %               (AXOEIL(2)-AXOPTV(2)) ** 2 +
+     %               (AXOEIL(3)-AXOPTV(3)) ** 2  )
+C
+C     PROTECTION DANS LE CAS OU OEIL = PTV
+      IF( AXODIS .LE. 0 ) THEN
+         AXODIS = SQRT(AXOPTV(1) ** 2 + AXOPTV(2) ** 2 + AXOPTV(3) ** 2)
+         IF( AXODIS .LE. 1E-10 ) AXODIS = 1.0
+         AXODIS = AXODIS * 10.0
+      ENDIF
+C
+C     LONGITUDE ET LATITUDE EN RADIANS DE LA NOUVELLE POSITION DE L'OEIL
+      R      = ATAN(1.0)  / 45.0
+      RADLON = DEGLON * R
+      RADLAT = DEGLAT * R
+      COSLON = COS( RADLON )
+      SINLON = SIN( RADLON )
+      COSLAT = COS( RADLAT )
+      SINLAT = SIN( RADLAT )
+C     RAYON DANS LE PLAN XY
+      RXY    = AXODIS * COSLAT
+C
+      AXOEIL(1) = AXOPTV(1) + RXY    * COSLON
+      AXOEIL(2) = AXOPTV(2) + RXY    * SINLON
+      AXOEIL(3) = AXOPTV(3) + AXODIS * SINLAT
+C
+      RETURN
+      END

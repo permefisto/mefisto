@@ -1,0 +1,9 @@
+deftms ~>>>FLUXFR 'Flux de Chaleur sur les Frontieres de l OBJET'
+variable muet DATE 'date de creation du tableau'   reel2 ;
+variable muet NUTD 'numero du tableau descripteur' entier ;  
+variable NBCAFF 'Nombre de cas des flux frontieres' entier ;
+variable NTPLSF 'No du type des frontieres (1P 2L 3S)'  entier ; 
+variable NBPLSF 'Nombre de P ou L ou S aux frontieres' entier ;
+tableau  FLUXFR(1..NBPLSF,1..NBCAFF) 'FLUX NORMAL sur CHAQUE PLSF' reel2 ;
+tableau  NUPLSF(1..NBPLSF) 'No des PLS dans leur repertoire' entier ;
+fintms ;

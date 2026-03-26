@@ -1,0 +1,33 @@
+ , 4  : 'quadrangle B-SPLINE a partir de LIGNES B-SPLINES'
+  4: variable NBAXQB 'nombre d''aretes en X' entier ;
+     variable NBAYQB 'nombre d''aretes en Y' entier ;
+     variable RAGXQB 'raison geometrique d''espacement en X des sommets' reel ; 
+     variable RAGYQB 'raison geometrique d''espacement en Y des sommets' reel ; 
+     variable LDEXSB 'degre en X des polynomes' entier ;
+     variable LDEYSB 'degre en Y des polynomes' entier ;   
+     variable NBLIQB 'nombre de lignes B-SPLINES' entier ;   
+     tableau  NULIQB(1..NBLIQB) 'nom des lignes B-splines' ^~>LIGNE ;
+
+
+ , 5  : 'triangle BEZIER a partir de points de CONTROLE C0' 
+  5: variable NBARTB 'nombre d''aretes subdivision du triangle BEZIER' entier ;
+     variable LDEGTB 'degre des polynomes du triangle BEZIER' entier ;
+     variable NBPTTB 'nombre de points de controle du triangle' entier ;
+     tableau  NUPTTB(1..NBPTTB) 'nom des points de controle' ^~>POINT ;
+
+ , 7  : 'quadrangle C0 ALGEBRIQUE+PROJECTION sur des cercles'
+  7: tableau  NU4CAT(1..4)  'nom des 4 lignes des 4 cotes' ^~>LIGNE ; 
+     variable NBRPRO 'nombre de projections a definir' entier ; 
+     tableau  LIMITP(1..4,1..NBRPRO) 
+             'fenetre topologique IMIN-IMAX JMIN-JMAX de traitement' entier ;
+     tableau  PTAXEP(1..2,1..NBRPRO) 
+             'nom des 2 points de l''axe du cylindre ou du cercle' ^~>POINT ;
+     tableau  RAYONP(1..NBRPRO) 'rayon du cylindre ou du cercle' reel ;
+
+
+ , 40 : 'restructuration d''un quadrangle non structure'    
+ 40 : variable NUSUIN 'nom de la surface initiale'  ^~>SURFACE ;
+
+
+  , 41 : 'destructuration d''une surface structuree'
+ 41 : variable NUSUIN 'nom de la surface initiale'  ^~>SURFACE ;

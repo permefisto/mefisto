@@ -1,0 +1,237 @@
+      SUBROUTINE GIBBS( NBNOE, LPVOIS, LISTVOI, MNRENU )
+C ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+C BUT :    EXECUTION DE L ALGORITHME DE RENUMEROTATION DES NBNOE
+C -----    NOEUDS DU MAILLAGE PAR L'ALGORITHME DE GIBBS
+
+C ENTREES:
+C --------
+C NBNOE  : NOMBRE DE NOEUDS DES ELEMENTS FINIS DU MAILLAGE
+C LPVOIS : POINTEUR DERNIER NOEUD VOISIN DE CHAQUE NOEUD
+C LISTVOI: LISTE DES VOISINS
+
+C SORTIES:
+C --------
+C MNRENU : ADRESSE DANS MCN DE LA NOUVELLE NUMEROTATION
+C          RENU(I)=NOUVEAU NO DE L ANCIEN NO I
+C ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+C AUTEUR : BARGACH MOHAMED  ANALYSE NUMERIQUE UPMC PARIS    OCTOBRE 1989
+C MODIFS : DEFAIX THIERRY   ANALYSE NUMERIQUE UPMC PARIS   DECEMBRE 1989
+C MODIFS : ALAIN PERRONNET  Saint PIERRE du PERRAY            Mars  2021
+C23456---------------------------------------------------------------012
+C     LES VARIABLES DE GESTION DES MENUS ET AFFICHAGE DE DIAGNOSTICS
+      include"./incl/gsmenu.inc"
+      include"./incl/langue.inc"
+      include"./incl/pp.inc"
+      COMMON            MCN(MOTMCN)
+      COMMON /UNITES/   LECTEU, IMPRIM, NUNITE(30)
+      DOUBLE PRECISION  MAXPRI, MAXPRF
+      INTEGER           LPVOIS(0:NBNOE), LISTVOI(*),
+     %                  NSBNUM, NSTNODE, NSTNUM, NXC, NRVNODE
+
+C     INITIALISATIONS
+C     ===============
+      MNRENU1 = MNRENU - 1
+      LBD  = 0
+      LPRF = 0
+      DO I = 1, NBNOE+1
+         MCN(MNRENU1+I)=0
+      ENDDO
+
+C     CALCUL DES DEGRES DES NOEUDS
+C     ============================
+      IANDEG = 0
+      L2     = 4 * NBNOE + 4
+C     DECLARATION D'UN TABLEAU DE L2 ENTIERS
+      CALL TNMCDC( 'ENTIER', L2, IANDEG )
+      IALVL1 = IANDEG + NBNOE + 1
+      IALVL  = IALVL1 + NBNOE + 1
+      IALVL2 = IALVL  + NBNOE + 1
+      CALL GIBB2( NBNOE,  LISTVOI, LPVOIS,
+     %            MAXDEG, MCN(IANDEG), MAXLBD,  MAXPRI )
+
+C     PREPARATION DE LA RENUMEROTATION
+C     ================================
+      IANDEG1= IANDEG - 1
+      NSBNUM = 1
+      NSTNUM = NBNOE
+      DO I = 1, NBNOE
+         IF( MCN(IANDEG1+I) .LE. 0 ) THEN
+            MCN( MNRENU1+I ) = NSTNUM
+            NSTNUM = NSTNUM - 1
+         ENDIF
+      ENDDO
+
+C     ON CHERCHE UN NOEUD DE PLUS BAS DEGRE
+C     =====================================
+   30 LOWDG=MAXDEG-1
+      NFLG=1
+      ISDIR=1
+      DO 40 I=1,NBNOE
+         IF( MCN(IANDEG1+I) .GE. LOWDG ) GO TO 40
+         IF( MCN(MNRENU1+I)  .GT. 0    ) GO TO 40
+         LOWDG  = MCN(IANDEG1+I)
+         NSTNODE = I
+   40 ENDDO
+
+      IAIWK = 0
+      L3    = 3*NBNOE+3
+C     DECLARATION D'UN TABLEAU DE L3 ENTIERS
+      CALL TNMCDC( 'ENTIER', L3, IAIWK )
+      IANPER = IAIWK +NBNOE+1
+      IANDLS = IANPER+NBNOE+1
+      CALL GIBB3( NBNOE, LISTVOI, LPVOIS, IANDEG,
+     %            IALVL, IANPER, IANDLS, IAIWK,
+     %            NSTNODE, NRVNODE, IALVL1, IALVL2, IDFLT, IDPTH )
+C
+C     DESTRUCTION DU TABLEAU D'ADRESSE IAIWK
+      CALL TNMCDS('ENTIER',L3,IAIWK)
+
+C     FUSION DES DEUX STRUCTURES
+C     ==========================
+
+C     PREPARATION DE LA FUSION DES STRUCTURES
+C     ---------------------------------------
+      IF( MCN(IANDEG1+NSTNODE) .GT. MCN(IANDEG1+NRVNODE) ) THEN
+         NFLG = -1
+         NSTNODE = NRVNODE
+      ENDIF
+
+      IACCST=0
+      L4=3 * ( NBNOE + (IDPTH +1) + 1 )
+      CALL TNMCDC('ENTIER',L4,IACCST)
+      IANACU=IACCST+NBNOE+1
+      IANHIG=IANACU+IDPTH+1
+      IANLOW=IANHIG+NBNOE+1
+      IASIZE=IANLOW+NBNOE+1
+      IASTPT=IASIZE+IDPTH+1
+      CALL GIBB6( NBNOE, MCN(IALVL1), IDPTH,
+     %            MCN(IALVL2),
+     %            MCN(IALVL), MCN(IANACU) )
+      IF( NBNOE .LT. IDPTH ) GOTO 2000
+
+C     CONSTRUCTION DES COMPOSANTES CONNEXES
+C     -------------------------------------
+      NXC=0
+      LROOT=1
+      LVLN=1
+      DO I=1,NBNOE
+         IF (MCN(IALVL-1+I).EQ.0) THEN
+            NXC=NXC+1
+            MCN(IASTPT-1+NXC)=LROOT
+            CALL GIBB4( I, LISTVOI, LPVOIS,
+     %      MCN(IALVL), MCN(IACCST), LVLWTH, LVLBOT, LVLN, MAXLW, NBNOE)
+            MCN(IASIZE-1+NXC)=LVLBOT+LVLWTH-LROOT
+            LROOT=LVLBOT+LVLWTH
+            LVLN=LROOT
+         ENDIF
+      ENDDO
+
+      CALL GIBB7( NXC,  MCN(IASIZE),MCN(IASTPT),  TT)
+      IF(NBNOE.LT.IDPTH .OR. NBNOE.LT.NXC) GOTO 2000
+      IF(TT.NE.0) THEN
+         CALL GIBB8( MCN(IALVL1),MCN(IANACU),MCN(IACCST),MCN(IASIZE),
+     %               MCN(IASTPT),IDFLT,IDPTH,NXC,
+     %               MCN(IALVL2),MCN(IANHIG),MCN(IANLOW),
+     %               ISDIR      )
+         IF(NBNOE.LT.IDPTH .OR. NBNOE.LT.NXC) GOTO 2000
+      ENDIF
+C     DESTRUCTION DU TABLEAU
+      CALL TNMCDS('ENTIER',L4,IACCST)
+
+C     RENUMEROTATION
+C     --------------
+      ISDIR = ISDIR * NFLG
+      NUM   = NSBNUM
+      IF(ISDIR.LT.0) NUM = NSTNUM
+      IAIPFA = 0
+      L5     = 6 * NBNOE + IDPTH + 6
+C     DECLARATION DU TABLEAU DE L5 ENTIERS
+      CALL TNMCDC('ENTIER',L5,IAIPFA)
+      IALVLS = IAIPFA + NBNOE + 1
+      IALSTP = IALVLS + NBNOE + 1
+      IASTKA = IALSTP + IDPTH + 1
+      IASTKB = IASTKA + NBNOE + 1
+      IASTKC = IASTKB + NBNOE + 1
+      IASTKD = IASTKC + NBNOE + 1
+      CALL GIBB9( NBNOE,NSTNODE,NUM,ISDIR,NFLG,IDPTH,MAXDEG,
+     %            LISTVOI,LPVOIS,IALVL2,IANDEG,
+     %            IAIPFA,IALSTP,IALVLS,IASTKA,IASTKB,IASTKC,IASTKD,
+     %            MNRENU,LBD,LPRF )
+
+C     VERIFICATION DE LA VALIDITE
+C     ---------------------------
+      IF(NBNOE.LT.IDPTH .OR. NBNOE.LT.NXC) GOTO 2000
+
+C     DESTRUCTION DU TABLEAU
+      CALL TNMCDS('ENTIER',L5,IAIPFA)
+      IF (ISDIR.LT.0) NSTNUM = NUM
+      IF (ISDIR.GT.0) NSBNUM = NUM
+      IF (NSBNUM.LE.NSTNUM) GO TO 30
+      IF (LBD .GT. MAXLBD ) THEN
+         MCN(MNRENU) = 0
+         LPRF = INT( MAXPRI )
+         LBD  = MAXLBD
+      ENDIF
+
+C     DESTRUCTION DU TABLEAU NDEG
+      CALL TNMCDS( 'ENTIER', L2, IANDEG )
+
+      MAXPRF = LPRF
+      IF( LANGAG .EQ. 0 ) THEN
+         WRITE(IMPRIM,10900) NBNOE,MAXLBD,MAXPRI,LBD,MAXPRF
+      ELSE
+         WRITE(IMPRIM,20900) NBNOE,MAXLBD,MAXPRI,LBD,MAXPRF
+      ENDIF
+10900 FORMAT(/' RENUMEROTATION des',I8,
+     %        ' NOEUDS par la METHODE de GIBBS'
+     %       /' LARGEUR de BANDE INITIALE :',I13,3X,
+     %         'PROFIL INITIAL :',G25.17,
+     %       /' LARGEUR de BANDE FINALE   :',I13,3X,
+     %         'PROFIL FINAL   :',G25.17/)
+20900 FORMAT(/' RENUMBERING of',I8,
+     %        ' NODES by the GIBBS METHOD'
+     %       /' INITIAL BAND WIDTH :',I13,3X,
+     %         'INITIAL SKYLINE :',G25.17,
+     %       /' FINAL   BAND WIDTH :',I13,3X,
+     %         'FINAL   SKYLINE :',G25.17/)
+
+C     VERIFICATION DE LA CORRECTION DE LA PERMUTATION
+C     -----------------------------------------------
+      DO I = 1, NBNOE
+         NEW = MCN( MNRENU1+I )
+         IF( NEW.LT.0 .OR. NEW.GT.NBNOE ) THEN
+            PRINT*,'gibbs: Probleme dans la RENUMEROTATION des NOEUDS OL
+     %D Noeud=',I,' NEW Noeud=',NEW
+            GOTO 3000
+         endif
+      ENDDO
+
+      IF( MCN(MNRENU) .EQ. 0 ) THEN
+         DO I=1,NBNOE
+            MCN( MNRENU1+I ) = I
+         ENDDO
+      ENDIF
+
+      GOTO 1000
+
+C     TRAITEMENT DU DEBORDEMENT DE TABLEAU
+C     ------------------------------------
+ 2000 NBLGRC(NRERR) = 1
+      KERR(1) = ' ERREUR: gibbs TABLEAU MCN SATURE'
+      CALL LEREUR
+      WRITE(IMPRIM,12000) NBNOE,IDPTH,NXC
+12000 FORMAT('ERREUR GIBBS:NBNOE=',I12,' INSUFFISANT.IDPTH=',I12,
+     %' NXC=',I12/)
+
+C     TRAITEMENT D UNE ERREUR DANS LA PERMUTATION
+C     -------------------------------------------
+ 3000 NBLGRC(NRERR) = 1
+      KERR(1) = 'gibbs ERREUR: MAUVAISE PERMUTATION'
+      CALL LEREUR
+      WRITE(IMPRIM,13000) (K,MCN(MNRENU1+K),
+     %                     K=MAX(I-100,1),MIN(I+100,NBNOE))
+13000 FORMAT('ERREUR GIBBS:Un TERME DE LA PERMUTATION EST NEGATIF OU
+     %>NBNOE'/' TABLEAU ANCIEN=> NOUVEAU NO'/10(I6,'=>',I6,2X))
+
+ 1000 RETURN
+      END

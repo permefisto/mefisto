@@ -1,0 +1,4 @@
+variable ZEROS 'PRECISION to IDENTIFY POINTS' entier
+ ( 1  : 'NOT AROUND ZERO'
+ , 2  : 'AROUND ZERO'
+ , 3  : 'Return to INITIAL VALUES' ) ;

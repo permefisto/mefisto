@@ -1,0 +1,4 @@
+ARETBO is the wished length of edges 
+of the triangulation of the molecule boundary.
+This value can not be under the lowest radius
+of balls which form the molecule.

@@ -1,0 +1,29 @@
+      SUBROUTINE FIDAP
+C+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+C BUT :  FOURNIR LES DONNEES DU LOGICIEL FIDAP
+C -----
+C+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+C AUTEUR : ALAIN PERRONNET ANALYSE NUMERIQUE UPMC PARIS     FEVRIER 1998
+C2345X7..............................................................012
+C
+C     LECTURE DU MOT-CLE OU OPTION A EXECUTER
+ 10   CALL LIMTCL( 'fidap', NMTCL )
+C
+C     TRAITEMENT DE L'OPTION NMTCL
+      IF( NMTCL .LE.  0 ) GOTO 9000
+      GOTO( 100, 200, 300 ), NMTCL
+C
+C     FICHIER FIDAP DES XYZ DES SOMMETS ET ELEMENTS FINIS D'UN OBJET
+ 100  CALL FIDAPEF
+      GOTO 10
+C
+C     FICHIER FIDAP DES CONDITIONS AUX LIMITES
+ 200  CALL FIDAPCL
+      GOTO 10
+C
+C     FICHIER FIDAP DES CONDITIONS INITIALES
+ 300  CALL FIDAPCI
+      GOTO 10
+C
+ 9000 RETURN
+      END

@@ -1,0 +1,388 @@
+      SUBROUTINE DVSUEX( MXSOMM, NBSOM0, N1ST,   PXYD,
+     %                   MXTRIA, NBLFTR, NDARLF,
+     %                   MXSOAR, NOSOAR, NLSOFR,
+     %                   N1TRVI, NOTRIA, NOTRSO,
+     %                   NBTRIA, NDTRIA,
+     %                   MXPILE, NPILE , LETRSU,
+     %                   IERR )
+C+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+C BUT :    DESTRUCTION DES TRIANGLES EXTERIEURS
+C -----    CHAINAGE DES TRIANGLES INTERNES
+C
+C ENTREES:
+C --------
+C MXSOMM : NOMBRE MAXIMAL DE SOMMETS PERMIS POUR LA TRIANGULATION
+C NBSOM0 : NOMBRE ACTUEL DE SOMMETS ( INTERNES ET EXTERNES )
+C N1ST   : NUMERO PXYD DU PREMIER SOMMET MAILLE
+C PXYD   : TABLEAU DES COORDONNEES 2D DES POINTS
+C MXTRIA : NOMBRE MAXIMAL DE TRIANGLES DECLARABLES
+C NBLFTR : NOMBRE DE LIGNES FERMEES LIMITANT LA SURFACE A TRIANGULER
+C NDARLF : NUMERO DE LA PREMIERE ARETE DE CHAQUE LIGNE FERMEE DANS
+C          LE TABLEAU NOSOAR
+C MXSOAR : NOMBRE MAXIMAL D'ARETES FRONTIERES DECLARABLES
+C NOTRSO : NOTRSO(I) NUMERO D'UN TRIANGLE AYANT POUR SOMMET I
+C NOSOAR : NUMERO DES 2 SOMMETS DE CHAQUE ARETE ET
+C          POINTEUR SUR L'ARETE SUIVANTE
+C NLSOFR : NUMERO DE LA LIGNE FERMEE (1 A NBLFTR) DE CHAQUE SOMMET
+C         -NUMERO DE POINT INTERNE UTILISATEUR IMPOSE
+C          0 SI LE POINT EST INTERNE OU EXTERNE
+C NOTRIA : LISTE CHAINEE DES TRIANGLES
+C                 ------- ------- ------- -------- -------- --------
+C  PAR TRIANGLE : SOMMET1 SOMMET2 SOMMET3 TR_VOIS1 TR_VOIS2 TR_VOIS3
+C                 ------- ------- ------- -------- -------- --------
+C                 SOMMET    EST LE NUMERO DU SOMMET
+C                 TR_VOIS i EST LE NUMERO DANS NOTRIA DU TRIANGLE
+C                          ADJACENT PAR L'ARETE i
+C
+C TABLEAU AUXILIAIRE :
+C --------------------
+C NPILE(1:2,1:MXPILE) : MXPILE DOIT ETRE SUPERIEUR AU NOMBRE DE
+C                       TRIANGLES INTERNES DU FRONT DE RECHERCHE
+C LETRSU : NUMERO DANS NOTRIA DU TRIANGLE SUIVANT INTERNE
+C          0 SI PAS DE SUIVANT
+C         -1 SI TRIANGLE EXTERNE
+C
+C ENTREE ET SORTIE :
+C ------------------
+C N1TRVI : NUMERO DU PREMIER TRIANGLE VIDE DANS LE TABLEAU NOTRIA
+c          LES TRIANGLES VIDES SONT CHAINES PAR NOTRIA(4,.)
+C
+C SORTIES:
+C --------
+C NBTRIA : NOMBRE DE TRIANGLES INTERNES
+C NDTRIA : NUMERO NOTRIA DU DERNIER TRIANGLE INTERNE
+C IERR   : 0 SI PAS D'ERREUR
+C          1 SI SOMMET N1ST N'APPARTIENT PAS A LA FRONTIERE ENVELOPPE
+C         11 SATURATION DE LA PILE DES TRIANGLES INTERNES
+C+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+C AUTEUR : ALAIN PERRONNET  ANALYSE NUMERIQUE PARIS UPMC    JANVIER 1991
+C....................................................................012
+      include"./incl/gsmenu.inc"
+      COMMON / UNITES / LECTEU,IMPRIM,INTERA,NUNITE(29)
+      INTEGER           NOSOAR(3,MXSOAR),
+     %                  NDARLF(1:NBLFTR),
+     %                  NOTRIA(6,MXTRIA),
+     %                  LETRSU(MXPILE),
+     %                  NOTRSO(MXSOMM),
+     %                  NLSOFR(MXSOMM),
+     %                  NPILE(2,MXPILE)
+      DOUBLE PRECISION  PXYD(3,*),X,Y,COSINU,COSMAX
+C
+C     TOUS LES TRIANGLES SONT SUPPOSES EXTERNES
+      DO 1 I=1,MXPILE
+         LETRSU( I ) = -1
+ 1    CONTINUE
+C
+C     RECHERCHE DES ARETES DE LA FRONTIERE DE SOMMET N1ST
+C     ===================================================
+      NBARS1 = 0
+      NA1    = NDARLF(1)
+ 2    IF( NA1 .GT. 0 ) THEN
+         IF( NOSOAR(1,NA1).EQ.N1ST .OR. NOSOAR(2,NA1).EQ.N1ST ) THEN
+C           UNE ARETE FRONTALIERE DE PLUS DE SOMMET N1ST
+            NBARS1 = NBARS1 + 1
+            NPILE(1,NBARS1) = NA1
+         ENDIF
+         NA1 = NOSOAR(3,NA1)
+         GOTO 2
+      ENDIF
+      IF( NBARS1 .LE. 0 ) THEN
+         NBLGRC(NRERR) = 2
+         WRITE(KERR(MXLGER)(1:10), '(I10)' ) N1ST
+         KERR(1) = 'DVSUEX: SOMMET' // KERR(MXLGER)(1:10)
+         KERR(2) = 'NON SUR LA FRONTIERE ENVELOPPE'
+         CALL LEREUR
+         IERR = 1
+         GOTO 9999
+      ENDIF
+C
+C     TRI DES NBARS1 ARETES POUR TROUVER CELLE DE PLUS PETIT ANGLE AVEC OX
+C     ====================================================================
+      N2ST   = 0
+      COSMAX = -2
+      DO 3 I=1,NBARS1
+         NA1 = NPILE(1,I)
+         IF( NOSOAR(1,NA1) .EQ. N1ST ) THEN
+            NS2 = 2
+         ELSE
+            NS2 = 1
+         ENDIF
+         NS2 = NOSOAR(NS2,NA1)
+         X   = PXYD(1,NS2) - PXYD(1,N1ST)
+         Y   = PXYD(2,NS2) - PXYD(2,N1ST)
+         COSINU = X / SQRT( X * X + Y * Y )
+         IF( COSINU .GT. COSMAX ) THEN
+            COSMAX = COSINU
+            N2ST   = NS2
+         ENDIF
+ 3    CONTINUE
+C
+C     RECHERCHE PARMI LES TRIANGLES DE SOMMET N1ST DE L'ARETE
+C     N1ST-N2ST DE L'ENVELOPPE CONVEXE
+C     =======================================================
+C     PARCOURS DES TRIANGLES PAR LES ARETES DE SOMMET N1ST
+      NT0 = NOTRSO( N1ST )
+      NT1 = NT0
+C
+C     REPERAGE DES SOMMETS N2ST ET N1ST DANS NT1
+ 5    DO 7 I=1,3
+         IF( NOTRIA(I,NT1) .EQ. N2ST ) GOTO 11
+         IF( NOTRIA(I,NT1) .EQ. N1ST ) NA1 = I
+ 7    CONTINUE
+C
+C     N2ST NON RETROUVE. L'ARETE DE GAUCHE DE NA1
+      NT1 = NOTRIA(NA1+3,NT1)
+      IF( NT1 .EQ. 0 ) THEN
+C
+C        LE PARCOURS PASSE PAR 1 DES TRIANGLES EXTERIEURS
+C        LE PARCOURS EST INVERSE PAR L'ARETE DE GAUCHE
+         NT1 = NT0
+C        REPERAGE DES SOMMETS N2ST ET N1ST DANS NT1
+ 8       DO 9 I=1,3
+            IF( NOTRIA(I,NT1) .EQ. N2ST ) GOTO 11
+            IF( NOTRIA(I,NT1) .EQ. N1ST ) NA1 = I
+ 9       CONTINUE
+C
+C        N2ST NON RETROUVE. L'ARETE DE DROITE DE NA1
+         NA1 = NA1 + 2
+         IF( NA1 .EQ. 3 ) NA1 = 6
+         NT1 = NOTRIA(NA1,NT1)
+         IF( NT1 .EQ. 0   ) GOTO 10
+         IF( NT1 .NE. NT0 ) GOTO 8
+      ENDIF
+      IF( NT1 .NE. NT0 ) GOTO 5
+C
+ 10   WRITE(IMPRIM,*) 'DVSUEX: ERREUR N1ST-N2ST INATTEIGNABLE'
+      CALL XVPAUSE
+C
+C     L'ARETE N1ST-N2ST EST ELLE UNE ARETE DE L'ENVELOPPE
+C     DE LA FRONTIERE DE LA SURFACE?
+ 11   NA1 = NDARLF(1)
+C
+ 12   IF( NA1 .GT. 0 ) THEN
+C        LES SOMMETS DE L'ARETE NA1
+         NS3 = NOSOAR(1,NA1)
+         NS4 = NOSOAR(2,NA1)
+         IF( (NS4 .EQ. N1ST .AND. NS3 .EQ. N2ST) .OR.
+     %       (NS4 .EQ. N2ST .AND. NS3 .EQ. N1ST)) THEN
+C           ARETE RETROUVEE
+            GOTO 14
+         ENDIF
+C
+C        L'ARETE NE CONTIENT PAS N1ST OU N2ST
+C        PASSAGE A L'ARETE SUIVANTE
+         NA1 = NOSOAR(3,NA1)
+         GOTO 12
+      ENDIF
+C
+C     L'ARETE N'EST PAS SUR L'ENVELOPPE FRONTIERE DE LA SURFACE
+C     LE TRIANGLE NT1 EST EMPILE
+      LPILE = 1
+      NPILE(1,LPILE) = NT1
+      GOTO 15
+C
+C     L'ARETE N1ST-N2ST EST SUR LA FRONTIERE DE L'OBJET
+C     L'ARETE N1ST-N2ST EST L'ARETE I-1 DE NT1
+ 14   IF( I .NE. 1 ) THEN
+         I = I - 1
+      ELSE
+         I = 3
+      ENDIF
+C     MISE EN CONFORMITE AVEC 77 ( NT2 EST UN TRIANGLE INTERNE )
+      I   = I + 3
+      NT2 = NT1
+      GOTO 77
+C
+C     TANT QUE LA PILE DES TRIANGLES EXTERIEURS EST NON VIDE
+ 15   IF( LPILE .GT. 0 ) THEN
+C        LE TRIANGLE EXTERIEUR A TRAITER
+         NT1   = NPILE( 1 , LPILE )
+C        LE TRIANGLE EST DEPILE
+         LPILE = LPILE - 1
+C
+C        BOUCLE SUR SES 3 ARETES
+         DO 50 I=1,3
+            IF( NOTRIA(I+3,NT1) .LE. 0 ) GOTO 50
+            NS1 = NOTRIA(I,NT1)
+            NS2 = I + 1
+            IF( NS2 .EQ. 4 ) NS2 = 1
+            NS2 = NOTRIA(NS2,NT1)
+C
+C           CETTE ARETE EST ELLE DANS L'ENVELOPPE ?
+            NA1 = NDARLF(1)
+C
+ 20         IF( NA1 .GT. 0 ) THEN
+C              LES SOMMETS DE L'ARETE NA1
+               NS3 = NOSOAR(1,NA1)
+               NS4 = NOSOAR(2,NA1)
+               IF( NS3 .NE. NS1 ) THEN
+                  IF( NS4 .EQ. NS1 .AND. NS3 .EQ. NS2 ) THEN
+C                     ARETE RETROUVEE
+                      GOTO 70
+                  ENDIF
+               ELSE
+                  IF( NS4 .EQ. NS2 ) THEN
+C                     ARETE RETROUVEE
+                      GOTO 70
+                  ENDIF
+               ENDIF
+C
+C              L'ARETE NE CONTIENT PAS NS1 OU NS2
+C              PASSAGE A L'ARETE SUIVANTE
+               NA1 = NOSOAR(3,NA1)
+               GOTO 20
+            ENDIF
+C
+C           L'ARETE N'EST PAS SUR L'ENVELOPPE
+C           LE TRIANGLE DE L'AUTRE COTE EST EMPILE
+            NT2 = NOTRIA(I+3,NT1)
+            IF( NOTRIA(1,NT2) .GT. 0 ) THEN
+               LPILE = LPILE + 1
+               NPILE( 1 , LPILE ) = NT2
+            ENDIF
+ 50      CONTINUE
+C
+C        LE TRIANGLE NT1 EST DETRUIT
+         NOTRIA(1,NT1) = 0
+C
+C        PASSAGE AU TRIANGLE SUIVANT
+         GOTO 15
+      ENDIF
+C
+      WRITE(IMPRIM,*) 'DVSUEX: INTERIEUR NON RETROUVE'
+      CALL XVPAUSE
+C
+C     L'ARETE NA1 EST DANS L'ENVELOPPE AVEC LE TRIANGLE
+C     ADJACENT NT1 EXTERIEUR
+C     CHAINAGE DANS LETRSU DES TRIANGLES INTERNES
+C     ===========================================
+C     RECHERCHE DU 1-ER TRIANGLE INTERNE NT1 DE L'AUTRE COTE DE NA1
+ 70   NT2 = NOTRIA(I+3,NT1)
+C     LE NUMERO DE SON ARETE CONFONDUE AVEC CELLE DE NOSOAR
+      DO 75 I=4,6
+         IF( NOTRIA(I,NT2) .EQ. NT1 ) GOTO 77
+ 75   CONTINUE
+C
+C     N1TROC: NUMERO DU 1 PREMIER TRIANGLE INTERNE DANS LE TABLEAU NOTRIA
+ 77   N1TROC = 0
+C
+C     CE TRIANGLE NT2 ET L'ARETE I-3 SONT EMPILES
+      LPILE = 1
+      NPILE(1,LPILE) = NT2
+      NPILE(2,LPILE) = I-3
+C
+C     TANT QUE LA PILE EST NON VIDE FAIRE
+ 80   IF( LPILE .GT. 0 ) THEN
+C        LE NUMERO DU TRIANGLE INTERNE
+         NT1   = NPILE(1,LPILE)
+C        LE NUMERO LOCAL DE L'ARETE DANS CE TRIANGLE
+         NAR   = NPILE(2,LPILE)
+         LPILE = LPILE - 1
+C        LE TRIANGLE EST IL DEJA TRAITE ?
+         IF( LETRSU(NT1) .GE. 0 ) GOTO 80
+C
+C        NON: PARCOURS DES 2 AUTRES ARETES DU TRIANGLE NT1
+         DO 100 I=1,3
+            IF( NAR .NE. I ) THEN
+C
+C              LE NUMERO DANS NOTRIA DU TRIANGLE AU DELA
+               NT2 = NOTRIA(I+3,NT1)
+               IF( NT2 .LE. 0 ) GOTO 100
+C              CE TRIANGLE EST IL DEJA RECENSE ?
+               IF( LETRSU(NT2) .GE. 0 ) GOTO 100
+C
+C              LES 2 SOMMETS DE L'ARETE
+               NS1 = NOTRIA(I,NT1)
+               NS2 = I + 1
+               IF( NS2 .EQ. 4 ) NS2 = 1
+               NS2 = NOTRIA(NS2,NT1)
+C              LE NUMERO EVENTUEL DE LA LIGNE FERMEE DU SOMMET 1
+               L = NLSOFR( NS1 )
+               IF( L .GT. 0 .AND. L .EQ. NLSOFR(NS2) ) THEN
+C                 LES 2 SOMMETS SONT SUR LA MEME LIGNE FERMEE
+                  NA1 = NDARLF(L)
+C
+ 90               IF( NA1 .GT. 0 ) THEN
+C                    L'ARETE DE LA LIGNE FERMEE L
+                     NS3 = NOSOAR(1,NA1)
+                     NS4 = NOSOAR(2,NA1)
+                     IF( ( NS3 .EQ. NS1 .AND. NS4 .EQ. NS2 ) .OR.
+     %                   ( NS3 .EQ. NS2 .AND. NS4 .EQ. NS1 ) ) THEN
+C                       ARETE RETROUVEE
+                        GOTO 100
+                     ELSE
+C                       ARETE NON RETROUVEE PASSAGE A LA SUIVANTE
+                        NA1 = NOSOAR(3,NA1)
+                        GOTO 90
+                     ENDIF
+                  ENDIF
+               ENDIF
+C
+C              NS1-NS2 ARETE I DE NT1 N'EST PAS FRONTIERE
+C              LE TRIANGLE AU DELA EST EMPILE
+               LPILE = LPILE + 1
+               IF( LPILE .GT. MXPILE ) THEN
+                  NBLGRC(NRERR) = 2
+                  KERR(1) = 'SATURATION DE LA PILE'
+                  KERR(2) = 'DES TRIANGLES INTERNES'
+                  CALL LEREUR
+                  IERR = 11
+                  GOTO 9999
+               ENDIF
+C              RECHERCHE DE L'ARETE DANS NT2 ADJACENTE A NT1
+               DO 95 L=4,6
+                  IF( NOTRIA(L,NT2) .EQ. NT1 ) GOTO 97
+ 95            CONTINUE
+ 97            NPILE(2,LPILE) = L-3
+               NPILE(1,LPILE) = NT2
+            ENDIF
+ 100     CONTINUE
+C
+C        LE TRIANGLE NT1 EST CHAINE PARMI LES TRIANGLES INTERNES
+         IF( LETRSU(NT1) .LT. 0 ) THEN
+            LETRSU(NT1) = N1TROC
+            N1TROC = NT1
+         ENDIF
+         GOTO 80
+      ENDIF
+C
+C     ICI LETRSU(NT)=-1 SI LE TRIANGLE NT EST EXTERIEUR
+C                   > 0 SI LE TRIANGLE NT A UN TRIANGLE SUIVANT INTERNE
+C                   = 0 SI LE TRIANGLE NT EST INTERNE SANS TRIANGLE SUIVANT
+C
+C     DESTRUCTION EFFECTIVE DES TRIANGLES EXTERIEURS
+C     ==============================================
+      CALL AZEROI( NBSOM0 , NOTRSO )
+      NBTRIA = 0
+      NDTRIA = 0
+      DO 200 NT1=1,MXPILE
+         IF( LETRSU(NT1) .LT. 0 ) THEN
+            NOTRIA(1,NT1) = 0
+C           NT1 DEVIENT LE PREMIER TRIANGLE VIDE DE NOTRIA
+            NOTRIA(4,NT1) = N1TRVI
+            N1TRVI = NT1
+         ELSE
+C           LE PLUS GRAND NUMERO DANS NOTRIA DE TRIANGLE INTERNE
+            NDTRIA = NT1
+C           LE NOMBRE DE TRIANGLES INTERNES
+            NBTRIA = NBTRIA + 1
+C           SES 3 SOMMETS SONT MARQUES INTERNES
+C           SES 3 TRIANGLES ADJACENTS SONT RE-INITIALISES
+            DO 180 L=1,3
+               NS1 = NOTRIA(L,NT1)
+C              MISE A JOUR DU NUMERO DE TRIANGLE INTERNE DE SOMMET NS1
+               NOTRSO(NS1) = NT1
+C              LE TRIANGLE OPPOSE PAR L'ARETE L AU TRIANGLE NT1
+               NT2 = NOTRIA(3+L,NT1)
+               IF( NT2 .GT. 0 ) THEN
+                  IF( LETRSU(NT2) .LT. 0 ) THEN
+C                    LE TRIANGLE OPPOSE EST EXTERNE
+                     NOTRIA(3+L,NT1) = 0
+                  ENDIF
+               ENDIF
+ 180        CONTINUE
+         ENDIF
+ 200  CONTINUE
+C
+ 9999 RETURN
+      END

@@ -1,0 +1,44 @@
+{ ========================================================================= }
+{ MEFISTO Software     : December 2, 2021 version                           }
+{ USER's  Name         : Alain Perronnet                                    }
+{ Project Name         : Air around 3 Dennis 1m separated: TETRAHEDRIZATION }
+{ Date                 : 2 December 2021  10h 31m                           }
+{ ========================================================================= }
+
+DefVar Hight, WishEdge, AnglePlan;
+       Hight = 2.8;      { meter }
+       WishEdge = 0.05;  { meter }
+       AnglePlan = 10;   { degrees }
+
+4; { VOLUMES materials of the object }
+ D123_r_te;   { NAME of the VOLUME }
+  i;          { dans le LEXIQUE ~>TRANSFO }
+ 30;          { AMELIORATION de la QUALITE d une TETRAEDRISATION }
+              { NOM de VOLUME }
+ D123_v9;     { dans le LEXIQUE ~>VOLUME }
+ WishEdge;    { ARETGR LONGUEUR MAX de l''arete de la grille reguliere}
+ 0.1;         { QUTEMN qualite au dessous de laquelle ameliorer }
+ AnglePlan;   { ANTE2P 'DEGRES du petit angle de coplanearite }
+ 8;           { NBITAT 'Nombre des iterations pour ameliorer }
+@;
+@;
+@;
+
+90;   { EXPORT to SOFTWARES a PLSVO MESH }
+ 1;             { a File Mefisto xyznsef.v.d123_r_te of d123_r_te VOLUME }
+ 4;             { VOLUME }
+                { NAME of the VOLUME? }
+ d123_r_te;     { will be used with lower characters }
+ 0;             { WITHOUT TANGENTS }
+@;
+@;
+
+10;{ DRAWING of PLSVO meshes }
+ 4;             { VOLUME or VOLUMES }
+ 5;             { ONE VOLUME 1 PLANE of SECTION }
+                { NAME of the VOLUME? }
+ D123_r_te;
+ 90;            { Continue the DRAWING }
+ 3;             { Z=Constant }
+
+CLOSE;

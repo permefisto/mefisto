@@ -1,0 +1,5 @@
+variable INTERPOL 'INTERPOLATION TYPES' entier
+( 1 : 'AXISYMETRIC of DEGREE 1' ,
+  2 : 'AXISYMETRIC of DEGREE 2' ,
+  3 : 'LAGRANGE of DEGREE 1' ,
+  4 : 'LAGRANGE of DEGREE 2' ) ;

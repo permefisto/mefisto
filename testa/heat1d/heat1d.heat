@@ -1,0 +1,111 @@
+{ ==================================================================== }
+{ MEFISTO Software     : Version May 29-th 2009                        }
+{ USER's Name          : Alain Perronnet                               }
+{ Project Name         : heat1d   Test Mefisto for 1-dimension FE      }
+{                        Unsteady Heat Transfer Data                   }
+{ Date                 : 12/06/2009                                    }
+{ ==================================================================== }
+@;
+DefVar Rot; Rot=10; {Rot MASS Density}
+DefVar C;   C=1;    {C  MASSIC HEAT}
+DefVar k; k=0.1;    {k HEAT CONDUCTIVITY}
+DefVar CoefTemp; CoefTemp=0.01; {CT Coefficient in front of TEMPERATURE}
+DefVar TemperA; TemperA=10;  {Temperature at point A}
+DefVar TemperB; TemperB=20;  {Temperature at point B}
+
+DefVar Time0, Time1, Time2;  Time0 = 0;  Time1 = 2.0; Time2 = 2*Time1;
+DefVar NbStepT;  NbStepT=20;    { The number of time steps }
+DefVar TimeStep; TimeStep=(Time1-Time0) / NbStepT; { The step of time }
+
+DefFunc Exact_Temperature(Time,x,y,z)
+  Exact_Temperature=TemperA + (TemperB-TemperA) * x;
+EndFunc;
+
+DefFunc FOmega( Time, x, y, z, NO_TYPE_OBJECT, NO_OBJECT, TEMPER )
+  FOmega=CoefTemp *  Exact_Temperature(Time,x,y,z);
+EndFunc;
+
+2; { DATA for the STEADY HEAT PROBLEM }
+
+ { LINE: AB }
+   2; { density HEAT CONDUCTIVITY }
+     3; { 2D HOMOGENOUS ISOTROPIC material }
+     k; { CONDUC constant value of the material conductivity }
+
+   4; {FOmega INTERNAL HEAT SOURCE}
+    -1; { data by function }
+    FOmega; {Name of function}
+
+   6; { CT coefficient in front of TEMPERATURE }
+     1;        {type constant of coefficient}
+     CoefTemp; {value coefficient in front of temperature }
+   @;
+
+ { POINT: A }
+   3; { CONTACT imposed temperature  Dirichlet condition }
+     1; { contact constant }
+     TemperA; { imposed temperature at this point }
+   @;
+
+ { POINT: B }
+   3; { CONTACT imposed temperature  Dirichlet condition }
+     1; { contact constant }
+     TemperB; { imposed temperature at this point }
+   @;
+
+3; { SOLUTION of the STEADY LINEAR HEAT PROBLEM }
+   1; { Independent Coefficients of the TEMPERATURE }
+   1; { Solution by factorization CHOLESKY on skyline storage }
+@;
+
+{ ====================  The UNSTEADY HEAT PROBLEM  =======================}
+
+{Source = RotC dtemperature/dt
+        - k * Laplacien temperature
+        + V . gradient temperature
+        + CoefTemp * temperature }
+
+2; { DATA of the UNSTEADY HEAT PROBLEM PROBLEM }
+   { ONLY the MASS density and MASS HEAT density are added }
+   { BUT the SOURCE function has been modified }
+   { and a new version is given }
+
+ { LINE: AB }
+   1;     { Density of MASS }
+     1;   { constant mass }
+   Rot;   { value of the density of MASS }
+
+   7;     { Massic Heat of a PLSV }
+     1;   { constant massic heat }
+     C;   { value of the massic heat }
+   @;
+ { POINT: A  No new condition  }
+   @;
+ { POINT: B  No new condition  }
+   @;
+
+4;  { SOLVE the UNSTEADY HEAT PROBLEM on [Time0,Time1]}
+  1;       { [M] [K] g are INDEPENDENTS of TIME and TEMPERATURE }
+  Time0;   { INITIAL TIME of the study }
+  2;       { INITIAL TEMPERATURE is the already computed VECTEUR"TEMPERATURE }
+  Time1;   { FINAL TIME of the study }
+  TimeStep;{ Value of the constant STEP OF TIME }
+  NbStepT; { Number of VECTEUR"TEMPERATURE to add during the study }
+  1;       { Solution by factorization CHOLESKY on skyline storage }
+  1;       { Value of 1/2<=coefficient of the method<=1 }
+@;
+
+4; { SOLVE the UNSTEADY HEAT PROBLEM  on [Time1,Time2] npas STEPS MORE }
+  1;       { [M] [K] g are INDEPENDENTS of TIME and TEMPERATURE }
+  Time1;   { INITIAL TIME of the study }
+  2;       { INITIAL TEMPERATURE is the already computed VECTEUR"TEMPERATURE }
+  Time2;   { FINAL TIME of the study }
+  TimeStep;{ Value of the constant STEP OF TIME }
+  NbStepT; { Number of VECTEUR"TEMPERATURE to add during the study }
+  2;  1;   { Solution by PRECONDITIONED CONJUGUATE GRADIENT by 1 LEVEL }
+  1;       { Value of 1/2<=coefficient of the method<=1 }
+@;
+
+8; {DRAWING of the ERRORS}
+ 4; 15; 90;
+CLOSE;

@@ -1,0 +1,20 @@
+La fonction utilisateur (de nom quelconque a choisir)
+donne une valeur LOGIQUE au critere de selection du
+SOMMET de coordonnees x,y,z. 
+
+Elle doit comprendre dans cet ordre les 3 parametres  X Y Z
+et etre programmee selon la grammaire du langage LU
+(cf documentation et exemples du menu de depart ) 
+pour donner en sortie la valeur 1 pour vrai et <>1 pour faux
+
+A l'execution, les parametres X Y Z sont initialises.
+Ils peuvent ou non servir a calculer la valeur du critere.
+ 
+EXEMPLE:
+deffonc choisir( x , y , z ) ;
+ choisir = (x>0) et (x<=5) et ( (y-2)**2 + (z-3)**2 - 4 < 0 ) ;
+finfonc; 
+
+Cette fonction choisir selectionne les elements dont tous les
+sommets ont une abscisse x telle que  0<x<=5 et (y,z) est
+interne au cercle du plan yz centre en 2,3 et de rayon 2.

@@ -1,0 +1,4 @@
+variable ResoELIN 'Type RESOLUTION ELASTICITE INSTATIONNAIRE' entier
+(1: 'MASSE YOUNG POISSON NE dependent PAS du TEMPS',
+ 2: 'au moins UNE FORCE depend du TEMPS et DEPLACEMENT',
+ 3: 'UN des COEFFICIENTS depend du TEMPS et DEPLACEMENT' ) ;

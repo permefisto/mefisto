@@ -1,0 +1,24 @@
+#
+#  Alain PERRONNET   Juin 1997
+#
+# Copier les fichiers .am dans chaque repertoire afin d'obtenir
+# la VERSION SANS MOTIF des sous-programmes
+#
+echo ==========================================
+echo Construire la version Mefisto  SANS  Motif
+echo ==========================================
+for i in util xvue
+do
+  cd $MEFISTO/$i
+  echo Librairie $MEFISTO/$i
+  for j in `ls *.*.sm`
+  do
+    nomsp=`basename $j .sm`
+    echo Copie de $i/$j dans $i/$nomsp
+    cp $j $nomsp
+  done
+done
+
+cd $MEFISTO/bin
+echo Copie de bin/ccxvue.sm dans bin/ccxvue
+cp ccxvue.sm ccxvue

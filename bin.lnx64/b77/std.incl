@@ -1,0 +1,25 @@
+%include'params.incl'
+c
+      character*80 text(5000),texto(7000) 
+      character*32 mot_init(1000)   {liste des mots a remplacer}
+      character*6  new_mot(1000)    {correspondance nouveau nom}
+      character*6  new_id(2000)    {correspondance nouveau nom identificateur}
+      integer typ_id(2000)
+      character*60 nom_include
+      integer l_mot1(1000),l_mot2(1000)
+      integer nbremp
+      integer pile_do(50),nb_do
+      logical comment,indent,blancs,flageti(10000),flag_implicit
+      common /comtext/ text,texto,mot_init,new_mot,nom_include,
+     +                 new_id
+      common /comlig/  lig,ligo,comment,indent,blancs,l_mot1,l_mot2,
+     +                 nblig,nbinclude,nbremp,pile_do,nb_do,typ_id,
+     +                 nu_max,flageti,flag_implicit,nbprefix
+      integer nbprefix
+      integer maxprefix
+      parameter (maxprefix=16)
+
+
+      common/csr_idir/prefix
+      character*32 prefix(maxprefix)
+

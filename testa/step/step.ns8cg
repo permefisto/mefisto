@@ -1,0 +1,134 @@
+{ =============================================================== }
+{ MEFISTO Software     : May 24-th 2011 Version                   }
+{ USER's  Name         : Alain Perronnet                          }
+{ Project Name         : step   Flow over a Backward Facing Step  }
+{ Date                 : 2011/05/24                               }
+{ =============================================================== }
+
+{Data of workshop}
+DefVar Reynolds; Reynolds= 500;
+DefVar Umax;     Umax    =  1;
+DefVar UmaxDE;   UmaxDE  = Umax * hi/ht;
+DefVar Nu;       Nu      = Umax * (ht-hi)/Reynolds;
+display Reynolds, Umax, UmaxDE, Nu;
+
+DefFunc FixedVelocity(t,x,y,z,ntyob,numob,nocomp);
+DefVar s;
+FixedVelocity=0;
+if nocomp=1 then
+   if x<L then
+      s = (y-hstep)/hi;
+      FixedVelocity = 4*s*(1-s) * Umax;
+   else
+      if x>=L then
+         s = y/ht;
+         FixedVelocity = 4*s*(1-s) * UmaxDE;
+      endif; 
+   endif
+EndIf;
+EndFunc;
+
+DefFunc InitialVelocity(t,x,y,z,ntyob,numob,nocomp);
+InitialVelocity=0;
+if nocomp=1 and y>hstep then
+   InitialVelocity = FixedVelocity(t,x,y,z,ntyob,numob,nocomp);
+EndIf;
+EndFunc;
+
+
+2;  { FLUID INPUT DATA }
+
+ { SURFACE: MARCHE }{ The Fluid Characteristics =======================}
+ 1;    { Rho MASS Density of FLUID }
+ 1;    { Mass Constant }
+ 1.0;  { DMASSE Value of the constant mass density }
+
+ 2;    { FLUID DYNAMIC VISCOSITY }
+ 1;    { Constant Dynamic Viscosity }
+ Nu;   { Constant Dynamic Viscosity value }
+
+ 8;    { PRESSURE Coefficient }
+ 1;    { PRESSURE Constant Coefficient }
+ 1.0;  { PRESSURE Constant Coefficient value }
+
+ 4;    { INITIAL VELOCITIES ==========================================}
+-1;    { Initial Velocity Function }
+ 2;    { NBCOVI Number of Initial Velocity Components at a node }
+ 1; 2; { NUCOVI(1..NBCOVI) Number of Initial Velocity Components }
+ InitialVelocity; { initial velocity function name }
+
+ 5;    { INITIAL PRESSURE ============================================}
+ 1;    { CONSTANT INITIAL PRESSURE }
+ 0.0;  { Constant Initial Pressure Value }
+
+ @;
+
+ { LINE : AB } { The Boundary Conditions ===========================}
+ 2; { Fixation of the VELOCITY }
+ 1; { Constant Fixed Velocity }
+ 2; { NBCOBV number of components of the fixed Velocity }
+ 1; 2; { NUCOBV(1..NBCOBV) nb of each component of the fixed velocity}
+ 0.0; 0.0; {X & Y-Velocity }
+ @;
+
+ { LINE : BC } { The Boundary Conditions ===========================}
+ 2; { Fixation of the VELOCITY }
+ 1; { Constant Fixed Velocity }
+ 2; { NBCOBV number of components of the fixed Velocity }
+ 1; 2; { NUCOBV(1..NBCOBV) nb of each component of the fixed velocity}
+ 0.0; 0.0; {X & Y-Velocity }
+ @;
+
+ { LINE : CD } { The Boundary Conditions ===========================}
+ 2; { Fixation of the VELOCITY }
+ 1; { Constant Fixed Velocity }
+ 2; { NBCOBV number of components of the fixed Velocity }
+ 1; 2; { NUCOBV(1..NBCOBV) nb of each component of the fixed velocity}
+ 0.0; 0.0; {X & Y-Velocity }
+ @;
+
+ { LINE : DE } { The Boundary Conditions ===========================}
+ 2; { Fixation of the VELOCITY }
+-1; { Fixed Velocity Function }
+ 2; { NBCOBV number of components of the fixed Velocity }
+ 1; 2; { NUCOBV(1..NBCOBV) nb of each component of the fixed velocity}
+ FixedVelocity; { Name of velocity function }
+ @;
+
+ { LINE : EF } { The Boundary Conditions ===========================}
+ 2; { Fixation of the VELOCITY }
+ 1; { Constant Fixed Velocity }
+ 2; { NBCOBV number of components of the fixed Velocity }
+ 1; 2; { NUCOBV(1..NBCOBV) nb of each component of the fixed velocity}
+ 0.0; 0.0; {X & Y-Velocity }
+ @;
+
+ { LINE : FA } { The Boundary Conditions ===========================}
+ 2; { Fixation of the VELOCITY }
+-1; { Fixed Velocity Function }
+ 2; { NBCOBV number of components of the fixed Velocity }
+ 1; 2; { NUCOBV(1..NBCOBV) nb of each component of the fixed velocity}
+ FixedVelocity; { Name of velocity function }
+ @;
+
+ { POINT : D } { The Boundary Conditions ===========================}
+ 3;   { BLOCKING-UP the IMPOSED PRESSURE }
+ 1;   { Fixed Pressure CONSTANT }
+ 0.0; { Pressure CONSTANT VALUE }
+ @;
+
+20;    { PRECISION DATA  to STOP the CONJUGATE GRADIENT ITERATIONS }
+ 1e-6; { EPSILON   VALUE to STOP the CONJUGATE GRADIENT ITERATIONS }
+@;
+
+8;  { UNSTEADY FRACTIONAL NAVIER-STOKES FLUID SOLVER ==================}
+   2;   { CONDENSED MATRIX CONJUGATE GRADIENT + FACTORIZATION LEVEL }
+     1; { FACTORIZATION LEVEL VALUE (0 or 1 or 2) }
+  0.0;  { INITIAL TIME }
+ 25.0;  { FINAL   TIME }
+  0.1;  { STEP of TIME }
+   25;  { NUMBER of ADDED SOLUTION VECTORS }
+@;
+@;
+
+CLOSE;

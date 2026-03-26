@@ -1,0 +1,105 @@
+SUBROUTINE CONVECTH( tn, tn1, NDIM,   NBNOVI, XYZPOI, &
+                     NBNOEF, NBELEM,  NUNOEF, NU1EFN, &
+                     MOARET, MXARET,  MNLARE, &
+                     MOFACE, MXFACE,  MNLFAC, &
+                     NDDLNO, VXYZPN0, VITMAX0, &
+                     VITCON, IERR )
+! ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+! BUT : CALCUL DE LA VITESSE ui(tn,X(tn;tn+1,NONOEU)) CONVECTEE EN TOUS
+! ----- LES NOEUDS DU MAILLAGE DE TRIANGLES ou TETRAEDRES TAYLOR-HOOD
+!       PAR REMONTEE DE LA CARACTERISTIQUE en chaqueNOEUD sur UN TEMPS DT
+!       PROBLEME de NAVIER STOKES sur des EF TAYLOR HOOD
+!       INTEGRATION RETROGRADE DES CARACTERISTIQUES cf O. PIRONNEAU
+!       POLYNOME LAGRANGE DE DEGRE 2 POUR LA VITESSE
+!       POLYNOME LAGRANGE DE DEGRE 1 POUR LA PRESSION
+!       TRIANGLE ELEMENT FINI: e ref -> e EST P1 POUR CHAQUE COORDONNEE
+!
+! ENTREES:
+! --------
+! tn, tn1: INTERVALLE DE TEMPS tn tn+1  => DT PAS du TEMPS = tn1-tn
+! DT     : LE PAS DE TEMPS ENTRE tn ET tn+1
+! NBNOVI : NOMBRE DE NOEUDS DU MAILLAGE
+! XYZPOI : 3 COORDONNEES DES SOMMETS ET MILIEUX DES ARETES DES EF
+! NBNOEF : NOMBRE DE NOEUDS D'UN TRIANGLE = 6 et TETRAEDRE = 10
+! NBELEM : NOMBRE DE TETRAEDRES DU MAILLAGE
+! NUNOEF : NUMERO DES 3 ou 4 SOMMETS ET 3 ou 6 MILIEUX DES ARETES DES EF
+! NU1EFN : NUMERO D'UN EF CONTENANT LE NOEUD
+
+! MOFACE : NOMBRE DE MOTS DE CHAQUE FACE DU TABLEAU LFACES
+! MXFACE : NOMBRE MAXIMAL D'FACES DU TABLEAU LFACES
+! MNLFAC : ADRESSE MCN DU TABLEAU LFACES cf hachag.f
+
+! NDDLNO : TABLEAU DES POINTEURS SUR LE DERNIER DL DE CHAQUE NOEUD FLUIDE
+!          CE TABLEAU EST DIMENSIONNE A 1+NBNOEU
+! VXYZPN0: VECTEUR GLOBAL des DL VITESSES-PRESSIONS (1:NTDL) au TEMPS tn
+! VITMAX0: NORME DE LA VITESSE MAXIMALE DE VXYZPN0 AUX NOEUDS
+!
+! SORTIES:
+! --------
+! VITCON : VITESSE CONVECTEE de DT aux NOEUDS  ui(tn,X(tn;tn+1,NONOEU))
+! IERR   : CODE D'ERREUR 0 PAS D'ERREUR, >0 SINON
+!+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+! AUTEUR : ALAIN PERRONNET LJLL UPMC & St Pierre du Perray Decembre 2012
+!23456---------------------------------------------------------------012
+!$ USE OMP_LIB
+   IMPLICIT NONE
+      include"./incl/threads.inc"
+      REAL               tn, tn1, DT, XYZPOI(3,NBNOVI)
+      INTEGER            NDIM,   NBNOVI, NBNOEF, NBELEM, &
+                         MOARET, MXARET, MNLARE, &
+                         MOFACE, MXFACE, MNLFAC, &
+                         NUNOEF(NBELEM,NBNOEF), NDDLNO(0:NBNOVI), &
+                         NU1EFN(NBNOVI), IERR
+      DOUBLE PRECISION   VXYZPN0(1:*), VITMAX0, VITCON(NBNOVI,NDIM)
+
+      DOUBLE PRECISION   V(3)
+      INTEGER            NONOEU
+
+!$OMP PARALLEL DEFAULT(SHARED) PRIVATE(NONOEU,V)
+
+!     PAS DE TEMPS ENTRE tn et tn+1
+      DT = tn1 - tn
+
+      IF( NDIM .EQ. 2 ) THEN
+
+!        TRIANGLES TAYLOR-HOOD
+!$OMP DO SCHEDULE( STATIC, NBNOVI/NBTHREADS )
+         DO NONOEU = 1, NBNOVI
+
+!           VITESSE CONVECTEE DU NOEUD NONOEU
+            CALL CONVECTH2( NONOEU,  NU1EFN(NONOEU), NBELEM, NUNOEF, &
+                            MOARET,  MXARET, MNLARE, DT, XYZPOI, NDDLNO, &
+                            VXYZPN0, VITMAX0, &
+                            V,       IERR )
+            VITCON(NONOEU,1) = V(1)
+            VITCON(NONOEU,2) = V(2)
+
+         ENDDO
+!$OMP END DO
+
+      ELSE
+
+!        TETRAEDRES TAYLOR-HOOD
+!$OMP DO SCHEDULE( STATIC, NBNOVI/NBTHREADS )
+         DO NONOEU = 1, NBNOVI
+
+!           VITESSE CONVECTEE DU NOEUD NONOEU
+            CALL CONVECTH3( NONOEU,  NU1EFN(NONOEU), NBELEM, NUNOEF, &
+                            MOFACE,  MXFACE, MNLFAC, DT, XYZPOI, NDDLNO, &
+                            VXYZPN0, VITMAX0, &
+                            V,       IERR )
+            VITCON(NONOEU,1) = V(1)
+            VITCON(NONOEU,2) = V(2)
+            VITCON(NONOEU,3) = V(3)
+
+         ENDDO
+!$OMP END DO
+
+      ENDIF
+!$OMP END PARALLEL
+
+!!!      call affvect( 'convecth.f: VITESSEx',     20,      VITCON )
+!!!      call afl1ve(  'convecth.f: VITESSE ', NBNOVI*NDIM, VITCON )
+
+      RETURN
+END SUBROUTINE CONVECTH

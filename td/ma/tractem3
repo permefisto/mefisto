@@ -1,0 +1,7 @@
+variable TRACTEM3 'Drawings of 3d SOLUTIONS' entier
+ (  1 :  'ISO-SOLUTION SURFACES'
+ ,  2 :  'ZONES of ISO-SOLUTION COLORS'
+ ,  3 :  'ZONES by CUTTING PLANES X or Y or Z=Const'
+ ,  4 :  'PROFILES by CUTTING PLANES X or Y or Z=Const'
+ ,  5 :  'ALONG A LINE DEFINED BY 2 POINTS'
+ ,  8 :  'ABSOLUTE ERROR from EXACT_SOLUTION() GIVEN' ) ;

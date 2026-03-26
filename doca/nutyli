@@ -1,0 +1,320 @@
+SOME NOTIONS on a MESH of a LINE:
+=================================
+
+The mesh of a LINE is a set of EDGES, 
+stored in 2 TMS a___xyzsommet and a___nsef,
+defined by:
+
+- NBSOM 3D vertices of coordinates (Xi,Yi,Zi) in a___xyzsommet TMS
+- the array of (number vertex1, number vertex2) for the NBEFOB EDGES
+
+        V1*................*V2
+      A straigth edge (P1 interpolation)
+
+Eventually,
+- NBTGS 3D tangents of components (TXi,TYi,TZi) in a___xyzsommet TMS
+- the array of (number tangent1, number tangent2)
+at the 2 vertices of the NBEFTG EDGES or CURVED EDGES in a___nsef TMS
+
+This storage permits a parametrization of the edge by polynameials
+of degree 3 (Hermite interpolation)
+
+             ^                  ^
+            /                    \
+           /                      \
+      TG1 /      .   .    .        \TG2
+         /   .                 .    \
+        / .                        . \
+       /.                            .\
+    V1*                                *V2
+        A curved edge (P3 interpolation)
+
+In fact, if the line is simply connex and opened, it is sufficient
+to store the number NBSOM=NBEFOB+1 of vertices and use an implicit 
+numbering (i,i+1) for the 2 vertices (and 2 tangents) of the edge i.
+In this case, the mesh is said STRUCTURED, else, it is said UNSTRUCTURED
+
+
+A number of edges of the LINE is often demanded.
+Estimate the length of edges before to give this value.
+The heterogeneity of edge lengths can not produce good FE qualities
+A large and a small edge at a same vertex
+can not produce regular triangles or tetrahedra...
+
+A geometrical ratio on the edge lengths is demanded
+Give the geometrical ratio RATIO of the lengths Li of edges:
+To have a list of values Li  with Li+1 / Li = RATIO
+- constant   choose RATIO=1
+- ascending  choose RATIO>1
+- descending choose RATIO<1
+It is reasonable to choose RATIO value in the vicinity of 1.0!
+A 0<ratio<1 => small edges at the superior part
+A   ratio>1 => small edges at the inferior part
+
+Attention:
+These 2 values, edge number and geometrical ratio becomes INEFFICIENT
+if a User's function TAILLE_IDEALE(x,y,z) HAS BEEN GIVEN!
+In this case, these 2 values are not used, but MUST BE GIVEN! Sorry.
+The mesh algorithms compute the edges to satisfy the
+edge length, result of the call of TAILLE_IDEALE(x,y,z) and
+this is not compatible to a fixed number of edges!
+
+Attention:
+For STRUCTURED MESHES as STRUCTURED TRIANGLE or
+STRUCTURED QUADRANGLE, the call of TAILLE_IDEALE(x,y,z) is not
+done because the mesh algorithm is not compatible with!
+
+Example for the input of Taille_Ideale:
+DefVar lxf,lh2,lh3;
+lh2=0.3;
+lh3=0.7;
+lxf=max(lh2,lh3);
+
+DefFunc Taille_Ideale(x,y,z);
+  Taille_Ideale=0.45;
+  If x<lxf and y>-(lh3+lh2)*1.2
+    Then Taille_Ideale=0.15;
+  Else
+    If x<lxf and y>-(lh3+lh2)*1.8
+    Then Taille_Ideale=0.28;
+    EndIf;
+  EndIf;
+EndFunc;
+
+
+A LINE MAY BE CONSTRUCTED BY THE FOLLOWING OPTIONS:
+
+2 : STRAIGHT LINE
+    Example: LINE2; I; 2; 25; 1; P1; P2;
+    define a straigth line from P1 to P2 with
+    25 edges of same length
+
+3 : ARC OF CIRCLE PASSING BY 3 3D-POINTS
+    Example: LINE3; I; 3; 35; 1.1; P1; P2; P3;
+    define 35 edges of vertices on the arc of circle
+    of extremities P1 P2, passing by P3 (between P1 and P2)
+    The edge lengths have a ratio of 1.1.
+    Thus, the nearest edges from P1 are smaller than
+    the nearest edges of P2.
+
+4 : ARC OF CIRCLE PASSING BY 2+1 POINTS+RADIUS
+    Example: LINE4; I; 4; 35; 1.1; P1; P2; P3; 1.5;
+    define 35 edges of vertices on the arc of circle P1-P2
+    de radius 1.5 in the plane P1 P2 P3.
+    As 2 circles are possibles, the centre of chosen circle
+   is the nearest of the P3 point
+
+5 : ARC OF ELLIPSE OF R2 BY CENTRE AND XY AXES
+    Example: LINE5; I; 5; 22; CENTR; 5; 3; P1; P2; -1;
+    define 22 edges on the arc of ellipse from P2 to P1
+    ellipse of centre the point CENTR and with main axes
+    X of major radius 5 an Y of minor radius 3.
+
+6 : LIST OF POINTS NAMED BY YOU
+    Example: LINE6; I; 1; 5; P1;P2;P3;P4;P5;
+    define a line of 4 edges P1-P2, P2-P3, P3-P4, P4-P5
+    Only ONE edge between 2 successive points
+
+7 : LIST OF VERTICES DEFINED BY THEIRS X Y Z
+    Example: LINE7; I; 3;  0; 0; 0;  1; 0; 0;  1; 1; 0;
+    define a line of 2 edges defined by 3 vertices  
+    Only ONE edge between 2 successive vertices
+
+8 : COMPLETE 3D CIRCLE
+    Example: LINE8.1; I; 8; 24; 1; P1;P2;P3;
+    define 24 edges of constant length, of vertices on
+    the circle passing by P1 P2 and P3. 
+    Example: LINE8.2; I; 8; 28; 2;
+             CENTRE; PT_ON_CIRCLE; P_PLANE;
+    define a closed line unstructured of 28 edges of constant length
+    of vertices on the circle defined by the point CENTRE,
+    passing by PT_ON_CIRCLE and in the PLANE defined
+    by the 3 points CENTRE  PT_ON_CIRCLE  P_PLANE
+
+9 : COMPLETE 2D ELLIPSE
+    Example: LINE9; I; 9; 23; CENTRE; 5; 3;
+    define 23 edges on the ellipse of centre the point CENTR and
+    main axes X of major radius 5 et Y minus radius 3.
+
+10: DATA OF ARRAYS XYZSOMMET ET NSEF
+    These 2 arrays will be initialized value by value:
+    . the first array contains the number and 
+      the 3 coordinates of edge vertices
+    . the second array contains the vertex number of 2 extremities 
+      of every edge
+    Example: LINE10; I; 10;
+             3;0;3;   0;0;0; 1;0;0;  0.5;sqrt(3)/2;0; {3 vertices}
+             2; 1; 2; 0; {line closed 2vertices/edge 0tg}
+             3; 0; 0; 0; {3edges line 0tg unstructured}
+             1;2; 2;3; 3;1; {number of 2 vertices of 3 edges}
+    define a line composed of 3 edges of length 1,
+    contour of a regular triangle
+
+11: OPENED B-SPLINE FROM INTERPOLATION POINTS
+    a B-spline is a parameterized curve by piecewise polynomials
+    It is  possible to define
+    the degree of polynomials
+    the number and the name of interpolation points
+    the number of edges on this curve
+    the length of edges may follow a geometrical ratio
+    ATTENTION: the number of interpolation points must be
+               > degree of polynomials
+               the curve degree-1 differential continuous
+    Example: LINE11; I; 11;
+             50; 1.2; 3; 5; P1;P2;P3;P4;P5;
+    define a curve formed of 50 edges, of lengths
+    following a geometrical ratio 1.2 and passing by the 5 points,
+    of components piecewise polynomials of degree 3
+    Attention: 
+    To obtain the interpolation points as vertices of the mesh
+    choose a ratio=1 and an edge number = k (number of points-1)
+         
+12: OPENED B-SPLINE FROM CONTROL POINTS
+    The curve is of same type as the previous 11, but the points
+     are not interpolation points, but control points.
+    Execpted the extremities, the control points are NOT on the curve
+    Example: LINE12; I; 12;
+             45; 1; 2; 5; P1;P2;P3;P4;P5;
+    define a curve formed of 45 edges, of constant lengths,
+    of components piecewise polynomials of degree 2
+    de tailles constantes, polynomiale par morceaux de
+    passing by P1 and P5 only, and 
+    tangent at P1 to P1-P2 and P4-P5 at P5.
+
+21: CLOSED B-SPLINE FROM INTERPOLATION POINTS
+22: CLOSED B-SPLINE FROM CONTROL POINTS
+    Same types of lines as options 11; 12; with the difference that
+    Example: LINE21; I; 21; 50; 1; 3; 8;  P1;P2;P3;P4;P5;P6;P7;P8; 
+  { vertices P2 P4 P6 P8 et middles of a square P1 P3 P5 P7 }
+    define a closed curve formed of 50 edges, with components
+    piecewise polynomials of degree 3 and passing by the 8 points.
+    The 9th point is implicitly P1.
+
+24: INTERSECTION OF PLANE-TRUNCATED CONE
+    the plane is defined by 3 points.
+    the troncated cone is defined by 2 points on its axis,
+    the radius of circle of the section in the orthogonal plane
+    to the axis at each of these 2 points
+    Remark: a TRONCATED CONE becomes a CYLINDRE if the 2 radii are equals
+    Attention: These 2 planes delimit also some edges of the intersection
+    and the line may be opened or closed, composed of one or many pieces.
+
+25: INTERSECTION OF PLANE-ELLIPSOID
+    the plane is defined by 3 points.
+    The ellipsoid is defined by its centre and
+    the 3 points located at the half axis extremities
+    Of course, the reference system defined by these points
+    must be DIRECT!
+
+26: INTERSECTION OF 2 TRUNCATED CONES
+    the troncated cone is defined by 2 points on its axis,
+    the radius of circle of the section in the orthogonal plane
+    to the axis at each of these 2 points
+    Remark: a TRONCATED CONE becomes a CYLINDRE if the 2 radii are equals
+    Attention: These 2 planes delimit also some edges of the intersection
+    and the line may be opened or closed, composed of one or many pieces.
+
+27: INTERSECTION OF 2 CYLINDERS ONE WITH Z-AXIS & THE SECOND
+    with X or Y-axis centred at the ORIGIN of axes.
+    the Z-axis cylinder must have the smallest radius.
+    the line intersection is defined by
+    - an angular sector of longitude TETA0 and TETA1
+    - its Z cote Z positive or negative. 
+    Example: INTERSECTION; I; 27; 15; 2; 10; 5; -90; 90; -1;
+    line intersection of 2 cylinders of Z-axis of radius 5
+    and Y-axis of radius 10, formed of 15 edges from the
+    longitude (angle with x in the plan XY) -90 degrees (-Y)
+    and 90 degrees (+Y) for negative to choose the inferior
+    intersection line
+
+28: FILLET LINE WITH A TANGENT CIRCLE
+    It is a segment, followed by a tangent arc of circle,
+    followed by a new tangent segment.
+    The fillet is defined by 3 points P1 P2 P3 cf figure
+
+                P1--------------- .      * P2      
+                                     .     
+                                       .   
+                                        . 
+                                        |
+                                        |  
+                                        |
+                                        P3
+    Example: L28; I; 28; 33; 1; {radius of the arc of circle} 
+             P1;P2;P3;
+    define a line from P1, formed of 33 edges,
+    tangent at an arc of circle of radius 1 to the segment P1-P2,
+    and tangent to the segment P2-P3.
+    the point P2 is NOT on the line. 
+
+35: EXTRACTED EDGES OF A LINE BY EDGE NUMBERS
+    Every edge of number between the first and second input number
+    is an edge of the extracted line 
+    Example: L35; I; 35; INITIAL_LINE; 5; 15;
+    extract the edges 5 to 15 of INITIAL_LINE.
+
+36: EXTRACTED EDGES OF A LINE BY A CRITERION
+    Every edge of the 3 coordinates of its 2 vertices which
+    returns true for the criterion, is an edge of the extracted line 
+    Example: L36; I; 36; INITIAL_LINE;
+             deffunc PLANE_X_POSITIVE(x,y,z);
+               PLANE_X_POSITIVE = (x>=0);
+             endfunc;
+             PLANE_X_POSITIVE;
+    extract the edges with vertices of x>=0.
+
+37: INTERNAL OR BOUNDARY EDGES OF A SURFACE
+    Every edge of FE of a surface and such that the 3 coordinates
+    of its 2 vertices returns true for the criterion,
+    is an edge of the extracted line 
+    Example: L37; I; 37; SURFACE_EXISTANTE;
+             deffunc SQUARE_POSITIVE(x,y,z);
+             SQUARE_POSITIVE = (x>=0) et (y>=0); endfunc;
+             SQUARE_POSITIVE; 3;
+    extract the surface FE edges of which 2 vertices have
+    a X and y>=0.
+    The last input integer say what type of edge must be extracted
+    1 : only boundary edges (belong to 1 and only 1 FE)
+    2 : only internal edges (belong to 2 FE)
+    3 : boundary and internal edges
+
+40: RESTRUCTURATION OF AN UNSTRUCTURED LINE
+    simply connex, if it is possible, to reduce the storage
+    Example: L40_STRUCTURED; I; 40; LINE_UNSTRUCTURED; 
+    If the line LINE_UNSTRUCTURED was already STRUCTURED,
+    then L40_STRUCTURED is not created.
+  
+43: INVERSE THE VERTICES OF A STRUCTURED LINE
+    The vertices 1 to NB of the structured line are
+    ordering from NB to 1.
+    This option is used to change the normal vector of this line.
+
+48: IMPOSED POINTS ONTO the NEAREST VERTEX of the LINE
+    The 3 coordinates of the nearest vertex to a named point
+    are replaced by the 3 coordinates of the point.
+    Attention, the quality of finite elements may be modified.
+
+50: MAPPING OF AN ACTUAL LINE
+    An existing LINE is transformed by a predefined MAPPING
+    Example: L50; LINE_SYMMETRY; 50; INITIAL_LINE;
+    The vertices of the LINE L50 are the images
+    of vertices of the INITIAL_LINE by the mapping LINE_SYMMETRY
+
+51: UNION OF SEVERAL LINES
+    The line will be an UNION of LINES grouped under
+    a same name.
+    The common vertices of 2 lines are identified
+    to form an unique vertex. If this identification is NOT
+    correct, modify the identification precision of vertices
+    by the option 20; of Debut menu.
+    An UNION of lines is handled after as any other line
+    Example: L51; I; 51; 5; L1;L2;L3;L4;L5;
+
+81: RENAME THE LINE
+    ATTENTION TO THE ORDER OF INPUT!
+    Example: NEW_NAME; I; 81; OLD_NAME;
+    Rename the line OLD_NAME into NEW_NAME
+
+82: DELETE THE LINE
+    Delete the line from the input of its name done previously
+    Example: L82; I; 82;   delete the line L82 if it existed

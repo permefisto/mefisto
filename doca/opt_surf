@@ -1,0 +1,79 @@
+A meshed surface is drawn with painter's algorithm:
+
+The farest triangles or quadrangles are drawn first.
+The nearest are drawn above the farest.
+The material seems solid.
+
+Unfortunately, the result is NOT ALWAYS correct.
+The computed distance is the distance between the barycentre
+of the FE and the eye. A stretched FE may be drawn before
+an other farest one.
+
+In this case, use an other view direction.
+
+1 : BLACK and WHITE or COLORS
+Drawings with 2 or 256 colors
+
+2 : DRAWING or NOT of FACE EDGES
+
+3 : LINE EDGES COLOR
+To define the color of edges if the drawing is requested
+
+4 : DRAWING or NOT of FACES (triangles or quadrangles)
+
+5 : REDUCTION % of FACES
+to see better the position of edges of faces
+or to see the interior of the materials or the other side
+
+6 : DARKNESS or NOT
+The farer faces are drawn with a more darkness color
+than the nearest faces or NOT
+
+7 : FACE  NAME COLOR
+To define the color of line name if the drawing is requested
+
+8 : DRAWING or NOT of SURFACE NAMES
+
+9 : DRAWING or NOT of the TITLE
+
+10: DRAWING or NOT of VERTEX NUMBERS
+
+11: COLOR of the VERTEX NUMBERS
+
+12: DRAWING or NOT of the FE NUMBERS
+
+13: COLOR of FE NUMBERS
+
+14: SUBDIVISION MAX of an P3 EDGE
+With a value from 1 to 15 the drawing of the edge has
+a smal or great precision
+
+15: DRAWING or NOT of TANGENTS
+at every vertex of a curved Finite Element
+
+16: COLOR of the TANGENTS
+To define the color of tangents if the drawing is requested
+
+17: TANGENTS Line Drawing Type
+either continue line or dotted line
+
+20: THICKNESS of EDGES
+number of pixels into the thickness 0,1, ...
+
+49: AXES of LINES
+choose among differents drawings of coordinates axis
+ 
+50: ERASE the WINDOW
+
+75: Activate TRANSLATION ORBIT ZOOM
+permit to use the buttons of the mouse after the option 90;
+left   button => Translation
+middle button => @ in 2D, rotations in 3d
+right  button => Zoom + or -
+
+76: Stop the TRANSLATION ORBIT ZOOM
+suppress the effect of option 75;
+
+90: EXECUTE the DRAWING
+Draw with the drawing characteristics defined before
+colors, type of lines, ...

@@ -1,0 +1,25 @@
+Ce nombre reel PDARMX >=0 definit la taille de l'arete des 
+TRIANGLES EQUILATERAUX qui vont former la triangulation 
+de FOND du maillage de l'objet. 
+
+La longueur de l'arete des TRIANGLES EQUILATERAUX vaut
+    PDARMX * longueur de la plus longue ARETE 
+du maillage des lignes de l'objet a mailler. 
+PDARMX pondere la taille de l'ARETE MAXIMALE
+
+PDARMX<=0 signifie qu'AUCUN SOMMET INTERNE DOIT ETRE CREE
+                                                         
+PDARMX=1 peut etre considere comme une VALEUR PAR DEFAUT
+
+PDARMX=2 definit une arete double de l'arete maximale
+ce qui conduit a de grands triangles equilateraux
+a l'interieur de l'objet.
+
+PDARMX=0.5 donne de petits triangles equilateraux
+
+Les iterations de creation du barycentre des triangles
+trop grands ponderent cette donnee pour passer des 
+triangles frontaliers aux triangles equilateraux.
+
+
+

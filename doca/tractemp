@@ -1,0 +1,34 @@
+Choose among the options:
+
+1: ISOTHERMAL LINES or SURFACES
+with isovalue lines in 2D or isovalue surfaces in 3D
+
+2: ZONES of ISOTHERMAL COLORS on the BOUNDARY of the object
+with a color palette from blue (minimum) to magenta (maximum)
+
+3: ZONES by CUTTING PLANES X or Y or Z=CT
+in 2D: same as the option 2.
+in 3D: the temperature is drawn by color zones in the planes
+which have a constant coordinate X or Y or Z
+with a color palette from blue (minimum) to magenta (maximum)
+
+4: PROFILES by CUTTING PLANES X or Y or Z=CT
+in 2D: same as the option 2.
+in 3D: the temperature is drawn by color zones in the
+orthogonal direction of the cutting planes
+which have a constant coordinate X or Y or Z
+with a color palette from blue (minimum) to magenta (maximum)
+
+5: ALONG A LINE DEFINED BY 2 POINTS
+the temperature is drawn in Y ordinate.
+
+7: 2D SURFACE(X,Y,TEMPERATURE(X,Y))
+The temperature T(X,Y) is drawn in 3D with ( X, Y, T(X,Y) )
+
+8: 2D ERROR from the function TEMPERATURE_EXACTE()
+If this function exists, then the ERROR is drawn
+in 3D with ( X, Y, ERROR(X,Y) )
+
+9: PRINTING of TEMPERATURES at nodes in the text display
+under the graphical display of Mefisto
+

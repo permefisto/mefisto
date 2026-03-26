@@ -1,0 +1,5 @@
+variable TRACTEM1 'Drawings of 1d TEMPERATURES' entier
+ (  1 :  'Z=TEMPERATURE(t,x)'
+ ,  2 :  'Y=TEMPERATURE(t,x) with COLOR ZONES'
+ ,  8 :  'ERROR from EXACT_TEMPERATURE(t,x,y,z)'
+ ,  9 :  'PRINTING of TEMPERATURES' ) ;

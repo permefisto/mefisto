@@ -1,0 +1,189 @@
+
+GRAMMAIRE DU LANGAGE UTILISATEUR
+================================   
+L'interpreteur-compilateur lit une donnee selon la grammaire suivante :
+
+Le nombre de blancs entre les mots n'est pas significatif, excepte
+pour une <CHAINE DE CARACTERES>.
+
+<DONNEE> :=  | <MOT_CLE> ;
+             | <CHAINE DE CARACTERES> ; 
+             | defvar <IDENT_VAR>{,<IDENT_VAR>} ;
+             | <FONCTION_D> ; 
+             | <VALEUR_D>   ; 
+
+
+<MOT_CLE> := | { COMMENTAIRE }
+             | @        abandon de la lecture, remontee dans l'arborescence
+                        ATTENTION: La frappe de @; annihile l'analyse de TOUTE la
+                                   ligne de donnee c'est a dire des eventuelles
+                                   donnees qui precedent!
+             | ?        affiche la documentation de ce qui est a lire et
+                                eventuellement sa valeur actuelle
+             | =        garde   la valeur actuelle 
+ 
+             | QUITTER  le fichier actuel de lecture des donnees sans le fermer
+             | FERMER   quitter le fichier actuel de lecture des donnees et le fermer
+             | LIREF  Nom_De_Fichier  
+                      ATTENTION: Le nom UNIX du fichier ne doit
+                                 comprendre que des lettres MINUSCULES!   
+
+             | INITIERPS    initialiser le fichier de recueil des instructions
+                            PostScript pour tracer ce qui va etre trace sur l'ecran  
+             | AVECMENUPS   si le trace des rectangles (Menus, ...) doit etre
+                            stocke sur le fichier PS   
+             | SANSMENUPS   si le trace des rectangles (Menus, ...) ne doit plus etre
+                            stocke sur le fichier PS
+             | SAUVERPS   Nom_fichier_PS fermer le fichier Nom_fichier_PS contenant toutes
+                           les instructions PostScript depuis le dernier appel a INITIERPS
+             | IMPRIMERPS Nom_fichier_PS  envoyer sur l'imprimante les instructions  
+                            PostScript stockees dans le fichier Nom_fichier_PS.eps
+             | AFFICHER     <EXPR_D>{,<EXPR_D>} ;            
+
+<CHAINE DE CARACTERES> := | '<CARACTERE>{<CARACTERE>}'
+                          | '<CARACTERE>{''{<CARACTERE>}}'
+
+<FONCTION_D> :=  deffonc <IDENT_FONC>(<PARAM>{,<PARAM>});
+                {defvar  <NOM_VAR>{,<NOM_VAR>} ; }
+                {defetiq <ETIQ>{,<ETIQ>} ; }
+                {ETIQ :} <INSTRUCTION>
+               {{ETIQ :} <INSTRUCTION> }
+                {ETIQ :}  finfonc ;
+
+<INSTRUCTION> := | <IDENT_FONC> = <EXPR_D> ;
+                 | <NOM_VAR>    = <EXPR_D> ;
+                 | afficher <EXPR_D>{,<EXPR_D>} ;
+                 | si       <EXPR_LOGIQ> 
+                   alors    <INSTRUCTION>
+                  {sinon    <INSTRUCTION>}
+                   finsi ;
+                 | pour <NOM_VAR> = <EXPR_D>  a  <EXPR_D> ;  le pas vaut 1
+                      <INSTRUCTION>
+                   finpour ;
+                 | repeter ;
+                      <INSTRUCTION>
+                   jusque  <EXPR_LOGIQ> ;
+                 | tantque <EXPR_LOGIQ> ;
+                      <INSTRUCTION>
+                   fintant ;
+                 | retour ;
+                 | aller <ETIQ> ;
+
+
+<VALEUR_D>   := | <EXPR_D> 
+                | <IDENT_VAR> = <EXPR_D>  
+
+<EXPR_D>     := | (<EXPR_D>)
+                | <TERME>
+                | <TERME> + <EXPR_D>  
+                | <TERME> - <EXPR_D>  
+
+<TERME>      := | <FACTEUR>
+                | <FACTEUR> * <TERME>    
+                | <FACTEUR> / <TERME>    
+
+<FACTEUR>    := | <PUISSANCE>
+                | <PUISSANCE> ** <EXPR_D> 
+ 
+<PUISSANCE>  := | <EXPR_D>
+                | <VARIABLE>  
+
+<VARIABLE>   := | <CONSTANTE_D>
+                | <IDENT_VAR>
+                | <VARIABLE_TMS>
+                | <IDENT_FONC>(<EXPR_D>{,<EXPR_D>) 
+  
+Dans la definition deffonc d'une fonction,<VARIABLE> peut aussi etre
+un parametre <PARAM> de la fonction.
+
+<EXPR_LOGIQ> := | <EXPR_LOGI>  ox  <EXPR_LOGIQ>    ou exclusif      
+                | <EXPR_LOGIQ> ox  <EXPR_LOGI>   
+
+<EXPR_LOGI>  := | <EXPR_LOG>   ou  <EXPR_LOGIQ>    ou inclusif
+                | <EXPR_LOGIQ> ou  <EXPR_LOG>  
+
+<EXPR_LOG>   := | <EXPR_LO>    et  <EXPR_LOGIQ>  
+                | <EXPR_LOGIQ> et  <EXPR_LO>
+
+<EXPR_LO>    := | non <EXPR_L>  
+
+<EXPR_L>     := | <EXPR_D>  <=  <EXPR_D>
+                | <EXPR_D>  <   <EXPR_D>  
+                | <EXPR_D>  =   <EXPR_D>
+                | <EXPR_D>  <>  <EXPR_D>
+                | <EXPR_D>  >=  <EXPR_D>
+                | <EXPR_D>  >   <EXPR_D>
+
+<NOM_IDENT>  := <LETTRE>{<LETTRE OU CHIFFRE OU _ >}  
+<PARAM>      := <NOM_IDENT>     
+<IDENT_FONC> := <NOM_IDENT>   Il doit etre different d'un nom de variable 
+                              et de celui des fonctions usuelles ci-dessous
+<NOM_VAR>    := <NOM_IDENT>   Il doit etre different d'un nom de fonction
+                              et de celui des fonctions usuelles ci-dessous                              
+
+LES FONCTIONS UNAIRES   Elles suivent les regles FORTRAN 77 
+                        Appel du type: abs(x)
+     abs    VALEUR ABSOLUE
+     sqrt   RACINE CARREE
+     log    LOGARITHME NEPERIEN
+     log10  LOGARITHME DECIMAL
+     exp    EXPONENTIELLE
+     asin   ARC SINUS       -pi/2 < =  x < =  pi/2  radians
+     acos   ARC COSINUS        0  < =  x < =  pi    radians
+     atan   ARC TANGENTE    -pi/2 < =  x < =  pi/2  radians
+     sin    SINUS    angle en radians
+     cos    COSINUS  angle en radians
+     tan    TANGENTE angle en radians
+     sinh   SINUS    HYPERBOLIQUE
+     cosh   COSINUS  HYPERBOLIQUE
+     tanh   TANGENTE HYPERBOLIQUE
+     nint   PLUS PROCHE ENTIER
+     lligne LONGUEUR DES ARETES DE LA LIGNE  lligne( 'Nom_Ligne' )
+            -1 si la ligne est inconnue                         
+
+LES FONCTIONS BINAIRES  Elles suivent les regles FORTRAN 77 
+                        Appel du type: min(x,y)
+
+     min    MINIMUM DE 2 REELS
+     max    MAXIMUM DE 2 REELS
+     mod    mod(i,j)  i modulo j
+     isign  isign(x1,x2)= + |x1| si x2 >= 0
+                          - |x1| si x2 <  0
+
+     nuobjt nuobjt( 'type_objet' , 'nom_objet' )
+                    'type_objet' = | 'point'
+                                   | 'ligne'
+                                   | 'surface'
+                                   | 'volume'
+                                   | 'objet'
+                                   | 'fonction'
+                                   | 'transfo'
+            retourne le numero dans le lexique de l'objet de 
+                               nom 'nom_objet'
+                     0 si l'objet est inconnu
+                   
+     dist2p dist2p( 'nom_point_1' , 'nom_point_2' )
+            retourne la distance entre les 2 points
+                     -1 si l'un des points est inconnu
+   
+
+Remarques :
+
+- Il est possible d'afficher la valeur d'une variable d'un TMS.
+Par exemple :
+ afficher ~>SURFACE>S>XYZSOMMET(NBSOM)
+affiche le nombre de sommets du maillage de la surface S. 
+  
+ afficher ~SURFACE>S>XYZSOMMET(XYZSOM(5))
+affiche l'abscisse x , puis l'ordonnee y , puis la cote z 
+du sommet 5 de la surface S. 
+
+ afficher ~>SURFACE>S>XYZSOMMET(XYZSOM(VARUT)(3))
+affiche seulement la cote z du sommet de numero la valeur
+entiere de la variable utilisateur VARUT de la surface S. 
+
+- Le caractere > juste apres ~ n'est pas obligatoire. 
+Par contre, tous les caracteres > qui le suivent sont obligatoires.
+Ils jouent le role de separateur entre les differents mots.
+
+- Le nom d'une variable TMS doit etre tape sur une seule ligne.

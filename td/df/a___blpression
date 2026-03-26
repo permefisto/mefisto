@@ -1,0 +1,12 @@
+deftms ~>>>BLPRESSION 'pression imposee'
+variable muet DATE 'date de creation du tableau'   reel2 ;
+variable muet NUTD 'numero du tableau descripteur' entier ;
+variable LTBLPR    'type de la pression imposee' entier
+( 1 : 'PRESSION constante'
+, -1 : 'fonction PRESSION'
+,  0 : 'PRESSION a supprimer' ) ;
+cas LTBLPR
+ 1 : variable BLPRES 'pression imposee' reel ;
+-1 : variable NFBLPR 'nom de la fonction BLPRESSION' ^~>FONCTION ;
+fincas ;
+fintms ;

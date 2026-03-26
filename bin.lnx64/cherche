@@ -1,0 +1,36 @@
+#
+#  Alain PERRONNET   Octobre 1997
+#
+#  CHERCHE DANS MEFISTO-C1 UNE CHAINE DE CARACTERES
+#   set -v  affiche les commandes telles que
+#   set -x  affiche les commandes apres interpretation des *?...
+#
+cd $MEFISTO
+if test $1
+then
+   MOT=$1
+else
+   echo MOT a chercher dans MEFISTO-LINUX \?
+   read MOT
+fi
+echo ==============================================
+echo RECHERCHE dans MEFISTO-LINUX du mot $MOT
+echo ==============================================
+grep -i -n $MOT bin/*
+grep -i -n $MOT td/d/* 
+grep -i -n $MOT td/m/*
+grep -i -n $MOT doc/*
+grep -i -n $MOT incl/*.inc
+grep -i -n $MOT elas/*.f
+grep -i -n $MOT flui/*.f
+grep -i -n $MOT mail/*.f
+grep -i -n $MOT prpr/*.f
+grep -i -n $MOT reso/*.f
+grep -i -n $MOT ther/*.f
+grep -i -n $MOT xvue/*.f
+grep -i -n $MOT util/*.f
+echo dans xvue/xvuelc.c
+grep -i -n $MOT xvue/*.c
+#
+echo
+echo Toutes les librairies MEFISTO-LINUX ont ete parcourues

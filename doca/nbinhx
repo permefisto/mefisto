@@ -1,0 +1,8 @@
+The hexahedron of vertices
+(0,0,0)       (NBINHX,0,0)      (NBINHX,NBINHY,0)      (0,NBINHY,0)
+(0,0,NBINHZ)  (NBINHX,0,NBINHZ) (NBINHX,NBINHY,NBINHZ) (0,NBINHY,NBINHZ)
+is subdivided into NBINHX * NBINHY * NBINHZ hexahedra.
+
+Example:
+HEXAHEDRON11; I; 11; 5; 6; 7;
+Define 5*6*7=210 equal regular hexahedra.

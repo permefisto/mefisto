@@ -1,0 +1,4 @@
+variable TRAROT2D 'trace 2D du ROTATIONNEL(VITESSE) ou TOURBILLON' entier
+( 1 : 'ISOVALEURS de |Rot VITESSE|'
+, 2 : 'ISOVALEURS |Rot VITESSE| en ZONES de COULEURS '
+, 9 : 'TRACE la SURFACE( X, Y, Rot VITESSE(X,Y) )' ) ;

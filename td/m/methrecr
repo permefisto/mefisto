@@ -1,0 +1,5 @@
+variable METRECR  'choix pour RESOUDRE Ax=b' entier
+(1 : 'FACTORISATION CROUT avec stockage PROFIL',
+ 2 : 'GRADIENT CONJUGUE avec stockege CONDENSE',
+ 3 : 'DOUBLE GRADIENT ACCELERE CGS',
+ 4 : 'DOUBLE GRADIENT STABILISE BiCGStab' ) ;

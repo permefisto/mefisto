@@ -1,0 +1,3 @@
+xterm -geometry 200x40-0+50 -j -cr red -bc -ls -sb -sl 600000 \
+-name xterm -bg navy -fg white -fn 7x14bold -fb 7x14bold \
+-title "xterm bleu" &

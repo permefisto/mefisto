@@ -1,0 +1,83 @@
+#
+#  compilation et edition de liens de pppoba.f 
+#  Alain Perronnet    Linux 64bits   Septembre 2009
+# 
+if test -f $MEFISTO/td/m/anglais
+then
+  LANGAGE=1
+  LANGUE=ANGLAISE
+  echo
+  echo ===========================================================
+  echo MEFISTO-Linux 64bits: Compilation + Link Editor of pppoba.f
+  echo ===========================================================
+else
+  LANGAGE=0
+  LANGUE=FRANCAISE
+  echo
+  echo ==============================================================
+  echo MEFISTO-Linux 64bits: Compilation Edition de liens de pppoba.f
+  echo ==============================================================
+fi
+
+cd $MEFISTO
+nompp=pp/pppoba
+rm $nompp
+
+# compilation de xvuelc.c 
+if !( test -f xvue/xvuelc.o )
+then
+  bin/ccgxvue
+fi
+
+# compilation   
+echo "gfortran -m64 -fPIC -g -fopenmp -I.  prpr/pppoba.f  -o $nompp"
+      gfortran -m64 -fPIC -g -fopenmp -I.  prpr/pppoba.f \
+      util/lib xvue/lib xvue/xvuelc.o \
+     -lgfortran -L/usr/X11R6/lib -lX11 \
+     -o $nompp
+
+if test -f pppoba.o
+then
+  rm pppoba.o
+fi
+
+if test -f $nompp
+then 
+  echo "$MEFISTO/$nompp OK" 
+  echo
+  echo execution pppoba 
+  if test -f ./pp/pxyz
+  then
+    rm ./pp/pxyz
+  fi
+  chmod 755 $nompp
+  echo poba | $nompp
+
+  if test -f ./pp/pxyz
+  then
+    chmod 755 ./pp/pxyz
+    echo
+    echo ================================================================
+    if [ $LANGAGE = 0 ]
+    then
+      echo Les Valeurs des Polynomes sont rangees dans $MEFISTO/pp/pxyz
+      echo Le repertoire $MEFISTO/pp contient
+    else
+      echo The Polynomial Values are stored in $MEFISTO/pp/pxyz
+      echo The directory $MEFISTO/pp contains
+    fi
+    ls -l $MEFISTO/pp
+    exit 0
+  fi
+fi
+#Erreur
+echo ===========================================================================
+if [ $LANGAGE = 0 ]
+then
+  echo
+  echo CORRECT $MEFISTO/prpr/pppoba.f and EXECUTE AGAIN cbpoba
+else
+  echo
+  echo CORRIGER $MEFISTO/prpr/pppoba.f et RE-EXECUTER cbpoba
+fi
+echo ===========================================================================

@@ -1,0 +1,26 @@
+{ =============================================================== }
+{ MEFISTO Software     : December 31, 2021 version                }
+{ USER's Name          : Alain Perronnet                          }
+{ Project Name         : d123_r     Velocity Arrows Drawing       }
+{ Date                 : 2021/12/31   18h 13m 44s                 }
+{ =============================================================== }
+
+DefFunc REGION(t,x,y,z);
+  REGION = z>1.55 and z<1.65;
+EndFunc;
+
+10; { DRAWING of VELOCITIES PRESSURES }
+  3; { NUMBER of SURFACES? }
+     { NAME of the SURFACES? }
+    sdenis1; sdenis2; sdenis3;
+
+ 2;  { INITIAL and FINAL TIME of SOLUTIONS VECTORS to DRAW }
+ 75; { INITIAL TIME? }
+ 80; { FINAL TIME? }
+
+ 2;  { The VELOCITY is drawn with ARROWS }
+ 90; { DRAWING of VELOCITY ARROWS }
+ 2;  { Drawing of all VELOCITY ARROWS }
+ 90; { Continue the DRAWING }
+
+CLOSE;

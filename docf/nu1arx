@@ -1,0 +1,3 @@
+NU1ARX est le numero de la premiere arete a extraire de la ligne.
+Cet entier doit etre strictement positif et inferieur
+au nombre maximal d'aretes de la ligne.

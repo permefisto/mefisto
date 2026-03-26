@@ -1,0 +1,95 @@
+{=========================================================================}
+{ MEFISTO Version Mai 1999       PROJET: Test THEILC-ELAILC sur PENTAEDRE }
+{ Utilisateur: Perronnet Alain   Date:   22/5/99                          }
+{=========================================================================}
+defvar t0,a,b,c,d,eps;
+t0=1;
+a=9;
+b=9;
+c=9;
+d=max(a,b); d=max(d,c);
+eps=0.0001;
+
+DefFonc XX(x,y,z); XX=x/d; FinFonc;
+DefFonc YY(x,y,z); YY=y/d; FinFonc;
+DefFonc ZZ(x,y,z); ZZ=z/d; FinFonc;
+
+6; { TRANSFORMATIONS mathematiques }
+ reduc;
+  6; { F:R3->R3 definie par 3 fonctions (Fi) }
+  XX; YY; ZZ;
+@;
+
+3; { SURFACES faces de l objet }
+ ab;  i; 11; { rectangle structure plan }
+      a; { NBINQX 'nombre d''aretes en x' entier ; }
+      b; { NBINQY 'nombre d''aretes en y' entier ; }
+ abt; i; 31; { triangulation d une quadrangulation }
+      ab; 1; { creation d une ARETE S1 S3 }
+@;
+
+4; { VOLUMES materiaux de l objet }
+  hexaedre; 
+  reduc;{ DANS LE LEXIQUE ~>TRANSFO }
+     14;{ tranches d une surface generatrice }
+    abt;{ DANS LE LEXIQUE ~>SURFACE }
+      2;{ surfaces translatees d une cote z>0 constante (empilement) }
+      c;{ NBTRCS 'nombre de tranches du volume final' entier ; }
+      c;{ ZMAXCS 'cote maximale Z a decouper en tranches' reel ; }
+@;
+
+{Les coordonnees reduites}
+a=a/d; b=b/d; c=c/d;
+
+3;{ SURFACES faces de l objet }
+ base; i;{ DANS LE LEXIQUE ~>TRANSFO }
+   37;   { surface extraite d un volume }
+ hexaedre;   { DANS LE LEXIQUE ~>VOLUME }
+ deffonc base(x,y,z); base=z<eps; finfonc;
+ base;   { DANS LE LEXIQUE ~>FONCTION }
+    1;   { faces frontalieres }
+
+ haut; i; 37; hexaedre;
+ deffonc haut(x,y,z); haut=z>c-eps; finfonc;
+ haut; 1; { faces frontalieres }
+
+ derriere; i; 37; hexaedre;
+ deffonc derriere(x,y,z); derriere=x<eps; finfonc;
+ derriere; 1;
+
+ devant; i; 37; hexaedre;
+ deffonc devant(x,y,z); devant=x>a-eps; finfonc;
+ devant; 1; { faces frontalieres }
+
+ gauche; i; 37; hexaedre;
+ deffonc gauche(x,y,z); gauche=y<eps; finfonc;
+ gauche; 1;
+
+ droite; i; 37; hexaedre;
+ deffonc droite(x,y,z); droite=y>b-eps; finfonc;
+ droite; 1;
+
+@;
+
+5;{ OBJETS parties de l OBJET }
+ hexaedre; 0; { classique 2D ou 3D }
+  7; { nombre des Points Lignes Surfaces Volumes Objets de l''objet}
+ v; hexaedre; {'nom du type PLSVO et nom du PLSVO'}
+ s; haut;
+ s; droite;
+ s; devant;
+ s; gauche;
+ s; derriere;
+ s; base;
+@;
+
+7; { INTERPOLATION definition NOEUDS du maillage }
+   hexaedre;
+   3; { LAGRANGE de DEGRE 1 }
+@;
+
+10; { TRACE du MAILLAGE des PLSVO }
+  5;{ Tous les OBJETS }
+ 90;{ EXECUTION du TRACE }
+@;
+FERMER;

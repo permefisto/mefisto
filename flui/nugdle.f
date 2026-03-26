@@ -1,0 +1,107 @@
+      SUBROUTINE NUGDLE ( NDIM,  NUTYEL, NBDLMX, NBNOEU, NONOEF, NDDLNO,
+     %                    NRDLEF, NOGLDL, IERR )
+C ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+C BUT :     TROUVER LE NUMERO GLOBAL DES NRDLEF DL D'UN EF A PARTIR
+C -----     DU NUMERO DE SES NOEUDS POUR UN EF DE FLUIDE
+C           ATTENTION: POUR UN ELEMENT FINI DE BREZZI-FORTIN LES
+C           NDIM DL VITESSE DU BARYCENTRE ONT ETE ELIMINES PAR GAUSS
+C           ET NE SONT PAS TRAITES ICI
+C
+C ENTREES :
+C ---------
+C NDIM    : DIMENSION DE L'ESPACE DU FLUIDE (2 ou 3)
+C NUTYEL  : OPTION DE CALCUL FLUIDE (BF(13 ou 19)) OU TH(15 ou 20)
+C NBDLMX  : NOMBRE DE DL MAXIMAL D'UN ELEMENT FINI
+C NBNOEU  : NOMBRE TOTAL DE NOEUDS DU MAILLAGE HORS BARYCENTRES DES EF
+C NONOEF  : NUMERO GLOBAL DES "NOEUDS" DE L'EF
+C NDDLNO  : TABLEAU DES POINTEURS SUR DERNIER DL POUR CHAQUE NOEUD FLUIDE
+C           CE TABLEAU EST DIMENSIONNE A 1+NBNOEU
+C
+C SORTIES :
+C ---------
+C NRDLEF  : NOMBRE REDUIT DE DL DE L'EF
+C           (SANS VITESSE AU BARYCENTRE SI BREZZI-FORTIN)
+C           TRIANGLE BF  9, TETRAEDRE BF 16,
+C           TRIANGLE TH 15, TETRAEDRE TH 34
+C NOGLDL  : TABLEAU DU NUMERO GLOBAL DE CHAQUE DL D'UN EF
+C IERR    : 0 SI PAS D'ERREUR
+C           1 SI ON NE TRAVAILLE NI AVEC BF NI AVEC TH
+C+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+C AUTEUR: SOFIANE BENHAMADOUCHE ANALYSE NUMERIQUE UPMC PARISJanvier 2000
+C MODIFS: FREDERIC LEGOLL DEA ANALYSE NUMERIQUE UPMC PARIS  Janvier 2001
+C MODIFS: ALAIN PERRONNET Laboratoire J-L.LIONS UPMC Paris     Juin 2007
+C MODIFS: ALAIN PERRONNET Laboratoire J-L.LIONS UPMC Paris Novembre 2008
+C23456---------------------------------------------------------------012
+      COMMON /UNITES/ LECTEU,IMPRIM,NUNITE(30)
+      INTEGER         NONOEF(*)
+      INTEGER         NDDLNO(0:NBNOEU)
+      INTEGER         NOGLDL(1:NBDLMX)
+C
+      IERR = 0
+C
+      IF( NUTYEL .EQ. 13 .OR. NUTYEL .EQ. 19 ) THEN
+C
+C        TRIANGLE ou TETRAEDRE de BREZZI FORTIN
+C        LES NDIM DL VITESSE DU BARYCENTRE SONT ELIMINES PAR GAUSS
+         ND1 = NDIM + 1
+         NRDLEF = ND1 * ND1
+         ND2 = 2 * ND1
+         DO 10 I=1,ND1
+            NO   = NONOEF(I) - 1
+            NDDL = NDDLNO(NO)
+C           NUMERO DU DERNIER DDL RELATIF AU NOEUD NONOEF(I)-1
+            NOGLDL(I    ) = NDDL + 1
+            NOGLDL(I+ND1) = NDDL + 2
+            NOGLDL(I+ND2) = NDDL + 3
+            IF( NUTYEL .EQ. 19 ) THEN
+               NOGLDL(I+3*ND1) = NDDL + 4
+            ENDIF
+ 10      CONTINUE
+C
+      ELSE IF( NUTYEL .EQ. 15 ) THEN
+C
+C        TRIANGLE de TAYLOR HOOD  6 NOEUDS
+         NRDLEF = 15
+         DO 20 I=1,3
+            NO   = NONOEF(I) - 1
+            NDDL = NDDLNO(NO)
+            NOGLDL(I   ) = NDDL + 1
+            NOGLDL(I+6 ) = NDDL + 2
+            NOGLDL(I+12) = NDDL + 3
+ 20      CONTINUE
+         DO 30 I=4,6
+            NO   = NONOEF(I) - 1
+            NDDL = NDDLNO(NO)
+            NOGLDL(I  ) = NDDL + 1
+            NOGLDL(I+6) = NDDL + 2
+ 30      CONTINUE
+C
+      ELSE IF( NUTYEL .EQ. 20 ) THEN
+C
+C        TETRAEDRE de TAYLOR HOOD  10 NOEUDS
+         NRDLEF = 34
+         DO 40 I=1,4
+            NO   = NONOEF(I) - 1
+            NDDL = NDDLNO(NO)
+            NOGLDL(I   ) = NDDL + 1
+            NOGLDL(I+10) = NDDL + 2
+            NOGLDL(I+20) = NDDL + 3
+            NOGLDL(I+30) = NDDL + 4
+ 40      CONTINUE
+         DO 50 I=5,10
+            NO   = NONOEF(I) - 1
+            NDDL = NDDLNO(NO)
+            NOGLDL(I   ) = NDDL + 1
+            NOGLDL(I+10) = NDDL + 2
+            NOGLDL(I+20) = NDDL + 3
+ 50      CONTINUE
+C
+      ELSE
+C
+C        EF INCONNU
+         IERR = 1
+C
+      ENDIF
+C
+      RETURN
+      END

@@ -1,0 +1,21 @@
+The USER function (of any name to choose)
+give a LOGICAL VALUE to the selection criterion
+of the VERTEX of coordinates (x,y,z)
+
+This function has to have 3 parameters X Y Z in this order
+and be programmed with respect to LU grammar
+(cf documentation and examples of the debut menu)
+to output true (1) or false (0)
+
+All these parameters will be initialized during its call.
+These parameters can be used or not, but have to be present
+in the definition of this function..
+ 
+EXAMPLE:
+deffunc choice( x , y , z ) ;
+ choice = (x>0) and (x<=5) and ( (y-2)**2 + (z-3)**2 - 4 < 0 ) ;
+endfunc; 
+
+This function choice selects the Finite Elements of which
+all vertices have an abscisse x such that 0<x<=5 and (y,z) is
+interne to the circle of plane yz, centred at 2,3 and of radius 2.

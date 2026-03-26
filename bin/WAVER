@@ -1,0 +1,50 @@
+#!/bin/bash
+#  execution de pponde
+#  Alain Perronnet Octobre 2012   Version LINUX
+#   
+if test -f $MEFISTO/td/m/anglais
+then
+  LANGAGE=1
+  LANGUE=ANGLAISE
+  echo
+  echo '==============================================================='
+  echo 'MEFISTO-WAVER_OMP: Solver of a WAVE PROBLEM under LINUX 64 bits'
+  echo '==============================================================='
+  echo 'Project (low case) name' \?
+else
+  LANGAGE=0
+  LANGUE=FRANCAISE
+  echo
+  echo '================================================================='
+  echo 'MEFISTO-ONDER_OMP: Resoudre un Probleme d'ONDE sous LINUX 64 bits'
+  echo '================================================================='
+  echo 'nom (en minuscules) du projet' \?
+fi
+read nomproj
+
+direxec=$MEFISTOX/$nomproj
+echo
+if [ $LANGAGE = 0 ]
+then
+  echo "Execution MEFISTO WAVER_OMP dans le repertoire $direxec"
+else
+  echo "Execution MEFISTO ONDER_OMP in the directory $direxec"
+fi
+
+if test -d $direxec
+then
+   cd  $direxec 
+   echo "OMP_NUM_THREADS="$OMP_NUM_THREADS
+   time $MEFISTO/pp/pponde  
+else  
+  if [ $LANGAGE = 0 ]
+  then
+    echo Commande INITIER non prealablement executee
+    echo "avec ce nom de projet $nomproj"
+    echo Executer INITIER puis MAILLER
+  else
+    echo Command INITIER NOT EXECUTED BEFORE
+    echo "with this project name $nomproj"
+    echo Execute INITIER and after MESHER
+  fi
+fi

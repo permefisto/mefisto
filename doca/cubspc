@@ -1,0 +1,10 @@
+HEXAHEDRIZATION of a CUBE or a SPHERE
+A KERNEL is subdivided into CUBSPN**3 cubes with an edge length of
+CUBSPL/CUBSPN where CUBSPL is the length of the kernel.
+CUBSPD is the total length of the kernel+layers formed from
+the boundary of the kernel.
+With the option SPHERE, the vertices of hexahedra are projected on
+co-centric spheres of radii multiples of CUBSPL/CUBSPN,
+after, in geometric ratio to pass from CUBSPL/CUBSPN to the last radius
+
+GIVE CUBSPC>0 the NUMBER of LAYERS AROUND the KERNEL.

@@ -1,0 +1,1169 @@
+elan.ann.jussieu.fr:/home/perronne/mefistox/he -bash-> ll
+total 8184
+-rw-r--r--    1 perronne labo        30439 jan 17  2007 eigenmef1.gif
+-rw-r--r--    1 perronne labo          670 oct 30 17:58 frappe.001
+-rw-r--r--    1 perronne labo          467 oct 30 18:00 frappe.002
+-rwx------    1 perronne labo         1689 jan 10  2007 he.mail
+-rwx------    1 perronne labo         1952 jan 10  2007 he.ther
+-rw-r--r--    1 perronne labo        31567 jan 17  2007 LePBHe1.gif
+-rw-r--r--    1 perronne labo        27838 jan 17  2007 LePBHEH++1.gif
+-rw-r--r--    1 perronne labo        59094 jan 11  2007 lhe
+-rw-r--r--    1 perronne labo       601600 oct 30 18:00 ms10
+-rw-r--r--    1 perronne labo         4136 oct 30 18:00 ms11
+-rw-r--r--    1 perronne labo         5284 oct 30 18:00 ms12
+-rw-r--r--    1 perronne labo        51492 oct 30 18:00 ms13
+-rw-r--r--    1 perronne labo      7584788 oct 30 18:00 ms14
+elan.ann.jussieu.fr:/home/perronne/mefistox/he -bash-> 
+elan.ann.jussieu.fr:/home/perronne/mefistox/he -bash-> 
+elan.ann.jussieu.fr:/home/perronne/mefistox/he -bash-> 
+elan.ann.jussieu.fr:/home/perronne/mefistox/he -bash-> INITIER
+
+===============================================================
+         MEFISTO-INITIER: INIT a PROJECT on LINUX PC
+===============================================================
+
+Present state of PC memory
+             total       used       free     shared    buffers     cached
+Mem:       3875680    3682376     193304          0     247760    1780632
+-/+ buffers/cache:    1653984    2221696
+Swap:      2024148          0    2024148
+
+Free spaces on disks
+SysFichier           1K-blocs    Utilisé Dispo.   Util% Monté sur
+/dev/sda5             65819652  36029524  26446604  58% /
+/dev/sda3               101107     43399     52487  46% /boot
+/dev/sdb1             35007216  23616396   9612544  72% /mnt/disk2
+none                   1937840         0   1937840   0% /dev/shm
+
+Present Mefisto load modules
+total 12072
+-rwxr-xr-x    1 perronne labo      2659259 oct 30 18:22 ppelas
+-rwxr-xr-x    1 perronne labo      2592747 oct 30 18:23 ppflui
+-rwxr-xr-x    1 perronne labo       178682 oct 30 18:22 ppinit
+-rwxr-xr-x    1 perronne labo      2479929 oct 30 18:22 ppmail
+-rwxr-xr-x    1 perronne labo       129155 oct 30 18:19 pppara
+-rwxr-xr-x    1 perronne labo       565206 oct 30 18:19 pppoba
+-rwxr-xr-x    1 perronne labo      3068400 oct 30 18:23 ppther
+-rw-r--r--    1 perronne labo       639520 oct 30 18:19 pxyz
+
+Present projects in MEFISTOX=/home/perronne/mefistox
+total 4100
+drwxr-xr-x    2 perronne labo         4096 déc 21  2006 ampoule
+drwxr-xr-x    2 perronne labo         4096 oct 18  2006 cubcyl
+drwxr-xr-x    2 perronne labo         4096 mai 29 10:31 cube10
+drwxr-xr-x    2 perronne labo         4096 oct  5 15:33 ha
+drwxr-xr-x    2 perronne labo         4096 oct 10 17:23 habc
+drwxr-xr-x    2 perronne labo         4096 oct 10 15:09 habc1
+drwxr-xr-x    2 perronne labo         4096 oct 30 18:23 he
+drwxr-xr-x    2 perronne labo         4096 jan 10  2007 he0
+drwxr-xr-x    3 perronne labo         4096 oct 29 12:08 he1
+drwxr-xr-x    3 perronne labo         4096 jui  6  2006 he1.5
+drwxr-xr-x    3 perronne labo         4096 aoû 29  2006 he1.8
+drwxr-xr-x    3 perronne labo         4096 jui  6  2006 he2
+drwxr-xr-x    3 perronne labo         4096 jui  6  2006 he2.1
+drwxr-xr-x    2 perronne labo         4096 oct 29 13:32 helayer
+drwx------    2 perronne labo         4096 aoû 30  2006 he.oct5
+-rw-r--r--    1 perronne labo      4068400 oct 30 17:53 he.tgz
+drwxr-xr-x    2 perronne labo         4096 oct 10 15:15 hexa
+drwxr-xr-x    2 perronne labo         4096 sep 22  2006 hexapyra
+drwxr-xr-x    2 perronne labo         4096 nov 22  2006 layer
+drwxr-xr-x    2 perronne labo         4096 jun 26 16:11 maison
+drwxr-xr-x    2 perronne labo         4096 déc 12  2006 miroir3d
+drwxr-xr-x    2 perronne labo         4096 oct  4 18:07 pyra
+drwxr-xr-x    2 perronne labo         4096 nov 22  2006 suex13
+drwxr-xr-x    3 perronne labo         4096 sep  7  2006 th6q13
+drwxr-xr-x    2 perronne labo         4096 aoû 30  2006 thcube6.oct5
+drwxr-xr-x    2 perronne labo         4096 jan 12  2007 thermos
+drwxr-xr-x    2 perronne labo         4096 sep 20 10:23 tube
+drwxr-xr-x    2 perronne labo         4096 déc  4  2006 v33
+drwxr-xr-x    3 perronne labo         4096 sep  8  2006 vp6q13
+drwxr-xr-x    3 perronne labo         4096 aoû 30  2006 vp6q13.oct5
+drwxr-xr-x    3 perronne labo         4096 aoû 30  2006 vp6q33.oct5
+
+MEFISTO-INITIER: Project (low case) name ?
+he
+Files ms10 ms11 ms12 ms13 ms14 and frappe.001 frappe.002 are deleted
+
+Execution MEFISTO INITIER in directory /home/perronne/mefistox/he
+
+---------------------------------------------------------
+| MM   MM  EEEEEE  FFFFFF  IIII  SSSSSS  TTTTTT OOOOOOO |
+| MMM MMM  EE      FF       II   SS        TT   OO   OO |
+| MM M MM  EEEEE   FFFF     II   SSSSSS    TT   OO   OO |  FAIT L'EF !
+| MM   MM  EE      FF       II       SS    TT   OO   OO |
+| MM   MM  EEEEEE  FF      IIII  SSSSSS    TT   OOOOOOO | October 30th 2007 Version
+---------------------------------------------------------
+
+Project (low case) name?
+he
+ DATE         : 30/10/ 7   18H 24M 09S 
+ AUTHOR       : Alain Perronnet         
+ PROJECT      : he                                                                      
+
+INPUT DATA of MEFISTO in ENGLISH LANGUAGE
+Type ? to obtain the DOCUMENTATION
+Type @ to ESCAPE a MENU or INPUT DATA
+
+PRECISION EPZERO =  0.1000000E-05
+PRECISION EPSXYZ =  0.1000000E-03
+
+SUPER-ARRAY MCN WITH   532000000 WORDS of MEMORY
+
+SECONDARY MEMORY DECLARATION WITH 1 SUPER-FILE AND   4 NUMERICAL FILES
+================================================================================
+ REFIMS Array: DIRECTORY of MS Files
+
+ FILE MS=        1 NAME=ms11                                            
+ FILE NUMBER                                 :       11
+ PAGE NUMBER                                 :    16384
+ WORDS BY PAGE                               :      128
+ ADRESS MCG of BUFFER                        :        0
+ NO PAGE in BUFFER                           :        0
+ FIRST PAGE NUMBER in SF of RED1FI           :        4
+ FIRST FREE PAGE NUMBER of FILE              :        1
+
+ FILE MS=        2 NAME=ms12                                            
+ FILE NUMBER                                 :       12
+ PAGE NUMBER                                 :    16384
+ WORDS BY PAGE                               :      512
+ ADRESS MCG of BUFFER                        :        0
+ NO PAGE in BUFFER                           :        0
+ FIRST PAGE NUMBER in SF of RED1FI           :      132
+ FIRST FREE PAGE NUMBER of FILE              :        1
+
+ FILE MS=        3 NAME=ms13                                            
+ FILE NUMBER                                 :       13
+ PAGE NUMBER                                 :     8192
+ WORDS BY PAGE                               :     4096
+ ADRESS MCG of BUFFER                        :        0
+ NO PAGE in BUFFER                           :        0
+ FIRST PAGE NUMBER in SF of RED1FI           :      260
+ FIRST FREE PAGE NUMBER of FILE              :        1
+
+ FILE MS=        4 NAME=ms14                                            
+ FILE NUMBER                                 :       14
+ PAGE NUMBER                                 :     8192
+ WORDS BY PAGE                               :     8192
+ ADRESS MCG of BUFFER                        :        0
+ NO PAGE in BUFFER                           :        0
+ FIRST PAGE NUMBER in SF of RED1FI           :      324
+ FIRST FREE PAGE NUMBER of FILE              :        1
+
+
+Present contents of directory /home/perronne/mefistox/he
+eigenmef1.gif  he.mail  he.ther  LePBHe1.gif  LePBHEH++1.gif  lhe  ms10  ms11  ms12  ms13  ms14
+
+elan.ann.jussieu.fr:/home/perronne/mefistox/he -bash-> 
+elan.ann.jussieu.fr:/home/perronne/mefistox/he -bash-> 
+elan.ann.jussieu.fr:/home/perronne/mefistox/he -bash-> 
+elan.ann.jussieu.fr:/home/perronne/mefistox/he -bash-> 
+elan.ann.jussieu.fr:/home/perronne/mefistox/he -bash-> 
+elan.ann.jussieu.fr:/home/perronne/mefistox/he -bash-> 
+elan.ann.jussieu.fr:/home/perronne/mefistox/he -bash-> 
+elan.ann.jussieu.fr:/home/perronne/mefistox/he -bash-> 
+elan.ann.jussieu.fr:/home/perronne/mefistox/he -bash-> 
+elan.ann.jussieu.fr:/home/perronne/mefistox/he -bash-> 
+elan.ann.jussieu.fr:/home/perronne/mefistox/he -bash-> 
+elan.ann.jussieu.fr:/home/perronne/mefistox/he -bash-> 
+elan.ann.jussieu.fr:/home/perronne/mefistox/he -bash-> 
+elan.ann.jussieu.fr:/home/perronne/mefistox/he -bash-> MAILLER
+
+===============================================================
+       MEFISTO-MAILLER: MESH an OBJECT on LINUX PC
+===============================================================
+Project (low case) name ?
+he
+
+Execution MEFISTO MESHER in directory /home/perronne/mefistox/he
+
+---------------------------------------------------------
+| MM   MM  EEEEEE  FFFFFF  IIII  SSSSSS  TTTTTT OOOOOOO |
+| MMM MMM  EE      FF       II   SS        TT   OO   OO |
+| MM M MM  EEEEE   FFFF     II   SSSSSS    TT   OO   OO |  FAIT L'EF !
+| MM   MM  EE      FF       II       SS    TT   OO   OO |
+| MM   MM  EEEEEE  FF      IIII  SSSSSS    TT   OOOOOOO | October 30th 2007 Version
+---------------------------------------------------------
+
+ DATE         : 30/10/ 7   18H 24M 17S 
+ AUTHOR       : Alain Perronnet         
+ PROJECT      : he                                                                      
+
+INPUT DATA of MEFISTO in ENGLISH LANGUAGE
+Type ? to obtain the DOCUMENTATION
+Type @ to ESCAPE a MENU or INPUT DATA
+
+PRECISION EPZERO =  0.1000000E-05
+PRECISION EPSXYZ =  0.1000000E-03
+
+xvmmecran avant: ecran xmm=411 ymm= 308
+xvmmecran apres: ecran xmm=411 ymm= 308
+ Screen PIXELS     WIDTH=1600  HEIGHT=1200
+ Screen MM         WIDTH= 411  HEIGHT= 308
+ Class TrueColor
+ TrueColor: Mefisto with 256 colors
+ Visual->map_entries = 256
+ Used  colors number = 256
+ Color Planes Depth  = 24
+ Available X-Fonts number = 512
+ Window PIXELS     WIDTH=1500  HEIGHT=1120
+ Window MM         WIDTH= 385  HEIGHT= 288
+ X-CONVERSION MM=>PIXELS =  3.8929441
+ Y-CONVERSION MM=>PIXELS =  3.89610386
+ RESERVED COLORS from    0 to   15
+ ALLOWED  COLORS from   16 to  255
+ RECOVERY of  511 X-CHARACTER FONTS
+
+Typed data are written on file frappe.001                  
+SUPER-ARRAY MCN WITH   532000000 WORDS of MEMORY
+
+ Keyboard:readf he.mail;                                                                                  
+
+ DATA INPUT is REDIRECTED on a FILE                                                              
+ he.mail                                                                                         
+
+ Read File  2:{ ==================================================================== }                        
+ Read File  2:{ Logiciel MEFISTO     : Version Aout 2006                             }                        
+ Read File  2:{ Nom de l'Utilisateur : Alain Perronnet  Laboratoire JLL UPMC PARIS   }                        
+ Read File  2:{ Nom du Projet        : he   Atome d'HELIUM  en 6D                    }                        
+ Read File  2:{                        Ze=2 protons en (0,0,0, 0,0,0)  et            }                        
+ Read File  2:{                        1 electron en (x,y,z) & 1 electron en (u,v,w) }                        
+ Read File  2:{ Date                 : 19/9/2006 et 13/11/2006                       }                        
+ Read File  2:{ ==================================================================== }                        
+ Read File  2:4; { VOLUMES materiaux de l objet }                                                             
+ Read File  2:   6cube; { NOM du VOLUME ou ABANDON? }                                                         
+
+ CREATION of TMS ~>VOLUME>6CUBE>DEFINITION                                                       
+ Read File  2:   i;     { DANS LE LEXIQUE ~>TRANSFO }                                                         
+ Read File  2:   63;    { 6-cubes 3 differences finies et homothetie }                                        
+ Read File  2:   1;     { origine au centre du cube6 }                                                        
+ Read File  2: { 5;     { nombre de couches homothetiques }                                                   
+ Read File  2:      ==>  LE NOMBRE DE MOTS DU SUPER-TABLEAU MCN    532000000                                  
+ Read File  2:           NOMBRE MOTS DEMANDES     = 170 670 376                                               
+ Read File  2:           NOMBRE MAX DE MOTS LIBRES= 108 265 392  }                                            
+ Read File  2:   4;     { nombre de couches homothetiques }                                                   
+ Read File  2:    2.0;  { largeur du noyau du 6-cube }                                                        
+ Read File  2:   20.0;  { largeur totale   du 6-cube }                                                        
+ NB SOMMETS FRONTALIERS DES DIFFERENCES FINIES= 4032
+ NB SOMMETS du 6-CUBE= 20224
+ VOLUME 6CUBE of TYPE 63 :   20224 VT,      0 TG,  12393 FE,      0 FE with TG
+ Read File  2:@;                                                                                              
+ Read File  2:5; { OBJETS parties de l OBJET }                                                                
+ Read File  2:   helium; { NOM de l'OBJET ou ABANDON? }                                                       
+
+ CREATION of TMS ~>OBJET>HELIUM>DEFINITION                                                       
+ Read File  2:   0; { classique 2D ou 3D }                                                                    
+ Read File  2:   1; { NBDOBJ 'nombre des Points Lignes Surfaces Volumes Objets de l''objet'}                  
+ Read File  2:   V; 6cube; { VOLUME; NOMVOLUME; }                                                             
+
+ CONTENTS of TMS ~>OBJET>HELIUM>DEFINITION                                                       
+ tms : ~>OBJET>>DEFINITION 'Definition of an OBJECT'                                            
+ SDOUNO 'type of the treatment' = 0 '2D or 3D classic'                                          
+ NBDOBJ 'number of Points Lines Surfaces Volumes Objects of the object' = 1                     
+ NTYOBJ ( 1  ..  1 ) 'name of type PLSVO & PLSVO' s name' = ( 1 : VOLUME  6CUBE )               
+ END of DEFINITION of OBJECT: HELIUM                  
+
+ Read File  2:      { NTYOBJ(1..NBDOBJ) 'nom du type PLSVO et nom du PLSVO' typeobjet ;}                      
+ Read File  2:@;                                                                                              
+ Read File  2:7; { INTERPOLATION NOEUDS du maillage }                                                         
+ Read File  2: helium; { NOM de l'OBJET a INTERPOLER? }                                                       
+
+ CREATION TMS: ~>OBJET>HELIUM>TOPOLOGIE
+ ===============================================================================
+ END of CREATION of TMS: NPEF"6Q1C
+ Read File  2: 3;      { LAGRANGE de DEGRE 1 }                                                                
+ NUMBER of VERTICES    = 20224
+ NUMBER of NODES       = 20224
+ NUMBER of SEGMENTS    = 0
+ NUMBER of TRIANGLES   = 0
+ NUMBER of QUADRANGLES = 0
+ NUMBER of TETRAHEDRA  = 0
+ NUMBER of PYRAMIDS    = 0
+ NUMBER of PENTAHEDRA  = 0
+ NUMBER of HEXAHEDRA   = 0
+ NUMBER of 6-CUBES     = 12393
+ CREATION END of TMS: ~>OBJET>HELIUM                                                             
+
+ Read File  2:@;                                                                                              
+ Read File  2:10;  { TRACE du MAILLAGE des PLSVO }                                                            
+ Read File  2: 5;  { Objet }                                                                                  
+ Read File  2: 1;  { Tous les OBJETS 1 par 1 }                                                                
+ Read File  2: 90; { EXECUTION du TRACE }                                                                     
+ ||e 2||=  1.22474492
+ ||e 3||=  1.15470052
+ ||e 4||=  1.11803401
+ ||e 5||=  1.09544516
+ ||e 6||=  2.14907601E-07
+ Read File  2:@;                                                                                              
+ Read File  2:@;                                                                                              
+ Read File  2:FERMER;                                                                                         
+ END of READING an INPUT FILE                                                                    
+ To CONTINUE TYPE @ or ESCAPE                                                                    
+ Keyboard:@;                                                                                              
+ Type of @ => ESCAPE of READING                                                                  
+ Keyboard:@;                                                                                              
+ Type of @ => ESCAPE of READING                                                                  
+ Keyboard:@;                                                                                              
+ Type of @ => ESCAPE of READING                                                                  
+ Keyboard:@;                                                                                              
+ Type of @ => ESCAPE of READING                                                                  
+ Keyboard:@;                                                                                              
+ Type of @ => ESCAPE of READING                                                                  
+ Keyboard:          99;                                                                                   
+ DATA are SAVING on DISK ...                                                                     
+STOP : CORRECT END of MEFISTO EXECUTION statement executed
+elan.ann.jussieu.fr:/home/perronne/mefistox/he -bash-> THERMICER
+
+===============================================================
+   MEFISTO-THERMICER: HEAT TRANFER of an OBJECT on LINUX PC
+===============================================================
+Project (low case) name ?
+he
+
+Execution MEFISTO-THERMICER in directory /home/perronne/mefistox/he
+
+---------------------------------------------------------
+| MM   MM  EEEEEE  FFFFFF  IIII  SSSSSS  TTTTTT OOOOOOO |
+| MMM MMM  EE      FF       II   SS        TT   OO   OO |
+| MM M MM  EEEEE   FFFF     II   SSSSSS    TT   OO   OO |  FAIT L'EF !
+| MM   MM  EE      FF       II       SS    TT   OO   OO |
+| MM   MM  EEEEEE  FF      IIII  SSSSSS    TT   OOOOOOO | October 30th 2007 Version
+---------------------------------------------------------
+
+ DATE         : 30/10/ 7   18H 24M 41S 
+ AUTHOR       : Alain Perronnet         
+ PROJECT      : he                                                                      
+
+INPUT DATA of MEFISTO in ENGLISH LANGUAGE
+Type ? to obtain the DOCUMENTATION
+Type @ to ESCAPE a MENU or INPUT DATA
+
+PRECISION EPZERO =  0.1000000E-05
+PRECISION EPSXYZ =  0.1000000E-03
+
+xvmmecran avant: ecran xmm=411 ymm= 308
+xvmmecran apres: ecran xmm=411 ymm= 308
+ Screen PIXELS     WIDTH=1600  HEIGHT=1200
+ Screen MM         WIDTH= 411  HEIGHT= 308
+ Class TrueColor
+ TrueColor: Mefisto with 256 colors
+ Visual->map_entries = 256
+ Used  colors number = 256
+ Color Planes Depth  = 24
+ Available X-Fonts number = 512
+ Window PIXELS     WIDTH=1500  HEIGHT=1120
+ Window MM         WIDTH= 385  HEIGHT= 288
+ X-CONVERSION MM=>PIXELS =  3.8929441
+ Y-CONVERSION MM=>PIXELS =  3.89610386
+ RESERVED COLORS from    0 to   15
+ ALLOWED  COLORS from   16 to  255
+ RECOVERY of  511 X-CHARACTER FONTS
+
+Typed data are written on file frappe.002                  
+SUPER-ARRAY MCN WITH   532000000 WORDS of MEMORY
+ ||e 2||=  1.22474492
+ ||e 3||=  1.15470052
+ ||e 4||=  1.11803401
+ ||e 5||=  1.09544516
+ ||e 6||=  2.14907601E-07
+ Keyboard:readf he.ther;                                                                                  
+
+ DATA INPUT is REDIRECTED on a FILE                                                              
+ he.ther                                                                                         
+
+ Read File  2:{ ==================================================================== }                        
+ Read File  2:{ Logiciel MEFISTO     : Version Aout 2006                             }                        
+ Read File  2:{ Nom de l'Utilisateur : Alain Perronnet  Texas A & M University       }                        
+ Read File  2:{ Nom du Projet        : he   Atome d'HELIUM  en 6D                    }                        
+ Read File  2:{                        Ze=2 protons en (0,0,0, 0,0,0)  et            }                        
+ Read File  2:{                        1 electron en (x,y,z) & 1 electron en (u,v,w) }                        
+ Read File  2:{ Date                 : 19/9/2006 et 13/11/2006                       }                        
+ Read File  2:{ ==================================================================== }                        
+ Read File  2:{ ATTENTION: La condition aux limites sur le Bord du 6-cubes est fixee }                        
+ Read File  2:{ ********** en DUR IMPLICITEMENT dans $MEFISTO/ther/thdlfx.f          }                        
+ Read File  2:{ Condition IMPLICITE de NEUMANN   HOMOGENE  => ligne 68 a DECOMMENTER }                        
+ Read File  2:{           => Ctes sont solutions!...      <=> PB NON INVERSIBLE      }                        
+ Read File  2:{ Condition IMPLICITE de DIRICHLET HOMOGENE  => ligne 68 avec CCC      }                        
+ Read File  2:{ ==================================================================== }                        
+ Read File  2:DefVar Ze; Ze=2;                                                                                
+ LU: ADDED VARIABLE ZE                                                                           
+ Read File  2:2; { ENTREE des DONNEES du PROBLEME }                                                           
+
+ ********************************************************************************
+ READING of INPUT HEAT DATA of the OBJECT HELIUM                  
+ ********************************************************************************
+
+ VOLUME: 6CUBE
+ Read File  2: { VOLUME: helium }                                                                             
+ Read File  2: 1;   { Rot Densite de MASSE }                                                                  
+
+ CREATION of TMS ~>VOLUME>6CUBE>MASSE                                                            
+ Read File  2: 1;   { Masse constante }                                                                       
+ Read File  2: 1;   { DMASSE 'Densite de MASSE' reel ; }                                                      
+
+ CONTENTS of TMS ~>VOLUME>6CUBE>MASSE
+ tms : ~>>>MASSE 'Density of MASS'                                                              
+ LTDMAS 'Type of the mass density' = 1 'constant mass density'                                  
+ DMASSE 'value of the density of MASS' = 1.000000                                               
+ Read File  2: 2;   { [A] Tenseur CONDUCTIVITE THERMIQUE }                                                    
+
+ CREATION of TMS ~>VOLUME>6CUBE>CONDUCTIVITE                                                     
+ Read File  2: 1;   { Materiau 6D homogene isotrope }                                                         
+ Read File  2: 0.5; { CONDUC 'Conductivite du materiau' reel ; }                                              
+
+ CONTENTS of TMS ~>VOLUME>6CUBE>CONDUCTIVITE
+ tms : ~>>>CONDUCTIVITE 'Conductivity of a SV'                                                  
+ LTCOND 'type of conductivity' = 1 '3D HOMOGENOUS ISOTROPIC material'                           
+ CONDUC 'constant material conductivity' = 0.5000000                                            
+ Read File  2: 6;   { CT Coefficient devant TEMPERATURE }                                                     
+
+ CREATION of TMS ~>VOLUME>6CUBE>COEFTEMPERATURE                                                  
+ Read File  2: -1;  { fonction Coefficient de la Temperature }                                                
+ Read File  2: deffonc Coulomb(temps, x,y,z, u,v,w, no_type_objet, materiau, temper);                         
+ Read File  2:   defvar de1pxyz, de2puvw, de12;                                                               
+ Read File  2:   de1pxyz=sqrt(x*x+y*y+z*z);                                                                   
+ Read File  2:   de2puvw=sqrt(u*u+v*v+w*w);                                                                   
+ Read File  2:   de12=sqrt((x-u)**2+(y-v)**2+(z-w)**2);                                                       
+ Read File  2:   Coulomb= 1/de12 - Ze/de1pxyz - Ze/de2puvw;                                                   
+ Read File  2: finfonc;                                                                                       
+ LU: ADDED VARIABLE DE1PXYZ                                                                      
+ LU: ADDED VARIABLE DE2PUVW                                                                      
+ LU: ADDED VARIABLE DE12                                                                         
+ LU: ADDITION OF THE FUNCTION COULOMB                                                            
+ Read File  2: Coulomb; { DANS LE LEXIQUE ~>FONCTION }                                                        
+
+ CONTENTS of TMS ~>VOLUME>6CUBE>COEFTEMPERATURE
+ tms : ~>>>COEFTEMPERATURE 'Coefficient of in front of the Temperature'                         
+ LTCOET 'Type of Coefficient of Temperature' = -1 'function coefficient of temperature'         
+ NFCOET 'name of function of temperature coefficient' =                                         
+ ( 1 : COULOMB )                                                                                
+ Read File  2:@;                                                                                              
+ Read File  2:@;                                                                                              
+ Read File  2:6;      { CALCUL des VALEURS VECTEURS PROPRES }                                                 
+
+ ================================================================================
+ SOLUTION of EIGENVALUES and EIGENVECTORS of OBJECT: HELIUM                  
+ ================================================================================
+
+ CONTENTS of TMS ~>VOLUME>6CUBE>MASSE                                                            
+ tms : ~>>>MASSE 'Density of MASS'                                                              
+ LTDMAS 'Type of the mass density' = 1 'constant mass density'                                  
+ DMASSE 'value of the density of MASS' = 1.000000                                               
+
+ CONTENTS of TMS ~>VOLUME>6CUBE>CONDUCTIVITE                                                     
+ tms : ~>>>CONDUCTIVITE 'Conductivity of a SV'                                                  
+ LTCOND 'type of conductivity' = 1 '3D HOMOGENOUS ISOTROPIC material'                           
+ CONDUC 'constant material conductivity' = 0.5000000                                            
+
+ CONTENTS of TMS ~>VOLUME>6CUBE>COEFTEMPERATURE                                                  
+ tms : ~>>>COEFTEMPERATURE 'Coefficient of in front of the Temperature'                         
+ LTCOET 'Type of Coefficient of Temperature' = -1 'function coefficient of temperature'         
+ NFCOET 'name of function of temperature coefficient' =                                         
+ ( 1 : COULOMB )                                                                                
+
+ SPACE DIMENSION (2 or 3 or 6)         =     6
+ NUMBER of COMPONENTS of each VECTOR   = 20224
+ The 57480 WORDS of the ARRAY 6Q11 are RESTORED in MCN
+ 2 SKYLINE MATRICES of    85335188 DOUBLE PRECISION REALS
+ ADRESS  1125511 of  170670376 DOUBLE REALS
+ CONSTRUCTION of the MATRIX [M]
+ CONSTRUCTION of the MATRIX [K]
+ [M] and [K] CONSTANT MATRICES COMPUTED
+
+THDLFX: NUMBER of TEMPERATURES  or NODES =   20224
+THDLFX: NUMBER of TEMPERATURES     FIXED =    4032
+THDLFX: NUMBER of TEMPERATURES NOT FIXED =   16192
+
+
+SUPPRESSION of      4032 LINES and COLUMNS of  DoF FIXED at NULL on [K] and [M] among the     20224 DoF
+PCDLID: INITIAL SKYLINE of the MATRIX =  85335188
+PCDLID: FINAL   SKYLINE of the MATRIX =  65103823
+PCDLID: INITIAL SKYLINE of the MATRIX =  85335188
+PCDLID: FINAL   SKYLINE of the MATRIX =  65103823
+MAXIMUM COEFFICIENT of the MATRIX [K] =   6.040723    
+MAXIMUM COEFFICIENT of the MATRIX [M] =   2.314580    
+DIVISION of 2 MATRICES  [K]&[M] by    6.040723    =>
+MAXIMUM COEFFICIENT of the MATRIX [K] =   1.000000    
+MAXIMUM COEFFICIENT of the MATRIX [M] =  0.3831628    
+ Read File  2:   1;   { SOUS ESPACES }                                                                        
+
+SUB-SPACE METHOD
+ Read File  2: -3.0;  { BORNE INFERIEURE des VALEURS PROPRES a CALCULER? }                                    
+ Read File  2: -1.0;  { BORNE SUPERIEURE des VALEURS PROPRES a CALCULER? }                                    
+SSPACE: COMPUTATION of EIGENVALUES from   -3.000000     to   -1.000000    
+L*D*tL FACTORIZATION of K +   1.000000     M
+   14 EIGENVALUES BEFORE  -1.000000    
+L*D*tL FACTORIZATION of K +   3.000000     M
+    0 EIGENVALUES BEFORE  -3.000000    
+
+There are    14 EIGENVALUES from   -3.000000     to   -1.000000    
+ 14 EIGENVALUES to COMPUTE
+ 19 RESERVED VECTORS and 0 INITIAL EIGENVALUES
+APPROXIMATION DE X0        (INITX0) :      1
+ITERATION NUMBER MAXIMUM (NITEM) :     64
+ MANAG(  1) : 1   MANAG(  2) : 3   MANAG(  3) : 1   MANAG(  4) : 1   MANAG(  5) : 5
+ MANAG(  6) : 1   MANAG(  7) : 2   MANAG(  8) : 3   MANAG(  9) : 5   MANAG( 10) : 1
+ MANAG( 11) : 2   MANAG( 12) : 3   MANAG( 13) : 5   MANAG( 14) : 5   MANAG( 15) : 5
+ MANAG( 16) : 5   MANAG( 17) : 5   MANAG( 18) : 5   MANAG( 19) : 5   MANAG( 20) : 5
+ MANAG( 21) : 5   MANAG( 22) : 5   MANAG( 23) : 5   MANAG( 24) : 5   MANAG( 25) : 5
+ MANAG( 26) : 5   MANAG( 27) : 5   MANAG( 28) : 5   MANAG( 29) : 5   MANAG( 30) : 5
+ MANAG( 31) : 5   MANAG( 32) : 5   MANAG( 33) : 5   MANAG( 34) : 5   MANAG( 35) : 5
+ MANAG( 36) : 5   MANAG( 37) : 5   MANAG( 38) : 5   MANAG( 39) : 5   MANAG( 40) : 5
+ MANAG( 41) : 5   MANAG( 42) : 5   MANAG( 43) : 5   MANAG( 44) : 5   MANAG( 45) : 5
+ MANAG( 46) : 5   MANAG( 47) : 5   MANAG( 48) : 5   MANAG( 49) : 5   MANAG( 50) : 5
+ MANAG( 51) : 5   MANAG( 52) : 5   MANAG( 53) : 5   MANAG( 54) : 5   MANAG( 55) : 5
+ MANAG( 56) : 5   MANAG( 57) : 5   MANAG( 58) : 5   MANAG( 59) : 5   MANAG( 60) : 5
+ MANAG( 61) : 5   MANAG( 62) : 5   MANAG( 63) : 5   MANAG( 64) : 5   MANAG(
+
+ITERATION    1:  SIMULTANEOUS SIMPLE
+ITERATION    2:  SIMULTANEOUS SIMPLE
+ITERATION    2:  M-ORTHONORMALIZATION
+ITERATION    3:  SIMULTANEOUS SIMPLE
+ITERATION    4:  SIMULTANEOUS SIMPLE
+ITERATION    5:  RAYLEIGHT-RITZ ANALYSIS on the ITERATED SPACE
+NUMBER of JACOBI ITERATIONS =      5
+ITERATION   5:  The COMPUTED EIGENVALUES : 
+   1 :   -2.816518       2 :   -2.040800       3 :   -1.800948       4 :   -1.796173       5 :   -1.633523    
+   6 :  -0.9283741       7 :  -0.7919178       8 :  -0.6668462       9 :  -0.5047622      10 :  -0.4374400    
+  11 :  -0.2820783      12 :  -0.1491045      13 :  -0.9883284E-01  14 :  -0.9254481E-01  15 :   0.1144398    
+  16 :   0.2145319      17 :   0.2719888      18 :   0.3457893      19 :   0.5692766    
+
+ITERATION   5:  NUMBER of CONVERGED EIGENVALUES=   0
+
+START of the ITERATION   6
+ITERATION    6:  SIMULTANEOUS SIMPLE
+ITERATION    7:  SIMULTANEOUS SIMPLE
+ITERATION    7:  M-ORTHONORMALIZATION
+ITERATION   7:  The COMPUTED EIGENVALUES : 
+   1 :   -2.816518       2 :   -2.049278       3 :   -1.823189       4 :   -1.821473       5 :   -1.677180    
+   6 :   -1.320126       7 :   -1.022949       8 :   -1.010823       9 :   -1.309821      10 :  -0.9264980    
+  11 :  -0.6633629      12 :  -0.6114125      13 :  -0.5721953      14 :  -0.7439867      15 :  -0.2739935    
+  16 :  -0.3808806      17 :  -0.1270845      18 :   0.6174787      19 :   0.3727549    
+ITERATION    8:  SIMULTANEOUS SIMPLE
+ITERATION    8:  M-ORTHONORMALIZATION
+ITERATION    9:  RAYLEIGHT-RITZ ANALYSIS on the ITERATED SPACE
+NUMBER of JACOBI ITERATIONS =      4
+ITERATION   9:  The COMPUTED EIGENVALUES : 
+   1 :   -2.816485       2 :   -2.044918       3 :   -1.822469       4 :   -1.822016       5 :   -1.674056    
+   6 :   -1.550836       7 :   -1.505328       8 :   -1.055999       9 :  -0.9846063      10 :  -0.9824920    
+  11 :  -0.8392884      12 :  -0.7747609      13 :  -0.7109935      14 :  -0.5280311      15 :  -0.4578542    
+  16 :  -0.4005133      17 :  -0.3163799      18 :  -0.9764467E-01  19 :   0.1176860    
+
+ITERATION   9:  NUMBER of CONVERGED EIGENVALUES=   1
+
+START of the ITERATION  10
+ITERATION   10:  SIMULTANEOUS SIMPLE
+ITERATION   11:  SIMULTANEOUS SIMPLE
+ITERATION   11:  M-ORTHONORMALIZATION
+ITERATION  11:  The COMPUTED EIGENVALUES : 
+   1 :   -2.816518       2 :   -2.050107       3 :   -1.829976       4 :   -1.829786       5 :   -1.688033    
+   6 :   -1.576149       7 :   -1.572440       8 :   -1.114369       9 :   -1.085845      10 :   -1.014875    
+  11 :  -0.9860922      12 :  -0.8873381      13 :  -0.8237377      14 :  -0.6083368      15 :  -0.5030386    
+  16 :  -0.2570933      17 :  -0.5983745E-02  18 :  -0.1424190      19 :  -0.4573678E-01
+ITERATION   12:  SIMULTANEOUS SIMPLE
+ITERATION   12:  M-ORTHONORMALIZATION
+ITERATION   13:  RAYLEIGHT-RITZ ANALYSIS on the ITERATED SPACE
+NUMBER of JACOBI ITERATIONS =      3
+ITERATION  13:  The COMPUTED EIGENVALUES : 
+   1 :   -2.816488       2 :   -2.044598       3 :   -1.821695       4 :   -1.820961       5 :   -1.673496    
+   6 :   -1.564955       7 :   -1.563710       8 :   -1.107967       9 :   -1.077649      10 :  -0.9972376    
+  11 :  -0.9844794      12 :  -0.9003573      13 :  -0.8060118      14 :  -0.6343771      15 :  -0.5334603    
+  16 :  -0.3476189      17 :  -0.3051961      18 :  -0.1714945      19 :  -0.1334452    
+
+ITERATION  13:  NUMBER of CONVERGED EIGENVALUES=   1
+
+START of the ITERATION  14
+ITERATION   14:  RAYLEIGHT-RITZ ANALYSIS on the ITERATED SPACE
+NUMBER of JACOBI ITERATIONS =      4
+ITERATION  14:  The COMPUTED EIGENVALUES : 
+   1 :   -2.816518       2 :   -2.049436       3 :   -1.828488       4 :   -1.828216       5 :   -1.684934    
+   6 :   -1.576151       7 :   -1.575092       8 :   -1.132955       9 :   -1.111233      10 :   -1.022728    
+  11 :   -1.007112      12 :  -0.9446810      13 :  -0.8421731      14 :  -0.6656754      15 :  -0.5532062    
+  16 :  -0.1240670      17 :   0.3232976E-01  18 :   0.1888122      19 :   0.2918897    
+
+ITERATION  14:  NUMBER of CONVERGED EIGENVALUES=   1
+
+START of the ITERATION  15
+ITERATION   15:  RAYLEIGHT-RITZ ANALYSIS on the ITERATED SPACE
+NUMBER of JACOBI ITERATIONS =      3
+ITERATION  15:  The COMPUTED EIGENVALUES : 
+   1 :   -2.816518       2 :   -2.050103       3 :   -1.829913       4 :   -1.829747       5 :   -1.688122    
+   6 :   -1.580038       7 :   -1.578179       8 :   -1.148852       9 :   -1.133680      10 :   -1.041825    
+  11 :   -1.017446      12 :  -0.9777962      13 :  -0.8721226      14 :  -0.6927237      15 :  -0.5714704    
+  16 :   0.1472706      17 :   0.2770203      18 :   0.3603376      19 :   0.4565330    
+
+ITERATION  15:  NUMBER of CONVERGED EIGENVALUES=   1
+
+START of the ITERATION  16
+ITERATION   16:  RAYLEIGHT-RITZ ANALYSIS on the ITERATED SPACE
+NUMBER of JACOBI ITERATIONS =      3
+ITERATION  16:  The COMPUTED EIGENVALUES : 
+   1 :   -2.816518       2 :   -2.050210       3 :   -1.830258       4 :   -1.830106       5 :   -1.689113    
+   6 :   -1.581409       7 :   -1.579223       8 :   -1.160130       9 :   -1.149235      10 :   -1.054848    
+  11 :   -1.023973      12 :   -1.002685      13 :  -0.8979800      14 :  -0.7164622      15 :  -0.5922078    
+  16 :  -0.2706569E-01  17 :   0.5783852E-01  18 :   0.1212898      19 :   0.2895311    
+
+ITERATION  16:  NUMBER of CONVERGED EIGENVALUES=   4
+
+START of the ITERATION  17
+ITERATION   17:  RAYLEIGHT-RITZ ANALYSIS on the ITERATED SPACE
+NUMBER of JACOBI ITERATIONS =      3
+ITERATION  17:  The COMPUTED EIGENVALUES : 
+   1 :   -2.816518       2 :   -2.050229       3 :   -1.830346       4 :   -1.830198       5 :   -1.689439    
+   6 :   -1.581915       7 :   -1.579605       8 :   -1.168619       9 :   -1.160120      10 :   -1.064042    
+  11 :   -1.029674      12 :   -1.020209      13 :  -0.9205262      14 :  -0.7373156      15 :  -0.6149063    
+  16 :  -0.8413441E-02  17 :   0.2016535      18 :   0.3978351      19 :   0.4306821    
+
+ITERATION  17:  NUMBER of CONVERGED EIGENVALUES=   7
+
+START of the ITERATION  18
+ITERATION   18:  RAYLEIGHT-RITZ ANALYSIS on the ITERATED SPACE
+NUMBER of JACOBI ITERATIONS =      2
+ITERATION  18:  The COMPUTED EIGENVALUES : 
+   1 :   -2.816518       2 :   -2.050232       3 :   -1.830369       4 :   -1.830223       5 :   -1.689550    
+   6 :   -1.582108       7 :   -1.579750       8 :   -1.175251       9 :   -1.167851      10 :   -1.070821    
+  11 :   -1.039313      12 :   -1.027864      13 :  -0.9401768      14 :  -0.7556306      15 :  -0.6396683    
+  16 :   0.1942670      17 :   0.2904820      18 :   0.2964675      19 :   0.3598754    
+
+ITERATION  18:  NUMBER of CONVERGED EIGENVALUES=   7
+
+START of the ITERATION  19
+ITERATION   19:  RAYLEIGHT-RITZ ANALYSIS on the ITERATED SPACE
+NUMBER of JACOBI ITERATIONS =      2
+ITERATION  19:  The COMPUTED EIGENVALUES : 
+   1 :   -2.816518       2 :   -2.050233       3 :   -1.830375       4 :   -1.830230       5 :   -1.689589    
+   6 :   -1.582183       7 :   -1.579808       8 :   -1.180506       9 :   -1.173460      10 :   -1.075991    
+  11 :   -1.049600      12 :   -1.030598      13 :  -0.9572386      14 :  -0.7717313      15 :  -0.6661511    
+  16 :   0.1354218      17 :   0.3357605      18 :   0.3432560      19 :   0.4143630    
+
+ITERATION  19:  NUMBER of CONVERGED EIGENVALUES=   7
+
+START of the ITERATION  20
+ITERATION   20:  RAYLEIGHT-RITZ ANALYSIS on the ITERATED SPACE
+NUMBER of JACOBI ITERATIONS =      3
+ITERATION  20:  The COMPUTED EIGENVALUES : 
+   1 :   -2.816518       2 :   -2.050233       3 :   -1.830377       4 :   -1.830232       5 :   -1.689603    
+   6 :   -1.582214       7 :   -1.579832       8 :   -1.184661       9 :   -1.177635      10 :   -1.080047    
+  11 :   -1.057925      12 :   -1.032204      13 :  -0.9720243      14 :  -0.7859439      15 :  -0.6943876    
+  16 :   0.2706661      17 :   0.3289255      18 :   0.3306594      19 :   0.4133577    
+
+ITERATION  20:  NUMBER of CONVERGED EIGENVALUES=   7
+
+START of the ITERATION  21
+ITERATION   21:  RAYLEIGHT-RITZ ANALYSIS on the ITERATED SPACE
+NUMBER of JACOBI ITERATIONS =      3
+ITERATION  21:  The COMPUTED EIGENVALUES : 
+   1 :   -2.816518       2 :   -2.050233       3 :   -1.830378       4 :   -1.830233       5 :   -1.689608    
+   6 :   -1.582227       7 :   -1.579841       8 :   -1.187911       9 :   -1.180850      10 :   -1.083301    
+  11 :   -1.064502      12 :   -1.033314      13 :  -0.9848487      14 :  -0.7985883      15 :  -0.7270501    
+  16 :  -0.3123660E-01  17 :   0.4123502E-01  18 :   0.1253003      19 :   0.2608421    
+
+ITERATION  21:  NUMBER of CONVERGED EIGENVALUES=   7
+
+START of the ITERATION  22
+ITERATION   22:  RAYLEIGHT-RITZ ANALYSIS on the ITERATED SPACE
+NUMBER of JACOBI ITERATIONS =      3
+ITERATION  22:  The COMPUTED EIGENVALUES : 
+   1 :   -2.816518       2 :   -2.050233       3 :   -1.830378       4 :   -1.830233       5 :   -1.689610    
+   6 :   -1.582232       7 :   -1.579845       8 :   -1.190413       9 :   -1.183403      10 :   -1.085982    
+  11 :   -1.069743      12 :   -1.034135      13 :  -0.9960615      14 :  -0.8101841      15 :  -0.7664495    
+  16 :  -0.1398150E-01  17 :   0.1403327      18 :   0.1624547      19 :   0.2666834    
+
+ITERATION  22:  NUMBER of CONVERGED EIGENVALUES=   7
+
+START of the ITERATION  23
+ITERATION   23:  RAYLEIGHT-RITZ ANALYSIS on the ITERATED SPACE
+NUMBER of JACOBI ITERATIONS =      3
+ITERATION  23:  The COMPUTED EIGENVALUES : 
+   1 :   -2.816518       2 :   -2.050233       3 :   -1.830378       4 :   -1.830233       5 :   -1.689610    
+   6 :   -1.582235       7 :   -1.579847       8 :   -1.192311       9 :   -1.185483      10 :   -1.088194    
+  11 :   -1.073877      12 :   -1.034777      13 :   -1.005756      14 :  -0.8219966      15 :  -0.7994314    
+  16 :   0.1035351      17 :   0.2119538      18 :   0.3151535      19 :   0.3204139    
+
+ITERATION  23:  NUMBER of CONVERGED EIGENVALUES=   7
+
+START of the ITERATION  24
+ITERATION   24:  RAYLEIGHT-RITZ ANALYSIS on the ITERATED SPACE
+NUMBER of JACOBI ITERATIONS =      2
+ITERATION  24:  The COMPUTED EIGENVALUES : 
+   1 :   -2.816518       2 :   -2.050233       3 :   -1.830378       4 :   -1.830233       5 :   -1.689611    
+   6 :   -1.582236       7 :   -1.579847       8 :   -1.193732       9 :   -1.187219      10 :   -1.090034    
+  11 :   -1.077176      12 :   -1.035313      13 :   -1.014164      14 :  -0.8390070      15 :  -0.8214979    
+  16 :   0.2347893      17 :   0.3719432      18 :   0.4376653      19 :   0.6554406    
+
+ITERATION  24:  NUMBER of CONVERGED EIGENVALUES=   7
+
+START of the ITERATION  25
+ITERATION   25:  RAYLEIGHT-RITZ ANALYSIS on the ITERATED SPACE
+NUMBER of JACOBI ITERATIONS =      3
+ITERATION  25:  The COMPUTED EIGENVALUES : 
+   1 :   -2.816518       2 :   -2.050233       3 :   -1.830378       4 :   -1.830233       5 :   -1.689611    
+   6 :   -1.582236       7 :   -1.579848       8 :   -1.194789       9 :   -1.188692      10 :   -1.091618    
+  11 :   -1.079794      12 :   -1.035799      13 :   -1.021449      14 :  -0.8618478      15 :  -0.8330703    
+  16 :   0.1826179      17 :   0.2752535      18 :   0.3097539      19 :   0.3425386    
+
+ITERATION  25:  NUMBER of CONVERGED EIGENVALUES=   7
+
+START of the ITERATION  26
+ITERATION   26:  RAYLEIGHT-RITZ ANALYSIS on the ITERATED SPACE
+NUMBER of JACOBI ITERATIONS =      3
+ITERATION  26:  The COMPUTED EIGENVALUES : 
+   1 :   -2.816518       2 :   -2.050233       3 :   -1.830378       4 :   -1.830233       5 :   -1.689611    
+   6 :   -1.582237       7 :   -1.579848       8 :   -1.195574       9 :   -1.189956      10 :   -1.092982    
+  11 :   -1.081907      12 :   -1.036368      13 :   -1.027723      14 :  -0.8870929      15 :  -0.8419339    
+  16 :  -0.1277054      17 :   0.1132092      18 :   0.1596447      19 :   0.1830409    
+
+ITERATION  26:  NUMBER of CONVERGED EIGENVALUES=   8
+
+START of the ITERATION  27
+ITERATION   27:  RAYLEIGHT-RITZ ANALYSIS on the ITERATED SPACE
+NUMBER of JACOBI ITERATIONS =      3
+ITERATION  27:  The COMPUTED EIGENVALUES : 
+   1 :   -2.816518       2 :   -2.050233       3 :   -1.830378       4 :   -1.830233       5 :   -1.689611    
+   6 :   -1.582237       7 :   -1.579848       8 :   -1.196150       9 :   -1.191052      10 :   -1.094162    
+  11 :   -1.083596      12 :   -1.037434      13 :   -1.032626      14 :  -0.9083752      15 :  -0.8497333    
+  16 :  -0.4907236E-01  17 :   0.1726953      18 :   0.3376343      19 :   0.3873513    
+
+ITERATION  27:  NUMBER of CONVERGED EIGENVALUES=   8
+
+START of the ITERATION  28
+ITERATION   28:  RAYLEIGHT-RITZ ANALYSIS on the ITERATED SPACE
+NUMBER of JACOBI ITERATIONS =      3
+ITERATION  28:  The COMPUTED EIGENVALUES : 
+   1 :   -2.816518       2 :   -2.050233       3 :   -1.830378       4 :   -1.830233       5 :   -1.689611    
+   6 :   -1.582237       7 :   -1.579848       8 :   -1.196569       9 :   -1.192006      10 :   -1.095188    
+  11 :   -1.084948      12 :   -1.040194      13 :   -1.035077      14 :  -0.9257877      15 :  -0.8570784    
+  16 :   0.1011131      17 :   0.2370437      18 :   0.2501508      19 :   0.3062662    
+
+ITERATION  28:  NUMBER of CONVERGED EIGENVALUES=   8
+
+START of the ITERATION  29
+ITERATION   29:  RAYLEIGHT-RITZ ANALYSIS on the ITERATED SPACE
+NUMBER of JACOBI ITERATIONS =      2
+ITERATION  29:  The COMPUTED EIGENVALUES : 
+   1 :   -2.816518       2 :   -2.050233       3 :   -1.830378       4 :   -1.830233       5 :   -1.689611    
+   6 :   -1.582237       7 :   -1.579848       8 :   -1.196872       9 :   -1.192839      10 :   -1.096085    
+  11 :   -1.086027      12 :   -1.043955      13 :   -1.035863      14 :  -0.9401836      15 :  -0.8641651    
+  16 :   0.3049573      17 :   0.3464051      18 :   0.3752357      19 :   0.4473790    
+
+ITERATION  29:  NUMBER of CONVERGED EIGENVALUES=  10
+
+START of the ITERATION  30
+ITERATION   30:  RAYLEIGHT-RITZ ANALYSIS on the ITERATED SPACE
+NUMBER of JACOBI ITERATIONS =      3
+ITERATION  30:  The COMPUTED EIGENVALUES : 
+   1 :   -2.816518       2 :   -2.050233       3 :   -1.830378       4 :   -1.830233       5 :   -1.689611    
+   6 :   -1.582237       7 :   -1.579848       8 :   -1.197093       9 :   -1.193566      10 :   -1.096871    
+  11 :   -1.086892      12 :   -1.047554      13 :   -1.036245      14 :  -0.9524986      15 :  -0.8710779    
+  16 :   0.2528857      17 :   0.2945419      18 :   0.3351928      19 :   0.3748632    
+
+ITERATION  30:  NUMBER of CONVERGED EIGENVALUES=  11
+
+START of the ITERATION  31
+ITERATION   31:  RAYLEIGHT-RITZ ANALYSIS on the ITERATED SPACE
+NUMBER of JACOBI ITERATIONS =      3
+ITERATION  31:  The COMPUTED EIGENVALUES : 
+   1 :   -2.816518       2 :   -2.050233       3 :   -1.830378       4 :   -1.830233       5 :   -1.689611    
+   6 :   -1.582237       7 :   -1.579848       8 :   -1.197255       9 :   -1.194205      10 :   -1.097574    
+  11 :   -1.087587      12 :   -1.050815      13 :   -1.036507      14 :  -0.9646054      15 :  -0.8778683    
+  16 :  -0.2103648      17 :   0.1213024      18 :   0.1748167      19 :   0.2317608    
+
+ITERATION  31:  NUMBER of CONVERGED EIGENVALUES=  11
+
+START of the ITERATION  32
+ITERATION   32:  RAYLEIGHT-RITZ ANALYSIS on the ITERATED SPACE
+NUMBER of JACOBI ITERATIONS =      3
+ITERATION  32:  The COMPUTED EIGENVALUES : 
+   1 :   -2.816518       2 :   -2.050233       3 :   -1.830378       4 :   -1.830233       5 :   -1.689611    
+   6 :   -1.582237       7 :   -1.579848       8 :   -1.197371       9 :   -1.194764      10 :   -1.098189    
+  11 :   -1.088144      12 :   -1.053724      13 :   -1.036715      14 :  -0.9751168      15 :  -0.8845039    
+  16 :  -0.2073846      17 :   0.1672469      18 :   0.1981318      19 :   0.2889958    
+
+ITERATION  32:  NUMBER of CONVERGED EIGENVALUES=  11
+
+START of the ITERATION  33
+ITERATION   33:  RAYLEIGHT-RITZ ANALYSIS on the ITERATED SPACE
+NUMBER of JACOBI ITERATIONS =      2
+ITERATION  33:  The COMPUTED EIGENVALUES : 
+   1 :   -2.816518       2 :   -2.050233       3 :   -1.830378       4 :   -1.830233       5 :   -1.689611    
+   6 :   -1.582237       7 :   -1.579848       8 :   -1.197454       9 :   -1.195251      10 :   -1.098727    
+  11 :   -1.088589      12 :   -1.056328      13 :   -1.036895      14 :  -0.9843050      15 :  -0.8909692    
+  16 :   0.1243312      17 :   0.1695710      18 :   0.2496098      19 :   0.3100312    
+
+ITERATION  33:  NUMBER of CONVERGED EIGENVALUES=  11
+
+START of the ITERATION  34
+ITERATION   34:  RAYLEIGHT-RITZ ANALYSIS on the ITERATED SPACE
+NUMBER of JACOBI ITERATIONS =      2
+ITERATION  34:  The COMPUTED EIGENVALUES : 
+   1 :   -2.816518       2 :   -2.050233       3 :   -1.830378       4 :   -1.830233       5 :   -1.689611    
+   6 :   -1.582237       7 :   -1.579848       8 :   -1.197515       9 :   -1.195676      10 :   -1.099195    
+  11 :   -1.088946      12 :   -1.058708      13 :   -1.037045      14 :  -0.9926141      15 :  -0.8972309    
+  16 :   0.5797845E-01  17 :   0.2239131      18 :   0.3029935      19 :   0.3822954    
+
+ITERATION  34:  NUMBER of CONVERGED EIGENVALUES=  11
+
+START of the ITERATION  35
+ITERATION   35:  RAYLEIGHT-RITZ ANALYSIS on the ITERATED SPACE
+NUMBER of JACOBI ITERATIONS =      3
+ITERATION  35:  The COMPUTED EIGENVALUES : 
+   1 :   -2.816518       2 :   -2.050233       3 :   -1.830378       4 :   -1.830233       5 :   -1.689611    
+   6 :   -1.582237       7 :   -1.579848       8 :   -1.197560       9 :   -1.196044      10 :   -1.099609    
+  11 :   -1.089237      12 :   -1.060898      13 :   -1.037180      14 :   -1.000214      15 :  -0.9032528    
+  16 :   0.1826203      17 :   0.1966604      18 :   0.3291904      19 :   0.4394094    
+
+ITERATION  35:  NUMBER of CONVERGED EIGENVALUES=  11
+
+START of the ITERATION  36
+ITERATION   36:  RAYLEIGHT-RITZ ANALYSIS on the ITERATED SPACE
+NUMBER of JACOBI ITERATIONS =      3
+ITERATION  36:  The COMPUTED EIGENVALUES : 
+   1 :   -2.816518       2 :   -2.050233       3 :   -1.830378       4 :   -1.830233       5 :   -1.689611    
+   6 :   -1.582237       7 :   -1.579848       8 :   -1.197592       9 :   -1.196363      10 :   -1.099972    
+  11 :   -1.089471      12 :   -1.062958      13 :   -1.037305      14 :   -1.007388      15 :  -0.9090138    
+  16 :  -0.1192461      17 :   0.1829902      18 :   0.2056683      19 :   0.2616724    
+
+ITERATION  36:  NUMBER of CONVERGED EIGENVALUES=  11
+
+START of the ITERATION  37
+ITERATION   37:  RAYLEIGHT-RITZ ANALYSIS on the ITERATED SPACE
+NUMBER of JACOBI ITERATIONS =      3
+ITERATION  37:  The COMPUTED EIGENVALUES : 
+   1 :   -2.816518       2 :   -2.050233       3 :   -1.830378       4 :   -1.830233       5 :   -1.689611    
+   6 :   -1.582237       7 :   -1.579848       8 :   -1.197615       9 :   -1.196636      10 :   -1.100289    
+  11 :   -1.089660      12 :   -1.064930      13 :   -1.037421      14 :   -1.013940      15 :  -0.9144783    
+  16 :  -0.7351195E-01  17 :   0.1506446      18 :   0.2038733      19 :   0.3057755    
+
+ITERATION  37:  NUMBER of CONVERGED EIGENVALUES=  11
+
+START of the ITERATION  38
+ITERATION   38:  RAYLEIGHT-RITZ ANALYSIS on the ITERATED SPACE
+NUMBER of JACOBI ITERATIONS =      4
+ITERATION  38:  The COMPUTED EIGENVALUES : 
+   1 :   -2.816518       2 :   -2.050233       3 :   -1.830379       4 :   -1.830232       5 :   -1.689611    
+   6 :   -1.582237       7 :   -1.579848       8 :   -1.197632       9 :   -1.196868      10 :   -1.100568    
+  11 :   -1.089815      12 :   -1.066849      13 :   -1.037529      14 :   -1.019868      15 :  -0.9196263    
+  16 :  -0.1210365      17 :   0.1128499      18 :   0.2743526      19 :   0.3130184    
+
+ITERATION  38:  NUMBER of CONVERGED EIGENVALUES=  11
+
+START of the ITERATION  39
+ITERATION   39:  RAYLEIGHT-RITZ ANALYSIS on the ITERATED SPACE
+NUMBER of JACOBI ITERATIONS =      2
+ITERATION  39:  The COMPUTED EIGENVALUES : 
+   1 :   -2.816518       2 :   -2.050233       3 :   -1.830379       4 :   -1.830232       5 :   -1.689611    
+   6 :   -1.582237       7 :   -1.579848       8 :   -1.197644       9 :   -1.197064      10 :   -1.100810    
+  11 :   -1.089941      12 :   -1.068737      13 :   -1.037629      14 :   -1.025133      15 :  -0.9244572    
+  16 :   0.1805774      17 :   0.2373397      18 :   0.2562380      19 :   0.3546786    
+
+ITERATION  39:  NUMBER of CONVERGED EIGENVALUES=  11
+
+START of the ITERATION  40
+ITERATION   40:  RAYLEIGHT-RITZ ANALYSIS on the ITERATED SPACE
+NUMBER of JACOBI ITERATIONS =      2
+ITERATION  40:  The COMPUTED EIGENVALUES : 
+   1 :   -2.816518       2 :   -2.050233       3 :   -1.830379       4 :   -1.830232       5 :   -1.689611    
+   6 :   -1.582237       7 :   -1.579848       8 :   -1.197652       9 :   -1.197227      10 :   -1.101023    
+  11 :   -1.090045      12 :   -1.070608      13 :   -1.037736      14 :   -1.029719      15 :  -0.9289584    
+  16 :   0.2666579      17 :   0.3783513      18 :   0.3881969      19 :   0.4466375    
+
+ITERATION  40:  NUMBER of CONVERGED EIGENVALUES=  11
+
+START of the ITERATION  41
+ITERATION   41:  RAYLEIGHT-RITZ ANALYSIS on the ITERATED SPACE
+NUMBER of JACOBI ITERATIONS =      3
+ITERATION  41:  The COMPUTED EIGENVALUES : 
+   1 :   -2.816518       2 :   -2.050233       3 :   -1.830379       4 :   -1.830232       5 :   -1.689611    
+   6 :   -1.582237       7 :   -1.579848       8 :   -1.197659       9 :   -1.197362      10 :   -1.101209    
+  11 :   -1.090131      12 :   -1.072455      13 :   -1.037858      14 :   -1.033660      15 :  -0.9331437    
+  16 :   0.6407350E-01  17 :   0.1144333      18 :   0.1575092      19 :   0.2472161    
+
+ITERATION  41:  NUMBER of CONVERGED EIGENVALUES=  11
+
+START of the ITERATION  42
+ITERATION   42:  RAYLEIGHT-RITZ ANALYSIS on the ITERATED SPACE
+NUMBER of JACOBI ITERATIONS =      3
+ITERATION  42:  The COMPUTED EIGENVALUES : 
+   1 :   -2.816518       2 :   -2.050233       3 :   -1.830379       4 :   -1.830232       5 :   -1.689611    
+   6 :   -1.582237       7 :   -1.579848       8 :   -1.197664       9 :   -1.197473      10 :   -1.101371    
+  11 :   -1.090202      12 :   -1.074268      13 :   -1.038189      14 :   -1.036811      15 :  -0.9370265    
+  16 :   0.4909967E-01  17 :   0.1837084      18 :   0.2377173      19 :   0.2958985    
+
+ITERATION  42:  NUMBER of CONVERGED EIGENVALUES=  11
+
+START of the ITERATION  43
+ITERATION   43:  RAYLEIGHT-RITZ ANALYSIS on the ITERATED SPACE
+NUMBER of JACOBI ITERATIONS =      3
+ITERATION  43:  The COMPUTED EIGENVALUES : 
+   1 :   -2.816518       2 :   -2.050233       3 :   -1.830379       4 :   -1.830232       5 :   -1.689611    
+   6 :   -1.582237       7 :   -1.579848       8 :   -1.197667       9 :   -1.197562      10 :   -1.101513    
+  11 :   -1.090261      12 :   -1.076026      13 :   -1.040190      14 :   -1.037761      15 :  -0.9406208    
+  16 :   0.1884875E-01  17 :   0.2197938      18 :   0.2416208      19 :   0.3336724    
+
+ITERATION  43:  NUMBER of CONVERGED EIGENVALUES=  11
+
+START of the ITERATION  44
+ITERATION   44:  RAYLEIGHT-RITZ ANALYSIS on the ITERATED SPACE
+NUMBER of JACOBI ITERATIONS =      3
+ITERATION  44:  The COMPUTED EIGENVALUES : 
+   1 :   -2.816518       2 :   -2.050233       3 :   -1.830379       4 :   -1.830232       5 :   -1.689611    
+   6 :   -1.582237       7 :   -1.579848       8 :   -1.197670       9 :   -1.197634      10 :   -1.101637    
+  11 :   -1.090310      12 :   -1.077699      13 :   -1.042516      14 :   -1.037904      15 :  -0.9439416    
+  16 :   0.2103084      17 :   0.2404888      18 :   0.3097743      19 :   0.3818699    
+
+ITERATION  44:  NUMBER of CONVERGED EIGENVALUES=  11
+
+START of the ITERATION  45
+ITERATION   45:  RAYLEIGHT-RITZ ANALYSIS on the ITERATED SPACE
+NUMBER of JACOBI ITERATIONS =      2
+ITERATION  45:  The COMPUTED EIGENVALUES : 
+   1 :   -2.816518       2 :   -2.050233       3 :   -1.830379       4 :   -1.830232       5 :   -1.689611    
+   6 :   -1.582237       7 :   -1.579848       8 :   -1.197689       9 :   -1.197671      10 :   -1.101742    
+  11 :   -1.090351      12 :   -1.079264      13 :   -1.044476      14 :   -1.038000      15 :  -0.9470053    
+  16 :   0.2330329      17 :   0.2671861      18 :   0.3751507      19 :   0.4159132    
+
+ITERATION  45:  NUMBER of CONVERGED EIGENVALUES=  11
+
+START of the ITERATION  46
+ITERATION   46:  RAYLEIGHT-RITZ ANALYSIS on the ITERATED SPACE
+NUMBER of JACOBI ITERATIONS =      3
+ITERATION  46:  The COMPUTED EIGENVALUES : 
+   1 :   -2.816518       2 :   -2.050233       3 :   -1.830379       4 :   -1.830232       5 :   -1.689611    
+   6 :   -1.582237       7 :   -1.579848       8 :   -1.197735       9 :   -1.197673      10 :   -1.101838    
+  11 :   -1.090386      12 :   -1.080702      13 :   -1.046128      14 :   -1.038056      15 :  -0.9498252    
+  16 :   0.3311061E-01  17 :   0.1600798      18 :   0.1955154      19 :   0.2907788    
+
+ITERATION  46:  NUMBER of CONVERGED EIGENVALUES=  11
+
+START of the ITERATION  47
+ITERATION   47:  RAYLEIGHT-RITZ ANALYSIS on the ITERATED SPACE
+NUMBER of JACOBI ITERATIONS =      3
+ITERATION  47:  The COMPUTED EIGENVALUES : 
+   1 :   -2.816518       2 :   -2.050233       3 :   -1.830379       4 :   -1.830232       5 :   -1.689611    
+   6 :   -1.582237       7 :   -1.579848       8 :   -1.197770       9 :   -1.197674      10 :   -1.101920    
+  11 :   -1.090415      12 :   -1.082007      13 :   -1.047493      14 :   -1.038114      15 :  -0.9524238    
+  16 :   0.8627357E-01  17 :   0.2000375      18 :   0.2590448      19 :   0.2790751    
+
+ITERATION  47:  NUMBER of CONVERGED EIGENVALUES=  11
+
+START of the ITERATION  48
+ITERATION   48:  RAYLEIGHT-RITZ ANALYSIS on the ITERATED SPACE
+NUMBER of JACOBI ITERATIONS =      3
+ITERATION  48:  The COMPUTED EIGENVALUES : 
+   1 :   -2.816518       2 :   -2.050233       3 :   -1.830379       4 :   -1.830232       5 :   -1.689611    
+   6 :   -1.582237       7 :   -1.579848       8 :   -1.197798       9 :   -1.197675      10 :   -1.101991    
+  11 :   -1.090440      12 :   -1.083173      13 :   -1.048627      14 :   -1.038168      15 :  -0.9548130    
+  16 :   0.7372796E-01  17 :   0.2089060      18 :   0.2442256      19 :   0.2912123    
+
+ITERATION  48:  NUMBER of CONVERGED EIGENVALUES=  11
+
+START of the ITERATION  49
+ITERATION   49:  RAYLEIGHT-RITZ ANALYSIS on the ITERATED SPACE
+NUMBER of JACOBI ITERATIONS =      4
+ITERATION  49:  The COMPUTED EIGENVALUES : 
+   1 :   -2.816518       2 :   -2.050233       3 :   -1.830379       4 :   -1.830232       5 :   -1.689611    
+   6 :   -1.582237       7 :   -1.579848       8 :   -1.197819       9 :   -1.197675      10 :   -1.102052    
+  11 :   -1.090461      12 :   -1.084201      13 :   -1.049570      14 :   -1.038216      15 :  -0.9570070    
+  16 :   0.1519308      17 :   0.2602685      18 :   0.2838388      19 :   0.3376120    
+
+ITERATION  49:  NUMBER of CONVERGED EIGENVALUES=  11
+
+START of the ITERATION  50
+ITERATION   50:  RAYLEIGHT-RITZ ANALYSIS on the ITERATED SPACE
+NUMBER of JACOBI ITERATIONS =      3
+ITERATION  50:  The COMPUTED EIGENVALUES : 
+   1 :   -2.816518       2 :   -2.050233       3 :   -1.830379       4 :   -1.830232       5 :   -1.689611    
+   6 :   -1.582237       7 :   -1.579848       8 :   -1.197835       9 :   -1.197675      10 :   -1.102105    
+  11 :   -1.090478      12 :   -1.085099      13 :   -1.050356      14 :   -1.038261      15 :  -0.9590191    
+  16 :   0.1239872      17 :   0.3046215      18 :   0.3198389      19 :   0.4022687    
+
+ITERATION  50:  NUMBER of CONVERGED EIGENVALUES=  14
+
+START of the ITERATION  51
+ITERATION   51:  RAYLEIGHT-RITZ ANALYSIS on the ITERATED SPACE
+NUMBER of JACOBI ITERATIONS =      3
+ITERATION  51:  The COMPUTED EIGENVALUES : 
+   1 :   -2.816518       2 :   -2.050233       3 :   -1.830379       4 :   -1.830232       5 :   -1.689611    
+   6 :   -1.582237       7 :   -1.579848       8 :   -1.197847       9 :   -1.197676      10 :   -1.102151    
+  11 :   -1.090493      12 :   -1.085877      13 :   -1.051015      14 :   -1.038302      15 :  -0.9608619    
+  16 :   0.7232002E-02  17 :   0.1587933      18 :   0.2045552      19 :   0.2937125    
+
+ITERATION  51:  NUMBER of CONVERGED EIGENVALUES=  14
+
+START of the ITERATION  52
+ITERATION   52:  RAYLEIGHT-RITZ ANALYSIS on the ITERATED SPACE
+NUMBER of JACOBI ITERATIONS =      3
+ITERATION  52:  The COMPUTED EIGENVALUES : 
+   1 :   -2.816518       2 :   -2.050233       3 :   -1.830379       4 :   -1.830232       5 :   -1.689611    
+   6 :   -1.582237       7 :   -1.579848       8 :   -1.197856       9 :   -1.197676      10 :   -1.102190    
+  11 :   -1.090506      12 :   -1.086547      13 :   -1.051570      14 :   -1.038340      15 :  -0.9625486    
+  16 :  -0.1330971      17 :   0.2155819      18 :   0.2741115      19 :   0.4330385    
+
+ITERATION  52:  NUMBER of CONVERGED EIGENVALUES=  14
+
+START of the ITERATION  53
+ITERATION   53:  RAYLEIGHT-RITZ ANALYSIS on the ITERATED SPACE
+NUMBER of JACOBI ITERATIONS =      2
+ITERATION  53:  The COMPUTED EIGENVALUES : 
+   1 :   -2.816518       2 :   -2.050233       3 :   -1.830379       4 :   -1.830232       5 :   -1.689611    
+   6 :   -1.582237       7 :   -1.579848       8 :   -1.197863       9 :   -1.197676      10 :   -1.102223    
+  11 :   -1.090516      12 :   -1.087118      13 :   -1.052040      14 :   -1.038376      15 :  -0.9640932    
+  16 :   0.1943340      17 :   0.2308092      18 :   0.3329771      19 :   0.3720133    
+
+ITERATION  53:  NUMBER of CONVERGED EIGENVALUES=  14
+
+START of the ITERATION  54
+ITERATION   54:  RAYLEIGHT-RITZ ANALYSIS on the ITERATED SPACE
+NUMBER of JACOBI ITERATIONS =      3
+ITERATION  54:  The COMPUTED EIGENVALUES : 
+   1 :   -2.816518       2 :   -2.050233       3 :   -1.830379       4 :   -1.830232       5 :   -1.689611    
+   6 :   -1.582237       7 :   -1.579848       8 :   -1.197868       9 :   -1.197676      10 :   -1.102252    
+  11 :   -1.090526      12 :   -1.087611      13 :   -1.052435      14 :   -1.038409      15 :  -0.9654991    
+  16 :   0.2626331      17 :   0.3297481      18 :   0.3526471      19 :   0.3953086    
+
+ITERATION  54:  NUMBER of CONVERGED EIGENVALUES=  14
+
+START of the ITERATION  55
+ITERATION   55:  RAYLEIGHT-RITZ ANALYSIS on the ITERATED SPACE
+NUMBER of JACOBI ITERATIONS =      2
+ITERATION  55:  The COMPUTED EIGENVALUES : 
+   1 :   -2.816518       2 :   -2.050233       3 :   -1.830379       4 :   -1.830232       5 :   -1.689611    
+   6 :   -1.582237       7 :   -1.579848       8 :   -1.197872       9 :   -1.197676      10 :   -1.102276    
+  11 :   -1.090534      12 :   -1.088026      13 :   -1.052773      14 :   -1.038440      15 :  -0.9667852    
+  16 :   0.2812599      17 :   0.3428654      18 :   0.3467555      19 :   0.4245387    
+
+ITERATION  55:  NUMBER of CONVERGED EIGENVALUES=  14
+
+START of the ITERATION  56
+ITERATION   56:  RAYLEIGHT-RITZ ANALYSIS on the ITERATED SPACE
+NUMBER of JACOBI ITERATIONS =      3
+ITERATION  56:  The COMPUTED EIGENVALUES : 
+   1 :   -2.816518       2 :   -2.050233       3 :   -1.830379       4 :   -1.830232       5 :   -1.689611    
+   6 :   -1.582237       7 :   -1.579848       8 :   -1.197875       9 :   -1.197676      10 :   -1.102298    
+  11 :   -1.090541      12 :   -1.088382      13 :   -1.053062      14 :   -1.038469      15 :  -0.9679553    
+  16 :   0.5328512E-01  17 :   0.2286414      18 :   0.2355694      19 :   0.3392476    
+
+ITERATION  56:  NUMBER of CONVERGED EIGENVALUES=  14
+
+START of the ITERATION  57
+ITERATION   57:  RAYLEIGHT-RITZ ANALYSIS on the ITERATED SPACE
+NUMBER of JACOBI ITERATIONS =      3
+ITERATION  57:  The COMPUTED EIGENVALUES : 
+   1 :   -2.816518       2 :   -2.050233       3 :   -1.830379       4 :   -1.830232       5 :   -1.689611    
+   6 :   -1.582237       7 :   -1.579848       8 :   -1.197878       9 :   -1.197676      10 :   -1.102315    
+  11 :   -1.090546      12 :   -1.088683      13 :   -1.053311      14 :   -1.038495      15 :  -0.9690221    
+  16 :   0.8336798E-01  17 :   0.2274550      18 :   0.3209424      19 :   0.3856395    
+
+ITERATION  57:  NUMBER of CONVERGED EIGENVALUES=  14
+
+START of the ITERATION  58
+ITERATION   58:  RAYLEIGHT-RITZ ANALYSIS on the ITERATED SPACE
+NUMBER of JACOBI ITERATIONS =      3
+ITERATION  58:  The COMPUTED EIGENVALUES : 
+   1 :   -2.816518       2 :   -2.050233       3 :   -1.830379       4 :   -1.830232       5 :   -1.689611    
+   6 :   -1.582237       7 :   -1.579848       8 :   -1.197879       9 :   -1.197677      10 :   -1.102331    
+  11 :   -1.090551      12 :   -1.088939      13 :   -1.053526      14 :   -1.038521      15 :  -0.9699945    
+  16 :   0.8975903E-01  17 :   0.2225814      18 :   0.2601271      19 :   0.2948571    
+
+ITERATION  58:  The COMPUTED EIGENVALUES : 
+   1 :   -2.816518       2 :   -2.050233       3 :   -1.830379       4 :   -1.830232       5 :   -1.689611    
+   6 :   -1.582237       7 :   -1.579848       8 :   -1.197879       9 :   -1.197677      10 :   -1.102331    
+  11 :   -1.090551      12 :   -1.088939      13 :   -1.053526      14 :   -1.038521      15 :  -0.9699945    
+END SSPAC1 at ITERATION  58
+
+FUSVVP:    0 EIGENVALUES BEFORE FUSION:
+
+FUSVVP:   15 EIGENVALUES to MERGE     :
+    1 :  -2.816518        2 :  -2.050233        3 :  -1.830379        4 :  -1.830232        5 :  -1.689611    
+    6 :  -1.582237        7 :  -1.579848        8 :  -1.197879        9 :  -1.197677       10 :  -1.102331    
+   11 :  -1.090551       12 :  -1.088939       13 :  -1.053526       14 :  -1.038521       15 : -0.9699945    
+FUSVVP:   14 EIGENVALUES AFTER  FUSION:
+    1 :  -2.816518        2 :  -2.050233        3 :  -1.830379        4 :  -1.830232        5 :  -1.689611    
+    6 :  -1.582237        7 :  -1.579848        8 :  -1.197879        9 :  -1.197677       10 :  -1.102331    
+   11 :  -1.090551       12 :  -1.088939       13 :  -1.053526       14 :  -1.038521    
+ START of ORTVVP: NUMBER of EIGENVALUES= 14
+ EXIT  of ORTVVP: NUMBER of EIGENVALUES= 14
+There are     0 FORGOTTEN EIGENVALUES from   -3.000000     until   -1.000000    
+EXIT of SSPACE with CORRECT EIGENSOLUTIONS
+NO FORGOTTEN EIGENVALUE from  -3.000000     until   -1.000000    
+
+ The     14 EIGENVALUES or FREQUENCIES :
+ ================================================================================
+ EIGENVALUE    1 =  -2.816518      FREQUENCY =  0.2671015     Hz
+ EIGENVALUE    2 =  -2.050233      FREQUENCY =  0.2278882     Hz
+ EIGENVALUE    3 =  -1.830379      FREQUENCY =  0.2153231     Hz
+ EIGENVALUE    4 =  -1.830232      FREQUENCY =  0.2153145     Hz
+ EIGENVALUE    5 =  -1.689611      FREQUENCY =  0.2068776     Hz
+ EIGENVALUE    6 =  -1.582237      FREQUENCY =  0.2001962     Hz
+ EIGENVALUE    7 =  -1.579848      FREQUENCY =  0.2000450     Hz
+ EIGENVALUE    8 =  -1.197879      FREQUENCY =  0.1741914     Hz
+ EIGENVALUE    9 =  -1.197677      FREQUENCY =  0.1741766     Hz
+ EIGENVALUE   10 =  -1.102331      FREQUENCY =  0.1670999     Hz
+ EIGENVALUE   11 =  -1.090551      FREQUENCY =  0.1662046     Hz
+ EIGENVALUE   12 =  -1.088939      FREQUENCY =  0.1660818     Hz
+ EIGENVALUE   13 =  -1.053526      FREQUENCY =  0.1633589     Hz
+ EIGENVALUE   14 =  -1.038521      FREQUENCY =  0.1621913     Hz
+
+    10 FIRST NO NULL COMPONENTS of   20224 COMPONENTS of the EIGENVECTOR   1
+     1:  0.736118E-02     2:  0.980102E-02     3:  0.117325E-01     4:  0.108389E-01     5:  0.980102E-02
+     6:  0.128533E-01     7:  0.152537E-01     8:  0.131254E-01     9:  0.117325E-01    10:  0.152537E-01
+
+    10 FIRST NO NULL COMPONENTS of   20224 COMPONENTS of the EIGENVECTOR   2
+     1:  0.797109E-02     2:  0.114146E-01     3:  0.135327E-01     4:  0.110817E-01     5:  0.114146E-01
+     6:  0.164291E-01     7:  0.192191E-01     8:  0.144244E-01     9:  0.135327E-01    10:  0.192191E-01
+
+    10 FIRST NO NULL COMPONENTS of   20224 COMPONENTS of the EIGENVECTOR   3
+     1: -0.126648E-08     2: -0.372567E-02     3: -0.126246E-01     4: -0.156775E-01     5:  0.372567E-02
+     6: -0.231043E-08     7: -0.111292E-01     8: -0.146883E-01     9:  0.126246E-01    10:  0.111292E-01
+
+    10 FIRST NO NULL COMPONENTS of   20224 COMPONENTS of the EIGENVECTOR   4
+     1: -0.410815E-02     2: -0.153105E-02     3:  0.610049E-02     4:  0.923180E-02     5: -0.153105E-02
+     6:  0.337495E-02     7:  0.139705E-01     8:  0.159908E-01     9:  0.610049E-02    10:  0.139705E-01
+
+    10 FIRST NO NULL COMPONENTS of   20224 COMPONENTS of the EIGENVECTOR   5
+     1:  0.132348E-01     2:  0.181793E-01     3:  0.219658E-01     4:  0.191836E-01     5:  0.181793E-01
+     6:  0.245274E-01     7:  0.293664E-01     8:  0.239296E-01     9:  0.219658E-01    10:  0.293664E-01
+
+    10 FIRST NO NULL COMPONENTS of   20224 COMPONENTS of the EIGENVECTOR   6
+     1:  0.121853E-09     2: -0.235768E-02     3: -0.863023E-02     4: -0.111474E-01     5:  0.235768E-02
+     6:  0.155464E-09     7: -0.778790E-02     8: -0.105350E-01     9:  0.863023E-02    10:  0.778790E-02
+
+    10 FIRST NO NULL COMPONENTS of   20224 COMPONENTS of the EIGENVECTOR   7
+     1:  0.172821E-01     2:  0.215609E-01     3:  0.202117E-01     4:  0.139736E-01     5:  0.215609E-01
+     6:  0.269582E-01     7:  0.241444E-01     8:  0.148317E-01     9:  0.202117E-01    10:  0.241444E-01
+
+    10 FIRST NO NULL COMPONENTS of   20224 COMPONENTS of the EIGENVECTOR   8
+     1: -0.103809E-03     2:  0.281224E-02     3:  0.103442E-01     4:  0.112999E-01     5: -0.316958E-02
+     6: -0.300872E-03     7:  0.975304E-02     8:  0.110122E-01     9: -0.108862E-01    10: -0.106048E-01
+
+    10 FIRST NO NULL COMPONENTS of   20224 COMPONENTS of the EIGENVECTOR   9
+     1:  0.512893E-02     2:  0.107768E-01     3:  0.197002E-01     4:  0.182006E-01     5:  0.106901E-01
+     6:  0.202222E-01     7:  0.326923E-01     8:  0.271840E-01     9:  0.193938E-01    10:  0.323995E-01
+
+    10 FIRST NO NULL COMPONENTS of   20224 COMPONENTS of the EIGENVECTOR  10
+     1: -0.619115E-03     2: -0.325947E-02     3: -0.528435E-02     4: -0.235240E-02     5: -0.329103E-02
+     6: -0.725766E-02     7: -0.107497E-01     8: -0.631438E-02     9: -0.541710E-02    10: -0.109058E-01
+
+    10 FIRST NO NULL COMPONENTS of   20224 COMPONENTS of the EIGENVECTOR  11
+     1: -0.136882E-01     2: -0.185006E-01     3: -0.164851E-01     4: -0.108169E-01     5: -0.192768E-01
+     6: -0.261761E-01     7: -0.221296E-01     8: -0.132465E-01     9: -0.199253E-01    10: -0.258845E-01
+
+    10 FIRST NO NULL COMPONENTS of   20224 COMPONENTS of the EIGENVECTOR  12
+     1: -0.506683E-02     2: -0.815524E-02     3: -0.120163E-01     4: -0.994056E-02     5: -0.510302E-02
+     6: -0.868506E-02     7: -0.135238E-01     8: -0.101989E-01     9:  0.868130E-03    10:  0.299830E-04
+
+    10 FIRST NO NULL COMPONENTS of   20224 COMPONENTS of the EIGENVECTOR  13
+     1:  0.105600E-01     2:  0.144729E-01     3:  0.215988E-01     4:  0.226820E-01     5:  0.142591E-01
+     6:  0.193827E-01     7:  0.280349E-01     8:  0.268258E-01     9:  0.208405E-01    10:  0.274299E-01
+
+    10 FIRST NO NULL COMPONENTS of   20224 COMPONENTS of the EIGENVECTOR  14
+     1:  0.383397E-02     2:  0.152846E-02     3: -0.518857E-02     4: -0.930612E-02     5:  0.154515E-02
+     6:  0.115013E-02     7: -0.397112E-03     8: -0.221958E-02     9: -0.512758E-02    10: -0.335180E-03
+
+ PREPARATION TIME =      121.13 CPU SECONDS
+ EIGENVALUES TIME =    11470.55 CPU SECONDS
+ NORMAL FLUX TIME =        0.00 CPU SECONDS
+ TOTAL       TIME =    11591.68 CPU SECONDS
+ Read File  2:@;                                                                                              
+ Read File  2:fermer;                                                                                         
+ END of READING an INPUT FILE                                                                    
+ To CONTINUE TYPE @ or ESCAPE          

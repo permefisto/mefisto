@@ -1,0 +1,98 @@
+#!/bin/bash
+#
+#  Alain Perronnet                  Version Fevrier 2022
+echo
+echo =====================================================================
+echo "Creation du fichier ~/public_html/pub/mefisto.???.tgz"
+echo "c-a-d des modules executables du logiciel MEFISTO"
+echo =====================================================================
+echo
+NomMachine=lnx64
+echo "Le NomMachine est $NomMachine"
+
+cd $MEFISTO
+chmod -R 755 *
+
+if test -f ~/perronnetWEB/public_html/pub/mefisto.$NomMachine.tgz
+then
+  echo "avant reconstruction, destruction du fichier ~/perronnetWEB/public_html/pub/mefisto.$NomMachine.tgz"
+  rm ~/perronnetWEB/public_html/pub/mefisto.$NomMachine.tgz
+fi
+
+echo
+echo =====================================================================
+echo "Construction du fichier $MEFISTO.$NomMachine.tgz contenant"
+echo "les modules executables du logiciel Mefisto"
+echo "version $NomMachine executable sans les sources .f et .c"
+echo "Pour installer, utiliser le fichier  install.bash"
+echo =====================================================================
+
+if test ! -f LISEZMOI
+then
+  echo erreur: pas de fichier LISEZMOI dans $MEFISTO
+  exit
+fi
+
+if test ! -f install.bash
+then
+  echo erreur: pas de fichier install.bash dans $MEFISTO
+  exit
+fi
+
+if test ! -d bin.$NomMachine
+then
+  echo erreur: pas de repertoire bin.$NomMachine dans $MEFISTO
+  exit
+fi
+
+if test ! -d pp.$NomMachine
+then
+  echo erreur: pas de repertoire pp.$NomMachine dans $MEFISTO
+  exit
+fi
+
+if test ! -d doca
+then
+  echo erreur: pas de repertoire doca dans $MEFISTO
+  exit
+fi
+
+if test ! -d docf
+then
+  echo erreur: pas de repertoire docf dans $MEFISTO
+  exit
+fi
+if test ! -d td
+then
+  echo erreur: pas de repertoire td dans $MEFISTO
+  exit
+fi
+
+if test ! -d testa
+then
+  echo erreur: pas de repertoire testa dans $MEFISTO
+  exit
+fi
+
+if test ! -d testf
+then
+  echo erreur: pas de repertoire testf dans $MEFISTO
+  exit
+fi
+
+echo "tar des fichiers et librairies de Mefisto"
+echo "LISEZMOI install.bash bin.$NomMachine pp.$NomMachine doca docf td testa testf"
+tar cvf ~/perronnetWEB/public_html/pub/mefisto.$NomMachine.tar \
+        LISEZMOI install.bash bin.$NomMachine pp.$NomMachine \
+        doca docf td testa testf
+echo
+echo "Compression du fichier ~/perronnetWEB/public_html/pub/mefisto.$NomMachine.tar"
+gzip  ~/perronnetWEB/public_html/pub/mefisto.$NomMachine.tar
+mv ~/perronnetWEB/public_html/pub/mefisto.$NomMachine.tar.gz ~/perronnetWEB/public_html/pub/mefisto.$NomMachine.tgz
+echo
+echo "Les attributs du fichier ~/perronnetWEB/public_html/pub/mefisto.$NomMachine.tgz"
+ls -l ~/perronnetWEB/public_html/pub/mefisto.$NomMachine.tgz
+echo
+echo "***********************************************************************************"
+echo "fin de creation du fichier ~/perronnetWEB/public_html/pub/mefisto.$NomMachine.tgz"
+echo "***********************************************************************************"

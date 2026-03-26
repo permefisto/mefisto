@@ -1,0 +1,8 @@
+variable VALISOVA 'Values of ISOVALUES' entier
+( 1 : 'REGULAR'
+, 2 : 'MIN & MAX of ISOVALUES'
+, 3 : 'VALUES of ISOVALUES'
+, 5 : 'COLOR of MESH''s EDGES'
+, 6 : 'TYPE of LINES of MESH''s EDGES'
+, 7 : 'COLOR of EDGES of ISOVALUES'
+, 8 : 'TYPE of LINES of EDGES of ISO' ) ;

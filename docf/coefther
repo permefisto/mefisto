@@ -1,0 +1,10 @@
+Les caracteristiques THERMIQUES d'un materiau sont:
+-la CAPACITE CALORIFIQUE ou plus exactement sa densite volumique
+-la CONDUCTIVITE THERMIQUE ou  plus exactement sa densite volumique
+-la DILATATION thermique ou plus exactement sa densite volumique 
+ suivie de la TEMPERATURE INITIALE a l'etat naturel
+-les SOURCES de CHALEUR exterieures volumiques
+
+Si l'espace est 2D, il faut remplacer volumique par surfacique.
+
+Le nombre de jeux doit actuellement etre fixe a 1.

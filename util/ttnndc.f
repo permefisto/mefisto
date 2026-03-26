@@ -1,0 +1,51 @@
+      SUBROUTINE TTNNDC( MNTATA,NOTATA,KTYPE,NBVARI )
+C+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+C BUT : DECLARER LE TABLEAU NUMERIQUE NOTATA DU TABLEAU DE TABLEAUX
+C ----
+C ENTREES :
+C ---------
+C MNTATA : ADRESSE MCN DU TABLEAU DES NUMEROS DE TAMS DES TABLEAUX
+C NOTATA : NUMERO DU TABLEAU A DECLARER (1 A MXTATA)
+C KTYPE  : TYPE DU TABLEAU NUMERIQUE (NON CARACTERE)
+C          A DECLARER 'ENTIER' OU 'REEL' OU ...
+C NBVARI : NOMBRE DE SES VARIABLES
+C+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+C PROGRAMMEUR : ALAIN PERRONNET ANALYSE NUMERIQUE PARIS  OCTOBRE 1985
+C.......................................................................
+      include"./incl/gsmenu.inc"
+      CHARACTER*(*)     KTYPE
+      CHARACTER*9       KTYP
+      COMMON / UNITES / LECTEU,IMPRIM,NUNITE(30)
+      include"./incl/pp.inc"
+      COMMON            MCN(MOTMCN)
+C
+C     LE NUMERO NOTATA EST IL >0 ET < MXTATA ?
+      MXTATA = MCN( MNTATA + 3 )
+      IF( NOTATA .LE. 0 .OR. NOTATA .GT. MXTATA ) THEN
+         NBLGRC(NRERR) = 1
+         KERR(1) = ' NO TABLEAU INCORRECT'
+         CALL LEREUR
+         RETURN
+      ENDIF
+C
+C     LE TABLEAU EST IL DEJA DECLARE ?
+      MN = MNTATA + 3 + NOTATA
+      IF( MCN(MN) .NE. 0 ) THEN
+C
+C        OUI.LES ATTRIBUTS SONT ILS IDENTIQUES ?
+         CALL TAMSTV( ABS(MCN(MN)),KTYP,NBV )
+         IF( KTYP .NE. KTYPE .OR. NBV .NE. NBVARI ) THEN
+C           LES ATTRIBUTS SONT DIFFERENTS => ERREUR
+            NBLGRC(NRERR) = 1
+            KERR(1) ='TABLEAU DECLARE AVEC DES ATTRIBUTS DIFFERENTS'
+            CALL LEREUR
+C        ELSE
+C           LES ATTRIBUTS SONT IDENTIQUES => RETOUR
+C           RETURN
+         ENDIF
+      ELSE
+C
+C        NON.DECLARATION DU TABLEAU NOTATA DU TATA
+         CALL TNMSDC( KTYPE , NBVARI , MCN(MN) )
+      ENDIF
+      END

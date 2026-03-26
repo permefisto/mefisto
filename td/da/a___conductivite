@@ -1,0 +1,25 @@
+deftms ~>>>CONDUCTIVITE 'Conductivity of a SV'
+variable muet DATE 'date of creation of the TMS'   reel2  ;
+variable muet NUTD 'number of the descriptor array TD' entier ; 
+variable      LTCOND 'type of conductivity' entier 
+( 1 : '3D HOMOGENEOUS ISOTROPIC material' ,
+  2 : 'AXISYMETRIC HOMOGENEOUS ISOTROPIC material' ,
+  3 : '1D or 2D HOMOGENEOUS ISOTROPIC material' ,
+ 10 : 'Constant ANISOTROPIC tensor of Conductivity C11 C12 C22...' ,
+ -1 : 'Function ISOTROPIC Conductivity' ,
+ -2 : 'Function ANISOTROPIC Conductivity' ,
+  0 : 'Delete the actual Conductivity' ) ;
+cas LTCOND
+1..3 : variable CONDUC 'constant material conductivity'  reel   ;
+10: variable NVCOND
+   'Number of constant coefficients of conductivity tensor C11 C12 C22...'
+     entier ;
+    tableau  TECOND(1..NVCOND) 
+   'constant coefficients C11,C21,C22,... of conductivity tensor' reel ;  
+-1 : variable NFCOND 'name of   ISOTROPIC conductivity function' ^~>FONCTION ;
+-2 : variable NVCOAN
+    'Number of coefficients of ANISOTROPIC conductivity tensor C11 C12 C22...'
+     entier ;
+     variable NFCOAN 'name of ANISOTROPIC conductivity function' ^~>FONCTION ;
+fincas ;   
+fintms ;

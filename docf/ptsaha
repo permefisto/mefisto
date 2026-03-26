@@ -1,0 +1,5 @@
+Ce POINT definit 
+- l'axe du cylindre avec l'ORIGINE des AXES du REPERE
+- le PLAN du CERCLE SUPERIEUR du CYLINDRE pour lequel
+  Z = COTE de ce POINT 
+Ainsi l'AXE du CYLINDRE peut etre penche.

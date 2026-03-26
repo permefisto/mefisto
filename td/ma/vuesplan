@@ -1,0 +1,7 @@
+variable VUESPLAN 'VIEWS from SPECIAL PLANS' entier
+( 1  : 'VIEW from ABOVE  or XY'
+, 2  : 'VIEW from UNDER  or YX'
+, 3  : 'VIEW from LEFT   or XZ'
+, 4  : 'VIEW from RIGHT  or ZX'
+, 5  : 'VIEW from AHEAD  or YZ'
+, 6  : 'VIEW from BEHIND or ZY' ) ;

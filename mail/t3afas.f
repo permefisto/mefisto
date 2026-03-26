@@ -1,0 +1,217 @@
+      SUBROUTINE T3AFAS( NBCOOR, XYZPOI,
+     %                   NBSO,   NSPSOM, NBAR,   NSLARE, NBFA,  NSSFAC,
+     %                   MOARFR, MXARFR, LAREFR, NBBARY, NOBARY,
+     %                   NUMXPO, NUMXLI, NUMXSU, NBPPLS )
+C ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+C BUT :    TRACER LES ARETES FRONTALIERES, FACES DES SURFACES, ARETES
+C -----    DES LIGNES ET POINTS D'UN OBJET
+C
+C ENTREES:
+C --------
+C NBCOOR : NOMBRE DE COORDONNEES D'UN POINT OU NOEUD (3 ou 6)
+C XYZPOI : XYZ DES POINTS DES EF DU MAILLAGE
+C NBSO   : NOMBRE DE SOMMETS=POINTS UTILISATEUR
+C NSPSOM : NUMERO XYZPOI DU SOMMET ET NO DU POINT
+C NBAR   : NOMBRE D' ARETES SUR UNE LIGNE   UTILISATEUR
+C NSLARE : NUMERO XYZPOI DES 2 SOMMETS ET NO DE LA LIGNE
+C NBFA   : NOMBRE DE FACES  SUR UNE SURFACE UTILISATEUR
+C NSSFAC : NUMERO XYZPOI DES 3 OU 4 SOMMETS ET NO DE LA SURFACE
+C MOARFR : NOMBRE DE MOTS PAR ARETE FRONTALIERE DU TABLEAU LAREFR
+C MXARFR : NOMBRE DE FACES DU TABLEAU LAREFR
+C LAREFR : TABLEAU NUMERO DES 2 SOMMETS ET LIEN
+C          LAREFR(1,I)= NO DU 1-ER  SOMMET DE L'ARETE FRONTALIERE
+C          LAREFR(2,I)= NO DU 2-EME SOMMET > 1-ER  SOMMET
+C          LAREFR(3,I)= 0 OU NUMERO DE L'ARETE FRONTALIERE SUIVANTE
+C NBBARY : NOMBRE DE BARYCENTRES TRIES
+C NOBARY : NUMERO DE L'ITEM A TRACER SELON SON ORDRE
+C          LES PLUS ELOIGNES D'ABORD (ALGORITHME DU PEINTRE)
+C NUMXPO : NUMERO MAXIMAL DES POINTS   DE L'OBJET
+C NUMXLI : NUMERO MAXIMAL DES LIGNES   DE L'OBJET
+C NUMXSU : NUMERO MAXIMAL DES SURFACES DE L'OBJET
+C
+C MODIFIE:
+C --------
+C NBPPLS : TEMOIN DE TRACE D'UN POINT OU LIGNE OU SURFACE
+C ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+C AUTEUR : PERRONNET ALAIN ANALYSE NUMERIQUE UPMC PARIS    NOVEMBRE 1994
+C ...................................................................012
+      PARAMETER     (LIGCON=0, LIGTIR=1)
+      include"./incl/trvari.inc"
+      include"./incl/mecoit.inc"
+      REAL           XYZPOI(1:NBCOOR,1:*)
+      INTEGER        NSPSOM(2,NBSO)
+      INTEGER        NSLARE(3,NBAR)
+      INTEGER        NSSFAC(5,NBFA)
+      INTEGER        LAREFR(1:MOARFR,1:MXARFR)
+      INTEGER        NOBARY(1:*)
+      INTEGER        NBPPLS(1:NUMXPO+NUMXLI+NUMXSU)
+      CHARACTER*24   NOMOBJ
+      REAL           XYZ(3,4), XYZP(3)
+C
+C     LE NOMBRE-1 DE COULEURS DISPONIBLES
+      NBCOUL = NDCOUL - N1COUL
+C
+C     SI UNE REDUCTION DEMANDEE EST UTILISEE
+      REDUCF = PREDUF * 0.01
+C
+C     LA PALETTE 1 : LES COULEURS VARIENT TRES VITE
+      CALL PALCDE(1)
+      CALL T3PLAV
+      CALL TRAXES
+      CALL XVEPAISSEUR( 1 )
+C     AUCUN ITEM SUR L'ECRAN
+      CALL ITEMS0
+C
+      NBSAF = NBSO + NBAR + NBFA
+      DO 200 K = 1, NBBARY
+
+C        LE NUMERO DE L'ITEM LE PLUS ELOIGNE ET RESTANT A TRACER
+         N = NOBARY( K )
+
+         IF( N .LE. NBSO ) THEN
+
+C            TRACE DU SOMMET=POINT
+C            LE NUMERO DU POINT-UTILISATEUR
+             NUOB = NSPSOM(2,N)
+C            LE NOM DU POINT
+             CALL NMOBNU( 'POINT',  NUOB, NOMOBJ )
+             CALL ITEMP3( XYZPOI(1,NSPSOM(1,N)), NOMOBJ, NUOB )
+
+         ELSE IF( N .LE. NBSO+NBAR ) THEN
+
+C            TRACE DE L'ARETE D'UNE LIGNE-UTILISATEUR
+             CALL XVTYPETRAIT( LIGCON )
+             CALL XVEPAISSEUR( 3 )
+             N = N - NBSO
+C            LE NUMERO DE LA LIGNE
+             NUOB = NSLARE(3,N)
+C            LA COULEUR DE LA LIGNE
+CCC             NCOUL = MOD( NUOB+NBSO, NBCOUL ) + N1COUL
+             NCOUL = NCNOIR
+C            NO DES 2 SOMMETS EXTREMITES
+             NSL1 = NSLARE(1,N)
+             NSL2 = NSLARE(2,N)
+             IF( PREDUA .GT. 0 ) THEN
+C               REDUCTION DE L'ARETE
+                REDUCF = PREDUA * 0.01
+                REDUC1 = 1.0 - REDUCF
+                XYZ(1,1) = REDUCF*XYZPOI(1,NSL1) + REDUC1*XYZPOI(1,NSL2)
+                XYZ(2,1) = REDUCF*XYZPOI(2,NSL1) + REDUC1*XYZPOI(2,NSL2)
+                XYZ(3,1) = REDUCF*XYZPOI(3,NSL1) + REDUC1*XYZPOI(3,NSL2)
+                XYZ(1,2) = REDUC1*XYZPOI(1,NSL1) + REDUCF*XYZPOI(1,NSL2)
+                XYZ(2,2) = REDUC1*XYZPOI(2,NSL1) + REDUCF*XYZPOI(2,NSL2)
+                XYZ(3,2) = REDUC1*XYZPOI(3,NSL1) + REDUCF*XYZPOI(3,NSL2)
+C               LE TRACE DE L'ARETE REDUITE
+                CALL TRAIT3D( NCOUL, XYZ(1,1), XYZ(1,2) )
+             ELSE
+C               LE TRACE DE L'ARETE
+                CALL TRAIT3D( NCOUL, XYZPOI(1,NSL1), XYZPOI(1,NSL2) )
+             ENDIF
+
+             IF( NBPPLS(NUMXPO+NUOB) .EQ. 0 ) THEN
+C               LE NOM DE LA LIGNE EST TRACE
+                CALL XVCOULEUR( NCGRIS )
+                CALL NMOBNU( 'LIGNE',  NUOB, NOMOBJ )
+                CALL ITEML3( XYZPOI(1,NSL2), NOMOBJ, NUOB )
+                NBPPLS(NUMXPO+NUOB) = 1
+             ENDIF
+             CALL XVEPAISSEUR( 1 )
+
+         ELSE IF( N .LE. NBSAF ) THEN
+
+C            TRACE DE LA FACE D'UNE SURFACE
+C            COULEUR SELON LE NUMERO DE LA SURFACE
+             CALL XVTYPETRAIT( LIGCON )
+
+C            LE NUMERO DE LA SURFACE
+             N = N - NBSO - NBAR
+             NUOB = NSSFAC(5,N)
+C            LA COULEUR DE LA SURFACE
+cccc            AVEC CALL PALCDE(1)
+ccc             NCOUL = MOD( NUOB+NBSO+NBAR, NBCOUL ) + N1COUL
+C            LA COULEUR DE LA SURFACE ENTRE 1 ET 8 =>
+C            NCBLAN, NCROUG, NCJAUN, NCVERT, NCCYAN, NCBLEU, NCMAGE, NCGRIS
+             NCOUL = MOD( NUOB+NBSO+NBAR,8 ) + 1
+
+C            LE TRACE DE LA FACE
+             IF( NSSFAC(4,N) .EQ. 0 ) THEN
+                NB = 3
+             ELSE
+                NB = 4
+             ENDIF
+
+C            LES XYZ DES SOMMETS DE LA FACE
+             DO I=1,NB
+                DO J=1,3
+                   XYZ(J,I) = XYZPOI(J,NSSFAC(I,N))
+                ENDDO
+             ENDDO
+
+C            REDUCTION DE LA FACE SELON PREDUF
+             IF( PREDUF .GT. 0 ) THEN
+C               UNE REDUCTION DEMANDEE EST UTILISEE
+                REDUCF = PREDUF * 0.01
+C               TRACE DES ARETES AVEC LA CULEUR DE LA FACE
+                NCAR   = NCOUL
+
+ccc             ELSE IF( PREDUF .LT. 0 ) THEN
+cccC               REDUCTION DE 50% IMPOSEE POUR VOIR LES SURFACES INTERNES
+ccc                REDUCF = 0.5
+
+             ELSE
+                REDUCF = 0.0
+C               COULEUR des ARETES des FACES
+                NCAR   = NCOUAF
+             ENDIF
+             REDUC1 = 1.0 - REDUCF
+C            CALCUL DES COORDONNEES XYZP DU BARYCENTRE DE LA FACE
+             CALL COBAPO( NB, XYZ, XYZP )
+C            L'HOMOTHETIE DE CENTRE LE BARYCENTRE DE LA FACE
+             DO J=1,NB
+                XYZ(1,J) = XYZ(1,J) * REDUC1 + XYZP(1) * REDUCF
+                XYZ(2,J) = XYZ(2,J) * REDUC1 + XYZP(2) * REDUCF
+                XYZ(3,J) = XYZ(3,J) * REDUC1 + XYZP(3) * REDUCF
+             ENDDO
+
+C            TRACE DE LA FACE ET DE SES ARETES
+             CALL FACE3D( NCOUL, NCAR, NB, XYZ )
+
+             IF( NBPPLS(NUMXPO+NUMXLI+NUOB) .EQ. 0 ) THEN
+C               LE NOM DE LA SURFACE EST TRACE
+                CALL NMOBNU( 'SURFACE',  NUOB, NOMOBJ )
+                CALL XVCOULEUR( NCGRIS )
+                CALL ITEMS3( XYZPOI(1,NSSFAC(2,N)), NOMOBJ, NUOB )
+                NBPPLS(NUMXPO+NUMXLI+NUOB) = 1
+             ENDIF
+
+         ELSE
+
+C           TRACE DE L' ARETE FRONTALIERE DES VOLUMES DE L'OBJET
+            IF( REDUCF .GT. 0 ) THEN
+C              L'ARETE EST TRACEE EN POINTILLE
+               CALL XVTYPETRAIT( LIGTIR )
+C              LE NUMERO DE L'ARETE DANS LE TABLEAU LAREFR
+               NN = N - NBSAF
+               CALL TRAIT3D( NCGRIC, XYZPOI(1,LAREFR(1,NN)),
+     %                               XYZPOI(1,LAREFR(2,NN)) )
+            ENDIF
+
+C           TRACE DU NO DES 2 SOMMETS
+            IF( IAVNSO .GT. 0 ) THEN
+C              N-NBSAF LE NUMERO DE L'ARETE DANS LE TABLEAU LAREFR
+               NN = LAREFR(1,N-NBSAF)
+               CALL ENTIER3D( NCONSO,  XYZPOI(1,NN), NN )
+               NN = LAREFR(2,N-NBSAF)
+               CALL ENTIER3D( NCONSO,  XYZPOI(1,NN), NN )
+            ENDIF
+         ENDIF
+
+ 200  ENDDO
+
+C     FINITION DU TRACE DES 3 PLANS PAR TRACE DES 3 ARETES VUES
+      CALL T3PLAP
+
+C     RETOUR AU TRACE CONTINU DES TRAITS
+      CALL XVTYPETRAIT( LIGCON )
+      RETURN
+      END

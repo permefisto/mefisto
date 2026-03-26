@@ -1,0 +1,135 @@
+{ ==================================================================== }
+{ MEFISTO Software     : Version April 29-th 2009                      }
+{ USER's Name          : alain                                         }
+{ Project Name         : cavity3d                                      }
+{ Date                 : 29/04/2009                                    }
+{ ==================================================================== }
+DefVar nbar; nbar=5;
+DefVar eps;  eps=0.0001;
+
+DefFunc edge_length(x,y,z);
+ edge_length=abs( 0.3*z + (1-z) )/nbar;
+EndFunc;
+
+1;  { POINTS vertices of the object }
+ 1; { TYPING of VALUES }
+ a; i; 1;  0; 0; 0;
+ b; i; 1;  1; 0; 0;
+ c; i; 1;  1; 1; 0;
+ d; i; 1;  0; 1; 0;
+
+ e; i; 1;  0; 0; 1;
+ f; i; 1;  1; 0; 1;
+ g; i; 1;  1; 1; 1;
+ h; i; 1;  0; 1; 1;
+@;
+
+2;  { LINES edges of the object }
+ ab; i; 2; { STRAIGHT LINE }
+ nbar;     { NBARLI 'number of edges of the line' entier ; }
+ 1;        { RAIGEO 'geometrical ratio between the edges' reel ; }
+ A;        { NAME of INITIAL POINT }
+ B;        { NAME of FINAL   POINT }
+ bc; i; 2; nbar; 1; b; c;
+ cd; i; 2; nbar; 1; c; d;
+ da; i; 2; nbar; 1; d; a;
+
+ ae; i; 2; nbar; 1; a; e;
+ bf; i; 2; nbar; 1; b; f;
+ cg; i; 2; nbar; 1; c; g;
+ dh; i; 2; nbar; 1; d; h;
+
+ ef; i; 2; nbar; 1; e; f;
+ fg; i; 2; nbar; 1; f; g;
+ gh; i; 2; nbar; 1; g; h;
+ he; i; 2; nbar; 1; h; e;
+
+ abcd; i;  { in LEXICON ~>TRANSFO }
+  51;      { UNION OF SEVERAL LINES }
+   4;      { NBLIUN 'number of lines of the union' entier ; }
+           { NAME of 4 LINES }
+ ab; bc; cd; da;
+ abfe; i; 51; 4; ab; bf; ef; ae;
+ bcgf; i; 51; 4; bc; cg; fg; bf;
+ cdhg; i; 51; 4; cd; dh; gh; cg;
+ daeh; i; 51; 4; da; ae; he; dh;
+ efgh; i; 51; 4; ef; fg; gh; he;
+@;
+
+3;  { SURFACES faces of the object }
+    { NAME of the SURFACE or ESCAPE? }
+ abcd; i;{ in LEXICON ~>TRANSFO }
+ 9;      { TRIANGULATION1 BETWEEN CLOSED LINES }
+ 1/nbar; { ARETMX 'max length of edges of regular triangles' reel ; }
+ 1;      { NBLFTR 'number of closed lines contour of the surface' entier ; }
+ 0;      { NBPTIT 'number of internal points future vertices' entier ; }
+ ABCD;   { NAME of the CLOSED LINE }
+ abfe; i; 9; 1/nbar; 1; 0; abfe;
+ bcgf; i; 9; 1/nbar; 1; 0; bcgf;
+ cdhg; i; 9; 1/nbar; 1; 0; cdhg;
+ daeh; i; 9; 1/nbar; 1; 0; daeh;
+ efgh; i; 9; 1/nbar; 1; 0; efgh;
+
+ cube; i; 51; 6;  abcd; abfe; bcgf; cdhg; daeh; efgh;
+@;
+
+4;
+ cube8;  i; 8; 1; cube;
+ cube19; i; 19; 100000; 0.5/nbar; 2; 0; 1; cube8;
+ cube;   i; 30;  { QUALITY IMPROVEMENT OF A TETRAHEDRIZATION }
+         cube19; { in LEXICON ~>VOLUME }
+         0.4; { QUTEMN 'MAX QUALITY to be improved' reel; }
+         2;   { ANTE2P 'MAX DEGREES of COPLANEARITY' reel; }
+         15;  { NBITAT 'NUMBER of IMPROVMENT ITERATIONS' entier ; }
+@;
+
+3;{ SURFACES faces of the object }
+ base; i;{ in the lexicon ~>TRANSFO }
+   37;   { EXTRACTED SURFACE FROM FACES OF the VOLUME cube }
+ cube;   { in the lexicon ~>VOLUME }
+ DefFunc base(x,y,z); base=z<eps; EndFunc;
+ base;   { in the lexicon ~>FONCTION }
+    1;   { faces on boundary }
+
+ top; i; 37; cube;
+ DefFunc top(x,y,z); top=z>1-eps; EndFunc;
+ top; 1; { faces on boundary }
+
+ back; i; 37; cube;
+ DefFunc back(x,y,z); back=x<eps; EndFunc;
+ back; 1; { faces on boundary }
+
+ front; i; 37; cube;
+ DefFunc front(x,y,z); front=x>1-eps; EndFunc;
+ front; 1; { faces on boundary }
+
+ left; i; 37; cube;
+ DefFunc left(x,y,z); left=y<eps; EndFunc;
+ left; 1; { faces on boundary }
+
+ right; i; 37; cube;
+ DefFunc right(x,y,z); right=y>1-eps; EndFunc;
+ right; 1; { faces on boundary }
+@;
+
+5; { OBJECTS parts of the object }
+ cavity3d; 0; { classic 2D ou 3D }
+  7; { number of Points Lines Surfaces Volumes Objects of the object }
+ v; cube; { POINT or LINE or SURFACE or VOLUME or OBJECT? }
+ s; top;  { name of type PLSVO and name of PLSVO}
+ s; base;  s; right;  s; left;  s; front;  s; back;
+@;
+
+7; { INTERPOLATION definition of nodes of the mesh }
+ cavity3d; { NAME of the OBJECT to be INTERPOLATED }
+   3; { LAGRANGE of DEGREE 1 => BREZZI-FORTIN finite elements }
+ { 4;   LAGRANGE of DEGREE 2 => TAYLOR-HOOD finite elements }
+@;
+
+10;  { DRAWINGS of the cavity3d }
+ 5;  { OBJECT }
+ 1;  { ALL OBJECTS 1 by 1 }
+ 90; { Continue the DRAWING }
+
+CLOSE;
+

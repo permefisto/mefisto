@@ -1,0 +1,238 @@
+      SUBROUTINE OTVOST( NUOT, NOSMMT, LARBRO, LARBRT, PTXYZD,
+     %                   NBOTVO, NUOTVO )
+C+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+C BUT :    RETROUVER LES OT VOISINS PAR LE SOMMET NOSMMT DE L'OT NUOT
+C -----
+C
+C ENTREES:
+C --------
+C NUOT   : NUMERO DE L'OT, >0 SI DANS LARBRO,  <0 SI DANS LARBRT
+C NOSMMT : 1 A 4 POUR UN TETRAEDRE ( NUOT<0 )
+C          1 A 8 POUR UN OCTAEDRE  ( NUOT>0 )
+C LARBRO : ARBRE-14 DES OCTAEDRES ( FOND DE LA TETRAEDRISATION )
+C      LARBRO(-1:20,1) : RACINE DE L'ARBRE (OCTAEDRE SANS PERE)
+C      LARBRO(-1,J) : NO DU PERE DE L'OCTAEDRE J DANS UN DES 2 ARBRES
+C                     >0 => DANS LARBRO
+C                     <0 => DANS LARBRT
+C      LARBRO(0,J)  : 1 A 14 NO DE FILS DE L'OCTAEDRE J POUR SON PERE
+C                     + 100 * NO TYPE DE L'OT J
+C                     NO TYPE DE L'OT : 0 SI OCTAEDRE
+C                                       1 SI TETRAEDRE T RONDE (T1)
+C                                       2 SI TETRAEDRE T       (T2)
+C   SI LARBRO(0,J)>0 ALORS J EST UN OCTAEDRE OCCUPE
+C      SI LARBRO(1,.)>0 ALORS
+C         LARBRO(1:14,J): NO (>0 OU <0) LARBRO DES 14 SOUS-OCTA-TETRAEDRES
+C         REMARQUE : TOUT FILS 1 EST UN OCTAEDRE => NO OT >0 DANS LARBRO
+C                    DONC <0 => UNE FEUILLE
+C      SINON
+C         LARBRO(1:14,J):-NO PTXYZD DES 0 A 14 POINTS INTERNES DE L'OCTA J
+C                         0  SI PAS DE POINT
+C                        ( J EST ALORS UNE FEUILLE DE L'ARBRE )
+C
+C      LARBRO(15:20,J) : NO PTXYZD DES 6 SOMMETS DE L'OCTAEDRE J
+C   SINON
+C      LARBRO(0,J): -ADRESSE DANS LARBRO DE L'OCTAEDRE VIDE SUIVANT
+C
+C LARBRT : ARBRE-5 DES TETRAEDRES ( FOND DE LA TETRAEDRISATION )
+C      LARBRT(0,0) : NO DU 1-ER TETRAEDRE VIDE DANS LARBRT
+C      LARBRT(1,0) : MAXIMUM DU 1-ER INDICE DE LARBRT (ICI -1:9)
+C      LARBRT(2,0) : MAXIMUM DECLARE DU 2-EME INDICE DE LARBRT
+C                     (ICI = MXARBT)
+C
+C      LARBRT(-1,J) : NO DU PERE DU TETRAEDRE J DANS UN DES 2 ARBRES
+C                     >0 => DANS LARBRO
+C                     <0 => DANS LARBRT
+C      LARBRT(0,J) : 1 A 5 NO DE FILS DU TETRAEDRE J POUR SON PERE
+C                    + 100 * NO TYPE DE L'OT J
+C                     NO TYPE DE L'OT : 0 SI OCTAEDRE
+C                                       1 SI TETRAEDRE T RONDE (T1)
+C                                       2 SI TETRAEDRE T       (T2)
+C
+C   SI LARBRT(0,J)>0 ALORS J EST UN TETRAEDRE OCCUPE
+C      SI LARBRT(1,J)>0 ALORS
+C         LARBRT(1:5,J): NO (>0 OU <0) LARBRT DES 5 SOUS-OCTA-TETRAEDRES
+C         REMARQUE : TOUT FILS 1 EST UN OCTAEDRE => NO OT >0 DANS LARBRO
+C                    DONC <0 => UNE FEUILLE
+C      SINON
+C         LARBRT(1:5,J):-NO PTXYZD DES 0 A 5 POINTS INTERNES AU TETRA J
+C                         0  SI PAS DE POINT
+C                        ( J EST ALORS UNE FEUILLE DU ARBRE )
+C
+C      LARBRT(6:9,J) : NO PTXYZD DES 4 SOMMETS DU TETRAEDRE J
+C   SINON
+C      LARBRT(0,J): ADRESSE DANS LARBRT DU TETRAEDRE VIDE SUIVANT
+C
+C PTXYZD : PAR POINT : X  Y  Z  DISTANCE_SOUHAITEE
+C
+C SORTIES:
+C --------
+C NBOTVO : NOMBRE D'OT VOISINS PAR LE SOMMET NOSMMT DE L'OT NUOT
+C NUOTVO : NUMEROS DES OT VOISINS
+C+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+C AUTEUR : ALAIN PERRONNET ANALYSE NUMERIQUE UPMC PARIS    NOVEMBRE 1992
+C2345X7..............................................................012
+      COMMON / UNITES / LECTEU, IMPRIM, NUNITE(30)
+      INTEGER           LARBRO(-1:20,0:*),
+     &                  LARBRT(-1:9,0:*),
+     &                  NUOTVO(16),
+     &                  NUFACE(4),
+     &                  NUARET(4)
+      DOUBLE PRECISION  PTXYZD(4,*)
+C
+C     RECHERCHE DU NUMERO DES 3 OU 4 FACES DE SOMMET NOSMMT
+      CALL NUFSOT( NUOT, NOSMMT, NBFACE, NUFACE )
+C
+C     RECHERCHE DU NUMERO DES 3 OU 4 ARETES DE SOMMET NOSMMT
+      CALL NUASOT( NUOT, NOSMMT, NBFACE, NUARET )
+C
+C     BOUCLE SUR CHAQUE FACE ET ARETE DE SOMMET NOSMMT
+      NBOTVO = 0
+      DO 10 I=1,NBFACE
+C
+C        RECHERCHE DE L'OT OPPOSE PAR L'ARETE I DU SOMMET NOSMMT
+         CALL OTVOAR( NUOT, NUARET(I), LARBRO, LARBRT,
+     %                NUOTVO(NBOTVO+1), NB )
+         IF( NUOTVO(NBOTVO+1) .NE. 0 ) NBOTVO = NBOTVO + 1
+C
+C        RECHERCHE DE L'OT VOISIN PAR LA FACE I DU SOMMET NOSMMT
+         CALL OTVOFA( NUOT, NUFACE(I), LARBRO, LARBRT,
+     %                NUOTVO(NBOTVO+1), NB )
+         IF( NUOTVO(NBOTVO+1) .NE. 0 ) NBOTVO = NBOTVO + 1
+ 10   CONTINUE
+C
+C     RECHERCHE DE L'OT OPPOSE PAR LE SOMMET NOSMMT
+C     =============================================
+      CALL OTVOSO( NUOT, NOSMMT, LARBRO, LARBRT, NUOTOP, NB )
+      IF( NUOTOP .EQ. 0 ) RETURN
+C
+C     L'OT OPPOSE EST AJOUTE AUX OT VOISINS
+      NBOTVO = NBOTVO + 1
+      NUOTVO( NBOTVO ) = NUOTOP
+C
+C     LE NUMERO PTXYZD DE NOSMMT DANS NUOT
+      IF( NUOT .GT. 0 ) THEN
+         NOST = LARBRO( 14 + NOSMMT, NUOT )
+      ELSE
+         NOST = LARBRT(  5 + NOSMMT,-NUOT )
+      ENDIF
+C
+      IF( NB .GT. 0 ) THEN
+C
+C        ========================================
+C        L'OT NUOT EST PLUS PETIT QUE L'OT NUOTOP
+C        ========================================
+C        RECHERCHE DU SOMMET LE PLUS PROCHE DU SOMMET NOST
+C        LE CARRE DE LA LONGUEUR POUR UN TEST RELATIF DES DISTANCES
+         CALL LOAROT( NUOTOP, LARBRO, LARBRT, PTXYZD, ARETE2 )
+         CALL DPTSOT( PTXYZD(1,NOST), PTXYZD, NUOTOP, LARBRO, LARBRT,
+     %                DISMIN, N )
+         IF( (DISMIN**2) .LT. 1E-4*ARETE2 ) THEN
+C           LE SOMMET NOST EST UN SOMMET DE NUOTOP
+            GOTO 40
+         ENDIF
+C
+C        RECHERCHE DE L'ARETE LA PLUS PROCHE DU SOMMET NOST
+         CALL DPTAOT( PTXYZD(1,NOST), PTXYZD, NUOTOP, LARBRO, LARBRT,
+     %                DISMIN, N )
+         IF( (DISMIN**2) .LT. 1E-4*ARETE2 ) THEN
+C
+C           LE SOMMET NOST EST SUR L'ARETE N DE L'OT NUOTOP
+C           -----------------------------------------------
+C           RECHERCHE DE L'OT VOISIN PAR CETTE ARETE
+            CALL OTVOAR( NUOTOP, N, LARBRO, LARBRT, NUOTV, NB )
+            IF( NUOTV .NE. 0 ) THEN
+               DO 150 J=1,NBOTVO
+                  IF( NUOTVO(J) .EQ. NUOTV ) GOTO 160
+ 150           CONTINUE
+               NBOTVO = NBOTVO + 1
+               NUOTVO( NBOTVO ) = NUOTV
+            ENDIF
+C
+C           LES 2 FACES AYANT N COMME ARETE COMMUNE
+ 160        CALL NUFAOT( NUOTOP, N, NUFACE(1), NUFACE(2) )
+            DO 180 I=1,2
+C              RECHERCHE DE L'OT VOISIN PAR LA FACE I DE L'OT NUOTOP
+               CALL OTVOFA(NUOTOP, NUFACE(I), LARBRO, LARBRT, NUOTV, NB)
+               IF( NUOTV .NE. 0 ) THEN
+                  DO 170 J=1,NBOTVO
+                     IF( NUOTVO(J) .EQ. NUOTV ) GOTO 180
+ 170              CONTINUE
+                  NBOTVO = NBOTVO + 1
+                  NUOTVO( NBOTVO ) = NUOTV
+               ENDIF
+ 180        CONTINUE
+C
+         ELSE
+C
+C           RECHERCHE DE LA FACE LA PLUS PROCHE DU SOMMET NOST
+C           --------------------------------------------------
+            CALL DPTFOT( PTXYZD(1,NOST), PTXYZD, NUOTOP, LARBRO, LARBRT,
+     %                   DISMIN, N )
+            IF( (DISMIN**2) .LT. 1E-4*ARETE2 ) THEN
+C              LE SOMMET NOST EST SUR LA FACE N DE L'OT NUOTOP
+C              RECHERCHE DE L'OT VOISIN PAR CETTE FACE
+               CALL OTVOFA( NUOTOP, N, LARBRO, LARBRT, NUOTV, NB )
+               IF( NUOTV .NE. 0 ) THEN
+                  DO 270 J=1,NBOTVO
+                     IF( NUOTVO(J) .EQ. NUOTV ) GOTO 280
+ 270              CONTINUE
+                  NBOTVO = NBOTVO + 1
+                  NUOTVO( NBOTVO ) = NUOTV
+               ENDIF
+            ENDIF
+         ENDIF
+         GOTO 280
+      ENDIF
+C
+C     ==========================================
+C     ICI, LES OT NUOT ET NUOTOP ONT MEME TAILLE
+C     ==========================================
+C     RECHERCHE DES VOISINS A PARTIR DU SOMMET NOSMMT DE NUOT
+C     RECHERCHE DU NUMERO DU SOMMET NOST DANS L'OT NUOTOP
+      IF( NUOTOP .GT. 0 ) THEN
+         DO 20 N=1,6
+            IF( LARBRO( 14+N, NUOTOP ) .EQ. NOST ) GOTO 40
+ 20      CONTINUE
+      ELSE
+         DO 30 N=1,4
+            IF( LARBRT( 5+N, -NUOTOP ) .EQ. NOST ) GOTO 40
+ 30      CONTINUE
+      ENDIF
+      WRITE(IMPRIM,*) 'ERREUR OTVOST: SOMMET PERDU'
+      WRITE(IMPRIM,*) ' NOSMMT=',NOSMMT,' NUOT=',NUOT,
+     %                ' NUOTOP=',NUOTOP
+      CALL XVPAUSE
+      RETURN
+C
+C     RECHERCHE DU NUMERO DES 3 OU 4 FACES DE SOMMET N DANS NUOTOP
+ 40   CALL NUFSOT( NUOTOP, N, NBFACE, NUFACE )
+C
+C     RECHERCHE DU NUMERO DES 3 OU 4 ARETES DE SOMMET N DANS NUOTOP
+      CALL NUASOT( NUOTOP, N, NBFACE, NUARET )
+C
+C     BOUCLE SUR CHAQUE FACE ET ARETE DE SOMMET NOSMMT
+      DO 80 I=1,NBFACE
+C
+C        RECHERCHE DE L'OT OPPOSE PAR L'ARETE I DU SOMMET NOSMMT
+         CALL OTVOAR( NUOTOP, NUARET(I), LARBRO, LARBRT, NUOTV, NB )
+         IF( NUOTV .NE. 0 ) THEN
+            DO 50 J=1,NBOTVO
+               IF( NUOTVO(J) .EQ. NUOTV ) GOTO 60
+ 50         CONTINUE
+            NBOTVO = NBOTVO + 1
+            NUOTVO( NBOTVO ) = NUOTV
+         ENDIF
+C
+C        RECHERCHE DE L'OT VOISIN PAR LA FACE I DU SOMMET NOSMMT
+ 60      CALL OTVOFA( NUOTOP, NUFACE(I), LARBRO, LARBRT, NUOTV, NB )
+         IF( NUOTV .NE. 0 ) THEN
+            DO 70 J=1,NBOTVO
+               IF( NUOTVO(J) .EQ. NUOTV ) GOTO 80
+ 70         CONTINUE
+            NBOTVO = NBOTVO + 1
+            NUOTVO( NBOTVO ) = NUOTV
+         ENDIF
+ 80   CONTINUE
+C
+ 280  RETURN
+      END

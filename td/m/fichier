@@ -1,0 +1,4 @@
+variable FICHIER 'descriptif d''un FICHIER de la MS' entier
+( 1 : 'Nombre de PAGES du fichier' ,
+  2 : 'Nombre de MOTS d''une PAGE du fichier' ,
+  3 : 'AJOUTER ce FICHIER a la MS' );

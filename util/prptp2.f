@@ -1,0 +1,46 @@
+      SUBROUTINE PRPTP2( PT, PLAN, PTPROJ, IERR )
+C+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+C BUT :    CALCULER LE POINT PROJECTION DU POINT PT
+C -----    SUR LE PLAN DEFINI PAR SES 4 COEFFICIENTS AX + BY + CZ + D=0
+C
+C ENTREES:
+C --------
+C PT     : X Y Z DU POINT
+C PLAN   : 4 COEFFICIENTS DU PLAN
+C
+C SORTIES:
+C --------
+C PTPROJ : LES 3 COORDONNEES DU POINT DE PROJECTION
+C IERR   : =0 SI POINT PROJETE CORRECTEMENT CALCULE
+C          >0 SI 3 PREMIERS COEFFICIENTS DE PLAN NULS
+C+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+C AUTEUR : ALAIN PERRONNET ANALYSE NUMERIQUE UPMC PARIS        JUIN 1998
+C2345X7..............................................................012
+      DOUBLE PRECISION  PLAN(4), LAMBDA
+      REAL              PT(3),   PTPROJ(3)
+      INTRINSIC         REAL
+C
+C     PTPROJ(1:3) = PT(1:3) + LAMBDA * PLAN(1:3)
+C     LAMBDA A CALCULER POUR QUE PTPROJ APPARTIENNE AU PLAN
+C     PLAN(1)*(PT(1)+LAMBDA*PLAN(1)) + PLAN(2)*(PT(2)+LAMBDA*PLAN(2)) +
+C     C * (PT(3)+LAMBDA*PLAN(3)) + D = 0
+      LAMBDA = PLAN(1)**2 + PLAN(2)**2 + PLAN(3)**2
+C
+      IF( LAMBDA .LE. 0D0 ) THEN
+C        ERREUR PLAN INDEFINI
+         IERR = 1
+         RETURN
+      ENDIF
+C
+C     LE COEFFICIENT POUR QUE LE PTPROJ APPARTIENNE AU PLAN
+      LAMBDA =-(PLAN(1)*PT(1) + PLAN(2)*PT(2) + PLAN(3)*PT(3) + PLAN(4))
+     %       / LAMBDA
+C
+C     LE POINT PROJETE
+      PTPROJ(1) = REAL( PT(1) + LAMBDA * PLAN(1) )
+      PTPROJ(2) = REAL( PT(2) + LAMBDA * PLAN(2) )
+      PTPROJ(3) = REAL( PT(3) + LAMBDA * PLAN(3) )
+      IERR = 0
+C
+      RETURN
+      END

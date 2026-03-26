@@ -1,0 +1,46 @@
+{================================================================}
+{ MEFISTO Version Janvier 1999        PROJET: nafems_te31 ITEINV }
+{ Utilisateur: Perronnet Alain        Date:   4/1/99             }
+{ TEST 31 DE L'AGENCE NAFEMS CANTILEVER SQUARE MEMBRANE          }
+{ fichier TEST CALCUL DES MODES PROPRES PAR ITERATIONS INVERSES  }
+{================================================================}
+1; CARRE;
+
+2;
+
+ {surface CARRE}
+  1; {densite volumique de masse}
+  1; 8000;  {kg/m**3}
+
+  2; {Young et Poisson}
+ {3; 200e9; N/m**2  0.3; en CONTRAINTES  PLANES}
+  4; 200e9;  {N/m**2}   0.3;  {en DEFORMATIONS PLANES}
+ @;
+
+ {ligne S4S1}
+ 2; {fixation}
+  1; {constante}
+  2; {composantes}
+  1; 2; {no de la composante des deplacements a fixer}
+  0; 0; {valeur fixee}
+ @;
+@;
+
+DefVar DeuxPi; DeuxPi=atan(1)*8;
+
+6; {calcul des modes propres  Omega**2}
+{ 0;  coefficient TETA de translation des valeurs propres}
+  2; {methode des iterations inverses}
+  0; {nombre de valeurs a calculer => borne superieure a definir}
+(DeuxPi*300)**2; {borne superieure des valeurs propres a calculer}
+@;
+
+7; {trace de la deformee amplifiee 100 fois}
+  2; 2; 100; 90; 90;
+
+FERMER;
+
+{Pour obtenir les resultats Nafems a partir des valeurs propres
+affichees (Omega**2), il faut calculer la frequence par la formule
+   frequence = sqrt( Valeur Propre calculee ) / ( 2 Pi )
+}

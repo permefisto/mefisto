@@ -1,0 +1,74 @@
+{ ========================================================= }
+{ MEFISTO Version Fevrier 1999     PROJET: TEST 1 DES ONDES }
+{ Schema CENTR'E EXPLICITE CONDITIONNELLEMENT STABLE        }
+{ Utilisateur: Alian Perronnet     Date:   25/2/99          }
+{ ========================================================= }
+DefVar TMin,TMax,NombrePasTemps,DELTA_T; 
+  TMin=0; TMax=1; NombrePasTemps=20;
+  DELTA_T=(TMax-TMin)/(NombrePasTemps*10);
+ 
+DefFonc depla0(t,x,y,z,notyob, noob, nc );
+si abs(x-a/2)<0.001 et abs(y-b/2)<0.001
+alors
+  depla0=5;
+sinon
+  depla0=0;
+finsi;
+FinFonc;
+
+DefFonc vites0(t,x,y,z,notyob, noob, nc );
+si abs(x-a/2)<0.001 et abs(y-b/2)<0.001
+alors
+  vites0=2;
+sinon
+  vites0=0;
+finsi;
+FinFonc;
+
+2; { ENTREE des DONNEES DES ONDES }
+
+   { SURFACE: S }
+   1; { densite de MASSE }
+     1; { constante }
+     1; { densite de MASSE }
+
+   7; { CHALEUR MASSIQUE }
+     1; { constante }
+     1; { CHALEUR MASSIQUE }
+
+   2; { densite CONDUCTIVITE THERMIQUE }
+     3; { materiau 2D homogene isotrope }
+     5; { CONDUC conductivite du materiau }
+   
+   4; { densite de SOURCE de CHALEUR }
+       1; { constante }
+    -0.5; { SOURCE valeur de la source }
+   @;
+
+   { LIGNE: CONTOUR }
+   3; { CONTACT temperature imposee }
+     1; { constante }
+     0; { CONTAC temperature imposee }
+   @;
+
+5; { RESOUDRE L EQUATION DES ONDES }
+   { 1;      Coefficients INDEPENDANTS du TEMPS }
+
+   TMin;   { TEMPS INITIAL }
+
+  -1;      { fonction utilisateur pour le DEPLACEMENT INITIAL }
+   depla0; { DANS LE LEXIQUE ~>FONCTION }
+
+  -1;      { fonction utilisateur pour la VITESSE INITIALE }
+   vites0; { DANS LE LEXIQUE ~>FONCTION }
+
+    TMax;  { TEMPS FINAL  }
+
+  DELTA_T; { PAS DE TEMPS }
+
+ NombrePasTemps+1;  { VECTEURS DEPLACEMENTS A STOCKER }
+
+   2; 1;   { RESOLUTION PAR GC PRECONDITIONNE SUR MATRICE MORSE }
+   3;      {Schema CENTR'E EXPLICITE CONDITIONNELLEMENT STABLE}
+
+FERMER;

@@ -1,0 +1,119 @@
+{ ==================================================================== }
+{ MEFISTO Software     : February 7-th, 2011 Version                   }
+{ USER's Name          : ap                                            }
+{ Project Name         : vvpt2d                                        }
+{ Date                 :  7/02/11   14h 58m 57s                        }
+{ ==================================================================== }
+ readf vvpt2d.sspace;
+ { SURFACE: CARRES }
+ { LIGNE: CARREL }
+ @;
+ 7;
+ { DRAWING of EIGENVALUE & VECTORS }
+ 1;
+ { CASE NUMBER of TEMPERATURES }
+ { NUMBER of the CASE (=0 => ALL if possible)? }
+ 11;
+ 2;
+ { Drawings of TEMPERATURES }
+ 1;
+ { ISOTHERMAL LINES }
+ 2;
+ { REGULAR ISO between MIN MAX }
+ 90;
+ { Continue the DRAWING }
+ @;
+ @;
+ @;
+ 1;
+ { CASE NUMBER of TEMPERATURES }
+ { NUMBER of the CASE (=0 => ALL if possible)? }
+ 0;
+ 2;
+ { Drawings of TEMPERATURES }
+ 1;
+ { ISOTHERMAL LINES }
+ 2;
+ { REGULAR ISO between MIN MAX }
+ 90;
+ { Continue the DRAWING }
+ @;
+ @;
+ 2;
+ { ZONES of ISOTHERMAL COLORS }
+ 1;
+ { Drawing of ZONES of COLORS }
+ 90;
+ { Continue the DRAWING }
+ @;
+ @;
+ 7;
+ { SURFACE(X,Y,TEMPERATURE(X,Y)) }
+ 1;
+ { DRAWING of SOLUTION from Z }
+ 90;
+ { Continue the DRAWING }
+ @;
+ @;
+ @;
+ 2;
+ { Drawings of TEMPERATURES }
+ 7;
+ { SURFACE(X,Y,TEMPERATURE(X,Y)) }
+ 1;
+ { DRAWING of SOLUTION from Z }
+ 90;
+ { Continue the DRAWING }
+ @;
+ @;
+ @;
+ @;
+ @;
+ @;
+ @;
+ @;
+ @;
+ @;
+ @;
+ @;
+ @;
+ @;
+ @;
+ @;
+ @;
+ @;
+ @;
+ @;
+ @;
+ @;
+ @;
+ @;
+ @;
+ @;
+ @;
+ @;
+ readf vvpt2d.sspace;
+ { SURFACE: CARRES }
+ { LIGNE: CARREL }
+ @;
+ 1;
+ { DRAWING of SOLUTION from Z }
+ 90;
+ { Continue the DRAWING }
+ @;
+ @;
+ @;
+ @;
+ @;
+ @;
+ @;
+ readf vvpt2d.sspace;
+ { SURFACE: CARRES }
+ { LIGNE: CARREL }
+ @;
+ @;
+ @;
+ @;
+ @;
+ 99;
+ { SAVE DATA and QUIT }

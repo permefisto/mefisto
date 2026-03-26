@@ -1,0 +1,11 @@
+variable TRFLEVIT 'Trace des Fleches des Vitesses' entier
+(  2 : 'FLECHE MAX EN CM'
+,  3 : 'Un CM VAUT en NORME de la VITESSE' 
+,  4 : 'ECHELLE PRECEDENTE de la VITESSE'
+,  5 : 'COULEUR des ARETES du MAILLAGE'
+,  6 : 'TYPE TRAIT des ARETES MAILLAGE'
+,  7 : 'COULEUR des FLECHES de la VITESSE'
+,  8 : 'EPAISSEUR des FLECHES de la VITESSE'
+,  9 : 'PAS DE TRACE des FLECHES-VITESSE'
+, 50 : 'EFFACER le trace actuel'
+, 90 : 'TRACE des FLECHES de la VITESSE' ) ;

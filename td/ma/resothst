@@ -1,0 +1,4 @@
+variable ResoTHST 'Stationary Heat Coefficient Types' entier
+(1: 'Coefficients are INDEPENDENT of TEMPERATURE',
+ 2: 'Coefficients are  DEPENDENT of TEMPERATURE',
+ 3: 'NON LINEAR LANE-EMDEN''s problem' ) ;

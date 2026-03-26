@@ -1,0 +1,7 @@
+Ce tableau VARABO contient la valeur du rayon
+des NBBOUL boules qui forment la molecule.
+Tout rayon doit etre strictement positif et
+strictement superieur a la longueur souhaitee
+ARETBO des aretes de la triangulation de la
+surface de la molecule.
+

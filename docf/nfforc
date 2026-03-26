@@ -1,0 +1,47 @@
+La fonction utilisateur donnant la valeur des FORCES
+a l'instant TEMPS, au point X,Y,Z, 
+pour l'objet de numero de type NO_TYPE_OBJET
+(1:POINT, 2:LIGNE, 3:SURFACE, 4:VOLUME, 5:OBJET )
+et de numero dans ce lexique   NO_OBJET   
+pour la composante    NO_COMP  des FORCES
+de vecteur XN,YN,ZN normal unitaire dirige vers l'exterieur
+pour faciliter la donnee par l'utilisateur des forces normales
+sur les surfaces 3D ou lignes 2D de la frontiere,
+doit comprendre dans cet ordre les 10 parametres 
+
+FORCE( TEMPS, X,Y,Z, NO_TYPE_OBJET, NO_OBJET, NO_COMP, XN,YN,ZN ) 
+
+et etre programmee selon la grammaire du langage LU
+(cf documentation et exemples du menu de depart )
+
+Ces parametres sont tous initialises en entree.
+Ils peuvent ou non servir a calculer la valeur des FORCES.
+
+ATTENTION: Le vecteur XN,YN,ZN normal unitaire dirige vers
+l'exterieur est seulement initialise pour les surfaces d'un objet 3d
+ou les lignes d'un objet 2d. Dans tous les autres cas c-a-d
+les points en 2d ou 3d, les lignes d'un objet 3d, les surfaces d'un
+objet 2d, les volumes d'un objet 3d, les 3 composantes sont
+initialisees a zero.
+ 
+EXEMPLE: 
+deffonc force( t, x,y,z, no_type_objet, materiau, no_comp, xn,yn,zn );
+si  materiau=nuobjt( 'volume' , 'acier' )
+alors 
+  si no_comp=1
+  alors  force=1e6; 
+  sinon  force=5e4; 
+  finsi ;
+sinon
+  si  materiau=nuobjt( 'volume' , 'cuivre' )
+  alors 
+    si no_comp=1
+    alors force= 2e3 ;
+    sinon force=-1e4 ;
+    finsi;  
+  finsi;   
+finsi;
+finfonc;
+
+Remarque: La fonction nuobjt( p1, p2 ) donne le
+numero de PLSVO de type p1 ayant pour nom p2.

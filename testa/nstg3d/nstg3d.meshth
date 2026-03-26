@@ -1,0 +1,112 @@
+{ ====================================================================== }
+{ MEFISTO Software     : March 17-th 2010 Version                        }
+{ USER's  Name         : Alain Perronnet                                 }
+{ Project Name         : ns3d Navier-Stokes TAYLOR-GREEN vortex solution }
+{ Date                 : 17/3/2010                                       }
+{ ====================================================================== }
+DefVar pi; pi=atan(1)*4;
+DefVar a,b,c,nba,eps;
+nba=20;
+a=nba;
+b=nba;
+c=nba;
+eps=0.0001;
+
+DefFunc xmap( x, y, z );
+if x>0 then
+   xmap = x * Pi / a;
+else
+   xmap = 0;
+endif
+EndFunc;
+
+DefFunc ymap( x, y, z );
+if y>0 then
+   ymap = y * Pi / b;
+else
+   ymap = 0;
+endif
+EndFunc;
+
+DefFunc zmap( x, y, z );
+if z>0 then
+   zmap = z * Pi / c;
+else
+   zmap = 0;
+endif
+EndFunc;
+
+6; { MAPPINGS R3-->R3 }
+ homo;  { NAME of the TRANSFORMATION or ESCAPE? }
+ 6;     { F:R3->R3 define by 3 functions (Fi) }
+ xmap; ymap; zmap;
+@;
+
+4; { VOLUMES materials of the object }
+  cubePiHexa;
+  homo;{ in the lexicon ~>TRANSFO }
+  11;  { regular cube with unit edges }
+  a;   { NBINHX number of X-edges }
+  b;   { NBINHY number of Y-edges }
+  c;   { NBINHZ number of Z-edges }
+
+  cubePi; i;
+  31; {TETRAHEDRIZATION of a PYRA-PENTA-HEXAHEDRIZATION}
+  cubePiHexa; {NAME of VOLUME with tetra-penta-hexaedra}
+@;
+
+3;{ SURFACES faces of the object }
+
+ base; i;{ in the lexicon ~>TRANSFO }
+   37;   { EXTRACTED SURFACE FROM FACES OF A VOLUME }
+ cubePi;   { in the lexicon ~>VOLUME }
+ DefFunc base(x,y,z); base=z<eps; EndFunc;
+ base;   { in the lexicon ~>FONCTION }
+    1;   { faces on boundary }
+
+ top; i; 37; cubePi;
+ DefFunc top(x,y,z); top=z>Pi-eps; EndFunc;
+ top; 1; { faces on boundary }
+
+ back; i; 37; cubePi;
+ DefFunc back(x,y,z); back=x<eps; EndFunc;
+ back; 1; { faces on boundary }
+
+ front; i; 37; cubePi;
+ DefFunc front(x,y,z); front=x>Pi-eps; EndFunc;
+ front; 1; { faces on boundary }
+
+ left; i; 37; cubePi;
+ DefFunc left(x,y,z); left=y<eps; EndFunc;
+ left; 1; { faces on boundary }
+
+ right; i; 37; cubePi;
+ DefFunc right(x,y,z); right=y>Pi-eps; EndFunc;
+ right; 1; { faces on boundary }
+
+ cubeSurf; i; 51; 6; base; top;  back; front;  left; right;
+@;
+
+5; { OBJECTS parts of the object }
+ cubePi; 0;  { classic 2D ou 3D }
+ 2;          { number of Points Lines Surfaces Volumes of the object}
+ v; cubePi;  { POINT or LINE or SURFACE or VOLUME or OBJECT? }
+ s; cubeSurf;{ name of type PLSVO and name of PLSVO}
+@;
+
+7; { INTERPOLATION definition of nodes of the mesh }
+ cubePi; { NAME of the OBJECT to be INTERPOLATED? }
+{3;        LAGRANGE of DEGREE 1 => tetraedres Brezzi-Fortin }
+ 4;      { LAGRANGE of DEGREE 2 => tetraedres Taylor-Hood }
+@;
+
+10;
+ { DRAWING of PLSVO meshes }
+ 5; { OBJECT }
+ 3; { ONE OBJECT }
+ { NAME of the OBJECT? }
+ cubePi;
+ 90; { Continue the DRAWING }
+ 90; { Continue the DRAWING }
+
+CLOSE;

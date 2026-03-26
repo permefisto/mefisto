@@ -1,0 +1,133 @@
+      SUBROUTINE SOMOBJ( NMTOBJ , NOMOBJ , NTSOOB , MNSOOB , IERR )
+C+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+C BUT : GENERER S'IL N'EXISTE PAS LE TABLEAU 'XYZSOMMET' D'UN OBJET
+C ----- A PARTIR DE SON TABLEAU DE SES NSEF C-A-D 'ARETE'
+C       OU 'FACE' OU 'CUBES'
+C       ET RETOURNER SON NUMERO TS ET ADRESSE MCN
+C
+C ENTREES :
+C ---------
+C NMTOBJ : NOM DU TYPE DE L'OBJET 'POINT' 'LIGNE' ... 'OBJET'
+C NOMOBJ : NOM DE L'OBJET
+C
+C SORTIES:
+C --------
+C NTSOOB : NUMERO DU TABLEAU TAMS 'XYZSOMMET' DE L'OBJET
+C MNSOOB : ADRESSE MCN DU TABLEAU 'XYZSOMMET' DE L'OBJET
+C IERR   : 0  SI PAS D'ERREUR A LA GENERATION DES ARETES OU SOMMETS
+C          1  OBJET INCONNU
+C          2  TABLEAU 'DEFINITION' INCONNU POUR CET OBJET
+C          3  TABLEAU DES NSEF SANS SOUS-OBJET
+C ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+C AUTEUR : ALAIN PERRONNET ANALYSE NUMERIQUE PARIS  AVRIL 1987
+C.......................................................................
+      COMMON / UNITES / LECTEU,IMPRIM,NUNITE(30)
+      CHARACTER*(*)     NMTOBJ,NOMOBJ
+      include"./incl/ntmnlt.inc"
+      include"./incl/pp.inc"
+      COMMON            MCN(MOTMCN)
+      REAL              RMCN(1)
+      EQUIVALENCE      (RMCN(1),MCN(1))
+C
+      INTEGER           INFOS(-1:8)
+      LOGICAL           AVANT
+C
+C     GENERATION OU RECHERCHE DU TABLEAU MAILLAGE DE L'OBJET
+C     ======================================================
+      CALL MAILEX( NMTOBJ , NOMOBJ , NTTSMA , MNTSMA , IERR )
+      IF( IERR .NE. 0 ) RETURN
+C
+C     LE NO DE TYPE DE L'OBJET
+C     ------------------------
+      NOTYOB = NTYOBJ( NMTOBJ )
+C
+C     SI LE MAILLAGE EST 'XYZSOMMET' RETOUR
+      IF( NOTYOB .EQ. 1 ) THEN
+         NTSOOB = NTTSMA
+         MNSOOB = MNTSMA
+         RETURN
+      ENDIF
+C
+C     DECLARATION DU TABLEAU 'XYZSOMMET'
+C     --------------------------------
+C     LE LEXIQUE DES OBJETS
+      NTLX = NTMN( NOTYOB )
+      CALL LXLXOU( NTLX , NOMOBJ , NTLXOB , MNLXOB )
+C
+C     LE NOMBRE DE SOMMETS PAR SOUS-OBJET
+      NBSOEF = 2 ** ( NOTYOB - 1 )
+C
+C     LE NOMBRE DE NSEF DE L'OBJET
+      MNMA   = MNTSMA + 2
+      NBSOBJ = MCN( MNMA )
+      IF( NBSOBJ .LE. 0 ) THEN
+C        ERREUR PAS DE NSEF
+         IERR = 3
+         RETURN
+      ENDIF
+C
+C     LE TABLEAU 'XYZSOMMET' EXISTE-T-IL ?
+      CALL LXTSOU( NTLXOB , 'XYZSOMMET' ,  NTSOOB , MNSOOB )
+      IF( NTSOOB .GT. 0 ) THEN
+C        LE TABLEAU 'XYZSOMMET' EXISTE
+C        A T IL ETE CREE APRES SES NSEF ?
+         IF( AVANT( MCN(MNTSMA) , MCN(MNSOOB) ) ) RETURN
+C        NON.LE TABLEAU 'XYZSOMMET' EST DETRUIT
+         CALL LXTSDS( NTLXOB , 'XYZSOMMET' )
+      ENDIF
+C
+C     IL N'EXISTE PAS . DECLARATION ET OUVERTURE
+      MXSOOB = ( NBSOBJ + 8 ) * NBSOEF / 2
+      CALL LXTNDC( NTLXOB , 'XYZSOMMET' , 'ENTIER', MXSOOB )
+      CALL LXTSOU( NTLXOB , 'XYZSOMMET' ,  NTSOOB , MNSOOB )
+      MNSO = MNSOOB + 2
+C
+C     LE NOMBRE ACTUEL DE SOMMETS RECENSES DANS L'OBJET
+      NBS = 0
+C
+C     BOUCLE SUR LES NSEF
+C     --------------------------
+      DO 100 N = 1 , NBSOBJ
+C        LE NUMERO DU SOUS-OBJET
+         NO = MCN( MNMA + N )
+C        LES INFORMATIONS DU SOUS-OBJET
+         CALL PAFCLE( NOTYOB , NO , INFOS )
+C
+C        BOUCLE SUR LES SOMMETS DU SOUS-OBJET
+C        ------------------------------------
+         DO 20 J = 1 , NBSOEF
+C           LE NUMERO DU SOMMET J DU SOUS-OBJET N
+            NO = INFOS( J )
+            IF( NO .LE. 0 ) GOTO 20
+C
+C           LE SOMMET NO A T IL ETE RECENSE ?
+C           METHODE BESTIALE . RECHERCHE PAR LA FIN POUR ACCELERER
+            DO 10 I = NBS , 1 , -1
+               IF( NO .EQ. MCN( MNSO + I ) ) GOTO 20
+ 10         CONTINUE
+C
+C           NON . LE SOMMET NO EST AJOUTE AU TABLEAU 'XYZSOMMET'
+C           ---   --------------------------------------------
+            NBS = NBS + 1
+            IF( NBS .GT. MXSOOB ) THEN
+C              LE TABLEAU 'XYZSOMMET' TROP COURT EST ALLONGE
+               CALL TAMSAU( NTSOOB , MXSOOB + 128 )
+C              LE TABLEAU EST REOUVERT
+C              CAR SON ADRESSE A PEUT ETRE CHANGEE
+               CALL TAMSOU( NTSOOB , MNSOOB )
+               MNSO = MNSOOB + 2
+            ENDIF
+C           LE NUMERO NO EST AJOUTE
+            MCN( MNSO + NBS ) = NO
+C
+ 20      CONTINUE
+ 100  CONTINUE
+C
+C     MISE A JOUR DU NOMBRE DE SOMMETS ET DATE DU TABLEAU
+      MCN( MNSO ) = NBS
+      CALL ECDATE( MCN( MNSOOB ) )
+C
+C     MISE A JOUR DE LA TAILLE DU TABLEAU MS 'XYZSOMMET'
+      CALL TAMSRA( NTSOOB , 3 + NBS )
+      IERR = 0
+      END

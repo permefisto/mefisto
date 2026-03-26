@@ -1,0 +1,7 @@
+variable SCHEONDE 'schema en temps des ondes' entier
+(1 : 'NEWMARK  IMPLICITE inconditionnellement STABLE',
+ 2 : 'DECENTRE IMPLICITE inconditionnellement STABLE' ) ;
+
+
+
+ 3 : 'EXPLICITE => CONDITION CFL pas de temps petit' ) ;

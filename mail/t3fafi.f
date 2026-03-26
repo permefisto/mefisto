@@ -1,0 +1,139 @@
+      SUBROUTINE T3FAFI( NBISO,  NBFAFR, NBFISO, NOFAFR,
+     %                   MOFACE, MXFACE, LFACES, XYZPOI,
+     %                   TRIANG, XYZISO, NUMISO )
+C ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+C BUT :    TRACER EN COULEURS LES FACES FRONTALIERES OU ISOVALEURS
+C -----
+C
+C ENTREES:
+C --------
+C NBISO  : NOMBRE DE SURFACES ISOVALEURS A TRACER  (DOIT ETRE <=10)
+C NBFAFR : NOMBRE DE FACES FRONTALIERES
+C NBFISO : NOMBRE DE FACES ISOVALEURS
+C NOFAFR : NUMERO DES FACES SELON LEUR DISTANCE CROISSANTE A L'OEIL
+C MOFACE : NOMBRE DE MOTS PAR FACE DANS LFACES
+C MXFACE : NOMBRE MAXIMAL DE FACES DANS LFACES
+C LFACES : TABLEAU ENTIER DU NO DES SOMMETS DES FACES FRONTALIERES
+C XYZPOI : COORDONNEES DES SOMMETS DES FACES FRONTALIERES (ET INTERNES)
+C TRIANG : REEL VALEUR TEMOIN DE TRIANGLE DANS XYZISO(3,4,.)
+C XYZISO : XYZ DES 4 SOMMETS DES FACES DES ISOVALEURS
+C NUMISO : NUMERO DE L'ISOVALEUR DE CHAQUE FACE ISOVALEUR
+C+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+C AUTEUR : PERRONNET ALAIN UPMC ANALYSE NUMERIQUE PARIS     OCTOBRE 1994
+C2345X7..............................................................012
+      PARAMETER   ( LIGCON=0, LIGTIR=1 )
+      include"./incl/trvari.inc"
+      include"./incl/mecoit.inc"
+      include"./incl/gsmenu.inc"
+      INTEGER        NUMISO(NBFISO)
+      INTEGER        NOFAFR(1:NBFAFR+NBFISO)
+      INTEGER        LFACES(1:MOFACE,1:MXFACE)
+      REAL           XYZPOI(1:3,1:*)
+      REAL           XYZISO(1:3,1:4,1:NBFISO)
+      REAL           XYZ(3,5)
+      REAL           CNORFA(1:3)
+C
+C     LA DIRECTION DE VISEE PTV-OEIL
+      DIREVI(1) = AXOEIL(1) - AXOPTV(1)
+      DIREVI(2) = AXOEIL(2) - AXOPTV(2)
+      DIREVI(3) = AXOEIL(3) - AXOPTV(3)
+C
+C     LA DIRECTION DE VISEE NORMALISEE A 1.
+      CALL NORMER( 3, DIREVI, IERR )
+      IF( IERR .NE. 0 ) THEN
+         NBLGRC(NRERR) = 1
+         KERR(1) = 'OEIL ET POINT VU IDENTIQUES'
+         CALL LEREUR
+         RETURN
+      ENDIF
+C
+C     LE NOMBRE DE COULEURS DISPONIBLES
+      NBCOUL = NDCOUL - N1COUL + 1
+C
+C     NOMBRE-1 DE COULEURS DISPONIBLES POUR UNE ISOVALEUR (NBISO<=10)
+      NBCPIS = NBCOUL / 10 - 1
+      IF( NBCPIS .LT. 0 ) NBCPIS = 0
+C
+C     LA PALETTE ARC EN CIEL DU TYPE QUALITES
+      CALL PALCDE(12)
+      CALL EFFACE
+C
+C     LES ARETES SONT POINTILLEES AVEC UNE EPAISSEUR
+      CALL XVTYPETRAIT( LIGTIR )
+      CALL XVEPAISSEUR( 1 )
+C
+C     LE TRACE DES FACES EN COMMENCANT PAR LES PLUS ELOIGNEES
+C     =======================================================
+      DO 200 NF = 1, NBFAFR+NBFISO
+C
+C        LE NUMERO DE LA FACE LA PLUS ELOIGNEE NON TRACEE
+         NFRI = NOFAFR( NF )
+C
+         IF( NFRI .LE. NBFISO ) THEN
+C
+C           TRACE DE LA FACE ISOVALEUR
+C           --------------------------
+C           LE NOMBRE DE SOMMETS DE LA FACE
+            IF( XYZISO(3,4,NFRI) .EQ. TRIANG ) THEN
+               NAF = 3
+            ELSE
+               NAF = 4
+            ENDIF
+C
+C           CNORFA LES COORDONNEES DE LA NORMALE A LA FACE (NORME=1)
+            NC = 0
+            CALL NORMTQ( NAF, XYZISO(1,1,NFRI),  CNORFA, NC )
+            IF( NC .NE. 0 ) GOTO 200
+C
+C           LE PRODUIT SCALAIRE DIRECTION VISEE ET NORMALE
+            R = PROSCR( DIREVI , CNORFA , 3 )
+C           LE NUMERO DE L'ISOVALEUR DE LA FACE
+            NUISO = NUMISO(NFRI)
+C
+C           LA COULEUR PRIMAIRE VISUALISE L'ISOVALEUR  (NBISO<=10)
+            NC = NBISO + 1 - NUISO
+            NC = NC - 1 + N1COUL
+C
+C           LA COULEUR PONDEREE PAR LA DIRECTION DANS LA COULEUR DE L'ISO
+            NUDC = NINT( (1.0-ABS(R)) * NBCPIS )
+C
+C           LA COULEUR DANS LA PALETTE
+            NC   = NC + 10 * NUDC
+C
+C           LE TRACE DE LA FACE
+            CALL FACE3D( NC, NCNOIR, NAF, XYZISO(1,1,NFRI) )
+C
+         ELSE
+C
+C           TRACE DES ARETES DE CETTE FACE FRONTALIERE
+C           ------------------------------------------
+C           LE NUMERO DE LA FACE DANS LE TABLEAU LFACES
+            NFRI = NFRI - NBFISO
+C           LE NOMBRE DE SOMMETS DE LA FACE
+            IF( LFACES(4,NFRI) .EQ. 0 ) THEN
+               NAF = 3
+            ELSE
+               NAF = 4
+            ENDIF
+C
+            DO 20 J=1,NAF
+C              LES COORDONNEES DU SOMMET J
+               NC = LFACES(J,NFRI)
+               XYZ(1,J) = XYZPOI(1,NC)
+               XYZ(2,J) = XYZPOI(2,NC)
+               XYZ(3,J) = XYZPOI(3,NC)
+ 20         CONTINUE
+C           AJOUT DU POINT 1 POUR FERMER LE CONTOUR
+            J = NAF + 1
+            XYZ(1,J) = XYZ(1,1)
+            XYZ(2,J) = XYZ(2,1)
+            XYZ(3,J) = XYZ(3,1)
+C
+C           LE TRACE EFFECTIF
+            CALL TRAITS3D( NCBLAN, J, XYZ )
+         ENDIF
+ 200  CONTINUE
+C
+C     RETOUR AU TRACE CONTINU DES LIGNES
+      CALL XVTYPETRAIT( LIGCON )
+      END

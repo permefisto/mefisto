@@ -1,0 +1,413 @@
+      SUBROUTINE SDTRIT( KNOMOB, NTLXOB, NBTRTE, NBSD,
+     %                   NBTYEL, MNTOPO, MNELEM, MNPOGE,
+     %                   NCAS  , NBISO , TMIN ,  TMAX  ,
+     %                   TMI, XMI, YMI, TMA, XMA, YMA )
+C+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+C BUT :    TRACER LES ISOTHERMES DANS UN OBJET 2D ou 2D AXISYMETRIQUE
+C -----    OU 3D
+C
+C ENTREES :
+C ---------
+C KNOMOB : NOM DE L'OBJET
+C NTLXOB : NUMERO DU TMS LEXIQUE DE L'OBJET A TRAITER
+C NBTRTE : LE NUMERO DE CE SOUS-DOMAINE
+C NBSD   : LE NOMBRE TOTAL DE SOUS-DOMAINES
+C NBTYEL : LE NOMBRE DE TYPES D'ELEMENTS DANS CETTE TOPOLOGIE
+C MNTOPO : ADRESSE MCN DU TABLEAU TOPOLOGIE
+C MNELEM : ADRESSE MCN DES TABLEAUX ELEMENTS DE CETTE TOPOLOGIE
+C MNPOGE : ADRESSE MCN DU TABLEAU POINTS GEOMETRIQUES DE L'OBJET
+C MNNOEU : ADRESSE MCN DU TABLEAU NOEUDS D'INTERPOLATION DU MAILLAGE
+C TMIN   : TEMPERATURE MINIMALE SUR L'OBJET COMPLET
+C TMAX   : TEMPERATURE MAXIMALE SUR L'OBJET COMPLET
+C
+C MODIFIES EVENTUELLEMENT :
+C -------------------------
+C NCAS   : NUMERO DU CAS A TRAITER
+C NBISO  : NOMBRE D'ISOTHERMES A TRACER
+C+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+C AUTEUR : PASCAL JOLY   ANALYSE NUMERIQUE UPMC PARIS      NOVEMBRE 1994
+C23456---------------------------------------------------------------012
+      include"./incl/gsmenu.inc"
+      include"./incl/a_objet__topologie.inc"
+      include"./incl/a___npef.inc"
+      include"./incl/a___vecteur.inc"
+      include"./incl/a___xyzpoint.inc"
+      include"./incl/a___xyznoeud.inc"
+      include"./incl/donele.inc"
+      include"./incl/inteel.inc"
+      include"./incl/ponoel.inc"
+      include"./incl/trvari.inc"
+      include"./incl/mecoit.inc"
+      include"./incl/xyzext.inc"
+      COMMON / UNITES / LECTEU,IMPRIM,INTERA,NUNITE(29)
+      COMMON / ISOTH /  MNVISO,MNSOLE,IANOTY,IACOPT
+      include"./incl/pp.inc"
+      COMMON            MCN(MOTMCN)
+      REAL              RMCN(1)
+      EQUIVALENCE      (MCN(1),RMCN(1))
+      CHARACTER*(*)     KNOMOB
+      CHARACTER*160     KNOM
+C
+      MOREE2 = MOTVAR(6)
+      IF (NBTRTE.EQ.1) THEN
+         MNVISO = 0
+         MNSOLE = 0
+         IANOTY = 0
+         IACOPT = 0
+      ENDIF
+C
+C     RECHERCHE DES TEMPERATURES DE L'OBJET
+      CALL  LXLXOU( NTLXOB, 'VECTEUR"TEMPERATURE', NTTEMP, MNTEMP )
+      IF( NTTEMP .LE. 0 ) THEN
+         NBLGRC(NRERR) = 2
+         KERR(1) = 'ERREUR : OBJET ' // KNOMOB
+         KERR(2) = 'SANS TEMPERATURES CALCULEES'
+         CALL LEREUR
+         GOTO 9000
+      ENDIF
+C     NOMBRE DE DEGRES DE LIBERTE
+      NTDL = MCN( MNTEMP + WBCOVE )
+C     NOMBRE DE CAS
+      NDSM = MCN( MNTEMP + WBVECT )
+C
+C     POUR LE PREMIER APPEL : AJUSTEMENT DES PARAMETRES DE TRACE
+C     ==========================================================
+      IF (NBTRTE .NE. 1 ) GOTO  200
+C
+C     LA FENETRE EST EFFACEE
+      CALL EFFACE
+C     VALEURS PAR DEFAUT DU TRACE
+      CALL VISEE( NMTCL )
+C
+C     NDIM DIMENSION EFFECTIVE DE L'ESPACE DES COORDONNEES
+      CALL DIMCOO( MCN(MNPOGE+WNBPOI) , MCN(MNPOGE+WYZPOI), NDIM )
+C
+C     LECTURE DES DONNEES
+C     ===================
+ 100  CALL LIMTCL( 'valisoth', NMTCL )
+      IF( NMTCL .LT.  0 ) GOTO 9000
+      GOTO( 110, 130, 140, 150, 159, 160, 170, 180 ) , NMTCL
+C
+C     NOMBRE D'ISOTHERMES
+C     ...................
+ 110  IF( MNVISO .GT. 0 ) THEN
+C        DESTRUCTION DU TABLEAU DES VALEURS DES ISOTHERMES
+         CALL TNMCDS( 'REEL', MXISO+1, MNVISO )
+         CALL TNMCDS( 'ENTIER', MXISO, MNTISO )
+      ENDIF
+      CALL INVITE( 79 )
+      NCVALS = 4
+      CALL LIRENT( NCVALS, NBISO )
+      IF( NCVALS .LE. 0 ) GOTO 100
+      NBISO = ABS( NBISO )
+C     AU MOINS UNE ISOVALEUR
+      NBISO  = MAX( 1, NBISO )
+C     EN 3D AU PLUS 10 ISOVALEURS
+      IF( NDIM .EQ. 3 ) NBISO = MIN( 10, NBISO )
+      MXISO  = NBISO
+      CALL TNMCDC( 'REEL', MXISO+1, MNVISO )
+      CALL TNMCDC( 'ENTIER', MXISO, MNTISO )
+C     PAR DEFAUT ISOTHERMES REGULIERES
+C
+C     REGULIERES
+C     ..........
+ 130  TEMIN = TMIN
+      TEMAX = TMAX
+      X = ( TEMAX - TEMIN ) / 100.
+      IF( X .EQ. 0 ) X = 1.0
+      TEMIN = TEMIN + X
+      TEMAX = TEMAX - X
+      GOTO 145
+C
+C     INTERVALLE_MIN_MAX_DES_ISOS
+C     ...........................
+ 140  NCVALS = 0
+      CALL INVITE( 32 )
+      CALL LIRRSP( NCVALS, TEMIN )
+      IF( NCVALS .LE. 0 ) GOTO 100
+      CALL INVITE( 30 )
+      NCVALS = 0
+      CALL LIRRSP( NCVALS, TEMAX )
+      IF( NCVALS .LE. 0    ) GOTO 100
+      IF( TEMIN  .GT. TEMAX ) GOTO 140
+C
+ 145  I = NBISO - 1
+      IF( I .EQ. 0 ) I = 1
+      X    = ( TEMAX - TEMIN ) / I
+      F    = TEMIN
+      DO 148 I=1,NBISO
+         RMCN( MNVISO - 1 + I ) = F
+         F                      = F + X
+ 148  CONTINUE
+      RMCN( MNVISO + NBISO ) = TEMAX
+      IF( NBISO .EQ. 1 ) RMCN(MNVISO) = (TEMIN + TEMAX) * 0.5
+      IF( NMTCL .EQ. 1 ) GOTO 100
+      GOTO 200
+C
+C     VALEURS_DES_ISOS
+C     ................
+ 150  KNOM = 'VALEUR DE L ISOTHERME '
+      DO 152 I=1,NBISO
+         WRITE( KNOM(23:28), '(I6)' ) I
+         CALL INVITD( KNOM )
+         NCVALS = 0
+         CALL LIRRSP( NCVALS, RMCN(MNVISO-1+I) )
+         IF( NCVALS .LE. 0 ) GOTO 100
+ 152  CONTINUE
+      CALL TRIREE( NBISO, RMCN(MNVISO) )
+C
+C     PALETTE ARC EN CIEL
+      CALL PALCDE( 12 )
+C
+C     OPTIONS DE LA VISEE POUR VOIR L'OBJET ET SES ISOTHERMES
+ 154  CALL VISE2D( NMTCL )
+      IF( NMTCL .LT. 0 ) GOTO 100
+C
+C     INITIALISATION DE TRANSLATION ZOOM
+      IF( LORBITE .NE. 0 ) THEN
+         CALL ZOOM2D0( NOTYEV )
+         IF( NOTYEV .EQ. 0 ) GOTO 154
+      ENDIF
+C
+ 155  IF( LORBITE .NE. 0 ) THEN
+         CALL ZOOM2D1( NOTYEV )
+         IF( NOTYEV .EQ. 0 ) GOTO 154
+      ENDIF
+      GOTO 200
+C
+C     COULEUR des ARETES du MAILLAGE
+C     ------------------------------
+ 159  CALL LIMTCL( 'couleur0' , I )
+      IF( I .EQ. -1 ) THEN
+         GOTO 9000
+      ELSE IF( I .EQ. -2 ) THEN
+         NCOUAF = -2
+      ELSE IF( I .EQ. 0 ) THEN
+C        COULEUR NOIRE
+         NCOUAF = 0
+      ELSE
+C        COULEUR RESERVEE
+         NCOUAF = N1COEL + I
+      ENDIF
+      GOTO 100
+C
+C     TYPE du TRAIT des ARETES du MAILLAGE
+C     ------------------------------------
+ 160  CALL LIMTCL( 'typtrait' , I )
+      IF( I .EQ. -1 ) GOTO 100
+      NTLAFR = I
+      GOTO 100
+C
+C     COULEUR des ARETES sur les SURFACES ISOTHERMES
+C     ..............................................
+ 170  CALL LIMTCL( 'couleur0' , I )
+      IF( I .EQ. -1 ) GOTO 100
+      IF( I .EQ. -2 ) THEN
+C        COULEUR INVISIBLE A NE PAS TRACER
+         NCOAPL = -2
+      ELSE IF( I .EQ. 0 ) THEN
+C        LA COULEUR NOIRE
+         NCOAPL = 0
+      ELSE
+         NCOAPL = N1COEL + I
+      ENDIF
+      GOTO 100
+C
+C     TYPE du TRAIT des ARETES des SURFACES ISOTHERMES
+C     ................................................
+ 180  CALL LIMTCL( 'typtrait' , I )
+      IF( I .EQ. -1 ) GOTO 100
+      NTLAPL = I
+      GOTO 100
+C
+C     EXECUTION DU TRACE DES ISOTHERMES
+C     =================================
+ 200  IF( MNVISO .EQ. 0 ) THEN
+C        INITIALISATIONS PAR DEFAUT
+         NBISO = ABS( NBISO )
+         NBISO = MAX( 1, NBISO )
+         MXISO = NBISO
+         CALL TNMCDC( 'REEL', MXISO+1, MNVISO )
+         CALL TNMCDC( 'ENTIER', MXISO, MNTISO )
+         TEMIN = TMIN
+         TEMAX = TMAX
+         X     = ( TEMAX - TEMIN ) / 100.
+         IF( X .EQ. 0 ) X = 1.0
+         TEMIN = TEMIN + X
+         TEMAX = TEMAX - X
+         I    = NBISO - 1
+         IF( I .LE. 0 ) I=1
+         X    = ( TEMAX - TEMIN ) / I
+         F    = TEMIN
+         DO 210 I=1,NBISO
+            RMCN( MNVISO - 1 + I ) = F
+            F                      = F + X
+ 210     CONTINUE
+         IF( NBISO .EQ. 1 ) RMCN(MNVISO) = (TEMIN + TEMAX) * 0.5
+      ENDIF
+C
+      WRITE(IMPRIM,10210) NCAS, (I,RMCN(MNVISO-1+I),I=1,NBISO)
+10210 FORMAT(/'CAS ',I3,' : LES VALEURS DES ISOTHERMES'/
+     % 5(I4,' : ',G13.5))
+C     NDIM DIMENSION EFFECTIVE DE L'ESPACE DES COORDONNEES
+C     CALL DIMCOO( MCN(MNPOGE+WNBPOI), MCN(MNPOGE+WYZPOI), NDIM )
+C
+C     PARAMETRES DES TAILLES DES TABLEAUX.A MODIFIER EVENTUELLEMENT
+C     -------------------------------------------------------------
+C     MXSOUI : MAXIMUM D INTERVALLES DU SEGMENT UNITE
+C              MXSOUI ** 2 SOUS-TRIANGLES CREES AU PLUS DANS UN TRIANGLE
+      MXSOUI = 4
+C     MXPIL3 : MAXIMUM DE SOUS-TRIANGLES GENERES DANS L ELEMENT REFERENCE
+      IF(NDIM.EQ.2) MXPIL3 = 2 * MXSOUI * MXSOUI + 16
+C     MXPIL3 : MAXIMUM DE SOUS-TETRAEDRES GENERES DANS L ELEMENT REFERENCE
+      IF(NDIM.EQ.3) MXPIL3 = 6 * MXSOUI * MXSOUI * MXSOUI
+C     NDLMAX : MAXIMUM DE D.L. EN UN NOEUD
+      NDLMAX = 4
+C     MAXDLE : MAXIMUM DE D.L. D UNE INTERPOLATION (CF SP INTERP)
+      MAXDLE = 30
+C
+C     DECLARATION DES TABLEAUX ENTIERS AUXILIAIRES
+C     --------------------------------------------
+C     NOINVA,NOINTI,NBNOIN,NONOIN (CF SP ELINTE)
+      IANOTY = 0
+      MONOTY = 3*MXPIL3+3*NBISO
+      CALL TNMCDC( 'ENTIER', MONOTY, IANOTY )
+      IAPIL3 = IANOTY
+      IANOPO = IANOTY + 3*MXPIL3
+C
+C     DECLARATION DES TABLEAUX REELS DOUBLE PRECISION AUXILIAIRES
+C     -----------------------------------------------------------
+C     SOLEL (MXNOEL) SOLUTION AUX NOEUDS DE L ELEMENT DU MAILLAGE
+C     FBASE (MAXDLE) VALEUR DES FONCTIONS DE BASE EN UN POINT
+C     COPOE (MXPOEL,3) COORDONNEES DES POINTS DE L ELEMENT
+      MNSOLE = 0
+      MOSOLE = MXNOEL+MAXDLE+MXPOEL*3
+      CALL TNMCDC( 'REEL2', MOSOLE, MNSOLE )
+      MNFBAS = MNSOLE + MOREE2 * MXNOEL
+      MNCOPO = MNFBAS + MOREE2 * MAXDLE
+C
+C     DECLARATION DES TABLEAUX REELS AUXILIAIRES
+C     ------------------------------------------
+C     MXPOIS : MAXIMUM D INTERSECTIONS DES ISO ET ARETES DU SOUS-TRIANGLE
+C              OU SOUS-TETRAEDRE
+      IF(NDIM.EQ.2) THEN
+         K=2
+      ELSE
+         K=8
+      ENDIF
+      MXPOIS = K * (NBISO + 1)
+C     COPOT (NDIM,MXPOIS) COORDONNEES DES POINTS D INTERSECTION ISO-ARET
+      L      = NDIM * MXPOIS
+      IF( NDIM .EQ. 3 ) L = 0
+C     MXSOMM : MAXIMUM DE SOMMETS DES SOUS-TRIANGLES DE L ELEMENT REFERE
+C              OU DES SOUS-TETRAEDRES
+      IF(NDIM.EQ.2) MXSOMM = ( MXSOUI + 1 ) ** 2 + 16
+      IF(NDIM.EQ.3) MXSOMM = ( MXSOUI + 1 ) ** 3
+C     VALST (NDIM+1,MXSOMM) COORDONNEES ET VALEUR DE LA SOLUTION
+C     AUX SOMMETS DES SOUS-TRIANGLES OU SOUS-TETRAEDRES
+      L1     = (NDIM+1) * MXSOMM
+      IACOPT = 0
+      MOCOPT = L + L1
+      CALL TNMCDC( 'REEL', MOCOPT, IACOPT )
+      IAVALS = IACOPT + L
+C
+C     LE NOMBRE DE TRACE DE SEGMENTS DE CHAQUE ISO EST MIS A ZERO
+      CALL AZEROI( NBISO, MCN(MNTISO) )
+C
+C     LE CODE DE TRAITEMENT DE L'OBJET
+C     NDPGST : CODE TRAITEMENT DE L ELEMENT
+C                 0 : NOEUDS=POINTS=SOMMETS
+C                 1 : NOEUDS=POINTS#SOMMETS
+C                 2 : NOEUDS#POINTS=SOMMETS
+C                 3 : NOEUDS#POINTS#SOMMETS
+      NDPGST = MCN( MNTOPO + WDPGST )
+C
+C     BOUCLE SUR LES DIFFERENTS TYPES D'ELEMENTS DU MAILLAGE
+C     ======================================================
+      DO 420 I = 0, NBTYEL-1
+C        L'ADRESSE MCN DU DEBUT DU TABLEAU ELEMENTS
+         MNELE = MCN( MNELEM + I )
+C        LE NUMERO DU TYPE DES ELEMENTS FINIS
+         NUTYEL = MCN( MNELE + WUTYEL )
+C        LE NOMBRE DE TELS ELEMENTS
+         NBELEM = MCN(MNELE + WBELEM )
+C
+C        LES CARACTERISTIQUES DE L'ELEMENT FINI
+         CALL ELTYCA( NUTYEL )
+C
+C        L'ADRESSE MCN DES POINTS GEOMETRIQUES
+         MNPGEL = MNELE + WUNDEL
+         IF( NDPGST .GE. 2 ) THEN
+            MNPGEL = MNPGEL + MCN(MNELE+WBELEM) * MCN(MNELE+WBNDEL)
+         ENDIF
+C
+C        TRACE EFFECTIF DES ISOTHERMES
+C        PASSAGE PAR UN SP AFIN DE BENEFICIER DES INDICES FORTRAN EN CLAIR
+         CALL SDTRIS( NBISO , RMCN(MNVISO), MCN(MNTISO) ,
+     %                NDIM  , NCAS  , NDSM  , NTDL   ,
+     %                RMCN(MNTEMP+WECTEU) ,
+     %                NUTYEL, NBELEM ,
+     %                NBNOE , MCN(MNELE+WUNDEL), NBPOE, MCN(MNPGEL),
+     %                MCN(MNPOGE+WNBPOI), MCN(MNPOGE+WYZPOI) ,
+     %                MXSOMM, MXPOIS, MCN(MNSOLE), MCN(MNCOPO) ,
+     %                MXPIL3, MCN(IAPIL3), MCN(IANOPO) ,
+     %                NUINVA, NUINTI, NBNDIN, NUNOIN ,
+     %                MCN(IACOPT), MCN(IAVALS), MCN(MNFBAS) ,
+     %                TMI, XMI, YMI, TMA, XMA, YMA )
+ 420  CONTINUE
+C
+C     LE TRACE DU TITRE FINAL
+C     =======================
+      IF ( NBTRTE .NE. NBSD ) RETURN
+C     LE TYPE DES CARACTERES
+      KNOM = 'OBJET: ' // KNOMOB
+      I    = NUDCNB( KNOM )
+      CALL XVCOULEUR( NCBLAN )
+      CALL XVTEXTE( KNOM(1:I), I, 50, 35 )
+C
+      NX    = LAPXFE - 200
+      NY    = 500
+C
+      DO 600 I=1,NBISO
+C        LA COULEUR DE L'ISOTHERME
+         NCOUL = NBISO + 1 - I
+         NCOUL = MOD(NCOUL-1,NDCOUL) + N1COUL
+         CALL XVCOULEUR( NCOUL )
+         CALL XVRECTANGLE( NX, NY, 30, 10 )
+         WRITE( KNOM(1:4), '(I4)' ) I
+         KNOM(5:7) = ' : '
+         WRITE( KNOM(8:17), '(G10.3)' ) RMCN(MNVISO-1+I)
+         CALL XVTEXTE( KNOM(1:17), 17, NX+40, NY+10 )
+         NY = NY + 20
+ 600  CONTINUE
+C
+C     RETOUR AU TRACE NORMAL POUR POSTSCRIPT
+      IF ( LASOPS.NE.0 ) THEN
+        LASOPS = LASOPS -10
+        CALL XVPOSTSCRIPT(LASOPS)
+      ENDIF
+C
+CCCC     UN CLIC POUR LIRE TRANQUILLEMENT SANS LE MENU
+CCC      IF( INTERA .GE. 3 ) THEN
+CCC         CALL CLICSO
+CCC      ENDIF
+C
+C     RETOUR AUX PARAMETRES INITIAUX
+      CALL XVEPAISSEUR( 1 )
+      CALL XVTYPETRAIT( LIGCON )
+C
+C     FIN DU TRACE
+      KNOM = 'CARTE DES ISOTHERMES CAS      '
+      WRITE( KNOM(26:29), '(I4)' ) NCAS
+      CALL TRFINS( KNOM )
+C
+      IF( LORBITE .NE. 0 ) GOTO 155
+C
+C     SORTIE DU TRACE DES ISOTHERMES
+C     ==============================
+ 9000 IF( MNVISO .GT. 0 ) CALL TNMCDS( 'REEL'  , NBISO+1,MNVISO )
+      IF( MNTISO .GT. 1 ) CALL TNMCDS( 'ENTIER', NBISO , MNTISO )
+      IF( MNSOLE .GT. 0 ) CALL TNMCDS( 'REEL2' , MOSOLE, MNSOLE )
+      IF( IANOTY .GT. 0 ) CALL TNMCDS( 'ENTIER', MONOTY, IANOTY )
+      IF( IACOPT .GT. 0 ) CALL TNMCDS( 'REEL'  , MOCOPT, IACOPT )
+      END

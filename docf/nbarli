@@ -1,0 +1,26 @@
+NBARLI est le nombre d'aretes de la ligne
+Ce nombre doit etre strictement positif.
+
+Attention: Ce nombre n'est plus significatif si
+l'utilisateur fournit la fonction Taille_Ideale(x,y,z)
+qui indique la longueur souhaitee d'une arete autour
+du point de coordonnees cartesiennes x,y,z
+
+Exemple:
+DefFonc taille_ideale(x,y,z);
+ defvar r2;
+ r2=x*x+y*y;
+ si r2>1.01 alors
+   taille_ideale=1;
+ sinon
+   si r2>=0.99 alors
+     taille_ideale=0.005;
+   sinon
+     taille_ideale=0.1;
+   finsi;
+ finsi;
+FinFonc;
+
+Pour obtenir un maillage regulier, il est preferable de
+definir une fonction ne variant pas trop rapidement et
+continue si possible...!

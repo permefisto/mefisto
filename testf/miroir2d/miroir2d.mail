@@ -1,0 +1,117 @@
+{ ============================================================ }
+{ MEFISTO Version Octobre 2000               PROJET: miroir2d  }
+{ Utilisateur: Perronnet Alain               Date:   15/11/00  }
+{ ============================================================ }
+ defvar l, lc, hc, hd, hp, hv;
+ l=0.09;
+ lc=0.00175;
+ hc=0.017;
+ hd=0.06;
+ hp=0.002;
+ hv=0.03; 
+
+ DefFonc Taille_Ideale(x,y,z);
+ DefVar R;
+ Taille_Ideale=0.007;
+ R = sqrt( (x-lc)**2 + (y-hc)**2 );
+ Si R<0.025
+ Alors
+   Si R<0.01
+   Alors 
+     Taille_Ideale=0.0001 + R/10;
+   Sinon
+     Taille_Ideale=0.003;
+   FinSi;
+ FinSi;
+ FinFonc;
+
+ defvar nalc, nal, nahc, nahd, nahp, nahv;
+ nalc=2;
+ nal=10;
+ nahc=12;
+ nahd=10;
+ nahp=2;
+ nahv=7;
+               { ============================ }
+            1; { POINTS principaux de l objet }
+               { ============================ }
+            1; { FRAPPE des valeurs }
+
+ cbd; i; 1; lc; 0; 0; { DANS LE LEXIQUE ~>TRANSFO }
+                      { coordonnees x y z }
+ m;   i; 1; l;   0;      0;
+ chg; i; 1; 0;  hc;      0;
+ chd; i; 1; lc; hc;      0;
+ dpg; i; 1; 0;  hd;      0;
+ dpd; i; 1; l;  hd;      0;
+ vpg; i; 1; 0; hd+hp;    0;
+ vpd; i; 1; l; hd+hp;    0;
+ hg;  i; 1; 0; hd+hp+hv; 0;
+ hd;  i; 1; l; hd+hp+hv; 0;
+ @;
+ @;
+                { ======================== }
+            2;  { LIGNES aretes de l objet }
+                { ======================== }
+ cbd_m; i; 2; nal; 1.1; cbd; m;
+    { DANS LE LEXIQUE ~>TRANSFO }
+    { segment de droite }
+    { NBARLI 'nombre d''aretes de la ligne' entier ; }
+    { RAIGEO 'raison geometrique espacant les sommets' }
+    { DANS LE LEXIQUE ~>POINT }
+    { DANS LE LEXIQUE ~>POINT }
+ chg_chd; i; 2; nalc; 1; chg; chd;
+ cbd_chd; i; 2; nahc; 1; chd; cbd;
+ caloduc; i; 51; 2; cbd_chd; chg_chd;
+ chg_dpg; i; 2; nahd; 1.3; chg; dpg;
+ m_dpd;   i; 2; nahd; 1; m; dpd;
+ dpd_vpd; i; 2; nahp; 1; dpd; vpd;
+ vpd_hd;  i; 2; nahv; 1; vpd; hd;
+ dpg_vpg; i; 2; nahp; 1; dpg; vpg;
+ vpg_hg;  i; 2; nahv; 1; vpg; hg;
+ dpg_dpd; i; 2; nal; 1; dpg; dpd;
+ vpg_vpd; i; 2; nal; 1; vpg; vpd;
+ soleil;  i; 2; nal; 1; hg; hd;
+ dural;   i; 51; 5;
+    { DANS LE LEXIQUE ~>TRANSFO }
+    { union de plusieurs lignes }
+    { NBLIUN 'nombre de lignes de l''union' entier ; }
+    cbd_m; m_dpd; dpg_dpd; chg_dpg; caloduc;
+ @;
+ @; 
+                { ============================ }
+            3;  { SURFACES contours de l objet }
+                { ============================ }
+ dural; i; 9;   { triangulation DELAUNAY de lignes fermees }
+    l/nal;{ ARETMX 'taille max des aretes des triangles equilateraux' reel}
+    1;    { NBLFTR 'nombre de lignes fermees contour de la surface' entier}
+    0;    { NBPTIT 'nombre de points internes futurs sommets' entier ; }
+ dural;   { DANS LE LEXIQUE ~>LIGNE }
+          { NUPTIT(1..NBPTIT) }
+          { DISOSV(1..NBPTIT) 'distance souhaitee'}
+
+ paille; i;  { DANS LE LEXIQUE ~>TRANSFO }
+         1;  { quadrangle ALGEBRIQUE structure ou non }
+     dpg_dpd;  dpd_vpd;  vpg_vpd;  dpg_vpg;
+             { DANS LE LEXIQUE ~>LIGNE }
+         1;  { Lagrange carre de reference regulier }
+ verre; i; 1; vpg_vpd; vpd_hd; soleil; vpg_hg; 1;
+ @;
+               { ============================ }
+            5; { OBJETS les objets de l OBJET }
+               { ============================ }
+ miroir_neumann;  0; { classique }
+    6; { NBDOBJ 'nombre des points lignes surfaces volumes objets de l''objet'}
+    s; verre;  s; paille;   s; dural;
+    l; soleil; l; caloduc;
+    p; cbd;
+ @;
+               { =========================================== }
+            7; { INTERPOLATION definition noeuds du maillage }
+               { =========================================== }
+ miroir_neumann;       4; { LAGRANGE de DEGRE 2 }
+ @;
+
+10; 5; 90;     { TRACE de l'OBJET }
+FERMER;
+

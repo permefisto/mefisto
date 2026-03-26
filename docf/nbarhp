@@ -1,0 +1,7 @@
+Le pentaedre de sommets
+(0,0,0)       (NBACTP,0,0)      (0,NBACTP,0)
+(0,0,NBARHP)  (NBACTP,0,NBARHP) (0,NBACTP,NBARHP)
+est decoupe en NBACTP*NBACTP * NBARHP pentaedres.
+
+Exemple: PENTAEDRE13; I; 13; 5; 6;
+Definit 5*5*6=150 pentaedres reguliers egaux

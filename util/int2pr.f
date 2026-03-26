@@ -1,0 +1,19 @@
+      INTEGER*2 FUNCTION INT2PR( PIXEL )
+C+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+C BUT :   STOCKE DANS UN ENTIER DE 2 OCTETS L'ENTIER PIXEL
+C -----   EN ASSURANT UNE PROTECTION DE NON DEBORDEMENT
+C
+C SP DEPENDANT DU NOMBRE DE BITS   VERSION ENTIER2=16BITS
+C+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+C AUTEUR : PERRONNET ALAIN UPMC ANALYSE NUMERIQUE PARIS    NOVEMBRE 1993
+C2345X7..............................................................012
+      PARAMETER  (MININ2=-2**15,MAXIN2=2**15-1)
+      INTEGER     PIXEL
+C
+C     PROTECTION CONTRE LE DEBORDEMENT
+      IF( PIXEL .LT. MININ2 ) PIXEL = MININ2
+      IF( PIXEL .GT. MAXIN2 ) PIXEL = MAXIN2
+C
+C     TRANSFORMATION EN ENTIER 2 OCTETS
+      INT2PR = INT2( PIXEL )
+      END

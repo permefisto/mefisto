@@ -1,0 +1,16 @@
+deftms ~>>>BLVITESSE 'Vitesse fixee'
+variable muet DATE 'date de creation du tableau'   reel2  ;
+variable muet NUTD 'numero du tableau descripteur' entier ; 
+variable LTBLVI    'type vitesse fixee' entier 
+( 1 : 'vitesse fixee constante'
+,-1 : 'fonction vitesse fixee'
+, 0 : 'vitesse fixee a supprimer'
+, 2 : 'vitesse convectee au temps tn' ) ;
+variable NBCOBV 'nombre composantes vitesse fixee' entier ; 
+tableau  NUCOBV(1..NBCOBV) 'no composantes de la vitesse fixee' entier ; 
+cas LTBLVI 
+ 1 : tableau  BLVITE(1..NBCOBV) 
+     'valeur des composantes de la vitesse fixee' reel ;
+-1 : variable NFBLVI 'nom de la fonction BLVITESSE' ^~>FONCTION ; 
+fincas ;
+fintms ;

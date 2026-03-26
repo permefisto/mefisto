@@ -1,0 +1,2 @@
+variable NON_OUI 'RESPONSE by YES or NO' entier
+ ( 0 : 'NO' , 1 : 'YES' ) ;

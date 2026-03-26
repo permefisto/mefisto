@@ -1,0 +1,30 @@
+      SUBROUTINE TKMCDS( NBCACH , NBCHAI , MKTABL )
+C+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+C BUT : DETRUIRE UN TABLEAU MC DE NBCHAI CHAINES DE NBCACH CARACTERES
+C -----
+C ENTREES :
+C ---------
+C NBCACH : NOMBRE DE CARACTERES PAR CHAINE
+C NBCHAI : NOMBRE DE CHAINES DE NBCACH CARACTERES
+C
+C ENTREE ET SORTIE  :
+C -------------------
+C MKTABL : EN ENTREE ADRESSE MCK DU 1-ER MOT DU TABLEAU MC
+C                    VALEUR RETOURNEE PAR LE SP TAMCDC
+C          0 EN SORTIE
+C+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+C PROGRAMMEUR : PERRONNET ALAIN ANALYSE NUMERIQUE PARIS  DECEMBRE 1983
+C.......................................................................
+      include"./incl/motmcg.inc"
+      COMMON / MSSFTA / NOFISF,NBPASF,MOPASF,MGBUSF,NSFLIB,
+     %                  M1FIMS,M2FIMS,MGFIMS,NSFIMS,LPFIMS,
+     %                  M1TAMS,M2TAMS,MGBUTA,NBBUTA,NPTAMS,NATAMS,
+     %                  NBCTMS,LLTAMS,LFTAMS,MGNPSF,NSFNPS,NPSNPS,
+     %                  MGZLMG,MGZLMK,MGZLMN,MOTSMG,MOTSMK,MOTSMN,NTADAM
+C
+C     LE NOMBRE DE CARACTERES REELS DU TABLEAU
+      NBC = NBCATA( NBCACH , NBCHAI )
+C
+C     LA DECLARATION PROPREMENT DITE DU TABLEAU
+      CALL TAMCDS( 'CARACTERE' , NBC , MCG(MGZLMK) , MKTABL )
+      END

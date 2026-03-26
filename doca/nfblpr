@@ -1,0 +1,38 @@
+NFBLPR is the name of the user's imposed pressure function
+             
+This user's function compute the value of the pressure to be fixed
+
+- at time t, 
+
+- at point X,Y,Z;
+
+- for the object of type number NuTypePLS : (3:SURFACE, 2:LINE, 1:POINT)
+
+- with the number in this directory NuPLS of this PLS
+
+In fact, the function nuobjt( TypeName of PLSVO, Name PLSVO ) gives the number of the PLSVO in the
+directory from its name;
+
+must have all the parameters in this order:
+
+ImposedPressure( t, X,Y,Z, NuTypePLS, NuPLS ) 
+
+All these parameters are initialized at the function call during the execution.
+They may be used or not, in the body of the function to compute the value of a force components.
+          
+EXAMPLE : 
+ 2; 2;  { imposed pressure }
+ -1;    { ImposedPressure function }
+ DefFunc ImposedPressure( t, x,y,z, NuTypePLS, boundary );
+ ImposedPressure=0;
+ if  boundary=nuobjt( 'line' , 'wall' )
+ then 
+   ImposedPressure=0;
+ else
+   if  boundary=nuobjt( 'surface' , 'sphere' )
+   then 
+     ImposedPressure=-110.5;
+   endif;   
+ endif;
+ EndFunc;
+ imposedpressure;      { Do not FORGET to give the name of the function! }

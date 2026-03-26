@@ -1,0 +1,5 @@
+variable ManagMef 'Management de Mefisto' entier
+( 1 : 'SUIVI des TMS AFFICHAGE MODIFICATION',
+  2 : 'SUIVI des FICHIERS de la MS',
+  3 : 'GESTION des unites lecture affichage',
+  4 : 'TUER des TMS de PLSVO' ) ;

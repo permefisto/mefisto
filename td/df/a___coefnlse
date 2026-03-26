@@ -1,0 +1,12 @@
+deftms ~>>>COEFNLSE  'Coefficient du TERME NON LINEAIRE de NLSE'
+variable muet DATE   'date de creation du tableau'   reel2  ;
+variable muet NUTD   'numero du tableau descripteur' entier ; 
+variable      LTNLSE 'Type du Coefficient dU NLSE' entier 
+(  1 : 'Coefficient du NLSE constant'
+, -1 : 'fonction Coefficient de NLSE'
+,  0 : 'Coefficient de NLSE a supprimer' ) ;
+cas LTNLSE
+ 1 : variable CONLSE 'Coefficient de NLSE'  reel ; 
+-1 : variable NFNLSE 'Nom fonction Coefficient NLSE' ^~>FONCTION ;
+fincas ;   
+fintms ;

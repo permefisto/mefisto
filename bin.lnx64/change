@@ -1,0 +1,21 @@
+# changer MOT1 MOT2
+# change MOT1 par MOT2 dans tous les fichiers Fortran *.f
+# de toutes les librairies de Mefisto    Mai 1996
+echo
+echo change $1 par $2 dans tous les fichiers Fortran de MEFISTO
+echo '=============================================================='
+for i in `ls $MEFISTO`
+do
+  echo
+  echo Debut du traitement de la Librairie Mefisto $i
+  for j in `ls $MEFISTO/$i/*.f`
+  do
+ed $j <<@
+1,\$s/$1/$2/g
+w
+q
+@
+  done
+done
+echo Fin de change
+

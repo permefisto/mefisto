@@ -1,0 +1,25 @@
+Une TETRAEDRISATION REGULIERE forme le FOND du maillage.
+Les FACES FRONTALIERES peuvent etre de tailles beaucoup
+plus petites.
+Il est possible de passer RAPIDEMENT ou NON de la FRONTIERE
+a l'INTERIEUR en PEU ou BEAUCOUP de COUCHES de TETRAEDRES.
+
+Le reel ACCRTE definit cette vitesse d'accroissement.
+Si L est la longueur de la moyenne des 3 aretes de la face
+frontaliere, alors approximativement : 
+
+L * ACCRTE sera la taille de l'arete du tetraedre servant
+de premiere couche puis, 
+L * ACCRTE * ACCRTE pour la suivante, et ainsi de suite
+croitre jusqu'a atteindre ARETGR la longueur d'arete de la
+grille reguliere.
+
+ACCRTE =  1.2 peut etre choisie comme VALEUR PAR DEFAUT.
+
+ACCRTE <= 1.0 impose en fait cette valeur 1.2 PAR DEFAUT.
+
+ACCRTE =  2.0 conduit a peu de couches pour atteindre les
+tetraedres reguliers. La TAILLE DES COUCHES VARIE VITE 
+
+ATTENTION: Selon le type de l'objet, fin ou epais, ACCRTE est
+a choisir au mieux ( plutot 1.0 pour fin, >1.1 pour epais...)

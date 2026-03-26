@@ -1,0 +1,10 @@
+variable TEMPGRAD 'Solution drawings or printings' entier  
+ (  1 : 'CASE NUMBER of SOLUTIONS'
+ ,  2 : 'Drawings of SOLUTIONS'
+ ,  3 : 'Drawings of SOLUTION GRADIENTS'
+ ,  4 : 'Drawings of SOLUTION NORMAL FLUXES'
+ ,  5 : 'Drawings of ERROR ESTIMATORS in 2D'
+ ,  7 : 'Printings of SOLUTIONS'
+ ,  8 : 'Printings of SOLUTION GRADIENTS'
+ ,  9 : 'Printings of SOLUTION FLUXES on FE INTERFACES'
+ , 10 : 'Printings of SOLUTION FLUXES on PLS of the OBJECT' ) ;

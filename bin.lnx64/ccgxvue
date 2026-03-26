@@ -1,0 +1,42 @@
+#!/bin/bash
+#
+# compilation et edition de liens de xvuelc.c
+# Alain Perronnet   LINUX 64bits  Septembre 2009
+echo
+# 
+echo     
+echo =====================================================
+if test -f $MEFISTO/td/m/anglais
+then 
+ echo MEFISTO-LINUX 64bits: C compilation of xvue/xvuelc.c
+else
+ echo MEFISTO-LINUX 64bits: Compilation C de xvue/xvuelc.c
+fi
+echo =====================================================
+
+cd $MEFISTO
+rm  xvue/xvuelc.o
+
+echo gcc -g -m64 -openmp -fPIC -I. -Wall -Wno-format-contains-nul -c xvue/xvuelc.c -o $MEFISTO/xvue/xvuelc.o
+gcc -g -m64 -openmp -fPIC -I. -Wall -Wno-format-contains-nul -c xvue/xvuelc.c -o xvue/xvuelc.o
+
+if test -f xvue/xvuelc.o
+then 
+  chmod 755 xvue/xvuelc.o
+  if test -f $MEFISTO/td/m/anglais
+  then
+    echo "$MEFISTO/xvue/xvuelc.o is READY TO USE"
+  else
+    echo "$MEFISTO/xvue/xvuelc.o est PRET a l'emploi" 
+  fi
+else
+  if test -f $MEFISTO/td/m/anglais
+  then
+    echo "$MEFISTO/xvue/xvuelc.o is INCORRECT"
+    echo CORRECT $MEFISTO/xvue/xvuelc.c and COMPILE AGAIN
+  else
+    echo "$MEFISTO/xvue/xvuelc.o est INCORRECT"
+    echo CORRIGER $MEFISTO/xvue/xvuelc.c et RECOMPILER avec ccgxvue
+  fi
+fi 
+echo

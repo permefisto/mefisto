@@ -1,0 +1,5 @@
+The number of SLICES M is equal to
+the number of displacements of the SURFACE
+to create the pentahedra and/or hexahedra of the volume
+from the N triangles and/or quadrangles of the surface.
+Thus, M*N Finite Elements will be created.

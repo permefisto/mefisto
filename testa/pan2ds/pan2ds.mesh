@@ -1,0 +1,146 @@
+{ ========================================================================== }
+{ MEFISTO Software     : May 18, 2023 version                                }
+{ USER's  Name         : Alain Perronnet                                     }
+{ Project Name         : Pan 2d of Water in natural convection Symetric Mesh }
+{ Date                 : 2023/05/18   19h 05m                                }
+{ ========================================================================== }
+
+ DefVar xmin,      xmax,     ymin,   ymax,      EdgeMax;
+        xmin=-0.1; xmax=0.1; ymin=0; ymax=0.08; EdgeMax=0.001;  { meters }
+ DefVar nax; nax= (xmax-xmin)/EdgeMax/2;
+ DefVar nay; nay= (ymax-ymin)/EdgeMax;  {To be EVEN }
+
+19; { min MAX of PLSV }
+ xmin; xmax;
+ ymin; ymax;
+    0;    0;
+
+1;{ POINTS sommets of the object }
+ 1;{ FRAPPE des valeurs  NAME of POINT }
+ A; i; 1; xmin; ymin; 0;
+ { IN THE LEXICON ~>TRANSFO }
+ { coordinates x y z }
+ { COORPO '3 cartesien coordinates of point' xyz ; }
+ { NAME du POINT or ESCAPE? }
+
+ B;  i; 1; xmax; ymin; 0;
+ C;  i; 1; xmax; ymax; 0;
+ D;  i; 1; xmin; ymax; 0;
+ ABMIDDLE; i; 1; 0; 0;    0;
+ CDMIDDLE; i; 1; 0; ymax; 0;      
+ @;
+
+6;{ Mathematical R3-->R3 MAPPINGS }
+ symABMCDM; { NAME of the TRANSFORMATION or ESCAPE? }
+ 3;         { isometry R3 -> R3 }
+ 5;         { symmetry line defined by 2 points }
+            { NAME of POINT }
+ ABMIDDLE; CDMIDDLE; { in LEXICON ~>POINT }
+ { NAME of the TRANSFORMATION or ESCAPE? }
+ @;
+
+2; {LINES}
+ ABMIDDLEB; I; 2;{ in LEXICON ~>TRANSFO }
+                 { STRAIGHT LINE }
+ nax;   { NBARLI 'number of edges of the line' entier ; }
+ 1;     { RAIGEO 'geometrical ratio between the edges' reel ; }
+        { NAME of POINT }
+ ABMIDDLE; B;     { in LEXICON ~>POINT }
+
+ BC;               i; 2; nay; 1; B; C;
+ CCDMIDDLE;        i; 2; nax; 1; C; CDMIDDLE;
+ CDMIDDLEABMIDDLE; i; 2; nay; 1; CDMIDDLE; ABMIDDLE;
+@;
+
+3; { SURFACES faces of the object }
+ ABMCDMQ; i;{ IN THE LEXICON ~>TRANSFO }
+ 1; {transfinite  quadrangle}
+ ABMIDDLEB;  BC; CCDMIDDLE; CDMIDDLEABMIDDLE;
+ 1; {regular mesh}
+
+ ABMCDMT; i;  { name of TRANSFORMATION }
+ 31;          { Triangulation of a Quadrangulation }
+ ABMCDMQ;     { name of initial SURFACE }
+ 1;           { creation of an EDGE S1 S3 }
+
+ ABMCDMSym;
+             { NAME of TRANSFORMATION }
+ SymABMCDM;  { in LEXICON ~>TRANSFO }
+ 50;         { MAPPING of a SURFACE }
+             { NAME of SURFACE }
+ ABMCDMT;    { in LEXICON ~>SURFACE }
+ 
+ ABCDT;
+        { NAME of TRANSFORMATION }
+ I;     { in LEXICON ~>TRANSFO }
+ 51;    { C0-CONTINUITY UNION of SURFACES }
+ 2;     { NBSUUN 'NUMBER of UNION SURFACES' entier ; }
+        { NAME of SURFACE }
+ ABMCDMsym;  ABMCDMT;  { in LEXICON ~>SURFACE }
+@;
+
+2;   { LINES edges of the object }
+     { NAME of the LINE or ESCAPE? }
+
+ AB; I; { in LEXICON ~>TRANSFO }
+ 37;    { EXTRACT INTERNAL OR BOUNDARY EDGES of a SURFACE }
+        { NAME of SURFACE }
+ ABCDT;
+         { NAME of FUNCTION }
+ DefFunc EdgeAB(x,y,z); EdgeAB = y<ymin+0.00001; EndFunc;
+ EdgeAB; { in LEXICON ~>FONCTION }
+ 1;      { boundary edges }
+
+ BC; I;  { in LEXICON ~>TRANSFO }
+ 37;     { EXTRACT INTERNAL OR BOUNDARY EDGES of a SURFACE }
+         { NAME of SURFACE }
+ abcdt;
+         { NAME of FUNCTION }
+ DefFunc EdgeBC(x,y,z); EdgeBC = x>xmax-0.00001; EndFunc;
+ EdgeBC; { in LEXICON ~>FONCTION }
+ 1;      { boundary edges }
+
+ CD; I;  { in LEXICON ~>TRANSFO }
+ 37;     { EXTRACT INTERNAL OR BOUNDARY EDGES of a SURFACE }
+         { NAME of SURFACE }
+ abcdt;
+         { NAME of FUNCTION }
+ DefFunc EdgeCD(x,y,z); EdgeCD = y>ymax-0.00001; EndFunc;
+ EdgeCD; { in LEXICON ~>FONCTION }
+ 1;      { boundary edges }
+
+ DA; I;  { in LEXICON ~>TRANSFO }
+ 37;     { EXTRACT INTERNAL OR BOUNDARY EDGES of a SURFACE }
+         { NAME of SURFACE }
+ abcdt;
+         { NAME of FUNCTION }
+ DefFunc EdgeDA(x,y,z); EdgeDA = x<xmin+0.00001; EndFunc;
+ EdgeDA; { in LEXICON ~>FONCTION }
+ 1;      { boundary edges }
+@:
+
+
+5; { OBJECTS parts of the OBJECT }
+ pan2ds;  { name of the OBJECT }
+ 0;       { classic 2D or 3D }
+ 10;      { NBDOBJ number of Points Lines Surfaces Volumes Objects of the object}
+ { POINT or LINE or SURFACE or VOLUME or OBJECT? }
+ S; ABCDT; 
+ L; AB;  L; BC;  L; CD;  L; DA;
+ P;  A;  P;  B;  P;  C;  P;  D;  P; CDMIDDLE;
+ { NTYOBJ(1..NBDOBJ) 'name of type PLSVO and name of PLSVO' typeobject }
+ { name of OBJECT or ESCAPE? }
+ @;
+
+ 7;   { INTERPOLATION NODES of the MESH }
+ pan2ds; { name of the OBJECT to INTERPOLATE }
+  4;     { LAGRANGE de DEGRE 2 => Triangles Taylor-Hood P2 }
+ @;
+ @;
+
+10;  { DRAWINGS of the pan }
+ 5;  { OBJECT }
+ 1;  { ALL OBJECTS 1 by 1 }
+ 90; { Continue the DRAWING }
+
+CLOSE;

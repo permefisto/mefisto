@@ -1,0 +1,231 @@
+{ ==================================================================== }
+{ Software MEFISTO     : June 2007 Version                             }
+{ USER's Name          : Alain Perronnet                               }
+{ Project Name         : rab                                           }
+{                        Unsteady Heat Transfer Data                   }
+{ Date                 : 30/06/ 7   09h 13m 11s                        }
+{ ==================================================================== }
+DefVar Pi; Pi=atan(1) * 4;
+DefVar pisa,pisb;   pisa = PI / a;   pisb = Pi / b;
+
+DefVar t0; t0=1;
+
+DefVar DeltaT; DeltaT=0.1;
+
+{Rot MASS Density}
+DefVar Rot; Rot=2;
+
+{C  MASSIC HEAT}
+DefVar C; C=3;
+
+DefVar RotC; RotC= Rot * C;
+
+{The HEAT CONDUCTIVITY}
+DefVar k; k=1.3;
+
+{CT Coefficient in front TEMPERATURE}
+DefVar CoefTemp; CoefTemp=0.5;
+
+{g HEAT TRANSFER between wall and fluid on BC}
+DefVar g; g=1.5;
+
+{Vf Coefficient in front GradTEMPERATURE}
+defvar V1,V2;  V1=1/10; V2=1/10;
+
+DefVar a2; a2=a*a;
+
+{To display the errors }
+DefFunc temperature_exacte(t,x,y,z);
+  temperature_exacte = (t+t0) * x*(a-x)/a2 * sin(Pisb*y) + 1.0;
+EndFunc;
+
+{Define the temperature at the Dirichlet Boundaries (Steady heat problem)}
+DefFunc temperature(t,x,y,z,nutyob,nuobj,temper);
+  temperature=temperature_exacte(t,x,y,z);
+EndFunc;
+
+DefFunc dttemperature(t,x,y);
+  dttemperature = x*(a-x)/a2 * sin(Pisb*y);
+EndFunc;
+
+DefFunc dxtemperature(t,x,y);
+  dxtemperature = (t+t0) * (a-2*x)/a2 * sin(Pisb*y);
+EndFunc;
+DefFunc ddxtemperature(t,x,y);
+  ddxtemperature = - (t+t0) * 2/a2 * sin(Pisb*y);
+EndFunc;
+
+DefFunc dytemperature(t,x,y);
+  dytemperature = (t+t0) * x*(a-x)/a2 * Pisb * cos(Pisb*y);
+EndFunc;
+DefFunc ddytemperature(t,x,y);
+  ddytemperature = - (t+t0) * x*(a-x)/a2 * Pisb**2 * sin(Pisb*y);
+EndFunc;
+
+DefFunc NeumannCD(t,x,y,z,nutyob,nuobj,temper);
+  NeumannCD = k * dytemperature(t,x,y);
+EndFunc;
+
+DefFunc FourierBC(t,x,y,z,nutyob,nuobj,temper);
+  FourierBC=k*dxtemperature(t,x,y)+g*temperature(t,x,y,z,nutyob,nuobj,temper);
+EndFunc;
+
+{ ==================== STEADY HEAT TRANSFER ================================}
+
+{Source = - k * Laplacien temperature
+          + V . gradient temperature
+          + CoefTemp * temperature }
+
+ DefFunc Source(t,x,y,z,nutyob,nuobjt,temper);
+    defvar t1,x1,y1;
+    t1 = t + t0;
+    x1 = x*(a-x);
+    y1 = y*(b-y);
+    Source = - k * ( ddxtemperature(t,x,y) + ddytemperature(t,x,y) )
+           +  V1 *  dxtemperature(t,x,y) + V2 * dytemperature(t,x,y)
+           +  CoefTemp * temperature_exacte(t,x,y,z);
+ EndFunc;
+
+1; { NAME of the OBJECT to TREAT }
+ RECTANGLE;
+
+2; { DATA for the STEADY HEAT PROBLEM }
+
+ { SURFACE: RECTANGLE }
+   2; { density HEAT CONDUCTIVITY }
+     3; { 2D HOMOGENOUS ISOTROPIC material }
+     k; { CONDUC constant value of the material conductivity }
+
+   4;   { density of Source of heat }
+    -1; { user function source }
+     Source; { in the lexicon ~>FONCTION }
+
+   5; { Velocity of the material }
+     1; {type constant Velocity }
+     2; {number of components of the Velocity}
+     V1; V2; {Value of 2 components of material Velocity}
+
+   6; { CT coefficient in front of TEMPERATURE }
+     1;        {type constant of coefficient}
+     CoefTemp; {value coefficient in front of temperature }
+   @;
+
+ { LINE: AB }
+   3; { CONTACT imposed temperature  Dirichlet condition }
+     -1; { function imposed temperature }
+      temperature; { in the lexicon ~>FONCTION }
+   @;
+
+ { LINE: BC }
+  1; { ECHANGE heat transfer coefficient  Robin condition }
+      1; {constant heat transfer coefficient}
+      g; {heat transfer coefficient value}
+  2; { source of heat imposed at the boundary }
+     -1; { user function source }
+      FourierBC; { in the lexicon ~>FONCTION }
+   @;
+
+ { LINE: CD }
+   2; { source of flux heat imposed at the boundary  Neumann condition }
+     -1; { user function source }
+      NeumannCD; { in the lexicon ~>FONCTION }
+   @;
+
+ { LINE: DA }
+   3; { CONTACT imposed temperature  Dirichlet condition }
+     -1; { user function source }
+      temperature; {  in the lexicon ~>FONCTION }
+   @;
+
+ { POINT: A }
+   3; { CONTACT imposed temperature  Dirichlet condition }
+     -1; { user function source }
+      temperature; { in the lexicon ~>FONCTION }
+   @;
+
+ { POINT: B }
+   3; { CONTACT imposed temperature  Dirichlet condition }
+     -1; { user function source }
+      temperature; { in the lexicon ~>FONCTION }
+   @;
+
+ { POINT: D }
+   3; { CONTACT imposed temperature  Dirichlet condition }
+     -1; { user function source }
+      temperature; { in the lexicon ~>FONCTION }
+   @;
+
+3; { SOLUTION of the STEADY LINEAR HEAT PROBLEM }
+   1; { Independent Coefficients of the TEMPERATURE }
+   1; { Solution by factorization CHOLESKY on skyline storage }
+@;
+
+{ ====================  The UNSTEADY HEAT PROBLEM  =======================}
+
+{Source = RotC dtemperature/dt
+        - k * Laplacien temperature
+        + V . gradient temperature
+        + CoefTemp * temperature }
+
+DefFunc Source(t,x,y,z,nutyob,nuobjt,temper);
+    Source = RotC * dttemperature(t,x,y)
+           - k * ( ddxtemperature(t,x,y) + ddytemperature(t,x,y) )
+           + V1 *  dxtemperature(t,x,y) + V2 * dytemperature(t,x,y)
+           + CoefTemp * temperature_exacte(t,x,y,z);
+EndFunc;
+
+2; { DATA of the UNSTEADY HEAT PROBLEM PROBLEM }
+   { ONLY the MASS density and MASS HEAT density are added }
+   { BUT the SOURCE function has been modified }
+   { and a new version is given }
+
+ { SURFACE: RECTANGLE }
+   1;     { Density of MASS }
+     1;   { constant mass }
+   Rot;   { value of the density of MASS }
+   7;     { Massic Heat of a PLSV }
+     1;   { constant massic heat }
+     C;   { value of the massic heat }
+   @;
+ { LINE: AB  No new condition }
+   @;
+ { LINE: BC  No new condition  }
+   @;
+ { LINE: CD  No new condition  }
+   @;
+ { LINE: DA  No new condition  }
+   @;
+ { POINT: A  No new condition  }
+   @;
+ { POINT: B  No new condition  }
+   @;
+ { POINT: D  No new condition  }
+   @;
+
+4;  { SOLVE the UNSTEADY HEAT PROBLEM }
+DefVar nbpas; nbpas=10; { Number of time steps is a variable }
+
+      1;       { [M] [K] g are INDEPENDENTS of TIME and TEMPERATURE }
+    0.0;       { INITIAL TIME of the study }
+      2;       { INITIAL TEMPERATUE is the already computed VECTEUR"TEMPERATURE}
+nbpas*DeltaT;  { FINAL TIME of the study }
+ DeltaT;       { Value of the constant STEP OF TIME }
+ nbpas;        { Number of VECTEUR"TEMPERATURE to add during the study }
+      1;       { Solution by factorization CHOLESKY on skyline storage }
+      1;       { Value of 1/2<=theta<=1 coefficient of the method }
+@;
+
+4; { SOLVE the UNSTEADY HEAT PROBLEM npas STEPS MORE }
+      1;       { [M] [K] g are INDEPENDENTS of TIME and TEMPERATURE }
+nbpas*DeltaT;  { INITIAL TIME of the study }
+      2;       { INITIAL TEMPERATUE is the already computed VECTEUR"TEMPERATURE}
+2*nbpas*DeltaT;{ FINAL TIME of the study }
+ DeltaT;       { Value of the constant STEP OF TIME }
+ nbpas;        { Number of VECTEUR"TEMPERATURE to add during the study }
+  2;  1;       { Solution by PRECONDITIONED CONJUGATE GRADIENT by 1 LEVEL }
+      1;       { Value of 1/2<=theta<=1 coefficient of the method }
+@;
+
+8; {DRAWING of the ERRORS}
+ 2; 8; 1; 90;
+CLOSE;

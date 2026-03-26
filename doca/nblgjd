@@ -1,0 +1,3 @@
+The number of lines must be >=2.
+The number of edges of lines must grow of 0 or 1
+to permit the mesh with triangles or quadrangles.

@@ -1,0 +1,157 @@
+      SUBROUTINE TRVITE2D( NBPOI,    XYZPOI,
+     %                     MOARET,   MXARET,   LARETE,
+     %                     SEMINVIT, SEMAXVIT, CMVITE,
+     %                     NCAS,     VITX,     VITY,   VITMAX )
+C ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+C BUT :    TRACER LES ARETES FRONTALIERES, LES FLECHES VITESSES
+C -----    EN TOUS LES POINTS DES EF 2D
+
+C ENTREES:
+C --------
+C NBPOI  : NOMBRE DE POINTS STOCKES DANS XYZPOI
+C XYZPOI : XYZ DES POINTS DES EF DU MAILLAGE
+C MOARET : NOMBRE DE MOTS PAR ARETE DU TABLEAU LARETE
+C MXARET : NOMBRE MAXIMAL D'ARETES DU TABLEAU LARETE
+C LARETE : TABLEAU NUMERO DES 2 SOMMETS ET LIEN
+C        LARETE : TABLEAU DES ARETES DU MAILLAGE
+C        LARETE(1,I)= NO DU 1-ER  SOMMET DE L'ARETE (0 SI PAS D'ARETE)
+C        LARETE(2,I)= NO DU 2-EME SOMMET > 1-ER  SOMMET
+C        LARETE(3,I)= CHAINAGE HACHAGE SUR ARETE SUIVANTE
+C        LARETE(4,I)= NUMERO DU 1-ER TRIANGLE CONTENANT CETTE ARETE
+C                   + NO TYPE EF (1 a NBTYEF) * 100 000 000
+C                     0 SI PAS DE 1-ER  TRIANGLE
+C        LARETE(5,I)= NUMERO DU 2-EME TRIANGLE CONTENANT CETTE ARETE
+C                   + NO TYPE EF (1 a NBTYEF) * 100 000 000
+C                     0 SI PAS DE 2-EME TRIANGLE
+C        LARETE(6,I)= NUMERO DANS LARETE DE L'ARETE SUIVANTE
+C                 SOIT DANS LE CHAINAGE D'UNE LIGNE J ENTRE NUMILF ET NUMX
+C                 SOIT DANS LE CHAINAGE DES ARETES FRONTALIERES
+C                 0 SI C'EST LA DERNIERE
+
+C SEMINVIT: MIN DE LA NORME DE LA VITESSE AU DESSOUS DUQUEL LA
+C           FLECHE NE DOIT PAS ETRE TRACEE
+C SEMAXVIT: MAX DE LA NORME DE LA VITESSE AU DESSUS DUQUEL LA
+C           FLECHE NE DOIT PAS ETRE TRACEE
+C CMVITE : NOMBRE DE CM POUR L'UNITE DE VITESSE
+C NCAS   : NUMERO DU CAS A TRAITER
+C VITX   : COMPOSANTE X DE LA VITESSE EN CHAQUE POINT DES TRIANGLES
+C VITY   : COMPOSANTE Y DE LA VITESSE EN CHAQUE POINT DES TRIANGLES
+
+C REMARQUE:
+C          LA FONCTION UTILISATEUR Region(t,x,y,z) PEUT LIMITER LA
+C          REGION OU TRACER LA FLECHE DE LA VITESSE
+C ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+C AUTEUR : ALAIN PERRONNET LJLL UPMC & St Pierre du Perray Decembre 2012
+C ...................................................................012
+      PARAMETER     (LIGCON=0, LIGTIR=1)
+      include"./incl/langue.inc"
+      include"./incl/trvari.inc"
+      include"./incl/mecoit.inc"
+      include"./incl/ntmnlt.inc"
+      include"./incl/ctemps.inc"
+      COMMON / UNITES / LECTEU,IMPRIM,INTERA,NUNITE(29)
+      DOUBLE PRECISION  VITX(NBPOI),
+     %                  VITY(NBPOI)
+      REAL              XYZPOI(3,NBPOI), DIRFLE(2)
+      INTEGER           LARETE(1:MOARET,1:MXARET)
+      DOUBLE PRECISION  SEMINVIT, SEMAXVIT, VITNORM, VITMAX,
+     %                  DPARAF(4), DSREGI
+
+C     EXISTENCE OU NON DE LA FONCTION 'REGION'
+C     ========================================
+      CALL LXNMNO( NTFONC, 'REGION', NOFORE, I )
+C     NOFORE>0 SI CETTE FONCTION EXISTE
+
+C     LA PALETTE 2 : LES COULEURS VARIENT RAPIDEMENT ET S'ASSOMBRISSENT
+C     LA PALETTE 11: ARC EN CIEL
+      CALL PALCDE(11)
+
+C     LE NOMBRE-1 DE COULEURS DISPONIBLES
+      NBCOUL = NDCOUL - N1COUL
+
+C     LES ARETES SONT TRACEES EN CONTINU
+      CALL XVTYPETRAIT( LIGCON )
+
+C     AUCUN ITEM SUR L'ECRAN
+      CALL ITEMS0
+
+C     TRACE DES AXES
+      CALL TRAXE2
+C
+      IF( NOFORE .GT. 0 ) THEN
+C        LIMITATION PAR LA FONCTION 'REGION(t,x,y,z)'
+C        --------------------------------------------
+         IF( LANGAG .EQ. 0 ) THEN
+            WRITE(IMPRIM,10011) NCAS
+         ELSE
+            WRITE(IMPRIM,20021) NCAS
+         ENDIF
+10011    FORMAT(' CAS',I5,
+     %'VITESSES dans la REGION DEFINIE par la FONCTION REGION(t,x,y,z)')
+20021    FORMAT(' CASE',I5,
+     %'VELOCITIES in a REGION DEFINED by the FUNCTION REGION(t,x,y,z)')
+      ENDIF
+
+C     TRACE DES ARETES DES EF DE L'OBJET
+C     ----------------------------------
+      CALL XVEPAISSEUR( 0 )
+      DO N=1,MXARET
+         IF( LARETE(1,N) .NE. 0 ) THEN
+ccc            IF( LARETE(4,N) .EQ. 0 .OR.
+ccc     %          LARETE(5,N) .EQ. 0 ) THEN
+               NS1 = LARETE(1,N)
+               NS2 = LARETE(2,N)
+               CALL TRAIT2D( NCOUAF, XYZPOI(1,NS1), XYZPOI(2,NS1),
+     %                               XYZPOI(1,NS2), XYZPOI(2,NS2) )
+ccc            ENDIF
+         ENDIF
+
+      ENDDO
+
+C     FLECHE VITESSE EN TOUS LES NOEUDS SAUF NON INCLUS DANS LA REGION
+C     ----------------------------------------------------------------
+      CALL XVEPAISSEUR( 2 )
+      DO 20 N=1,NBPOI
+cccc
+ccc         print 10020,N,(XYZPOI(K,N),K=1,3),VITX(N),VITY(N)
+ccc10020    FORMAT('XY',I3,'=',3G13.4,'  VXY=',2G15.6)
+
+         IF( NOFORE .GT. 0 ) THEN
+C           LES 4 PARAMETRES D'APPEL DE LA FONCTION 'REGION'
+C           LE TEMPS EN 1-ER PARAMETRE
+            DPARAF(1) = TEMPS
+C           PUIS LES 3 COORDONNEES X Y Z DU NOEUD N
+            DO K=1,3
+               DPARAF(1+K) = XYZPOI(K,N)
+            ENDDO
+C           FONCTION REGION(TEMPS,X,Y,Z)
+            CALL FONVAL( NOFORE, 4, DPARAF, NCODEV, DSREGI )
+            IF( NCODEV .EQ. 0 .OR. DSREGI .EQ. 0D0 ) GOTO 20
+C           ICI TRACE DE LA FLECHE
+         ENDIF
+
+C        MODULE DE LA FLECHE VITESSE AU POINT
+         VITNORM = SQRT( VITX(N)**2 + VITY(N)**2 )
+
+C        AU DESSOUS DU SEUIL MIN PAS DE TRACE DE LA FLECHE
+         IF( VITNORM .LT. SEMINVIT ) GOTO 20
+C        AU DESSUS DU SEUIL MAX PAS DE TRACE DE LA FLECHE
+         IF( VITNORM .GT. SEMAXVIT ) GOTO 20
+
+C        LONGUEUR DE LA FLECHE
+         DIRFLE(1) = REAL( VITX(N) * CMVITE )
+         DIRFLE(2) = REAL( VITY(N) * CMVITE )
+         DISTCM    = REAL( VITNORM * CMVITE )
+
+C        COULEUR DU BOIS DE LA FLECHE
+         NOCOUL = NINT( VITNORM / VITMAX * NBCOUL + N1COUL )
+         IF( NOCOUL .GT. NDCOUL ) NOCOUL = NDCOUL
+         CALL T2FLEC( NOCOUL, XYZPOI(1,N),XYZPOI(2,N), DISTCM,
+     %                DIRFLE(1), DIRFLE(2) )
+
+ 20   CONTINUE
+
+      CALL XVEPAISSEUR( 1 )
+
+      RETURN
+      END

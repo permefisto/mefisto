@@ -1,0 +1,77 @@
+{================================================================}
+{ MEFISTO Version Octobre 1999        PROJET: nafems_te51 ITEINV }
+{ Utilisateur: Perronnet Alain        Date:   14/10/99           }
+{ TEST 51 DE L'AGENCE NAFEMS DEEP SIMPLY-SUPPORTED SOLID BEAM    }
+{ fichier TEST CALCUL DES MODES PROPRES PAR ITERATIONS INVERSES  }
+{================================================================}
+1; poutre;
+
+2;
+
+ {volume poutre}
+  1; {densite volumique de masse}
+  1; 8000;  {kg/m**3}
+
+  2; {Young et Poisson}
+  1; 200e9; {N/m**2}  0.3;
+ @;
+
+ {surface droite}
+ 2; {fixation}
+  1; {constante}
+  1; {composantes}
+  2; {no de la composante des deplacements a fixer}
+  0; {valeurs fixees}
+ @;
+
+ {ligne B4=s4s1}
+ 2; {fixation}
+  1;    {constante}
+  2;    {composantes}
+  1; 3; {no de la composante des deplacements a fixer}
+  0; 0; {valeur fixee}
+ @;
+
+ {ligne B2=s2s3}
+ 2; {fixation}
+  1; {constante}
+  1; {composante}
+  3; {no de la composante des deplacements a fixer}
+  0; {valeur fixee}
+ @;
+
+ {point s4}
+ 2; {fixation}
+  1;       {constante}
+  3;       {composantes}
+  1; 2; 3; {no de la composante des deplacements a fixer}
+  0; 0; 0; {valeur fixee}
+ @;
+
+ {point s3}
+ 2; {fixation}
+  1;    {constante}
+  2;    {composantes}
+  2; 3; {no de la composante des deplacements a fixer}
+  0; 0; {valeur fixee}
+ @;
+
+@;
+
+DefVar DeuxPi; DeuxPi=atan(1)*8;
+
+6; {calcul des modes propres  Omega**2}
+{ 0;  coefficient TETA de translation des valeurs propres}
+  2; {methode des iterations inverses}
+  0; {nombre de valeurs a calculer}
+(DeuxPi*330)**2; {borne superieure des valeurs propres a calculer}
+@;
+
+8; {Trace de la deformee amplifiee 100 fois }
+ 2; 2; 100; 90; 90;
+
+FERMER;
+
+{Pour obtenir les resultats Nafems a partir des valeurs propres
+affichees (Omega**2), il faut calculer la frequence par la formule
+   frequence = sqrt( Valeur Propre calculee ) / ( 2 Pi )}

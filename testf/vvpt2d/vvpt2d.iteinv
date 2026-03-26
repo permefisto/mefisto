@@ -1,0 +1,41 @@
+{===================================================================}
+{ MEFISTO Version Janvier 1999        PROJET: VVPT2D  ITEINV        }
+{ Utilisateur: Perronnet Alain        Date:   4/1/99                }
+{===================================================================}
+{TEST DU CALCUL DES VALEURS ET VECTEURS PROPRES EN THERMIQUE}
+{Nombreuses valeurs propres doubles : vp=(n**2 + m**2) Pi**2}
+
+1; CARRE;
+
+2;
+
+ {surface CARRES}
+  1; {densite de masse}
+  1; 1.0;
+
+  7; {chaleur massique}
+  1; 1.0;
+
+  2; {conductivite thermique}
+  3; 1.0;
+ @;
+
+ {ligne CARREL}
+ 3;  {contact}
+  1; {constant}
+  0; {valeur fixee}
+ @;
+@;
+
+6; {calcul des valeurs et vecteurs propres de l'operateur thermique}
+  2; {METHODE DES ITERATIONS INVERSES}
+ 15; {nombre des plus petites valeurs propres a calculer}
+     { ou 0; 300; borne superieure des valeurs propres a calculer}
+@;
+
+
+7; {Drawing of eigenvalues and eigenvectors}
+ 1; 0;        {Tous les vecteurs propres}
+ 2; 7; 1; 90; {TRACE des 10 isothermes entre mim et max}
+
+FERMER;

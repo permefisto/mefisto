@@ -1,0 +1,6 @@
+Le nombre approximatif de triangles a generer doit etre
+strictement superieur a  1 (pour le 1/8 de sphere)
+                        20 (pour la sphere) 
+Pour obtenir la valeur exacte, il suffit de choisir 
+N*N    pour le 1/8 de sphere
+20*N*N pour la sphere         pour tout entier N>0

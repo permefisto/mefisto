@@ -1,0 +1,2613 @@
+{ ============================================================ }
+{ MEFISTO Version Octobre 1999     PROJET: gourde              }
+{ Utilisateur: Michael Guillao     Date:   9/6/99              }
+{ ============================================================ }
+
+{*************************** DEFINITION DES VARIABLES ************************}
+DefVar pi, R, Rm, teta, eps, eps1, eps2, epaisseur, Nb_aretes, Hauteur_Cylindre,
+       Hauteur_Cylindre1, Hauteur_Bouchon, Aretes_Plastique, Aretes_Air,
+       Nb_aretes2, Nb_aretes3;
+  pi=atan(1)*4;
+  R=0.16/2;
+  Rm=0.007*1;
+  teta=pi/3;
+  eps=0;
+  eps1=0.001;
+  eps2=0.002;
+  epaisseur=0.06/2;
+  Nb_aretes=2;    {goulot}
+  Nb_aretes2=3;
+  Nb_aretes3=3;    {cylindre}
+  Hauteur_Cylindre1=0.035;
+  Hauteur_Bouchon=0.02/2;
+  Aretes_Plastique=1;
+  Aretes_Air=1;
+
+ Hauteur_Cylindre=Hauteur_Cylindre1+(R+eps)*sin(teta);
+
+{******************************************************************************}
+{******************************************************************************}
+{********************** LA GOURDE SANS LE GOULOT **************************}
+{******************************************************************************}
+{******************************************************************************}
+
+{************************* DEFINITION DES POINTS *****************************}
+           1;
+{ POINTS sommets de l objet }
+           1;
+{ FRAPPE des valeurs }
+{ NOM DU POINT ou ABANDON?        }
+
+Origine;
+{ NOM DE TRANSFORMATION        }
+I;
+{ DANS LE LEXIQUE ~>TRANSFO }
+           1;
+{ coordonnees x y z }
+{ VALEUR de X=?        }
+0;
+{ VALEUR de Y=?        }
+0;
+{ VALEUR de Z=?        }
+0;
+{ COORPO '3 coordonnees cartesiennes du point' xyz ; }
+{ NOM DU POINT ou ABANDON?        }
+
+Origine_z ;
+{ NOM DE TRANSFORMATION        }
+I;
+{ DANS LE LEXIQUE ~>TRANSFO }
+           1;
+{ coordonnees x y z }
+{ VALEUR de X=?        }
+0;
+{ VALEUR de Y=?        }
+0;
+{ VALEUR de Z=?        }
+R*sin(teta) +eps;
+{ COORPO '3 coordonnees cartesiennes du point' xyz ; }
+{ NOM DU POINT ou ABANDON?        } 
+
+a ; I; 1;
+   0; R+eps; 0;
+
+b ; I; 1;
+   (1/2*epaisseur)*sin(pi/4); R+eps; 0;
+
+c ; I; 1;
+   epaisseur+eps; R+eps; 0;
+
+d ; I; 1;
+   epaisseur+eps; R-Rm; 0;
+
+e ; I; 1;
+   epaisseur+eps; (R-Rm)*cos(teta); 0;
+
+f ; I; 1;
+   epaisseur+eps; (1/2*epaisseur)*cos(pi/4); 0;
+
+g ; I; 1;
+   epaisseur+eps; 0; 0;
+
+h ; I; 1;
+   epaisseur+eps; 0; (R-Rm)*sin(teta);
+
+i ; I; 1;
+   epaisseur+eps; (1/2*epaisseur)*cos(pi/4); (R-Rm)*sin(teta);
+
+j ; I; 1;
+   epaisseur+eps; (R-Rm)*cos(teta); (R-Rm)*sin(teta);
+
+k ; I; 1;
+   epaisseur+eps; R*cos(teta); R*sin(teta)+eps;
+
+l ; I; 1;
+   epaisseur+eps; (1/2*epaisseur)*cos(pi/4); R*sin(teta)+eps;
+
+m ; I; 1;
+   epaisseur+eps; 0; R*sin(teta)+eps;
+
+n ; I; 1;
+   1/2*epaisseur; 0; R*sin(teta)+eps;
+
+o ; I; 1;
+   (1/2*epaisseur)*sin(pi/4); (1/2*epaisseur)*cos(pi/4); R*sin(teta)+eps;
+
+p ; I; 1;
+   0; 1/2*epaisseur; R*sin(teta)+eps;
+
+q ; I; 1;
+   0; R*cos(teta); R*sin(teta)+eps;
+
+r ; I; 1;
+   (1/2*epaisseur)*sin(pi/4); R*cos(teta); R*sin(teta)+eps;
+
+{ pour maillage de l'eau }
+
+s ; I; 1;
+   (1/2*epaisseur)*sin(pi/4); R*cos(teta); 0;
+
+t ; I; 1;
+   0; R*cos(teta); 0;
+
+u ; I; 1;
+   1/2*epaisseur; 0; 0;
+
+v ; I; 1;
+   (1/2*epaisseur)*sin(pi/4); (1/2*epaisseur)*cos(pi/4); 0;
+
+w ; I; 1;
+   0; 1/2*epaisseur; 0;
+   
+x ; I; 1;
+   (1/2*epaisseur)*sin(pi/4); 0; 0;
+
+@;
+
+
+{**************************** DEFINITION DES LIGNES **************************}
+           2;
+{ LIGNES aretes de l objet }
+{ NOM DE LA LIGNE ou ABANDON?        }
+
+a_b ; I; 2;
+   Nb_aretes; 1;
+   a ; b ;
+
+b_d ; I; 28; { ligne avec conge }
+   Nb_aretes2; 0.0045;
+   b ; c ; d ;
+
+d_e ; I; 2;
+   Nb_aretes2; 1;
+   d ; e ;
+
+e_f ; I; 2;
+   Nb_aretes2; 1;
+   e ; f ;
+
+f_g ; I; 2;
+   Nb_aretes; 1;
+   f ; g ;
+
+g_h ; I; 2;
+   Nb_aretes2; 1;
+   g ; h ;
+
+h_i ; I; 2;
+   Nb_aretes; 1;
+   h ; i ;
+
+i_j ; I; 2;
+   Nb_aretes2; 1;
+   i ; j ;
+
+q_r ; I; 2;
+   Nb_aretes; 1;
+   q ; r ;
+
+p_q ; I; 2;
+   Nb_aretes2; 1;
+   p ; q ;
+
+o_r ; I; 2;
+   Nb_aretes2; 1;
+   o ; r ;
+
+j_r ; I; 28; { ligne avec conge }
+   Nb_aretes2; 0.0045;
+   r ; k ; j ;
+
+i_o ; I; 28; { ligne avec conge }
+   Nb_aretes2; 0.0045;
+   o ; l ; i ;
+
+h_n ; I; 28; { ligne avec conge }
+   Nb_aretes2; 0.0045;
+   n ; m ; h ;
+
+o_p ; I; 4; { arc de cercle passant par 2+1 points+RAYON }
+   Nb_aretes; 1;
+   o ; p ;
+   Origine_z ;
+   1/2*epaisseur;
+
+n_o ; I; 4; { arc de cercle passant par 2+1 points+RAYON }
+   Nb_aretes; 1;
+   n ; o ;
+   Origine_z ;
+   1/2*epaisseur;
+
+d_j ; I; 4; { arc de cercle passant par 2+1 points+RAYON }
+   Nb_aretes2; 1;
+   d ; j ;
+   g ;
+   R-Rm;
+
+a_q ; I; 4; { arc de cercle passant par 2+1 points+RAYON }
+   Nb_aretes2; 1;
+   a ; q ;
+   Origine;
+   R;
+
+e_j ; I; 2;
+   Nb_aretes2; 1;
+   e ; j ;
+
+f_i ; I; 2;
+   Nb_aretes2; 1;
+   f ; i ;
+
+{ pour maillage de l'eau }
+
+e_s ; I; 2;
+   Nb_aretes2; 1;
+   e ; s ;
+
+s_t ; I; 2;
+   Nb_aretes; 1;
+   s ; t ;
+
+e_t ; I; 51; 2; { union de plusieurs lignes }
+   e_s ; s_t ;
+
+r_s ; I; 2;
+   Nb_aretes2; 1;
+   r ; s ;
+
+q_t ; I; 2;
+   Nb_aretes2; 1;
+   q ; t ;
+
+s_v ; I; 2;
+   Nb_aretes2; 1;
+   s ; v ;
+
+t_w ; I; 2;
+   Nb_aretes2; 1;
+   t ; w ;
+
+p_w ; I; 2;
+   Nb_aretes2; 1;
+   p ; w ;
+
+o_v ; I; 2;
+   Nb_aretes2; 1;
+   o ; v ;
+
+n_u ; I; 2;
+   Nb_aretes2; 1;
+   n ; u ;
+
+f_v ; I; 2;
+   Nb_aretes2; 1;
+   f ; v ;
+
+g_u ; I; 2;
+   Nb_aretes2; 1;
+   g ; u ;
+
+a_t ; I; 2;
+   Nb_aretes2; 1;
+   a ; t ;
+   
+b_r ; I; 4; { arc de cercle passant par 2+1 points+RAYON }
+   Nb_aretes2; 1;
+   b; r;
+   x;
+   R;
+   
+b_s ; I; 2;
+   Nb_aretes2; 1;
+   b ; s ;
+   
+u_v ; I; 4; { arc de cercle passant par 2+1 points+RAYON }
+   Nb_aretes; 1;
+   u ; v ;
+   Origine;
+   1/2*epaisseur;
+
+v_w ; I; 4; { arc de cercle passant par 2+1 points+RAYON }
+   Nb_aretes; 1;
+   v ; w ;
+   Origine ;
+   1/2*epaisseur;
+
+@;
+
+
+{******************************* DEFINITION DES SURFACES **********************} 
+         3;
+{ NOM DE LA SURFACE ou ABANDON?        }
+
+A ; I; 1; { quadrangle algebrique }
+   a_b ; b_r ; q_r ; a_q ;
+   1;
+
+X ; I; 1; { quadrangle algébrique }
+   b_d ; d_j ; j_r ; b_r ;
+   1; 
+
+B ; I; 6; { triangle algébrique structuré }
+   d_e ; e_j ; d_j ;
+
+C ; I; 1; { quadrangle algebrique }
+   e_f ; f_i ; i_j ; e_j ;
+   1;
+
+D ; I; 1; { quadrangle algebrique }
+   f_g ; g_h ; h_i ; f_i ;
+   1;
+
+E ; I; 1; { quadrangle algebrique }
+   i_j ; i_o ; o_r ; j_r ;
+   1;
+
+F ; I; 1; { quadrangle algebrique }
+   h_i ; h_n ; n_o ; i_o ;
+   1;
+
+G ; I; 1; { quadrangle algebrique }
+   o_r ; o_p ; p_q ; q_r ;
+   1;
+
+{ pour maillage de l'eau }
+
+H ; I; 1; 
+   b_d ; d_e ; e_s ; b_s ;
+   1;
+
+I ; I; 1; { quadrangle algébrique }
+   e_f ; f_v ; s_v ; e_s ;
+   1;
+
+J ; I; 2; { quadrangle elliptique }
+   f_g ; g_u ; u_v ; f_v ;
+   0;
+
+K ; I; 1; { quadrangle algébrique }
+   s_v ; v_w ; t_w ; s_t ;
+   1;
+
+L ; I; 6; { triangle algébrique structuré }
+   a_t ; q_t ; a_q ;
+
+M ; I; 1; { quadrangle algébrique }
+   s_t ; r_s ; q_r ; q_t ;
+   1;
+
+N ; I; 1; { quadrangle elliptique }
+   e_j ; j_r ; r_s ; e_s ;
+   1;
+
+O ; I; 1; { quadrangle algébrique }
+   s_v ; o_v ; o_r ; r_s ;
+   1;
+
+P ; I; 15; { rotation d'une ligne autour d'un axe }
+   p_w ;
+   Origine ; Origine_z;
+   Nb_aretes;
+   0; -45;
+
+Q ; I; 15; { rotation d'une ligne autour d'un axe }
+   o_v ;
+   Origine ; Origine_z;
+   Nb_aretes;
+   0; -45;
+
+R ; I; 1; { quadrangle algébrique }
+   t_w ; p_w ; p_q ; q_t ;
+   1;
+
+S ; I; 2; { quadrangle elliptique }
+   g_u ; g_h ; h_n ; n_u ;
+   0;
+
+U ; I; 2; { quadrangle elliptique }
+   f_i ; i_o ; o_v ; f_v ;
+   0;
+
+V ; I; 1; { quadrangle algébrique }
+   a_b ; b_s ; s_t ; a_t ;
+   1;
+   
+W ; I; 6; { triangle algébrique structuré }
+   b_s ; r_s ; b_r ;    
+
+  
+@;
+
+
+{*****************************************************************************}
+{******************************** répétition 1 *******************************}
+{*****************************************************************************}
+
+eps=eps1;
+{************************* DEFINITION DES POINTS *****************************}
+           1;
+{ POINTS sommets de l objet }
+           1;
+{ FRAPPE des valeurs }
+{ NOM DU POINT ou ABANDON?        }
+
+Origine_z1 ;
+{ NOM DE TRANSFORMATION        }
+I;
+{ DANS LE LEXIQUE ~>TRANSFO }
+           1;
+{ coordonnees x y z }
+{ VALEUR de X=?        }
+0;
+{ VALEUR de Y=?        }
+0;
+{ VALEUR de Z=?        }
+R*sin(teta) +eps;
+{ COORPO '3 coordonnees cartesiennes du point' xyz1 ; }
+{ NOM DU POINT ou ABANDON?        } 
+
+a1 ; I; 1;
+   0; R+eps; 0;
+
+b1 ; I; 1;
+   (1/2*epaisseur)*sin(pi/4); R+eps; 0;
+
+c1 ; I; 1;
+   epaisseur+eps; R+eps; 0;
+
+d1 ; I; 1;
+   epaisseur+eps; R-Rm; 0;
+
+e1 ; I; 1;
+   epaisseur+eps; (R-Rm)*cos(teta); 0;
+
+f1 ; I; 1;
+   epaisseur+eps; (1/2*epaisseur)*cos(pi/4); 0;
+
+g1 ; I; 1;
+   epaisseur+eps; 0; 0;
+
+h1 ; I; 1;
+   epaisseur+eps; 0; (R-Rm)*sin(teta);
+
+i1 ; I; 1;
+   epaisseur+eps; (1/2*epaisseur)*cos(pi/4); (R-Rm)*sin(teta);
+
+j1 ; I; 1;
+   epaisseur+eps; (R-Rm)*cos(teta); (R-Rm)*sin(teta);
+
+k1 ; I; 1;
+   epaisseur+eps; R*cos(teta); R*sin(teta)+eps;
+
+l1 ; I; 1;
+   epaisseur+eps; (1/2*epaisseur)*cos(pi/4); R*sin(teta)+eps;
+
+m1 ; I; 1;
+   epaisseur+eps; 0; R*sin(teta)+eps;
+
+n1 ; I; 1;
+   1/2*epaisseur; 0; R*sin(teta)+eps;
+
+o1 ; I; 1;
+   (1/2*epaisseur)*sin(pi/4); (1/2*epaisseur)*cos(pi/4); R*sin(teta)+eps;
+
+p1 ; I; 1;
+   0; 1/2*epaisseur; R*sin(teta)+eps;
+
+q1 ; I; 1;
+   0; R*cos(teta); R*sin(teta)+eps;
+
+r1 ; I; 1;
+   (1/2*epaisseur)*sin(pi/4); R*cos(teta); R*sin(teta)+eps;
+
+@;
+
+
+{**************************** DEFINITION DES LIGNES **************************}
+           2;
+{ LIGNES aretes de l objet }
+{ NOM DE LA LIGNE ou ABANDON?        }
+
+a1_b1 ; I; 2;
+   Nb_aretes; 1;
+   a1 ; b1 ;
+
+b1_d1 ; I; 28; { ligne avec conge }
+   Nb_aretes2; 0.0045;
+   b1 ; c1 ; d1 ;
+
+d1_e1 ; I; 2;
+   Nb_aretes2; 1;
+   d1 ; e1 ;
+
+e1_f1 ; I; 2;
+   Nb_aretes2; 1;
+   e1 ; f1 ;
+
+f1_g1 ; I; 2;
+   Nb_aretes; 1;
+   f1 ; g1 ;
+
+g1_h1 ; I; 2;
+   Nb_aretes2; 1;
+   g1 ; h1 ;
+
+h1_i1 ; I; 2;
+   Nb_aretes; 1;
+   h1 ; i1 ;
+
+i1_j1 ; I; 2;
+   Nb_aretes2; 1;
+   i1 ; j1 ;
+
+q1_r1 ; I; 2;
+   Nb_aretes; 1;
+   q1 ; r1 ;
+
+p1_q1 ; I; 2;
+   Nb_aretes2; 1;
+   p1 ; q1 ;
+
+o1_r1 ; I; 2;
+   Nb_aretes2; 1;
+   o1 ; r1 ;
+
+j1_r1 ; I; 28; { ligne avec conge }
+   Nb_aretes2; 0.0045;
+   r1 ; k1 ; j1 ;
+
+i1_o1 ; I; 28; { ligne avec conge }
+   Nb_aretes2; 0.0045;
+   o1 ; l1 ; i1 ;
+
+h1_n1 ; I; 28; { ligne avec conge }
+   Nb_aretes2; 0.0045;
+   n1 ; m1 ; h1 ;
+
+o1_p1 ; I; 4; { arc de cercle passant par 2+1 points+RAYON }
+   Nb_aretes; 1;
+   o1 ; p1 ;
+   Origine_z1 ;
+   1/2*epaisseur;
+
+n1_o1 ; I; 4; { arc de cercle passant par 2+1 points+RAYON }
+   Nb_aretes; 1;
+   n1 ; o1 ;
+   Origine_z1 ;
+   1/2*epaisseur;
+
+d1_j1 ; I; 4; { arc de cercle passant par 2+1 points+RAYON }
+   Nb_aretes2; 1;
+   d1 ; j1 ;
+   g1 ;
+   R-Rm;
+
+a1_q1 ; I; 4; { arc de cercle passant par 2+1 points+RAYON }
+   Nb_aretes2; 1;
+   a1 ; q1 ;
+   Origine;
+   R+eps;
+
+e1_j1 ; I; 2;
+   Nb_aretes2; 1;
+   e1 ; j1 ;
+
+f1_i1 ; I; 2;
+   Nb_aretes2; 1;
+   f1 ; i1 ;
+
+b1_r1 ; I; 4; { arc de cercle passant par 2+1 points+RAYON }
+   Nb_aretes2; 1;
+   b1; r1;
+   x;
+   R+eps;
+   
+@;
+
+
+{******************************* DEFINITION DES SURFACES **********************} 
+         3;
+{ NOM DE LA SURFACE ou ABANDON?        }
+
+A1 ; I; 1; { quadrangle algebrique }
+   a1_b1 ; b1_r1 ; q1_r1 ; a1_q1 ;
+   1;
+
+X1 ; I; 1; { quadrangle algébrique }
+   b1_d1 ; d1_j1 ; j1_r1 ; b1_r1 ;
+   1; 
+
+B1 ; I; 6; { triangle algébrique structuré }
+   d1_e1 ; e1_j1 ; d1_j1 ;
+
+C1 ; I; 1; { quadrangle algebrique }
+   e1_f1 ; f1_i1 ; i1_j1 ; e1_j1 ;
+   1;
+
+D1 ; I; 1; { quadrangle algebrique }
+   f1_g1 ; g1_h1 ; h1_i1 ; f1_i1 ;
+   1;
+
+E1 ; I; 1; { quadrangle algebrique }
+   i1_j1 ; i1_o1 ; o1_r1 ; j1_r1 ;
+   1;
+
+F1 ; I; 1; { quadrangle algebrique }
+   h1_i1 ; h1_n1 ; n1_o1 ; i1_o1 ;
+   1;
+
+G1 ; I; 1; { quadrangle algebrique }
+   o1_r1 ; o1_p1 ; p1_q1 ; q1_r1 ;
+   1;
+
+@;
+
+{*****************************************************************************}
+{******************************** répétition 2 *******************************}
+{*****************************************************************************}
+
+eps=eps+eps2;
+{************************* DEFINITION DES POINTS *****************************}
+           1;
+{ POINTS sommets de l objet }
+           1;
+{ FRAPPE des valeurs }
+{ NOM DU POINT ou ABANDON?        }
+
+Origine_z2 ;
+{ NOM DE TRANSFORMATION        }
+I;
+{ DANS LE LEXIQUE ~>TRANSFO }
+           1;
+{ coordonnees x y z }
+{ VALEUR de X=?        }
+0;
+{ VALEUR de Y=?        }
+0;
+{ VALEUR de Z=?        }
+R*sin(teta) +eps;
+{ COORPO '3 coordonnees cartesiennes du point' xyz2 ; }
+{ NOM DU POINT ou ABANDON?        } 
+
+a2 ; I; 1;
+   0; R+eps; 0;
+
+b2 ; I; 1;
+   (1/2*epaisseur)*sin(pi/4); R+eps; 0;
+
+c2 ; I; 1;
+   epaisseur+eps; R+eps; 0;
+
+d2 ; I; 1;
+   epaisseur+eps; R-Rm; 0;
+
+e2 ; I; 1;
+   epaisseur+eps; (R-Rm)*cos(teta); 0;
+
+f2 ; I; 1;
+   epaisseur+eps; (1/2*epaisseur)*cos(pi/4); 0;
+
+g2 ; I; 1;
+   epaisseur+eps; 0; 0;
+
+h2 ; I; 1;
+   epaisseur+eps; 0; (R-Rm)*sin(teta);
+
+i2 ; I; 1;
+   epaisseur+eps; (1/2*epaisseur)*cos(pi/4); (R-Rm)*sin(teta);
+
+j2 ; I; 1;
+   epaisseur+eps; (R-Rm)*cos(teta); (R-Rm)*sin(teta);
+
+k2 ; I; 1;
+   epaisseur+eps; R*cos(teta); R*sin(teta)+eps;
+
+l2 ; I; 1;
+   epaisseur+eps; (1/2*epaisseur)*cos(pi/4); R*sin(teta)+eps;
+
+m2 ; I; 1;
+   epaisseur+eps; 0; R*sin(teta)+eps;
+
+n2 ; I; 1;
+   1/2*epaisseur; 0; R*sin(teta)+eps;
+
+o2 ; I; 1;
+   (1/2*epaisseur)*sin(pi/4); (1/2*epaisseur)*cos(pi/4); R*sin(teta)+eps;
+
+p2 ; I; 1;
+   0; 1/2*epaisseur; R*sin(teta)+eps;
+
+q2 ; I; 1;
+   0; R*cos(teta); R*sin(teta)+eps;
+
+r2 ; I; 1;
+   (1/2*epaisseur)*sin(pi/4); R*cos(teta); R*sin(teta)+eps;
+
+@;
+
+
+{**************************** DEFINITION DES LIGNES **************************}
+           2;
+{ LIGNES aretes de l objet }
+{ NOM DE LA LIGNE ou ABANDON?        }
+
+a2_b2 ; I; 2;
+   Nb_aretes; 1;
+   a2 ; b2 ;
+
+b2_d2 ; I; 28; { ligne avec conge }
+   Nb_aretes2; 0.0045;
+   b2 ; c2 ; d2 ;
+
+d2_e2 ; I; 2;
+   Nb_aretes2; 1;
+   d2 ; e2 ;
+
+e2_f2 ; I; 2;
+   Nb_aretes2; 1;
+   e2 ; f2 ;
+
+f2_g2 ; I; 2;
+   Nb_aretes; 1;
+   f2 ; g2 ;
+
+g2_h2 ; I; 2;
+   Nb_aretes2; 1;
+   g2 ; h2 ;
+
+h2_i2 ; I; 2;
+   Nb_aretes; 1;
+   h2 ; i2 ;
+
+i2_j2 ; I; 2;
+   Nb_aretes2; 1;
+   i2 ; j2 ;
+
+q2_r2 ; I; 2;
+   Nb_aretes; 1;
+   q2 ; r2 ;
+
+p2_q2 ; I; 2;
+   Nb_aretes2; 1;
+   p2 ; q2 ;
+
+o2_r2 ; I; 2;
+   Nb_aretes2; 1;
+   o2 ; r2 ;
+
+j2_r2 ; I; 28; { ligne avec conge }
+   Nb_aretes2; 0.0045;
+   r2 ; k2 ; j2 ;
+
+i2_o2 ; I; 28; { ligne avec conge }
+   Nb_aretes2; 0.0045;
+   o2 ; l2 ; i2 ;
+
+h2_n2 ; I; 28; { ligne avec conge }
+   Nb_aretes2; 0.0045;
+   n2 ; m2 ; h2 ;
+
+o2_p2 ; I; 4; { arc de cercle passant par 2+1 points+RAYON }
+   Nb_aretes; 1;
+   o2 ; p2 ;
+   Origine_z2 ;
+   1/2*epaisseur;
+
+n2_o2 ; I; 4; { arc de cercle passant par 2+1 points+RAYON }
+   Nb_aretes; 1;
+   n2 ; o2 ;
+   Origine_z2 ;
+   1/2*epaisseur;
+
+d2_j2 ; I; 4; { arc de cercle passant par 2+1 points+RAYON }
+   Nb_aretes2; 1;
+   d2 ; j2 ;
+   g2 ;
+   R-Rm;
+
+a2_q2 ; I; 4; { arc de cercle passant par 2+1 points+RAYON }
+   Nb_aretes2; 1;
+   a2 ; q2 ;
+   Origine;
+   R+eps;
+
+e2_j2 ; I; 2;
+   Nb_aretes2; 1;
+   e2 ; j2 ;
+
+f2_i2 ; I; 2;
+   Nb_aretes2; 1;
+   f2 ; i2 ;
+
+b2_r2 ; I; 4; { arc de cercle passant par 2+1 points+RAYON }
+   Nb_aretes2; 1;
+   b2; r2;
+   x;
+   R+eps;
+@;
+
+
+{******************************* DEFINITION DES SURFACES **********************} 
+         3;
+{ NOM DE LA SURFACE ou ABANDON?        }
+
+A2; I; 1; { quadrangle algebrique }
+   a2_b2; b2_r2; q2_r2; a2_q2;
+   1;
+
+X2; I; 1; { quadrangle algébrique }
+   b2_d2; d2_j2; j2_r2; b2_r2;
+   1; 
+
+B2 ; I; 6; { triangle algébrique structuré }
+   d2_e2 ; e2_j2 ; d2_j2 ;
+
+C2 ; I; 1; { quadrangle algebrique }
+   e2_f2 ; f2_i2 ; i2_j2 ; e2_j2 ;
+   1;
+
+D2 ; I; 1; { quadrangle algebrique }
+   f2_g2 ; g2_h2 ; h2_i2 ; f2_i2 ;
+   1;
+
+E2 ; I; 1; { quadrangle algebrique }
+   i2_j2 ; i2_o2 ; o2_r2 ; j2_r2 ;
+   1;
+
+F2 ; I; 1; { quadrangle algebrique }
+   h2_i2 ; h2_n2 ; n2_o2 ; i2_o2 ;
+   1;
+
+G2 ; I; 1; { quadrangle algebrique }
+   o2_r2 ; o2_p2 ; p2_q2 ; q2_r2 ;
+   1;
+
+@;
+
+{*****************************************************************************}
+{******************************** répétition 3 *******************************}
+{*****************************************************************************}
+
+eps=eps+eps1;
+
+{************************* DEFINITION DES POINTS *****************************}
+           1;
+{ POINTS sommets de l objet }
+           1;
+{ FRAPPE des valeurs }
+{ NOM DU POINT ou ABANDON?        }
+
+Origine_z3 ;
+{ NOM DE TRANSFORMATION        }
+I;
+{ DANS LE LEXIQUE ~>TRANSFO }
+           1;
+{ coordonnees x y z }
+{ VALEUR de X=?        }
+0;
+{ VALEUR de Y=?        }
+0;
+{ VALEUR de Z=?        }
+R*sin(teta) +eps;
+{ COORPO '3 coordonnees cartesiennes du point' xyz3 ; }
+{ NOM DU POINT ou ABANDON?        } 
+
+a3 ; I; 1;
+   0; R+eps; 0;
+
+b3 ; I; 1;
+   (1/2*epaisseur)*sin(pi/4); R+eps; 0;
+
+c3 ; I; 1;
+   epaisseur+eps; R+eps; 0;
+
+d3 ; I; 1;
+   epaisseur+eps; R-Rm; 0;
+
+e3 ; I; 1;
+   epaisseur+eps; (R-Rm)*cos(teta); 0;
+
+f3 ; I; 1;
+   epaisseur+eps; (1/2*epaisseur)*cos(pi/4); 0;
+
+g3 ; I; 1;
+   epaisseur+eps; 0; 0;
+
+h3 ; I; 1;
+   epaisseur+eps; 0; (R-Rm)*sin(teta);
+
+i3 ; I; 1;
+   epaisseur+eps; (1/2*epaisseur)*cos(pi/4); (R-Rm)*sin(teta);
+
+j3 ; I; 1;
+   epaisseur+eps; (R-Rm)*cos(teta); (R-Rm)*sin(teta);
+
+k3 ; I; 1;
+   epaisseur+eps; R*cos(teta); R*sin(teta)+eps;
+
+l3 ; I; 1;
+   epaisseur+eps; (1/2*epaisseur)*cos(pi/4); R*sin(teta)+eps;
+
+m3 ; I; 1;
+   epaisseur+eps; 0; R*sin(teta)+eps;
+
+n3 ; I; 1;
+   1/2*epaisseur; 0; R*sin(teta)+eps;
+
+o3 ; I; 1;
+   (1/2*epaisseur)*sin(pi/4); (1/2*epaisseur)*cos(pi/4); R*sin(teta)+eps;
+
+p3 ; I; 1;
+   0; 1/2*epaisseur; R*sin(teta)+eps;
+
+q3 ; I; 1;
+   0; R*cos(teta); R*sin(teta)+eps;
+
+r3 ; I; 1;
+   (1/2*epaisseur)*sin(pi/4); R*cos(teta); R*sin(teta)+eps;
+
+
+@;
+
+
+{**************************** DEFINITION DES LIGNES **************************}
+           2;
+{ LIGNES aretes de l objet }
+{ NOM DE LA LIGNE ou ABANDON?        }
+
+a3_b3 ; I; 2;
+   Nb_aretes; 1;
+   a3 ; b3 ;
+
+b3_d3 ; I; 28; { ligne avec conge }
+   Nb_aretes2; 0.0045;
+   b3 ; c3 ; d3 ;
+
+d3_e3 ; I; 2;
+   Nb_aretes2; 1;
+   d3 ; e3 ;
+
+e3_f3 ; I; 2;
+   Nb_aretes2; 1;
+   e3 ; f3 ;
+
+f3_g3 ; I; 2;
+   Nb_aretes; 1;
+   f3 ; g3 ;
+
+g3_h3 ; I; 2;
+   Nb_aretes2; 1;
+   g3 ; h3 ;
+
+h3_i3 ; I; 2;
+   Nb_aretes; 1;
+   h3 ; i3 ;
+
+i3_j3 ; I; 2;
+   Nb_aretes2; 1;
+   i3 ; j3 ;
+
+q3_r3 ; I; 2;
+   Nb_aretes; 1;
+   q3 ; r3 ;
+
+p3_q3 ; I; 2;
+   Nb_aretes2; 1;
+   p3 ; q3 ;
+
+o3_r3 ; I; 2;
+   Nb_aretes2; 1;
+   o3 ; r3 ;
+
+j3_r3 ; I; 28; { ligne avec conge }
+   Nb_aretes2; 0.0045;
+   r3 ; k3 ; j3 ;
+
+i3_o3 ; I; 28; { ligne avec conge }
+   Nb_aretes2; 0.0045;
+   o3 ; l3 ; i3 ;
+
+h3_n3 ; I; 28; { ligne avec conge }
+   Nb_aretes2; 0.0045;
+   n3 ; m3 ; h3 ;
+
+o3_p3 ; I; 4; { arc de cercle passant par 2+1 points+RAYON }
+   Nb_aretes; 1;
+   o3 ; p3 ;
+   Origine_z3 ;
+   1/2*epaisseur;
+
+n3_o3 ; I; 4; { arc de cercle passant par 2+1 points+RAYON }
+   Nb_aretes; 1;
+   n3 ; o3 ;
+   Origine_z3 ;
+   1/2*epaisseur;
+
+d3_j3 ; I; 4; { arc de cercle passant par 2+1 points+RAYON }
+   Nb_aretes2; 1;
+   d3 ; j3 ;
+   g3 ;
+   R-Rm;
+
+a3_q3 ; I; 4; { arc de cercle passant par 2+1 points+RAYON }
+   Nb_aretes2; 1;
+   a3 ; q3 ;
+   Origine;
+   R+eps;
+
+e3_j3 ; I; 2;
+   Nb_aretes2; 1;
+   e3 ; j3 ;
+
+f3_i3 ; I; 2;
+   Nb_aretes2; 1;
+   f3 ; i3 ;
+
+b3_r3 ; I; 4; { arc de cercle passant par 2+1 points+RAYON }
+   Nb_aretes2; 1;
+   b3; r3;
+   x;
+   R+eps;
+   
+@;
+
+
+{******************************* DEFINITION DES SURFACES **********************} 
+         3;
+{ NOM DE LA SURFACE ou ABANDON?        }
+
+A3 ; I; 1; { quadrangle algebrique }
+   a3_b3 ; b3_r3 ; q3_r3 ; a3_q3 ;
+   1;
+
+X3 ; I; 1; { quadrangle algébrique }
+   b3_d3 ; d3_j3 ; j3_r3 ; b3_r3 ;
+   1; 
+
+B3 ; I; 6; { triangle algébrique structuré }
+   d3_e3 ; e3_j3 ; d3_j3 ;
+
+C3 ; I; 1; { quadrangle algebrique }
+   e3_f3 ; f3_i3 ; i3_j3 ; e3_j3 ;
+   1;
+
+D3 ; I; 1; { quadrangle algebrique }
+   f3_g3 ; g3_h3 ; h3_i3 ; f3_i3 ;
+   1;
+
+E3 ; I; 1; { quadrangle algebrique }
+   i3_j3 ; i3_o3 ; o3_r3 ; j3_r3 ;
+   1;
+
+F3 ; I; 1; { quadrangle algebrique }
+   h3_i3 ; h3_n3 ; n3_o3 ; i3_o3 ;
+   1;
+
+G3 ; I; 1; { quadrangle algebrique }
+   o3_r3 ; o3_p3 ; p3_q3 ; q3_r3 ;
+   1;
+
+@;
+
+{********************************************************************************} 
+{***************************** DEFINITION DES COUCHES **********************} 
+{********************************************************************************}
+
+{******************************** DEFINITION DES LIGNES ***********************}
+
+2;
+{ LIGNES aretes de l objet }
+{ NOM DE LA LIGNE ou ABANDON?        }
+
+{ -> 1 }
+
+a_a1 ; I; 2;
+   Aretes_plastique; 1;
+   a ; a1 ;
+
+b_b1 ; I; 2;
+   Aretes_plastique; 1;
+   b ; b1 ;
+
+c_c1 ; I; 2;
+   Aretes_plastique; 1;
+   c ; c1 ;
+
+d_d1 ; I; 2;
+   Aretes_plastique; 1;
+   d ; d1 ;
+
+e_e1 ; I; 2;
+   Aretes_plastique; 1;
+   e ; e1 ;
+
+f_f1 ; I; 2;
+   Aretes_plastique; 1;
+   f ; f1 ;
+
+g_g1 ; I; 2;
+   Aretes_plastique; 1;
+   g ; g1 ;
+
+h_h1 ; I; 2;
+   Aretes_plastique; 1;
+   h ; h1 ;
+
+i_i1 ; I; 2;
+   Aretes_plastique; 1;
+   i ; i1 ;
+
+j_j1 ; I; 2;
+   Aretes_plastique; 1;
+   j ; j1 ;
+
+k_k1 ; I; 2;
+   Aretes_plastique; 1;
+   k ; k1 ;
+
+l_l1 ; I; 2;
+   Aretes_plastique; 1;
+   l ; l1 ;
+
+m_m1 ; I; 2;
+   Aretes_plastique; 1;
+   m ; m1 ;
+
+n_n1 ; I; 2;
+   Aretes_plastique; 1;
+   n ; n1 ;
+
+o_o1 ; I; 2;
+   Aretes_plastique; 1;
+   o ; o1 ;
+
+p_p1 ; I; 2;
+   Aretes_plastique; 1;
+   p ; p1 ;
+
+q_q1 ; I; 2;
+   Aretes_plastique; 1;
+   q ; q1 ;
+
+r_r1 ; I; 2;
+   Aretes_plastique; 1;
+   r ; r1 ;
+
+{ 1-> 2 }
+
+a1_a2 ; I; 2;
+   Aretes_air; 1;
+   a1 ; a2 ;
+
+b1_b2 ; I; 2;
+   Aretes_air; 1;
+   b1 ; b2 ;
+
+c1_c2 ; I; 2;
+   Aretes_air; 1;
+   c1 ; c2 ;
+
+d1_d2 ; I; 2;
+   Aretes_air; 1;
+   d1 ; d2 ;
+
+e1_e2 ; I; 2;
+   Aretes_air; 1;
+   e1 ; e2 ;
+
+f1_f2 ; I; 2;
+   Aretes_air; 1;
+   f1 ; f2 ;
+
+g1_g2 ; I; 2;
+   Aretes_air; 1;
+   g1 ; g2 ;
+
+h1_h2 ; I; 2;
+   Aretes_air; 1;
+   h1 ; h2 ;
+
+i1_i2 ; I; 2;
+   Aretes_air; 1;
+   i1 ; i2 ;
+
+j1_j2 ; I; 2;
+   Aretes_air; 1;
+   j1 ; j2 ;
+
+k1_k2 ; I; 2;
+   Aretes_air; 1;
+   k1 ; k2 ;
+
+l1_l2 ; I; 2;
+   Aretes_air; 1;
+   l1 ; l2 ;
+
+m1_m2 ; I; 2;
+   Aretes_air; 1;
+   m1 ; m2 ;
+
+n1_n2 ; I; 2;
+   Aretes_air; 1;
+   n1 ; n2 ;
+
+o1_o2 ; I; 2;
+   Aretes_air; 1;
+   o1 ; o2 ;
+
+p1_p2 ; I; 2;
+   Aretes_air; 1;
+   p1 ; p2 ;
+
+q1_q2 ; I; 2;
+   Aretes_air; 1;
+   q1 ; q2 ;
+
+r1_r2 ; I; 2;
+   Aretes_air; 1;
+   r1 ; r2 ;
+
+{ 2-> 3 }
+
+a2_a3 ; I; 2;
+   Aretes_plastique; 1;
+   a2 ; a3 ;
+
+b2_b3 ; I; 2;
+   Aretes_plastique; 1;
+   b2 ; b3 ;
+
+c2_c3 ; I; 2;
+   Aretes_plastique; 1;
+   c2 ; c3 ;
+
+d2_d3 ; I; 2;
+   Aretes_plastique; 1;
+   d2 ; d3 ;
+
+e2_e3 ; I; 2;
+   Aretes_plastique; 1;
+   e2 ; e3 ;
+
+f2_f3 ; I; 2;
+   Aretes_plastique; 1;
+   f2 ; f3 ;
+
+g2_g3 ; I; 2;
+   Aretes_plastique; 1;
+   g2 ; g3 ;
+
+h2_h3 ; I; 2;
+   Aretes_plastique; 1;
+   h2 ; h3 ;
+
+i2_i3 ; I; 2;
+   Aretes_plastique; 1;
+   i2 ; i3 ;
+
+j2_j3 ; I; 2;
+   Aretes_plastique; 1;
+   j2 ; j3 ;
+
+k2_k3 ; I; 2;
+   Aretes_plastique; 1;
+   k2 ; k3 ;
+
+l2_l3 ; I; 2;
+   Aretes_plastique; 1;
+   l2 ; l3 ;
+
+m2_m3 ; I; 2;
+   Aretes_plastique; 1;
+   m2 ; m3 ;
+
+n2_n3 ; I; 2;
+   Aretes_plastique; 1;
+   n2 ; n3 ;
+
+o2_o3 ; I; 2;
+   Aretes_plastique; 1;
+   o2 ; o3 ;
+
+p2_p3 ; I; 2;
+   Aretes_plastique; 1;
+   p2 ; p3 ;
+
+q2_q3 ; I; 2;
+   Aretes_plastique; 1;
+   q2 ; q3 ;
+
+r2_r3 ; I; 2;
+   Aretes_plastique; 1;
+   r2 ; r3 ;
+
+@;
+
+{******************************* DEFINITION DES SURFACES **********************}
+            3;
+{ SURFACES faces de l objet }
+{ NOM DE LA SURFACE ou ABANDON?        }
+
+{ ->1 }
+a_b_1 ; I; 1; { quadrangle algebrique }
+   a_b ; a1_b1 ; a_a1 ; b_b1;
+   1;
+   
+b_d_1 ; I; 1; { quadrangle algebrique }
+   b_d ; b1_d1 ; d_d1 ; b_b1;
+   1;
+
+b_r_1 ; I; 1; { quarrangle algebrique }
+   b_r ; b1_r1 ; r_r1 ; b_b1;
+   1;
+       
+d_e_1 ; I; 1; { quadrangle algebrique }
+   d_e; d1_e1; d_d1; e_e1;
+   1;
+
+e_f_1 ; I; 1; { quadrangle algebrique }
+   e_f; e1_f1; e_e1; f_f1;
+   1;
+
+f_g_1 ; I; 1; { quadrangle algebrique }
+   f_g; f1_g1; f_f1; g_g1;
+   1;
+
+g_h_1 ; I; 1; { quadrangle algebrique }
+   g_h; g1_h1; g_g1; h_h1;
+   1;
+
+h_i_1 ; I; 1; { quadrangle algebrique }
+   h_i; h1_i1; h_h1; i_i1;
+   1;
+
+i_j_1 ; I; 1; { quadrangle algebrique }
+   i_j; i1_j1; i_i1; j_j1;
+   1;
+
+d_j_1 ; I; 1; { quadrangle algebrique }
+   d_j; d1_j1; d_d1; j_j1;
+   1;
+
+e_j_1 ; I; 1; { quadrangle algebrique }
+   e_j; e1_j1; e_e1; j_j1;
+   1;
+
+f_i_1 ; I; 1; { quadrangle algebrique }
+   f_i; f1_i1; f_f1; i_i1;
+   1;
+
+a_q_1 ; I; 1; { quadrangle algebrique }
+   a_q; a1_q1; a_a1; q_q1;
+   1;
+
+p_q_1 ; I; 1; { quadrangle algebrique }
+   p_q; p1_q1; p_p1; q_q1;
+   1;
+
+o_r_1 ; I; 1; { quadrangle algebrique }
+   o_r; o1_r1; o_o1; r_r1;
+   1;
+
+n_o_1 ; I; 1; { quadrangle algebrique }
+   n_o; n1_o1; n_n1; o_o1;
+   1;
+
+o_p_1 ; I; 1; { quadrangle algebrique }
+   o_p; o1_p1; o_o1; p_p1;
+   1;
+
+j_r_1 ; I; 1; { quadrangle algebrique }
+   j_r; j1_r1; j_j1; r_r1;
+   1;
+
+q_r_1 ; I; 1; { quadrangle algebrique }
+   q_r; q1_r1; q_q1; r_r1;
+   1;
+
+i_o_1 ; I; 1; { quadrangle algebrique }
+   i_o; i1_o1; i_i1; o_o1;
+   1;
+
+h_n_1 ; I; 1; { quadrangle algebrique }
+   h_n; h1_n1; h_h1; n_n1;
+   1;
+
+{ 1->2 }
+a_b_2 ; I; 1; { quadrangle algebrique }
+   a1_b1 ; a2_b2 ; a1_a2 ; b1_b2 ;
+   1;
+   
+b_d_2 ; I; 1; { quadrangle algebrique }
+   b1_d1 ; b2_d2 ; d1_d2 ; b1_b2 ;
+   1;
+   
+b_r_2 ; I; 1; { quarrangle algebrique }
+   b1_r1 ; b2_r2 ; r1_r2 ; b1_b2 ;
+   1;
+
+d_e_2 ; I; 1; { quadrangle algebrique }
+   d1_e1; d2_e2; d1_d2; e1_e2;
+   1;
+
+e_f_2 ; I; 1; { quadrangle algebrique }
+   e1_f1; e2_f2; e1_e2; f1_f2;
+   1;
+
+f_g_2 ; I; 1; { quadrangle algebrique }
+   f1_g1; f2_g2; f1_f2; g1_g2;
+   1;
+
+g_h_2 ; I; 1; { quadrangle algebrique }
+   g1_h1; g2_h2; g1_g2; h1_h2;
+   1;
+
+h_i_2 ; I; 1; { quadrangle algebrique }
+   h1_i1; h2_i2; h1_h2; i1_i2;
+   1;
+
+i_j_2 ; I; 1; { quadrangle algebrique }
+   i1_j1; i2_j2; i1_i2; j1_j2;
+   1;
+
+d_j_2 ; I; 1; { quadrangle algebrique }
+   d1_j1; d2_j2; d1_d2; j1_j2;
+   1;
+
+e_j_2 ; I; 1; { quadrangle algebrique }
+   e1_j1; e2_j2; e1_e2; j1_j2;
+   1;
+
+f_i_2 ; I; 1; { quadrangle algebrique }
+   f1_i1; f2_i2; f1_f2; i1_i2;
+   1;
+
+a_q_2 ; I; 1; { quadrangle algebrique }
+   a1_q1; a2_q2; a1_a2; q1_q2;
+   1;
+
+p_q_2 ; I; 1; { quadrangle algebrique }
+   p1_q1; p2_q2; p1_p2; q1_q2;
+   1;
+
+o_r_2 ; I; 1; { quadrangle algebrique }
+   o1_r1; o2_r2; o1_o2; r1_r2;
+   1;
+
+n_o_2 ; I; 1; { quadrangle algebrique }
+   n1_o1; n2_o2; n1_n2; o1_o2;
+   1;
+
+o_p_2 ; I; 1; { quadrangle algebrique }
+   o1_p1; o2_p2; o1_o2; p1_p2;
+   1;
+
+j_r_2 ; I; 1; { quadrangle algebrique }
+   j1_r1; j2_r2; j1_j2; r1_r2;
+   1;
+
+q_r_2 ; I; 1; { quadrangle algebrique }
+   q1_r1; q2_r2; q1_q2; r1_r2;
+   1;
+
+i_o_2 ; I; 1; { quadrangle algebrique }
+   i1_o1; i2_o2; i1_i2; o1_o2;
+   1;
+
+h_n_2 ; I; 1; { quadrangle algebrique }
+   h1_n1 ; h2_n2 ; h1_h2 ; n1_n2 ;
+   1;
+   
+{ 2->3 }
+a_b_3 ; I; 1; { quadrangle algebrique }
+   a2_b2 ; a3_b3 ; a2_a3 ; b2_b3 ;
+   1;
+   
+b_d_3 ; I; 1; { quadrangle algebrique }
+   b2_d2 ; b3_d3 ; d2_d3 ; b2_b3 ;
+   1;
+
+b_r_3 ; I; 1; { quarrangle algebrique }
+   b2_r2 ; b3_r3 ; r2_r3 ; b2_b3 ;
+   1;    
+
+d_e_3 ; I; 1; { quadrangle algebrique }
+   d2_e2; d3_e3; d2_d3; e2_e3;
+   1;
+
+e_f_3 ; I; 1; { quadrangle algebrique }
+   e2_f2; e3_f3; e2_e3; f2_f3;
+   1;
+
+f_g_3 ; I; 1; { quadrangle algebrique }
+   f2_g2; f3_g3; f2_f3; g2_g3;
+   1;
+
+g_h_3 ; I; 1; { quadrangle algebrique }
+   g2_h2; g3_h3; g2_g3; h2_h3;
+   1;
+
+h_i_3 ; I; 1; { quadrangle algebrique }
+   h2_i2; h3_i3; h2_h3; i2_i3;
+   1;
+
+i_j_3 ; I; 1; { quadrangle algebrique }
+   i2_j2; i3_j3; i2_i3; j2_j3;
+   1;
+
+d_j_3 ; I; 1; { quadrangle algebrique }
+   d2_j2; d3_j3; d2_d3; j2_j3;
+   1;
+
+e_j_3 ; I; 1; { quadrangle algebrique }
+   e2_j2; e3_j3; e2_e3; j2_j3;
+   1;
+
+f_i_3 ; I; 1; { quadrangle algebrique }
+   f2_i2; f3_i3; f2_f3; i2_i3;
+   1;
+
+a_q_3 ; I; 1; { quadrangle algebrique }
+   a2_q2; a3_q3; a2_a3; q2_q3;
+   1;
+
+p_q_3 ; I; 1; { quadrangle algebrique }
+   p2_q2; p3_q3; p2_p3; q2_q3;
+   1;
+
+o_r_3 ; I; 1; { quadrangle algebrique }
+   o2_r2; o3_r3; o2_o3; r2_r3;
+   1;
+
+n_o_3 ; I; 1; { quadrangle algebrique }
+   n2_o2; n3_o3; n2_n3; o2_o3;
+   1;
+
+o_p_3 ; I; 1; { quadrangle algebrique }
+   o2_p2; o3_p3; o2_o3; p2_p3;
+   1;
+
+j_r_3 ; I; 1; { quadrangle algebrique }
+   j2_r2; j3_r3; j2_j3; r2_r3;
+   1;
+
+q_r_3 ; I; 1; { quadrangle algebrique }
+   q2_r2; q3_r3; q2_q3; r2_r3;
+   1;
+
+i_o_3 ; I; 1; { quadrangle algebrique }
+   i2_o2; i3_o3; i2_i3; o2_o3;
+   1;
+
+h_n_3 ; I; 1; { quadrangle algebrique }
+   h2_n2; h3_n3 ; h2_h3 ; n2_n3 ;
+   1;
+@;
+
+{**************************** LES TRANSFORMATIONS ****************************}
+ 6;
+{ TRANSFORMATIONS mathematiques }
+{ NOM TRANSFORMATION ou ABANDON?        }
+
+SymetrieOxy;
+   3; { isometrie de R3 -> R3 }
+   4; { symetrie par rapport a un plan defini par 3 points }
+   Origine; g; a;
+
+SymetrieOxz;
+   3; { isometrie de R3 -> R3 }
+   4; { symetrie par rapport a un plan defini par 3 points }
+   Origine; g; h;
+
+SymetrieOyz;
+   3; { isometrie de R3 -> R3 }
+   4; { symetrie par rapport a un plan defini par 3 points }
+   Origine; a; p;
+   
+TranslationcA; 3; 0;    0; 0; R*sin(teta)+2*eps1+eps2;
+
+TranslationcB; 3; 0;    0; 0; R*sin(teta)+eps1+eps2;
+
+TranslationcC; 3; 0;    0; 0; R*sin(teta)+eps1;
+ 
+TranslationcD; 3; 0;    0; 0; Hauteur_cylindre; 
+
+TranslationcE; 3; 0;    0; 0; R*sin(teta);
+
+TranslationcG; 3; 0;    0; 0; Hauteur_cylindre+eps1;
+
+TranslationbH; 3; 0;    0; 0; eps1;
+
+Ecrase_bouchon;     6;
+   DefFonc XX(x,y,z);
+        XX=x;
+   FinFonc;
+
+   DefFonc YY(x,y,z);
+        YY=y;
+   FinFonc; 
+
+   DefFonc ZZ(x,y,z);
+        ZZ=(z - (Hauteur_Cylindre+eps1) )/2+Hauteur_Cylindre+eps1;
+   FinFonc;
+
+  XX; YY; ZZ;
+
+@;
+
+{******************************* DEFINITION DES VOLUMES **********************}
+4;
+
+{ ->1 }
+A_1 ; I; 1;
+  a_b_1; A;
+  q_r_1; b_r_1;
+  A1; a_q_1;
+
+X_1 ; I; 1;
+   X ; X1 ;
+   b_d_1 ; d_j_1 ;
+   j_r_1 ; b_r_1 ;
+   
+B_1 ; I; 4;
+   B ; B1 ; d_e_1 ; e_j_1 ; d_j_1 ;
+
+C_1 ; I; 1;
+   e_f_1 ; i_j_1 ;
+   f_i_1 ; C ;
+   e_j_1 ; C1 ;
+   
+D_1 ; I; 1;
+   f_g_1 ; h_i_1 ;
+   D ; D1 ;   
+   g_h_1 ; f_i_1 ;
+
+E_1 ; I; 1;
+   E ; E1 ;
+   i_j_1 ; o_r_1 ;
+   i_o_1 ; j_r_1 ;
+
+F_1 ; I; 1;
+   F ; F1 ;
+   h_i_1 ; n_o_1 ;
+   h_n_1 ; i_o_1 ;
+
+G_1 ; I; 1;
+   G ; G1 ;
+   o_r_1 ; p_q_1 ;
+   o_p_1 ; q_r_1 ;
+
+
+{ 1 ->2 }
+A_2 ; I; 1;
+  a_b_2; A1;
+  q_r_2; b_r_2;
+  A2; a_q_2;
+
+X_2 ; I; 1;
+   X1 ; X2 ;
+   b_d_2 ; d_j_2 ;
+   j_r_2 ; b_r_2 ;
+
+B_2 ; I; 4;
+   B1  ; B2 ; d_e_2 ; e_j_2 ; d_j_2 ;
+
+C_2 ; I; 1;
+   e_f_2 ; i_j_2 ;
+   C1  ; C2 ;
+   f_i_2 ; e_j_2 ;
+
+D_2 ; I; 1;
+   f_g_2 ; h_i_2 ;
+   D1  ; D2 ;
+   g_h_2 ; f_i_2 ;
+
+E_2 ; I; 1;
+   E1  ; E2 ;
+   i_j_2 ; o_r_2 ;
+   i_o_2 ; j_r_2 ;
+
+F_2 ; I; 1;
+   F1  ; F2 ;
+   h_i_2 ; n_o_2 ;
+   h_n_2 ; i_o_2 ;
+
+G_2 ; I; 1;
+   G1  ; G2 ;
+   o_r_2 ; p_q_2 ;
+   o_p_2 ; q_r_2 ;
+
+
+{ 2 ->3 }
+A_3 ; I; 1;
+  a_b_3; A2;
+  q_r_3; b_r_3;
+  A3; a_q_3;
+
+X_3 ; I; 1;
+   X2 ; X3 ;
+   b_d_3 ; d_j_3 ;
+   j_r_3 ; b_r_3 ;
+
+B_3 ; I; 4;
+   B2  ; B3 ; d_e_3 ; e_j_3 ; d_j_3 ;
+
+C_3 ; I; 1;
+   e_f_3 ; i_j_3 ;
+   C2  ; C3 ;
+   f_i_3 ; e_j_3 ;
+
+D_3 ; I; 1;
+   f_g_3 ; h_i_3 ;
+   D2  ; D3 ;
+   g_h_3 ; f_i_3 ;
+
+E_3 ; I; 1;
+   E2  ; E3 ;
+   i_j_3 ; o_r_3 ;
+   i_o_3 ; j_r_3 ;
+
+F_3 ; I; 1;
+   F2  ; F3 ;
+   h_i_3 ; n_o_3 ;
+   h_n_3 ; i_o_3 ;
+
+G_3 ; I; 1;
+   G2  ; G3 ;
+   o_r_3 ; p_q_3 ;
+   o_p_3 ; q_r_3 ;
+
+
+{********************************* VOLUME DE L'EAU ****************************}
+
+A ; I; 4;
+   A; W ; L ; M ; V ;
+
+E ; I; 1;
+   E ; I ;
+   C ; O ;
+   N ; U ;
+
+F ; I; 1;
+   U ; F ; S ;
+   D ; J ; Q ;
+
+G ; I; 1;
+   O ; K ; R ;
+   M ; G ; P ; 
+   
+X ; I; 4;
+   X; N ; B ; H ; W ;
+   
+@;
+
+{******************************************************************************}
+{********************************* FIN DE **************************************}
+{********************** LA GOURDE SANS LE GOULOT **************************}
+{******************************************************************************}
+{******************************************************************************}
+
+
+{********************************************************************************} 
+{*********************************** LE BOUCHON *******************************} 
+{********************************************************************************}
+      1; 1;
+Origine_zz ; I; 1;
+   0; 0; Hauteur_Cylindre+eps1+Hauteur_Bouchon;
+
+Origine_zcE ; I; 1;
+   0; 0; eps1;
+
+Origine_zcC ; I; 1;
+   0; 0; eps2;
+
+Origine_zcA ; I; 1;
+   0; 0; Hauteur_cylindre1-2*eps1-eps2;
+
+Origine_zcG ; I; 1;
+   0; 0; Hauteur_bouchon;
+
+ba ; I; 1;
+   0; 1/2*epaisseur; Hauteur_Cylindre;
+
+bb ; I; 1;
+                0; 1/2*epaisseur; Hauteur_Cylindre+eps1;
+
+bc ; I; 1;
+                0; 1/2*epaisseur; Hauteur_Cylindre+eps1+Hauteur_Bouchon;
+
+bd ; I; 1;
+   0; 1/2*epaisseur-eps1; Hauteur_Cylindre+eps1+Hauteur_Bouchon;
+
+be ; I; 1;
+   0; 1/2*epaisseur-eps1-eps2; Hauteur_Cylindre+eps1+Hauteur_Bouchon;
+
+bf ; I; 1;
+   0; 1/2*epaisseur-2*eps1-eps2; Hauteur_Cylindre+eps1+Hauteur_Bouchon;
+
+bg ; I; 1;
+   0; 1/2*epaisseur-2*eps1-eps2; Hauteur_Cylindre+eps1;
+
+bh ; I; 1;
+   0; 1/2*epaisseur-2*eps1-eps2; Hauteur_Cylindre;
+
+bi ; I; 1;
+   0; 1/2*epaisseur-2*eps1-eps2; R*sin(teta)+2*eps1+eps2;
+
+bj ; I; 1;
+   0; 1/2*epaisseur-2*eps1-eps2; R*sin(teta)+eps1+eps2;
+
+bk ; I; 1;
+   0; 1/2*epaisseur-2*eps1-eps2; R*sin(teta)+eps1;
+
+bl ; I; 1;
+   0; 1/2*epaisseur-2*eps1-eps2; R*sin(teta);
+
+bm ; I; 1;
+   0; 1/2*epaisseur-eps1-eps2; R*sin(teta);
+
+bn ; I; 1;
+   0; 1/2*epaisseur-eps1; R*sin(teta);
+
+bo ; I; 1;
+   0; 1/2*epaisseur-eps1-eps2; R*sin(teta)+eps1;
+
+bp ; I; 1;
+   0; 1/2*epaisseur-eps1; R*sin(teta)+eps1;
+
+bq ; I; 1;
+   0; 1/2*epaisseur-eps1-eps2; R*sin(teta)+eps1+eps2;
+
+br ; I; 1;
+   0; 1/2*epaisseur-eps1; R*sin(teta)+eps1+eps2;
+
+bs ; I; 1;
+   0; 1/2*epaisseur-eps1-eps2; R*sin(teta)+2*eps1+eps2;
+
+bt ; I; 1;
+   0; 1/2*epaisseur-eps1; R*sin(teta)+2*eps1+eps2;
+
+bu ; I; 1;
+   0; 1/2*epaisseur-eps1-eps2; Hauteur_cylindre;
+
+bv ; I; 1;
+   0; 1/2*epaisseur-eps1; Hauteur_cylindre;
+
+bw ; I; 1;
+   0; 1/2*epaisseur-eps1-eps2; 0;
+
+bx ; I; 1;
+   0; 1/2*epaisseur-eps1; 0;
+
+by ; I; 1;
+   0; 1/2*epaisseur-2*eps1-eps2; 0;
+
+bz ; I; 1;
+   0; 1/2*epaisseur; Hauteur_Cylindre+eps1+2*Hauteur_Bouchon;
+
+bzz ; I; 1;
+   0; 1/2*epaisseur+Hauteur_bouchon; Hauteur_Cylindre+eps1;
+
+@;
+
+2;
+{ LIGNES aretes de l objet }
+{ NOM DE LA LIGNE ou ABANDON?        }
+
+p3_ba ; I; 2; Nb_aretes3; 1;
+   p3 ; ba ;
+
+ba_bb ; I; 2; Aretes_plastique; 1;
+   ba ; bb ;
+
+bb_bc ; I; 2; 4 {Nb d'aretes}; 1;
+   bb ; bc ;
+
+bc_bd ; I; 2; Aretes_plastique; 1;
+   bc ; bd ;
+
+bd_be ; I; 2; Aretes_Air; 1;
+   bd ; be ;
+
+be_bf ; I; 2; Aretes_plastique; 1;
+   be ; bf ;
+
+bf_bg ; I; 2; 4 {Nb d'aretes}; 1;
+   bf ; bg ;
+
+bg_bh ; I; 2; Aretes_plastique; 1;
+   bg ; bh ;
+
+bh_bi ; I; 2; Nb_aretes3; 1;
+   bh ; bi ;
+
+bi_bj ; I; 2; Aretes_plastique; 1;
+   bi ; bj ;
+
+bj_bk ; I; 2; Aretes_Air; 1;
+   bj ; bk ;
+
+bk_bl ; I; 2; Aretes_plastique; 1;
+   bk ; bl ;
+
+bl_bm ; I; 2; Aretes_plastique; 1;
+   bl ; bm ;
+
+bm_bn ; I; 2; Aretes_air; 1;
+   bm ; bn ;
+
+p_bn ; I; 2; Aretes_plastique; 1;
+   p ; bn ;
+   
+bl_by ; I; 2; Nb_aretes2; 1;
+   bl ; by ;
+
+bw_by ; I; 2; Aretes_plastique; 1;
+   by ; bw ;
+
+bw_bx ; I; 2; Aretes_air; 1;
+   bw ; bx ;
+
+w_bx ; I; 2; Aretes_plastique; 1;
+   w ; bx ;
+
+p1_bp ; I; 2; Aretes_plastique; 1;
+   p1 ; bp ;
+
+bk_bo ; I; 2; Aretes_plastique; 1;
+   bk ; bo ;
+
+bo_bp ; I; 2; Aretes_air; 1;
+   bo ; bp ;
+
+p2_br ; I; 2; Aretes_plastique; 1;
+   p2 ; br ;
+
+bj_bq ; I; 2; Aretes_plastique; 1;
+   bj ; bq ;
+
+bq_br ; I; 2; Aretes_air; 1;
+   bq ; br ;
+
+p3_bt ; I; 2; Aretes_plastique; 1;
+   p3 ; bt ;
+
+bi_bs ; I; 2; Aretes_plastique; 1;
+   bi ; bs ;
+
+bs_bt ; I; 2; Aretes_air; 1;
+   bs ; bt ;
+
+ba_bv ; I; 2; Aretes_plastique; 1;
+   ba ; bv ;
+
+bu_bv ; I; 2; Aretes_air; 1;
+   bu ; bv ;
+
+bh_bu ; I; 2; Aretes_plastique; 1;
+   bh ; bu ;
+
+bp_br ; I; 2; Aretes_air; 1;
+   bp ; br ;
+
+br_bt ; I; 2; Aretes_plastique; 1;
+   br ; bt ;
+
+bn_bp ; I; 2; Aretes_plastique; 1;
+   bn ; bp ;
+   
+bo_bq ; I; 2; Aretes_air; 1;
+   bo ; bq ;
+
+bq_bs ; I; 2; Aretes_plastique; 1;
+   bq ; bs ;
+
+bm_bo ; I; 2; Aretes_plastique; 1;
+   bo ; bm ;
+   
+bs_bu ; I; 2; Nb_aretes3; 1;
+   bs ; bu ;
+
+bt_bv ; I; 2; Nb_aretes3; 1;
+   bt ; bv ;
+
+p2_ba ; I; 51; 2; { union de plusieurs lignes }
+   p2_p3 ; p3_ba ;
+
+ba_bc; I; 51; 2; { union de plusieurs lignes }
+   ba_bb ; bb_bc ;
+
+bc_bf; I; 51; 3; { union de plusieurs lignes }
+   bc_bd ; bd_be ; be_bf ;
+
+bf_bh; I; 51; 2; { union de plusieurs lignes }
+   bf_bg ; bg_bh ;
+
+bh_bl; I; 51; 4; { union de plusieurs lignes }
+   bh_bi ; bi_bj ; bj_bk ; bk_bl ;
+
+bm_bu; I; 51; 4; { union de plusieurs lignes }
+   bm_bo ; bo_bq ; bq_bs ; bs_bu ;
+
+bp_bv; I; 51; 3; { union de plusieurs lignes }
+   bp_br ; br_bt ; bt_bv ;
+
+ba_bh; I; 51; 3; { union de plusieurs lignes }
+   ba_bv ; bu_bv ; bh_bu ;
+
+bb_bg; translationbH; 50;
+ba_bh; { transformation d une ligne existante }
+
+br_bv; I; 51; 2; { union de plusieurs lignes }
+   br_bt ; bt_bv ;
+
+bo_bu; I; 51; 3; { union de plusieurs lignes }
+   bo_bq ; bq_bs ; bs_bu ;
+
+w_by; I; 51; 3; { union de plusieurs lignes }
+   w_bx ; bw_bx ; bw_by ;
+
+p_bl; I; 51; 3; { union de plusieurs lignes }
+   p_bn ; bm_bn ; bl_bm ;
+   
+p_bm; I; 51; 2; { union de plusieurs lignes }
+   p_bn ; bm_bn ;
+   
+p1_bk; I; 51; 3; { union de plusieurs lignes }
+   p1_bp ; bo_bp ; bk_bo ;
+
+p1_bo; I; 51; 2; { union de plusieurs lignes }
+   p1_bp ; bo_bp ;
+   
+p2_bj; I; 51; 3; { union de plusieurs lignes }
+   bq_br ; p2_br ;  bj_bq ;
+
+p3_bi; I; 51; 3; { union de plusieurs lignes }
+   p3_bt ; bs_bt ; bi_bs ;
+
+bb_bz;
+{ NOM DE TRANSFORMATION        }
+Ecrase_Bouchon;
+{ DANS LE LEXIQUE ~>TRANSFO }
+           3;
+{ arc de cercle passant par 3 points de R**3 }
+6;
+{ NBARLI 'nombre d''aretes de la ligne' entier ; }
+1;
+{ RAIGEO 'raison geometrique espacant les sommets' reel ; }
+{ NOM DE POINT        }
+bb;
+{ DANS LE LEXIQUE ~>POINT }
+{ NOM DE POINT        }
+bz;
+{ DANS LE LEXIQUE ~>POINT }
+{ NOM DE POINT        }
+bzz;
+{ DANS LE LEXIQUE ~>POINT }
+{ NOM DE LA LIGNE ou ABANDON?        }
+
+Ligne_Ferme_Bouchon;       I; 51; 2;
+   bb_bz ; bb_bc;
+
+@;
+
+
+3;
+{ SURFACES faces de l objet }
+{ NOM DE LA SURFACE ou ABANDON?        }
+
+bA ; I; 1;
+   bb_bc ; bc_bf ; bf_bg ; bb_bg ;
+   1;
+
+bB ; I; 1;
+   ba_bv ; br_bv ; p2_ba ; p2_br ;
+   1;
+
+bC ; I; 1;
+   bu_bv ; bo_bu ; bo_bp ; bp_bv ;
+   1;
+
+bD ; I; 1;
+   bh_bu ; bh_bl ; bl_bm ; bm_bu ;
+   1;
+
+bE ; I; 1;
+   p1_p2 ; p2_br ; bp_br ; p1_bp ;
+   1;
+
+bF ; I; 1;
+   p_p1 ; p1_bo ; bm_bo ; p_bm ;
+   1;
+
+bG ; I; 1;
+   p_w ; w_by ; bl_by ; p_bl ;
+   1;
+
+bH ; I; 1;
+   ba_bh ; bg_bh ; bb_bg ; ba_bb ;
+   1;
+
+fA ; I; 1;
+   p3_bi ; bi_bj ; p2_bj ; p2_p3 ;
+   1;
+
+fB ; I; 1;
+   p2_bj ; bj_bk ; p1_bk ; p1_p2 ;
+   1;
+
+fC ; I; 1;
+   p1_bk ; bk_bl ; p_p1 ; p_bl ;
+   1;
+
+Arc_bouchon_temp;     I;    9;
+     0.05 {Longueur Max des aretes};  1; 0;
+     Ligne_Ferme_Bouchon;
+
+Arc_bouchon;     I;     51;     2;
+   bA; Arc_bouchon_temp;
+
+Goulot;     I;     51;     4;
+   bB ; bD ; bF ; bH;
+
+Air_goulot;     I;     51;     2;
+   bC ; bE ;
+
+@;
+
+
+
+4;
+Goulot;   I;    15;
+      Goulot;
+        Origine; Origine_z;
+      Nb_aretes*8; 0;
+      360;
+
+Arc_Bouchon;   I;    15;
+      Arc_Bouchon;
+        Origine; Origine_z;
+      Nb_aretes*8; 0;
+      360;
+
+Air_goulot;   I;    15;
+      Air_goulot ;
+        Origine; Origine_z;
+      Nb_aretes*8; 0;
+      360;
+
+bG ;   I;    15;
+      bG ;
+        Origine; Origine_z;
+      Nb_aretes*2; 0;
+      -90;
+
+fA ;   I;    15;
+      fA ;
+        Origine; Origine_z;
+      Nb_aretes*8; 0;
+      360;
+
+fB ;   I;    15;
+      fB ;
+        Origine; Origine_z;
+      Nb_aretes*8; 0;
+      360;
+
+fC ;   I;    15;
+      fC ;
+        Origine; Origine_z;
+      Nb_aretes*8; 0;
+      360;
+
+{********************************************************************************} 
+{********************************** LES CYLINDRES ******************************}
+{********************************************************************************} 
+
+  cA;     translationcA;     21;  {Cylindre du milieu }
+         3 {aretes sur le rayon du cylindre};
+         1/2*epaisseur-2*eps1-eps2 {rayon du cercle inferieur}; 1 {raison};
+         Origine_zcA;
+         Nb_aretes3 {aretes dans la hauteur du cylindre};   1 {raison};
+         1/2*epaisseur-2*eps1-eps2 {rayon du cercle superieur};
+         Nb_aretes*8 {aretes sur les arcs de cercle}; 1 {raison};
+
+  cB; translationcB;     21;
+         3 {aretes sur le rayon du cylindre};
+         1/2*epaisseur-2*eps1-eps2 {rayon du cercle inferieur}; 1 {raison};
+         Origine_zcE ;
+         Aretes_plastique {aretes dans la hauteur du cylindre};   1 {raison};
+         1/2*epaisseur-2*eps1-eps2 {rayon du cercle superieur};
+         Nb_aretes*8 {aretes sur les arcs de cercle}; 1 {raison};
+
+  cC; translationcC;     21;
+         3 {aretes sur le rayon du cylindre};
+         1/2*epaisseur-2*eps1-eps2 {rayon du cercle inferieur}; 1 {raison};
+         Origine_zcC ;
+         Aretes_air {aretes dans la hauteur du cylindre};   1 {raison};
+         1/2*epaisseur-2*eps1-eps2 {rayon du cercle superieur};
+         Nb_aretes*8 {aretes sur les arcs de cercle}; 1 {raison};
+
+  cD; translationcD;     21;
+         3 {aretes sur le rayon du cylindre};
+         1/2*epaisseur-2*eps1-eps2 {rayon du cercle inferieur}; 1 {raison};
+         Origine_zcE ;
+         Aretes_plastique {aretes dans la hauteur du cylindre};   1 {raison};
+         1/2*epaisseur-2*eps1-eps2 {rayon du cercle superieur};
+         Nb_aretes*8 {aretes sur les arcs de cercle}; 1 {raison};
+
+  cE; translationcE;     21;
+         3 {aretes sur le rayon du cylindre};
+         1/2*epaisseur-2*eps1-eps2 {rayon du cercle inferieur}; 1 {raison};
+         Origine_zcE ;
+         Aretes_plastique {aretes dans la hauteur du cylindre};   1 {raison};
+         1/2*epaisseur-2*eps1-eps2 {rayon du cercle superieur};
+         Nb_aretes*8 {aretes sur les arcs de cercle}; 1 {raison};
+
+  cF;      I;     21;
+         3 {aretes sur le rayon du cylindre};
+         1/2*epaisseur-2*eps1-eps2 {rayon du cercle inferieur}; 1 {raison};
+         Origine_z ;
+         Nb_aretes2 {aretes dans la hauteur du cylindre};   1 {raison};
+         1/2*epaisseur-2*eps1-eps2 {rayon du cercle superieur};
+         Nb_aretes*8 {aretes sur les arcs de cercle}; 1 {raison};
+
+  cG; translationcG;     21;
+         3 {aretes sur le rayon du cylindre};
+         1/2*epaisseur-2*eps1-eps2 {rayon du cercle inferieur}; 1 {raison};
+         Origine_zcG ;
+         4 {aretes dans la hauteur du cylindre};   1 {raison};
+         1/2*epaisseur-2*eps1-eps2 {rayon du cercle superieur};
+         Nb_aretes*8 {aretes sur les arcs de cercle}; 1 {raison};
+  
+Cylindre_Haut; I; 51; 6;
+    cE; cC; cB; cA; cD; cG;
+
+DefFonc FBouchon(x,y,z);
+   FBouchon=(z>= (Hauteur_cylindre-Hauteur_Bouchon-0.01));
+FinFonc;
+
+DefFonc FEau(x,y,z);
+   Feau=(z <= (Hauteur_cylindre-2*Hauteur_Bouchon));
+FinFonc;
+
+DefFonc FAir(x,y,z);
+   Fair=( (z<= (Hauteur_cylindre-Hauteur_Bouchon+0.005))
+         et (z >= (Hauteur_cylindre-2*Hauteur_Bouchon-0.005) ) );
+FinFonc; 
+
+Cylindre_Bouchon;      I;   36;
+          Cylindre_Haut;
+          FBouchon;
+
+Cylindre_Air;      I;   36;
+          Cylindre_Haut;
+          FAir;
+
+Cylindre_Eau;      I;   36;
+          Cylindre_Haut;
+          Feau;
+@;
+
+{********************************************************************************} 
+{******************************* DESTRUCTION DE TMS **************************}
+{********************************************************************************}
+74;
+2; 1; b ; 2; 1; c ; 2; 1; d ; 2; 1; e ; 2; 1; f ; 2; 1; i ; 
+2; 1; j ; 2; 1; k ; 2; 1; l ; 2; 1; m ; 2; 1; n ; 2; 1; o ; 2; 1; q ; 2; 1; r ;
+2; 1; s ; 2; 1; t ; 2; 1; u ; 2; 1; v ; 2; 1; w ;
+
+2; 1; a1; 2; 1; b1; 2; 1; c1; 2; 1; d1; 2; 1; e1; 2; 1; f1; 2; 1; g1; 2; 1; h1; 2; 1; i1;
+2; 1; j1; 2; 1; k1; 2; 1; l1; 2; 1; m1; 2; 1; n1; 2; 1; o1; 2; 1; p1; 2; 1; q1; 2; 1; r1;
+
+2; 1; a2; 2; 1; b2; 2; 1; c2; 2; 1; d2; 2; 1; e2; 2; 1; f2; 2; 1; g2; 2; 1; h2; 2; 1; i2;
+2; 1; j2; 2; 1; k2; 2; 1; l2; 2; 1; m2; 2; 1; n2; 2; 1; o2; 2; 1; p2; 2; 1; q2; 2; 1; r2;
+
+2; 1; a3; 2; 1; b3; 2; 1; c3; 2; 1; d3; 2; 1; e3; 2; 1; f3; 2; 1; g3; 2; 1; h3; 2; 1; i3;
+2; 1; j3; 2; 1; k3; 2; 1; l3; 2; 1; m3; 2; 1; n3; 2; 1; o3; 2; 1; p3; 2; 1; q3; 2; 1; r3;
+
+2; 1; ba ; 2; 1; bb ; 2; 1; bc ; 2; 1; bd ; 2; 1; be ; 2; 1; bf ; 2; 1; bg ; 2; 1; bh ;
+2; 1; bi ; 2; 1; bj ; 2; 1; bk ; 2; 1; bl ; 2; 1; bm ; 2; 1; bn ; 2; 1; bo ; 2; 1; bp ;
+2; 1; bq ; 2; 1; br ; 2; 1; bs ; 2; 1; bt ; 2; 1; bu ; 2; 1; bv ; 2; 1; bw ; 2; 1; bx ;
+2; 1; by ; 2; 1; bz ; 2; 1; bzz ;
+
+2; 2; a_b ; 2; 2; b_d ; 2; 2; d_e ; 2; 2; e_f ; 2; 2; f_g ; 2; 2; g_h ; 2; 2; h_i ;
+2; 2; i_j ; 2; 2; q_r ; 2; 2; p_q ; 2; 2; o_r ; 2; 2; j_r ; 2; 2; i_o ; 2; 2; h_n ;
+2; 2; o_p ; 2; 2; n_o ; 2; 2; d_j ; 2; 2; a_q ; 2; 2; e_j ; 2; 2; f_i ; 
+
+
+
+{ pour maillage de l'eau }
+2; 2; e_s ; 2; 2; s_t ; 2; 2; e_t ; 2; 2; r_s ; 2; 2; q_t ; 2; 2; s_v ;
+2; 2; t_w ; 2; 2; p_w ; 2; 2; o_v ; 2; 2; n_u ; 2; 2; f_v ; 2; 2; g_u ;
+2; 2; a_t ; 2; 2; u_v ; 2; 2; v_w ;
+
+2; 2; a1_b1; 2; 2; b1_d1; 2; 2; d1_e1; 2; 2; e1_f1; 2; 2; f1_g1;
+2; 2; g1_h1; 2; 2; h1_i1; 2; 2; i1_j1; 2; 2; q1_r1; 2; 2; p1_q1; 2; 2; o1_r1;
+2; 2; j1_r1; 2; 2; i1_o1; 2; 2; h1_n1; 2; 2; o1_p1; 2; 2; n1_o1;
+2; 2; d1_j1; 2; 2; a1_q1; 2; 2; e1_j1; 2; 2; f1_i1;
+
+2; 2; a2_b2; 2; 2; b2_d2; 2; 2; d2_e2; 2; 2; e2_f2; 2; 2; f2_g2;
+2; 2; g2_h2; 2; 2; h2_i2; 2; 2; i2_j2; 2; 2; q2_r2; 2; 2; p2_q2; 2; 2; o2_r2;
+2; 2; j2_r2; 2; 2; i2_o2; 2; 2; h2_n2; 2; 2; o2_p2; 2; 2; n2_o2;
+2; 2; d2_j2; 2; 2; a2_q2; 2; 2; e2_j2; 2; 2; f2_i2;
+
+2; 2; a3_b3; 2; 2; b3_d3; 2; 2; d3_e3; 2; 2; e3_f3; 2; 2; f3_g3;
+2; 2; g3_h3; 2; 2; h3_i3; 2; 2; i3_j3; 2; 2; q3_r3; 2; 2; p3_q3; 2; 2; o3_r3;
+2; 2; j3_r3; 2; 2; i3_o3; 2; 2; h3_n3; 2; 2; o3_p3; 2; 2; n3_o3;
+2; 2; d3_j3; 2; 2; a3_q3; 2; 2; e3_j3; 2; 2; f3_i3;
+
+{ -> 1 }
+2; 2; a_a1 ; 2; 2; b_b1 ; 2; 2; c_c1 ; 2; 2; d_d1 ; 2; 2; e_e1 ; 2; 2; f_f1 ;
+2; 2; g_g1 ; 2; 2; h_h1 ; 2; 2; i_i1 ; 2; 2; j_j1 ; 2; 2; k_k1 ; 2; 2; l_l1 ;
+2; 2; m_m1 ; 2; 2; n_n1 ; 2; 2; o_o1 ; 2; 2; p_p1 ; 2; 2; q_q1 ; 2; 2; r_r1 ;
+
+{ 1-> 2 }
+2; 2; a1_a2 ; 2; 2; b1_b2 ; 2; 2; c1_c2 ; 2; 2; d1_d2 ; 2; 2; e1_e2 ; 2; 2; f1_f2 ;
+2; 2; g1_g2 ; 2; 2; h1_h2 ; 2; 2; i1_i2 ; 2; 2; j1_j2 ; 2; 2; k1_k2 ; 2; 2; l1_l2 ;
+2; 2; m1_m2 ; 2; 2; n1_n2 ; 2; 2; o1_o2 ; 2; 2; p1_p2 ;  2; 2; q1_q2 ; 2; 2; r1_r2 ;
+
+{ 2-> 3 }
+2; 2; a2_a3 ; 2; 2; b2_b3 ; 2; 2; c2_c3 ; 2; 2; d2_d3 ; 2; 2; e2_e3 ; 2; 2; f2_f3 ;
+2; 2; g2_g3 ; 2; 2; h2_h3 ; 2; 2; i2_i3 ; 2; 2; j2_j3 ; 2; 2; k2_k3 ; 2; 2; l2_l3 ;
+2; 2; m2_m3 ; 2; 2; n2_n3 ; 2; 2; o2_o3 ; 2; 2; p2_p3 ; 2; 2; q2_q3 ; 2; 2; r2_r3 ;
+
+2; 2; p3_ba ; 2; 2; ba_bb ; 2; 2; bb_bc ; 2; 2; bc_bd ; 2; 2; bd_be ; 2; 2; be_bf ;
+2; 2; bf_bg ; 2; 2; bg_bh ; 2; 2; bh_bi ; 2; 2; bi_bj ; 2; 2; bj_bk ; 2; 2; bk_bl ;
+2; 2; bl_bm ; 2; 2; bm_bn ; 2; 2;  p_bn ; 2; 2; bl_by ; 2; 2; bw_by ; 2; 2; bw_bx ;
+2; 2;  w_bx ; 2; 2; p1_bp ; 2; 2; bk_bo ; 2; 2; bo_bp ;
+2; 2; p2_br ; 2; 2; bj_bq ; 2; 2; bq_br ; 2; 2; p3_bt ; 2; 2; bi_bs ; 2; 2; bs_bt ;
+2; 2; ba_bv ; 2; 2; bu_bv ; 2; 2; bh_bu ; 2; 2; bp_br ; 2; 2; br_bt ; 2; 2; bn_bp ;
+2; 2; bo_bq ; 2; 2; bq_bs ; 2; 2; bm_bo ; 2; 2; bs_bu ; 2; 2; bt_bv ; 2; 2; p2_ba ;
+2; 2; ba_bc ; 2; 2; bc_bf ; 2; 2; bf_bh ; 2; 2; bh_bl ; 2; 2; bm_bu ; 2; 2; bp_bv ;
+2; 2; ba_bh ; 2; 2; br_bv ; 2; 2; bo_bu ; 2; 2;  w_by ; 2; 2;  p_bl ; 2; 2;  p_bm ;
+2; 2; p1_bk ; 2; 2; p1_bo ; 2; 2; p2_bj ; 2; 2; p3_bi ; 2; 2; bb_bz ; 2; 2; bb_bg ;
+2; 2; Ligne_Ferme_Bouchon;
+
+2; 3; A; 2; 3; B; 2; 3; C; 2; 3; D; 2; 3; E; 2; 3; F; 2; 3; G; 2; 3; H; 2; 3; I;
+2; 3; J; 2; 3; K; 2; 3; L; 2; 3; M; 2; 3; N; 2; 3; O; 2; 3; P; 2; 3; Q; 2; 3; R;
+2; 3; S; 2; 3; U; 2; 3; V; 2; 3; W; 2; 3; X;
+
+2; 3; A1 ; 2; 3; E1 ; 2; 3; F1 ; 2; 3; G1 ; 2; 3; X1 ;
+2; 3; B1 ; 2; 3; C1 ; 2; 3; D1 ;
+
+2; 3; A2 ; 2; 3; E2 ; 2; 3; F2 ; 2; 3; G2 ; 2; 3; X2 ;
+2; 3; B2 ; 2; 3; C2 ; 2; 3; D2 ;
+ 
+2; 3; A3 ; 2; 3; E3 ; 2; 3; F3 ; 2; 3; G3 ; 2; 3; X3 ;
+2; 3; B3 ; 2; 3; C3 ; 2; 3; D3 ; 
+ 
+2; 3; bA; 2; 3; bB; 2; 3; bC; 2; 3; bD; 2; 3; bE; 2; 3; bF; 2; 3; bG; 2; 3; bH;
+2; 3; arc_bouchon; 2; 3; arc_bouchon_temp; 2; 3; fA; 2; 3; fB; 2; 3; fC;
+
+2; 3; a_b_1 ; 2; 3; b_d_1 ; 2; 3; d_e_1 ; 2; 3; e_f_1 ; 2; 3; f_g_1 ; 2; 3; g_h_1 ;
+2; 3; h_i_1 ; 2; 3; i_j_1 ; 2; 3; q_r_1 ; 2; 3; p_q_1 ; 2; 3; o_r_1 ; 2; 3; j_r_1 ;
+2; 3; i_o_1 ; 2; 3; h_n_1 ; 2; 3; o_p_1 ; 2; 3; n_o_1 ; 2; 3; d_j_1 ; 2; 3; a_q_1 ;
+2; 3; e_j_1 ; 2; 3; f_i_1 ; 
+
+2; 3; a_b_2 ; 2; 3; b_d_2 ; 2; 3; d_e_2 ; 2; 3; e_f_2 ; 2; 3; f_g_2 ; 2; 3; g_h_2 ;
+2; 3; h_i_2 ; 2; 3; i_j_2 ; 2; 3; q_r_2 ; 2; 3; p_q_2 ; 2; 3; o_r_2 ; 2; 3; j_r_2 ;
+2; 3; f_i_2 ; 2; 3; i_o_2 ; 2; 3; h_n_2 ; 2; 3; o_p_2 ; 2; 3; n_o_2 ; 2; 3; d_j_2 ;
+2; 3; a_q_2 ; 2; 3; e_j_2 ;
+
+
+2; 3; a_b_3 ; 2; 3; b_d_3 ; 2; 3; d_e_3 ; 2; 3; e_f_3 ; 2; 3; f_g_3 ; 2; 3; g_h_3 ;
+2; 3; h_i_3 ; 2; 3; i_j_3 ; 2; 3; q_r_3 ; 2; 3; p_q_3 ; 2; 3; o_r_3 ; 2; 3; j_r_3 ;
+2; 3; f_i_3 ; 2; 3; i_o_3 ; 2; 3; h_n_3 ; 2; 3; o_p_3 ; 2; 3; n_o_3 ; 2; 3; d_j_3 ;
+2; 3; a_q_3 ; 2; 3; e_j_3 ;
+
+@;
+
+{********************************************************************************} 
+{******************************* CONCEPTION DE LA GOURDE **************************}
+{********************************************************************************} 
+4;
+Cercle_eau_Q; I; 51; 6;
+A ; E ; F ; G ; X ; bG ;
+
+Cercle_eau_d;
+SymetrieOxz; 50; Cercle_eau_Q;
+
+Cercle_eau_a;
+I; 51; 2; Cercle_eau_Q; Cercle_eau_d;
+
+Cercle_eau_p;
+SymetrieOyz; 50; Cercle_eau_a;
+
+Cercle_eau_h;
+I; 51; 3; Cercle_eau_a; Cercle_eau_p; cF;
+
+Cercle_eau_b;
+SymetrieOxy; 50; Cercle_eau_h;
+
+Cercle_eau;
+I; 51; 2; Cercle_eau_h; Cercle_eau_b;
+
+{ Couche 1 }
+Couche_g_1 ;
+I; 51; 8; A_1 ; B_1 ; C_1 ; D_1 ; E_1 ; F_1 ; G_1 ; X_1;
+
+Couche_d_1 ;
+SymetrieOxz; 50; Couche_g_1 ;
+
+Couche_a_1 ;
+I; 51; 2; Couche_d_1 ; Couche_g_1 ;
+
+Couche_p_1 ;
+SymetrieOyz; 50; Couche_a_1 ;
+
+Couche_h_1 ;
+I; 51; 2; Couche_a_1; Couche_p_1;
+
+Couche_ht_1 ;
+I; 51; 4; Couche_a_1; Couche_p_1; fC; cE;
+
+Couche_b_1 ;
+SymetrieOxy; 50; Couche_ht_1 ;
+
+Couche_1 ;
+I; 51; 2; Couche_h_1 ; Couche_b_1 ;
+
+
+{ Couche 2 }
+Couche_g_2 ;
+I; 51; 8; A_2 ; B_2 ; C_2 ; D_2 ; E_2 ; F_2 ; G_2 ; X_2;
+
+Couche_d_2 ;
+SymetrieOxz; 50; Couche_g_2 ;
+
+Couche_a_2 ;
+I; 51; 2; Couche_d_2 ; Couche_g_2 ;
+
+Couche_p_2 ;
+SymetrieOyz; 50; Couche_a_2 ;
+
+Couche_h_2 ;
+I; 51; 2; Couche_a_2 ; Couche_p_2 ;
+
+Couche_ht_2 ;
+I; 51; 4; Couche_a_2 ; Couche_p_2 ; fB; cC;
+
+Couche_b_2 ;
+SymetrieOxy; 50; Couche_ht_2 ;
+
+Couche_2 ;
+I; 51; 2; Couche_h_2 ; Couche_b_2 ;
+
+{ Couche 3 }
+Couche_g_3 ;
+I; 51; 8; A_3 ; B_3 ; C_3 ; D_3 ; E_3 ; F_3 ; G_3 ; X_3;
+
+Couche_d_3 ;
+SymetrieOxz; 50; Couche_g_3 ;
+
+Couche_a_3 ;
+I; 51; 2; Couche_d_3 ; Couche_g_3 ;
+
+Couche_p_3 ;
+SymetrieOyz; 50; Couche_a_3 ;
+
+Couche_h_3 ;
+I; 51; 2; Couche_a_3 ; Couche_p_3 ;
+
+Couche_ht_3 ;
+I; 51; 4; Couche_a_3 ; Couche_p_3 ; fA; cB;
+
+Couche_b_3 ;
+SymetrieOxy; 50; Couche_ht_3 ;
+
+Couche_3 ;
+I; 51; 2; Couche_h_3 ; Couche_b_3 ;
+
+
+@;
+
+74;
+{ TUER des TMS de PLSVO }
+2;
+{ Tuer un PLSVO }
+4;
+{ VOLUME }
+{ NOM DE VOLUME? }
+Cercle_eau_Q; 2; 4; Cercle_eau_d; 2; 4; Cercle_eau_a; 2; 4; Cercle_eau_p; 2; 4;
+Cercle_eau_h; 2; 4; Cercle_eau_b;
+2; 4; A; 2; 4; E; 2; 4; F; 2; 4; G; 2; 4; X; 2; 4; 
+
+{ Couche 1 }
+Couche_g_1 ; 2; 4; Couche_d_1 ; 2; 4; Couche_a_1 ; 2; 4;
+Couche_p_1 ; 2; 4; Couche_h_1 ; 2; 4; Couche_ht_1 ; 2; 4; Couche_b_1 ;
+2; 4; A_1; 2; 4; B_1; 2; 4; C_1; 2; 4; D_1; 2; 4; E_1; 2; 4; F_1; 2; 4; G_1; 2; 4; X_1; 2; 4;
+
+{ Couche 2 }
+Couche_g_2 ; 2; 4; Couche_d_2 ; 2; 4; Couche_a_2 ; 2; 4;
+Couche_p_2 ; 2; 4; Couche_h_2 ; 2; 4; Couche_ht_2 ; 2; 4; Couche_b_2 ;
+2; 4; A_2; 2; 4; B_2; 2; 4; C_2; 2; 4; D_2; 2; 4; E_2; 2; 4; F_2; 2; 4; G_2; 2; 4; X_2; 2; 4;
+
+{ Couche 3 }
+Couche_g_3 ; 2; 4; Couche_d_3 ; 2; 4; Couche_a_3 ; 2; 4;
+Couche_p_3 ; 2; 4; Couche_h_3 ; 2; 4; Couche_ht_3 ; 2; 4 ; Couche_b_3 ;
+2; 4; A_3; 2; 4; B_3; 2; 4; C_3; 2; 4; D_3; 2; 4; E_3; 2; 4; F_3; 2; 4; G_3; 2; 4; X_3;
+
+2; 4; cylindre_haut; 2; 4; cA; 2; 4; cB; 2; 4; cC; 2; 4; cD; 2; 4; cE; 2; 4; cF; 2; 4; cG;
+2; 4; fA; 2; 4; fB; 2; 4; fC;
+@;
+
+
+{********************************************************************************} 
+{******************************* FINITION DES COUCHES **************************}
+{********************************************************************************} 
+4;
+
+Bouchon ; I; 51; 2;
+Arc_Bouchon ; Cylindre_Bouchon;
+
+Plastique ; I; 51; 3;
+Couche_1 ; Couche_3 ; Goulot;
+
+Air ; I; 51; 2;
+Couche_2 ; Air_goulot;
+
+Eau ; I; 51; 2;
+Cercle_eau; Cylindre_Eau;
+
+@;
+
+74;
+2; 4; Arc_Bouchon ; 2; 4; Cylindre_Bouchon ;
+2; 4; Couche_1 ; 2; 4; Couche_3 ; 2; 4; Goulot ;
+2; 4; Couche_2 ; 2; 4; Air_goulot ;
+2; 4; Cercle_eau ; 2; 4; Cylindre_Eau ; 2; 4; bG;
+
+2; 3; Goulot ; 2; 3; Air_goulot ;
+@;
+
+4;
+Gourde ; I; 51; 5;
+Bouchon; Plastique ; Air ; Eau ; Cylindre_Air;
+@;
+
+{********************************************************************************} 
+{******************************* DEFINITION DE L'OBJET **************************}
+{********************************************************************************} 
+DefFonc FTable(x,y,z);
+     FTable=( z<= -( R*sin(teta)+eps-0.001) );
+FinFonc;
+
+DefFonc FPlastique(x,y,z);
+     FPlastique=( ( z>= -( R*sin(teta)+eps )) ou (( z<= -( R*sin(teta)+eps) )
+         et (abs(x)>=R*cos(teta)-0.015)) ou (( z<= -( R*sin(teta)+eps) )
+         et (abs(y)>=R*cos(teta)-0.005) ));
+FinFonc;
+
+{DefFonc FBouchon(x,y,z);
+     FBouchon=( (z>= (hauteur_cylindre+eps1))
+               ou ((x*x+y*y)>= (1/2*epaisseur*1/2*epaisseur) ) );
+FinFonc;}
+
+3;
+Table; I; 37; Plastique; FTable; 1;
+Plastique; I; 37; gourde; FPlastique; 1;
+{Bouchon; I; 37; bouchon; FBouchon; 1;}
+
+@;
+74; 2; 4; gourde;
+@;
+
+5; { OBJETS parties de l OBJET }
+gourde; { NOM DE L'OBJET }
+ 0; { classique 3D }
+ 7; { NBDOBJ 'nombre des Points Lignes Surfaces Volumes Objets de l''objet' }
+ V; Air;
+ V; Cylindre_air;
+ V; Eau;
+ V; Plastique;
+ V; Bouchon;
+ S; Table;
+ S; Plastique;
+@;
+
+7;  { INTERPOLATION NOEUDS du maillage }
+gourde; { NOM DE L'OBJET A INTERPOLER}
+3;      { LAGRANGE de DEGRE 1 }
+@;
+FERMER;

@@ -1,0 +1,13 @@
+deftms ~>>>DTEMPERATURE 'Temperature gradient at integration points'
+variable muet DATE 'date of creation of the TMS'   reel2  ;
+variable muet NUTD 'number of the descriptor array TD'          entier ;
+variable NBJECD 'Number of packs of gradients computations'     entier ;
+variable NDIMED 'Dimension of the Object Space 1 or 2 or 3'  entier ;
+variable NUTYED 'Type number of Finite Elements'                entier ;
+variable NBELFD 'Number of Finite Elements of this type'        entier ;
+variable NBPEFD 'Number of gradient computation points on 1 FE' entier ;
+tableau  DTEMPE(1..NBELFD,1..NDIMED,1..NBPEFD,1..NBJECD)
+'Gradient of Temperature at integration points of FE'   reel2 ;
+tableau  COPEFD(1..NBELFD,1..NBPEFD,1..NDIMED)
+'NDIMED coordinates of NBPEFD integration points of FE'  reel ;
+fintms ;

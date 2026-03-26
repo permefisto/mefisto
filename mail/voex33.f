@@ -1,0 +1,220 @@
+      SUBROUTINE VOEX33( NTLXVO, LADEFI, RADEFI,
+     %                   NTEFHX, MNEFHX, NTSTHX, MNSTHX, IERR )
+C+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+C BUT :    GENERER LE MAILLAGE NON STRUCTURE EN HEXAEDRES D'UN CUBE ou
+C -----    D'UNE SPHERE CENTRE A L'ORIGINE AVEC UN NOYAU DE
+C          n DIFFERENCES FINIES et des COUCHES GENEREES PAR HOMOTHETIE
+C          EN PROGRESSION GEOMETRIQUE
+C
+C ENTREES:
+C --------
+C NTLXVO : NUMERO DU TABLEAU TS DU LEXIQUE DU VOLUME
+C LADEFI : TABLEAU DE DEFINITION DES VOLUMES
+C          CF '~td/d/a_volume__definition'
+C
+C SORTIES:
+C --------
+C NTEFHX : NUMERO      DU TMS 'NSEF' DES NUMEROS DES HEXAEDRES
+C MNEFHX : ADRESSE MCN DU TMS 'NSEF' DES NUMEROS DES HEXAEDRES
+C          CF '~td/d/a___nsef'
+C NTSTHX : NUMERO      DU TMS 'XYZSOMMET' DU MAILLAGE DES HEXAEDRES
+C MNSTHX : ADRESSE MCN DU TMS 'XYZSOMMET' DU MAILLAGE DES HEXAEDRES
+C          CF '~td/d/a___xyzsommet'
+C IERR   : 0 SI PAS D'ERREUR
+C        > 0 SINON
+C+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+C AUTEUR: ALAIN PERRONNET Laboratoire J-L LIONS UPMC Paris Decembre 2006
+C.......................................................................
+      IMPLICIT INTEGER (W)
+      COMMON / UNITES / LECTEU , IMPRIM , INTERA , NUNITE(29)
+      include"./incl/langue.inc"
+      include"./incl/gsmenu.inc"
+      include"./incl/ntmnlt.inc"
+      include"./incl/a___xyzsommet.inc"
+      include"./incl/a___nsef.inc"
+      include"./incl/a_volume__definition.inc"
+      include"./incl/pp.inc"
+      COMMON            MCN(MOTMCN)
+      REAL              RMCN(1)
+      EQUIVALENCE      (MCN(1),RMCN(1))
+      INTEGER           LADEFI(0:*)
+      REAL              RADEFI(0:*)
+      REAL              COIN(6,2)
+C
+      IERR = 0
+C
+C     DIMENSION DE L'ESPACE DU CUBE ou SPHERE
+C     =======================================
+      NBCOOR = 3
+C
+C     CUBE (0) ou SPHERE (1)
+C     ======================
+      LCUouSP = LADEFI( WUBSPO ) - 1
+C
+C     NOMBRE D'ARETES DANS UNE DIRECTION DU NOYAU
+C     ===========================================
+      NACUSP = LADEFI(WUBSPN)
+      IF( NACUSP .LT. 1 ) THEN
+         NBLGRC(NRERR) = 1
+         WRITE(KERR(MXLGER)(1:4),'(I4)') NACUSP
+         KERR(1)='NOMBRE INCORRECT (<1) d ARETES DU NOYAU='
+     %           // KERR(MXLGER)(1:4)
+         CALL LEREUR
+         IERR = 1
+         RETURN
+      ENDIF
+C
+C     NOMBRE DE COUCHES OU HOMOTHETIES
+C     ================================
+      NCCUSP = LADEFI(WUBSPC)
+      IF( NCCUSP .LT. 0 ) THEN
+         NBLGRC(NRERR) = 1
+         WRITE(KERR(MXLGER)(1:4),'(I4)') NCCUSP
+         KERR(1)='NOMBRE INCORRECT (<0) DE COUCHES ='//KERR(MXLGER)(1:4)
+         CALL LEREUR
+         IERR = 2
+         RETURN
+      ENDIF
+C
+C     LARGEUR du NOYAU du CUBE ou SPHERE DANS UNE DIRECTION
+C     =====================================================
+      CUSPLA = RADEFI(WUBSPL)
+      IF( CUSPLA .LT. 0.0 ) THEN
+         NBLGRC(NRERR) = 1
+         WRITE(KERR(MXLGER)(1:14),'(E14.6)') CUSPLA
+         KERR(1) =  'LARGEUR INCORRECTE du NOYAU du CUBE ou SPHERE='
+     %           //  KERR(MXLGER)(1:4)
+         CALL LEREUR
+         IERR = 3
+         RETURN
+      ENDIF
+C
+C     LARGEUR TOTALE du CUBE ou SPHERE dans une DIRECTION
+C     ===================================================
+      CUSPDI = RADEFI(WUBSPD)
+      IF( CUSPDI .LT. CUSPLA .OR.
+     %   (CUSPDI .EQ. CUSPLA .AND. NCCUSP .GT. 0) ) THEN
+         NBLGRC(NRERR) = 1
+         WRITE(KERR(MXLGER)(1:14),'(E14.6)') CUSPDI
+         KERR(1) =  'LARGEUR TOTALE INCORRECTE du CUBE ou SPHERE='
+     %           //  KERR(MXLGER)(1:4)
+         CALL LEREUR
+         IERR = 3
+         RETURN
+      ENDIF
+C
+C     RAISON GEOMETRIQUE D''HOMOTHETIE DANS LES 3 DIMENSIONS
+C     ======================================================
+      IF( NCCUSP .GT. 0 ) THEN
+         CUSPRG = REAL( ( CUSPDI / CUSPLA ) ** (1d0/NCCUSP) )
+      ELSE
+         CUSPRG = 1.0
+      ENDIF
+      IF( CUSPRG .LT. 1.0 ) THEN
+         NBLGRC(NRERR) = 1
+         WRITE(KERR(MXLGER)(1:14),'(E14.6)') CUSPRG
+         KERR(1) =  'RAISON GEOMETRIQUE INCORRECTE (<=1.0) ='
+     %           //  KERR(MXLGER)(1:14)
+         CALL LEREUR
+         IERR = 2
+         RETURN
+      ENDIF
+C
+C     GENERATION DES SOMMETS DES HEXAEDRES du CUBE ou SPHERE
+C     ======================================================
+C     CONSTRUCTION DU TABLEAU 'XYZSOMMET' DE CE VOLUME
+C     NOMBRE DE SOMMETS DANS UNE DIRECTION = NOMBRE D'ARETES DU NOYAU + 1
+      NSCUSP = NACUSP + 1
+C     NOMBRE DE SOMMETS DE LA DERNIERE PEAU DES DIFFERENCES FINIES DU NOYAU
+      NBSTCH = NSCUSP ** NBCOOR - (NACUSP-1) ** NBCOOR
+C     NOMBRE TOTAL DE SOMMETS DU MAILLAGE DES HEXAEDRES
+      NBSOM  = NSCUSP ** NBCOOR + NBSTCH * NCCUSP
+C     DECLARATION OUVERTURE DU TMS XYZSOMMET
+      CALL LXTNDC( NTLXVO, 'XYZSOMMET', 'MOTS' , WYZSOM+NBCOOR*NBSOM )
+      CALL LXTSOU( NTLXVO, 'XYZSOMMET',  NTSTHX, MNSTHX )
+C
+C     CONSTRUCTION DU TABLEAU XYZ des SOMMETS des HEXAEDRES
+C     NO DES SOMMETS SUR LA FRONTIERE DIFFERENCES FINIES
+      CALL TNMCDC( 'ENTIER', NSCUSP**NBCOOR, MNSTNOY )
+      CALL AZEROI( NSCUSP**NBCOOR, MCN(MNSTNOY) )
+C     LONGUEUR D'UNE ARETE DU NOYAU
+      ARCUSP = CUSPLA / NACUSP
+      MNXCH  = MNSTHX + WYZSOM + NBCOOR * ( NSCUSP ** NBCOOR )
+      CALL XYZCUSP( LCUouSP, ARCUSP, NACUSP,
+     %              CUSPDI, CUSPRG, NCCUSP,NBSTCH,
+     %              MCN(MNSTNOY), RMCN(MNSTHX+WYZSOM), RMCN(MNXCH) )
+C
+C     LA DIMENSION DE L'ESPACE = NOMBRE DES COORDONNEES D'UN SOMMET
+      MCN( MNSTHX + WBCOOR ) = NBCOOR
+C     LE NOMBRE DE SOMMETS
+      MCN( MNSTHX + WNBSOM ) = NBSOM
+C     LE NOMBRE DE TANGENTES
+      MCN( MNSTHX + WNBTGS ) = 0
+C     LA DATE DE CREATION
+      CALL ECDATE( MCN(MNSTHX) )
+C     LE NUMERO DU TABLEAU DESCRIPTEUR
+      MCN( MNSTHX + MOTVAR(6) ) = NONMTD( '~>>>XYZSOMMET' )
+C
+C     MIN ET MAX DES COORDONNEES
+      CALL CADEXT( MNSTHX, COIN )
+C
+C     GENERATION DES NUMEROS DES SOMMETS DE CHAQUE EF=HEXAEDRE
+C     ========================================================
+C     CONSTRUCTION DU TABLEAU 'NSEF' DE CES HEXAEDRES NON STRUCTURES
+      NBSOEF = 2 ** NBCOOR
+C     UNE COUCHE = NBFACES DE LA PEAU DES DIFFERENCES FINIES DU NOYAU
+C     NBFACE = 2 * NOMBRE DE CHOIX DE 2 PARMI 3
+C     NBFACE = 2 * 3 = 6 FACES DANS UN HEXAEDRE
+      NBEF1C = NACUSP ** (NBCOOR-1) * 6
+C     NOMBRE TOTAL D'EF DU MAILLAGE
+      NBEFOB = NACUSP ** NBCOOR + NBEF1C * NCCUSP
+      MOTS   = WUSOEF + NBSOEF * NBEFOB
+      CALL LXTNDC( NTLXVO, 'NSEF', 'ENTIER', MOTS   )
+      CALL LXTSOU( NTLXVO, 'NSEF',  NTEFHX,  MNEFHX )
+C
+C     TABLEAU  NUSOEF(1..NBSOEF,1..NBEFOB)
+C     CONSTRUCTION DU TABLEAU DU NO DES 8 SOMMETS DES EF DU CUBE ou SPHERE
+C     EN 3 MORCEAUX: LES DF, LA 1-ERE COUCHE, LES AUTRES COUCHES
+      MNEFNOY = MNEFHX  + WUSOEF
+      MNEFCH  = MNEFNOY + NBSOEF * (NACUSP**NBCOOR)
+      CALL NSEFCUSP( NACUSP, NCCUSP, NBSTCH, MCN(MNSTNOY), NBEF1C,
+     %               MCN(MNEFNOY), MCN(MNEFCH) )
+      CALL TNMCDS( 'ENTIER', NSCUSP**NBCOOR, MNSTNOY )
+C
+C     PERMUTATION DES SOMMETS 3 et 4  7 et 8 POUR OBTENIR L'ORDRE
+C     DE STOCKAGE DES SOMMETS D'UN HEXAEDRE
+      MN = MNEFNOY - 1
+      DO 10 N=1,NBEFOB
+         NS = MCN( MN + 3 )
+         MCN( MN + 3 ) = MCN( MN + 4 )
+         MCN( MN + 4 ) = NS
+         NS = MCN( MN + 7 )
+         MCN( MN + 7 ) = MCN( MN + 8 )
+         MCN( MN + 8 ) = NS
+         MN = MN + NBSOEF
+ 10   CONTINUE
+C
+C     MISE A JOUR DU TABLEAU 'NSEF' DE CE MAILLAGE
+C     TYPE DE L'OBJET : CUBE ou SPHERE est un VOLUME => 4
+      MCN( MNEFHX + WUTYOB ) = 4
+C     LE TYPE INCONNU DE FERMETURE DU MAILLAGE
+      MCN( MNEFHX + WUTFMA ) = -1
+C     VARIABLE NBSOEF 'NOMBRE DE SOMMETS PAR EF' ( 8: 'CUBE' )
+      MCN( MNEFHX + WBSOEF ) = NBSOEF
+C     VARIABLE NBTGEF 'NOMBRE DE TANGENTES PAR EF' ( 0: '0 TG PAR EF' )
+      MCN( MNEFHX + WBTGEF ) = 0
+C     VARIABLE NBEFOB 'NOMBRE DES EF DU PLSV'
+      MCN( MNEFHX + WBEFOB ) = NBEFOB
+C     variable NBEFTG 'Nombre des EF avec TG'
+      MCN( MNEFHX + WBEFTG ) = 0
+C     variable NBEFAP 'Nombre des EF avec POINTEUR sur EF a TG'
+      MCN( MNEFHX + WBEFAP ) = 0
+C     VARIABLE NUTYMA 'NUMERO DE TYPE DU MAILLAGE' ( 0 : 'NON STRUCTURE')
+      MCN( MNEFHX + WUTYMA ) = 0
+C     LA DATE DE CREATION
+      CALL ECDATE( MCN(MNEFHX) )
+C     LE NUMERO DU TABLEAU DESCRIPTEUR
+      MCN( MNEFHX + MOTVAR(6) ) = NONMTD( '~>>>NSEF' )
+C
+      RETURN
+      END

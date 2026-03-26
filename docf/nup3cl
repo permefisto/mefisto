@@ -1,0 +1,18 @@
+Le NOM du TROISIEME POINT des 3 POINTS de la ligne conge.
+La demande ne cessera qu'avec l'entree d'un nom de POINT EXISTANT 
+
+Exemple: P1; P2; P3;
+         La ligne debute en P1 jusqu'au point de tangence construit q1
+         avec les segments P1-q1 et q2-P3 et se termine en P3
+
+                                  q1
+                P1--------------- .      *P2      
+                                      . 
+                                        . 
+                                          
+                                         .q2
+                                         |
+                                         |  
+                                         |
+                                         P3
+

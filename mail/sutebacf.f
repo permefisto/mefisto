@@ -1,0 +1,165 @@
+      SUBROUTINE SUTEBACF( KTITRE, PTXYZD, LEFACO, NO0FAR,
+     %                     NBTRCF, NOTRCF, NBSTCF, NOSTCF, NOTETR,
+     %                     NBTECF, NOTECF )
+C+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+C BUT :    SUPPRIMER D'UNE LISTE DE TETRAEDRES LES TETRAEDRES DONT LE
+C -----    BARYCENTRE SE PROJETTE SUR AUCUNE DES NBTRCF FACES NOTRCF
+C          ET N'AYANT PAS 2 SOMMETS DU CF
+
+C ENTREES:
+C --------
+C KTITRE : TITRE DU TRACE
+C PTXYZD : TABLEAU DES COORDONNEES DES POINTS
+C          PAR POINT : X  Y  Z DISTANCE_SOUHAITEE
+C LEFACO : FACE DU CONTOUR OU INTERFACES ENTRE VOLUMES
+C          IL CONTIENT DANS CET ORDRE
+C          1:   =0 POUR UNE FACE VIDE
+C          123: NO (DANS PTXYZD) DU SOMMET 1, SOMMET 2, SOMMET 3
+C          45:  NO (DANS NUVOPA 0 SINON) DU VOLUME1 , VOLUME2 DE LA FACE
+C          678: NO (DANS LEFACO) DE LA FACE ADJACENTE PAR L'ARETE 1 2 3
+C          9: ATTENTION: UNE ARETE PEUT APPARTENIR A PLUS DE 2 FACES
+C             => CHAINAGE CIRCULAIRE DE CES FACES DANS LEFACO
+C             LEFACO(9,*) -> FACE SUIVANTE (*=0:VIDE, *<>0:NON VIDE)
+C          10: HACHAGE AVEC LA SOMME DES 3 SOMMETS MODULO MXFACO
+C              LF = MOD( NOSOFA(1)+NOSOFA(2)+NOSOFA(3) , MXFACO ) + 1
+C              NF = LEFACO( 10, LF ) LE NUMERO DE LA 1-ERE FACE DANS LEFACO
+C              SI LA FACE NE CONVIENT PAS. PASSAGE A LA SUIVANTE
+C              NF = LEFACO( 9, NF )  ...
+C          11: >0  NO NOTETR D'UN TETRAEDRE AYANT CETTE FACE,
+C              =0  SINON
+C NO0FAR : NUMERO DES 3 SOMMETS DE LA FACE AJOUTEE AU CF
+C          NORMALE VERS L'INTERIEUR DU TETRAEDRE LA CONTENANT
+C NBTRCF : NOMBRE DE TRIANGLES DU TABLEAU NOTRCF
+C          C-A-D DU POLYGONE ENCORE DIT ENSUITE ETOILE
+C NOTRCF : SI NOTRCF(*)>0 NUMERO LEFACO DU TRIANGLE PERDU DU CF
+C                      <0 NUMERO NO0FAR DU TRIANGLE AJOUTE AU CF
+C NBSTCF : NOMBRE DE SOMMETS PERIPHERIQUES DU CF
+C NOSTCF : NUMERO PTXYZD DES NBSTCF SOMMETS PERIPHERIQUES DU CF
+C NOTETR : LISTE DES TETRAEDRES
+C          SOMMET1,    SOMMET2,    SOMMET3,    SOMMET4,
+C          TETRAEDRE1, TETRAEDRE2, TETRAEDRE3, TETRAEDRE4
+C          DE L'AUTRE COTE DE LA FACE
+C          1: 123      2: 234      3: 341      4: 412
+
+C MODIFIES:
+C ---------
+C NBTECF : NOMBRE DE TETRAEDRES DANS LE TABLEAU NOTECF
+C NOTECF : NUMERO NOTETR DES NBTECF TETRAEDRES
+C+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+C AUTEUR : ALAIN PERRONNET LJLL UPMC & St PIERRE du PERRAY Novembre 2017
+C2345X7..............................................................012
+      COMMON / TRTETR / STOPTE, TRACTE
+      LOGICAL           STOPTE, TRACTE, TRACTE0
+
+      CHARACTER*(*)     KTITRE
+      DOUBLE PRECISION  PTXYZD(4,*), CBTR(3), XYZBAR(3), PTPROJ(3)
+      INTEGER           NOTETR(8,*), LEFACO(11,0:*), NO0FAR(3,*),
+     %                  NOTRCF(NBTRCF), NOSTCF(NBSTCF), NOTECF(NBTECF),
+     %                  NFETOI(1)
+
+      TRACTE0 = TRACTE
+      TRACTE = .TRUE.
+      KTITRE='sutebacf:           TETRAEDRES AVANT LES RETRAITS'
+      WRITE( KTITRE(11:17), '(I7)' ) NBTECF
+      CALL SANSDBL( KTITRE, L )
+      CALL TRFETO4( KTITRE(1:L), PTXYZD, 0, NFETOI,
+     %              NBTRCF, NOTRCF, LEFACO, NO0FAR,
+     %              NBTECF, NOTECF, NOTETR )
+
+      NBTE1 = 0
+      DO 40 N = 1, NBTECF
+
+C        LE TETRAEDRE N
+         NTE = NOTECF( N )
+
+C        CALCUL DES XYZBAR DU BARYCENTRE DU TETRAEDRE NTE
+         DO K=1,3
+            XYZBAR( K ) = 0D0
+         ENDDO
+         DO L=1,4
+            NS = NOTETR( L, NTE )
+            DO K = 1, 3
+               XYZBAR( K ) = XYZBAR( K ) + PTXYZD( K, NS )
+            ENDDO
+         ENDDO
+         DO K=1,3
+            XYZBAR( K ) = XYZBAR( K ) * 0.25D0
+         ENDDO
+
+C        PROJECTION DU BARYCENTRE SUR LES NBTRCF FACES DE NOTRCF
+         DO 10 L=1,NBTRCF
+
+            NTR = NOTRCF( L )
+            IF( NTR .GT. 0 ) THEN
+
+C              POINT DE PROJECTION DU BARYCENTRE SUR LE PLAN DE LA FACE NTR
+               CALL PRPTPLD( XYZBAR,
+     %                       PTXYZD(1,LEFACO(1,NTR)),
+     %                       PTXYZD(1,LEFACO(2,NTR)),
+     %                       PTXYZD(1,LEFACO(3,NTR)),
+     %                       PTPROJ, IER )
+C              PTPROJ(3) : XYZBAR DU POINT PROJETE SUR LE PLAN LEFACO(1:3,NTR)
+               IF( IER .NE. 0 ) GOTO 10
+
+C              3 COORDONNEES BARYCENTRIQUES DU POINT PTPROJ DANS LE TRIANGLE NTR
+               CALL CBPTTR( PTXYZD(1,LEFACO(1,NTR)),
+     %                      PTXYZD(1,LEFACO(2,NTR)),
+     %                      PTXYZD(1,LEFACO(3,NTR)),
+     %                      PTPROJ,  CBTR )
+
+C              PTPROJ EST IL INTERNE AU TRIANGLE NTR?
+               IF( ABS(CBTR(1))+ABS(CBTR(2))+ABS(CBTR(3)).LE.1D0 ) THEN
+C                 OUI: NTE EST CONSERVE
+                  GOTO 20
+               ENDIF
+
+            ENDIF
+
+ 10      ENDDO
+
+C        AUCUN POINT PROJETE N'EST INTERNE A SA FACE DU CF
+C        A T IL 2 SOMMETS DU CF?
+         NBSCF = 0
+         DO 15 K=1,4
+            NS = NOTETR(K,NTE)
+            DO L=1,NBSTCF
+               IF( NS .EQ. NOSTCF(L) ) THEN
+                  NBSCF = NBSCF + 1
+                  GOTO 15
+               ENDIF
+            ENDDO
+ 15      ENDDO
+         IF( NBSCF .GE. 2 ) GOTO 20
+
+C        NON: LE TETRAEDRE EST SUPPRIME DE NOTECF
+         PRINT*,'sutebacf: SUPPRESSION du TETRAEDRE',NTE,
+     %          ' st:',  (NOTETR(L,NTE),L=1,4),
+     %          ' efop:',(NOTETR(L,NTE),L=5,8)
+         GOTO 40
+
+C        LE POINT DE PROJECTION EST INTERNE
+C        => LE TETRAEDRE EST CONSERVE
+ 20      NBTE1 = NBTE1+1
+         NOTECF( NBTE1 ) = NOTECF( N )
+
+ 40   ENDDO
+
+      IF( NBTE1 .LT. NBTECF ) THEN
+         PRINT*,'sutebacf: SUITE PROJECTIONS SUR CF',NBTECF-NBTE1,
+     %             ' TETRAEDRES SUPPRIMES de l''ETOILE'
+         KTITRE='sutebacf: RETRAITS de        TETRAEDRES apres PROJECTIO
+     %NN sur PLAN des Faces du CF'
+         WRITE( KTITRE(23:28), '(I6)' ) NBTECF-NBTE1
+         CALL SANSDBL( KTITRE, L )
+         CALL TRFETO4( KTITRE(1:L), PTXYZD, 0, NFETOI,
+     %                 NBTRCF, NOTRCF, LEFACO, NO0FAR,
+     %                 NBTE1,  NOTECF, NOTETR )
+      ENDIF
+
+C     NOUVEAU NOMBRE DE TETRAEDRES DANS NOTECF
+      NBTECF = NBTE1
+
+      TRACTE = TRACTE0
+
+      RETURN
+      END

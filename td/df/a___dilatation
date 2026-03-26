@@ -1,0 +1,14 @@
+deftms ~>>>DILATATION 'DILATATION & TEMPERATURE REFERENCE'
+variable muet DATE   'date de creation du tableau'   reel2  ;
+variable muet NUTD   'numero du tableau descripteur' entier ; 
+variable      LTDILA 'Type des donnees'  entier  
+ ( 1 : 'dilatation & temperature reference constantes' 
+, -1 : 'fonction dilatation & temperature reference' 
+,  0 : 'dilatation & temperature reference a supprimer' ) ; 
+cas LTDILA
+ 1 : variable  DILATA 'Coefficient Dilatation Thermique' reel ; 
+     variable  TEMPIN 'Temperature Reference' reel ; 
+-1 : variable  NFDILA 'Nom fonction Dilatation' ^~>FONCTION ;
+     variable  NFTEMI 'Nom fonction Temperature Reference' ^~>FONCTION ;
+fincas ;
+fintms ;

@@ -1,0 +1,45 @@
+      SUBROUTINE DVAJBA( ARETMX, NBSTEC, NOSTEC, NBSOMM, PXYD )
+C+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+C BUT :    AJOUTER DANS PXYD LE BARYCENTRE DES SOMMETS DE L'ENVELOPPE
+C -----    CONVEXE
+C
+C ENTREES:
+C --------
+C NBSTEC : NOMBRE DE SOMMETS DE L'ENVELOPPE CONVEXE
+C NOSTEC : NOSTEC(1,NA) NUMERO DU SOMMET DE L'ARETE NA DE L'ENVELOPPE
+C          NOSTEC(2,NA) NUMERO DE L'ARETE SUIVANTE DANS L'ENVELOPPE
+C          NA=1 EST LA PREMIERE ARETE DE L'ENVELOPPE PARCOURUE SELON
+C          LE SENS DES AIGUILLES D'UNE MONTRE
+C          LE CHAINAGE EST CIRCULAIRE
+C
+C MODIFIES :
+C ----------
+C NBSOMM : NUMERO DU DERNIER SOMMET STOCKE DANS PXYD
+C PXYD   : TABLEAU DES COORDONNEES 2D DES POINTS
+C+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+C AUTEUR : ALAIN PERRONNET  ANALYSE NUMERIQUE PARIS UPMC       JUIN 1994
+C....................................................................012
+      INTEGER          NOSTEC(1:2,1:*)
+      DOUBLE PRECISION PXYD(3,*), X, Y
+C
+C     CREATION DU BARYCENTRE DE L'ENVELOPPE CONVEXE
+C     =============================================
+      X  = 0D0
+      Y  = 0D0
+      N1 = 1
+      DO 10 I=1,NBSTEC
+C        LE NUMERO DU SOMMET DE L'ARETE I DE L'ENVELOPPE CONVEXE
+         NS = NOSTEC(1,N1)
+         X  = X + PXYD(1,NS)
+         Y  = Y + PXYD(2,NS)
+C        LE SOMMET SUIVANT
+         N1 = NOSTEC(2,N1)
+ 10   CONTINUE
+C
+      NBSOMM = NBSOMM + 1
+      PXYD(1,NBSOMM) = X / NBSTEC
+      PXYD(2,NBSOMM) = Y / NBSTEC
+      PXYD(3,NBSOMM) = ARETMX
+C
+      RETURN
+      END

@@ -1,0 +1,856 @@
+{#############################################################################}
+
+{ =========================================================================== }
+{ MEFISTO         Version de decembre 1999                                    }
+{ UTILISATEUR     Laurent JEANFAIVRE                                          }
+{ PROJET          NACA 16-020 avec RECOUVREMENT --> COUPLAGE                  }
+{ DATE            Mercredi 21 juin 2000                                       }
+{ =========================================================================== }
+
+{#############################################################################}
+{ V A R I A B L E S                                                           }
+{#############################################################################}
+
+{L'UNITE DE DEFINITION DES COORDONNEES EST LE MILLIMETRE}
+
+DefVar
+   zero, C0, L, deuxC0, demiC0,
+   recouvrement,
+   xmin, xmax, ymin, ymax, zmin, zmax,
+   xminmin, xmaxmax, yminmin, ymaxmax, zminmin, zmaxmax,
+   CoucheLim,
+   aretemin, aretemax, aretemox, n,
+   eps, eps2, eps3, eps4, eps5, eps6, eps7, eps8, eps9,
+   eps10, eps15, eps20, eps40, eps_2,
+   C0_R, L_R,
+   E_max, LmoinsE_max, LplusE_max,
+   r, r_H,
+   pres, dim_pres, ouah, dim_ouah, loin, dim_loin;
+
+   zero         =            0;
+   C0           =          475;
+   L            =        712.5;
+   deuxC0       =       2 * C0;
+   demiC0       =     1/2 * C0;
+
+   recouvrement =     1/8 * C0;
+
+   xmin         =    -1/4 * C0; {PARAMETRES DE LA VEINE EXPERIMENTALE}
+   xmax         =     5/4 * C0;
+   ymin         =         zero;
+   ymax         =     3/4 * C0;
+   zmin         =         zero;
+   zmax         =     7/4 * C0;
+
+   xminmin      =         xmin - recouvrement; {PARAMETRES DE LA VEINE EXPERIMENTALE}
+   xmaxmax      =         xmax + recouvrement;
+   yminmin      =         ymin;
+   ymaxmax      =         ymax + recouvrement;
+   zminmin      =         zmin;
+   zmaxmax      =         zmax + recouvrement;
+
+   CoucheLim    =           50;
+
+   aretemin     =    1/22 * C0;
+   aretemax     =    5/22 * C0;
+   aretemox     =    6/22 * C0;
+   n            =           50;
+
+   eps          =    1/50 * C0;
+   eps2         =      2 * eps;
+   eps3         =      3 * eps;
+   eps4         =      4 * eps;
+   eps5         =      5 * eps;
+   eps6         =      6 * eps;
+   eps7         =      7 * eps;
+   eps8         =      8 * eps;
+   eps9         =      9 * eps;
+   eps10        =     10 * eps;
+   eps15        =     15 * eps;
+   eps20        =     20 * eps;
+   eps40        =     40 * eps;
+   eps_2        =    1/2 * eps;
+
+   C0_R         =     C0 - eps;
+   L_R          =      L - eps;
+
+{#############################################################################}
+{ F O N C T I O N S                                                           }
+{#############################################################################}
+
+DefFonc IdX(x,y,z);
+   IdX = x;
+FinFonc;
+
+DefFonc IdY(x,y,z);
+   IdY = y;
+FinFonc;
+
+DefFonc IdZ(x,y,z);
+   IdZ = z;
+FinFonc;
+
+{CORDE HOMOTHETIQUE EN FONCTION DE z}
+DefFonc C(z,C0,L);
+   C = C0 * sqrt( Abs( 1 - (z/L)**2 ) );
+FinFonc;
+
+DefFonc A(x,y,z);
+   A = ( C0 - C(z,C0,L) ) / 2;
+FinFonc;
+
+DefFonc F(x,y,z);
+   F = ( C0 + C(z,C0,L) ) / 2;
+FinFonc;
+
+DefFonc A_R(x,y,z);
+   A_R = ( C0 - C(z,C0_R,L_R) ) / 2;
+FinFonc;
+
+DefFonc F_R(x,y,z);
+   F_R = ( C0 + C(z,C0_R,L_R) ) / 2;
+FinFonc;
+
+{PARAMETRE EN x DE L'AILE}
+DefFonc ParamAile(x,z);
+   ParamAile = x + ( C(z,C0,L) - C0 ) / 2;
+FinFonc;
+
+DefFonc OrdonneeAile(x,muet,z); {MUET CAR 3 PARAMETRES POUR LA TRANSFORMATION}
+   DefVar u,CC;
+   CC = C(z,C0,L);
+   Si CC <= 0.00001
+   ou Abs( Abs( x - demiC0 ) - CC / 2 ) <= 0.0001 * Abs( CC )
+   Alors
+      OrdonneeAile = zero;
+      Retour;
+   Finsi; 
+   u = ( x + ( CC - C0 ) / 2 ) / CC ; {PARAMETRE u DE L'AILE}
+   Si u <= 0
+   Alors
+      OrdonneeAile = zero;
+      Retour;
+   Finsi;
+   Si u < 0.5
+   Alors
+      OrdonneeAile = ( ( -111.642 * u - 8.434 ) * u - 47.796 ) * u
+                     + 197.936 * sqrt(u);
+   Sinon 
+      Si u <= 0.99999
+      Alors
+         u = 1 - u;
+         OrdonneeAile = ( ( 292 * u - 684 ) * u + 465 ) * u + 2;
+      Sinon
+         OrdonneeAile = zero;
+      FinSi;
+   Finsi;
+   OrdonneeAile = OrdonneeAile * sqrt( Abs( 1 - (z/L)**2 ) );
+FinFonc;
+
+DefFonc E(x,muet,z);
+   E = OrdonneeAile( x, 0, z );
+FinFonc;
+
+E_max = OrdonneeAile( demiC0, 0, 0.0 ); {A L'EMPLANTURE DE L'AILE}
+Afficher E_max;
+LmoinsE_max = L - E_max;
+LplusE_max  = L + E_max;
+
+{#############################################################################}
+{ T A I L L E _ I D E A L E                                                   }
+{#############################################################################}
+
+DefFonc Taille_Ideale(x,y,z);
+
+   r         = sqrt( ( x - demiC0 )**2 + ( y + C(z,C0,L) / 2 )**2 );
+   r_H       = sqrt( ( x - demiC0 )**2 + y**2 + ( z - L + eps )**2 );
+   pres      = 1/20 * C0 + C(z,C0,L) / sqrt(2);
+   dim_pres  =                       1/18 * C0;
+   ouah      = 3/20 * C0 + C(z,C0,L) / sqrt(2);
+   dim_ouah  =                       1/12 * C0;
+   loin      =  1/4 * C0 + C(z,C0,L) / sqrt(2);
+   dim_loin  =                        1/8 * C0;
+
+   Taille_Ideale = aretemax;
+
+{EXTERIEUR}
+
+   Si y   >= 0                              {HAUT}
+   et z   >= L - eps2
+   et r_H >= 0        et r_H <= eps3
+   Alors
+      Taille_Ideale = dim_pres;
+   Finsi;
+
+   Si y >= 0                                {COTE -> loin}
+   et z >= 0    et z <= L
+   et r >= ouah et r <= loin
+   Alors
+      Taille_Ideale = dim_loin;
+   Finsi;
+
+   Si y >= 0                                {COTE -> ouah}
+   et z >= 0    et z <= L
+   et r >= pres et r <= ouah
+   Alors
+      Taille_Ideale = dim_ouah;
+   Finsi;
+
+   Si y >= 0                                {COTE -> pres}
+   et z >= 0                   et z <= L
+   et r >= C(z,C0,L) / sqrt(2) et r <= pres
+   Alors
+      Taille_Ideale = dim_pres;
+   Finsi;
+
+   Si y >= 0                                {BAS -> loin}
+   et z >= -0.01 et z <= 0.01
+   et r >= pres  et r <= loin
+   Alors
+      Taille_Ideale = dim_loin;
+   Finsi;
+
+   Si y >= 0                                {BAS -> pres}
+   et z >= -0.01               et z <= 0.01
+   et r >= C(z,C0,L) / sqrt(2) et r <= pres
+   Alors
+      Taille_Ideale = dim_pres;
+   Finsi;
+
+   Si x <= xmin - eps5 ou x >= xmax + eps5  {RECO}
+                       ou y >= ymax + eps5 
+                       ou z >= zmax + eps5 
+   Alors
+      Taille_Ideale = aretemax;
+   Finsi;
+
+{AILE PLANE GROSSIERE}
+
+   Si y >= -0.01                      et y <= 0.01
+   et z >= -0.01                      et z <= L_R - eps
+   et x >= ( C0 - C(z,C0_R,L_R) ) / 2 et x <= ( C0 + C(z,C0_R,L_R) ) / 2
+   Alors
+      Taille_Ideale = 1/20 * C0;
+   Finsi;
+
+{COUCHE EXTERIEURE}
+
+   Si y >= -0.01                et y <= 0.01
+   et z >= -0.01                et z <= 0.01 + LplusE_max
+   et x >= (C0-C(z,C0,L))/2-eps et x <= (C0-C(z,C0,L))/2+eps4
+   Alors
+      Taille_Ideale = aretemin;
+   Finsi;
+
+   Si y >= -0.01                 et y <= 0.01
+   et z >= -0.01                 et z <= 0.01 + LplusE_max
+   et x >= (C0+C(z,C0,L))/2-eps4 et x <= (C0+C(z,C0,L))/2+eps2
+   Alors
+      Taille_Ideale = aretemin;
+   Finsi;
+
+{COUCHE INTERIEURE}
+
+   Si y >= -0.01                      et y <= 0.01
+   et z >= -0.01                      et z <= 0.01 + LplusE_max
+   et x >= (C0-C(z,C0_R,L_R))/2-eps_2 et x <= (C0-C(z,C0_R,L_R))/2+eps4
+   Alors
+      Taille_Ideale = aretemin;
+   Finsi;
+
+   Si y >= -0.01                     et y <= 0.01
+   et z >= -0.01                     et z <= 0.01 + LplusE_max
+   et x >= (C0+C(z,C0_R,L_R))/2-eps4 et x <= (C0+C(z,C0_R,L_R))/2+eps_2
+   Alors
+      Taille_Ideale = aretemin;
+   Finsi;
+
+{LIMITATIONS}
+
+   Si Taille_Ideale < aretemin
+   Alors
+      Taille_Ideale = aretemin;
+   Finsi;
+
+   Si Taille_Ideale > aretemox
+   Alors
+      Taille_Ideale = aretemox;
+   Finsi;
+
+FinFonc;
+
+{#############################################################################}
+{ T R A N S F O R M A T I O N S                                               }
+{#############################################################################}
+
+6;
+
+T_A_R;
+   6; A_R; IdY         ; IdZ;
+T_F_R;
+   6; F_R; IdY         ; IdZ;
+T_A;
+   6; A  ; IdY         ; IdZ;
+T_F;
+   6; F  ; IdY         ; IdZ;
+T_Aile;
+   6; IdX; OrdonneeAile; IdZ;
+
+@;
+
+{#############################################################################}
+{ P O I N T S                                                                 }
+{#############################################################################}
+
+1; 1;
+
+centre;
+   i; 1; C0/2; 0    ; 0;
+largeur;
+   i; 1; C0/2; E_max; 0;
+hauteur;
+   i; 1; C0/2; 0    ; L;
+
+a1_R;
+   i; 1; eps                          ; ymin; zmin    ;
+a2_R;
+   i; 1; C0_R                         ; ymin; zmin    ;
+a1_R_post_T;
+   i; 1; eps/2                        ; ymin; zmin    ;
+a2_R_post_T;
+   i; 1; C0-eps/2                     ; ymin; zmin    ;
+ab1_R;
+   i; 1; demiC0-C(L_R*0.36,C0_R,L_R)/2; ymin; L_R*0.36;
+ab2_R;
+   i; 1; demiC0+C(L_R*0.36,C0_R,L_R)/2; ymin; L_R*0.36;
+aab1_R;
+   i; 1; demiC0-C(L_R*0.66,C0_R,L_R)/2; ymin; L_R*0.66;
+aab2_R;
+   i; 1; demiC0+C(L_R*0.66,C0_R,L_R)/2; ymin; L_R*0.66;
+b1_R;
+   i; 1; demiC0-C(L_R*0.96,C0_R,L_R)/2; ymin; L_R*0.96;
+b2_R;
+   i; 1; demiC0+C(L_R*0.96,C0_R,L_R)/2; ymin; L_R*0.96;
+c1_R;
+   i; 1; demiC0-C(L_R*0.98,C0_R,L_R)/2; ymin; L_R*0.98;
+c2_R;
+   i; 1; demiC0+C(L_R*0.98,C0_R,L_R)/2; ymin; L_R*0.98;
+pointe_R;
+   i; 1; demiC0                       ; ymin; L_R     ;
+
+{POINTS DE L'HEXAEDRE ENGLOBANT}
+h1;
+   i; 1; xmin; ymin; zmin;
+h2;
+   i; 1; xmax; ymin; zmin;
+h3;
+   i; 1; xmax; ymax; zmin;
+h4;
+   i; 1; xmin; ymax; zmin;
+h5;
+   i; 1; xmin; ymin; zmax;
+h6;
+   i; 1; xmax; ymin; zmax;
+h7;
+   i; 1; xmax; ymax; zmax;
+h8;
+   i; 1; xmin; ymax; zmax;
+
+w1;
+   i; 1; xminmin; yminmin; zminmin;
+w2;
+   i; 1; xmaxmax; yminmin; zminmin;
+w3;
+   i; 1; xmaxmax; ymaxmax; zminmin;
+w4;
+   i; 1; xminmin; ymaxmax; zminmin;
+w5;
+   i; 1; xminmin; yminmin; zmaxmax;
+w6;
+   i; 1; xmaxmax; yminmin; zmaxmax;
+w7;
+   i; 1; xmaxmax; ymaxmax; zmaxmax;
+w8;
+   i; 1; xminmin; ymaxmax; zmaxmax;
+
+a1;
+   i; 1; zero                   ; ymin; zmin  ;
+a2;
+   i; 1; C0                     ; ymin; zmin  ;
+a3;
+   i; 1; C0+Couchelim           ; ymin; zmin  ;
+a4;
+   i; 1; deuxC0                 ; ymin; zmin  ;
+ab1;
+   i; 1; demiC0-C(L*0.36,C0,L)/2; ymin; L*0.36;
+ab2;
+   i; 1; demiC0+C(L*0.36,C0,L)/2; ymin; L*0.36;
+aab1;
+   i; 1; demiC0-C(L*0.66,C0,L)/2; ymin; L*0.66;
+aab2;
+   i; 1; demiC0+C(L*0.66,C0,L)/2; ymin; L*0.66;
+b1;
+   i; 1; demiC0-C(L*0.96,C0,L)/2; ymin; L*0.96;
+b2;
+   i; 1; demiC0+C(L*0.96,C0,L)/2; ymin; L*0.96;
+c1;
+   i; 1; demiC0-C(L*0.98,C0,L)/2; ymin; L*0.98;
+c2;
+   i; 1; demiC0+C(L*0.98,C0,L)/2; ymin; L*0.98;
+pointe;
+   i; 1; demiC0                 ; ymin; L     ;
+
+@;
+
+{#############################################################################}
+{ T R A N S F O R M A T I O N S                                               }
+{#############################################################################}
+
+6;
+
+SYM_plan_XZ;
+   3; 4; h1    ; h2     ; h5     ;
+SYM_plan_YZ;
+   3; 4; centre; largeur; hauteur;
+
+@;
+
+{#############################################################################}
+{ L I G N E S                                                                 }
+{#############################################################################}
+
+2;
+
+{LIGNES AVEC taille_ideale}
+battaque_R; 
+   T_A_R; 2 ; n; 1.0; a1_R       ; ab1_R      ;
+b1milieu_R; 
+   T_A_R; 3 ; n; 1.0; ab1_R      ; b1_R       ; aab1_R;
+b1pointe_R;
+   T_A_R; 3 ; n; 1.0; b1_R       ; pointe_R   ; c1_R  ;
+b2pointe_R;
+   T_F_R; 3 ; n; 1.0; pointe_R   ; b2_R       ; c2_R  ;
+b2milieu_R; 
+   T_F_R; 3 ; n; 1.0; b2_R       ; ab2_R      ; aab2_R;
+bfuite_R;
+   T_F_R; 2 ; n; 1.0; ab2_R      ; a2_R       ;
+emplanture_plan_R;
+   i    ; 2 ; n; 1.0; a2_R_post_T; a1_R_post_T;
+attaque_R;
+   i    ; 51; 3; battaque_R ; b1milieu_R       ; b1pointe_R;
+fuite_R;
+   i    ; 51; 3; b2pointe_R ; b2milieu_R       ; bfuite_R  ;
+aile_plan_R;
+   i    ; 51; 2; attaque_R  ; fuite_R          ;
+aile_reduite; 
+   i    ; 51; 2; aile_plan_R; emplanture_plan_R;
+
+{LIGNES DE L'HEXAEDRE ENGLOBANT}
+h1a1;
+   i; 2; n; 1.0; h1; a1; {n EST ACTIF CAR taille_ideale EXISTE}
+h2a2;
+   i; 2; n; 1.0; h2; a2;
+h2h3;
+   i; 2; n; 1.0; h2; h3; {LIGNES DU PLAN z=0}
+h3h4;
+   i; 2; n; 1.0; h3; h4;
+h1h4;
+   i; 2; n; 1.0; h1; h4;
+
+h1h5;
+   i; 2; n; 1.0; h1; h5; {LIGNES VERTICALES}
+h2h6;
+   i; 2; n; 1.0; h2; h6;
+h3h7;
+   i; 2; n; 1.0; h3; h7;
+h4h8;
+   i; 2; n; 1.0; h4; h8;
+
+h5h6;
+   i; 2; n; 1.0; h5; h6; {LIGNES DU PLAN z=zmax}
+h6h7;
+   i; 2; n; 1.0; h6; h7;
+h7h8;
+   i; 2; n; 1.0; h7; h8;
+h5h8;
+   i; 2; n; 1.0; h5; h8;
+
+h1h2;
+   i; 2; n; 1.0; h1; h2; {LIGNES DU PLAN z=0}
+
+w1w2;
+   i; 2; n; 1.0; w1; w2; {LIGNES DU PLAN z=0}
+w2w3;
+   i; 2; n; 1.0; w2; w3;
+w3w4;
+   i; 2; n; 1.0; w3; w4;
+w1w4;
+   i; 2; n; 1.0; w1; w4;
+
+w1w5;
+   i; 2; n; 1.0; w1; w5; {LIGNES VERTICALES}
+w2w6;
+   i; 2; n; 1.0; w2; w6;
+w3w7;
+   i; 2; n; 1.0; w3; w7;
+w4w8;
+   i; 2; n; 1.0; w4; w8;
+
+w5w6;
+   i; 2; n; 1.0; w5; w6; {LIGNES DU PLAN z=zmax}
+w6w7;
+   i; 2; n; 1.0; w6; w7;
+w7w8;
+   i; 2; n; 1.0; w7; w8;
+w5w8;
+   i; 2; n; 1.0; w5; w8;
+
+h1w1;
+   i; 2; n; 1.0; h1; w1;
+h2w2;
+   i; 2; n; 1.0; h2; w2;
+
+battaque;
+   T_A   ; 2 ; n; 1.0; a1    ; ab1   ;
+b1milieu; 
+   T_A   ; 3 ; n; 1.0; ab1   ; b1    ; aab1;
+b1pointe;
+   T_A   ; 3 ; n; 1.0; b1    ; pointe; c1  ;
+b2pointe;
+   T_F   ; 3 ; n; 1.0; pointe; b2    ; c2  ;
+b2milieu; 
+   T_F   ; 3 ; n; 1.0; b2    ; ab2   ; aab2;
+bfuite;
+   T_F   ; 2 ; n; 1.0; ab2   ; a2    ;
+emplanture_plan;
+   i     ; 2 ; n; 1.0; a2    ; a1    ;
+emplanture;
+   T_aile; 50; emplanture_plan;
+attaque;
+   i     ; 51; 3; battaque; b1milieu  ; b1pointe;
+fuite;
+   i     ; 51; 3; b2pointe; b2milieu  ; bfuite  ;
+aile_plan;
+   i     ; 51; 2; attaque ; fuite     ;
+bas;
+   i     ; 51; 6; h1a1    ; emplanture; h2a2; h2h3; h3h4; h1h4 ;
+gauche;
+   i     ; 51; 7; h1a1    ; h1h5      ; h5h6; h2h6; h2a2; fuite; attaque;
+
+{lignes du domaine de recouvrement}
+xbas;
+   i; 51; 8; h1h4; h3h4; h2h3; h2w2; w2w3; w3w4; w1w4; h1w1;
+xhaut;
+   i; 51; 4; w5w6; w6w7; w7w8; w5w8;
+xcote;
+   i; 51; 4; w3w7; w7w8; w4w8; w3w4;
+xdevant;
+   i; 51; 4; w2w3; w3w7; w6w7; w2w6;
+xderriere;
+   i; 51; 4; w1w4; w4w8; w5w8; w1w5;
+xinterieur_haut;
+   i; 51; 4; h5h6; h6h7; h7h8; h5h8;
+xinterieur_cote;
+   i; 51; 4; h3h7; h7h8; h4h8; h3h4;
+xinterieur_devant;
+   i; 51; 4; h2h3; h3h7; h6h7; h2h6;
+xinterieur_derriere;
+   i; 51; 4; h1h4; h4h8; h5h8; h1h5;
+xplan_de_symetrie;
+   i; 51; 8; h1h5; h5h6; h2h6; h2w2; w2w6; w5w6; w1w5; h1w1;
+
+@;
+
+{#############################################################################}
+{ S U R F A C E S                                                             }
+{#############################################################################}
+
+3;
+
+couronne;            i; 33; 2; aile_plan; aile_plan_R;
+triang_couronne;     i; 31; couronne; 3;
+triang_aile_reduite; i; 9; aretemin; 1; 0; aile_reduite;
+aile_plan_total;     i; 51; 2; triang_couronne; triang_aile_reduite;
+aile;                T_aile; 50; aile_plan_total;
+
+@;
+
+2;
+
+emplanture; i; 37; aile; 
+            DefFonc plan_z_nul(x,y,z);
+               plan_z_nul = z>-0.001 et z<0.001;
+            FinFonc;
+            plan_z_nul; 1;
+bas;        i; 51; 6; h1a1; emplanture; h2a2; h2h3; h3h4; h1h4;
+gauche;     i; 51; 7; h1a1; h1h5; h5h6; h2h6; h2a2; fuite; attaque;
+
+@;
+
+3;
+
+gauche;
+   i; 9 ; aretemox; 1  ; 0; gauche;
+bas;
+   i; 9 ; aretemox; 1  ; 0; bas   ;
+naca;
+   i; 51; 3   ; bas; gauche; aile;
+derriere;
+   i; 1 ; h1h4; h4h8; h5h8; h1h5; 2;
+droite;
+   i; 1 ; h4h8; h7h8; h3h7; h3h4; 2;
+haut;
+   i; 1 ; h5h6; h6h7; h7h8; h5h8; 2;
+devant;
+   i; 1 ; h2h3; h3h7; h6h7; h2h6; 2;
+
+{surfaces du domaine de recouvrement}
+triang_xbas;
+   i; 9 ; aretemin; 1; 0;                xbas; {triangulation du bas}
+triang_xhaut;
+   i; 9 ; aretemin; 1; 0;               xhaut; {triangulation du haut}
+triang_xcote;
+   i; 9 ; aretemin; 1; 0;               xcote; {triangulation du cote}
+triang_xdevant;
+   i; 9 ; aretemin; 1; 0;             xdevant; {triangulation du devant}
+triang_xderriere;
+   i; 9 ; aretemin; 1; 0;           xderriere; {triangulation du derriere}
+triang_xplan_de_symetrie;
+   i; 9 ; aretemin; 1; 0;   xplan_de_symetrie; {triangulation du plan_de_symetrie}
+
+triang_rec_1;
+   i; 51; 6; triang_xbas; triang_xhaut; triang_xcote; triang_xdevant; haut; droite;
+triang_recouvrement;                          {union des surfaces}
+   i; 51; 5; triang_rec_1; triang_xderriere; devant; derriere; triang_xplan_de_symetrie;
+
+amelio_triang_recouvrement;                   {amelioration de la surface "union"}
+   i; 30; triang_recouvrement; 0.9; 0;
+
+peau;
+   i; 51; 5; naca; haut; devant; derriere; droite;
+peaut;
+   i; 31; peau; 3;
+
+@;
+
+20;       {PRECISION D'IDENTIFICATION DES POINTS}
+1 ; 1e-4; {AUTOUR D'UN POINT NON ORIGINE}
+2 ; 1e-5; {AUTOUR DU POINT ORIGINE}
+@ ;
+
+@;
+
+{#############################################################################}
+{ V O L U M E S                                                               }
+{#############################################################################}
+
+4;
+
+moitie_NACA;
+   i; 8; 1; peaut;
+moitie_RECO;
+   i; 8; 1; amelio_triang_recouvrement;
+moitie_NACA_RECO;
+   i; 9; 150000; aretemax; 5; 0; 2; moitie_NACA; moitie_RECO;
+amelio_moitie_NACA_RECO;
+   i; 30; moitie_NACA_RECO; 0.38; 5; 10;
+sym_amelio_moitie_NACA_RECO;
+   SYM_plan_XZ; 50; amelio_moitie_NACA_RECO;
+NACA_RECO;
+   i; 51; 2; amelio_moitie_NACA_RECO; sym_amelio_moitie_NACA_RECO;
+
+amelio_moitie_NACA;
+   i; 30; moitie_NACA; 0.2; 5; 10;
+sym_NACA;
+   SYM_plan_XZ; 50; amelio_moitie_NACA;
+NACA;
+   i; 51; 2; amelio_moitie_NACA; sym_NACA;
+
+amelio_moitie_RECO;
+   i; 30; moitie_RECO; 0.2; 5; 10;
+sym_RECO;
+   SYM_plan_XZ; 50; amelio_moitie_RECO;
+RECO;
+   i; 51; 2; amelio_moitie_RECO; sym_RECO;
+
+@;
+
+90; {FICHIER DES tms XYZSOMMET NSEF D'UN PLSV}
+4; NACA;
+@;
+
+90; {FICHIER DES tms XYZSOMMET NSEF D'UN PLSV}
+4; RECO;
+@;
+FERMER;
+{#############################################################################}
+
+
+########################################################################
+                   LES RESULTATS OBTENUS
+########################################################################
+
+
+ MAILLAGE FORME DE L'UNION DU VOISINAGE DE L'AILE (NACA)
+ ET DU RECOUVREMENT (RECO)
+
+ corde a l"emplanture : C0 = 475.0
+ x_minimal = -0.375 C0    x_maximal = 1.375 C0
+ y_minimal = -0.875 C0    y_maximal = 0.875 C0
+ z_minimal = 0.0 C0    z_maximal = 1.875 C0
+
+ nw_c  = 4 noeuds P1 par tetraedre
+ np_c  = 7783 noeuds P1 au total
+ nws_c = 3 noeuds P1 par triangle surfacique
+ nps_c = 2792 noeuds P1 surfaciques au total
+
+ nw_f  = 10 noeuds P2 par tetraedre
+ np_f  = 57429 noeuds P2 au total
+ nws_f = 6 noeuds P2 par triangle surfacique
+ nps_f = 11162 noeuds P2 surfaciques au total
+
+ me    = 39074 tetraedres interieurs au total
+ mes   = 5580 triangles surfaciques au total
+
+ la limite entre les processeurs charges du maillage EF
+ purs et le dernier processeur responsable du recouvrement
+ est marquee par le noeud P1 6903
+
+
+########################################################################
+
+
+ MAILLAGE DU VOISINAGE DE L'AILE (NACA)
+
+ corde a l"emplanture : C0 = 475.0
+ x_minimal = -118.75 C0    x_maximal = 593.75 C0
+ y_minimal = -356.25 C0    y_maximal = 356.25 C0
+ z_minimal = 0.0 C0    z_maximal = 831.25 C0
+
+ nw_c  = 4 noeuds P1 par tetraedre
+ np_c  = 6903 noeuds P1 au total
+ nws_c = 3 noeuds P1 par triangle surfacique
+ nps_c = 2493 noeuds P1 surfaciques au total
+
+ nw_f  = 10 noeuds P2 par tetraedre
+ np_f  = 50976 noeuds P2 au total
+ nws_f = 6 noeuds P2 par triangle surfacique
+ nps_f = 9966 noeuds P2 surfaciques au total
+
+ me    = 34680 tetraedres interieurs au total
+ mes   = 4982 triangles surfaciques au total
+
+
+########################################################################
+
+
+ MAILLAGE DU RECOUVREMENT (RECO)
+
+ corde a l"emplanture : C0 = 475.0
+ x_minimal = -178.125 C0    x_maximal = 653.125 C0
+ y_minimal = -415.625 C0    y_maximal = 415.625 C0
+ z_minimal = 0.0 C0    z_maximal = 890.625 C0
+
+ nw_c  = 4 noeuds P1 par tetraedre
+ np_c  = 1484 noeuds P1 au total
+ nws_c = 3 noeuds P1 par triangle surfacique
+ nps_c = 1477 noeuds P1 surfaciques au total
+
+ nw_f  = 10 noeuds P2 par tetraedre
+ np_f  = 8836 noeuds P2 au total
+ nws_f = 6 noeuds P2 par triangle surfacique
+ nps_f = 5902 noeuds P2 surfaciques au total
+
+ me    = 4394 tetraedres interieurs au total
+ mes   = 2950 triangles surfaciques au total
+
+
+########################################################################
+
+
+ CREATION DU TMS ~>SURFACE>PEAUT>DEFINITION
+ SURFACE PEAUT                    :   1798 ST      0 TG   3592 EF      0 EF a TG
+
+ QUALITE DU MAILLAGE : SURFACE PEAUT
+ ---------------------
+ NOMBRE DE SOMMETS       =   1798
+ NOMBRE DE TANGENTES     =      0
+ NOMBRE D'ELEMENTS FINIS =   3592
+ NOMBRE D'EF AVEC DES TGS=      0
+ QUALITE MOYENNE  DES EF = 0.902
+ QUALITE MINIMALE DES EF = 0.409     POUR L'EF     294
+ ECART TYPE / 1   DES EF = 0.137
+
+ 0.900=< QUALITE <1.000 :  2226 EF soit  62 % : *******************************
+ 0.800=< QUALITE <0.900 :   847 EF soit  24 % : ************
+ 0.700=< QUALITE <0.800 :   365 EF soit  10 % : *****
+ 0.600=< QUALITE <0.700 :    92 EF soit   3 % : *
+ 0.500=< QUALITE <0.600 :    59 EF soit   2 % : *
+ 0.400=< QUALITE <0.500 :     3 EF soit   0 % : .
+
+ EF    294 DE QUALITE MINIMALE   0.4094790
+ SOMMET    174 X=   494.8009     Y=   22.25552     Z=   0.000000
+ SOMMET     24 X=   470.2500     Y=   6.581892     Z=   0.000000
+ SOMMET     25 X=   475.0000     Y=   0.000000     Z=   0.000000
+
+
+########################################################################
+
+
+ QUALITE DU MAILLAGE : VOLUME NACA
+ ---------------------
+ NOMBRE DE SOMMETS       =   6903
+ NOMBRE DE TANGENTES     =      0
+ NOMBRE D'ELEMENTS FINIS =  34680
+ NOMBRE D'EF AVEC DES TGS=      0
+ QUALITE MOYENNE  DES EF = 0.648
+ QUALITE MINIMALE DES EF = 0.201     POUR L'EF    1120
+ ECART TYPE / 1   DES EF = 0.392
+
+ 0.900=< QUALITE <1.000 :  4138 EF soit  12 % : ******
+ 0.800=< QUALITE <0.900 :  1186 EF soit   3 % : *
+ 0.700=< QUALITE <0.800 :  3312 EF soit  10 % : *****
+ 0.600=< QUALITE <0.700 : 12994 EF soit  37 % : ******************
+ 0.500=< QUALITE <0.600 :  6630 EF soit  19 % : *********
+ 0.400=< QUALITE <0.500 :  4066 EF soit  12 % : ******
+ 0.300=< QUALITE <0.400 :  1684 EF soit   5 % : **
+ 0.200=< QUALITE <0.300 :   670 EF soit   2 % : *
+
+ EF   1120 DE QUALITE MINIMALE   0.2005915
+ SOMMET   1382 X=   54.08621     Y=   76.80265     Z=   37.70550
+ SOMMET    147 X=   50.32141     Y=   78.56658     Z=   0.000000
+ SOMMET   2594 X=   54.08621     Y=   103.0046     Z=   37.70550
+ SOMMET    152 X=   56.81834     Y=   97.13468     Z=   0.000000
+
+
+########################################################################
+
+
+ QUALITE DU MAILLAGE : VOLUME RECO
+ ---------------------
+ NOMBRE DE SOMMETS       =   1484
+ NOMBRE DE TANGENTES     =      0
+ NOMBRE D'ELEMENTS FINIS =   4394
+ NOMBRE D'EF AVEC DES TGS=      0
+ QUALITE MOYENNE  DES EF = 0.710
+ QUALITE MINIMALE DES EF = 0.219     POUR L'EF     165
+ ECART TYPE / 1   DES EF = 0.313
+
+ 0.900=< QUALITE <1.000 :   112 EF soit   3 % : *
+ 0.800=< QUALITE <0.900 :   822 EF soit  19 % : *********
+ 0.700=< QUALITE <0.800 :  1700 EF soit  39 % : *******************
+ 0.600=< QUALITE <0.700 :  1156 EF soit  26 % : *************
+ 0.500=< QUALITE <0.600 :   364 EF soit   8 % : ****
+ 0.400=< QUALITE <0.500 :   126 EF soit   3 % : *
+ 0.300=< QUALITE <0.400 :    84 EF soit   2 % : *
+ 0.200=< QUALITE <0.300 :    30 EF soit   1 % : +
+
+ EF    165 DE QUALITE MINIMALE   0.2190148
+ SOMMET    677 X=  -178.1250     Y=   355.6855     Z=   153.2091
+ SOMMET    128 X=  -118.7500     Y=   356.2500     Z=   107.9545
+ SOMMET    153 X=  -118.7500     Y=   281.7197     Z=   184.8837
+ SOMMET    720 X=  -178.1250     Y=   311.1986     Z=   177.0748
+
+
+########################################################################
+

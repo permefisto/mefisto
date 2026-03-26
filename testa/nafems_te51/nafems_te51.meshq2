@@ -1,0 +1,68 @@
+{==========================================================}
+{  MEEFISTO  VERSION July 2007     PROJECT: nafems_te51    }
+{  TEST 51 NAFEMS DEEP SIMPLY-SUPPORTED SOLID BEAM         }
+{  CONSTRUCTION of the BEAM MESH                           }
+{  HEXAHEDRA of DEGREE 2    HEXA 3Q2C                      }
+{==========================================================}
+
+DefVar nbax,nbay,nbaz;
+nbax=5;
+nbay=1;
+nbaz=1;
+
+1; 1;     { POINTS }
+   A;  I; 1; 0; 0; 0;
+   B;  I; 1;10; 0; 0;
+   BB; I; 1;10; 2; 0;
+   AA; I; 1; 0; 2; 0;     
+   HA; I; 1; 0; 0; 2;
+   HB; I; 1;10; 0; 2;
+   HBB; I; 1;10; 2; 2;
+   HAA; I; 1; 0; 2; 2;
+@;
+2;        { LINES }
+   B1; I; 2; nbax; 1; A;   B;
+   B2; I; 2; nbay; 1; B;   BB;
+   B3; I; 2; nbax; 1; BB;  AA;
+   B4; I; 2; nbay; 1; AA;  A;  
+   H1; I; 2; nbax; 1; HA;  HB;
+   H2; I; 2; nbay; 1; HB;  HBB;
+   H3; I; 2; nbax; 1; HBB; HAA;
+   H4; I; 2; nbay; 1; HAA; HA; 
+   V1; I; 2; nbaz; 1; A;   HA;
+   V2; I; 2; nbaz; 1; B;   HB;
+   V3; I; 2; nbaz; 1; BB;  HBB;
+   V4; I; 2; nbaz; 1; AA;  HAA;
+@;
+3;         { SURFACES }
+   DOWN;   I; 1; B1; B2; B3; B4; 2;
+   UP;     I; 1; H1; H2; H3; H4; 2;
+   LEFT;   I; 1; B1; V2; H1; V1; 2;
+   AHEAD;  I; 1; B2; V3; H2; V2; 2;
+   RIGHT;  I; 1; B3; V4; H3; V3; 2;
+   BEHIND; I; 1; B4; V4; H4; V1; 2;
+@;  
+4;         { VOLUME }
+   BEAM; I; 1;   {TRANSFINITE HEXAHEDRON}
+       DOWN; UP; LEFT; AHEAD; RIGHT; BEHIND;
+@;
+
+5; { OBJECT }
+ BEAM; { OBJECT NAME }
+      0; { classic 2D ou 3D }
+      6; { Total of Points Lines Surfaces Volumes NUMBER }
+      V;  BEAM;
+      S;  RIGHT;
+      L;  B4;
+      L;  B2;
+      P;  AA;
+      P;  BB;
+@;
+
+7; { INTERPOLATION definition of mesh nodes }
+  BEAM; 4;  { LAGRANGE of DEGREE 2 }
+@;
+ 10; {drawings}
+  5; 1; 90; { All OBJECTS}
+
+CLOSE;

@@ -1,0 +1,57 @@
+1 : bascule NOIR et BLANC ou COULEURS  
+Les traces s'effectuent ensuite avec 2 ou 256 couleurs
+
+3 : COULEUR des ARETES des LIGNES  
+Definit la couleur des aretes si leur trace est demande.
+
+5 : POURCENTAGE de REDUCTION des ARETES 
+Le trace des aretes donne alors un effet de pointille.
+
+7 : COULEUR  du NOM des LIGNES
+Definit la couleur du NOM des LIGNES tracees
+
+8: bascule TRACE ou NON du NOM des LIGNES
+
+9: bascule TRACE ou NON du TITRE
+
+10: bascule TRACE ou NON du Numero des SOMMETS 
+selon la couleur des caracteres et du fond des caracteres
+
+11: COULEUR du Numero des SOMMETS
+Definit la couleur des numeros des sommets des aretes de la ligne
+
+12: bascule TRACE ou NON du Numero des EF
+
+13: COULEUR du Numero des EF
+Definit la couleur des numeros des aretes de la ligne
+
+14: Max SUBDIVISIONS une ARETE P3
+Definit le nombre maximal de subdivisions en sous-aretes droites
+pour tracer la courbe P3 representant la ligne
+
+15: bascule TRACE ou NON TANGENTES des ARETES d'une LIGNE P3
+
+16: COULEUR du trace des TANGENTES
+Definit la couleur des tangentes aux aretes P3 d'une ligne
+
+17: TYPE de TRAIT des TANGENTES
+Definit le type: continu, tiret'e, doublement tiret'e
+
+20: Nombre d'EPAISSEURS du trace des ARETES
+Permet de renforcer de 1 a 10 traits le trace de chaque arete
+
+50: EFFACER le trace actuel
+
+75: Activer la TRANSLATION ORBITE ZOOM alors
+un mouvement de la souris donne avec le
+bouton 1 de la souris une translation de la ligne
+bouton 2 de la souris une orbite de la ligne
+bouton 3 de la souris un zoom de la ligne
+Pour ABANDONNER, frapper la touche ECHAPPEMENT.
+
+76: Arreter la TRANSLATION ORBITE ZOOM commandee par la souris
+Revient au mode sans mouvement de la ligne avec la souris
+
+90: EXECUTION du TRACE 
+selon la couleur des caracteres et du fond des caracteres   
+la couleur des aretes et les caracteristiques definies avant

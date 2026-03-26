@@ -1,0 +1,86 @@
+      SUBROUTINE VDCFCX( PTXYZD, N1A1CF, NOARCF, SINMIN )
+C+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+C BUT :    LE CONTOUR FERME DEFINI PAR N1A1CF ET NOARCF EST IL CONVEXE?
+C -----
+C
+C ENTREES:
+C --------
+C PTXYZD : TABLEAU DES COORDONNEES DES POINTS
+C          PAR POINT : X  Y  Z DISTANCE_SOUHAITEE
+C NBET   : NUMERO DU CONTOUR FERME A TRAITER
+C N1A1CF : POINTEUR DANS NOARCF DE LA PREMIERE ARETE DU CF
+C NOARCF : NUMERO DES ARETES DE LA LIGNE DU CONTOUR FERME SELON UN SENS
+C
+C SORTIE :
+C --------
+C SINMIN : >=0 LE CF EST CONVEXE ET SINMIN EST EGAL A LA VALEUR ABSOLUE
+C              DU SINUS MINIMAL DES ANGLES INTERNES AU CF
+C          < 0 LE CF N'EST PAS CONVEXE
+C+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+C AUTEUR : ALAIN PERRONNET  ANALYSE NUMERIQUE PARIS UPMC    OCTOBRE 1991
+C2345X7..............................................................012
+      DOUBLE PRECISION  PTXYZD(1:4,1:*)
+      INTEGER           NOARCF(1:3,1:*)
+      DOUBLE PRECISION  VECT(3,3),VN(3),PROSCD,D,D1,D2,D3
+C
+C     LES 3 PREMIERS SOMMETS OU ARETES DU CF
+      NA1 = N1A1CF
+C
+ 3    NS1 = NOARCF( 1, NA1 )
+      NA2 = NOARCF( 2, NA1 )
+      NS2 = NOARCF( 1, NA2 )
+      NS0 = NS2
+      SINMIN = 2
+C
+C     LE 3-EME SOMMET
+ 5    NA3 = NOARCF( 2, NA2 )
+      NS3 = NOARCF( 1, NA3 )
+C
+C     CALCUL DU PRODUIT VECTORIEL DE 2 ARETES CONSECUTIVES DU CF
+      DO 10 I=1,3
+         VECT(I,1) = PTXYZD(I,NS1) - PTXYZD(I,NS2)
+         VECT(I,2) = PTXYZD(I,NS3) - PTXYZD(I,NS2)
+ 10   CONTINUE
+      CALL PROVEC( VECT(1,1), VECT(1,2), VECT(1,3) )
+C
+      D1 = VECT(1,1)**2 + VECT(2,1)**2 + VECT(3,1)**2
+      D2 = VECT(1,2)**2 + VECT(2,2)**2 + VECT(3,2)**2
+      D3 = VECT(1,3)**2 + VECT(2,3)**2 + VECT(3,3)**2
+C
+      IF( NS0 .EQ. NS2 ) THEN
+C
+C        SAUVEGARDE DU PREMIER VECTEUR NORMAL NON NUL
+         IF( D3 .LT. (D1+D2)*1D-10) THEN
+C           LES 3 SOMMETS SONT ALIGNES
+C           CHOIX D'UNE AUTRE ARETE
+            NA1 = NA2
+            GOTO 3
+         ENDIF
+         DO 20 I=1,3
+            VN(I) = VECT(I,3)
+ 20      CONTINUE
+C
+      ELSE
+C
+C        LA NORMALE A T ELLE CHANGE DE SENS ?
+         D = PROSCD( VECT(1,3), VN, 3 )
+         IF( D .LT. 0D0 ) THEN
+C           CHANGEMENT DE SENS => ANGLE INTERNE > PI
+            SINMIN = -1
+            RETURN
+         ENDIF
+C
+C        LE MINIMUM DE LA VALEUR ABSOLUE DU SINUS
+         D = D1 * D2
+         IF( D .GT. 0D0 ) THEN
+            SINMIN = REAL( MIN( DBLE(SINMIN) , SQRT( D3 / (D1*D2) ) ) )
+         ENDIF
+      ENDIF
+C
+C     NON: PASSAGE AU SOMMET SUIVANT
+      NA2 = NA3
+      NS1 = NS2
+      NS2 = NS3
+      IF( NS2 .NE. NS0 ) GOTO 5
+C     ICI LE CF CONVEXE ET SINMIN EST >=0
+      END

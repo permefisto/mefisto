@@ -1,0 +1,18 @@
+variable DebuELAS 'ELASTICITY of OBJECTS' entier
+(1  : 'OBJECT NAME to treat',
+ 2  : 'ELASTICITY INPUT DATA', 
+ 3  : 'STEADY ELASTICITY solver',
+ 4  : 'UNSTEADY ELASTICITY solver d2/dt2',
+ 6  : 'EIGENMODES solver',
+ 7  : 'DRAWING of EIGENMODES',
+ 8  : 'DRAWING of DISPLACEMENT & STRESS',
+ 10 : 'DRAWING of PLSVO meshes',
+ 20 : 'PRECISION to INVERSE A x = b',
+ 38 : 'WINDOW PIXELS WIDTH & HEIGHT',
+ 39 : 'BACKGROUND COLOR',
+ 71 : 'TOOLS on TMS',
+ 72 : 'TOOLS on FILES of the MS',
+ 73 : 'TOOLS on I/O units',
+ 74 : 'DELETE TMS of PLSVO',
+ 97 : 'MEFISTO VERSION NAME',
+ 99 : 'SAVE DATA and QUIT' ) ;

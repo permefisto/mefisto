@@ -1,0 +1,137 @@
+{ ================================================================ }
+{ MEFISTO Version Octobre 1999 PROJET: Test THEILC sur carre [0,1] }
+{ Utilisateur: perronnet       Date  : 21/02/98                    }
+{ ================================================================ }
+{Pour definir la temperature au bord du pb stationnaire t=0}
+ deffonc temperature(t,x,y,z,nutype,nuobj,temper);
+ temperature=x*(1-x)*y*(1-y)*(t+1);
+ finfonc;
+
+{Pour afficher les erreurs}
+ deffonc temperature_exacte(t,x,y,z);
+ temperature_exacte=x*(1-x)*y*(1-y)*(t+1);
+ finfonc;
+
+{La vitesse du fluide}
+ defvar V1,V2;  V1=0.1; V2=0.1;
+
+{ ====================  PB STATIONNAIRE ============================}
+{fomega = V gradient temperature - Laplacien temperature}
+ deffonc fomega(t,x,y,z,nutyob,nuobjt,temper);
+    defvar x1,y1,t1;
+    t1 = t + 1;
+    x1 = x*(1-x);
+    y1 = y*(1-y);
+    fomega= 2*t1*(x1+y1)+ t1*(V1*(1-2*x)*y1+V2*(1-2*y)*x1) ;
+ finfonc;
+
+1; { NOM de l OBJET a traiter ensuite }
+ carre;
+
+2; { ENTREE des DONNEES du PROBLEME de THERMIQUE }
+
+ { SURFACE: CARRE }
+   2; { densite de CONDUCTIVITE THERMIQUE }
+     3;   { materiau 2D homogene isotrope }
+     1.0; { CONDUC  'conductivite du materiau'}
+   4;   { densite SOURCE de CHALEUR }
+    -1;   { fonction utilisateur }
+     fomega; { DANS LE LEXIQUE ~>FONCTION }
+   5; {VITESSE du FLUIDE}
+     1;   {type de la vitesse du fluide: constante}
+     2;   {nombre des composantes de la vitesse}
+     V1; V2; {vecteur vitesse du fluide}
+   @;
+
+ { LIGNE: AD }
+   3; { CONTACT temperature imposee }
+     -1; { fonction utilisateur }
+      temperature; { DANS LE LEXIQUE ~>FONCTION }
+   @;
+
+ { LIGNE: CD }
+   3; { CONTACT temperature imposee }
+     -1; { fonction utilisateur }
+      temperature; { DANS LE LEXIQUE ~>FONCTION }
+   @;
+
+ { LIGNE: BC }
+   3; { CONTACT temperature imposee }
+     -1; { fonction utilisateur }
+      temperature; { DANS LE LEXIQUE ~>FONCTION }
+   @;
+
+ { LIGNE: AB }
+   3; { CONTACT temperature imposee }
+     -1; { fonction utilisateur }
+      temperature; { DANS LE LEXIQUE ~>FONCTION }
+   @;
+
+3;  1; { RESOLUTION pb THERMIQUE LINEAIRE STATIONNAIRE }
+    1; { Resolution par CHOLESKY }
+@;
+
+{ ====================  PB INSTATIONNAIRE ============================}
+{fomega = d temperature/dt +V gradient temperature - Laplacien temperature}
+ deffonc fomega(t,x,y,z,nutyob,nuobjt,temper);
+    defvar x1,y1,t1;
+    t1 = t + 1;
+    x1 = x*(1-x);
+    y1 = y*(1-y);
+    fomega=x1*y1 + 2*t1*(x1+y1)+ t1*(V1*(1-2*x)*y1+V2*(1-2*y)*x1) ;
+ finfonc;
+
+2; { ENTREE des DONNEES du PROBLEME de THERMIQUE }
+
+ { SURFACE: CARRE }
+   1; { densite de MASSE }
+     1;   { constante }
+     1.0; { densite de MASSE }
+   7; { densite de CHALEUR MASSIQUE }
+     1;   { constante }
+     1.0; { densite de CHALEUR MASSIQUE }
+   2; { densite de CONDUCTIVITE THERMIQUE }
+     3;   { materiau 2D homogene isotrope }
+     1.0; { CONDUC  'conductivite du materiau'}
+   4;   { densite SOURCE de CHALEUR }
+    -1;   { fonction utilisateur }
+     fomega; { DANS LE LEXIQUE ~>FONCTION }
+   @;
+
+ { LIGNE: AD }
+   3; { CONTACT temperature imposee }
+     -1; { fonction utilisateur }
+      temperature; { DANS LE LEXIQUE ~>FONCTION }
+   @;
+
+ { LIGNE: CD }
+   3; { CONTACT temperature imposee }
+     -1; { fonction utilisateur }
+      temperature; { DANS LE LEXIQUE ~>FONCTION }
+   @;
+
+ { LIGNE: BC }
+   3; { CONTACT temperature imposee }
+     -1; { fonction utilisateur }
+      temperature; { DANS LE LEXIQUE ~>FONCTION }
+   @;
+
+ { LIGNE: AB }
+   3; { CONTACT temperature imposee }
+     -1; { fonction utilisateur }
+      temperature; { DANS LE LEXIQUE ~>FONCTION }
+   @;
+        {======================================}
+4;      { RESOUDRE pb THERMIQUE INSTATIONNAIRE }
+        {======================================}
+     1; { COEFFICIENTS INDEPENDANTS du TEMPS et de la TEMPERATURE }
+   0.0; { TEMPS INITIAL de l'etude thermique }
+     2; { Temperature initiale = la solution du PB stationnaire }
+    16; { TEMPS FINAL du CALCUL }
+     1; { PAS de TEMPS }
+     5; { Nombre de vecteurs temperatures a stocker }
+     1; { Resolution par CHOLESKY avec stockage PROFIL }
+   2/3; { THETA de la THETA-METHODE }
+@;
+8; 2; 2; 1; 90; {TRACE des ZONES de COULEURS AU TEMPS FINAL}
+FERMER;

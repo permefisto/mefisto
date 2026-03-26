@@ -1,0 +1,9 @@
+deftms ~>>>XYZSOMMET 'XYZ of vertices & tangents of a PLSV'
+variable muet DATE 'date of creation of the TMS'   reel2  ;
+variable muet NUTD 'number of the descriptor array TD' entier ; 
+variable      NBSOM       'number of vertices'    entier ;
+variable      NBTGS       'number of tangents'    entier ;
+variable      NBCOOR      'number of vertex coordinates' entier ;
+tableau  XYZSOM(1..NBSOM) 'X Y Z of each vertex'  xyz ;
+tableau  XYZTGS(1..NBTGS) 'X Y Z of each tangent' xyz ;
+fintms ;

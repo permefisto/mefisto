@@ -1,0 +1,203 @@
+{ ==================================================================== }
+{ Logiciel MEFISTO     : Version Decembre 1999                         }
+{ Nom de l'Utilisateur : perronne                                      }
+{ Nom du Projet        : demo                                          }
+{ Date                 : 28/05/ 0                                      }
+{ Heure                : 12h 05m 29s                                   }
+{ ==================================================================== }
+@;
+@;
+@;
+
+3; { SURFACES faces de l objet }
+ a; {NOM de la SURFACE ou ABANDON? }
+ i; {DANS LE LEXIQUE ~>TRANSFO }
+ 1; {quadrangle transfini }
+ AX1AX2; AX2AM2AY2; AY1AY2; AX1AM1AY1; {DANS LE LEXIQUE ~>LIGNE }
+ 1; { maillage regulier }
+
+ a; i; 9; {triangulation par TE ecrase la precedente}
+ arete; 1; 0; la;
+
+ { NOM de la SURFACE ou ABANDON? }
+ ab1; i; 1;
+ { DANS LE LEXIQUE ~>TRANSFO }
+ { quadrangle transfini }
+ { NOM de LIGNE }
+ AX1AM1AY1;
+ { DANS LE LEXIQUE ~>LIGNE }
+ { NOM de LIGNE }
+ ay1by1;
+ { DANS LE LEXIQUE ~>LIGNE }
+ { NOM de LIGNE }
+ BX1BM1BY1;
+ { DANS LE LEXIQUE ~>LIGNE }
+ { NOM de LIGNE }
+ AX1BX1;
+ { DANS LE LEXIQUE ~>LIGNE }
+ 1;
+ { maillage regulier }
+
+ { NOM de la SURFACE ou ABANDON? }
+ abx; i; 1;
+ { DANS LE LEXIQUE ~>TRANSFO }
+ { quadrangle transfini }
+ { NOM de LIGNE }
+ AX1AX2;
+ { DANS LE LEXIQUE ~>LIGNE }
+ { NOM de LIGNE }
+ AX1BX1;
+ { DANS LE LEXIQUE ~>LIGNE }
+ { NOM de LIGNE }
+ BX1BX2;
+ { DANS LE LEXIQUE ~>LIGNE }
+ { NOM de LIGNE }
+ AX2BX2;
+ { DANS LE LEXIQUE ~>LIGNE }
+ 1;
+ { maillage regulier }
+
+ { NOM de la SURFACE ou ABANDON? }
+ aby; i; 1;
+ { DANS LE LEXIQUE ~>TRANSFO }
+ { quadrangle transfini }
+ { NOM de LIGNE }
+ AY1AY2;
+ { DANS LE LEXIQUE ~>LIGNE }
+ { NOM de LIGNE }
+ AY2BY2;
+ { DANS LE LEXIQUE ~>LIGNE }
+ { NOM de LIGNE }
+ by1by2;
+ { DANS LE LEXIQUE ~>LIGNE }
+ { NOM de LIGNE }
+ ay1by1;
+ { DANS LE LEXIQUE ~>LIGNE }
+ 1;
+ { maillage regulier }
+
+ { NOM de la SURFACE ou ABANDON? }
+ ab2; i; 1;
+ { DANS LE LEXIQUE ~>TRANSFO }
+ { quadrangle transfini }
+ { NOM de LIGNE }
+ AX2AM2AY2;
+ { DANS LE LEXIQUE ~>LIGNE }
+ { NOM de LIGNE }
+ AY2BY2;
+ { DANS LE LEXIQUE ~>LIGNE }
+ { NOM de LIGNE }
+ bx2bm2bY2;
+ { DANS LE LEXIQUE ~>LIGNE }
+ { NOM de LIGNE }
+ ax2bx2;
+ { DANS LE LEXIQUE ~>LIGNE }
+ 1;
+ { maillage regulier }
+
+ { NOM de la SURFACE ou ABANDON? }
+ b23; i; 1;
+ { DANS LE LEXIQUE ~>TRANSFO }
+ { quadrangle transfini }
+ { NOM de LIGNE }
+ bx3bm3by3;
+ { DANS LE LEXIQUE ~>LIGNE }
+ { NOM de LIGNE }
+ by2by3;
+ { DANS LE LEXIQUE ~>LIGNE }
+ { NOM de LIGNE }
+ bx2bm2by2;
+ { DANS LE LEXIQUE ~>LIGNE }
+ { NOM de LIGNE }
+ bx2bx3;
+ { DANS LE LEXIQUE ~>LIGNE }
+ 1;
+ { maillage regulier }
+
+ { NOM de la SURFACE ou ABANDON? }
+ bc1;
+ { NOM de TRANSFORMATION }
+ i;
+ { DANS LE LEXIQUE ~>TRANSFO }
+ 1;
+ { quadrangle transfini }
+ { NOM de LIGNE }
+ BX1BM1BY1;
+ { DANS LE LEXIQUE ~>LIGNE }
+ { NOM de LIGNE }
+ BY1CY1;
+ { DANS LE LEXIQUE ~>LIGNE }
+ { NOM de LIGNE }
+ CX1CM1CY1;
+ { DANS LE LEXIQUE ~>LIGNE }
+ { NOM de LIGNE }
+ BX1CX1;
+ { DANS LE LEXIQUE ~>LIGNE }
+ 1;
+ { maillage regulier }
+ 
+ { NOM de la SURFACE ou ABANDON? }
+ bcx; i;1;
+ { DANS LE LEXIQUE ~>TRANSFO }
+ { quadrangle transfini }
+ { NOM de LIGNE }
+ bx;
+ { DANS LE LEXIQUE ~>LIGNE }
+ { NOM de LIGNE }
+ BX3CX3;
+ { DANS LE LEXIQUE ~>LIGNE }
+ { NOM de LIGNE }
+ CX1CX3;
+ { DANS LE LEXIQUE ~>LIGNE }
+ { NOM de LIGNE }
+ bx1cx1;
+ { DANS LE LEXIQUE ~>LIGNE }
+ 1;
+ { maillage regulier }
+
+ { NOM de la SURFACE ou ABANDON? }
+ bcy; i; 1;
+ { DANS LE LEXIQUE ~>TRANSFO }
+ { quadrangle transfini }
+ { NOM de LIGNE }
+ by;
+ { DANS LE LEXIQUE ~>LIGNE }
+ { NOM de LIGNE }
+ BY3CY3;
+ { DANS LE LEXIQUE ~>LIGNE }
+ { NOM de LIGNE }
+ CY;
+ { DANS LE LEXIQUE ~>LIGNE }
+ { NOM de LIGNE }
+ BY1CY1;
+ { DANS LE LEXIQUE ~>LIGNE }
+ 1;
+ { maillage regulier }
+
+ bc3;   i; 1; bx3bm3by3; by3cy3; cx3cy3; bx3cx3; 2;
+ cxypd; i; 9; arete; 1; 0; cxypd;
+ cepg;  i; 9; arete; 1; 0; cepg;
+
+{cepd;  i; 1; cpgcm3cy3; cy3; epgem3ey3; cpgepg; 2;
+ cepdcyl3; proj_cyl3; 50; cepd;}
+
+ plancyl3;  i;  9; arete; 1; 0; cyce3plan;
+ cepdcyl3; c3; 50; plancyl3;
+
+ cpy3;  i;  1; cpdcy3;   cy3cdy3;  cdypcdy3; cpdcdyp;     1;
+ cyl4q; i;  1; cdypcdy3; intersec; deypdey3; cdypdmpdeyp; 2;
+ cyl4t; i; 31; cyl4q; 1;
+ epy;   i;  1; deypdey3; dey3ey3; epdey3; deypepd; 1;
+ edg;   i;  9; arete; 1; 0; edg;
+
+ cardantq4; i; 51; 17;
+    a;   ab1; abx; aby; ab2;
+    b23; bc1; bcx; bcy; bc3;
+    cxypd;  cepg;  cepdcyl3;  cpy3; cyl4t; epy;  edg;
+
+ cardan4; i; 31; cardantq4; 1;
+@;
+@;
+10; 3;
+
+fermer;

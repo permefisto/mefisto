@@ -1,0 +1,23 @@
+#!/bin/bash
+#  Alain Perronnet    Juin 1997
+#  ATTENTION : A EXECUTER dans une FENETRE xterm
+#
+echo 
+echo CHANGER dans un REPERTOIRE le MOTAVANT par le MOTAPRES
+echo ======================================================
+echo NOM du REPERTOIRE\?
+read REP
+echo MOT AVANT\?
+read MOTAVANT
+echo MOT APRES\?
+read MOTAPRES
+echo ======================================================
+cd $REP
+for i in `ls -1`
+do
+ed $j <<@
+1,\$s/$MOTAVANT/$MOTAPRES/g
+w
+q
+@
+done

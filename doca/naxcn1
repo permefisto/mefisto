@@ -1,0 +1,9 @@
+Give the name of the 2 points on the axis of the cone.
+Attention:
+- The 2 PLANES, ORTHOGONAL to the axis at these points,
+delimit the troncated cone.
+The edges of the intersection line will be computed
+on the surface of the truncated cone and limited by
+these 2 planes.
+- By construction, the cone summit can not be between
+these 2 planes.

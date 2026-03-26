@@ -1,0 +1,24 @@
+A regular tetrahedrization constitutes the background of the mesh.
+The boundary faces may be of very much smaller size.
+It is possible to pass quickly or not from the boundary to the
+interior with few or many layers of tetrahedra.
+
+The real ACCRTE defines tis velocity of growing.
+If L is the averaged length of the 3 edges of the boundary face,
+then, approximately
+
+L * ACCRTE will be the size of the tetrahedron edge of the first level.
+L * ACCRTE * ACCRTE will be the size of the tetrahedron edge of the second level
+...
+and so on until this size attains ARETGR the size of the regular grid.
+
+ACCRTE = 1.2 may be used as the default value.
+
+ACCRTE <= 1.0 imposes in fact the value 1.2 BY DEFAULT.
+
+ACCRTE =  2.0 leads to a small number of layers
+The size varies quickly.
+
+ATTENTION:
+This choice of ACCRTE must be chosen with careful, depending of the thickness
+of the object.

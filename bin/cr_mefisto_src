@@ -1,0 +1,61 @@
+#
+#  Alain Perronnet  2 octobre 1997
+echo
+echo =================================================================
+echo Construire MEFISTO.src.tar contenant TOUS les sources de $MEFISTO
+echo =================================================================
+
+cd $MEFISTO
+#destruction des fichiers .tar.gz
+echo Destruction des fichiers *.tar.gz
+rm *.tar.gz
+
+tar cvf LISEZMOI.tar  LISEZMOI*
+gzip    LISEZMOI.tar# Changement du nom de la librairie bin
+if test ! -d bin.hp
+then
+   cp  bin bin.hp
+fi
+
+#tar et compression des librairies
+tar cvf bin.tar bin*
+gzip    bin.tar
+
+tar cvf doc.tar doc
+gzip    doc.tar
+
+tar cvf elas.tar elas/*.f
+gzip    elas.tar
+
+tar cvf incl.tar incl
+gzip    incl.tar
+
+tar cvf mail.tar mail/*.f
+gzip    mail.tar
+
+tar cvf prpr.tar prpr/*.f
+gzip    prpr.tar
+
+tar cvf reso.tar reso/*.f
+gzip    reso.tar
+
+tar cvf td.tar td
+gzip    td.tar
+
+tar cvf test.tar test
+gzip    test.tar
+
+tar cvf ther.tar ther/*.f
+gzip    ther.tar
+
+tar cvf util.tar util/*.f util/*.*.*
+gzip    util.tar
+
+tar cvf xvue.tar xvue/*.f  xvue/*.c xvue/*.*.*
+gzip    xvue.tar
+
+ls -l $MEFISTO
+echo
+echo "====================="
+echo "Fin de cr_mefisto_src"
+echo "====================="

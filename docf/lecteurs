@@ -1,0 +1,5 @@
+Trois types d'unites de lecture:
+1: le CLAVIER a frapper;
+2: un FICHIER a lire a son debut;
+3: un FICHIER deja ouvert et abandonne
+   par la frappe de QUITTER ou QUIT.

@@ -1,0 +1,7 @@
+Give the geometrical ratio RAIGEO of the lengths Li of edges:
+To have a file of values Li  with Li+1 / Li = RAIGEO
+- constant   choose RAIGEO=1
+- ascending  choose RAIGEO>1
+- descending choose RAIGEO<1
+
+It is reasonable to choose value in the vicinity of 1.0!

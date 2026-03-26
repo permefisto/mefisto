@@ -1,0 +1,3 @@
+variable ManagFen 'Graphic Window Managment' entier
+( 1 : 'WINDOW PIXELS WIDTH & HEIGHT',
+  2 : 'BACKGROUND COLOR of the WINDOW' ) ;

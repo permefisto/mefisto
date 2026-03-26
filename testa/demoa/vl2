@@ -1,0 +1,46 @@
+{ ================================================================ }
+{ MEFISTO software : Version August 2006                           }
+{ USER name        : Alain Perronnet                               }
+{ PROJECT name     : dema = demo anglaise                          }
+{ DATE             : 14/9/2006                                     }
+{ ================================================================ }
+@;
+@;
+@;
+
+6;  {mappings}
+ symyz; 3; 4; a0; ay2; z; {yz plane symmetry}
+ symxz; 3; 4; a0; ax2; z; {xz plane symmetry}
+@;
+
+4;  { plane symetric volumes }
+ cardan4_yz; symyz; 50;  cardan4;
+ cardan2;    i;     51;  2; cardan4; cardan4_yz; {union of 2/4}
+
+ cardan2_xz; symxz; 50;  cardan2;
+ cardan;     i;     51;  2; cardan2; cardan2_xz; {union of 2/2}
+@;
+
+3;
+ deffunc extrac_cyl4(x,y,z);
+ extrac_cyl4 = (y>0) and ((x**2 + (z-zd)**2) < (r4+0.001)**2) and (x>-0.001);
+ endfunc;
+ cyl4; i; 37; cardan; extrac_cyl4; 1; {extraction of 1/2 cylinder}
+
+ deffunc extrac_cyl4_sym(x,y,z);
+ extrac_cyl4_sym = (y<0) et ((x**2 + (z-zd)**2) < (r4+0.001)**2) et (x<0.001);
+ endfunc;
+ cyl4_sym; i; 37; cardan; extrac_cyl4_sym; 1; {extraction of 1/2 cylinder}
+
+ deffunc base(x,y,z);
+   base = z<0.001;
+ endfunc;
+ base;  i; 37; cardan; base; 1; {extraction of the inferior ring}
+@;
+
+
+@;
+10; 4; {drawing of Volumes}
+1; 90; {all volumes}
+
+close;

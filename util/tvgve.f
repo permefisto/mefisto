@@ -1,0 +1,43 @@
+       SUBROUTINE tVgVe( N, NODL, NODLIB, VG, VE, RESULT )
+C ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+C BUT:     CALCUL DU PRODUIT  tVg Ve  A PARTIR DES DL GLOBAUX
+C ----     RESULT = tVg Ve REEL DOUBLE PRECISION
+C          ATTENTION: LES DL FIXES SONT SUPPOSES NULS
+C
+C ENTREES:
+C --------
+C N      : NOMBRE DE COMPOSANTES DE VE et NODL
+C NODL   : NUMERO GLOBAL DES N DEGRES DE LIBERTE LOCAUX
+C NODLIB : NODLIB(I) = NUMERO DU DEGRE DE LIBERTE S'IL EST LIBRE
+C                     -INDICE DANS LA LISTE DES DL BLOQUES S'IL EST BLOQUE
+C VG     : VECTEUR GLOBAL DE 1 A NTDL
+C          VE = VG( NODL() )
+C VE     : VECTEUR N ELEMENTAIRE
+C
+C SORTIE :
+C --------
+C RESULT : = tVg VE   REEL DOUBLE PRECISION
+C ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+C AUTEUR : ALAIN PERRONNET St PIERRE DU PERRAY & LJLL UPMC  JANVIER 2010
+C23456---------------------------------------------------------------012
+      DOUBLE PRECISION  VG(1:*), VE(1:N), RESULT
+      INTEGER           NODL(N), NODLIB(*)
+C
+      RESULT = 0D0
+      DO K = 1, N
+C
+C        NUMERO DU DL DANS LE MAILLAGE
+         NDL = NODL(K)
+C
+C        NUMERO DU DL DANS LA NUMEROTATION DES DEGRES DE LIBERTE NON FIXES
+C        ATTENTION: LES AUTRES DL FIXES SONT SUPPOSES NULS
+         NDLL = NODLIB( NDL )
+C
+         IF( NDLL .GT. 0 ) THEN
+            RESULT = RESULT + VG( NDLL ) * VE(K)
+         ENDIF
+C
+      ENDDO
+C
+      RETURN
+      END

@@ -1,0 +1,8 @@
+Les aretes peuvent
+- etre de tailles egales ou presque egales ( RAISON=1)
+- former une suite de valeurs en PROGRESSION GEOMETRIQUE
+  de RAISON <>1
+Si RAISON>1, les aretes deviennent de plus en plus
+grandes a partir du 1-er sommet.
+Si 0<RAISON<1, les aretes sont de plus en plus petites.
+

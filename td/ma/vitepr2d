@@ -1,0 +1,13 @@
+variable VITEPR2D '2D FLUID DRAWINGS of VELOCITY or PRESSURE' entier
+ ( 1 : 'The PRESSURE drawings'
+,  2 : 'The VELOCITY is drawn with ARROWS'
+,  3 : 'One VELOCITY COMPONENT X Y Z or the VELOCITY MAGNITUDE'
+,  4 : '|VELOCITY|Mean Max PRESSURE Max-Min TEMPERATURE Mean (Time)'
+,  5 : 'The TEMPERATURE drawings'
+,  6 : 'The TEMPERATURE FLUX drawings'
+,  7 : 'COMPUTE and DRAW the RUN of PARTICLES in the FLUID'
+,  9 : 'The STREAM FUNCTION  Psi ou (Vx,Vy)=(dPsi/dy,-dPsi/dx)'
+, 10 : 'The VORTICITY=Rotational Velocity=dVy/dx-dVx/dy'
+, 90 : 'The PRINTING VELOCITY PRESSURE ERRORS at Nodes'
+, 91 : 'The |VELOCITY| ERRORS from Velocity_Exact(t,x,y,z,nc) GIVEN'
+, 92 : 'The PRESSURE ERRORS from Pressure_Exact(t,x,y,z) is GIVEN' ) ;

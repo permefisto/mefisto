@@ -1,0 +1,13 @@
+deftms ~>>>FLUX 'Normal flux of heat on the FE faces'
+variable muet DATE 'date of creation of the TMS'   reel2  ;
+variable muet NUTD 'number of the descriptor array TD' entier ; 
+variable NBCAFX 'Number of packs of normal flux' entier ;
+variable NDIMFX 'Dimension of the Object Space 1 or 2 or 3'  entier ;
+variable NUTYFX 'Type number of the Finite Elements'  entier ; 
+variable NBELFX 'Number of FE of this type' entier ;        
+variable NBPNFX 'Number of points with computed normal flux in 1 FE' entier ;
+tableau  FLUXNP(1..NBPNFX,1..NBELFX,1..NBCAFX)
+'normal flux value at points of FE faces' reel2 ; 
+tableau  COPNFX(1..3,1..NBPNFX,1..NBELFX,1..2)
+'Coordinates of points & normal vectors where computed normal flux' reel ;
+fintms ;

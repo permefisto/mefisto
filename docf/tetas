@@ -1,0 +1,10 @@
+Les 3 coordonnees spheriques du point sont constituees
+du RAYON        : nombre reel positif ou nul 
+                  Racine carree de  x*x + y*y + z*z  du point
+de la LONGITUDE : angle en degres entre l'axe des x
+                  et la droite passant par l'origine et
+                  la projection du point sur le plan xOy
+de la LATITUDE  : angle en degres entre la droite origine-point
+                  et la droite origine-point projete sur le plan xoy
+
+Donner ici la LONGITUDE comprise entre o et 360 degres.

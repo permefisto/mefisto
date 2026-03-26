@@ -1,0 +1,52 @@
+      SUBROUTINE RHOBAR( NBNOEF, NDIM,   XYZEF,
+     %                   NOOBVO, NUMIVO, NUMAVO, LTDEVO,
+     %                   RHO )
+C ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+C BUT :    RECHERCHE DE LA DENSITE DE MASSE AU BARYCENTRE DU TRIANGLE
+C -----    OU DU TETRAEDRE
+C
+C ENTREES:
+C --------
+C NBNOEF : NOMBRE DE NOEUDS DE L'EF
+C NDIM   : DIMENSION DE L'ESPACE DE TRAVAIL
+C XYZEF  : NDIM COORDONNEES DES NBNOEF NOEUDS DE L'EF
+C NOOBVO : NUMERO DE VOLUME DE CET ELEMENT FINI NEF1
+C NUMIVO : NUMERO MINIMAL DES OBJETS VOLUMES
+C NUMAVO : NUMERO MAXIMAL DES OBJETS VOLUMES
+C LTDEVO : TABLEAU DES ADRESSES DU TABLEAU DES DONNEES DU FLUIDE
+C
+C SORTIE :
+C --------
+C RHO    : DENSITE DE MASSE DE L'ELEMENT FINI
+C+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+C AUTEUR : ALAIN PERRONNET LJLL UPMC & St Pierre du Perray     Juin 2011
+C23456---------------------------------------------------------------012
+      IMPLICIT  NONE
+      include"./incl/donflu.inc"
+      REAL               XYZEF(NBNOEF,NDIM)
+      INTEGER            NBNOEF, NDIM, NOOBVO, NUMIVO, NUMAVO,
+     %                   LTDEVO(1:MXDOFL,NUMIVO:NUMAVO)
+      DOUBLE PRECISION   RHO, X1, Y1, Z1
+C
+      IF( NDIM .EQ. 2 ) THEN
+C
+C        RECHERCHE DE LA DENSITE DE MASSE AU BARYCENTRE DU TRIANGLE
+         X1 = (XYZEF(1,1) + XYZEF(2,1) + XYZEF(3,1)) / 3D0
+         Y1 = (XYZEF(1,2) + XYZEF(2,2) + XYZEF(3,2)) / 3D0
+         Z1 = 0D0
+C
+      ELSE
+C
+C        RECHERCHE DE LA DENSITE DE MASSE AU BARYCENTRE DU TETRAEDRE
+         X1 = (XYZEF(1,1) + XYZEF(2,1) + XYZEF(3,1)+ XYZEF(4,1))* 0.25D0
+         Y1 = (XYZEF(1,2) + XYZEF(2,2) + XYZEF(3,2)+ XYZEF(4,2))* 0.25D0
+         Z1 = (XYZEF(1,3) + XYZEF(2,3) + XYZEF(3,3)+ XYZEF(4,3))* 0.25D0
+C
+      ENDIF
+C
+C     RECHERCHE DE LA DENSITE DE MASSE
+      CALL REMASS2( NDIM+1, NOOBVO, X1, Y1, Z1,
+     %              LTDEVO(LPMASS,NOOBVO), RHO )
+C
+      RETURN
+      END

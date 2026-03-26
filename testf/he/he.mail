@@ -1,0 +1,45 @@
+{ ==================================================================== }
+{ Logiciel MEFISTO     : Version Aout 2006                             }
+{ Nom de l'Utilisateur : Alain Perronnet  Laboratoire JLL UPMC PARIS   }
+{ Nom du Projet        : he   Atome d'HELIUM  en 6D                    }
+{                        Ze=2 protons en (0,0,0, 0,0,0)  et            }
+{                        1 electron en (x,y,z) & 1 electron en (u,v,w) }
+{ Date                 : 19/9/2006 et 13/11/2006                       }
+{ ==================================================================== }
+4; { VOLUMES materiaux de l objet }
+   6cube; { NOM du VOLUME ou ABANDON? }
+   i;     { DANS LE LEXIQUE ~>TRANSFO }
+   63;    { 6-cubes 3 differences finies et homothetie }
+   1;     { origine au centre du cube6 }
+
+ { 5;     { nombre de couches homothetiques }
+      ==>  LE NOMBRE DE MOTS DU SUPER-TABLEAU MCN    532000000
+           NOMBRE MOTS DEMANDES     = 170 670 376
+           NOMBRE MAX DE MOTS LIBRES= 108 265 392  }
+
+   4;     { nombre de couches homothetiques }
+    2.0;  { largeur du noyau du 6-cube }
+   20.0;  { largeur totale   du 6-cube }
+@;
+
+5; { OBJETS parties de l OBJET }
+   helium; { NOM de l'OBJET ou ABANDON? }
+   0; { classique 2D ou 3D }
+   1; { NBDOBJ 'nombre des Points Lignes Surfaces Volumes Objets de l''objet'}
+   V; 6cube; { VOLUME; NOMVOLUME; }
+      { NTYOBJ(1..NBDOBJ) 'nom du type PLSVO et nom du PLSVO' typeobjet ;}
+@;
+
+7; { INTERPOLATION NOEUDS du maillage }
+ helium; { NOM de l'OBJET a INTERPOLER? }
+ 3;      { LAGRANGE de DEGRE 1 }
+@;
+
+10;  { TRACE du MAILLAGE des PLSVO }
+ 5;  { Objet }
+ 1;  { Tous les OBJETS 1 par 1 }
+ 90; { EXECUTION du TRACE }
+@;
+@;
+
+FERMER;

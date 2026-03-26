@@ -1,0 +1,7 @@
+variable TRACERR3 'trace des ERREURS aux NOEUDS' entier
+ (  1 :  'SURFACES ISO-ERREURS'
+ ,  2 :  'ZONES COULEURS ISO-ERREURS'
+ ,  3 :  'ZONES par SECTIONS X ou Y ou Z=CTE'
+ ,  4 :  'PROFILS dans PLANS X ou Y ou Z=CTE'
+ ,  5 :  'SUR une DROITE definie par 2 POINTS'
+ ,  6 :  'Courbe ERREUR(Temps)' ) ;

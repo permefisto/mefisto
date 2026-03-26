@@ -1,0 +1,26 @@
+La fonction utilisateur donnant la valeur de la CONDUCTIVITE
+a l'instant TEMPS, au point X,Y,Z, 
+pour l'objet de numero de type NO_TYPE_OBJET
+(1:POINT, 2:LIGNE, 3:SURFACE, 4:VOLUME, 5:OBJET )
+et de numero dans ce lexique   NO_OBJET
+a la temperature TEMPER conue ou non (cas non lineaire)
+doit comprendre dans cet ordre les 7 parametres 
+
+CONDUCTIVITE( TEMPS, X, Y, Z, NO_TYPE_OBJET, NO_OBJET, TEMPER ) 
+
+et etre programmee selon la grammaire du langage LU
+(cf documentation et exemples du menu de depart )
+
+Ces parametres sont tous initialises en entree.
+Ils peuvent ou non servir a calculer la CONDUCTIVITE.
+ 
+EXEMPLE:
+deffonc conductivite( t, x, y, z, no_type_objet, materiau, temper ) ;
+si    materiau=nuobjt( 'volume' , 'acier' )
+alors conductivite=20;
+sinon si    materiau=nuobjt( 'volume' , 'cuivre' )
+      alors conductivite=52;
+      sinon conductivite=0 ;
+      finsi;  
+finsi;
+finfonc; 

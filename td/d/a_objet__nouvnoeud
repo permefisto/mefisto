@@ -1,0 +1,6 @@
+deftms ~>OBJET>>NOUVNOEUD 'les numeros des noeuds apres renumerotation'
+ variable muet DATE         'date de creation du tableau'   reel2  ;
+ variable muet NUTD         'numero du tableau descripteur' entier ; 
+ variable      NBNONO       'nombre de noeuds renumerotes'  entier ;
+ tableau  NONOEU(1..NBNONO) 'nouveau numero des noeuds'     entier ;
+fintms ;

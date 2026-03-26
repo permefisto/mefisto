@@ -1,0 +1,11 @@
+The intersection curve of cylinders of axis Z and axis X or Y
+is given by the longitude of its initial point and final point.
+The longitude is the angle (Ox,OM), in degrees
+often written TETA as cylindar coordinates
+   0 =< TETA =< 360 degrees 
+                  
+Al0caz  is the initial longitude followed by
+Al1caz     the final longitude
+
+EXAMPLE:  0;  90;   means the sector X>0 Y>0
+         90; 180;   means the sector X<0 Y>0 ...

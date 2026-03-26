@@ -1,0 +1,28 @@
+      CHARACTER*1 FUNCTION LETMIN( CAR )
+C+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+C BUT : TRANSFORMER L'EVENTUELLE LETTRE MAJUSCULE CAR EN SA MINUSCULE
+C ----- EN PASSANT PAR LE CODAGE DE LA TABLE ASCII
+C
+C       CETTE FUNCTION FAIT APPEL AUX FONCTIONS CHAR ET ICHAR DE FORTRAN
+C
+C ENTREE :
+C --------
+C CAR    : LE CARACTERE A TRAITER
+C+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+C AUTEUR : PERRONNET ALAIN  ANALYSE NUMERIQUE UPMC PARIS    FEVRIER 1990
+C23456---------------------------------------------------------------012
+      CHARACTER*(*) CAR
+      CHARACTER*1   CHAR
+C
+C     LA PLACE DU CARACTERE DANS LA TABLE ASCII
+      N = ICHAR( CAR(1:1) )
+C
+C     CE CARACTERE EST IL UNE LETTRE MAJUSCULE ?
+      IF( N .GE. 65 .AND. N .LE. 90 ) THEN
+C        OUI: LA MAJUSCULE CORRESPONDANTE
+         LETMIN = CHAR( N + 32 )
+      ELSE
+C        NON: PAS DE MODIFICATION
+         LETMIN = CAR(1:1)
+      ENDIF
+      END

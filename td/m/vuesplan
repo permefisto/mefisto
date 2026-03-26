@@ -1,0 +1,7 @@
+variable VUESPLAN 'VUES selon des PLANS' entier
+( 1  : 'VUE du DESSUS   ou XY'
+, 2  : 'VUE de DESSOUS  ou YX'
+, 3  : 'VUE de GAUCHE   ou XZ'
+, 4  : 'VUE de DROITE   ou ZX'
+, 5  : 'VUE de FACE     ou YZ'
+, 6  : 'VUE de DERRIERE ou ZY' ) ;

@@ -1,0 +1,497 @@
+Quelques NOTIONS pour MAILLER un VOLUME:
+========================================
+
+Le maillage d'un VOLUME est un ensemble de EF, TETRAEDRES et/ou
+PENTAEDRES et/ou HEXAEDRES stockes dans 2 TMS a___xyzsommet  et  a___nsef,
+definis par:
+
+- NBSOM sommets de coordonnees (Xi,Yi,Zi) dans le TMS a___xyzsommet
+- le tableau du no des 8 sommets (NS1, NS2, ... , NS8) (1<=NS<=NBSOM)
+avec NS7=NS8=0 pour un PENTAEDRE,
+avec NS5=NS6=NS7=NS8=0 pour un TETRAEDRE
+des NBEFOB EF.
+
+Meme si les TMS permettent de stocker les tangentes aux aretes des
+EF 3D, faute d'avoir une interpolation C1-CONTINUE pour eux
+respectant aux faces les EF de Clough et Tocher ou 
+Fraeijs de Veubeke et Sander, les algorithmes de maillage
+3D ne stockeront pas les tangentes aux aretes.
+Par suite, pour les volumes toutes les aretes des EF seront DROITES.
+
+                                            *V6
+                                        .   |   .               V8*......*V7
+                                     .      |       .            .         .
+          *V3  --------*V3       V4*........|.........*V5    V5*............*V6
+         .    .     .  |           |        |         |        |            |
+        .        .     |           |        *V3       |        |            |
+       .      .    .   |           |    .        .    |        |V4*......*V3|
+      .   .           .|           |  .             . |        |.          .|
+   V1*..................*V2      V1*..................*V2    V1*............*V2
+     un tetraedre droit              un pentaedre droit       un hexaedre droit
+     (P1 interpolation)             (R1 interpolation)       (Q1 interpolation)
+
+En fait, si un TETRAEDRE est subdivise en M**3 tetraedres,
+ou si un PENTAEDRE est subdivise en MxMxN pentaedres,
+ou si un HEXAEDRE  est subdivise en MxNxP hexaedres,
+il est suffisant de stocker ces 1 ou 2 ou 3 entiers pour obtenir
+une numerotation implicite des sommets et tangentes des EF.
+Dans ce cas le maillage est dit STRUCTURE.
+Sinon, il est dit NON STRUCTURE.
+
+La qualite des EF DEPEND de la qualite des triangles et quadrangles
+du maillage de la frontiere de la surface car le maillage de cette frontiere
+est respectee dans celle du volume.
+=> une augmentation ou diminution REGULIERE de la longueur des aretes
+est necessaire!
+
+Attention:
+L'Utilisateur peut fournir la fonction
+TAILLE_IDEALE(x,y,z) pour obtenir une tetraedrisation ou la
+longueur des aretes autour du point (x,y,z) sera le resultat
+de l'appel de cette fonction au point (x,y,z)!
+La presence de la fonction suffit a son utilisation.
+
+Par contre pour creer des maillages structures, cette fonction,
+meme presente, ne sera pas utilisee car elle contredit les principes
+des algorithmes de creation de maillages structures.
+
+Exemple d'entree de la fonction Taille_Ideale:
+DefVar lxf,lh2,lh3;
+lh2=0.3;
+lh3=0.7;
+lxf=max(lh2,lh3);
+
+DefFonc Taille_Ideale(x,y,z);
+  Taille_Ideale=0.45;
+  Si x<lxf and y>-(lh3+lh2)*1.2
+    Alors Taille_Ideale=0.15;
+  Else
+    Si x<lxf and y>-(lh3+lh2)*1.8
+    Alors Taille_Ideale=0.28;
+    FinSi;
+  FinSi;
+FinFonc;
+
+Ici, majuscules et minuscules ne sont pas significatives!
+
+
+Un VOLUME peut etre defini par l'une des OPTIONS SUIVANTES:
+-----------------------------------------------------------
+
+1 : HEXAEDRE ALGEBRIQUE STRUCTURE
+L'HEXAEDRE, eventuellement deforme,est defini a partir 
+de 6 QUADRANGLES structures definissant son contour. 
+Les 6 QUADRANGLES ont au total 8 sommets communs et 
+12 aretes communes.
+Une INTERPOLATION TRANSFINIE de degre 1
+(Methode de COOK, GORDON, HALL) transporte une hexaedrisation
+du cube unite sur l'hexaedre en respectant les 6 quadrangles
+du  contour. 
+ATTENTION:
+Le NOMBRE des ARETES des 4 ARETES "PARALLELES" doit etre le meme 
+Exemple: V1_HEXAEDRE; I; 1; QUADRANGLE1; QUADRANGLE2;QUADRANGLE3;
+QUADRANGLE4; QUADRANGLE5;QUADRANGLE6;
+ATTENTION: Un recouvrement d'EF ou une sortie du contour peuvent
+apparaitre si les lignes presentent de violentes oscillations.
+Ce cas n'est pas detecte. Une visualisation montrera la validite
+ou non du maillage. Ce probleme est corrige dans le cas ELLIPTIQUE 
+
+2 : HEXAEDRE ELLIPTIQUE STRUCTURE
+L'HEXAEDRE, eventuellement deforme,est defini a partir 
+de 6 QUADRANGLES definissant son contour. 
+La RESOLUTION d'un SYSTEME d'EQUATIONS aux DERIVEES PARTIELLES
+ELLIPTIQUES NON LINEAIRES (Methode de WINSLOW) transporte une
+hexaedrisation reguliere du cube unite sur l'hexaedre
+en respectant les 6 quadrangles du contour. 
+ATTENTION:    
+Le NOMBRE des ARETES des 4 ARETES "PARALLELES" doit etre le meme 
+ATTENTION: Le recouvrement d'EF ou une sortie du contour sont corriges
+automatiquement grace a des FONCTIONS de CONTROLE places sur le
+contour et etendues a l'interieur du domaine
+Il est possible d'indiquer 
+-le nombre maximal d'iterations de correction a effectuer,
+-un facteur par quadrangle pour obtenir un ecrasement ou une expansion 
+ des hexaedres EF proches (cf DOC de FADI3D) 
+Exemple: V2_HEXAEDRE; I; 2; QUADRANGLE1; QUADRANGLE2;QUADRANGLE3;
+QUADRANGLE4; QUADRANGLE5;QUADRANGLE6; {les 6 faces quadrangulaires}
+8; 0.1; 1; 2; 0; 0; 0; 
+Definit une hexaedrisation de contour les 6 quadrangles
+avec des hexaedres 10 fois moins haut que large et long 
+pres de QUADRANGLE1, cubiques au voisinage de QUADRANGLE2
+2 fois plus haut que large et long pres de QUADRANGLE3 et
+sans amelioration des tailles pres des 3 autres derniers QUADRANGLES
+(mais avec amelioration des angles vers 90 degres)
+REMARQUE: En general, 'HEXAEDRISATION ELLIPTIQUE est PLUS
+"ORTHOGONALE" que la QUADRANGULATION ALGEBRIQUE mais 
+aussi PLUS COUTEUSE.
+Pour un PARALLELIPIPEDE RECTANGLE de FACES decoupees regulierement,
+utiliser de preference la methode algebrique plus economique et
+dans ce cas autant "orthogonale"
+
+3 : TETRAEDRE STRUCTURE ALGEBRIQUE
+Le tetraedre est defini par ses 4 FACES TRIANGULAIRES structurees
+Le nombre de triangles(>0) doit etre le meme carre d'un nombre entier
+ATTENTION: Un recouvrement d'EF ou une sortie du contour peuvent
+apparaitre si les triangles presentent de violentes oscillations.
+Ce cas n'est pas detecte. Une visualisation montrera la validite
+ou non du maillage.  
+Exemple:   SV3_TETRAEDRE; I; 3;
+TRIANGLE1; TRIANGLE2; TRIANGLE3; TRIANGLE4; {Les FACES}
+La tetraedrisation respecte les sommets et aretes et triangles
+des 6 faces triangulaires.
+
+4 : PENTAEDRE STRUCTURE ALGEBRIQUE
+Le pentaedre est defini par ses 2 FACES TRIANGULAIRES structurees 
+et ses 3 FACES QUADRANGULAIRES structurees.
+Le nombre de triangles(>0) doit etre le meme carre d'un nombre entier
+Le nombre d'aretes dans la 3-eme dimension ( celle des quadrangles)
+doit etre constant sur les 3 aretes "PARALLELES" du pentaedre.
+ATTENTION: Un recouvrement d'EF ou une sortie du contour peuvent
+apparaitre si les triangles presentent de violentes oscillations.
+Ce cas n'est pas detecte.
+Une visualisation montrera la validite ou non du maillage.  
+Exemple:   SV3_PENTAEDRE; I; 4;
+TRIANGLE1; TRIANGLE2; QUADRANGLE1; QUADRANGLE2; QUADRANGLE3;
+La pentaedrisation respecte les sommets et aretes et triangles
+des 2 faces triangulaires et des 3 faces quadrangulaires.
+
+8 : UN VOLUME FERME D''UN VOLUME POUR OPTION 9
+Un volume ferme d'un volume partitionne a TETRAEDRISER 
+avec l'option 9 .  Un volume 8 = Un MATERIAU
+Ce volume sert exclusivement a definir un volume partitionne
+pour l'option 9 laquelle sera utilisee ensuite.
+Il est defini par le nombre de surfaces TRIANGULEES FERMEES 
+(Une arete de la surface appartient toujours a 2 triangles)
+de son contour ( Des "TROUS" dans le volume sont possibles.
+Un TROU est defini par une surface fermee triangulee)
+suivi des noms de ces surfaces et de la demande ou non
+de respecter la surface fermee triangulee initiale lors de la
+tetraedrisation.  cf 9
+
+9 ou 19: TETRAEDRISATION DE VOLUMES DE TYPE 8
+le volume union de volumes fermes de type 8 a TETRAEDRISER
+Le VOLUME GLOBAL a TETRAEDRISER est forme de VOLUMES de type 8.
+Il est possible de donner une liste de POINTS INTERNES
+futurs sommets de la tetraedrisation avec une distance
+souhaitee aux sommets voisins afin d'affiner ou elargir
+la tetraedrisation autour de ces points.
+Si la fonction TAILLE_IDEALE(x,y,z) existe, alors elle est utilisee
+pour definir la longueur des aretes des tetraedres.
+Exemple:
+ boule8;  i; 8; {La BOULE definie en volume option 8
+1; {NBSF1V 'nombre de surfaces fermees contour du volume}
+surface_trian_boule; {La SURFACE FERMEE TRIANGULEE}
+
+boule9; i; 9; { le volume union de volumes fermes de type 8 }
+10000;  { MXSOVO nombre maximal de sommets de la tetraedrisation}
+1.5;    { ARETGR longueur maximale des aretes de la tetraedrisation}
+1;      { NBPTIV nombre de points internes fournis par l'utilisateur}
+1;      { NBVOPA nombre de volumes de type 8 de la partition}
+boule8; { le volume d'option 8}
+centre; { le point interne}
+0.35;   { La distance souhaitee autour de ce point centre }
+Definit une tetraedrisation d'une boule avec affinage autour 
+du point centre
+
+Les options 9 et 19 different par la position des sommets internes
+ajoutes. Les donnees sont les memes.
+
+10: DONNEE DIRECTE DES TABLEAUX XYZSOMMET ET NSEF 
+Ces 2 tableaux sont a initialiser valeur apres valeur
+Exemple: UN_CUBE_UNITE10; I; 10;
+8; 0; 3; {nbsom, nbtg, nbcoor}
+0;0;0; 1;0;0;  1;1;0; 0;1;0;  0;0;1; 1;0;1;  1;1;1; 0;1;1; {8st}
+4; 0; 8; 0;  {volume nonferme 8sommets/EF 0tg}
+1; 0; 0; 0;  {1hexaedre 0tg non structure}
+1;2;3;4;5;6;7;8;
+
+11: PARALLELIPIPEDE_RECTANGLE REGULIER D'ARETES 1 
+HEXAEDRISATION en CUBES UNITES de
+[0,NBINHX] * [0,NBINHY] * [0,NBINHZ]
+Exemple: HEXAEDRE11; I; 11; 7; 4; 2;
+Definit 7*4*2=56 cubes de longueur 1, avec
+7 ARETES en X, 4 en Y et 2 couches
+Toute TRANSFORMATION est ensuite utilisable.
+
+12: TETRAEDRE RECTANGLE REGULIER D'ARETES 1 
+TETRAEDRISATION reguliere (mais non homogene) du tetraedre
+de sommets (0,0,0)  (NBACTE,0,0) (0,NBACTE,0) (0,0,NBACTE)
+Exemple: TETRAEDRE12; I; 12; 5;
+Definit 5*5*5=125 tetraedres reguliers mais non tous egaux
+
+13: PENTAEDRE RECTANGLE REGULIER D'ARETES 1 
+PENTAEDRISATION reguliere du pentaedre de sommets
+(0,0,NBARHP)  (NBACTP,0,NBARHP) (0,NBACTP,NBARHP)
+(0,0,NBARHP)  (NBACTP,0,NBARHP) (0,NBACTP,NBARHP)
+Exemple: PENTAEDRE13; I; 13; 5; 6;
+Definit 5*5*6=150 pentaedres reguliers egaux
+
+14: TRANCHES A PARTIR D'UNE SURFACE GENERATRICE ou EXTRUSION
+Une SURFACE MAILLEE est deplacee pour definir un VOLUME MAILLE.
+A chaque deplacement correspond une TRANCHE ou COUCHE. 
+Plusieurs types de deplacements sont possibles.
+Les TRIANGLES deviennent des pentaedres et les quadrangles
+deviennent des hexaedres.
+ATTENTION: Les deplacements ne doivent pas permettre des
+croisements sous peine de faire degenerer les EF du volume.
+Par contre, la derniere surface peut redonner la premiere,
+formant ainsi une couronne.  
+Le DEPLACEMENT de la SURFACE GENERATRICE peut etre definie
+selon 7 options :
+0: a la surface initiale est associe un repere orthonorme E0
+.   defini par 3 points P01 P02 P03 
+.   P01 est l'origine
+.   P01-P02 definit le vecteur canonique E1
+.   E1 PRODUIT VECTORIEL P01-P03 normalise definit E2
+.   E3 = E1 PRODUIT VECTORIEL E2
+.   A tout deplacement I sont associes 3 points qui definissent
+.   de la meme maniere un repere EI.
+.   La TRANSFORMATION de la surface initiale est alors celle 
+.   definie par le deplacement du repere E0 en le repere EI. 
+.   Les sommets des aretes des surfaces transformees sont relies 2 a 2.
+.Exemple: V14.0; I; 14; SURFACE_INITIALE; 0; 2; {nombre de tranches}
+.         P01;P02;P03;  P11;P12;P13;   P21;P22;P23;
+.        {les 3 points de definition des reperes}
+1: 3 lignes definissent les transformations de la surface 
+.   Meme methode que precedemment, les 3 points de definition
+.   etant les sommets des aretes des 3 lignes
+.   Le premier sommet des 3 lignes definit P01 P02 P03, ...  
+.Exemple: V14.1; I; 14; SURFACE_INITIALE; 1; L1; L2; L3;
+.        {les 3 lignes de sommets definissant les reperes}
+2: surfaces translatees d'une cote Z>0 constante (empilement)
+.   La surface precedente est translatee d'une cote Z constante. 
+.Exemple: V14.2; I; 14; SURFACE_INITIALE; 2; 3; {tranches}
+.         6; {cote maximale a decouper en 3 tranches d'epaisseur Z=2}
+3: surfaces translatees d'une cote z>0 precisee pour chaque surface 
+.   La surface initiale est translatee d'une cote Z variable
+.   ATTENTION: Il s'agit de la cote ABSOLUE et non relative
+.              a la surface precedente  
+.Exemple: V14.3; I; 14; SURFACE_INITIALE; 3; 2; {tranches}
+.         4; 7; {cote absolue de chacune des 2 tranches}
+4: le vecteur translation (x y z) valable pour toutes les tranches 
+.   La surface precedente est translatee d'un VECTEUR CONSTANT non nul 
+.Exemple: V14.4; I; 14; SURFACE_INITIALE; 4; 5; {tranches}
+.   1; 2; 3; {les 3 composantes du vecteur constant de translation}
+5: les vecteurs translations (x y z) definis un par tranche  
+.   La surface precedente est translatee d'un VECTEUR non nul 
+.Exemple: V14.5; I; 14; SURFACE_INITIALE; 5; 2; {tranches}  1; 2; 3;
+.{les 3 composantes de la 1-ere translation relative a la surface initiale}
+.   1; 2; 5;
+.{les 3 composantes de la 2-eme translation relative a la surface
+. precedente , les translations s'ajoutent}
+6: 3 fonctions X Y Z(no_couche,x,y,z) transforment la surface initiale.
+.   Les sommets de la surface initiale subissent une transformation
+.   de R3 dans R3 definie par 3 fonctions utilisateur. 
+.   Par exemple: ABSCISSE(no_tranche,x,y,z)
+.                ORDONNEE(no_tranche,x,y,z)
+.                COTE    (no_tranche,x,y,z)
+.   Tout sommet (x,y,z) de la surface initiale devient le sommet de
+.   coordonnees ( ABSCISSE(no_tranche,x,y,z) ,
+.                 ORDONNEE(no_tranche,x,y,z) ,
+.                 COTE    (no_tranche,x,y,z) )
+. de la surface de la tranche no_tranche  
+.Exemple: V14.6; I; 14; SURFACE_INITIALE; 6; 5; {tranches} 
+ ABSCISSE; ORDONNEE; COTE; {Le nom des 3 fonctions de la transformation}
+
+15: 'ROTATION SURFACE AUTOUR AXE(0 SOMMET/AXE)
+La surface generatrice subit N rotations qui creent autant de
+tranches. Les TRIANGLES deviennent des pentaedres et les quadrangles
+deviennent des hexaedres si aucun sommet ne se trouve sur l'axe.
+Dans le cas contraire, un triangle avec 1 sommet sur l'axe genere
+une pyramide, avec 2 sommets genere un tetraedre, un quadrangle
+avec 1 sommet sur l'axe genere une pyramide et un pentaedre,
+avec 2 sommets genere un pentaedre pour chaque rotation.
+L'angle total de rotation peut atteindre 360 degres.
+Exemples: 
+V15.0; I; 15; SURFACE_INITIALE; P1_AXE; P2_AXE; 36; {rotations}
+0; {angles constants} 10; {degres} 
+Definit une volume par 36 rotations cumulees de 10 degres 
+des aretes de la SURFACE_INITIALE.                           
+
+V15.1; I; 15; SURFACE_INITIALE; P1_AXE; P2_AXE; 4; {rotations}
+1; {angles a preciser pour chaque rotation}
+20; 30; 40; 50;
+{les rotations s'ajoutent par rapport a la surface initiale} 
+Definit un volume par 4 rotations de 20 puis 50 puis 90
+puis 140 degres de la surface initiale autour de l'axe defini
+par les points P1_AXE et P2_AXE
+
+16: COUCHES GROSSIES ou EXTRUDEES D'UNE SURFACE 3D ORIENTABLE
+Dans la direction normale aux faces, triangles ou quadrangles, de la 
+surface, une penta-hexaedrisation est effectuee composee de NBCOLA couches,
+chacunes d'une petite epaisseur EPCOLA pour representer des couches limites
+Ensuite, NBLACO autres couches sont penta-hexaedrisees avec pour epaisseur
+une variation lineaire entre EPCOLA et la derniere epaisseur EPLACO a fournir
+Attention: Si les normales aux aretes se croisent, la  penta-hexaedrisation
+eloignee de la surface initiale peut devenir INCORRECTE par croisements...
+Il faut se limiter a un voisinage de la surface ...
+Si une epaisseur est negative, les 2 epaisseurs sont supposees negatives et
+les couches sont alors crees de l'autre cote de la surface initiale.
+
+21: 1/1 CYLINDRE
+22: 1/2 CYLINDRE  
+Le CYLINDRE a pour base le plan Z=0 et est centre a l'ORIGINE
+Le PLAN SUPERIEUR est defini par la COTE Z d'un POINT 
+Dans ces 2 plans le rayon du cercle est a donner.
+Les tailles des aretes peuvent former une progression geometrique
+ou etre constantes. 
+Exemple: CYLINDRE_V21; I; 21; 
+10;{aretes sur le rayon du cylindre}
+3; {rayon du cercle inferieur}
+1; {taille constante des aretes}
+POINT_CENTRE_SUPERIEUR;
+5; {aretes dans la hauteur du cylindre}
+1; {de taille constante}
+4; {rayon superieur du cylindre} 
+24;{aretes sur les arcs de cercle}
+1; {taille constante en X}
+
+23: 1/1 CONE
+24: 1/2 CONE  
+Le CONE centre a l'ORIGINE a pour base le plan Z=0.
+Le SOMMET du CONE est defini par un POINT de COTE Z>0.
+Les tailles des aretes peuvent former une progression geometrique
+ou etre constantes. 
+Le nombre d'ARETES sur l'arc de CERCLE doit etre PAIR.
+Exemple: CONE_V23; I; 23; 
+10;  {aretes sur le rayon du cone}
+2;   {rayon du cercle en Z=0}
+1;   {taille constante des aretes}
+SOMMET_CONE;
+8;   {aretes dans la hauteur du cone}
+1;   {de taille constante}
+18;  {nombre PAIR d'aretes sur les arcs de cercle} 
+1;   {taille constante selon X}  
+
+30: AMELIORATION DE LA TETRAEDRISATION
+Les tetraedres de mauvaise qualite sont rectifies, soit directement, 
+soit par leur voisinage.
+La QUALITE d'un EF mesure sa distance a l'EF EQUILATERAL.
+Sa valeur est comprise entre zero (EF degenere) et 1 (EF equilateral).
+3 donnees a fournir:
+-la qualite au dessous de laquelle le tetraedre est ameliore
+-l'angle en degres pour lequel 2 triangles, faces de
+tetraedres ayant un cote commun, sont consideres coplanaires
+-le nombre d'iterations d'amelioration a effectuer
+Exemple: TETRA_MEILLEURE; I; 30; TETRA_INITIALE;
+ 0.1;  {Qualite minimale souhaitee}
+   3;    {Au dessous de 3 degres, 2 faces adjacentes
+          par une arete sont jugees coplanaires}
+  10;    {iterations a faire}
+
+31: TETRAEDRISER UNE HEXAEDRISATION-PENTAEDRISATION-PYRAMIDRISATION
+Tout EF du volume initial de type hexaedre ou pentaedre ou pyramide 
+est decompose en tetraedres
+Exemple: TETRAEDRISATION_V31; I; HEXA__PENTAEDRISATION; 
+
+33: HEXAEDRISATION d'un CUBE ou d'une SPHERE
+UN NOYAU est decoupe en CUBSPN**3 cubes de taille d'aretes
+CUBSPL/CUBSPN ou CUBSPL est la largeur de ce noyau.
+CUBSPD est la largeur totale du noyau et des couches
+homothetiques formees a partir de la frontiere du noyau.
+Si l'option SPHERE est demandee, les sommets sont projetes
+sur les spheres cocentriques de rayon multiples de
+CUBSPL/CUBSPN, puis en progression geometriques pour
+passer de ce rayon au dernier, compte tenu du nombre de
+couches homothetiques demandees.
+Exemple:
+ cube3; i; 33; { HEXAEDRISATION d une SPHERE }
+  2;  {SPHERE}
+  3;  {CUBSPN nombre d'aretes d'une direction du noyau}
+  4;  {CUBSPC nombre de couches homothetiques}
+  3;  {CUBSPL largeur du noyau du cube ou sphere}
+  10; {CUBSPD largeur totale du cube ou sphere}
+Construit une hexaedrisation d'une sphere de 3*3*3=27 hexaedres
++ 6*9 hexaedres pour chacune des 4 couches demandees.
+
+35: HEXAEDRE EXTRAIT D'UN HEXAEDRE STRUCTURE
+Extrait d'un volume les hexaedres definis par 3 intervalles
+parmi les 3 indices de definition du volume structure
+Exemple: V35; I; 35; VOLUME_STRUCTURE; 2;5; 4;8;  1;1;
+Extrait les hexaedres des 3 couches 2 a 5 en I, 
+des 4 couches 4 a 8 en J et de la couche K=1
+
+36: VOLUME EXTRAIT D'UN VOLUME SUR CRITERE
+Tout EF du volume dont les 3 coordonnees des sommets
+donnent VRAI ou 1 a la fonction logique, forme un EF du volume
+extrait
+Exemple: V36; I; 36; VOLUME_INITIAL;
+deffonc PLAN_X_POSITIF(x,y,z); PLAN_X_POSITIF = (x>=0); finfonc;
+PLAN_X_POSITIF;
+extrait les EF du volume dont tous les sommets ont une abscisse
+positive ou nulle
+
+39: SUBDIVISION des EF 3d en 8 SOUS EF
+Tout EF du volume est subdivise en sous ef de meme type a partir
+de la creation des milieux des aretes et du barycentre des faces
+Attention, une pyramide donne 6 sous-pyramides et 4 tetraedres
+qu'il faut decouper en tetraedres pour les utiliser dans un objet
+Exemple: V39; I; 39; VOLUME_INITIAL;
+
+48: POINTS IMPOSES COMME PLUS PROCHE SOMMET du VOLUME
+Les 3 coordonnees du plus proche sommet du volume
+se voit imposer les 3 coordonnees du point designe.
+Attention, la qualite des elements finis peut en patir.
+
+50: TRANSFORMATION D'UN VOLUME EXISTANT 
+Un VOLUME deja existant est transforme a l'aide d'une
+transformation predefinie
+Exemple: S50; SYMETRIE_PLAN; 50; VOLUME_INITIAL;
+Les sommets de la SURFACE S50 sont les images des sommets
+du VOLUME_INITIAL par la transformation SYMETRIE_PLAN
+
+51: UNION DE PLUSIEURS VOLUMES
+Ce volume est en fait une UNION de VOLUMES regroupes sous un meme
+nom. Une UNION de volumes se manipule comme un volume.
+Exemple: V51; I; 51;   5; V1;V2;V3;V4;V5;
+
+53: 1 VOLUME MULTI-MATERIAUX est decoupe EN AUTANT DE
+VOLUMES MONO-MATERIAU
+
+54: 1 VOLUME MULTI-MATERIAUX devient UN SEUL VOLUME MONO-MATERIAU
+
+61 : 6-CUBES REGULIERS TYPE DIFFERENCES FINIES dans R6
+Dans R6, un 6-CUBE [a,b]**6 est maille avec des 6-cubes [x,x+h]**6
+de type DIFFERENCES FINIES.
+(parallelipipedes orthogonaux generalises en dimension 6)
+
+ATTENTION:
+Un 6-cube => 2**6 C06 0-cubes =  64 sommets
+          => 2**5 C16 1-cubes = 192 aretes
+          => 2**4 C26 2-cubes = 240 2-cubes
+          => 2**3 C36 3-cubes = 160 3-cubes
+          => 2**2 C46 4-cubes =  60 4-cubes
+          => 2**1 C56 5-cubes =  12 faces
+
+L'ORIGINE des AXES est
+soit le centre du 6-cube,
+soit le minimum de ses coordonnees.
+Le nombre constant d'aretes pour une direction est demande.
+La valeur de h, longueur d'une arete, est demandee
+
+62 : 6-CUBES EMBOITES EN HOMOTHETIE dans R6
+Le maillage du 6-cube est forme d'un 6-cube noyau central.
+Chacune de ses 12 faces (5-cubes) genere par homothetie centrale
+un nombre de couches de 6-cubes.
+La largeur du noyau est demandee.
+Le nombre de couches est demande.
+
+63 : 6-CUBES 3 DIFFERENCES FINIES ET HOMOTHETIE dans R6
+Le maillage est forme d'un noyau de 3**6 6-cubes de type
+differences finies (cf option 61) et d'un certain nombre
+de couches homothetiques de 6-cubes.
+La largeur du noyau est demandee.
+La largeur totale du 6-cube est demandee.
+Le nombre de couches est demande.
+
+81: RENOMMER UN VOLUME
+Renomme le NOM d'un VOLUME comme suit
+Un nom a ete fourni pour arriver ici.
+C'est le NOUVEAU NOM du VOLUME.
+L'ANCIEN NOM du volume sera demande apres. 
+Exemple: V_NOUVEAU_81; I; 81; V_ANCIEN; 
+Renomme le volume V_ANCIEN en V_NOUVEAU_81
+
+82: TUER CE VOLUME  
+Detruit le volume dont le nom vient d'etre donne.
+Exemple: V82; I; 82;   detruit le volume V82 s'il existait

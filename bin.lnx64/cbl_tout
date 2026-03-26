@@ -1,0 +1,86 @@
+#!/bin/bash
+#
+#  COMPILATION fortran et fortran95, EDITION DE LIENS, ARCHIVAGE DE
+#  TOUTES LES BIBLIOTHEQUES ET PROGRAMMES MEFISTO sous LINUX
+#  avec OPTIONS Fortran95 + OpenMP
+#  Alain Perronnet          4 Avril 2013
+echo
+
+# banner -w30 MEFISTO
+
+#construction du fichier $MEFISTO/incl/homdir.inc
+echo
+echo MEFISTO=$MEFISTO
+#nombre de caracteres de $MEFISTO
+NBCHAR=` expr length $MEFISTO `
+echo NBCHAR=$NBCHAR
+
+nbcha=` expr length $MEFISTO `
+nbcha=` expr $nbcha - 65 `
+echo nbcha=$nbcha
+
+if test $nbcha -gt 0
+then
+cat <<@ >$MEFISTO/incl/homdir.inc
+C     $MEFISTO/incl/homdir.inc Mefisto source directory
+      CHARACTER*$NBCHAR HOMDIR
+      PARAMETER (HOMDIR=
+     %'${MEFISTO:0:65}
+     %${MEFISTO:65:$nbcha}'
+     %)
+@
+else
+cat <<@ >$MEFISTO/incl/homdir.inc
+C     $MEFISTO/incl/homdir.inc Mefisto source directory
+      CHARACTER*$NBCHAR HOMDIR
+      PARAMETER (HOMDIR=
+     %'$MEFISTO'
+     %)
+@
+fi
+
+echo Creation $MEFISTO/incl/homdir.inc
+cat $MEFISTO/incl/homdir.inc
+
+echo File $MEFISTO/incl/pp.inc
+cat $MEFISTO/incl/pp.inc
+
+#
+#  Compilation C de xvuelc.c
+$MEFISTO/bin/ccxvue
+
+#  regeneration des parametres des TMS de MEFISTO 
+#  A eviter lors d'une installation 
+#  car les fichiers INCLUDE disparaissent et sp non compiles
+#   $MEFISTO/bin/cbpara 
+  
+#
+#  compilation bind et librairie des sp fortran .f de
+#  toutes les librairies FORTRAN de MEFISTO 
+echo elas | $MEFISTO/bin/cbl_tous_f
+echo flui | $MEFISTO/bin/cbl_tous_f
+echo mail | $MEFISTO/bin/cbl_tous_f
+echo reso | $MEFISTO/bin/cbl_tous_f
+echo ther | $MEFISTO/bin/cbl_tous_f
+echo util | $MEFISTO/bin/cbl_tous_f
+echo xvue | $MEFISTO/bin/cbl_tous_f
+echo TOUTES les LIBRAIRIES FORTRAN de MEFISTO ont ete compilees -O -fopenmp
+#
+# rm $MEFISTO/*/*/*~
+# rm $MEFISTO/*/*~
+# rm $MEFISTO/*~
+rm $MEFISTO/*/*.o
+
+$MEFISTO/bin/cbinit
+$MEFISTO/bin/cbmail
+$MEFISTO/bin/cbelas
+$MEFISTO/bin/cbther
+$MEFISTO/bin/cbflui
+$MEFISTO/bin/cbnlse
+$MEFISTO/bin/cbpoba
+
+#
+echo Le repertoire $MEFISTO/pp :
+ls -l $MEFISTO/pp
+#
+echo TOUS les MODULES EXECUTABLES sans debogueur de $MEFISTO sous LINUX sont crees

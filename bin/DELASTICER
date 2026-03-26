@@ -1,0 +1,20 @@
+#!/bin/bash
+#  execution de ppelas avec debogueur ddd
+#  Alain Perronnet    Novembre 2003  Version LINUX
+#   
+#  mise sous le directory 
+echo
+echo MEFISTO-ELASTICITE: nom du projet \?
+read nomproj
+
+direxec=$MEFISTOX/$nomproj
+echo Execution MEFISTO ELASTICITE dans $direxec
+
+if test -d $direxec
+then
+   cd  $direxec
+   ddd $MEFISTO/pp/ppelas       
+else  
+   echo Commande INITIER non prealablement executee
+   echo avec ce nom de projet $nomproj
+fi

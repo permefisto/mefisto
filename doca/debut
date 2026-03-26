@@ -1,0 +1,573 @@
+     ---------------------------------------------------------
+     | MM   MM  EEEEEE  FFFFFF  IIII  SSSSSS  TTTTTT OOOOOOO |
+     | MMM MMM  EE      FF       II   SS        TT   OO   OO |
+     | MM M MM  EEEEE   FFFF     II   SSSSSS    TT   OO   OO |  FAIT L'EF !
+     | MM   MM  EE      FF       II       SS    TT   OO   OO |
+     | MM   MM  EEEEEE  FF      IIII  SSSSSS    TT   OOOOOOO |
+     ---------------------------------------------------------  
+
+AN INTRODUCTION :
+=================
+The Reader who discovers MEFISTO has to read the set of this documentation.
+The notions of POINTS, LINES, SURFACES, VOLUMES, OBJECTS are explained
+in the following paragrah.
+The using notice of MENUS is described in the paragraph MENUS.
+The Reader who hesitates on the input of a value or a User's function 
+may come to the paragraphs MENUS, NUMERICAL INPUT, GRAMMAR of LU language
+and especially the EXAMPLES which follow.
+The available KEY WORDS of this menu are described in the last paragraph.
+
+THE GEOMETRIC PRIMITIVES:
+========================= 
+Every OBJECT to be MESHED has to be decomposed into 
+POINTS, LINES, SURFACES, VOLUMES, ( in an abbreviated form PLSV ).
+After, to add the materials, the boundary conditions and the interpolation
+the PLSV are grouped to form the OBJECT for the computing.
+
+The extremities of one PLSV are described from the previous:
+The POINTS   are defined from their coordinates or mapping of an initial point.
+The LINES    (often CURVES) are defined often from their extremities: POINTS.
+The SURFACES are defined often from their extremities: LINES.
+The VOLUMES  are defined often from their extremities: SURFACES.
+                                  
+By notation, a PLSV is indefferently a POINT or a LINE or a SURFACE or a VOLUME.
+A PLSV may not be a blend of POINTS, LINES, SURFACES, VOLUMES.
+But, a PLSV may be an UNION of same type PLSV.
+For example, an UNION of LINES    is a LINE
+             an UNION of SURFACES is a SURFACE ...
+
+Every PLSV definition requierts a MAPPING.
+Generally, this MAPPING is reduced to IDENTITY noted I.
+In other cases, the MAPPING permits the construction of curved PLSV or
+DEFORMED or DISPLACED ou SYMETRIC ou PROJETED PLSV... 
+
+An OBJECT is the UNION without MAPPING of POINTS,LINES,SURFACES,VOLUMES and
+OBJECTS. The numerical computing (heat transfer, elasticity, wave,...)
+is done from one OBJECT.  
+
+Every PLSV or OBJECT is IDENTIFIED by a NAME of up to 24 CHARACTERS,
+choosen by the User. All data arrays of PLSVO are identified from these names.
+
+PHYSICAL DATA:
+==============
+The comportement of materials is charaterized by some input
+(conductivity, module de Young,...). These data are linked
+to the PLSV which support them. A conductivity to a volume, a pressure
+on a surface, a fixation at a point, ...
+A vocabulary is associated to data for each type of problem (heat transfer, 
+elasticity, wave, ...) Cf the initial documentation of the first menu of
+THERMICER, ELASTICER, FLUIDER.
+
+THE LOGICAL ORDER TO CONSTRUCT A FINITE ELEMENT MESH:
+=====================================================
+2 TYPES of MESHES : STRUCTURED or UNSTRUCTURED.
+In all cases, the 3 coordinates of VERTICES of FINITE ELEMENT (FE) are stored.
+A STRUCTURED MESH is characterized by some integers:
+line of N consecutive points,
+quadrangle of NX edges in a direction "X" and NY in an other direction "Y"
+hexahedron of NX edges in a direction "X", NY in direction "Y", 
+              NZ in direction "Z3
+
+An UNSTRUCTURED MESH is described by the list of node numbers of every FE.
+
+The top-down analysis leads to choose:
+
+- for every VOLUME an algorithm programmed in Mefisto which induces data
+often a list of SURFACES (as the boundary of the volume);
+
+- for every SURFACE an algorithm programmed in Mefisto which induces data
+often a list of LINES (as the boundary of the surface) or SURFACES;
+
+- for every LINE an algorithm programmed in Mefisto which induces data
+often a list of POINTS (as interpolation points) or LINES;
+
+A synthesis gives the list of POINTS, LINES, SURFACES, VOLUMES.
+
+Remark: The intersection of 2 FE must be the empty set, or a vertex,
+or the totality of an edge, or the totality of a triangular or quadrangular face.
+Else, the mesh is NOT CORRECT, NOT CONFORM.
+
+With this analysis, a PLS common at 2 PLSV is construct once and referred
+many times and the CONFORMITY is obtained.
+
+The bottom-up construction leads to type:
+
+- the POINTS either the typing of 3 coordinates, or the using of the mouse
+in 2d or 3d.
+
+- the LINES from the data of its type (straight line, arc of circle, 
+B-spline, ...), the number of edges of the line, the distribution of vertices,
+regular or defined with a geometrical ratio of edge lengths.
+
+- the SURFACES from the data of its type (square, circle, B-spline, ...),
+the list of LINES of their boundary,...
+
+
+- the VOLUMES from the data of its type (hexahedron, polyhedron, ...),
+the list of SURFACES of their boundary,...
+
+A PLSV can be the result of a MAPPING ( translation, rotation,
+dilatation, mathematical expression from R3 to R3, projection, symetries,...) 
+
+After, the OBJECT is defined from POINTS, LINES, SURFACES, VOLUMES in order
+to associate their PHYSICAL CHARATERISTICS, the BOUNDARY CONDITIONS.
+
+Thus, the choice of FE is done by the degree of Lagrange polynomials used.
+During this operation, the nodes will be renumbered to reduce the storage
+of the future skyline matrices.
+
+THE MENUS :
+===========
+The start of the execution produces a menu of options.
+
+2 possibilities are offered:
+1. displace the mouse arrow to the rectangle of the chosen option and click
+   one of the 3 buttoms of the mouse => the option is executed
+2. type on keyboard the integer number written in the rectangle, and 
+   the character ";" and "return" => the option is executed
+A computation is done or a new menu appears. And so on ...
+
+To abandon the option, type @;  or Escape or click the rectangle @; Escape...
+
+ATTENTION: The typing of @;  suppresses all data input data, in particular
+the preceding data of the line!
+
+To obtain the documentation, type ?;  or click the rectangle DOCUMENTATION
+
+THE NUMERICAL INPUT and USER LANGUAGE LU:
+=========================================
+These input (integer, real, real2 (double precision), logical, characters,...)
+are typed on the keyboard and FINISHED by the 2 characters  ;  return
+
+The typing of ? gives the documentation of the value which is requested,
+then indicates the type of the value and its actual value if it exists
+a default value. If this value is correct, type = to accept it.
+
+All text between the characters is a comment.
+{ comment } is not taken in account by the User Language (LU).
+
+For LU, upper or lower cases of letters are equal.
+
+This language permits to type on keyboard at any time
+- a numerical value :  3;  -2E-3;
+- an algebraic expression to be evaluated :  3.14159 * 2.71828 ;
+- a declaration of variables : defvar pi,radius, nb_edges;
+- the value of a pre-defined variable : radius = 1.2; pi=atan(1) * 4.0;
+- the declaration of a function : deffunc aire( r );
+                                  aire = pi * r ** 2 ;
+                                  endfunc;
+- the evaluation of a function : aire( 10.345 );  aire( rayon/ 7);
+
+For more precisions, cf the LU grammar and examples which followed;
+                            
+ATTENTION: DO NOT FORGET to SAVE the DATA ARRAYS by the typing of 
+99; SAVE DATA and QUIT
+else, ALL IS LOST!!!...
+Type CTRL C leads to the same LOST! 
+
+
+A REMARK ON THE MANAGEMENT OF FILES:
+====================================
+Every DATA is stored in a SECONDARY MEMORY (MS) formed from some DIRECT 
+ACCESS FILES ON DISK.
+If space is not sufficient, it is possible to add a new file.
+
+The LU LANGUAGE GRAMMAR:
+========================
+Every NUMERICAL VALUE (integer, real, double real ) or CHARACTER STRING
+must be done with respect to the rules of the grammar defined below:
+
+The number of blank between words is not significant, excepted for a
+string of characters <STRING of CHARACTERS>.
+
+<DONNEE> :=  | <KEY_WORD> ;
+             | <STRING of CHARACTERS> ; 
+             | defvar <IDENT_VAR>{,<IDENT_VAR>} ;
+             | <FONCTION_D> ; 
+             | <VALEUR_D>   ; 
+
+<KEY_WORD> := | { COMMENTAIRE }
+              | @        abandon of input, up a level in the tree of menus
+                         ATTENTION: The typing of @; or ESCAPE do not permit 
+                                    the analysis of data on this line, even
+                                    data before this character!
+             | ?         display the documentation for this input
+                                 eventually its actual value
+             | =        keep the actual value
+             | QUITTER  the actual input file without close it
+             | EXIT     the actual input file without close it
+             | FERMER   quit the actual input file and close it
+             | CLOSE    quit the actual input file and close it
+             | LIREF nom_de_fichier   nom  dependant de l'utilisateur
+             | READF name_of_file     name dependent of the user
+
+<STRING of CHARACTERS> := | '<CHARACTER>{<CHARACTER>}'
+                          | '<CHARACTER>{''{<CHARACTER>}}'
+
+<FONCTION_D> :=  DefFunc <IDENT_FONC>(<PARAM>{,<PARAM>});
+                {defvar  <NOM_VAR>{,<NOM_VAR>} ; }
+                {defetiq <ETIQ>{,<ETIQ>} ; }
+                {ETIQ :} <INSTRUCTION>
+               {{ETIQ :} <INSTRUCTION> }
+                {ETIQ :}  EndFunc ;
+
+<INSTRUCTION> := | <IDENT_FONC> = <EXPR_D> ;
+                 | <NOM_VAR>    = <EXPR_D> ;
+                 | afficher <EXPR_D>{,<EXPR_D>} ;
+                 | if       <EXPR_LOGIQ> 
+                   then    <INSTRUCTION>
+                  {else    <INSTRUCTION>}
+                   endif ;
+                 | pour <NOM_VAR> = <EXPR_D>  a  <EXPR_D> ;
+                      <INSTRUCTION>
+                   finpour ;
+                 | repeter ;
+                      <INSTRUCTION>
+                   jusque  <EXPR_LOGIQ> ;
+                 | tantque <EXPR_LOGIQ> ;
+                      <INSTRUCTION>
+                   fintant ;
+                 | retour ;
+                 | aller <ETIQ> ;
+
+                 | display  <EXPR_D>{,<EXPR_D>} ;
+                 | if       <EXPR_LOGIQ> 
+                   then    <INSTRUCTION>
+                  {else    <INSTRUCTION>}
+                   endif ;
+                 | for <NOM_VAR> = <EXPR_D>  to  <EXPR_D> ;  the step is 1
+                      <INSTRUCTION>
+                   endfor ;
+                 | repeat ;
+                      <INSTRUCTION>
+                   until  <EXPR_LOGIQ> ;
+                 | while <EXPR_LOGIQ> ;
+                      <INSTRUCTION>
+                   endwhile ;
+                 | return ;
+                 | goto <ETIQ> ;
+
+<VALEUR_D>   := | <EXPR_D> 
+                | <IDENT_VAR> = <EXPR_D>  
+
+<EXPR_D>     := | (<EXPR_D>)
+                | <TERME>
+                | <TERME> + <EXPR_D>  
+                | <TERME> - <EXPR_D>  
+
+<TERME>      := | <FACTEUR>
+                | <FACTEUR> * <TERME>    
+                | <FACTEUR> / <TERME>    
+
+<FACTEUR>    := | <PUISSANCE>
+                | <PUISSANCE> ** <EXPR_D> 
+ 
+<PUISSANCE>  := | <EXPR_D>
+                | <VARIABLE>  
+
+<VARIABLE>   := | <CONSTANTE_D>
+                | <IDENT_VAR>
+                | <VARIABLE_TMS>
+                | <IDENT_FONC>(<EXPR_D>{,<EXPR_D>) 
+  
+In the definition deffunc of a function,<VARIABLE> may be 
+a parameter <PARAM> of the function.
+
+<EXPR_LOGIQ> := | <EXPR_LOGI>  ox  <EXPR_LOGIQ>    or exclusif      
+                | <EXPR_LOGIQ> ox  <EXPR_LOGI>   
+
+<EXPR_LOGI>  := | <EXPR_LOG>   ou  <EXPR_LOGIQ>    or inclusif
+                | <EXPR_LOGIQ> ou  <EXPR_LOG>  
+                | <EXPR_LOG>   or  <EXPR_LOGIQ>
+                | <EXPR_LOGIQ> or  <EXPR_LOG>
+
+<EXPR_LOG>   := | <EXPR_LO>    et  <EXPR_LOGIQ>  
+                | <EXPR_LOGIQ> et  <EXPR_LO>
+                | <EXPR_LO>    and <EXPR_LOGIQ>  
+                | <EXPR_LOGIQ> and <EXPR_LO>
+
+<EXPR_LO>    := | non <EXPR_L>  
+
+<EXPR_L>     := | <EXPR_D>  <=  <EXPR_D>
+                | <EXPR_D>  <   <EXPR_D>  
+                | <EXPR_D>  =   <EXPR_D>
+                | <EXPR_D>  <>  <EXPR_D>
+                | <EXPR_D>  >=  <EXPR_D>
+                | <EXPR_D>  >   <EXPR_D>
+
+<NOM_IDENT>  := <LETTRE>{<LETTRE OU CHIFFRE OU _ >}  
+<PARAM>      := <NOM_IDENT>     
+<IDENT_FONC> := <NOM_IDENT>     
+<NOM_VAR>    := <NOM_IDENT>     
+
+
+THE UNARY FONCTIONS  its follow the FORTRAN 77 rules
+                     Call of type: abs(x)
+     abs    ABSOLUTE VALUE
+     sqrt   SQUARE ROOT
+     log    NEPERIAN LOGARITHM
+     log10  DECIMAL LOGARITHM
+     exp    EXPONENT
+     asin   ARC SINUS       -pi/2 < =  x < =  pi/2  radians
+     acos   ARC COSINUS        0  < =  x < =  pi    radians
+     atan   ARC TANGENTE    -pi/2 < =  x < =  pi/2  radians
+     sin    SINUS    angle in radians
+     cos    COSINUS  angle in radians
+     tan    TANGENTE angle in radians
+     sinh   HYPERBOLIC SINUS
+     cosh   HYPERBOLIC COSINUS
+     tanh   HYPERBOLIC TANGENT
+     nint   NEAREST INTEGER
+                               
+
+THE BINARY FUNCTIONS  its follow the FORTRAN 77 rules
+                      Call of type: min(x,y)
+
+     min    MINIMUM of 2 REALS
+     max    MAXIMUM of 2 REALS
+     mod    mod(i,j)  i modulo j
+     isign  isign(x1,x2)= + |x1| if x2 >= 0
+                          - |x1| if x2 <  0
+
+     nuobjt nuobjt( 'type_object' , 'nom_object' )
+                    'type_object' = | 'point'
+                                    | 'ligne'
+                                    | 'surface'
+                                    | 'volume'
+                                    | 'objet'
+                                    | 'fonction'
+                                    | 'transfo'
+            return the number in the directory objet of the object 
+                       of name 'nom_object'
+                   0 if not recovered
+
+SOME EXAMPLES of LANGAGE LU USING:
+==================================
+ 3 ; 7e5 ;  -(3+4)/7;   { 3 algebraic expressions }
+
+defvar pi,R,circonference;
+pi=atan(1) * 4 ; R=1e3 ; circonference= 2 * pi * R ; 
+                                      
+deffunc g( no , x );
+if no=1 then g=no ;
+        else g=x ;
+endif; 
+finfunc; 
+g(1,2);              {Calls of the function g}
+g(2,3);
+
+deffunc k(n);        { A bad example. Do not use it }
+defetiq e1,e2;
+aller e2;
+e1: k=n*n;
+retour;
+e2: aller e1;
+finfunc;   
+
+DefFunc f(n);        { Example of loop pour }
+   defvar i; 
+   f=1;
+   pour i=1 a n ;
+      f=f*i;
+   finpour;
+EndFunc;
+f(5);
+
+deffunc fpur(n);     { franglais }
+defvar i,j;
+fpur=0;
+for i=1 to n;
+  for j=1 to 3;
+     fpur=fpur+i+j;
+  endfor;
+finpour;
+display fpur;
+endfunc;
+fpur(2);
+
+DefFunc fa(n);       { Example of while }
+   defvar i;
+   fa=1; i=0; 
+   while i<n ;
+      i=i+1 ;
+      fa=fa*i ;
+   endwhile;
+EndFunc; 
+fa(5);  
+
+deffunc ftantq(n);   { franglais }
+defvar i,j;
+ftantq=0;
+i=0;
+tantque i<n;
+   i=i+1;
+   j=0;
+   while j<=3;
+      j=j+1;
+      ftantq=ftantq+i+j;
+   endwhile;
+fintant;
+display ftantq;
+return;
+endfunc;
+display ftantq(2);
+
+DefFunc fac(n);      { Example of repeat ... until }
+   defvar i;
+   fac=1; i=0;
+   repeat
+      i=i+1; 
+      fac=fac*i;
+   until i=n;
+EndFunc;
+fac(5); 
+        
+deffunc frep(n);     { franglais }
+defvar i,j;
+frep=0; i=0;
+repeat;
+  i=i+1; j=0;
+  repeter ;
+    j=j+1;
+    frep=frep+i+j;
+  jusque j>4;
+until i>=n;
+endfunc;
+display frep(2);
+
+{Definition of YOUNG module at point x,y,z of this material}
+DefFunc young( t, x , y , z , no_type_objet , materiau )
+if    materiau=nuobjt( 'volume' , 'steel' )
+then young=1e11;
+else if    materiau=nuobjt( 'volume' , 'copper' )
+      then young=5e10 ;
+      else young=0 ;
+      endif;  
+endif;
+EndFunc; 
+young(1,0,0,4,3); 
+
+DefFunc puiss2( n );     { Example of display values }
+defvar i;
+for i=1 a n;
+   display 2**i;
+endfor;
+EndFunc;
+puiss2(16); 
+   
+deffunc h(n); h=n+n; endfunc; h(5);
+{ a function can call an other function }      
+deffunc k(n); k=h(h(n)) ; endfunc; k(5);
+
+deffunc maxi(x,y,z);       { Function max with 3 parameters }
+  maxi=max(x,max(y,z));
+endfunc;
+
+deffunc maxim(x,y,z,t,u);  { Function max with 5 parameters }
+  maxim=maxi(x,y,maxi(z,t,u));
+endfunc;
+maxim(1,2,3,4,5);
+
+deffunc maximum(x,y,z,t,u,v); { Variante with 6 parameters }
+  maximum=max(maxi(x,y,maxi(z,t,u)),v);
+display maximum;
+endfunc;
+maximum(1,2,3,6,5,4); 
+
+{End of examples of language LU using}
+  
+
+=======================================================================  
+THE AVAILABLE KEY WORDS AT THIS LEVEL (MENU Debut of the TREE of MENUS)
+=======================================================================
+ 0: EDGE LENGTH by DEFAULT of meshes   
+ 1: POINTS   define the POINTS of the objects
+ 2: LINES    define the curves of the objects
+ 3: SURFACES define the faces of the objects
+ 4: VOLUMES  materials of the objects
+ 5: OBJECTS  definition of the objects
+ 6: MAPPINGS R3-->R3 to use with PLSV
+ 7: INTERPOLATION choice of Lagrange interpolation degree
+                  and definition of NODES of the object mesh
+
+10: DRAWING of PLSVO meshes
+May be used at every time.
+
+11: RENAME TAILLE_IDEALE(x,y,z)
+Mostly of mesh algorithms use the User's function TAILLE_IDEALE(x,y,z)
+which definess the maximum length of finite element edges.
+If this function, after to be used, is not adapted for the future
+meshes, this function has to be renamed because its presence is sufficient
+to be used.
+
+19: min MAX of XYZ of PLSVO or EXTREMAL COORDINATES of PLSVO
+To evitate a scaling of drawing after every input, it is advised to
+give the minimum and maximum of 3 coordinates of the objects.
+
+20: PRECISION to IDENTIFY POINTS
+For every UNION of PLSV, the vertices which belong to 2 PLSV must 
+be identified. 2 PRECISIONS have been defined:
+- one in the vicinity of the ORIGIN (X Y Z reals lower than EPZERO)
+  where an ABSOLUTE TEST is EFFICIENT
+- one in the vicinity of any point not closed to ORIGIN
+  where a RELATIVE TEST is MORE EFFICIENT
+  (one of X Y Z greater than EPZERO)
+
+21: AUTOMATIC UPDATE of the MESHES or NOT
+By default, if one of PLSV of the definition of an PLSV is modified,
+the mesh is not automatically computed again.
+Click on this rectangle to obtain this automatic modification.
+Click again on this rectangle to suppress this automatic modification.
+ATTENTION: The cost of tests may be important.
+
+39: BACKGROUND COLOR of the WINDOW
+To change the color of the Mefisto window
+
+71: TOOLS on TMS
+With this option, it is possible to
+- DISPLAY a TMS (Tableau Memoire Secondaire = Array on Disk)
+- INPUT the values of a TMS
+- DISPLAY the VALUE of a TMS variable
+- IMPOSE  the VALUE of a TMS variable
+- CHANGE  a NAME in a directory
+
+72: TOOLS on FILES of the MS
+To add a new file to the MS if it is saturated...
+
+73: TOOLS on I/O units
+The option 3 (default value) permits the interaction User-Mefisto
+
+74: DELETE TMS of PLSVO
+It is possible to DESTROY a  TMS ou un PLSVO or the function 
+TAILLE_IDEALE(x,y,z) ... But no recovering is possible!
+Don not use this option.
+
+89: Object from software NEF
+Creation for Mefisto of an Object made with the software NEF.
+From the input of its NEF name (in upper case) the file NOMOBJECT.XyzNoEF
+stored in the project directory is read and the volumes or surfaces, ... 
+of this object are created.
+Do a Mefisto drawing to see what PLSV compose the object.
+The object definition may be modified by the option 5; of this menu.
+Do not forget to do the INTERPOLATION 7; to construct the nodes of the mesh
+
+90: File xyznsef of PLSV
+Creation of a file xyznsef of tms XYZSOMMET and NSEF of a PLSV 
+The values of XYZ of every vertice and the vertex numbers of every FE
+are stored in a file xyznsef, readable with a text editor.
+This file may be used as interface for other softwares.
+
+91: File xyznpef of an OBJECT
+The values of XYZ of every node and the node numbers of every FE
+the names of PLSV of vertices, edges, faces and volume of every FE
+are stored in a file xyznpef, readable with a text editor.
+This file may be used as interface for other softwares.
+
+99: SAVE DATA and QUIT
+This option is OBLIGATORY to recover the computed TMS of this
+execution during a future execution of MAILLER, THERMICER, ...
+ELSE, ALL DATA ARE LOST!...
+
+In this wrong case, see the files FRAPPE.* of the project
+which permits to compute again all executions...
+But, it is not recommended!...

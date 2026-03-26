@@ -1,0 +1,156 @@
+      SUBROUTINE VOEX49( NTLXVO , LADEFI ,
+     %                   NTVOOB , MNVOOB , NTSOVO , MNSOVO , IERR )
+C++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+C BUT :    DESTRUCTURATION D'UN VOLUME STRUCTURE EN VOLUME NON STRUCTURE
+C -----
+C
+C ENTREES:
+C --------
+C LADEFI : TABLEAU ENTIER DE DEFINITION DU VOLUME
+C          CF ~td/d/a_volume__definition
+C NTLXVO : NUMERO DU TABLEAU TS DU LEXIQUE DU VOLUME
+C
+C SORTIES:
+C --------
+C NTVOOB : NUMERO      DU TMS 'NSEF' DES NUMEROS DES CUBES DU VOLUME
+C MNVOOB : ADRESSE MCN DU TMS 'NSEF' DES NUMEROS DES CUBES DU VOLUME
+C          CF ~td/d/a___nsef
+C NTSOVO : NUMERO      DU TMS 'XYZSOMMET' DU VOLUME
+C MNSOVO : ADRESSE MCN DU TMS 'XYZSOMMET' DU VOLUME
+C IERR   : 0 SI PAS D'ERREUR
+C          1 SI NOMBRE DE SOMMETS INCORRECT <2
+C          2 POINT INITIAL OU FINAL NON INITIALISE
+C          3 POINT INITIAL ET FINAL CONFONDUS
+C+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+C AUTEUR : PASCAL JOLY ANALYSE NUMERIQUE UPMC  PARIS   JUIN 1989
+C.......................................................................
+      IMPLICIT INTEGER (W)
+      COMMON / UNITES / LECTEU , IMPRIM , INTERA , NUNITE(29)
+      include"./incl/gsmenu.inc"
+      include"./incl/a_volume__definition.inc"
+      include"./incl/a___xyzsommet.inc"
+      include"./incl/a___nsef.inc"
+      include"./incl/ntmnlt.inc"
+      include"./incl/pp.inc"
+      COMMON            MCN(MOTMCN)
+      REAL              RMCN(1)
+      EQUIVALENCE      (MCN(1),RMCN(1))
+C
+      INTEGER           LADEFI(0:*)
+C
+      IERR   = 0
+      NBSOVO = 0
+      NBEFOB = 0
+C
+C     LE VOLUME A DESTRUCTURER
+C     ========================
+C     LE NOM DE CE VOLUME
+      NUVOIN = LADEFI(WUVOIN)
+C     LE TABLEAU LEXIQUE DE CE VOLUME
+      CALL LXNLOU( NTVOLU , NUVOIN , NTLXVL , MNLXVO )
+      IF( NTLXVL .LE. 0 ) THEN
+      NBLGRC(NRERR) = 1
+      KERR(1) =  ' LE VOLUME EST INCONNU'
+      CALL LEREUR
+         IERR = 1
+         RETURN
+      ENDIF
+C     LE TABLEAU 'NSEF' DE CE VOLUME
+      CALL LXTSOU( NTLXVL , 'NSEF' , NTVOIN , MNVOIN )
+      IF( NTVOIN .LE. 0 ) THEN
+      NBLGRC(NRERR) = 1
+      KERR(1) =  ' VOLUME SANS NSEF'
+      CALL LEREUR
+         IERR = 3
+         RETURN
+      ENDIF
+C     LE VOLUME EST IL STRUCTURE ?
+      NUTYMA = MCN( MNVOIN + WUTYMA )
+      IF( NUTYMA .LE. 0 ) THEN
+         NBLGRC(NRERR) = 1
+         KERR(1) = 'VOLUME NON STRUCTURE'
+         CALL LEREUR
+         IERR = 1
+         RETURN
+      ENDIF
+      IF (NUTYMA.EQ.5) THEN
+C        LE VOLUME EST UN TETRAEDRE
+         NBARTE = MCN ( MNVOIN + WBARTE )
+         NBEFOB = NBARTE * NBARTE * NBARTE
+         NBSOVO = (NBARTE+1)*(NBARTE+2)*(NBARTE+3)/6
+      ELSE IF (NUTYMA.EQ.6) THEN
+C        LE VOLUME EST UN PENTAEDRE
+         NBARTP = MCN ( MNVOIN + WBARTP )
+         NBARZP = MCN ( MNVOIN + WBARZP )
+         NBEFOB = NBARTP * NBARTP * NBARZP
+         NBSOVO = (NBARTP+1)*(NBARTP+2)*(NBARZP+1)/2
+      ELSE IF(NUTYMA.EQ.7) THEN
+C        LE VOLUME EST UN HEXAEDRE
+         NBARXH = MCN ( MNVOIN + WBARXH )
+         NBARYH = MCN ( MNVOIN + WBARYH )
+         NBARZH = MCN ( MNVOIN + WBARZH )
+         NBEFOB = NBARXH * NBARYH * NBARZH
+         NBSOVO = (NBARXH+1)*(NBARYH+1)*(NBARZH+1)
+      END IF
+C     TEST SUR LE NOMBRE DE SOMMETS
+      IF( NBSOVO .LE. 1 ) THEN
+         NBLGRC(NRERR) = 1
+         KERR(1) = 'ERREUR NOMBRE <1 DES SOMMETS DU VOLUME'
+         CALL LEREUR
+         IERR = 1
+         RETURN
+      ENDIF
+C     LE TABLEAU 'XYZSOMMET' DE CE VOLUME
+      CALL LXTSOU( NTLXVL , 'XYZSOMMET' , NTSOVO , MNSOV0 )
+C
+C     CREATION DU VOLUME NON STRUCTURE
+C     ================================
+C     CONSTRUCTION DU TABLEAU 'XYZSOMMET'
+C     ---------------------------------
+      MOTS = WYZSOM + 3 * NBSOVO
+      CALL LXTNDC( NTLXVO , 'XYZSOMMET' , 'MOTS' , MOTS )
+      CALL LXTSOU( NTLXVO , 'XYZSOMMET' ,  NTSOVO  , MNSOVO )
+C     COPIE DU TABLEAU 'XYZSOMMET' STRUCTURE DANS CELUI NON STRUCTURE
+      CALL TRTATA( MCN(MNSOV0) , MCN(MNSOVO) , MOTS )
+C
+C     AJOUT DE LA DATE
+      CALL ECDATE( MCN(MNSOVO) )
+C
+C     CONSTRUCTION DU TABLEAU 'NSEF'
+C     ------------------------------------
+      CALL LXTNDC( NTLXVO , 'NSEF' , 'ENTIER' , WUSOEF + NBEFOB * 8 )
+      CALL LXTSOU( NTLXVO , 'NSEF' ,  NTVOOB  , MNVOOB )
+C
+C     LE TYPE DE L'OBJET : ICI VOLUME
+      MCN( MNVOOB + WUTYOB ) = 4
+C     LE TYPE DU MAILLAGE : ICI ELEMENT NON STRUCTURE
+      MCN( MNVOOB + WUTYMA ) = 0
+C     LE NOMBRE DE SOMMETS PAR SOUS-OBJET
+      MCN( MNVOOB + WBSOEF ) = 8
+C     LE NOMBRE DE NSEF
+      MCN( MNVOOB + WBEFOB ) = NBEFOB
+      IF (NUTYMA.EQ.5) THEN
+C        LE VOLUME EST UN TETRAEDRE
+         CALL VOEXT5(MNVOOB,MNVOOB+WUSOEF)
+      ELSE IF (NUTYMA.EQ.6) THEN
+C        LE VOLUME EST UN PENTAEDRE
+         CALL VOEXP5(MNVOOB,MNVOOB+WUSOEF)
+      ELSE IF(NUTYMA.EQ.7) THEN
+C        LE VOLUME EST UN HEXAEDRE
+         CALL VOEXH7(MNVOOB,MNVOOB+WUSOEF)
+      END IF
+C
+C     LE TYPE INCONNU DE FERMETURE DU MAILLAGE
+      MCN( MNVOOB + WUTFMA ) = -1
+C     PAS DE TANGENTES STOCKEES
+      MCN( MNVOOB + WBTGEF ) = 0
+      MCN( MNVOOB + WBEFAP ) = 0
+      MCN( MNVOOB + WBEFTG ) = 0
+C     AJOUT DE LA DATE
+      CALL ECDATE( MCN(MNVOOB) )
+C
+C     AJOUT DU NUMERO DU TABLEAU DESCRIPTEUR
+      MCN( MNVOOB + MOTVAR(6) ) = NONMTD( '~>>>NSEF' )
+C
+      IERR = 0
+      END

@@ -1,0 +1,19 @@
+Les NOEUDS definissent l'intervalle de definition
+du parametre de la B-spline et determinent un ensemble
+de segments dont l'image forme la courbe B-spline.
+La donnee d'un NOEUD est donc un REEL.
+Ces noeuds doivent etre donnes selon des valeurs reelles
+croissantes ou constantes. 
+Exemple: 0;0;0; 1;1; 2.2; 3; 5;5;5;
+         pour 10 NOEUDS
+La taille des segments influe sur la courbe B-spline. 
+
+Les fonctions (2 en 2D , 3 en 3D) sur chaque segment sont
+soit des polynomes, soit des fractions rationnelles.
+
+Le nombre de noeuds de la ligne B-spline OUVERTE est egal
+au nombre de points + le degre des polynomes + 1.    
+
+Le nombre de noeuds de la ligne B-spline FERMEE est egal
+au nombre de points de controle et n'est pas demande.
+

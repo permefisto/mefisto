@@ -1,0 +1,6 @@
+Le POINT a creer va etre l'image par la TRANSFORMATION
+definie auparavant du point dont le nom est a fournir.
+
+Exemple: P2; SYMETRIE_DROITE; 50; P1;
+         Le point P2 est l'image du point p1 par
+         la transformation SYMETRIE_DROITE

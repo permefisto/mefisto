@@ -1,0 +1,1 @@
+xterm -geometry 116x90+0+0 -j -cr red -ls -sb -sl 600000 -name xterm -bg black -fg yellow -fn 7x14bold -fb 7x14bold -title "xterm noir" &

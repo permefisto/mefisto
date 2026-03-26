@@ -1,0 +1,6 @@
+variable CL_THER 'Condition Limite div A grad' entier
+( 1 : 'g COEFFICIENT ECHANGE entre PAROI et FLUIDE Exterieur'
+, 2 : 'Fgamma SOURCE FLUX IMPOSE ou g * Temperature Exterieure'
+, 3 : 'Theta_D CONTACT TEMPERATURE IMPOSEE'
+, 8 : 'Theta_0 TEMPERATURE INITIALE'
+, 9 : 'Vo VITESSE INITIALE de l''ONDE' ) ;

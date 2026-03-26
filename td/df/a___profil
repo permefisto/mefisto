@@ -1,0 +1,16 @@
+deftms ~>>>PROFIL
+'Une matrice symetrique PROFIL est assemblee a partir des matrices
+elementaires associees aux elements finis du maillage d un objet.
+Seuls sont stockes les coefficients de chaque ligne compris entre le
+premier coefficient non nul et le coefficient diagonal.
+LPDIAG(i) donne la position dans le vecteur PROFIL du coefficient
+diagonal de la ligne i et par homogeneite LPDIAG(0)=0'
+variable muet DATE 'date de creation du tableau'   reel2  ;
+variable muet NUTD 'numero du tableau descripteur' entier ;
+variable NBLIPR    'nombre de lignes de la matrice PROFIL' entier ;
+variable LPPROF
+'decalage en mots(entier pair) dans ce tms du 1-er mot de PROFIL' entier ;
+tableau LPDIAG(0..NBLIPR)
+'pointeur dans PROFIL de chaque coefficient diagonal,LPDIAG(0)=0' entier ;
+tableau PROFIL(1..LPDIAG(NBLIPR)) 'coefficients matrice PROFIL' reel2 ;
+fintms ;

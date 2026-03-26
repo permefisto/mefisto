@@ -1,0 +1,49 @@
+      SUBROUTINE RENTDL( NBDLIB, NTDL, NUDLIB, NBV, VLIB, VDL )
+C ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+C BUT :   RETOUR A LA NUMEROTATION DE 1 A NTDL DES DEGRES DE LIBERTE
+C -----   LIBRES DE 1 A NBDLIB SUITE A LA PRISE EN COMPTE DES C.L.
+C         DIRICHLET HOMOGENES (SUPPRESSION LIGNE COLONNE DES DL ZERO)
+C
+C ENTREES:
+C --------
+C NBDLIB : NOMBRE DE DEGRES DE LIBERTE LIBRES
+C NTDL   : NOMBRE DE DEGRES DE LIBERTE LIBRES OU FIXES
+C NUDLIB : NUDLIB(I) = NUMERO DE 1 A NBDLIB DU DL I (1 A NTDL) LIBRE
+C                    -(INDICE DANS NODLFX) SI LE DL I EST BLOQUE
+C NBV    : NOMBRE DE VECTEURS A ELARGIR ET COMPLETER DE ZEROS
+C VLIB   : VLIB(NBDLIB,NBV) NBV VECTEURS
+C
+C SORTIES:
+C --------
+C VDL    : VECTEUR(NTDL,NBV) NBV VECTEURS
+C
+C REMARQUE: VLIB et VDL PEUVENT AVOIR MEME ADRESSE A L'APPEL
+C ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+C AUTEUR : ALAIN PERRONNET LJLL UPMC & ST PIERRE DU PERRAY DECEMBRE 2009
+C23456---------------------------------------------------------------012
+      INTEGER           NUDLIB(NTDL)
+      DOUBLE PRECISION  VLIB(NBDLIB,NBV), VDL(NTDL,NBV)
+C
+      DO 50 I = NTDL, 1, -1
+C
+C        NO DU DL LIBRE OU FIXE
+         NDLIB = NUDLIB(I)
+         IF( NDLIB .GT. 0 ) THEN
+C
+C           DL LIBRE
+            DO 10 K = 1, NBV
+               VDL( I, K ) = VLIB( NDLIB, K )
+ 10         CONTINUE
+C
+         ELSE
+C
+C           DL FIXE A ZERO
+            DO 20 K = 1, NBV
+               VDL( I, K ) = 0D0
+ 20         CONTINUE
+         ENDIF
+C
+ 50   CONTINUE
+C
+      RETURN
+      END

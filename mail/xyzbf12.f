@@ -1,0 +1,118 @@
+      SUBROUTINE XYZBF12( NOPOID, PTXYZD, N1FEOC, NPFEOC, NFETOI,
+     %                    NBFETO, XYZMIX, XYZ )
+C+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+C  BUT :   CALCULER LES COORDONNEES XYZ DU BARYCENTRE DES FACES
+C  -----   N1FEOC A NPFEOC DE L'ETOILE DEFINIE DANS NFETOI AVEC LES POIDS
+C          DES 1D0/SURFACES DES FACES ou 1D0
+
+C ENTREES:
+C --------
+C NOPOID : =2 CHOIX DU BARYCENTRE AVEC LES POIDS DES 1D0/SURFACES DES FACES
+C          =1 CHOIX DU BARYCENTRE CLASSIQUE POIDS=1
+C PTXYZD : TABLEAU DES COORDONNEES DES POINTS
+C          PAR POINT : X  Y  Z DISTANCE_SOUHAITEE
+C N1FEOC : POINTEUR SUR LA PREMIERE FACE DE L'ETOILE
+C          CHAINAGE SUIVANT DANS NFETOI(5,*)
+C NPFEOC : NUMERO NFETOI DE LA PREMIERE FACE DE L'ETOILE A NE PAS TRAITER
+C NFETOI : LES FACES TRIANGULAIRES DE L'ETOILE
+C          1: NUMERO DU TETRAEDRE DANS NOTETR OPPOSE A CETTE FACE
+C          2: NUMERO PTXYZD DU SOMMET 1 DE LA FACE
+C          3: NUMERO PTXYZD DU SOMMET 2 DE LA FACE
+C          4: NUMERO PTXYZD DU SOMMET 3 DE LA FACE
+C             S1S2xS1S3 EST DIRIGE VERS L'INTERIEUR DE L'ETOILE
+C          5: CHAINAGE SUR LA FACE SUIVANTE OCCUPEE OU VIDE
+
+C SORTIES:
+C --------
+C NBFETO : NOMBRE DE FACES DE L'ETOILE
+C XYZMIX : COORDOONNEES EXTREMES DES SOMMETS DES FACES DE L'ETOILE
+C XYZ    : 3 COORDONNEES XYZ DU BARYCENTRE DES FACES N1FEOC A NPFEOC
+C+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+C AUTEUR : ALAIN PERRONNET LJLL UPMC & VEULETTES SUR MER   NOVEMBRE 2014
+C2345X7..............................................................012
+      DOUBLE PRECISION  PTXYZD(4,*), XYZMIX(3,2), XYZ(3),
+     %                  S, SURTRD, POIDS, TTPOIDS
+      INTEGER           NFETOI(5,*)
+
+C     COORDONNEES DES POINTS EXTREMES ET DU BARYCENTRE DES SOMMETS
+C     DES FACES DE L'ETOILE
+      DO K=1,3
+         XYZ(K) = 0D0
+         XYZMIX(K,1) = 1D100
+         XYZMIX(K,2) =-1D100
+      ENDDO
+
+C     CALCUL DE LA SURFACE DES FACES
+      TTPOIDS = 0D0
+      NBFETO  = 0
+      NF1     = N1FEOC
+
+ 10   IF( NF1 .NE. NPFEOC ) THEN
+
+C        UNE FACE DE PLUS
+         NBFETO = NBFETO + 1
+
+         IF( NOPOID .EQ. 2 ) THEN
+C           ESSAI AVEC LE POIDS = L'INVERSE DE LA SURFACE DE LA FACE NF1
+            POIDS = SURTRD( PTXYZD(1, ABS(NFETOI(2,NF1)) ),
+     %                      PTXYZD(1, NFETOI(3,NF1) ),
+     %                      PTXYZD(1, NFETOI(4,NF1) ) )
+            POIDS = 1D0 / POIDS
+         ELSE
+C           ESSAI AVEC LE POIDS CLASSIQUE 1
+            POIDS = 1D0
+         ENDIF
+
+C        SOMME DES POIDS SUR LES SOMMETS DES FACES
+         TTPOIDS = TTPOIDS + POIDS * 3
+
+C        BOUCLE SUR LES 3 SOMMETS DE LA FACE NF1
+         DO K=1,3
+
+C           NUMERO DU SOMMET K DE LA FACE NF1
+            NS = ABS( NFETOI(1+K,NF1) )
+
+            DO L=1,3
+
+C              COORDONNEE L DU SOMMET NS
+               S = PTXYZD( L, NS )
+
+C              BARYCENTRE AVEC POUR POIDS LA SURFACE DE LA FACE
+               XYZ(L) = XYZ(L) + S * POIDS
+
+C              MIN MAX DE LA COORDONNEE L DES SOMMETS DES FACES
+               IF( S .LT. XYZMIX(L,1) )  XYZMIX(L,1) = S
+               IF( S .GT. XYZMIX(L,2) )  XYZMIX(L,2) = S
+
+            ENDDO
+
+         ENDDO
+
+C        LA FACE SUIVANTE
+         NF1 = NFETOI(5,NF1)
+         GOTO 10
+
+      ENDIF
+
+C     PONDERATION PAR LA SOMME DES POIDS
+      DO L=1,3
+         XYZ(L) = XYZ(L) / TTPOIDS
+      ENDDO
+
+ccc      PRINT *
+ccc      IF( NOPOID .EQ. 2 ) THEN
+ccc         PRINT *,'xyzbf12: BARYCENTRE avec les POIDS des 1D0/SURFACES de
+ccc     %',NBFETO,' FACES de l''ETOILE'
+ccc      ELSE
+ccc         PRINT *,'xyzbf12: BARYCENTRE CLASSIQUE avec un POIDS=1 de',
+ccc     %            NBFETO,' FACES de l''ETOILE'
+ccc      ENDIF
+ccc      PRINT *,'xyzbf12: Xmin=',XYZMIX(1,1),' Pt X=',XYZ(1),
+ccc     %' XMax=',XYZMIX(1,2)
+ccc      PRINT *,'xyzbf12: Ymin=',XYZMIX(2,1),' Pt Y=',XYZ(2),
+ccc     %' YMax=',XYZMIX(2,2)
+ccc      PRINT *,'xyzbf12: Zmin=',XYZMIX(3,1),' Pt Z=',XYZ(3),
+ccc     %' ZMax=',XYZMIX(3,2)
+
+      RETURN
+      END

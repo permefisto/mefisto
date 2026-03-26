@@ -1,0 +1,4 @@
+variable ResoTHST 'Type des coef du PB thermique STATIONNAIRE' entier
+(1: 'Coefficients INDEPENDANTS de la TEMPERATURE',
+ 2: 'Coefficients   DEPENDANTS de la TEMPERATURE',
+ 3: 'Probleme NON LINEAIRE de LANE-EMDEN' ) ;

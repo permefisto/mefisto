@@ -1,0 +1,38 @@
+For every component of the object, give in this order
+- the NAME of TYPE POINT LIGNE SURFACE VOLUME or OBJET
+  (This NAME can be REDUCED to its FIRST LETTER)
+-the NAME of the POINT LINE SURFACE VOLUME or OBJET 
+
+Example :
+5;   O; O3;  VOLUME; V1;  SURFACE; S7;  L; L5;  POINT; P1;
+L'OBJET is composed of 5 PLSVO, one of each type.
+
+Example in 3D:       
+5; { OBJETS PARTIES DE L OBJET }
+ JAW; {NAME DE L'OBJET}
+ 0;   {CLASSICAL 2D or 3D }
+ 5;   {NBDOBJ NUMBER of POINTS LINES SURFACES VOLUMES OBJECTS of the OBJECT}
+ V; MECHANICAL_PIECE; {NTYOBJ(1..NBDOBJ) 'TYPE of PLSVO NAME and PLSVO NAME}
+ S; RIGHT_WASHER;
+ S; LEFT_WASHER;
+ S; CYLINDER_WITH_FORCE;
+ S; RAIL_FIXED;
+ @;
+7; { INTERPOLATION DEFINITION of MESH NODES}
+ JAW; 4; { LAGRANGE of DEGREE 2 }
+@;
+
+Example in axisymmetric:
+5;{ OBJECTS components of the OBJECT }
+ WATER_CASTLE;  0; {classic solution 2D or 3D with renumbering}
+ 5; { number of Points Lines Surfaces Volumes Objects of the object }
+ SURFACE; GROUND;
+ SURFACE; CONCRETE;
+ LIGNE;   D2E2;
+ L; D1D2;
+ L; DISPLNULL;
+@;
+7; { Interpolation }
+ WATER_CASTLE;
+ 2; {AXISYMETRIC LAGRANGE DEGREE 2}
+@;

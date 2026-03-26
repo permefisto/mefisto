@@ -1,0 +1,330 @@
+         SUBROUTINE  TET4FA( XYZ, M, NBSTTR, XYSFTR, COSO,
+     %                       XYZF )
+C+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+C BUT :    CALCULER LES COORDONNEES DES POINTS SUR LES FACES
+C -----    DU TETRAEDRE RECTANGLE UNITE DE LA FORMULE DE
+C          L'INTERPOLATION TRANSFINIE DEGRE 1 (cf CRAS A.PERRONNET)
+C
+C ENTREES:
+C --------
+C XYZ     : LES 3 COORDONNEES DU POINT DANS LE TETRAEDRE UNITE
+C M       : LE NOMBRE DE SOMMETS PAR ARETE DES FACES TRIANGULAIRES
+C NBSTTR  : LE NOMBRE DE SOMMETS DE CHACUNE DES FACES TRIANGULAIRES
+C           = M*(M+1)/2
+C XYSFTR  : LES 3 COORDONNEES DES SOMMETS DES 4 FACES DU TETRAEDRE UNITE
+C COSO    : LES COORDONNEES DES SOMMETS SUR LES FACES DU TETRAEDRE COURBE
+C
+C SORTIES:
+C --------
+C XYZF   : LES 3 COORDONNEES DES SOMMETS DES FACES DU TETRAEDRE COURBE
+C          NECESSAIRES DANS LA FORMULE DE L'INTERPOLATION TRANSFINIE
+C+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+C AUTEUR : PERRONNET ALAIN ANALYSE NUMERIQUE UPMC PARIS    NOVEMBRE 1997
+C23456---------------------------------------------------------------012
+      REAL     XYZ(3)
+      REAL     XYSFTR(2,NBSTTR,1:4)
+      REAL     COSO(3,*)
+      REAL     XYZF(3,12)
+      REAL     CB(3)
+C
+C     LA FONCTION FORMULE DU NUMERO DES SOMMETS DU TRIANGLE
+C     NUSOTR(I,J)   = (I*I-I)/2 + J
+C     LA FONCTION FORMULE DU NUMERO DES SOMMETS DU TETRAEDRE
+      NUSOTE(I,J,K) = (I-1)*I*(I+1)/6 + (J+K-2)*(J+K-1)/2 + K
+C
+C     LES COORDONNEES BARYCENTRIQUES SUR LE TETRAEDRE UNITE DU POINT XYZ
+      CB2 = XYZ(1)
+      CB3 = XYZ(2)
+      CB4 = XYZ(3)
+      CB1 = 1 - CB2 - CB3 - CB4
+C
+C     SUR LA FACE 1 TRIANGULAIRE INFERIEURE DU TETRAEDRE UNITE
+C     LES SOMMETS DE CETTE FACE ONT POUR INDICES (I,J,K=1)
+C     ========================================================
+C     S(1-CB2-CB3,CB2,CB3,0)
+      CALL REXYT1( CB2, CB3, M, XYSFTR(1,1,1),
+     %             NTY, I, J, CB )
+C     LE POINT EST DANS LE SOUS-TRIANGLE DE SOMMETS NS1,NS2,NS3
+C     AVEC LES COORDONNEES BARYCENTRIQUES CB(1), CB(2), CB(3)
+C     CALCUL DE L'INTERPOLATION P1 DU POINT DANS LE SOUS-TRIANGLE
+      IF( NTY .GT. 0 ) THEN
+C        TRIANGLE DE SOMMET 1 "VERS L'ORIGINE"
+         NS1 = NUSOTE(I  ,J  ,1)
+         NS2 = NUSOTE(I+1,J  ,1)
+         NS3 = NUSOTE(I+1,J+1,1)
+      ELSE
+C        TRIANGLE DE SOMMET 1 "NON VERS L'ORIGINE"
+         NS1 = NUSOTE(I+1,J+1,1)
+         NS2 = NUSOTE(I  ,J+1,1)
+         NS3 = NUSOTE(I  ,J  ,1)
+      ENDIF
+      DO 11 K=1,3
+         XYZF(K,1) = CB(1) * COSO(K,NS1)
+     %             + CB(2) * COSO(K,NS2)
+     %             + CB(3) * COSO(K,NS3)
+ 11   CONTINUE
+C
+C     S(CB1,1-CB1-CB3,CB3,0)
+      CALL REXYT1( 1-CB1-CB3, CB3, M, XYSFTR(1,1,1),
+     %             NTY, I, J, CB )
+C     LE POINT EST DANS LE SOUS-TRIANGLE DE SOMMETS NS1,NS2,NS3
+C     AVEC LES COORDONNEES BARYCENTRIQUES CB(1), CB(2), CB(3)
+C     CALCUL DE L'INTERPOLATION P1 DU POINT DANS LE SOUS-TRIANGLE
+      IF( NTY .GT. 0 ) THEN
+C        TRIANGLE DE SOMMET 1 "VERS L'ORIGINE"
+         NS1 = NUSOTE(I  ,J  ,1)
+         NS2 = NUSOTE(I+1,J  ,1)
+         NS3 = NUSOTE(I+1,J+1,1)
+      ELSE
+C        TRIANGLE DE SOMMET 1 "NON VERS L'ORIGINE"
+         NS1 = NUSOTE(I+1,J+1,1)
+         NS2 = NUSOTE(I  ,J+1,1)
+         NS3 = NUSOTE(I  ,J  ,1)
+      ENDIF
+      DO 12 K=1,3
+         XYZF(K,2) = CB(1) * COSO(K,NS1)
+     %             + CB(2) * COSO(K,NS2)
+     %             + CB(3) * COSO(K,NS3)
+ 12   CONTINUE
+C
+C     S(CB1,CB2,1-CB1-CB2,0)
+      CALL REXYT1( CB2, 1-CB1-CB2, M, XYSFTR(1,1,1),
+     %             NTY, I, J, CB )
+C     LE POINT EST DANS LE SOUS-TRIANGLE DE SOMMETS NS1,NS2,NS3
+C     AVEC LES COORDONNEES BARYCENTRIQUES CB(1), CB(2), CB(3)
+C     CALCUL DE L'INTERPOLATION P1 DU POINT DANS LE SOUS-TRIANGLE
+      IF( NTY .GT. 0 ) THEN
+C        TRIANGLE DE SOMMET 1 "VERS L'ORIGINE"
+         NS1 = NUSOTE(I  ,J  ,1)
+         NS2 = NUSOTE(I+1,J  ,1)
+         NS3 = NUSOTE(I+1,J+1,1)
+      ELSE
+C        TRIANGLE DE SOMMET 1 "NON VERS L'ORIGINE"
+         NS1 = NUSOTE(I+1,J+1,1)
+         NS2 = NUSOTE(I  ,J+1,1)
+         NS3 = NUSOTE(I  ,J  ,1)
+      ENDIF
+      DO 13 K=1,3
+         XYZF(K,3) = CB(1) * COSO(K,NS1)
+     %             + CB(2) * COSO(K,NS2)
+     %             + CB(3) * COSO(K,NS3)
+ 13   CONTINUE
+C
+C     SUR LA FACE 4: S2-S3-S4 DU TETRAEDRE UNITE
+C     LES SOMMETS DE CETTE FACE ONT POUR INDICES (I=M,J,K)
+C     ====================================================
+C     S(0,1-CB3-CB4,CB3,CB4)
+      CALL REXYT1( CB3, CB4, M, XYSFTR(1,1,4),
+     %             NTY, I, J, CB )
+C     LE POINT EST DANS LE SOUS-TRIANGLE DE SOMMETS NS1,NS2,NS3
+C     AVEC LES COORDONNEES BARYCENTRIQUES CB(1), CB(2), CB(3)
+C     CALCUL DE L'INTERPOLATION P1 DU POINT DANS LE SOUS-TRIANGLE
+      IF( NTY .GT. 0 ) THEN
+C        TRIANGLE DE SOMMET 1 "VERS L'ORIGINE"
+         NS1 = NUSOTE(M,I-J+1,J  )
+         NS2 = NUSOTE(M,I-J+2,J  )
+         NS3 = NUSOTE(M,I-J+1,J+1)
+      ELSE
+C        TRIANGLE DE SOMMET 1 "NON VERS L'ORIGINE"
+         NS1 = NUSOTE(M,I-J+1,J+1)
+         NS2 = NUSOTE(M,I-J  ,J+1)
+         NS3 = NUSOTE(M,I-J+1,J  )
+      ENDIF
+      DO 41 K=1,3
+         XYZF(K,4) = CB(1) * COSO(K,NS1)
+     %             + CB(2) * COSO(K,NS2)
+     %             + CB(3) * COSO(K,NS3)
+ 41   CONTINUE
+C
+C     S(0,CB2,1-CB2-CB4,CB4)
+      CALL REXYT1( 1-CB2-CB4, CB4, M, XYSFTR(1,1,4),
+     %             NTY, I, J, CB )
+C     LE POINT EST DANS LE SOUS-TRIANGLE DE SOMMETS NS1,NS2,NS3
+C     AVEC LES COORDONNEES BARYCENTRIQUES CB(1), CB(2), CB(3)
+C     CALCUL DE L'INTERPOLATION P1 DU POINT DANS LE SOUS-TRIANGLE
+      IF( NTY .GT. 0 ) THEN
+C        TRIANGLE DE SOMMET 1 "VERS L'ORIGINE"
+         NS1 = NUSOTE(M,I-J+1,J  )
+         NS2 = NUSOTE(M,I-J+2,J  )
+         NS3 = NUSOTE(M,I-J+1,J+1)
+      ELSE
+C        TRIANGLE DE SOMMET 1 "NON VERS L'ORIGINE"
+         NS1 = NUSOTE(M,I-J+1,J+1)
+         NS2 = NUSOTE(M,I-J  ,J+1)
+         NS3 = NUSOTE(M,I-J+1,J  )
+      ENDIF
+      DO 42 K=1,3
+         XYZF(K,5) = CB(1) * COSO(K,NS1)
+     %             + CB(2) * COSO(K,NS2)
+     %             + CB(3) * COSO(K,NS3)
+ 42   CONTINUE
+C
+C     S(0,CB2,CB3,1-CB2-CB3)
+      CALL REXYT1( CB3, 1-CB2-CB3, M, XYSFTR(1,1,4),
+     %             NTY, I, J, CB )
+C     LE POINT EST DANS LE SOUS-TRIANGLE DE SOMMETS NS1,NS2,NS3
+C     AVEC LES COORDONNEES BARYCENTRIQUES CB(1), CB(2), CB(3)
+C     CALCUL DE L'INTERPOLATION P1 DU POINT DANS LE SOUS-TRIANGLE
+      IF( NTY .GT. 0 ) THEN
+C        TRIANGLE DE SOMMET 1 "VERS L'ORIGINE"
+         NS1 = NUSOTE(M,I-J+1,J  )
+         NS2 = NUSOTE(M,I-J+2,J  )
+         NS3 = NUSOTE(M,I-J+1,J+1)
+      ELSE
+C        TRIANGLE DE SOMMET 1 "NON VERS L'ORIGINE"
+         NS1 = NUSOTE(M,I-J+1,J+1)
+         NS2 = NUSOTE(M,I-J  ,J+1)
+         NS3 = NUSOTE(M,I-J+1,J  )
+      ENDIF
+      DO 43 K=1,3
+         XYZF(K,6) = CB(1) * COSO(K,NS1)
+     %             + CB(2) * COSO(K,NS2)
+     %             + CB(3) * COSO(K,NS3)
+ 43   CONTINUE
+C
+C     SUR LA FACE 2: S1-S3-S4 DU TETRAEDRE UNITE
+C     LES SOMMETS DE CETTE FACE ONT POUR INDICES (I,I,K)
+C     ==================================================
+C     S(CB1,0,1-CB1-CB4,CB4)
+      CALL REXYT1( 1-CB1-CB4, CB4, M, XYSFTR(1,1,2),
+     %             NTY, I, J, CB )
+C     LE POINT EST DANS LE SOUS-TRIANGLE DE SOMMETS NS1,NS2,NS3
+C     AVEC LES COORDONNEES BARYCENTRIQUES CB(1), CB(2), CB(3)
+C     CALCUL DE L'INTERPOLATION P1 DU POINT DANS LE SOUS-TRIANGLE
+      IF( NTY .GT. 0 ) THEN
+C        TRIANGLE DE SOMMET 1 "VERS L'ORIGINE"
+         NS1 = NUSOTE(I  ,I-J+1,J  )
+         NS2 = NUSOTE(I+1,I-J+2,J  )
+         NS3 = NUSOTE(I+1,I-J+1,J+1)
+      ELSE
+C        TRIANGLE DE SOMMET 1 "NON VERS L'ORIGINE"
+         NS1 = NUSOTE(I+1,I-J+1,J+1)
+         NS2 = NUSOTE(I  ,I-J  ,J+1)
+         NS3 = NUSOTE(I  ,I-J+1,J  )
+      ENDIF
+      DO 21 K=1,3
+         XYZF(K,7) = CB(1) * COSO(K,NS1)
+     %             + CB(2) * COSO(K,NS2)
+     %             + CB(3) * COSO(K,NS3)
+ 21   CONTINUE
+C
+C     S(CB1,0,CB3,1-CB1-CB3)
+      CALL REXYT1( CB3, 1-CB1-CB3, M, XYSFTR(1,1,2),
+     %             NTY, I, J, CB )
+C     LE POINT EST DANS LE SOUS-TRIANGLE DE SOMMETS NS1,NS2,NS3
+C     AVEC LES COORDONNEES BARYCENTRIQUES CB(1), CB(2), CB(3)
+C     CALCUL DE L'INTERPOLATION P1 DU POINT DANS LE SOUS-TRIANGLE
+      IF( NTY .GT. 0 ) THEN
+C        TRIANGLE DE SOMMET 1 "VERS L'ORIGINE"
+         NS1 = NUSOTE(I  ,I-J+1,J  )
+         NS2 = NUSOTE(I+1,I-J+2,J  )
+         NS3 = NUSOTE(I+1,I-J+1,J+1)
+      ELSE
+C        TRIANGLE DE SOMMET 1 "NON VERS L'ORIGINE"
+         NS1 = NUSOTE(I+1,I-J+1,J+1)
+         NS2 = NUSOTE(I  ,I-J  ,J+1)
+         NS3 = NUSOTE(I  ,I-J+1,J  )
+      ENDIF
+      DO 22 K=1,3
+         XYZF(K,8) = CB(1) * COSO(K,NS1)
+     %             + CB(2) * COSO(K,NS2)
+     %             + CB(3) * COSO(K,NS3)
+ 22   CONTINUE
+C
+C     S(1-CB3-CB4,0,CB3,CB4)
+      CALL REXYT1( CB3, CB4, M, XYSFTR(1,1,2),
+     %             NTY, I, J, CB )
+C     LE POINT EST DANS LE SOUS-TRIANGLE DE SOMMETS NS1,NS2,NS3
+C     AVEC LES COORDONNEES BARYCENTRIQUES CB(1), CB(2), CB(3)
+C     CALCUL DE L'INTERPOLATION P1 DU POINT DANS LE SOUS-TRIANGLE
+      IF( NTY .GT. 0 ) THEN
+C        TRIANGLE DE SOMMET 1 "VERS L'ORIGINE"
+         NS1 = NUSOTE(I  ,I-J+1,J  )
+         NS2 = NUSOTE(I+1,I-J+2,J  )
+         NS3 = NUSOTE(I+1,I-J+1,J+1)
+      ELSE
+C        TRIANGLE DE SOMMET 1 "NON VERS L'ORIGINE"
+         NS1 = NUSOTE(I+1,I-J+1,J+1)
+         NS2 = NUSOTE(I  ,I-J  ,J+1)
+         NS3 = NUSOTE(I  ,I-J+1,J  )
+      ENDIF
+      DO 23 K=1,3
+         XYZF(K,9) = CB(1) * COSO(K,NS1)
+     %             + CB(2) * COSO(K,NS2)
+     %             + CB(3) * COSO(K,NS3)
+ 23   CONTINUE
+C
+C     SUR LA FACE 3: S1-S4-S2 (SENS!) DU TETRAEDRE UNITE
+C     LES SOMMETS DE CETTE FACE ONT POUR INDICES (I,1,K)
+C     ==================================================
+C     S(CB1,CB2,0,1-CB1-CB2)
+      CALL REXYT1( 1-CB1-CB2, CB2, M, XYSFTR(1,1,3),
+     %             NTY, I, J, CB )
+C     LE POINT EST DANS LE SOUS-TRIANGLE DE SOMMETS NS1,NS2,NS3
+C     AVEC LES COORDONNEES BARYCENTRIQUES CB(1), CB(2), CB(3)
+C     CALCUL DE L'INTERPOLATION P1 DU POINT DANS LE SOUS-TRIANGLE
+      IF( NTY .GT. 0 ) THEN
+C        TRIANGLE DE SOMMET 1 "VERS L'ORIGINE"
+         NS1 = NUSOTE(I  ,1,I-J+1)
+         NS2 = NUSOTE(I+1,1,I-J+2)
+         NS3 = NUSOTE(I+1,1,I-J+1)
+      ELSE
+C        TRIANGLE DE SOMMET 1 "NON VERS L'ORIGINE"
+         NS1 = NUSOTE(I+1,1,I-J+1)
+         NS2 = NUSOTE(I  ,1,I-J  )
+         NS3 = NUSOTE(I  ,1,I-J+1)
+      ENDIF
+      DO 31 K=1,3
+         XYZF(K,10) = CB(1) * COSO(K,NS1)
+     %              + CB(2) * COSO(K,NS2)
+     %              + CB(3) * COSO(K,NS3)
+ 31   CONTINUE
+C
+C     S(1-CB2-CB4,CB2,0,CB4)
+      CALL REXYT1( CB4, CB2, M, XYSFTR(1,1,3),
+     %             NTY, I, J, CB )
+C     LE POINT EST DANS LE SOUS-TRIANGLE DE SOMMETS NS1,NS2,NS3
+C     AVEC LES COORDONNEES BARYCENTRIQUES CB(1), CB(2), CB(3)
+C     CALCUL DE L'INTERPOLATION P1 DU POINT DANS LE SOUS-TRIANGLE
+      IF( NTY .GT. 0 ) THEN
+C        TRIANGLE DE SOMMET 1 "VERS L'ORIGINE"
+         NS1 = NUSOTE(I  ,1,I-J+1)
+         NS2 = NUSOTE(I+1,1,I-J+2)
+         NS3 = NUSOTE(I+1,1,I-J+1)
+      ELSE
+C        TRIANGLE DE SOMMET 1 "NON VERS L'ORIGINE"
+         NS1 = NUSOTE(I+1,1,I-J+1)
+         NS2 = NUSOTE(I  ,1,I-J  )
+         NS3 = NUSOTE(I  ,1,I-J+1)
+      ENDIF
+      DO 32 K=1,3
+         XYZF(K,11) = CB(1) * COSO(K,NS1)
+     %              + CB(2) * COSO(K,NS2)
+     %              + CB(3) * COSO(K,NS3)
+ 32   CONTINUE
+C
+C     S(CB1,1-CB1-CB4,0,CB4)
+      CALL REXYT1( CB4, 1-CB1-CB4, M, XYSFTR(1,1,3),
+     %             NTY, I, J, CB )
+C     LE POINT EST DANS LE SOUS-TRIANGLE DE SOMMETS NS1,NS2,NS3
+C     AVEC LES COORDONNEES BARYCENTRIQUES CB(1), CB(2), CB(3)
+C     CALCUL DE L'INTERPOLATION P1 DU POINT DANS LE SOUS-TRIANGLE
+      IF( NTY .GT. 0 ) THEN
+C        TRIANGLE DE SOMMET 1 "VERS L'ORIGINE"
+         NS1 = NUSOTE(I  ,1,I-J+1)
+         NS2 = NUSOTE(I+1,1,I-J+2)
+         NS3 = NUSOTE(I+1,1,I-J+1)
+      ELSE
+C        TRIANGLE DE SOMMET 1 "NON VERS L'ORIGINE"
+         NS1 = NUSOTE(I+1,1,I-J+1)
+         NS2 = NUSOTE(I  ,1,I-J  )
+         NS3 = NUSOTE(I  ,1,I-J+1)
+      ENDIF
+      DO 33 K=1,3
+         XYZF(K,12) = CB(1) * COSO(K,NS1)
+     %              + CB(2) * COSO(K,NS2)
+     %              + CB(3) * COSO(K,NS3)
+ 33   CONTINUE
+C
+      RETURN
+      END

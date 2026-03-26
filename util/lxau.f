@@ -1,0 +1,121 @@
+      SUBROUTINE LXAU( NTLX , NBNMPL )
+C+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+C BUT :    AUGMENTER DE NBNMPL NOMS SUPPLEMENTAIRES LE LEXIQUE NTLX
+C -----
+C
+C ATTENTION EN SORTIE LE LEXIQUE NTLX EST FERME.IL DOIT ETRE
+C ========= REOUVERT AFIN DE RECUPERER SA NOUVELLE ADRESSE MCN
+C
+C ENTREES :
+C ---------
+C NBNMPL : NOMBRE DE NOMS SUPPLEMENTAIRES A AJOUTER AU LEXIQUE
+C NTLX   : NUMERO DU TABLEAU MS = LEXIQUE AVANT ET APRES L'AUGMENTATION
+C          DU NOMBRE DE SES NOMS
+C+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+C PROGRAMMEUR : ALAIN PERRONNET ANALYSE NUMERIQUE PARIS   OCTOBRE 1984
+C+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+      COMMON / UNITES / LECTEU, IMPRIM, NUNITE(30)
+      include"./incl/pp.inc"
+      COMMON            MCN(MOTMCN)
+C
+C     OUVERTURE DU TABLEAU MS = LEXIQUE NTLX
+CCC      WRITE(IMPRIM,*) 'ENTREE LXAU: NTLX=',NTLX,' NBNMPL=',NBNMPL
+      IF( NTLX .LE. 0 ) THEN
+         WRITE(IMPRIM,*) ' ERREUR LXAU: NTLX=',NTLX
+         CALL ARRET( 100 )
+      ENDIF
+C
+      CALL TAMSOU( NTLX , MNLX )
+C     MNLX : ADRESSE MCN DU LEXIQUE
+      IF( MNLX .LE. 0 ) THEN
+         WRITE(IMPRIM,*) ' ERREUR LXAU: MNLX=',MNLX
+         CALL ARRET( 100 )
+      ENDIF
+C
+C     M1LX : NOMBRE TOTAL D'ENTIERS PAR NOM
+      M1LX = MCN( MNLX )
+      IF( M1LX .LE. 0 ) THEN
+         WRITE(IMPRIM,*) ' ERREUR LXAU: M1LX=',M1LX
+         CALL ARRET(100)
+      ENDIF
+C
+C     M2LX : NOMBRE MAXIMAL DE NOMS DECLARABLES DANS LE LEXIQUE
+      M2LX = MCN( MNLX + 1 )
+      IF( M2LX .LE. 0 ) THEN
+         WRITE(IMPRIM,*) ' ERREUR LXAU: M2LX=',M2LX
+         CALL ARRET( 100 )
+      ENDIF
+C
+C     NBENNM : NOMBRE D'ENTIERS POUR STOCKER LES CARACTERES D'UN SEUL NOM
+      NBENNM = MCN( MNLX + 2 )
+      IF( NBENNM .LE. 0 ) THEN
+         WRITE(IMPRIM,*) ' ERREUR LXAU: NBENNM=',NBENNM
+         CALL ARRET( 100 )
+      ENDIF
+C
+C     AUGMENTATION DU TAMS DU LEXIQUE
+C     ===============================
+C     PROTECTION DE L'ANCIEN NUMERO DE TMS DU LEXIQUE
+      NTLX0 = NTLX
+      M2LY  = M2LX + NBNMPL
+      CALL TAMSAU( NTLX , M1LX * ( M2LY + 1 )  )
+C
+C     OUVERTURE DU LEXIQUE AUGMENTE
+      CALL TAMSOU( NTLX , MNLX )
+      IF( MNLX .LE. 0 ) THEN
+         WRITE(IMPRIM,*) ' LXAU: OUVERTURE DU TMS ',NTLX,' IMPOSSIBLE'
+         CALL ARRET(100)
+      ENDIF
+C
+C     CHAINAGE DES NOMS LIBRES SUPPLEMENTAIRES
+      MN = MNLX + NBENNM + M1LX * M2LX
+      DO 20 I = M2LX + 1 , M2LY
+         MN = MN + M1LX
+         MCN( MN ) = I + 1
+ 20   CONTINUE
+C
+C     LE DERNIER LIBRE EST CHAINE AVEC L'ANCIEN PREMIER LIBRE
+      MCN( MN ) = MCN( MNLX + 6 )
+C
+C     MISE A JOUR DU DEBUT DE CHAINAGE DES NOMS LIBRES
+      MCN( MNLX + 6 ) = M2LX + 1
+C
+C     MISE A JOUR DU NOMBRE TOTAL DE NOMS DU LEXIQUE
+      MCN( MNLX + 1 ) = M2LY
+C
+C     LE NUMERO DU TMS=LEXIQUE PERE EST STOCKE EN POSITION 5 DE TOUT LX FILS
+C     CE NUMERO DOIT DONC ETRE REMIS A JOUR S'IL VIENT DE CHANGER
+C     ======================================================================
+      IF( NTLX .NE. NTLX0 ) THEN
+C        LE PREMIER NOM OCCUPE DU LEXIQUE PERE
+         I = MCN( MNLX + 5 )
+ 50      IF( I .GT. 0 ) THEN
+C           LE NOM EST OCCUPE. QUEL EST SON TYPE?
+            MN = MNLX + M1LX * I + NBENNM + 1
+            IF( MCN( MN ) .EQ. ICHARX( 'LEXI' ) .OR.
+     %          MCN( MN ) .EQ. ICHARX( 'RELA' ) ) THEN
+C              LE NOM EST UN LEXIQUE OU UNE RELATION
+C              OUVERTURE DE SON TAMS ET MISE A JOUR DU NO TAMS PERE
+               NT = MCN( MN + 1 )
+               IF( NT .GT. 0 ) THEN
+                  CALL TAMSOU( NT , NMNT )
+C                 SI LE TABLEAU EST OUVRABLE ALORS LE NO TMS PERE EST ACTUALISE
+                  IF( NMNT .GT. 0 ) THEN
+                     IF( MCN( NMNT + 4 ) .EQ. NTLX0 ) THEN
+C                       REMPLACEMENT DE NTLX0 PAR NTLX
+                        MCN( NMNT + 4 ) = NTLX
+                     ENDIF
+                  ENDIF
+               ENDIF
+            ENDIF
+C
+C           PASSAGE AU NOM SUIVANT DANS LE LEXIQUE PERE
+            I = MCN( MN - 1 )
+            GOTO 50
+         ENDIF
+      ENDIF
+C
+C     LE NOUVEAU LEXIQUE EST FERME POUR FORCER SA REOUVERTURE AFIN
+C     D'OBTENIR SA NOUVELLE ADRESSE QUI , ELLE , A ETE MODIFIEE
+      CALL TAMSFE( NTLX )
+      END

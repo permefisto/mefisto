@@ -1,0 +1,5 @@
+variable ManagMef 'Mefisto Managment' entier
+( 1 : 'TOOLS on TMS',
+  2 : 'TOOLS on MS FILES',
+  3 : 'TOOLS on I/O units',
+  4 : 'DELETE TMS of PLSVO' ) ;

@@ -1,0 +1,204 @@
+      SUBROUTINE AJTRVO( NBXYZ, XYZST,  NBNVTR, NSNVTR, MXPXYD, MXTRIA,
+     %                   PXYD , NOTRSO, N1TRVI, NOTRIA, NOSUTR, IERR  )
+C+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+C BUT :    REMETTRE LES TABLEAUX SOUS LA FORME GENERALE DE LA TRIANGULATION
+C -----    LORS D'UNE ADAPTATION 2D
+C
+C ENTREES :
+C ---------
+C NBXYZ  : NOMBRE DE SOMMETS ACTUELS DE LA TRIANGULATION
+C XYZST  : 3 COORDONNEES DES NBXYZ SOMMETS DE LA TRIANGULATION
+C NBNVTR : NOMBRE ACTUEL DE TRIANGLES DANS NSNVTR
+C NSNVTR : NUMERO DES 3 SOMMETS NO SURFACE DES NBNVTR TRIANGLES ACTUELS
+C MXPXYD : NOMBRE MAXIMAL DE SOMMETS DECLARABLES DANS PXYD
+C MXTRIA : NOMBRE MAXIMAL DE TRIANGLES DECLARABLES DANS LE TABLEAU NOTRIA
+C
+C SORTIES:
+C --------
+C PXYD   : X, Y, D DE CHAQUE SOMMET
+C NOTRSO : NUMERO D'UN TRIANGLE DANS NOTRIA POUR CHAQUE SOMMET
+C          0 SI LE SOMMET APPARTIENT A AUCUN TRIANGLE DE NOTRIA
+C N1TRVI : NUMERO DU PREMIER TRIANGLE VIDE DANS NOTRIA
+C          (CHAINAGE DANS NOTRIA(4,*))
+C NOTRIA : LISTE DES TRIANGLES ST1 ST2 ST3 TR1 TR2 TR3
+C          ST NUMERO DANS PXYD DU SOMMET
+C          TR NUMERO DANS NOTRIA DU TRIANGLE ADJACENT PAR L'ARETE
+C NOSUTR : NUMERO DE SURFACE DE CHAQUE TRIANGLE
+C IERR   : 0 SI PAS D'ERREUR DETECTEE
+C          1 SI ARETE APPARTENANT A PLUS DE 2 TRIANGLES
+C+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+C AUTEUR : ALAIN PERRONNET ANALYSE NUMERIQUE UPMC PARIS     FEVRIER 1995
+C23456---------------------------------------------------------------012
+      include"./incl/gsmenu.inc"
+      include"./incl/trvari.inc"
+      COMMON / UNITES / LECTEU,IMPRIM,NUNITE(30)
+      include"./incl/pp.inc"
+      COMMON            MCN(MOTMCN)
+      REAL              RMCN(1)
+      EQUIVALENCE      (MCN(1),RMCN(1))
+      REAL              XYZST(3,*)
+      DOUBLE PRECISION  PXYD(3,MXPXYD)
+      INTEGER           NSNVTR(4,NBNVTR),
+     %                  NOTRSO(MXPXYD),
+     %                  NOTRIA(6,MXTRIA),
+     %                  NOSUTR(MXTRIA),
+     %                  NGS(2)
+      EQUIVALENCE      (NS1,NGS(1)),(NS2,NGS(2))
+C
+C     REMPLISSAGE DU TABLEAU PXYD
+C     ===========================
+      DO 10 I=1,NBXYZ
+         DO 5 K=1,3
+            PXYD(K,I) = XYZST(K,I)
+ 5       CONTINUE
+ 10   CONTINUE
+C
+C     GENERATION DU TABLEAU DES ARETES ET TRIANGLES VOISINS
+C     =====================================================
+C     ADRESSAGE ET OUVERTURE DU TABLEAU DES ARETES
+      MNARET = 0
+      MXARET = 3 * NBNVTR
+      CALL TNMCDC( 'ENTIER', 5*MXARET, MNARET )
+      CALL AZEROI( 5*MXARET , MCN(MNARET) )
+C
+C     LA 1-ERE ARETE LIBRE
+      LIBREF = MXARET
+C
+      DO 300 N=1,NBNVTR
+C
+C        SI L'AIRE D'UN TRIANGLE EST NEGATIVE ALORS PERMUTATION DES SOMMETS 2-3
+         S = SURTR2( XYZST(1,NSNVTR(1,N)),
+     %               XYZST(1,NSNVTR(2,N)),
+     %               XYZST(1,NSNVTR(3,N)) )
+         IF( S .LT. 0 ) THEN
+            I           = NSNVTR(2,N)
+            NSNVTR(2,N) = NSNVTR(3,N)
+            NSNVTR(3,N) = I
+         ENDIF
+C
+CCCC        TRACE EVENTUEL DU TRIANGLE N
+CCC         CALL ADTRTR( XYZST, NSNVTR, N, NCJAUN, NCBLEU )
+C
+C        BOUCLE SUR LES SOMMETS ET ARETES DU TRIANGLE
+         DO 200 NOA=1,3
+C           LE NUMERO LOCAL DES SOMMETS
+            IF( NOA .LT. 3 ) THEN
+               NS2 = NOA + 1
+            ELSE
+               NS2 = 1
+            ENDIF
+C           LE NUMERO GLOBAL DES SOMMETS DE L'ARETE
+            NS1 = NSNVTR(NOA,N)
+            NS2 = NSNVTR(NS2,N)
+            IF( NS1 .GT. NS2 ) THEN
+               I     = NS1
+               NS1   = NS2
+               NS2   = I
+            ENDIF
+C
+C           1:NO LE PLUS FAIBLE DES SOMMETS DE L'ARETE
+C           2:NO LE PLUS GRAND  DES SOMMETS DE L'ARETE
+C           RECHERCHE OU ADJONCTION DE L'ARETE SELON UN HACHAGE
+            CALL HACHAG( 2, NGS, 5, MXARET, MCN(MNARET), 3,
+     &                  LIBREF, NOARE)
+C           NOARE : NO DE LA COLONNE DU TABLEAU NGS RETROUVEE OU
+C                      DE LA COLONNE AYANT SERVIE A LA MISE A JOUR
+C                   =0 SI SATURATION DU TABLEAU ARETES
+C                   >0 SI LE TABLEAU NGS A ETE RETROUVE
+C                   <0 SI LE TABLEAU NGS A ETE AJOUTE
+            MN = MNARET + 5 * ABS(NOARE) - 5
+C
+C           STOCKAGE ADRESSE DU TRIANGLE DANS ARETES(4:5,|NOARE|)
+            K = 2
+ 140        K = K + 1
+            IF( K .LT. 5 ) THEN
+C
+C              RECHERCHE D'UN NUMERO NUL DANS ARETES
+               IF( MCN(MN + K) .NE. 0 ) GOTO 140
+C              LE NUMERO DU TRIANGLE EST AJOUTE POUR CETTE ARETE
+               MCN( MN + K ) = N
+C
+            ELSE
+C
+C              ERREUR IL Y A PLUS DE 2 ARETES CONTENANT CETTE ARETE
+               NBLGRC(NRERR) = 2
+               KERR(1) = 'PLUS DE 2 TRIANGLES CONTIENNENT UNE ARETE'
+               KERR(2) = 'TRIANGULATION INCORRECTE'
+               CALL LEREUR
+               IERR = 1
+               WRITE(IMPRIM,10200) N,(NSNVTR(K,N),K=1,3)
+               WRITE(IMPRIM,10201) (NGS(K),K=1,2),
+     %                             MCN(MN+3),MCN(MN+4),N
+               GOTO 9000
+            ENDIF
+ 200     CONTINUE
+10200 FORMAT(/' AJTRVO: TRIANGLE:',I4,' SOMMETS:',T25,4I6)
+10201 FORMAT( ' L''ARETE DE SOMMETS:',T25,2I6,
+     %       ' APPARTIENT AUX TRIANGLES ',3I9)
+ 300  CONTINUE
+C
+C     REMPLISSAGE DE NOTRIA ET NOTRSO A PARTIR DU TABLEAU ARETES
+C     ==========================================================
+      DO 400 N=1,NBNVTR
+         DO 310 K=1,3
+            NS1 = NSNVTR(K,N)
+            NOTRIA(K,N) = NS1
+            NOTRSO(NS1) = N
+ 310     CONTINUE
+C
+C        LE NUMERO DE SURFACE DU TRIANGLE
+         NOSUTR(N) = NSNVTR(4,N)
+C
+         DO 320 NOA=1,3
+C           LE NUMERO LOCAL DES SOMMETS
+            IF( NOA .LT. 3 ) THEN
+               NS2 = NOA + 1
+            ELSE
+               NS2 = 1
+            ENDIF
+C           LE NUMERO GLOBAL DES SOMMETS DE L'ARETE NS1<NS2
+            NS1 = NSNVTR(NOA,N)
+            NS2 = NSNVTR(NS2,N)
+            IF( NS1 .GT. NS2 ) THEN
+               I     = NS1
+               NS1   = NS2
+               NS2   = I
+            ENDIF
+C           RECHERCHE DE CETTE ARETE DANS LE HACHAGE DES ARETES
+            CALL HACHAG( 2, NGS, 5, MXARET, MCN(MNARET), 3,
+     &                  LIBREF, NOARE)
+C           NOARE EST >0 CAR L'ARETE EST TOUJOURS RETROUVEE
+            MN = MNARET + 5 * NOARE - 5
+C           RECHERCHE DU TRIANGLE OPPOSE PAR L'ARETE AU TRIANGLE N
+            NT = MCN(MN+3)
+            IF( NT .EQ. N ) THEN
+C              LE TRIANGLE OPPOSE EST LE SUIVANT
+               NT = MCN(MN+4)
+            ENDIF
+C           LE NUMERO NOTRIA DU TRIANGLE OPPOSE
+            NOTRIA(3+NOA,N) = NT
+ 320     CONTINUE
+ 400  CONTINUE
+C
+C     CHAINAGE DES TRIANGLES VIDES DANS NOTRIA
+      N1TRVI = NBNVTR + 1
+      DO 500 N=N1TRVI, MXTRIA
+         NOTRIA(4,N) = N+1
+ 500  CONTINUE
+C     FIN DU CHAINAGE
+      NOTRIA(4,MXTRIA) = 0
+C
+C     MISE A ZERO DU RESTE DU TABLEAU NOTRSO
+      DO 600 N = NBXYZ+1, MXPXYD
+         NOTRSO(N) = 0
+ 600  CONTINUE
+C
+C     MISE A ZERO DU RESTE DU TABLEAU NOSUTR
+      DO 700 N = NBNVTR+1, MXTRIA
+         NOSUTR(N) = 0
+ 700  CONTINUE
+C
+C     DESTRUTION DU TABLEAU ARETES
+C     ============================
+ 9000 IF( MNARET .GT. 0 ) CALL TNMCDS( 'ENTIER', 5*MXARET, MNARET )
+      END

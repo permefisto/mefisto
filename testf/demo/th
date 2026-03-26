@@ -1,0 +1,42 @@
+{ ================================================================== }
+{ MEFISTO Version Decembre 1999                     PROJET: CARDAN   }            
+{ UTILISATEUR: PERRONNET ALAIN                      DATE:   03/06/00 }
+{ ================================================================== }
+@;
+@;
+1; CARDAN; { NOM de l'OBJET a TRAITER }
+ 
+2;{ ENTREE DES DONNEES DU PROBLEME DE THERMIQUE }
+
+ { VOLUME: CARDAN }
+    2;   { densite de CONDUCTIVITE THERMIQUE }
+    1;   { materiau 3D homogene isotrope } 
+  200;   { CONDUC  conductivite du materiau }
+ @;
+
+ { SURFACE: CYL4 }
+   3;     { CONTACT temperature imposee }
+   1;     { constante }
+ 200;     { CONTAC  la temperature imposee }
+ @;
+
+ { SURFACE: CYL4_SYM }
+   3;     { CONTACT temperature imposee }
+   1;     { constante }
+ 200;     { CONTAC  la temperature imposee }
+ @;
+
+ { SURFACE: BASE }
+   3;     { CONTACT temperature imposee }
+   1;     { constante }
+  20;     { CONTAC  la temperature imposee }
+ @;
+@;
+
+3;  { RESOUDRE PB THERMIQUE STATIONNAIRE }
+  1;{ COEFFICIENTS INDEPENDANTS DES DEPLACEMENTS PB LINEAIRE}
+  2;{ GRADIENT CONJUGUE PRECONDITIONNE }
+  1;{ NIVEAU DU PRECONDITIONNEMENT DU GRADIENT CONJUGUE }
+@;
+
+FERMER;

@@ -1,0 +1,31 @@
+deftms ~>POINT>>DEFINITION  'Definition d''un point' 
+variable muet DATE   'date de creation du tableau'   reel2 ;
+variable muet NUTD   'numero du tableau descripteur' entier ;
+variable NTYTRP 'transformation (I pour IDENTITE)' ^~>TRANSFO ;
+variable NUTYPO 'numero du type du point' entier 
+ ( 1  : 'COORDONNEES X Y Z'
+ , 2  : 'RAYON THETA COTE' 
+ , 3  : 'RAYON LONGITUDE LATITUDE' 
+ , 35 : 'EXTRACTION NO SOMMETS D''UNE LIGNE' 
+ , 36 : 'EXTRACTION DE SOMMETS D''UN PLSV'
+ , 50 : 'TRANSFORMATION D''UN POINT'
+ , 81 : 'RENOMMER UN POINT'
+ , 82 : 'TUER CE POINT' ) ;
+cas NUTYPO
+  1 : variable COORPO '3 coordonnees cartesiennes du point' xyz ; 
+  2 : variable RAYOCY 'rayon des coordonnees cylindriques' reel ;
+      variable TETAC  'longitude en degres' reel ;
+      variable COTEC  'cote  des coordonnees cylindriques' reel ;     
+  3 : variable RAYONS 'rayon des coordonnees spheriques'   reel ;
+      variable TETAS  'longitude en degres' reel ;
+      variable PHIS   'latitude  en degres' reel ;  
+ 35 : variable NULGSX 'nom de la ligne de sommets a extraire' ^~>LIGNE ; 
+      variable NU1STX 'numero du premier sommet a extraire' entier;
+      variable NUDSTX 'numero du dernier sommet a extraire' entier;
+ 36 : variable NUPLSV 'nom de PLSV de sommets a extraire' typeobjet ;
+      variable NUFOCP 'nom de la fonction critere' ^~>FONCTION ; 
+ 50 : variable NUPOIN 'nom du point a transformer' ^~>POINT ; 
+ 81 : variable NPAVAN 'ancien nom du point a renommer' ^~>POINT ;
+fincas ;
+fintms ;
+

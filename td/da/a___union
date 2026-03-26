@@ -1,0 +1,14 @@
+deftms ~>>>UNION 'identification of vertices of an union of PLSVO
+from NBOBUN PLSVO of numbered vertices from 1 up to NS(i) 
+the array NDSCOU points on the last vertex of each PLSVO
+  ( NDSCOU(0)=0 , NDSCOU(i)=sum( NS(j) ) j=1,i )
+the array NOSOUN gives the number of each vertex of each PLSVO in the
+numbering after the identification of common vertices of the PLSVO'
+variable muet DATE 'date of creation of the TMS' reel2  ;
+variable muet NUTD 'number of the descriptor array TD' entier ; 
+variable NBOBUN   'number of PLSVO of the union'  entier ;
+tableau  NDSCOU(0..NBOBUN) 'pointer on the last vertex of each PLSVO' entier ;
+tableau  NUSOUN(1..NDSCOU(NBOBUN)) 'numbers of vertices in the union' entier ;
+tableau  NDTCOU(0..NBOBUN) 'pointer on the last TG of each PLSVO'  entier ;
+tableau  NUTGUN(1..NDTCOU(NBOBUN)) 'numbers of TG in the union' entier ;
+fintms ;

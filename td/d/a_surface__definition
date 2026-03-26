@@ -1,0 +1,273 @@
+deftms ~>SURFACE>>DEFINITION 'Definition d''une SURFACE'
+ variable muet DATE   'date de creation du tableau'   reel2  ;
+ variable muet NUTD   'numero du tableau descripteur' entier ;
+ variable NTYTRS 'transformation (I pour IDENTITE)' ^~>TRANSFO ;
+ variable NUTYSU 'numero du type de la surface'    entier
+ ( 1  : 'QUADRANGLE TRANSFINI'
+ , 2  : 'QUADRANGLE ELLIPTIQUE STRUCTURE PLAN'
+ , 3  : 'QUADRANGLE B-SPLINE INTERPOLATION de POINTS'
+ , 4  : 'QUADRANGLE B-SPLINE INTERPOLATION de SOMMETS de LIGNES'
+ , 6  : 'TRIANGLE TRANSFINI DEFINI PAR 3 LIGNES COTES'
+ , 8  : 'QUADRANGULATION d''un CERCLE ou CARRE en 2D'
+ , 9  : 'TRIANGULATION1 EQUILATERALE de LIGNES FERMEES'
+ , 10 : 'DONNEE DES TABLEAUX XYZSOMMET ET NSEF'
+ , 11 : 'RECTANGLE STRUCTURE PLAN d''ARETE 1'
+ , 12 : 'TRIANGLE RECTANGLE STRUCTURE PLAN d''ARETE 1'
+ , 13 : 'QUADRANGULATION LIGNE CONVEXE FERMEE'
+ , 14 : 'EXTRUSION ou TRANCHES d''une LIGNE GENERATRICE'
+ , 15 : 'ROTATION d''une LIGNE AUTOUR d''un AXE'
+ , 16 : 'EXTRUSION SELON NORMALE AUX ARETES d''une LIGNE 2D'
+ , 17 : '1/8 SURFACE OUVERTE d''une SPHERE'
+ , 18 : 'SURFACE FERMEE d''une SPHERE'
+ , 19 : 'TRIANGULATION2 de LIGNES FERMEES PAR SUBDIVISION'
+ , 20 : 'SURFACES EXTRUDEES A PARTIR d''un POLYGONE PLAN'
+ , 21 : 'SURFACE FERMEE d''une BOITE'
+ , 22 : 'SURFACE FERMEE d''un CYLINDRE ou CONE'
+ , 23 : 'SURFACE FERMEE d''un TORE'
+ , 25 : 'PIECES d''un ARBRE a PARTIR de CERCLES a Z=Cte'
+ , 27 : 'SECTEUR ANGULAIRE d''un TRONC de CONE ou CYLINDRE'
+ , 28 : 'SURFACE AVEC un CONGE'
+ , 29 : 'MODIFIER un MAILLAGE 2D ou 3D avec MENU et SOURIS'
+ , 30 : 'AMELIORATION de LA QUALITE d''une TRIANGULATION 3D'
+ , 31 : 'TRIANGULATION d''une QUADRANGULATION'
+ , 32 : 'JONCTION 1 POINT AUX ARETES d''une LIGNE'
+ , 33 : 'JONCTION ENTRE ARETES de PLUSIEURS LIGNES'
+ , 34 : 'QUADRANGLE EXTRAIT d''un HEXAEDRE STRUCTURE'
+ , 35 : 'QUADRANGLE EXTRAIT de QUADRANGLE STRUCTURE' 
+ , 36 : 'SURFACE EXTRAITE d''une SURFACE SUR CRITERE(x,y,z)'
+ , 37 : 'SURFACE EXTRAITE d''un VOLUME'
+ , 38 : 'SURFACE EXTRAITE CLIQUEE d''une SURFACE'
+ , 39 : 'SUBDIVISION des EF 2d en 4 SOUS EF'
+ , 40 : 'SURFACE EXTRAITE = SURFACE1 - SURFACE2'
+ , 41 : 'SURFACE EXTRAITE en 3D si (NORMALE,VECTEUR)>=0'
+ , 42 : 'SURFACE RENDUE G1-CONTINUE SI TANGENTES'
+ , 45 : 'OPERATEURS LOGIQUES SUR 2 SURFACES MAILLEES de R2 ou R3'
+ , 46 : 'COUDRE ARETES SIMPLES (1 FACE) d''une SURFACE MAILLEE'
+ , 48 : 'POINTS IMPOSES COMME PLUS PROCHE SOMMET de la SURFACE'
+ , 50 : 'TRANSFORMATION d''une SURFACE'
+ , 51 : 'UNION C0-CONTINUE de PLUSIEURS SURFACES'
+ , 52 : 'UNION G1-CONTINUE de PLUSIEURS SURFACES'
+ , 81 : 'RENOMMER une SURFACE' 
+ , 82 : 'TUER CETTE SURFACE' ) ;
+ cas NUTYSU
+  1: tableau  NU4COT(1..4)  'nom des 4 lignes des 4 cotes' ^~>LIGNE ; 
+     variable LAGHER 'type du maillage' entier 
+    (  1: 'maillage regulier'
+    ,  2: 'maillage irregulier' );
+  2: tableau  NU4COR(1..4)  'nom des 4 lignes des 4 cotes' ^~>LIGNE ; 
+     variable NITC2D 'nombre 0 a 100 d''iterations de correction' entier ; 
+     cas NITC2D
+   1..100: tableau FADI2D(1..4) 'facteur accentuant la distance au cote' reel ;
+     fincas ;
+  3: variable NBAXQB 'nombre d''aretes en U' entier ;
+     variable NBAYQB 'nombre d''aretes en V' entier ;
+     variable RAGXQB 'raison geometrique d''espacement en U des sommets' reel ; 
+     variable RAGYQB 'raison geometrique d''espacement en V des sommets' reel ; 
+     variable LDEXSB 'degre en U des polynomes' entier ;
+     variable LDEYSB 'degre en V des polynomes' entier ; 
+     variable NBPIEX 'nombre de points d''interpolation en U' entier;
+     variable NBPIEY 'nombre de points d''interpolation en V' entier;
+     tableau  POINSB(1..NBPIEX,1..NBPIEY) 
+             'nom des points d''interpolation en U puis en V' ^~>POINT ; 
+  4: variable NBAXQB 'nombre d''aretes en U' entier ;
+     variable NBAYQB 'nombre d''aretes en V' entier ;
+     variable RAGXQB 'raison geometrique d''espacement en U des sommets' reel ; 
+     variable RAGYQB 'raison geometrique d''espacement en V des sommets' reel ; 
+     variable LDEXSB 'degre en U des polynomes' entier ;
+     variable LDEYSB 'degre en V des polynomes' entier ; 
+     variable NBLISB 'nombre en V de lignes(U) d''interpolation' entier;
+     tableau  LIGNSB(1..NBLISB) 'nom des lignes(U) d''interpolation' ^~>LIGNE ; 
+  5: variable NBARTB 'nombre d''aretes subdivision du triangle BEZIER' entier ;
+     variable LDEGTB 'degre des polynomes du triangle BEZIER' entier ;
+     variable NBPTTB 'nombre de points de controle du triangle' entier ;
+     tableau  NUPTTB(1..NBPTTB) 'nom des points de controle' ^~>POINT ;
+  6: tableau  NU3COT(1..3)  'nom des 3 lignes des 3 cotes' ^~>LIGNE ;
+  8: variable CARCER 'CERCLE 2d ou CARRE 2d' entier
+      ( 1: 'CARRE 2d', 2: 'CERCLE 2d' );
+      variable CARCEN 'nombre d''aretes d''une direction du noyau' entier;
+      variable CARCEC 'nombre de couches homothetiques' entier;
+      variable CARCEL 'largeur du noyau du carre ou cercle' reel ;
+      variable CARCED 'largeur totale du carre ou cercle' reel ;
+  9: variable ARETMX 'taille max des aretes des triangles equilateraux' reel ;
+     variable NBLFTR 'nombre de lignes fermees contour de la surface' entier ; 
+     variable NBPTIT 'nombre de points internes futurs sommets' entier ;
+     tableau  NULFTR(1..NBLFTR) 'nom des lignes fermees' ^~>LIGNE ;
+     tableau  NUPTIT(1..NBPTIT) 'nom des points internes futurs sommets' 
+     ^~>POINT ; 
+     tableau  DISOSV(1..NBPTIT) 'distance souhaitee aux sommets voisins' reel ;
+ 10 : variable NUTSOS 'tableau MS xyzsommet'              tms ~>>>XYZSOMMET ;
+      variable NUTSSS 'tableau MS no des sommets des EF'  tms ~>>>NSEF ; 
+ 11 : variable NBINQX 'nombre d''aretes en x' entier ;
+      variable NBINQY 'nombre d''aretes en y' entier ;
+ 12 : variable NBINTR 'nombre d''aretes' entier ;
+ 13 : variable NULICE 'nom de la ligne convexe fermee'  ^~>LIGNE ;
+ 14 : variable NULICL 'nom de la ligne initiale des tranches'  ^~>LIGNE ;
+      variable NUTYCL 'numero du type de definition des tranches' entier 
+( 0: '3 points par surface definissent les transformations' ,
+  1: '3 lignes definissent les transformations de la ligne' ,
+  2: 'lignes translatees d''une cote z>0 constante (empilement)' ,
+  3: 'lignes translatees d''une cote z>0 precisee pour chaque ligne' ,
+  4: 'le  vecteur  translation  (x y z) valable pour toutes les tranches' ,
+  5: 'les vecteurs translations (x y z) definis un par tranche' ,
+  6: '3 fonctions X Y Z(no_tranche,x,y,z) transforment la ligne initiale' ) ;
+      cas NUTYCL
+      0 : variable NBTRCL 'nombre de tranches de la surface finale'  entier ;
+          tableau  NPTRCL(1..3,0..NBTRCL)
+         'nom des 3 points definissant chaque surface plane des tranches'
+          ^~>POINT ; 
+      1 : tableau  NLTRCL(1..3)
+ 'nom des lignes definissant les 3 points de chaque surface plane des tranches'
+          ^~>LIGNE ;
+      2 : variable NBTRCL 'nombre de tranches de la surface finale' entier ;
+          variable ZMAXCL 'cote maximale Z a decouper en tranches' reel ;
+      3 : variable NBTRCL 'nombre de tranches de la surface finale' entier ;
+          tableau  ZCTRCL(1..NBTRCL)
+                  'cote absolue (z>0) de chaque ligne des tranches'  reel  ;
+      4 : variable NBTRCL 'nombre de tranches de la surface finale' entier ;
+          tableau  TRCOCL(1..3)
+                 'X Y Z du vecteur constant de translation des tranches' reel ;
+      5 : variable NBTRCL 'nombre de tranches de la surface finale' entier ;
+          tableau  TRVACL(1..3,1..NBTRCL)
+               'X Y Z du vecteur de translation des tranches / precedente' reel ;
+      6 : variable NBTRCL 'nombre de tranches de la surface finale' entier ;
+      variable FONXCL 'fonction abscisse X(no_tranche,x0,y0,z0)' ^~>FONCTION ;
+      variable FONYCL 'fonction ordonnee Y(no_tranche,x0,y0,z0)' ^~>FONCTION ;
+      variable FONZCL 'fonction cote     Z(no_tranche,x0,y0,z0)' ^~>FONCTION ;
+      fincas ;
+ 15 : variable NULIAS 'nom de la ligne subissant les rotations' ^~>LIGNE ;
+      variable NUP1AS 'nom du 1-er  point de l''axe' ^~>POINT ; 
+      variable NUP2AS 'nom du 2-eme point de l''axe' ^~>POINT ;
+      variable NBANAS 'nombre d''angles de rotation autour de l''axe' entier ;
+      variable NTYPAS 'type des angles de rotation'  entier
+                      ( 0 : 'angles constants' , 1 : 'angles variables' ) ;
+      cas NTYPAS 
+      0 : variable ANMXAS 'angle (en degres) total des rotations' reel ;
+      1 : tableau  ANGLAS(1..NBANAS) 'angles relatifs en degres des rotations'
+          reel ;
+      fincas ; 
+ 16 : variable NULFAG 'nom de la ligne a extruder' ^~>LIGNE ;
+      variable NBCOLI 'nombre des premieres couches limites' entier ;
+      variable EPCOLI 'epaisseur UNE premiere couche limite' reel ;
+      variable NBDECO 'nombre des dernieres couches limites' entier ;
+      variable EPDECO 'epaisseur de la DERNIERE couche limite' reel ;
+ 17..18 : variable NBTRSP 'nombre approximatif de triangles a generer' entier ;
+      variable RAYOSP 'rayon de la sphere' reel ;
+      variable NUPCSP 'nom du point centre de la sphere' ^~>POINT ; 
+ 19: variable ARETMX 'taille max des aretes des triangles equilateraux' reel ;
+     variable NBLFTR 'nombre de lignes fermees contour de la surface' entier ; 
+     variable NBPTIT 'nombre de points internes futurs sommets' entier ;
+     tableau  NULFT9(1..NBLFTR) 'nom des lignes fermees' ^~>LIGNE ;
+     tableau  NUPTI9(1..NBPTIT) 'nom des points internes futurs sommets' 
+     ^~>POINT ; 
+     tableau  DISOS9(1..NBPTIT) 'distance souhaitee aux sommets voisins' reel ;
+ 20 :tableau  N2PTVT(1..2) 'nom 2 points du vecteur translation' ^~>POINT ;
+     variable OUFEES 'POLYGONE OUVERT(0) ou FERME(1)' entier ;
+     variable NBPTES 'nombre de points sommets du polygone plan' entier;
+     tableau  NUPTES(1..NBPTES) 'nom des points du polygone plan' ^~>POINT ;
+ 21 :variable LONXBX 'longueur en X de la boite' reel ;
+     variable LARYBX 'largeur en Y de la boite'  reel ;
+     variable HAUZBX 'hauteur en Z de la boite'  reel ;
+     variable PTCEBX 'nom du point centre de la boite' ^~>POINT ;
+ 22 :variable RAINCN 'rayon du cercle inferieur' reel ;
+     variable RASUCN 'rayon du cercle superieur' reel ;
+     variable PTINCN 'nom du point inferieur du tronc de cone' ^~>POINT ;
+     variable PTSUCN 'nom du point superieur du tronc de cone' ^~>POINT ;
+ 23 :variable RAPCTO 'rayon du petit cercle generateur' reel ;
+     variable RAGCTO 'rayon du grand cercle parcours'   reel ;
+     variable PTCETO 'nom du point centre du tore'    ^~>POINT ;
+     variable PTAXTO 'nom du point sur axe X du tore' ^~>POINT ;
+     variable PTAYTO 'nom du point sur axe Y du tore' ^~>POINT ;
+ 25 :variable NBLGZC 'nombre de Z-CERCLES evt REDUIT a 1 POINT' entier ;
+     variable NBPIEC 'nombre de PIECES ou TRONCONS de l''ARBRE' entier ;
+     variable NTZCPI 'nombre total de Z-CERCLES decrivant les PIECES' entier ;
+     tableau  NUPTZC(1..NBLGZC) 'nom des CENTRES des Z-CERCLES' ^~>POINT ; 
+     tableau  RAYZC(1..NBLGZC)  'rayon des Z-CERCLES' reel ;
+     tableau  NBZCPI(1..NBPIEC) 'nombre de Z-CERCLES de chaque PIECE' entier ;
+     tableau  PTZCPI(1..NTZCPI) 'nom du CENTRE des Z-CERCLES de chaque PIECE'
+                      ^~>POINT ;
+ 27 :variable NBACCS 'nombre d''aretes sur le secteur angulaire' entier ;
+     variable PGSACS 'raison progression geometrique sur le secteur' reel ;
+     variable RAYBAS 'rayon du cercle inferieur' reel ;
+     variable RAYHAU 'rayon du cercle superieur' reel ;
+     variable ANGLCS 'angle en degres du secteur angulaire' reel ; 
+     variable NBAHCS 'nombre d''aretes sur la hauteur' entier ; 
+     variable PGHACS 'raison progression geometrique sur la hauteur' reel ;
+     variable PTSABA 'nom point du centre du secteur angulaire inferieur'
+                     ^~>POINT ;
+     variable PTSAHA 'nom point du centre du secteur angulaire superieur'
+                     ^~>POINT ;
+ 28 :variable RAY1CS 'rayon cercle tangent a l''ANGLE INITIAL du CONGE' reel ;
+     variable RAY2CS 'rayon cercle tangent a l''ANGLE FINAL   du CONGE' reel ;
+     variable NBIYCS 'nombre d''aretes sur un ANGLE du CONGE'   entier ;
+     variable NBIXCS 'nombre d''aretes dans les couches du CONGE' entier ;
+     variable NUP1CS 'ANGLE INITIAL nom point 1 du CONGE' ^~>POINT ;
+     variable NUP2CS 'ANGLE INITIAL nom point 2 entre 1 3 du CONGE' ^~>POINT ;
+     variable NUP3CS 'ANGLE INITIAL nom point 3 du CONGE' ^~>POINT ;
+     variable NUP4CS 'ANGLE FINAL nom point 4 du CONGE'  ^~>POINT ;
+     variable NUP5CS 'ANGLE FINAL nom point 5 entre 4 6 du CONGE'  ^~>POINT ;
+     variable NUP6CS 'ANGLE FINAL nom point 6 du CONGE'  ^~>POINT ;
+ 29 :variable NUSUIN 'nom de la surface initiale'  ^~>SURFACE ;
+ 30 :variable NUSUQU 'nom de la triangulation a ameliorer' ^~>SURFACE ;
+     variable ARETXS 'TAILLE MAX des ARETES des TRIANGLES' reel ;
+     variable QUALMN 'qualite au dessous de laquelle ameliorer' reel;
+     variable ANGL2P 'degres du petit angle de coplanearite' reel;
+ 31 :variable NUSUQU 'nom de la surface quadrangulee a trianguler' ^~>SURFACE ;
+     variable NDECOU 'code decoupage des quadrangles' entier
+      ( 1 : 'creation d''une ARETE S1 S3'
+      , 2 : 'creation d''une ARETE S2 S4' 
+      , 3 : 'COUPE du PLUS GRAND ANGLE du quadrangle'
+      , 4 : 'MAX du MINIMUM des qualites des triangles' ) ; 
+ 32 : variable NBARPL 'nombre d''aretes point->ligne' entier;
+      variable NUPTJN 'nom du point a joindre aux aretes' ^~>POINT ;
+      variable NULGJN 'nom de la ligne a joindre au point' ^~>LIGNE ;
+ 33 : variable NBLGJD 'nombre de lignes d''aretes a joindre' entier ;
+      tableau  NULGJD(1..NBLGJD) 'nom des lignes a joindre' ^~>LIGNE ;
+ 34 : variable NUVOST 'nom du volume structure' ^~>VOLUME ;
+      variable I2MIN 'no minimal>=1 du sommet topologique I' entier ;      
+      variable I2MAX 'no MAXimal du sommet topologique I' entier ;
+      variable J2MIN 'no minimal>=1 du sommet topologique J' entier ;
+      variable J2MAX 'no MAXimal du sommet topologique J' entier ;
+      variable K2MIN 'no minimal>=1 du sommet topologique K' entier ;
+      variable K2MAX 'no MAXimal du sommet topologique K' entier ;
+ 35 : variable NUSUST 'nom du quadrangle structure' ^~>SURFACE ;
+      variable I2MIN 'no minimal>=1 de l''arete en I a extraire' entier ;      
+      variable I2MAX 'no MAXimal de l''arete en I a extraire' entier ;
+      variable J2MIN 'no minimal>=1 de l''arete en J a extraire' entier ;
+      variable J2MAX 'no MAXimal de l''arete en J a extraire' entier ;
+      variable QUADES 'GARDER les'           entier
+                     ( 0 : 'QUADRANGLES NON DESIGNES => 1TROU'
+                     , 1 : 'QUADRANGLES DESIGNES' );
+ 36 : variable NUSUIN 'nom de la surface initiale'          ^~>SURFACE ;
+      variable NUFOCS 'nom de la fonction critere'          ^~>FONCTION ; 
+ 37 : variable NUVOSE 'nom du volume de surface a extraire' ^~>VOLUME ;
+      variable NUFOCS 'nom de la fonction critere'          ^~>FONCTION ;
+      variable NTYFSE 'type de la surface a extraire'        entier 
+                      ( 1  : 'faces frontalieres'
+                      , 2  : 'faces internes' 
+                      , 3  : 'faces quelconques' ) ;
+ 38 : variable NUSUIN 'nom de la surface initiale'          ^~>SURFACE ;
+      variable NORMON 'si la NORMALE POINTE vers l''OEIL en 3D' entier
+      ( 0 : 'NON', 1 : 'OUI' ) ;
+ 39 : variable NUSU4E 'nom surface des EF a couper en 4 SOUS EF'
+                      ^~>SURFACE ;
+ 40 : variable NUSUIN 'nom de la surface initiale'  ^~>SURFACE ;
+      variable NUSUI2 'nom de la surface a oter'    ^~>SURFACE ;
+ 41 : variable NUSUIN 'nom de la surface initiale'  ^~>SURFACE ;
+      variable VECDIR '3 composantes cartesiennes du vecteur' xyz ;
+ 42 : variable NUSUIN 'nom de la surface initiale'  ^~>SURFACE ;
+ 45 : variable NUTRI1 'nom de la surface 1'   ^~>SURFACE ;
+      variable NUTRI2 'nom de la surface 2'   ^~>SURFACE ;
+      variable NUOPER 'nom de l''operateur' entier
+      ( 1: 'intersection' , 2: 'addition' , 3: 'soustraction' ) ;
+ 46 : variable NUSUIN 'nom de la surface initiale' ^~>SURFACE ;
+ 48 : variable NUSUIN 'nom de la surface initiale' ^~>SURFACE ;
+      variable NBPOSS 'nombre de points imposes sommets' entier ;
+      tableau  NUPOSS(1..NBPOSS) 'nom des points devenant sommets' ^~>POINT ;
+ 50 : variable NUSUIN 'nom de la surface initiale'  ^~>SURFACE ;
+ 51..52 : variable NBSUUN 'nombre de surfaces de l''union' entier ;
+      tableau  NUSUUN(1..NBSUUN) 'nom des surfaces de l''union' ^~>SURFACE ;   
+ 55 : variable NUVOL1 'nom du volume 1'  ^~>VOLUME ;
+      variable NUVOL2 'nom du volume 2'  ^~>VOLUME ;
+ 81 : variable NSAVAN 'nom de l''ancienne surface a renommer'   ^~>SURFACE ;
+fincas ;
+fintms ;

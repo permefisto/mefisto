@@ -1,0 +1,5 @@
+variable CL_ELAS 'Condition Limite en ELASTICITE' entier
+( 1 : 'FORCE force imposee a la frontiere'
+, 2 : 'FIXATION ou deplacement impose'
+, 8 : 'U0 DEPLACEMENT INITIAL'
+, 9 : 'V0 VITESSE INITIALE' ) ;

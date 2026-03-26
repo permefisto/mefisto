@@ -1,0 +1,460 @@
+{ ========================================================================= }
+{ MEFISTO Software     : November 30, 2021 version                          }
+{ USER's  Name         : Alain Perronnet                                    }
+{ Project Name         : Air around 3 Dennis 1m separated: TETRAHEDRIZATION }
+{ Date                 : 30 November 2021  13h 11m                          }
+{ ========================================================================= }
+DefVar Pi,              DegRad; 
+       Pi=atan(1.) * 4; DegRad = Pi / 180; { Conversion degrees -> Radians}
+
+DefVar Hight, WishEdge, AnglePlan;
+       Hight = 2.8;      { meter }
+       WishEdge = 0.05;  { meter }
+       AnglePlan = 20;   { degrees }
+
+DefVar xmin; xmin= -2.5;
+DefVar ymin; ymin= -2.25;
+DefVar zmin; zmin=  0.0;
+
+DefVar xmax; xmax= 3.5;
+DefVar ymax; ymax= 2.25;
+DefVar zmax; zmax= Hight;
+
+DefVar D1MOUTH_X,       D1MOUTH_Y,       D1MOUTH_Z;
+       D1MOUTH_X=0.18;  D1MOUTH_Y=-0.03; D1MOUTH_Z=1.615;   { XYZ Mouth coordinates }
+
+DefVar distance; distance=1.0;  { meter mouth DENNIS i to mouth DENNIS j }
+
+
+0;  { WISHED EDGE LENGTH>0 by DEFAULT }
+    { LENGTH by DEFAULT of MESH EDGES? }
+ WishEdge;
+@;
+
+19;    { XYZ min MAX of PLSVO }
+ xmin; xmax;
+ ymin; ymax;
+ zmin; zmax;
+@;
+
+3; { SURFACES faces of the object: DENNIS }
+ DENNIS1;   { NAME of the SURFACE }
+ i;         { in LEXICON ~>TRANSFO }
+ 10;        { INPUT DATA of XYZSOMMET & NSEF TMS }
+ readf xyznsef.s.dennis_up; { lower characters }
+ @;
+@;
+
+{ The VERTICES to define TRANSFO DENNIS1 -> DENNIS2 }
+1; { POINTS vertices of the object }
+ 1;  { TYPING of VALUES }
+     { NAME of the POINT or ESCAPE? }
+
+ D1MOUTH;    i; 1; D1MOUTH_X;   D1MOUTH_Y;   D1MOUTH_Z; { X Y Z COORDINATES }
+ D1MOUTH_AX; i; 1; D1MOUTH_X+1; D1MOUTH_Y;   D1MOUTH_Z; { Axis Definition }
+ D1MOUTH_AY; i; 1; D1MOUTH_X;   D1MOUTH_Y+1; D1MOUTH_Z;
+
+
+DefVar D2MOUTH_X; D2MOUTH_X=D1MOUTH_X + distance * cos(-20*DegRad);
+DefVar D2MOUTH_Y; D2MOUTH_Y=D1MOUTH_Y + distance * sin(-20*DegRad);
+DefVar D2MOUTH_Z; D2MOUTH_Z=D1MOUTH_Z;
+
+ D2MOUTH;    i; 1; D2MOUTH_X; D2MOUTH_Y; D2MOUTH_Z;
+ D2MOUTH_AX; i; 1; D2MOUTH_X - cos(50*DegRad);
+                   D2MOUTH_Y + sin(50*DegRad);
+                   D2MOUTH_Z;
+
+ D2MOUTH_AY; i; 1; D2MOUTH_X + cos(-140*DegRad);
+                   D2MOUTH_Y + sin(-140*DegRad);
+                   D2MOUTH_Z;
+
+
+DefVar D3MOUTH_X; D3MOUTH_X=D1MOUTH_X + distance * cos(40*DegRad);
+DefVar D3MOUTH_Y; D3MOUTH_Y=D1MOUTH_Y + distance * sin(40*DegRad);
+DefVar D3MOUTH_Z; D3MOUTH_Z=D1MOUTH_Z;
+
+ D3MOUTH;    i; 1; D3MOUTH_X; D3MOUTH_Y; D3MOUTH_Z;
+ D3MOUTH_AX; i; 1; D3MOUTH_X + cos(-110*DegRad);
+                   D3MOUTH_Y + sin(-110*DegRad);
+                   D3MOUTH_Z;
+ D3MOUTH_AY; i; 1; D3MOUTH_X + cos(-20*DegRad);
+                   D3MOUTH_Y + sin(-20*DegRad);
+                   D3MOUTH_Z;
+
+{ Radius and Centre of Circle DENNIS 1 2 3 }
+DefVar RC123;   RC123 = distance / 2 / cos(30*DegRad);
+DefVar CC123_X, CC123_Y;
+       CC123_X = D1MOUTH_X + RC123 * cos(10*DegRad);
+       CC123_Y = D1MOUTH_Y + RC123 * sin(10*DegRad);
+
+ CCD123; i; 1; CC123_X; CC123_Y;  D1MOUTH_Z;
+@;
+@;
+@;
+
+{
+display ~POINT>D1MOUTH>XYZSOMMET(XYZSOM(1));
+display ~POINT>D2MOUTH>XYZSOMMET(XYZSOM(1));
+display ~POINT>D3MOUTH>XYZSOMMET(XYZSOM(1));
+display ~POINT>CCD123>XYZSOMMET(XYZSOM(1));
+}
+
+
+6; {Transfo DENNIS1 -> DENNIS2 or 3 }
+TD12; { Name Transfo DENNIS1 -> DENNIS2 }
+   3;  { isometry R3 -> R3 }
+     3; { translation+rotation defined by 3 images of 3 points }
+     D1MOUTH;    { name of the point 1 before the isometry ^~>POINT }
+     D1MOUTH_AX; { name of the point 2 before the isometry ^~>POINT }
+     D1MOUTH_AY; { name of the point 3 before the isometry ^~>POINT }
+
+     D2MOUTH;    { name of the point 1 after the isometry ^~>POINT }
+     D2MOUTH_AX; { name of the point 2 after the isometry ^~>POINT }
+     D2MOUTH_AY; { name of the point 3 after the isometry ^~>POINT }
+
+TD13; { Name Transfo DENNIS1 -> DENNIS3 }
+   3;  { isometry R3 -> R3 }
+     3; { translation+rotation defined by 3 images of 3 points }
+     D1MOUTH;    { name of the point 1 before the isometry ^~>POINT }
+     D1MOUTH_AX; { name of the point 2 before the isometry ^~>POINT }
+     D1MOUTH_AY; { name of the point 3 before the isometry ^~>POINT }
+
+     D3MOUTH;    { name of the point 1 after the isometry ^~>POINT }
+     D3MOUTH_AX; { name of the point 2 after the isometry ^~>POINT }
+     D3MOUTH_AY; { name of the point 3 after the isometry ^~>POINT }
+@;
+@;
+
+3;{ SURFACES faces of the DENNIS2 }
+                { NAME of the SURFACE or ESCAPE? }
+ DENNIS2; TD12; { in LEXICON ~>TRANSFO }
+   50;          { MAPPING of a SURFACE }
+   DENNIS1;     { NAME of the initial surface ^~>SURFACE }
+
+ DENNIS3; TD13; { in LEXICON ~>TRANSFO }
+   50;          { MAPPING of a SURFACE }
+   DENNIS1;     { NAME of the initial surface ^~>SURFACE }
+@;
+@;
+@;
+
+2; { LINES EXTRACTED edges of DENNIS 1 2 3 in Z=0 PLANE }
+   { NAME of the LINE or ESCAPE? }
+ D1_BOOT_L; I;  { BOOT on XY PLANE extracted of DENNIS1 SURFACE }
+ 37;            { EXTRACT INTERNAL OR BOUNDARY EDGES of a SURFACE }
+ DENNIS1;       { NAME OF THE SURFACE TO EXTRACT THE LINE }
+ DEFFUNC All(x,y,z); All=1; EndFunc;
+ All;           { NAME OF THE CRITERION FUNCTION }
+ 1;             { TYPE OF THE EDGES TO BE EXTRACTED 1-> BOUNDARY EDGES }
+
+ D1_BOOT_L1; I; { First CONNEX COMPONENT of D1_BOOT_L }
+ 36;            { EXTRACT EDGES FROM a LINE BY a CRITERION(x,y,z) }
+ D1_BOOT_L;     { Name of the initial line }
+ DEFFUNC Y_1(X,Y,Z); Y_1= Y>-0.02 and Z<0.05; ENDFUNC;
+ Y_1;           { NAME OF THE CRITERION FUNCTION }
+
+ D1_BOOT_L2; I; { Second CONNEX COMPONENT of D1_BOOT_L }
+ 36;            { EXTRACT EDGES FROM a LINE BY a CRITERION(x,y,z) }
+ D1_BOOT_L;     { Name of the initial line }
+ DEFFUNC Y_2(X,Y,Z); Y_2= Y<0 and Z<0.05 ; ENDFUNC;
+ Y_2;           { NAME OF THE CRITERION FUNCTION }
+
+ D2_BOOT_L1;    { NAME of the LINE or ESCAPE }
+  TD12;         { in LEXICON ~>TRANSFO }
+   50;          { MAPPING of a LINE }
+   D1_BOOT_L1;  { NAME of the initial line ^~>LINE }
+
+ D2_BOOT_L2;    { NAME of the LINE or ESCAPE }
+  TD12;         { in LEXICON ~>TRANSFO }
+   50;          { MAPPING of a LINE }
+   D1_BOOT_L2;  { NAME of the initial line ^~>LINE }
+
+ D3_BOOT_L1;    { NAME of the LINE or ESCAPE }
+  TD13;         { in LEXICON ~>TRANSFO }
+   50;          { MAPPING of a LINE }
+   D1_BOOT_L1;  { NAME of the initial line ^~>LINE }
+
+ D3_BOOT_L2;    { NAME of the LINE or ESCAPE }
+  TD13;         { in LEXICON ~>TRANSFO }
+   50;          { MAPPING of a LINE }
+   D1_BOOT_L2;  { NAME of the initial line ^~>LINE }
+@;
+@;
+
+DefVar RC1232; RC1232=6.25 * RC123**2;
+
+{ WISHED Edge_Length to SUBDIVIDE LINES TRIANGLES TETRAHEDRA }
+DefFunc Edge_Length(x,y,z);
+ if ( (x-CC123_X)**2 + (y-CC123_Y)**2 ) < RC1232 and z<2.5 then
+    Edge_Length=0.02;
+ else
+    Edge_Length=0.05;
+ endif;
+ return;
+EndFunc;
+
+
+{ The 8 VERTICES of the BOX CONTAINING DENNIS_UP }
+1; { POINTS vertices of the object }
+ 1;  { TYPING of VALUES }
+     { NAME of the POINT or ESCAPE? }
+ P1; i; 1; xmin; ymin; zmin; { X Y Z COORDINATES }
+ P2; i; 1; xmax; ymin; zmin;
+ P3; i; 1; xmax; ymax; zmin;
+ P4; i; 1; xmin; ymax; zmin;
+
+ Q1; i; 1; xmin; ymin; zmax; { X Y Z COORDINATES }
+ Q2; i; 1; xmax; ymin; zmax;
+ Q3; i; 1; xmax; ymax; zmax;
+ Q4; i; 1; xmin; ymax; zmax;
+
+@;
+@;
+
+2; { 12 LINES edges of the BOX CONTAINING DEN2 }
+      { NAME of the LINE or ESCAPE? }
+ P1P2; i; { in LEXICON ~>TRANSFO }
+ 2;   { STRAIGHT LINE }
+ 10/WishEdge;  { NBARLI 'number of edges of the line' entier ; }
+ 1;   { RAIGEO 'geometrical ratio between the edges' reel ; }
+      { NAME of POINT }
+ P1;  { in LEXICON ~>POINT }
+      { NAME of POINT }
+ P2;  { in LEXICON ~>POINT }
+      { NAME of the LINE or ESCAPE? }
+
+ P2P3; i;
+ 2;   { STRAIGHT LINE }
+ 3.0/WishEdge;  { NBARLI 'number of edges of the line' entier ; }
+ 1;   { RAIGEO 'geometrical ratio between the edges' reel ; }
+      { NAME of POINT }
+ P2;  { in LEXICON ~>POINT }
+      { NAME of POINT }
+ P3;  { in LEXICON ~>POINT }
+
+ P3P4; i; 2; 10./WishEdge;  1; P3; P4;
+ P4P1; i; 2; 3.0/WishEdge;  1; P4; P1;
+
+ P1P2P3P4; i;{ in LEXICON ~>TRANSFO }
+ 51;   { UNION OF SEVERAL LINES }
+ 4;    { NBLIUN 'number of lines of the union' entier ; }
+       { NAME of LINE }
+ P1P2; { in LEXICON ~>LIGNE }
+ P2P3; { in LEXICON ~>LIGNE }
+ P3P4; { in LEXICON ~>LIGNE }
+ P4P1; { in LEXICON ~>LIGNE }
+
+ Q1Q2; i; 2; 10./WishEdge; 1; Q1; Q2;
+ Q2Q3; i; 2; 3.0/WishEdge; 1; Q2; Q3;
+ Q3Q4; i; 2; 10./WishEdge; 1; Q3; Q4;
+ Q4Q1; i; 2; 3.0/WishEdge; 1; Q4; Q1;
+ Q1Q2Q3Q4; i;{ in LEXICON ~>TRANSFO }
+ 51;   { UNION OF SEVERAL LINES }
+ 4;    { NBLIUN 'number of lines of the union' entier ; }
+ Q1Q2; { in LEXICON ~>LIGNE }
+ Q2Q3; { in LEXICON ~>LIGNE }
+ Q3Q4; { in LEXICON ~>LIGNE }
+ Q4Q1; { in LEXICON ~>LIGNE }
+
+ P1Q1; i; 2; Hight/WishEdge; 1; P1; Q1;
+ P2Q2; i; 2; Hight/WishEdge; 1; P2; Q2;
+ P3Q3; i; 2; Hight/WishEdge; 1; P3; Q3;
+ P4Q4; i; 2; Hight/WishEdge; 1; P4; Q4;
+
+ P1P2Q2Q1; i;{ in LEXICON ~>TRANSFO }
+ 51;   { UNION OF SEVERAL LINES }
+ 4;    { NBLIUN 'number of lines of the union' entier ; }
+ P1P2; { in LEXICON ~>LIGNE }
+ P2Q2; { in LEXICON ~>LIGNE }
+ Q1Q2; { in LEXICON ~>LIGNE }
+ P1Q1; { in LEXICON ~>LIGNE }
+
+ P2P3Q3Q2; i;{ in LEXICON ~>TRANSFO }
+ 51;   { UNION OF SEVERAL LINES }
+ 4;    { NBLIUN 'number of lines of the union' entier ; }
+ P2P3; { in LEXICON ~>LIGNE }
+ P3Q3; { in LEXICON ~>LIGNE }
+ Q2Q3; { in LEXICON ~>LIGNE }
+ P2Q2; { in LEXICON ~>LIGNE }
+
+ P3P4Q4Q3; i;{ in LEXICON ~>TRANSFO }
+ 51;   { UNION OF SEVERAL LINES }
+ 4;    { NBLIUN 'number of lines of the union' entier ; }
+ P3P4; { in LEXICON ~>LIGNE }
+ P4Q4; { in LEXICON ~>LIGNE }
+ Q3Q4; { in LEXICON ~>LIGNE }
+ P3Q3; { in LEXICON ~>LIGNE }
+
+ P4P1Q1Q4; i;{ in LEXICON ~>TRANSFO }
+ 51;   { UNION OF SEVERAL LINES }
+ 4;    { NBLIUN 'number of lines of the union' entier ; }
+ P4P1; { in LEXICON ~>LIGNE }
+ P1Q1; { in LEXICON ~>LIGNE }
+ Q4Q1; { in LEXICON ~>LIGNE }
+ P4Q4; { in LEXICON ~>LIGNE }
+@;
+@;
+
+
+3;{ SURFACES faces of the object DEN2 + GROUND }
+              { NAME of the SURFACE or ESCAPE? }
+ GROUND; i;   { in LEXICON ~>TRANSFO }
+ 9;           { TRIANGULATION1 BETWEEN CLOSED LINES }
+ WishEdge;    { ARETMX 'MAX length of edges of regular triangles }
+ 7;           { NBLFTR 'NUMBER of closed lines contour of the surface }
+ 0;           { NBPTIT 'NUMBER of internal points future vertices }
+              { NAME of LINES }
+ P1P2P3P4;    { in LEXICON ~>LIGNE }
+ D1_BOOT_L1;  { in LEXICON ~>LIGNE }
+ D1_BOOT_L2;  { in LEXICON ~>LIGNE }
+ D2_BOOT_L1;  { in LEXICON ~>LIGNE }
+ D2_BOOT_L2;  { in LEXICON ~>LIGNE }
+ D3_BOOT_L1;  { in LEXICON ~>LIGNE }
+ D3_BOOT_L2;  { in LEXICON ~>LIGNE }
+              { NUPTIT(1..NBPTIT) NAME of internal points future vertices}
+              { DISOSV(1..NBPTIT) wished distance to the near vertices}
+              { NAME of the SURFACE or ESCAPE? }
+
+ D123_GROUND;
+  I;          { in LEXICON ~>TRANSFO }
+ 51;          { C0-CONTINUITY UNION of SURFACES }
+  4;          { NUMBER of surfaces of the union }
+ GROUND; DENNIS1; DENNIS2; DENNIS3; { NAME of UNION surfaces }
+
+ Q1Q2Q3Q4; i; { in LEXICON ~>TRANSFO }
+ 9;           { TRIANGULATION1 BETWEEN CLOSED LINES }
+ WishEdge;    { ARETMX 'MAX length of edges of regular triangles }
+ 1;           { NBLFTR 'NUMBER of closed lines contour of the surface }
+ 0;           { NBPTIT 'NUMBER of internal points future vertices }
+              { NAME of LINES }
+ Q1Q2Q3Q4;    { in LEXICON ~>LIGNE }
+
+ P1P2Q2Q1; i; { in LEXICON ~>TRANSFO }
+ 9;           { TRIANGULATION1 BETWEEN CLOSED LINES }
+ WishEdge;    { ARETMX 'MAX length of edges of regular triangles }
+ 1;           { NBLFTR 'NUMBER of closed lines contour of the surface }
+ 0;           { NBPTIT 'NUMBER of internal points future vertices }
+              { NAME of LINES }
+ P1P2Q2Q1;    { in LEXICON ~>LIGNE }
+
+ P2P3Q3Q2; i; { in LEXICON ~>TRANSFO }
+ 9;           { TRIANGULATION1 BETWEEN CLOSED LINES }
+ WishEdge;    { ARETMX 'MAX length of edges of regular triangles }
+ 1;           { NBLFTR 'NUMBER of closed lines contour of the surface }
+ 0;           { NBPTIT 'NUMBER of internal points future vertices }
+              { NAME of LINES }
+ P2P3Q3Q2;    { in LEXICON ~>LIGNE }
+
+ P3P4Q4Q3; i; { in LEXICON ~>TRANSFO }
+ 9;           { TRIANGULATION1 BETWEEN CLOSED LINES }
+ WishEdge;    { ARETMX 'MAX length of edges of regular triangles }
+ 1;           { NBLFTR 'NUMBER of closed lines contour of the surface }
+ 0;           { NBPTIT 'NUMBER of internal points future vertices }
+              { NAME of LINES }
+ P3P4Q4Q3;    { in LEXICON ~>LIGNE }
+
+ P4P1Q1Q4; i; { in LEXICON ~>TRANSFO }
+ 9;           { TRIANGULATION1 BETWEEN CLOSED LINES }
+ WishEdge;    { ARETMX 'MAX length of edges of regular triangles }
+ 1;           { NBLFTR 'NUMBER of closed lines contour of the surface }
+ 0;           { NBPTIT 'NUMBER of internal points future vertices }
+              { NAME of LINES }
+ P4P1Q1Q4;    { in LEXICON ~>LIGNE }
+
+ D123_r_tr; i; { in LEXICON ~>TRANSFO }
+ 51;          { C0-CONTINUITY UNION of SURFACES }
+  6;          { NUMBER of UNION SURFACES }
+ D123_GROUND; { NAME of UNION SURFACES }
+ P1P2Q2Q1; P2P3Q3Q2; P3P4Q4Q3; P4P1Q1Q4; Q1Q2Q3Q4;
+ @;
+@;
+@;
+
+90; { EXPORT to SOFTWARES a PLSVO MESH }
+ 1;             { a File Mefisto xyznsef.s.d123_r_tr of a PLSV }
+ 3;             { SURFACE }
+ D123_r_tr;     { NAME of the SURFACE }
+ 0;             { WITHOUT TANGENTS }
+ @;
+@;
+@;
+
+{     { Example to read the xyznsef.s.SurfaceName.  NOT NECESSARY HERE }
+ 3;       { Create a SURFACE }
+ D123_r_tr;    { NAME of the SURFACE }
+ I;            { MAPPING NAME in LEXICON ~>TRANSFO }
+ 10;           { INPUT DATA of XYZSOMMET & NSEF TMS }
+ readf xyznsef.s.d123_r_tr;  { lower characters }
+}
+
+@;
+@;
+
+4; { VOLUMES materials of the object }
+ D123_V8;     { NAME of the VOLUME de TYPE 8 }
+ I;           { MAPPING NAME in LEXICON ~>TRANSFO }
+ 8;           { 1 CLOSED VOLUME FOR THE OPTION 9 }
+ 1;           { NUMBER of closed surfaces of the volume }
+ D123_r_tr;    { NAME of the closed surface }
+
+ D123_V9;     { NAME of the VOLUME }
+ I;           { MAPPING NAME in LEXICON ~>TRANSFO }
+ 9;           { TETRAHEDRIZATION of OPTION 8 VOLUMES }
+ 3000000;     { MAX NUMBER of vertices of the tetrahedrization }
+ WishEdge;    { MAX length of edges of the regular grid }
+ AnglePlan;   { MAX (degrees) angle of coplanearity }
+ 1;           { NBPTIV NUMBER of internal points future vertices }
+ 1;           { NUMBER of volumes of type 8 of the partition }
+ D123_V8;     { NAMES of volumes of the partition }
+ CCD123;      { tableau  NUPTIV(1..NBPTIV)
+                NAMES of internal points future vertices ^~>POINT; }
+ 0.01;        { tableau  DISSOV(1..NBPTIV)
+                wished distance up to near vertices reel ; }
+@;
+@;
+
+90;   { EXPORT to SOFTWARES a PLSVO MESH }
+ 1;           { a File Mefisto xyznsef.v.d123_v9 of d123_ve VOLUME }
+ 4;           { VOLUME }
+              { NAME of the VOLUME? }
+ d123_v9;     { will be used with lower characters }
+ 0;           { WITHOUT TANGENTS }
+@;
+@;
+
+QUIT;
+
+
+
+4; { VOLUMES materials of the object }
+ D123_r_te;   { NAME of the VOLUME }
+  i;          { dans le LEXIQUE ~>TRANSFO }
+ 30;          { AMELIORATION de la QUALITE d une TETRAEDRISATION }
+              { NOM de VOLUME }
+ D123_v9;     { dans le LEXIQUE ~>VOLUME }
+ WishEdge;    { ARETGR LONGUEUR MAX de l''arete de la grille reguliere}
+ 0.15;        { QUTEMN qualite au dessous de laquelle ameliorer }
+ AnglePlan;   { ANTE2P 'DEGRES du petit angle de coplanearite }
+ 8;           { NBITAT 'Nombre des iterations pour ameliorer }
+@;
+@;
+@;
+
+90;   { EXPORT to SOFTWARES a PLSVO MESH }
+ 1;             { a File Mefisto xyznsef.v.d123_r_te of d123_r_te VOLUME }
+ 4;             { VOLUME }
+                { NAME of the VOLUME? }
+ d123_r_te;     { will be used with lower characters }
+ 0;             { WITHOUT TANGENTS }
+@;
+@;
+
+10;{ DRAWING of PLSVO meshes }
+ 4;             { VOLUME or VOLUMES }
+ 5;             { ONE VOLUME 1 PLANE of SECTION }
+                { NAME of the VOLUME? }
+ D123_r_te;
+ 90;            { Continue the DRAWING }
+ 3;             { Z=Constant }
+
+CLOSE;

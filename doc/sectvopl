@@ -1,0 +1,15 @@
+Define the SECTION PLANE of FE
+at X=Constant or Y=Constant or Z=Constant
+or a plane dined by its normal vector,
+itself defined by its 3 components.
+
+Thus, the MOUSE MOVEMENT moves the SECTION PLANE
+ONLY the intersected FE are drawn.
+
+The LEFT BUTTON GAUCHE pressed displace the object
+The MIDDLE BUTTON MILIEU pressed and deplaced
+ vertically   rotates it around a centered horizontal axis
+ horizontally rotates it around a centered vertical axis
+THE RIGHT BUTTON DROIT pressed and deplaced
+ below do a ZOOM +
+ high  do a ZOOM -

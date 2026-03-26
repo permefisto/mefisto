@@ -1,0 +1,20 @@
+This is TeX, Version 3.14159 (Web2C 7.4.5) (format=tex 2005.2.4)  16 APR 2007 09:02
+**MEFLag.tex
+(/usr/share/texmf/tex/latex/tools/.tex
+! Interruption.
+l.2 
+    %% This is file `.tex',
+? cd
+Type <return> to proceed, S to scroll future error messages,
+R to run without stopping, Q to run quietly,
+I to insert something, E to edit your file,
+H for help, X to quit.
+? q
+OK, entering \batchmode...
+ File ignored)
+! Emergency stop.
+<*> MEFLag.tex
+              
+*** (job aborted, no legal \end found)
+
+No pages of output.

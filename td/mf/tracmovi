@@ -1,0 +1,9 @@
+variable TRACMOVI 'Traces d''une COMPOSANTE ou MODULE de la VITESSE' entier
+( 0 : 'CHOIX de la COMPOSANTE X Y Z ou MODULE de la VITESSE'
+, 1 : 'ISO-LIGNES ou ISO-SURFACES de la VITESSE dans l''OBJET'
+, 2 : 'ISO-COULEURS ZONES de la VITESSE'
+, 3 : 'ISO-COULEURS de la VITESSE par SECTIONS X ou Y ou Z=CTE'
+, 4 : 'ISO-PROFILS de la VITESSE sur des PLANS X ou Y ou Z=CTE'
+, 5 : 'ISO-VITESSE le LONG d''une DROITE definie par 2 POINTS'
+, 6 : 'ISO-VITESSE sur UNE SURFACE ou PLUS de l''OBJET'
+, 9 : 'En 2D SURFACE(X,Y,Vitesse(X,Y))' ) ;

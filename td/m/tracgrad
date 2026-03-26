@@ -1,0 +1,8 @@
+variable TRACGRAD 'GRADIENT de TEMPERATURE' entier
+( 1 : 'Nombre CM de la FLECHE MAX'
+, 2 : 'un CM VAUT EN GRADIENT'
+, 5 : 'COULEUR des ARETES du MAILLAGE'
+, 6 : 'TYPE TRAIT des ARETES MAILLAGE'
+, 7 : 'COULEUR des FLECHES'
+, 15: 'GRADIENTS dans tous les EF'
+, 16: 'GRADIENTS 1 SECTION PLANE des EF 3D' ) ;

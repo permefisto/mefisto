@@ -1,0 +1,160 @@
+{======================================================================}
+{ CHAUFFAGE D'UN PARECHOC  Les temperatures intermediaires Pascal JOLY }
+{======================================================================}
+1;  FOUR; { NOM de l OBJET a traiter }
+
+ { Definition des variables }
+ DefVar THAUT, TBAS, CONDINTERIEUR, CONDPARECHOC, CONDRES,
+ RE11, RE12, RE13, RE14, RE21, RE22, RE23, RE24, RE3, RE4;
+ THAUT = 50;
+ TBAS  = 20;
+ CONDINTERIEUR = 10.;
+ CONDPARECHOC  =  1.;
+ CONDRES       =  2.;
+ RE11 = 0.;
+ RE12 = 0.;
+ RE13 = 0.;
+ RE14 = 0.;
+ RE21 = 0.;
+ RE22 = 0.;
+ RE23 = 0.;
+ RE24 = 0.;
+ RE3  = 0.;
+ RE4  = 0.;
+
+2; {ENTREE DES DONNEES THERMIQUES}
+ {SURFACE INTERIEUR : densite de CONDUCTIVITE THERMIQUE }
+ 2; {densite de CONDUCTIVITE THERMIQUE }
+ 3; {materiau 2D homogene isotrope }
+ CONDINTERIEUR; {CONDUC  'conductivite du materiau' }
+ @;
+ {SURFACE : PARECHOC }
+ 2; {densite de CONDUCTIVITE THERMIQUE }
+ 3; {materiau 2D homogene isotrope }
+ CONDPARECHOC; {CONDUC  'conductivite du materiau' }
+ @; 
+ {SURFACE : RESIS4 }
+ 2; {densite de CONDUCTIVITE THERMIQUE }
+ 3; {materiau 2D homogene isotrope }
+ CONDRES; {CONDUC  'conductivite du materiau' }
+ 4; {densite SOURCE de CHALEUR }
+ 1; {constante }
+ RE4; {SOURCE(1..NBJESO) 'les valeurs des sources'; }
+ @; 
+ {SURFACE : RESIS3 }
+ 2; {densite de CONDUCTIVITE THERMIQUE }
+ 3; {materiau 2D homogene isotrope }
+ CONDRES; {CONDUC  'conductivite du materiau' }
+ 4; {densite SOURCE de CHALEUR }
+ 1; {constante }
+ RE3; {SOURCE(1..NBJESO) 'les valeurs des sources'; }
+ @;
+ {SURFACE : RESIS24 }
+ 2; {densite de CONDUCTIVITE THERMIQUE }
+ 3; {materiau 2D homogene isotrope }
+ CONDRES; {CONDUC  'conductivite du materiau' }
+ 4; {densite SOURCE de CHALEUR }
+ 1; {constante }
+ RE24; {SOURCE(1..NBJESO) 'les valeurs des sources'; }
+ @;
+ {SURFACE : RESIS23 }
+ 2; {densite de CONDUCTIVITE THERMIQUE }
+ 3; {materiau 2D homogene isotrope }
+ CONDRES; {CONDUC  'conductivite du materiau' }
+ 4; {densite SOURCE de CHALEUR }
+ 1; {constante }
+ RE23; {SOURCE(1..NBJESO) 'les valeurs des sources'; }
+ @;
+ {SURFACE : RESIS22 }
+ 2; {densite de CONDUCTIVITE THERMIQUE }
+ 3; {materiau 2D homogene isotrope }
+ CONDRES; {CONDUC  'conductivite du materiau' }
+ 4; {densite SOURCE de CHALEUR }
+ 1; {constante }
+ RE22; {SOURCE(1..NBJESO) 'les valeurs des sources'; }
+ @;
+ {SURFACE : RESIS21 }
+ 2; {densite de CONDUCTIVITE THERMIQUE }
+ 3; {materiau 2D homogene isotrope }
+ CONDRES; {CONDUC  'conductivite du materiau' }
+ 4; {densite SOURCE de CHALEUR }
+ 1; {constante }
+ RE21; {SOURCE(1..NBJESO) 'les valeurs des sources'; }
+ @;
+ {SURFACE : RESIS14 }
+ 2; {densite de CONDUCTIVITE THERMIQUE }
+ 3; {materiau 2D homogene isotrope }
+ CONDRES; {CONDUC  'conductivite du materiau' }
+ 4; {densite SOURCE de CHALEUR }
+ 1; {constante }
+ RE14; {SOURCE(1..NBJESO) 'les valeurs des sources'; }
+ @;
+ {SURFACE : RESIS13 }
+ 2; {densite de CONDUCTIVITE THERMIQUE }
+ 3; {materiau 2D homogene isotrope }
+ CONDRES; {CONDUC  'conductivite du materiau' }
+ 4; {densite SOURCE de CHALEUR }
+ 1; {constante }
+ RE13; {SOURCE(1..NBJESO) 'les valeurs des sources'; }
+ @;
+ {SURFACE : RESIS12 }
+ 2; {densite de CONDUCTIVITE THERMIQUE }
+ 3; {materiau 2D homogene isotrope }
+ CONDRES; {CONDUC  'conductivite du materiau' }
+ 4; {densite SOURCE de CHALEUR }
+ 1; {constante }
+ RE12; {SOURCE(1..NBJESO) 'les valeurs des sources' }
+ @;
+ {SURFACE : RESIS11 }
+ 2; {densite de CONDUCTIVITE THERMIQUE }
+ 3; {materiau 2D homogene isotrope }
+ CONDRES; {CONDUC  'conductivite du materiau' }
+ 4; {densite SOURCE de CHALEUR }
+ 1; {constante }
+ RE11; {SOURCE(1..NBJESO) 'les valeurs des sources' }
+ @;
+ {LIGNE : DROITE }
+ 1; {ECHANGE coefficient d echange avec le fluide a la paroi }
+ 1; {constante }
+ 0.; {ECHANG 'coefficient d'echange' }
+ @;
+ {LIGNE : GAUCHE }
+ 1; {ECHANGE coefficient d echange avec le fluide a la paroi }
+ 1; {constante }
+ 0.; {ECHANG 'coefficient d'echange' }
+ @;
+ {LIGNE : BAS }
+ 3; {CONTACT temperature imposee }
+ 1; {constante }
+ TBAS; {CONTAC(1..NBJECO) 'les temperatures imposees' }
+ @;
+ {LIGNE : HAUT }
+ 3; {CONTACT temperature imposee }
+ 1; {constante }
+ THAUT; {CONTAC(1..NBJECO) 'les temperatures imposees' }
+ @;
+ {POINT : HD }
+ 3; {CONTACT temperature imposee }
+ 1; {constante }
+ THAUT; {CONTAC(1..NBJECO) 'les temperatures imposees' }
+ @;
+ {POINT : HG }
+ 3; {CONTACT temperature imposee }
+ 1; {constante }
+ THAUT; {CONTAC(1..NBJECO) 'les temperatures imposees' }
+ @;
+ {POINT : BD }
+ 3; {CONTACT temperature imposee }
+ 1; {constante }
+ TBAS; {CONTAC(1..NBJECO) 'les temperatures imposees' }
+ @;
+ {POINT : BG }
+ 3; {CONTACT temperature imposee }
+ 1; {constante }
+ TBAS; {CONTAC(1..NBJECO) 'les temperatures imposees' }
+ @;
+                                            
+3; 1; { RESOLUTION coefficients independants de la température}
+   1; { RESOLUTION du systeme lineaire par Cholesky }
+ @;
+FERMER;

@@ -1,0 +1,90 @@
+{ ==================================================================== }
+{ MEFISTO Software     : Version July 24-th 2009                       }
+{ USER's Name          : Perronnet Alain                               }
+{ Project Name         : cylball                                       }
+{ Date                 : 24/07/2009   16h 05m                          }
+{ ==================================================================== }
+
+DefVar velo0; velo0=1;
+
+{ The velocity function on the surface of the circles right and left }
+ DefFunc Circlevelocity( time, x,y,z, ntypobj, nuobjt, nucomp )
+   DefVar ray; ray=sqrt(x*x+z*z);
+   Circlevelocity = 0;
+   if nucomp=2 and (y<0.0001 or y>(l1+l2)*0.9999) then
+     Circlevelocity = velo0 * ( rc - sqrt(x*x+z*z) ) / rc;
+   endif;
+ EndFunc;
+
+ 2; { DATA INPUT of the FLUID }
+
+ { VOLUME: CYLBALL }
+ 1;   { Rot  The Mass Density }
+ 1;   { Mass Constant }
+ DefVar roWater; roWater=1000;
+ roWater;{ DMASSE Value of the constant mass density of WATER  kg/m3}
+ 
+ 2; { nu The FLUID VISCOSITY }
+ 1; { Constant Viscosity }
+ 8.9E-4; { VISCOS WATER VISCOSITY in Pa.s  cf wikipedia }
+    { The dynamic viscosity nu of water is 8.90 × 10**-4 Pa·s at about 25 °C
+      As a function of temperature T(K): nu(Pa·s) = A × 10**(B/(T-C))
+      where A=2.414 × 10**-5 Pa·s; B = 247.8 K; and C = 140 K. }
+
+ 3;     { definition of the internal force density }
+ 1;     { Constant internal force }
+ 1;     { NBCOFO number of not zero force components }
+ 3;     { number of the component Z}
+ 0;     { -roWater*9.8; internal force density kg/m3 m/s2 (according to -Z) }
+
+ @;
+
+ { SURFACE: CY0S }
+ 2; { Fixation of the VELOCITY }
+-1; { fixed velocity FUNCTION }
+ 3; { NBCOBV number of components of the fixed velocity }
+ 1; 2; 3; { NUCOBV(1..NBCOBV) nb of each component of the fixed velocity}
+ Circlevelocity;
+ @;
+
+ { SURFACE: CYL1L2S }
+ 2; { Fixation of the VELOCITY }
+-1; { fixed velocity FUNCTION }
+ 3; { NBCOBV number of components of the fixed velocity }
+ 1; 2; 3; { NUCOBV(1..NBCOBV) nb of each component of the fixed velocity}
+ Circlevelocity;
+ @;
+
+ { SURFACE: CYLS }
+ 2; { Fixation of the VELOCITY }
+ 1; { constant fixed velocity }
+ 3; { NBCOBV number of components of the fixed velocity }
+ 1; 2; 3; { NUCOBV(1..NBCOBV) nb of each component of the fixed velocity}
+ 0; 0; 0; { BLVITE(1..NBCOBV) Value of the fixation }
+ @;
+
+ { SURFACE: BALLS }
+ 2; { Fixation of the VELOCITY }
+ 1; { constant fixed velocity }
+ 3; { NBCOBV number of components of the fixed velocity }
+ 1; 2; 3; { NUCOBV(1..NBCOBV) nb of each component of the fixed velocity}
+ 0; 0; 0; { BLVITE(1..NBCOBV) Value of the fixation }
+ @;
+
+@;
+@;
+
+5;  { STEADY FLUID SOLVER =======================================}
+   1;  { CROUT FACTORIZATION }
+@;
+
+6;  { UNSTEADY FLUID SOLVER =====================================}
+   1;  { CROUT FACTORIZATION }
+ 0.0;  { INITIAL TIME }
+ 1.0;  { FINAL   TIME }
+0.01;  { STEP of TIME }
+  10;  { NUMBER of ADDED SOLUTION VECTORS }
+@;
+@;
+
+CLOSE;

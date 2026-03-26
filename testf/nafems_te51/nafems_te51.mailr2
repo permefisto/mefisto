@@ -1,0 +1,59 @@
+{TEST 51 NAFEMS DEEP SIMPLY-SUPPORTED SOLID BEAM    }
+
+{fichier TEST CALCUL DES MODES PROPRES EN ELASTICITE}
+{Le maillage en pentaedres de degre 2 PENT 3R2C     }
+
+{Le 16 octobre 1998                  Alain PERRONNET}
+
+DefVar nbax,nbay,nbaz;
+nbax=5;
+nbay=1;
+nbaz=1;
+
+1; 1;     { LES POINTS }
+   S1; I; 1; 0; 0; 0;
+   S2; I; 1;10; 0; 0;
+   S3; I; 1;10; 2; 0;
+   S4; I; 1; 0; 2; 0;     
+@;
+2;        { LES LIGNES }
+   B1; I; 2; nbax; 1; S1; S2;
+   B2; I; 2; nbay; 1; S2; S3;
+   B3; I; 2; nbax; 1; S3; S4;
+   B4; I; 2; nbay; 1; S4; S1;  
+@;
+3;         { LES SURFACES }
+   BASQ;     I; 1; B1; B2; B3; B4; 2;
+   BAS;      I;31; BASQ; 1; {creation d''une ARETE S1 S3}
+@;  
+4;         { LE VOLUME }
+   POUTRE; I; 14; BAS; {tranches}
+      2; 1; 2.0; {1 tranche de hauteur 2.0}
+@;
+
+3;         {SURFACE EXTRAITE}
+   DROITE; I; 37; POUTRE;
+    DefFonc droite(x,y,z); droite=y>1.99999; finfonc;
+    droite;
+    1;     {frontaliere}
+@;
+
+5; { OBJETS parties de l OBJET }
+ POUTRE; { NOM DE L'OBJET }
+      0; { classique 2D ou 3D }
+      6; { nombre de Points Lignes Surfaces Volumes de l'objet }
+      v;  poutre;
+      s;  droite;
+      l;  b4;
+      l;  b2;
+      p;  s4;
+      p;  s3;
+@;
+
+7; { INTERPOLATION definition noeuds du maillage }
+  POUTRE; 4;  { LAGRANGE de DEGRE 2 }
+@;
+ 10; {trace}
+  5; 1; 90; {tous les objets}
+
+FERMER;

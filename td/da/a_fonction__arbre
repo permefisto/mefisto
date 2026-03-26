@@ -1,0 +1,11 @@
+deftms ~>FONCTION>>ARBRE 'Tree of operations to execute a function LU'
+variable muet DATE 'date of creation of the TMS'    reel2  ;
+variable muet NUTD 'number of the descriptor array' entier ; 
+variable L1ARBR 'max value of the 1-rst index of LARBRE' entier ;
+variable L2ARBR 'max value of the 2-nd index of LARBRE' entier ;
+variable NBPAFO 'number of parameters of the function' entier ;      
+variable NBVALO 'number of local variables of the function' entier ;
+variable LRARBR 'position in LARBRE of the root of the tree' entier ;
+tableau  LARBRE(1..L1ARBR,1..L2ARBR)
+        'operation codes of the tree of the function' entier ;
+fintms ;

@@ -1,0 +1,13 @@
+deftms ~>>>INTERFACE 'les noeuds d''une partie commune a plusieurs objets'
+variable muet DATE   'date de creation du tableau'   reel2 ;
+variable muet NUTD   'numero du tableau descripteur' entier ;  
+variable NBNOIN 'nombre de noeuds de l''interface'   entier ;
+variable MXOBNO 'nombre maximal d''objets contenant un meme noeud' entier ;
+variable LONUNO 'longueur du tableau NUNOOB' entier ;
+tableau  NBOBNO(1..NBNOIN) 'le nombre d''objets contenant le noeud' entier ;
+tableau  NUNOOB(1..LONUNO)
+       'pour chaque noeud le numero de type de chaque objet,
+        son numero dans le type et le numero du noeud dans l''objet'  entier ;
+tableau  COOR(1..3,1..NBNOIN)
+       'les coordonnees de chaque noeud de l''interface' reel ;
+fintms ;

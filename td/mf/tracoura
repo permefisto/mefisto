@@ -1,0 +1,4 @@
+variable TRACOURA 'trace de la fonction COURANT' entier
+( 1 : 'ISOVALEUR-COURBES de la FONCTION COURANT'
+, 2 : 'ZONES de COULEURS ISO-VALEURS'
+, 9 : 'SURFACE 3d(X,Y,FonctionCourant(X,Y))' ) ;

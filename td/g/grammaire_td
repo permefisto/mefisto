@@ -1,0 +1,80 @@
+                     ===================================
+                     GRAMMAIRE DES TABLEAUX DESCRIPTEURS
+                     ===================================
+
+LEGENDE : NOTATION DE BACKUS_NAUR
+---------
+          <   >  A DEFINIR
+           :=    DEFINIT
+          [   ]  OPTIONNEL
+          {   }  REPETE 0 OU PLUSIEURS FOIS
+            |    ALTERNATIVE  
+           reel  en minuscules les mots cles ou terminaux
+            $    CE QUI SUIT EST UN COMMENTAIRE
+
+TOUT MOT DOIT ETRE TAPE SUR UNE ET UNE SEULE LIGNE ET 
+SEPARE DE LA SUITE PAR UN BLANC OU UNE FIN DE LIGNE  
+------------------------------------------------------------------------
+
+deftms <NOM_TMS> [<CHAINE>] <TYPE> fintms ; 
+ 
+<TYPE> := |variable [muet] <IDENT> [<CHAINE>] <TYPE_VAR> ;
+          |tableau [muet] <IDENT>(<INTERVAL_ENT>{,<INTERVAL_ENT>})[<CHAINE>]
+                   <TYPE_VAR> ;
+          |cas     <IDENT> {<INTERVALLE_E> : <TYPE> }  fincas ;
+          {<TYPE>}
+
+<TYPE_VAR> := |entier {(<INTERVAL_ENT>:<CHAINE>{,<INTERVAL_ENT>:<CHAINE>})}
+              |^<NOM_LEXIQUE> $ pointe sur un numero de nom dans 
+                              $ ce lexique
+              |reel
+              |reel2
+              |caractere     $ 4 caracteres (lettre ou chiffre)
+              |xyz           $ 3 reels coordonnees d'un point
+              |typeobjet     $ 2 entiers type de l'objet et
+                             $ numero dans son lexique
+              |tms <NOM_TMS>  
+              |tms <NOM_TMS>"<SUFFIXE> 
+                             $ le numero du tms associe est stocke
+                             $ si numero nul le tableau n'existe pas
+                             $ le nom du lexique doit etre fusionable
+                             $ avec le nom du tms cf FUSNOM
+                    
+<NOM>          := <LETTRE> {<ALFANUM>}  
+<CHAINE>       := '{<CARACTERE>}' {'{<CARACTERE>}'}
+<IDENT>        := <LETTRE> {<ALFANUM>}    $ 8 caracteres au plus
+<ID_ENTIER>    := |<ENTIER> |<IDENT>  
+<ID_ENT_IND>   := |<ID_ENTIER> |<IDENT>(<ID_ENTIER>{,<ID_ENTIER>})
+<INTERVAL_ENT> := <ID_ENT_IND>..<ID_ENT_IND>
+<INTERVALLE_E> := |<ID_ENTIER> |<INTERVAL_ENT> 
+<NOM_LEXIQUE>  := ~{><NOM>}    $ le premier > est le caractere > 
+                               $ <NOM> le mot non terminal      
+<NOM_TMS>      := ~{>{<NOM>}}  $ le nom du tableau descripteur du tms
+                               $ il doit exister dans DICOTD
+<SUFFIXE>      := |<ENTIER>
+                  |<REEL>
+                  |<4CARACTERES>
+                  |^<IDENT> $ <IDENT> doit etre une variable ou un
+                            $         tableau deja declare
+                            $ ^variable est sa valeur actuelle
+                            $ ^tableau les indices du tableau et de
+                            $          celui en cours sont identiques 
+                            $ cf ~>OBJET>>TOPOLOGIE au niveau de NTTYEL
+
+<ALFANUM>      := |<LETTRE> |<CHIFFRE> {|<LETTRE> |<CHIFFRE>} 
+<CARACTERE>    := |<ALFANUM> |( |) |>         $ a completer
+<ENTIER+>      := <CHIFFRE+> {<CHIFFRE>}
+<ENTIER>       := |+ |- <ENTIER+>
+<REEL>         := |<ENTIER> |+0.<ENTIER+>{E<ENTIER>}
+<4CARACTERES>  := |<CARACTERE><CARACTERE><CARACTERE>CARACTERE>   
+
+<CHIFFRE+>     := |1 |2 |3 |4 |5 |6 |7 |8 |9
+<CHIFFRE>      := |0 |<CHIFFRE+>
+<LETTRE>       := |a |b |c |d |e |f |g |h |i |j |k |l |m |n |p |q 
+                  |r |s |t |u |v |w |x |y |z |_ 
+<CARACTERE>    := |<CHIFFRE> |<LETTRE>
+------------------------------------------------------------------------
+recherche d'une variable non indicee: NOM_TMS(IDENT)
+  
+recherche d'une variable indicee : NOM_TMS(IDENT(indice{,indice}))
+

@@ -1,0 +1,10 @@
+variable TRACPRES 'trace des PRESSIONS' entier
+ (  1 : 'ISO-PRESSIONS en ZONE COULEURS'
+ ,  2 : 'ZONES COULEURS ISO-PRESSIONS'
+ ,  3 : 'ZONES par SECTIONS X ou Y ou Z=CTE'
+ ,  4 : 'PROFILS dans PLANS X ou Y ou Z=CTE'
+ ,  5 : 'LE LONG d''une DROITE de 2 POINTS'
+ ,  6 : 'PRESSION sur des SURFACES de l''OBJET'
+ ,  7 : 'PRESSION sur les SURFACES FRONTALIERES 3D'
+ ,  8 : 'Calculs INTEGRALE sur SURFACES de l''OBJET'
+ ,  9 : 'En 2D SURFACE(X,Y,PRESSION(X,Y))' ) ;

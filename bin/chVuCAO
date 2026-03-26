@@ -1,0 +1,18 @@
+#
+#  Alain PERRONNET   Decembre 2000
+#
+#  CHERCHE DANS CAO et Vu UNE CHAINE DE CARACTERES
+#   set -v  affiche les commandes telles que
+#   set -x  affiche les commandes apres interpretation des *?...
+#
+if test $1
+then
+   MOT=$1
+else
+   echo MOT a chercher dans CAO Vu \?
+   read MOT
+fi
+echo ==============================================================
+echo RECHERCHE dans CAO et Vu du mot  $MOT
+echo ==============================================================
+grep -i -n $MOT  ~/Vu/*.h  ~/Vu/*.cpp  ~/CAO/*.h  ~/CAO/*.cpp

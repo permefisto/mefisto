@@ -1,0 +1,18 @@
+La fonction utilisateur (de nom quelconque a choisir)
+donne une valeur reelle a la COTE finale du POINT
+de coordonnees initiales x,y,z. 
+
+Elle doit comprendre dans cet ordre les 4 parametres  no_tranche X Y Z
+et etre programmee selon la grammaire du langage LU
+(cf documentation et exemples du menu de depart ) 
+
+A l'execution, les parametres no_tranche X Y Z sont initialises.
+Ils peuvent ou non servir a calculer la valeur de la COTE.
+            
+EXEMPLE:
+deffonc COTE( no_tranche , x , y , z ) ; 
+   si    (no_tranche>2)
+   alors  COTE = z - 1;
+   sinon  COTE = z + 1E-1;
+   finsi;  
+finfonc; 

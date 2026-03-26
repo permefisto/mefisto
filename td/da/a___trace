@@ -1,0 +1,64 @@
+deftms ~>>>TRACE 'ATTRIBUTS du trace du MAILLAGE du PLSVO'
+variable muet DATE 'date of creation of the TMS'   reel2  ;
+variable muet NUTD 'number of the descriptor array TD' entier ; 
+variable NBRCOU 'option black & white or colors' entier 
+ ( 0: 'black & white', 1: 'colors' ) ;  
+ variable NCOUCA 'color of characters' entier  
+ ( 0: 'black' , 1: 'red' , 2: 'green' ,    3: 'blue'
+ , 4: 'cyan' , 5: 'yellow' , 6: 'magenta' , 7: 'white'
+ , 8: 'dark_gray', 9: 'gray',10: 'light_gray',11: 'beige'
+ ,12: 'orange',     13: 'salmon',    14: 'pink',      15: 'turquoise' ) ;  
+ variable IAVARE 'drawing of edges or not' entier
+ ( 0: 'NO drawing of edges' , 1: 'drawing of edges' ) ;  
+ variable PREDUA 'percentage of reduction of edges of lines' reel ;
+ variable NEPARL 'thickness of edges of lines' entier ;  
+ variable NCOUAL 'color of edges of lines' entier 
+ ( 0: 'black' , 1: 'red' , 2: 'green' ,    3: 'blue'
+ , 4: 'cyan' , 5: 'yellow' , 6: 'magenta' , 7: 'white'
+ , 8: 'dark_gray', 9: 'gray',10: 'light_gray',11: 'beige'
+ ,12: 'orange',     13: 'salmon',    14: 'pink',      15: 'turquoise' ) ;  
+ variable IAVFAC 'drawing of faces or not' entier
+ ( 0: 'NO drawing of faces', 1: 'drawing of faces' ) ;     
+ variable PREDUF 'percentage of reduction of faces' reel ;  
+ variable NEPARF 'thickness of edges of faces' entier ;  
+ variable NCOUFA 'color of faces' entier 
+ ( 0: 'black' , 1: 'red' , 2: 'green' ,    3: 'blue'
+ , 4: 'cyan' , 5: 'yellow' , 6: 'magenta' , 7: 'white'
+ , 8: 'dark_gray', 9: 'gray',10: 'light_gray',11: 'beige'
+ ,12: 'orange',     13: 'salmon',    14: 'pink',      15: 'turquoise' ) ;  
+ variable NCOUAF 'color of edges of faces' entier 
+ ( 0: 'black' , 1: 'red' , 2: 'green' ,    3: 'blue'
+ , 4: 'cyan' , 5: 'yellow' , 6: 'magenta' , 7: 'white'
+ , 8: 'dark_gray', 9: 'gray',10: 'light_gray',11: 'beige'
+ ,12: 'orange',     13: 'salmon',    14: 'pink',      15: 'turquoise' ) ;  
+ variable IAVELO 'take in account the distances or not' entier 
+ ( 0: 'NO distance taken in account' 
+ , 1: 'distance taken in account' ) ;
+ variable IAVNSO 'drawing of numbers of vertices or not' entier
+ ( 0: 'NO drawing of numbers of vertices'
+ , 1: 'drawing of numbers of vertices' ) ; 
+ variable NCONSO 'color of numbers of vertices' entier
+ ( 0: 'black' , 1: 'red' , 2: 'green' ,    3: 'blue'
+ , 4: 'cyan' , 5: 'yellow' , 6: 'magenta' , 7: 'white'
+ , 8: 'dark_gray', 9: 'gray',10: 'light_gray',11: 'beige'
+ ,12: 'orange',     13: 'salmon',    14: 'pink',      15: 'turquoise' ) ;  
+ variable IAVNEF 'drawing of numbers of FE or not' entier
+ ( 0: 'NO drawing of numbers of FE', 1: 'drawing of numbers of FE' ) ; 
+ variable NCONEF 'color of numbers of FE' entier
+ ( 0: 'black' , 1: 'red' , 2: 'green' ,    3: 'blue'
+ , 4: 'cyan' , 5: 'yellow' , 6: 'magenta' , 7: 'white'
+ , 8: 'dark_gray', 9: 'gray',10: 'light_gray',11: 'beige'
+ ,12: 'orange',     13: 'salmon',    14: 'pink',      15: 'turquoise' ) ;  
+ variable IAVTIT 'drawing of the title or not' entier
+ ( 0: 'NO drawing of the title', 1: 'drawing of the title' ) ; 
+ variable LPPOIN 'handle of points or not' entier
+ ( 0: 'no' , 1: 'yes' ); 
+ variable LPLIGN 'handle of lines or not' entier
+ ( 0: 'no' , 1: 'yes' ); 
+ variable LPSURF 'handle of surfaces or not' entier
+ ( 0: 'no' , 1: 'yes' ); 
+ variable LPVOLU 'handle of volumes or not' entier
+ ( 0: 'no' , 1: 'yes' ); 
+ variable LPOBJE 'handle of objects or not' entier
+ ( 0: 'no' , 1: 'yes' ); 
+fintms ;

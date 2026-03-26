@@ -1,0 +1,23 @@
+1. Le mode d'INTERACTIVITE du TERMINAL peut etre CONVERSATIONNEL ou NON,
+   avec des TRACES GRAPHIQUES ou NON, avec emploi d'une SOURIS ou NON.
+
+2. Le BAVARDAGE des SORTIES peut etre REDUIT ou AUGMENTE.
+
+3. La BASCULE affichage ou non des adressages permet le pistage des
+   ERREURS d'un nouvel algorithme lorsque des tableaux se
+   superposent. A utiliser seulement en cas de DEBOGAGE. 
+
+4. Le langage LU interprete les donnees. Il peut etre interessant 
+   de lire quelle valeur a ete calculee, notamment lorsque des
+   fonctions sont utilisees.
+
+5. Les affichages, a priori sur l'ecran, peuvent etre rediriges dans
+   un fichier de nom a preciser ensuite.
+
+6. Plutot que de taper ou designer a la souris un choix, il est
+   interessant de taper toutes les donnees dans un fichier, qui
+   reste donc modifiable a souhait ou constitue un "sous-programme"
+   de maillage,... , et rediriger la lecture sur ce fichier.
+   Le mot cle QUITTER ou EXIT fait retourner au fichier lu appelant.
+   Le mot cle FERMER ou CLOSE ferme le fichier et fait retourner au
+   fichier lu appelant.

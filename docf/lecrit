@@ -1,0 +1,16 @@
+lecrit : numero du critere de qualite  
+
+  <=10 somme   des qualites des 2 triangles
+  > 10 minimum des qualites des 2 triangles
+   
+  =0 : triangulation DELAUNAY directe
+  =1 : minimisation de la somme des rayons circonscrits (delaunay)
+  =2 : maximisation de la somme des rayons incrits
+  =3 : maximisation de la somme des qualites ( 2r/r ) 
+
+  =11 : minimisation du maximum des rayons circonscrits
+  =12 : maximisation du minimum des rayons incrits
+  =13 : maximisation du minimum des qualites ( 2r/r )
+  =14 : minimisation du maximum des angles du quadrangle  
+  =15 : maximisation du minimum des hauteurs     
+  =16 : maximisation du minimum des medianes

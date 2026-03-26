@@ -1,0 +1,19 @@
+The topologic coordinates vary from 1 to MAX for 
+the vertices.
+Choose min and max for each topologic coordinate.
+
+Remark: to define a surface in a structured hexahedron
+it is necessary to define an interval reduced to 1 point
+
+Example: S34; I; 34; STRUCTURED_HEXAHEDRON; 
+2;5;  4;8;  1;1;
+Extract the quadrangles of 3 slices
+from 2 to 5 in I-coordinates, 
+from 4 to 8 in J-coordinates,
+obtained for K=1.
+
+Example: S35; I; 35; STRUCTURED_QUADRANGLE; 
+2;5;  4;6;
+Extract the quadrangles
+from 2 to 5 in I-coordinates, 
+from 4 to 6 in J-coordinates.

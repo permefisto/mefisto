@@ -1,0 +1,4 @@
+variable ResoTHIN 'Unstationary Heat Coefficient Types' entier
+(1: 'Rho C, A, V, CT, g INDEPENDENT of t & TEMPERATURE, SOURCE, CONTACT depends t ONLY',
+ 2: 'Rho C, A, V, CT, g INDEPENDENT of t & TEMPERATURE, SOURCE, CONTACT depends t & TEMP',
+ 3: 'At least one of Rho C, A, V, CT, g, FOmega, FGamma, TempDir depends of time & TEMP' ) ;

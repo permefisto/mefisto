@@ -1,0 +1,8 @@
+Le nom des 2 points de l'AXE du CONE est a donner.
+Attention:
+- Les 2 PLANS ORTHOGONAUX a l'axe du cone en ces 2 POINTS
+delimitent le TRONC de CONE. Les aretes de la ligne
+intersection seront calculees sur la surface du tronc
+de cone et LIMITEES par ces 2 plans
+- Par construction, Le SOMMET du CONE ne peut pas etre
+compris entre ces 2 PLANS!

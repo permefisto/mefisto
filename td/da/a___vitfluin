@@ -1,0 +1,16 @@
+deftms ~>>>VITESSEINIT 'Initial Velocities of Fluid'
+variable muet DATE 'Date de creation du tableau'   reel2  ;
+variable muet NUTD 'Numero du tableau descripteur' entier ; 
+variable LTVIF0 'Type of Initial Velocity' entier 
+(  1 : 'Constant Initial Velocity'
+, -1 : 'Function Initial Velocity'
+,  0 : 'DELETE the Fluid Velocity' ) ;
+cas LTVIF0
+ 1 : variable NBCOVI 'Number of Initial Velocity Components at a node' entier ;
+     tableau  NUCOVI(1..NBCOVI) 'Number of Initial Velocity Components' entier ;
+     tableau  VACOVI(1..NBCOVI) 'Constant Initial Velocity' reel ; 
+-1 : variable NBCOV0 'Number of Initial Velocity Components at a node' entier ;
+     tableau  NUCOV0(1..NBCOV0) 'Number of Initial Velocity Components' entier ;
+     variable NFVIF0 'Initial Velocity Function Name' ^~>FONCTION ;
+fincas ;   
+fintms ;

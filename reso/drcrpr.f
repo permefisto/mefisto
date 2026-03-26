@@ -1,0 +1,142 @@
+      SUBROUTINE DRCRPR( NTDL, NCODSA, LPDIAG, A, B0, NIVEAU,
+     %                   B,    IERR )
+C ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+C BUT: DESCENTE ET/OU REMONTEE D UN SYSTEME LINEAIRE FACTORISE SOUS
+C ---- LA FORME  A * B = L * D * TL * B = B0 DITE DE CROUT
+C      L EST UNE MATRICE TRIANGULAIRE INFERIEURE A DIAGONALE UNITE
+C      D EST UNE MATRICE DIAGONALE INVERSIBLE
+C      STOCKEES SOUS FORME PROFIL DANS A
+C      ATTENTION: CRMC1D DOIT ETRE EXECUTE AUPARAVANT
+
+C ENTREES:
+C --------
+C NTDL   : ORDRE DE LA MATRICE A
+C NCODSA : =-1 MATRICE PROFIL NON SYMETRIQUE
+C          = 0 MATRICE DIAGONALE
+C          = 1 MATRICE PROFIL     SYMETRIQUE
+C LPDIAG : SI NCODSA NON NUL ALORS
+C          LPDIAG TABLEAU DE POINTEURS SUR CHAQUE COEFFICIENT DIAGONAL DE A
+C          LPDIAG(0)=0, LPDIAG(I)=ADRESSE DANS A DU I-EME COEFFICIENT
+C                                 DIAGONAL  SI A EST NON DIAGONALE
+C A      : MATRICE L, D RESULTATS DE LA FACTORISATION DE CROUT
+C          ISSUE DE L EXECUTION DE CRMC1D
+C B0     : TABLEAU B0(NTDL) SECOND MEMBRE DU SYSTEME LINEAIRE
+
+C NIVEAU : 0  TL*B=B0      REMONTEES SEULEMENT VALABLE SI B=B0 SINON ERREUR
+C          1  L *B=B0      DESCENTES SEULEMENT
+C          2  L*D*X=B0     DESCENTES ET PRODUITS DIAGONAUX
+C          3  L*D*TL*B=B0  RESOLUTIONS TOTALES
+C          4  D*TL*B=B0    PRODUITS DIAGONAUX ET REMONTEES
+C                          SEULEMENT VALABLE SI B0 = B EN ENTREE
+C SORTIES:
+C --------
+C B      : TABLEAU B(NTDL) DE LA SOLUTION
+C          SI NIVEAU =0 OU 4 B0 ET B DOIVENT ETRE IDENTIQUES A L APPEL
+C IERR   : 0 SI PAS D'ERREUR DETECTEE, 1 SINON
+C ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+C AUTEUR : ALAIN PERRONNET LJLL UPMC & St PIERRE du PERRAY    Avril 2010
+C MODIFS : ALAIN PERRONNET LJLL UPMC & St PIERRE du PERRAY    Mai   2013
+C23456---------------------------------------------------------------012
+      include"./incl/threads.inc"
+      INTEGER           LPDIAG(0:NTDL)
+      DOUBLE PRECISION  A(*), B(NTDL), B0(NTDL)
+      DOUBLE PRECISION  S, PROSCD
+
+      IF( NCODSA .EQ. 0 ) THEN
+
+C        MATRICE DIAGONALE
+C        =================
+         CALL AXEBDD( NTDL, 1, A, B0,  B, IERR )
+         RETURN
+
+      ENDIF
+
+C     MATRICE NON DIAGONALE:
+C     ======================
+      IF( NIVEAU .EQ. 0 ) GOTO 300
+      IF( NIVEAU .EQ. 4 ) GOTO 200
+
+C     LA DESCENTE  L * B = B0
+C     -----------------------
+      NCDIAG0 = 0
+
+      IF( NTDL .LE. MININDSTHR .OR. NTDL .LE. NBTHREADS*MININD1THR )THEN
+
+C        TRAITEMENT SEQUENTIEL
+         DO I = 1,NTDL
+
+C           NO DU COEFFICIENT DIAGONAL
+            NCDIAG = LPDIAG(I)
+
+C           NOMBRE DE COEFFICIENTS DE LA LIGNE I
+            NBCL = NCDIAG - NCDIAG0
+
+C           NO-1 1-ER COLONNE
+            IMI = I - NBCL
+
+            S = 0.D0
+            DO K = 1,NBCL-1
+               S = S + A(NCDIAG0+K) * B(IMI+K)
+            ENDDO
+            B(I) = B0(I) - S
+
+C           PASSAGE A LA LIGNE SUIVANTE DE LA MATRICE
+            NCDIAG0 = NCDIAG
+C
+         ENDDO
+
+      ELSE
+
+C        TRAITEMENT OMP
+         DO I = 1,NTDL
+
+C           NO DU COEFFICIENT DIAGONAL
+            NCDIAG = LPDIAG(I)
+
+C           NOMBRE DE COEFFICIENTS DE LA LIGNE I
+            NBCL = NCDIAG - NCDIAG0
+
+C           NO-1 1-ER COLONNE
+            IMI = I - NBCL
+
+C           PRODUIT SCALAIRE PARALLELISE EVENTUELLEMENT
+            S = PROSCD( A(NCDIAG0+1), B(IMI+1), NBCL-1 )
+
+            B(I) = B0(I) - S
+
+C           PASSAGE A LA LIGNE SUIVANTE DE LA MATRICE
+            NCDIAG0 = NCDIAG
+
+         ENDDO
+
+      ENDIF
+
+      IF( NIVEAU .EQ. 1 ) RETURN
+
+C     D*B = B
+C     -------
+ 200  DO I = 1,NTDL
+         B(I) = B(I) / A( LPDIAG(I) )
+      ENDDO
+
+      IF( NIVEAU .EQ. 2 ) RETURN
+
+C     LA REMONTEE tL * B = B
+C     ----------------------
+ 300  DO I = NTDL, 2, -1
+
+C        NO COEFFICIENT DE LA DIAGONALE
+         NCDIAG = LPDIAG(I)
+
+C        NOMBRE-1 DE COEFFICIENTS DE LA LIGNE I
+         NBCL = NCDIAG - LPDIAG(I-1) - 1
+
+         DO K = 1, NBCL
+            IK = I - K
+            B(IK) = B(IK) - A(NCDIAG-K) * B(I)
+         ENDDO
+
+      ENDDO
+
+      RETURN
+      END

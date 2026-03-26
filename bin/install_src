@@ -1,0 +1,53 @@
+#!/bin/bash
+#  Alain Perronnet   Decembre 2006
+echo
+echo ==================================================================================
+echo Regeneration des librairies Mefisto a partir du fichier $MEFISTO/MEFISTO.tar
+echo ==================================================================================
+
+cd $MEFISTO
+
+echo
+echo Decompression et tar x des librairies de $MEFISTO/MEFISTO.tar
+tar xvf MEFISTO.tar
+
+for i in `ls *.tar.gz`
+do
+  nomlib =`basename $i .tar.gz`
+  gunzip $nomlib.tar.gz
+  tar xvf nomlib.tar
+done
+
+echo
+echo Choix de la librairie bin :
+echo Taper hp ou ibm ou lnx
+read bidon
+if `expr $bidon = hp`
+then
+  mv bin.hp bin
+elif `expr $bidon = ibm`
+  mv bin.ibm bin
+elif `expr $bidon = lnx`
+  mv bin.lnx bin
+else
+  echo Mauvaise reponse. lnx est impose
+  mv bin.lnx bin
+fi
+
+echo
+echo Choisir la version compilable AVEC ou SANS MOTIF :
+echo Taper AVEC pour obtenir la version AVEC MOTIF
+echo Taper tout autre caractere pour obtenir SANS MOTIF
+read bidon
+if `expr $bidon = AVEC`
+then
+  $MEFISTO/bin/avecMOTIF
+else
+  $MEFISTO/bin/sansMOTIF
+fi
+
+ls -l $MEFISTO
+
+echo
+echo Fin du tar x de $MEFISTO/MEFISTO.tar
+

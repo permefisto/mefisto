@@ -1,0 +1,190 @@
+      SUBROUTINE BGTHBOUS( tn, tn1, RhoCp, NBNOVI, NDDLNO, XYZNOE,
+     %                     NUTYEL, NBNOEF, NBELEM, NUNOEF,
+     %                     MOARET, MXARET, MNLARE,
+     %                     MOFACE, MXFACE, LFACES,
+     %                     VXYZPN, VITMAX, Temper,
+     %                     BG,     NBCHTL, IERR )
+C ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+C BUT: CONSTRUIRE le VECTEURV ELEMENTAIRE BE = RhoCp te(tn,X(tn;tn+1,x))
+C ---- ET l'AJOUTER au SECOND MEMBRE GLOBAL BG DU PROBLEME
+C      TG U(tn+1) = (RhoCp - dt Mhu Laplacien ) te(tn+1) =
+C      = RhoCp te(tn,X(tn;tn+1,x))
+
+C      ICI, AJOUT du TERME  Integrale RhoCp tP2 te(tn,X(tn;tn+1,bl)) dX
+C      au SECOND MEMBRE GLOBAL BG du SYSTEME LINEAIRE en TEMPERATURE
+
+C      Remarque:  + dt Source(tn+1) N'EST PAS CALCULE ni AJOUTE a BG
+
+C ENTREES:
+C --------
+C tn, tn1: INTERVALLE DE TEMPS tn tn+1  => DT le PAS du TEMPS = tn1-tn
+C DT     : PAS CONSTANT DU TEMPS
+C RhoCp  : DENSITE DE MASSE*CHALEUR MASSIQUE=CAPACITE THERMIQUE
+
+C NBNOVI : = NOMBRE DE NOEUDS = SOMMETS et MILIEUX DES ARETES DES EF
+C          = NOMBRE TOTAL DE DL de la TEMPERATURE
+C XYZNOE : XYZNOE(3,NBNOVI)  3 COORDONNEES DES NOEUDS P2 DU MAILLAGE
+C NDDLNO : NUMERO DU DERNIER DL DE CHAQUE NOEUD VITESSE (0:NBNOVI)
+C          A UTILISER POUR RETROUVER LES DL PRESSION DES VECTEURS VXYZPN
+C NUTYEL : NUMERO DU TYPE D'EF ( 15 TRIANGLE, 20 TETRAEDRE TAYLOR-HOOD )
+C NBNOEF : NOMBRE DE NOEUDS D'UN EF DE CE TYPE
+C          ( 6 POUR LE TRIANGLE, 10 POUR LE TETRAEDRE)
+C NBELEM : NOMBRE D'EF DU MAILLAGE
+C NUNOEF : NUNOEF(NBELEM,NBNOEF) NO DES NOEUDS DES NBELEM EF
+
+C NBVVEF : NOMBRE DE VOLUME  POUR 1 EF DE CE TYPE
+C NBSFEF : NOMBRE DE FACES   POUR 1 EF DE CE TYPE
+C NBLAEF : NOMBRE D'ARETES   POUR 1 EF DE CE TYPE
+C NUVVEF : TABLEAU DU NUMERO DE VOLUME DE CHAQUE ELEMENT FINI
+C NUSFEF : TABLEAU DU NUMERO DE SURFACE DES FACES   DE CHAQUE EF
+C NULAEF : TABLEAU DU NUMERO DE LIGNE   DES ARETES  DE CHAQUE EF
+C
+C NUMILI : NUMERO MINIMAL DES OBJETS LIGNES
+C NUMALI : NUMERO MAXIMAL DES OBJETS LIGNES
+C LTDELI : TABLEAU DES ADRESSES DU TABLEAU DES DONNEES DU FLUIDE
+C          DES OBJETS LIGNES
+C
+C NUMISU : NUMERO MINIMAL DES OBJETS SURFACES
+C NUMASU : NUMERO MAXIMAL DES OBJETS SURFACES
+C LTDESU : TABLEAU DES ADRESSES DU TABLEAU DES DONNEES DU FLUIDE
+C          DES OBJETS SURFACES
+C
+C NUMIVO : NUMERO MINIMAL DES OBJETS VOLUMES
+C NUMAVO : NUMERO MAXIMAL DES OBJETS VOLUMES
+C LTDEVO : TABLEAU DES ADRESSES DU TABLEAU DES DONNEES DU FLUIDE
+C          DES OBJETS VOLUMES
+
+C MOARET : NOMBRE DE MOTS POUR LES INFO D'UNE ARETE
+C MXARET : NOMBRE MAXIMAL D'ARETES DECLAREES
+C MNLARE : EN 2D SEULEMENT ADRESSE MCN DU 1-ER MOT DU TABLEAU LARETE
+
+C MOFACE : NOMBRE DE MOTS POUR LES INFO D'UNE FACE
+C MXFACE : NOMBRE MAXIMAL D'FACES DECLAREES
+C LFACES : TABLEAU DES FACES DU MAILLAGE  (cf hachag.f)
+C          LFACES(1,I)= NO DU 1-ER  SOMMET DE LA FACE
+C          LFACES(2,I)= NO DU 2-EME SOMMET > 1-ER  SOMMET
+C          LFACES(3,I)= NO DU 3-EME SOMMET DE LA FACE
+C          LFACES(4,I)= NO DU 4-EME SOMMET DE LA FACE
+C                       0 SI TRIANGLE
+C          LFACES(5,I)= CHAINAGE HACHAGE SUR FACE SUIVANTE
+C                       1 CUBE EST UN TETRA ou PENTA ou HEXAEDRE
+C          LFACES(6,I)= NUMERO DU 1-ER  CUBE CONTENANT CETTE FACE
+C                       0 SI PAS DE 1-ER  CUBE
+C          LFACES(7,I)= NUMERO DU 2-EME CUBE CONTENANT CETTE FACE
+C                       ou CHAINAGE SUR LA FACE FRONTALIERE SUIVANTE
+C          LFACES(8,I)= NUMERO DE LA FACE A TANGENTE DANS LE TABLEAU NUTGFA
+C          LFACES(9,I)= NUMERO DU TYPE DU DERNIER EF DE CETTE FACE
+
+C VXYZPN : VECTEUR PAR NOEUDS des DL VITESSES-PRESSIONS (1:NTDLVP) au TEMPS tn
+C VITMAX : NORME DE LA VITESSE MAXIMALE AU TEMPS
+C Temper : DL DE LA TEMPERATURE AU TEMPS et AUX NOEUDS DU MAILLAGE P2
+C
+C SORTIES:
+C --------
+C BG     : AJOUT des BE au VECTEUR GLOBAL SECOND MEMBRE ASSEMBLE
+C NBCHTL : NOMBRE DE REMONTEES DE LA CARACTERISTIQUE TROP LONGUES
+C IERR   : 0 PAS DE PROBLEME, >0 PROBLEME RENCONTRE
+C+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+C AUTEUR : ALAIN PERRONNET  Veulettes sur mer             Septembre 2022
+C MODIFS : ALAIN PERRONNET  Saint Pierre du Perray          Janvier 2023
+C23456---------------------------------------------------------------012
+      IMPLICIT NONE
+      include"./incl/donflu.inc"
+      REAL              DT, tn, tn1, XYZNOE(3,NBNOVI)
+      DOUBLE PRECISION  RhoCp, BG(NBNOVI)
+      INTEGER           NUNOEF(NBELEM,NBNOEF), NDDLNO(0:NBNOVI)
+      INTEGER           NBNOVI, TempouVit,
+     %                  NUTYEL, NBELEM, NBNOEF,
+     %                  MOARET, MXARET, MNLARE,
+     %                  MOFACE, MXFACE, LFACES(MOFACE,MXFACE),
+     %                  NBCHTL, IERR, NUELEM,
+     %                  M, K, NOK
+      DOUBLE PRECISION  DELTAT
+
+      INTEGER           NONOEF(10)
+      DOUBLE PRECISION  BE(30)
+      DOUBLE PRECISION  VXYZPN(1:*), VITMAX
+      DOUBLE PRECISION  Temper(NBNOVI)
+
+ccc      DOUBLE PRECISION  t_cpu_0, t_cpu_1
+ccc      call cpu_time(t_cpu_0)
+ccc      print*,'ENTREE de bgthbous.f sans OpenMP'
+
+C     LE PAS DE TEMPS EN DOUBLE PRECISION
+      DT     = tn1 - tn
+      DELTAT = DT
+
+      TempouVit = 0
+
+C     BOUCLE SUR LES EF de TAYLOR-HOOD
+      DO 10 NUELEM = 1, NBELEM
+
+C        NO DES NOEUDS DE L'ELEMENT FINI NUELEM
+         DO M = 1, NBNOEF
+            NONOEF(M) = NUNOEF(NUELEM,M)
+         ENDDO
+
+         IF( NUTYEL .EQ. 15 ) THEN
+
+C           TRIANGLE TAYLOR_HOOD
+C           Integrale RhoCp tP2 te(tn,X(tn;tn+1,x)) dx
+C           SECOND MEMBRE ELEMENTAIRE du TRANSPORT de la TEMPERATURE
+C           avec 6 COEFFICIENTS
+            CALL F2SBOP2P1( NUELEM,    1,      NBELEM, NUNOEF,
+     %                      MOARET,    MXARET, MNLARE,
+     %                      DT,        RhoCp,  XYZNOE, NDDLNO,
+     %                      TempouVit, Temper, VXYZPN, VITMAX,
+     %                      BE,        IERR )
+            IF( IERR .GT. 1 ) THEN
+C              ABANDON DE L'EF NUELEM
+               GOTO 10
+            ENDIF
+
+         ELSE
+
+C           TETRAEDRE TAYLOR-HOOD
+C           Integrale RhoCp tP2 te(tn,X(tn;tn+1,x)) dx
+C           SECOND MEMBRE ELEMENTAIRE du TRANSPORT pour NAVIER-STOKES
+            CALL F3SBOP2P1( NUELEM,    NBELEM, NUNOEF,
+     %                      MOFACE,    MXFACE, LFACES,
+     %                      DT,        RhoCp,  XYZNOE, NDDLNO,
+     %                      TempouVit, Temper, VXYZPN, VITMAX,
+     %                      BE,        IERR )
+            IF( IERR .GT. 1 ) THEN
+C              ABANDON DE L'EF NUELEM
+               GOTO 10
+            ENDIF
+
+         ENDIF
+         IF( IERR .EQ. 4 ) THEN
+            NBCHTL = NBCHTL + 1
+            IERR = 0
+C           ABANDON DE L'EF NUELEM
+            GOTO 10
+         ENDIF
+
+C        ASSEMBLAGE DE BE = + RhoCp te(tn,X(tn+1,x)) dans BG
+         DO K=1,NBNOEF
+
+C           NUMERO DU M-EME NOEUD DE L'ELEMENT FINI
+            NOK = NONOEF(K)
+
+C           ASSEMBLAGE DU COEFFICIENT ELEMENTAIRE K DANS LE COEFFICIENT GLOBAL
+            BG( NOK ) = BG( NOK ) + BE( K )
+
+         ENDDO
+
+C     FIN DE LA BOUCLE DES EF POUR ASSEMBLER BG
+ 10   ENDDO
+
+ccc      call affvect( 'BGTHBOUS VECTEUR BG', 10,     BG )
+ccc      call afl1ve(  'BGTHBOUS VECTEUR BG', NBNOVI, BG )
+
+cccC     Le TEMPS CPU donne par le systeme en fin d'execution de bgthbous.f
+ccc      call cpu_time(t_cpu_1)
+ccc      print*,'SORTIE de bgthbous.f sans OpenMP en',
+ccc     %        t_cpu_1-t_cpu_0,' CPU secondes'
+
+      IERR = 0
+      RETURN
+      END

@@ -1,0 +1,442 @@
+{ ==================================================================== }
+{ Software MEFISTO     : July 2007 Version                             }
+{ USER's Name          : Alain Perronnet                               }
+{ Project Name         : rab                                           }
+{                        Unsteady Thermal Elasticity Problem           }
+{                        Newmark Scheme with constant steps of time    }
+{ Date                 : 2/8/2007   14h 43m 19s                        }
+{ ==================================================================== }
+DefVar a2b2; a2b2=a*a*b*b;
+
+DefVar Dilatation,TempRef; Dilatation=0.01; TempRef=2.0;
+
+DefVar cu1, cu2; {Coefficient in front of Displacement}
+cu1=1; cu2=2;
+
+DefFunc defther(t,x,y);
+  defther = Dilatation * (exact_temperature(t,x,y,0) - TempRef);
+EndFunc;
+
+DefVar EYoung, nu, cont0;  EYoung=1e11; nu=0.3; cont0=1000;
+
+DefVar d1,d2,d3;
+d1 = EYoung * (1-nu) / ( (1+nu) * (1-2*nu) );
+d2 = EYoung * nu     / ( (1+nu) * (1-2*nu) );
+d3 = EYoung          / ( (1+nu) * 2 );
+
+DefFunc u1(t,x,y);
+  u1 = (t+t0) * (t+t0) * x * (a-x) * y * (b-y) / a2b2 + 0.6;
+EndFunc;
+
+DefFunc u2(t,x,y);
+  u2 = (t+t0) * (t+t0) * sin(Pisa*x) * sin(Pisb*y) + 0.5;
+EndFunc;
+
+DefFunc dtu1(t,x,y);
+  dtu1 = 2 * (t+t0) * x * (a-x) * y * (b-y) / a2b2;
+EndFunc;
+
+DefFunc dtu2(t,x,y);
+  dtu2 = 2 * (t+t0) * sin(Pisa*x) * sin(Pisb*y);
+EndFunc;
+
+DefFunc dttu1(t,x,y);
+  dttu1 = 2 * x * (a-x) * y * (b-y) / a2b2;
+EndFunc;
+
+DefFunc dttu2(t,x,y);
+  dttu2 = 2 * sin(Pisa*x) * sin(Pisb*y);
+EndFunc;
+
+DefFunc dxu1(t,x,y);
+  dxu1 = (t+t0) * (t+t0) * (a-2*x) * y * (b-y) / a2b2;
+EndFunc;
+
+DefFunc dyu1(t,x,y);
+  dyu1 = (t+t0) * (t+t0) * x * (a-x) * (b-2*y) / a2b2;
+EndFunc;
+
+DefFunc dxu2(t,x,y);
+  dxu2 = (t+t0) * (t+t0) * Pisa * cos(Pisa*x) * sin(Pisb*y);
+EndFunc;
+
+DefFunc dyu2(t,x,y);
+  dyu2 = (t+t0) * (t+t0) * sin(Pisa*x) * Pisb * cos(Pisb*y);
+EndFunc;
+
+DefFunc dxxu1(t,x,y);
+  dxxu1 = (t+t0) * (t+t0) * (-2) * y * (b-y) / a2b2;
+EndFunc;
+
+DefFunc dxyu1(t,x,y);
+  dxyu1 = (t+t0) * (t+t0) * (a-2*x) * (b-2*y) / a2b2;
+EndFunc;
+
+DefFunc dyyu1(t,x,y);
+  dyyu1 = (t+t0) * (t+t0) * x * (a-x) * (-2) / a2b2;
+EndFunc;
+
+DefFunc dxxu2(t,x,y);
+  dxxu2 = -(t+t0) * (t+t0) * Pisa * Pisa * sin(Pisa*x) * sin(Pisb*y);
+EndFunc;
+
+DefFunc dxyu2(t,x,y);
+  dxyu2 = (t+t0) * (t+t0) * Pisa * Pisb * cos(Pisa*x) * cos(Pisb*y);
+EndFunc;
+
+DefFunc dyyu2(t,x,y);
+  dyyu2 = -(t+t0)*(t+t0) * sin(Pisa*x) * Pisb * Pisb * sin(Pisb*y);
+EndFunc;
+
+DefFunc sig011(x,y);
+  sig011 = cont0 * x;
+EndFunc;
+
+DefFunc sig022(x,y);
+  sig022 = cont0 * y;
+EndFunc;
+
+DefFunc sig012(x,y);
+  sig012 = cont0 * x * y;
+EndFunc;
+
+DefFunc dxsig011(x,y);
+  dxsig011 = cont0;
+EndFunc;
+
+DefFunc dysig022(x,y);
+  dysig022 = cont0;
+EndFunc;
+
+DefFunc dxsig012(x,y);
+  dxsig012 = cont0 * y;
+EndFunc;
+
+DefFunc dysig012(x,y);
+  dysig012 = cont0 * x;
+EndFunc;
+
+DefFunc sig11(t,x,y);
+DefVar aux;
+  aux = defther(t,x,y);
+  sig11 = d1 * ( dxu1(t,x,y) - aux ) + d2 * ( dyu2(t,x,y) - aux )
+          + sig011(x,y);
+EndFunc;
+
+DefFunc sig22(t,x,y);
+DefVar aux;
+  aux = defther(t,x,y);
+  sig22 = d2 * ( dxu1(t,x,y) - aux ) + d1 * ( dyu2(t,x,y) - aux )
+          + sig022(x,y);
+EndFunc;
+
+DefFunc sig12(t,x,y);
+  sig12 = d3 * ( dyu1(t,x,y) + dxu2(t,x,y) ) + sig012(x,y);
+EndFunc;
+
+DefFunc dxsig11(t,x,y);
+DefVar aux;
+  aux = Dilatation * dxtemperature(t,x,y);
+  dxsig11 = d1 * ( dxxu1(t,x,y) - aux ) + d2 * ( dxyu2(t,x,y) - aux )
+          + dxsig011(x,y);
+EndFunc;
+
+DefFunc dysig22(t,x,y);
+DefVar aux;
+  aux = Dilatation * dytemperature(t,x,y);
+  dysig22 = d2 * ( dxyu1(t,x,y) - aux ) + d1 * ( dyyu2(t,x,y) - aux )
+          + dysig022(x,y);
+EndFunc;
+
+DefFunc dxsig12(t,x,y);
+  dxsig12 = d3 * ( dxyu1(t,x,y) + dxxu2(t,x,y) ) + dxsig012(x,y);
+EndFunc;
+
+DefFunc dysig12(t,x,y);
+  dysig12 = d3 * ( dyyu1(t,x,y) + dxyu2(t,x,y) ) + dysig012(x,y);
+EndFunc;
+
+{Forces sans l'acceleration pour le PB stationnaire}
+DefFunc force(t,x,y,z,nutype,nuobj,ncomp,xn,yn,zn);
+  if ncomp=1 then
+    force = - dxsig11(t,x,y) - dysig12(t,x,y) + cu1 * u1(t,x,y);
+  else
+    force = - dxsig12(t,x,y) - dysig22(t,x,y) + cu2 * u2(t,x,y);
+  endif;
+EndFunc;
+
+{sur BC n1=1 et n2=0}
+DefFunc pressureBC(t,x,y,ncomp);
+  if ncomp=1 then
+    pressureBC = sig11(t,x,y);
+  else
+    pressureBC = sig12(t,x,y);
+  endif;
+EndFunc;
+
+{sur CD n1=0 et n2=1}
+DefFunc pressureCD(t,x,y,ncomp);
+  if ncomp=1 then
+    pressureCD = sig12(t,x,y);
+  else
+    pressureCD = sig22(t,x,y);
+  endif;
+EndFunc;
+
+DefFunc pressure(t,x,y,z,nutype,nuobj,ncomp,xn,yn,zn);
+  if nuobj=nuobjt( 'ligne', 'bc' ) then
+    pressure = pressureBC(t,x,y,ncomp);
+  else
+    pressure = pressureCD(t,x,y,ncomp);
+  endif;
+EndFunc;
+
+DefFunc fixation(t,x,y,z,nutype,nuobj,ncomp);
+  if ncomp=1 then
+     fixation = u1(t,x,y);
+  else
+     fixation = u2(t,x,y);
+  endif;
+EndFunc;
+
+DefFunc initstress(t,x,y,z,nutype,nuobj,ncomp);
+  if ncomp=1 then
+     initstress = sig011(x,y);
+  else
+    if ncomp=2 then
+      initstress = sig022(x,y);
+    else
+      initstress = sig012(x,y);
+    endif;
+  endif;
+EndFunc;
+
+DefFunc initspeed(t,x,y,z,nutype,nuobj,ncomp);
+  if ncomp=1 then
+     initspeed = dtu1(t,x,y);
+  else
+     initspeed = dtu2(t,x,y);
+  endif;
+EndFunc;
+
+DefFunc exact_displacement(t,x,y,z,ncomp);
+  if ncomp=1 then
+     exact_displacement = u1(t,x,y);
+  else
+     exact_displacement = u2(t,x,y);
+  endif;
+EndFunc;
+
+@;
+@;
+              {====================}
+1; RECTANGLE; { NAME of the OBJECT }
+              {====================}
+@;
+   {=============================================}
+2; { DATA INPUT of the STEADY ELASTICITY PROBLEM }
+   {=============================================}
+
+{====================}
+{ SURFACE: RECTANGLE }
+{====================}
+ 1;  { Density of MASS }
+   1; { constant mass }
+ Rot; { value of the density of MASS }
+
+ 2;  { YOUNG's modulus & POISSON's coefficient of a SV }
+   4;       { planes strains }
+   EYoung;  { value of the YOUNG's modulus }
+   nu;      { value of the POISSON's coefficient }
+
+ 3;  { DILATATION coefficient and REFERENCE TEMPERATURE }
+   1;  { type of dilatation and reference temperature }
+Dilatation; { value of thermal dilatation }
+TempRef;    { value of reference temperature }
+
+ 4;  { Density of FORCE on a surface }
+  -1;       { user function force }
+   2;       { number of components of the force }
+   1; 2;    { number of each component of the force }
+  force;    { in the lexicon ~>FONCTION }
+ 
+ 6;  { Coefficients of DISPLACEMENT }
+   1;       { Type of Coefficients : constant }
+   2;       { Number of Coefficients }
+   1; 2;    { Number of the component of coefficients }
+  cu1; cu2; { Values of Coefficients }
+
+ 7;  { Density of INITIAL STRESSES }
+  -1;       { user function initial stresses }
+   3;       { number of components 3 or 4 or 6 }
+ initstress; { in the lexicon ~>FONCTION }
+@;
+
+{===========}
+{ LINE : AB }
+{===========}
+ 2; { FIXATION of FIXED DISPLACEMENTS }
+  -1;     { type of fixation: user's function fixed displacements }
+   2;     { number of fixed displacement components }
+   1; 2;  { number of each displacement component }
+fixation; { in the lexicon ~>FONCTION }
+@;
+
+{===========}
+{ LINE : BC }
+{===========}
+ 1;  { FORCE on a PLSV at the boundary }
+   -1;    { type of forces: user's function FORCE }
+    2;    { number of components of the force }
+    1; 2; { number of each component of the force }
+pressure; { name of the user's function FORCE }
+@;
+
+{===========}
+{ LINE : CD }
+{===========}
+ 1;  { FORCE on a PLSV at the boundary }
+   -1;    { type of forces: user's function FORCE }
+    2;    { number of components of the force }
+    1; 2; { number of each component of the force }
+pressure; { name of the user's function FORCE }
+@;
+
+{===========}
+{ LINE : DA }
+{===========}
+ 2; { FIXATION of FIXED DISPLACEMENTS }
+  -1;     { type of fixation: user's function fixed displacements }
+   2;     { number of fixed displacement components }
+   1; 2;  { number of each displacement component }
+fixation; { in the lexicon ~>FONCTION }
+@;
+
+{==========}
+{ POINT: A }
+{==========}
+ 2;  { FIXATION of FIXED DISPLACEMENTS }
+  -1;     { type of fixation: user's function fixed displacements }
+   2;     { number of fixed displacement components }
+   1; 2;  { number of each displacement component }
+fixation; { in the lexicon ~>FONCTION }
+@;
+
+{==========}
+{ POINT: B }
+{==========}
+ 2;  { FIXATION of FIXED DISPLACEMENTS }
+  -1;     { type of fixation: user's function fixed displacements }
+   2;     { number of fixed displacement components }
+   1; 2;  { number of each displacement component }
+fixation; { in the lexicon ~>FONCTION }
+@;
+
+{==========}
+{ POINT: D }
+{==========}
+ 2;  { FIXATION of FIXED DISPLACEMENTS }
+  -1;     { type of fixation: user's function fixed displacements }
+   2;     { number of fixed displacement components }
+   1; 2;  { number of each displacement component }
+fixation; { in the lexicon ~>FONCTION }
+@;
+
+@;
+     {==================================================}
+3;   { SOLUTION of the LINEAR STEADY ELASTICITY PROBLEM }
+     {==================================================}
+  1; { INDEPENDENT COEFFICIENTS of TIME and DISPLACEMENTS }
+  2; { THERMO-ELASTICITY }
+  1; { Solution by factorization CHOLESKY on skyline storage }
+@;
+
+     {=======================================================================}
+4;   { SOLUTION of the UNSTEADY ELASTICITY PROBLEM on [Time0,Time1] INTERVAL }
+     {=======================================================================}
+{Modification to add the acceleration in the FORCE user's function}
+DefFunc force(t,x,y,z,nutype,nuobj,ncomp,xn,yn,zn);
+  if ncomp=1 then
+    force = Rot*dttu1(t,x,y) - dxsig11(t,x,y) - dysig12(t,x,y) + cu1*u1(t,x,y);
+  else
+    force = Rot*dttu2(t,x,y) - dxsig12(t,x,y) - dysig22(t,x,y) + cu2*u2(t,x,y);
+  endif;
+EndFunc;
+{Others data are inchanged for the unsteady problem }
+
+  1;          { [M] [K] are INDEPENDENTS of TIME but f DEPENDS of TIME }
+  2;          { THERMO-ELASTICITY }
+  0;          { MASS      DUMPING COEFFICIENT }
+  0;          { STIFFNESS DUMPING COEFFICIENT }
+  Time0;      { INITIAL TIME }
+  2;          { INITIAL DISPLACEMENT from the steady solution }
+ -1;          { INITIAL VELOCITY by function }
+ initspeed;   { in the lexicon ~>FONCTION }
+  Time1;      { FINAL TIME }
+  TimeStep;   { CONSTANT STEP of TIME }
+  NbStepT;    { NUMBER of VECTORS to STORE => ALL }
+  1;          { Solution by factorization CHOLESKY on skyline storage }
+  1;          { TIME INTEGRATION by the NEWMARK's SCHEME }
+@;
+
+     {=======================================================================}
+4;   { SOLUTION of the UNSTEADY ELASTICITY PROBLEM on [Time1,Time2] INTERVAL }
+     {=======================================================================}
+  1;          { [M] [K] are INDEPENDENTS of TIME but f DEPENDS of TIME }
+  2;          { THERMO-ELASTICITY }
+  0;          { MASS      DUMPING COEFFICIENT }
+  0;          { STIFFNESS DUMPING COEFFICIENT }
+  Time1;      { INITIAL TIME }
+  3;          { INITIAL DISPLACEMENT from vector computed at Time1-TimeStep and Time1 }
+  Time2;      { FINAL TIME }
+  TimeStep;   { CONSTANT STEP of TIME }
+  NbStepT;    { NUMBER of VECTORS to STORE => ALL }
+  2; 1;       { Solution by PRECONDITIONED CONJUGUATE GRADIENT by 1 LEVEL }
+  1;          { TIME INTEGRATION by the NEWMARK's SCHEME }
+@;
+@;
+
+8; { DRAWING of DISPLACEMENT & STRESS }
+ 8; { ERROR from 2D EXACT_DISPLACEMENT() GIVEN }
+ 75;{ Activate TRANSLATION ORBIT ZOOM }
+ 90;{ Continue the DRAWING }
+
+CLOSE;
+
+
+
+
+     {=======================================================================}
+4;   { SOLUTION of the UNSTEADY ELASTICITY PROBLEM on [Time0,Time2] INTERVAL }
+     {=======================================================================}
+{Modification to add the acceleration in the FORCE user's function}
+DefFunc force(t,x,y,z,nutype,nuobj,ncomp,xn,yn,zn);
+  if ncomp=1 then
+    force = Rot*dttu1(t,x,y) - dxsig11(t,x,y) - dysig12(t,x,y) + cu1*u1(t,x,y);
+  else
+    force = Rot*dttu2(t,x,y) - dxsig12(t,x,y) - dysig22(t,x,y) + cu2*u2(t,x,y);
+  endif;
+EndFunc;
+{Others data are inchanged for the unsteady problem }
+
+  1;          { [M] [K] are INDEPENDENTS of TIME but f DEPENDS of TIME }
+  2;          { THERMO-ELASTICITY }
+  0;          { MASS      DUMPING COEFFICIENT }
+  0;          { STIFFNESS DUMPING COEFFICIENT }
+  Time0;      { INITIAL TIME }
+  2;          { INITIAL DISPLACEMENT from the steady solution }
+ -1;          { INITIAL VELOCITY by function }
+ initspeed;   { in the lexicon ~>FONCTION }
+  Time2;      { FINAL TIME }
+  TimeStep;   { CONSTANT STEP of TIME }
+  NbStepT*2;  { NUMBER of VECTORS to STORE => ALL }
+  1;          { Solution by factorization CHOLESKY on skyline storage }
+  1;          { TIME INTEGRATION by the NEWMARK's SCHEME }
+@;
+
+8; { DRAWING of DISPLACEMENT & STRESS }
+ 8; { ERROR from 2D EXACT_DISPLACEMENT() GIVEN }
+ 75;{ Activate TRANSLATION ORBIT ZOOM }
+ 90;{ Continue the DRAWING }
+
+CLOSE;

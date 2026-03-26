@@ -1,0 +1,107 @@
+File README                                           October 8, 2014
+
+===================================================================================
+ On a PC under system LINUX or equivalent, installation of
+- LOADABLE files of Mefisto package
+ Cf https://www.ljll.math.upmc.fr/perronnet/instalbinary.php
+- SOURCE files of Mefisto package
+ Cf https://www.ljll.math.upmc.fr/perronnet/instalsource.php
+===================================================================================
+
+********************************************************************************
+PRELIMINARY REMARK: The using rules of the software MEFISTO
+
+The using of the software Mefisto and its numerical results are FREE.
+But, it is forbidden to trade the software without an agreement with the authors
+who can be contacted by e-mail at perronnet@ann.jussieu.fr
+
+More, any publication must mention the using of the software MEFISTO and
+its access on the web at https://www.ljll.math.upmc.fr/perronnet/mefisto.gene.html
+
+The RIGHT BEHAVIOUR of the software is NEVER GUARANTED.
+Any damage, done by the using of the software, could never be the subject of
+compensation.
+
+Any try of installation implies that the User has accepted implictly this rules.
+*******************************************************************************
+
+
+Prerequisites on HARDWARE and SOFTWARE:
+=======================================
+The installation needs of 
+- a PC under system LINUX or equivalent;
+- a main memory of 1 giga-bytes;
+- a disk memory of 1 giga-bytes to store the software and execution files;
+- the libraries X11-WINDOW SYSTEM;
+- a graphic card which permits under X11 a definition of the display
+  1024x768 or 1280x1024 or +  with mode PseudoColor (256 colors) or TrueColor.
+
+
+DOWNLOAD and INSTALL the SOURCE of MEFISTO
+==========================================
+Let DirMefisto (as $HOME) the directory which will receive the file mefistosource.tgz
+This directory name is now refered DirMefisto
+- Give it the write access right by
+  chmod 777 DirMefisto
+- With a navigator as Mozilla or Firefox or ... , go to the URL
+  https://www.ljll.math.upmc.fr/perronnet/instalsource.php
+- Download in DirMefisto the 2 files: 
+  . instalsource.bash
+  . mefistosource.tgz
+- go to this directory with the command
+  cd DirMefisto
+- Type ./instalsource.bash   under bash and follow the statements... (language,...)
+  Wait patiently because many subroutines are compiled and the binding is long...
+- Give the access rights to DirMefisto
+  chmod -R 755 DirMefisto
+
+At the installation level, a problem may be:
+- a no correct name (upper case, ...)
+- a DirMefisto name with a blank character
+- a not possible access to DirMefisto by incorrect access rights
+- a not installed gcc compiler or gfortran (load it)
+- a not installed X11-dev linux package (load it)
+- an environment variable MEFISTO=DirMefisto/mefisto not initialized
+- an environment variable MEFISTOX=$HOME/mefistox not initialized
+- a directory DirMefisto/bin   without shell-scripts INITIER MAILLER ... to reload
+
+
+INSTALLATION OF A USER OF MEFISTO:
+==================================
+instalsource.bash modifies the  personal file .bashrc in $HOME directory
+by addition of the 2 environment variables
+
+export MEFISTO=DirMefisto/mefisto
+export MEFISTOX=$HOME/mefistox
+
+and after the definition of PATH and before the command export PATH, add
+export PATH=.:$PATH:$MEFISTO/bin
+export CDPATH=.:$HOME:$MEFISTO:$MEFISTOX
+
+Then, under Linux, the typing of commands INITIER, MAILLER, ELASTICER, FLUIDER,
+NLSER, THERMICER, cbl_tout, ...  will be found.
+                   
+REMARK on X11 WINDOWS SYSTEM:
+=============================
+Mefisto necessitates an installed libX11-dev package at different levels
+- at compilation of the C subroutines
+- at execution to draw the results
+If your system does not contain it, it is necessary to load libX11-dev package
+of your linux distribution.
+
+In a same way, the package ImageMagick must be installed in order the call of
+the command "convert" permits the construction of an animated gif file to
+visualize the solution.
+
+SOME AVAILABLE DOCUMENTATIONS:
+==============================
+Cf the page https://www.ljll.math.upmc.fr/perronnet
+
+
+SEND any execution PROBLEM or incomprehensible term of a documentation to
+Alain PERRONNET 
+Laboratoire Jacques-Louis LIONS de l'Universite Pierre et Marie CURIE
+Adress: 4 Place Jussieu 75252  Paris Cedex 05   FRANCE
+
+Telephone: (33) (1) 44 27 44 10   Fax: (33) (1) 44 27 72 00
+E-mail: perronnet@ann.jussieu.fr  https://www.ljll.math.upmc.fr/perronnet

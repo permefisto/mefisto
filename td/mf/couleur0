@@ -1,0 +1,6 @@
+variable COULEUR0 'NOMS' entier 
+(-2: 'invisible'   
+, 0: 'noir' ,       1: 'rouge' ,     2: 'vert',       3: 'bleu'
+, 4: 'cyan' ,       5: 'jaune' ,     6: 'magenta' ,   7: 'blanc'
+, 8: 'gris_sombre', 9: 'gris_moyen',10: 'gris_clair',11: 'beige'
+,12: 'orange',     13: 'saumon',    14: 'rose',      15: 'turquoise' ) ; 

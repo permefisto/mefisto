@@ -1,0 +1,121 @@
+{ ==================================================================== }
+{ Logiciel MEFISTO     : Version Aout 2006                             }
+{ Nom de l'Utilisateur : Alain PERRONNET                               }
+{ Nom du Projet        : cube2v8                                       }
+{                        TETRAEDRISATION DE 2 CUBES avec 1 FACE COMMUNE}
+{ Date                 : 2/12/99                                       }
+{ ==================================================================== }
+20;  {Precision pour identifier les points}
+  1; {NON PRES de l'origine}   0.0001;
+  2; {    PRES de l'origine}   0.0001;
+@;
+1;  { POINTS principaux de l objet ================================ }
+ 1;               { FRAPPE des valeurs }
+  centre;  i; 1;  { coordonnees x y z  }
+  0;  0;  0;      { COORPO 3 coordonnees cartesiennes du point }
+  p1; i; 1; 0; 1; 0; {3 points du plan Y=1}
+  p2; i; 1; 1; 1; 0;
+  p3; i; 1; 0; 1; 1;
+@;                                                                   
+4;         { VOLUMES parties de l objet }
+  cubv; i; 11; { parallelipipede rectangle regulier d aretes 1 }  
+  defvar NBINHX,NBINHY,NBINHZ;
+  NBINHX=5; NBINHY=5; NBINHZ=5;   
+  NBINHX;  { NBINHX nombre d'aretes en x }
+  NBINHY;  { NBINHY nombre d'aretes en y }
+  NBINHZ;  { NBINHZ nombre d'aretes en z } 
+@; @;
+6;     { TRANSFORMATIONS mathematiques sur les objets ==============}
+  homoth; 6;  { transformation de R3 -> R3 definie par 3 fonctions }
+  deffonc homox(x,y,z); homox=2*x/NBINHX-1; finfonc;
+  homox;  { DANS LE LEXIQUE ~ >FONCTION }    
+  deffonc homoy(x,y,z); homoy=2*y/NBINHY-1; finfonc;
+  homoy;  { DANS LE LEXIQUE ~ >FONCTION }     
+  deffonc homoz(x,y,z); homoz=2*z/NBINHZ-1; finfonc;
+  homoz;  { DANS LE LEXIQUE ~ >FONCTION }
+  sym_plan; 3; 4;  p1; p2; p3; {symetrie par rapport au plan p1 p2 p3}
+@;
+3;      { SURFACES contours de l objet =============================}
+  cube_q;  i;  37;   { surface extraite d un volume }
+             cubv;   { DANS LE LEXIQUE ~>VOLUME } 
+  deffonc f(x,y,z);
+    defvar eps; eps=0.00001;
+    f=   x<=eps ou X>=NBINHX-eps
+      ou y<=eps ou y>=NBINHY-eps 
+      ou z<=eps ou z>=NBINHZ-eps ;
+  finfonc;   
+  f;      { DANS LE LEXIQUE ~ >FONCTION }
+  1;      { faces frontali`eres } 
+  cube_h;  homoth; 50; { homothetie de la surface du cube } 
+  cube_q;
+  cube1_s;  i;  31; { triangulation d une quadrangulation }
+           cube_h;  { la quadrangulation }
+                1;  { creation d une arete S1 S3 }
+  cube2_s;  sym_plan; 50; cube1_s;
+@;
+
+DefVar AnglePlan; AnglePlan=1.0;
+
+4;  { VOLUMES parties de l objet ===================================} 
+  cube1_v8; i; { DANS LE LEXIQUE ~ >TRANSFO }
+    8;         { un volume ferme d un volume partitionne }
+    1;         { NBSF1V nombre de surfaces fermees contour du volume }
+    cube1_s;   { DANS LE LEXIQUE ~ >SURFACE }
+
+  cube2_v8; i; { DANS LE LEXIQUE ~ >TRANSFO }
+    8;         { un volume ferme d un volume partitionne }
+    1;         { NBSF1V nombre de surfaces fermees contour du volume }
+    cube2_s;   { DANS LE LEXIQUE ~ >SURFACE }
+
+  cubes_v9; i;  
+    9;         { le volume union de volumes fermes de type 8 }
+    10000;     { MXSOVO nombre maximal de sommets du volume partition }
+    sqrt(4/(NBINHX**2)+4/(NBINHY**2)) ;
+               { ARETGR longueur de l arete de la grille reguli`ere } 
+   AnglePlan;  { ANEN2P degres du petit angle de coplanearite }       
+    0;         { NBPTIV nombre de points internes fournis }
+    2;         { NBVOPA nombre de volumes de type 8 de la partition }
+    cube1_v8; cube2_v8; { DANS LE LEXIQUE ~ >VOLUME } 
+
+  cubes_v9_a; i;  
+    30;        { amelioration d une tetredrisation }
+    cubes_v9;  { DANS LE LEXIQUE ~ >VOLUME }
+    0.4;       { QUTEMN qualite au dessous de laquelle am'eliorer }
+   AnglePlan;  { ANEN2P degres du petit angle de coplanearite }       
+    5;         { NBITAT nombre iterations pour am'eliorer t'etraedrisation}
+
+
+  cube1_v18; i; { DANS LE LEXIQUE ~ >TRANSFO }
+    8;          { un volume ferme d un volume partitionne }
+    1;          { NBSF1V nombre de surfaces fermees contour du volume }
+    cube1_s;    { DANS LE LEXIQUE ~ >SURFACE }
+
+  cube2_v18; i; { DANS LE LEXIQUE ~ >TRANSFO }
+    8;          { un volume ferme d un volume partitionne }
+    1;          { NBSF1V nombre de surfaces fermees contour du volume }
+    cube2_s;    { DANS LE LEXIQUE ~ >SURFACE }
+
+  cubes_v19; i;  
+    19;         { le volume union de volumes fermes de type 8 }
+    10000;      { MXSOVO nombre maximal de sommets du volume partition }
+    sqrt(4/(NBINHX**2)+4/(NBINHY**2)) ;
+                { ARETGR longueur de l arete de la grille reguli`ere } 
+   AnglePlan;  { ANEN2P degres du petit angle de coplanearite }       
+    0;          { NBPTIV nombre de points internes fournis }
+    2;          { NBVOPA nombre de volumes de type 8 de la partition }
+    cube1_v18; cube2_v18; { DANS LE LEXIQUE ~ >VOLUME } 
+
+  cubes_v19_a; i;  
+    30;        { amelioration d une tetredrisation }
+    cubes_v19; { DANS LE LEXIQUE ~ >VOLUME }
+    0.4;       { QUTEMN qualite au dessous de laquelle am'eliorer }
+   AnglePlan;  { ANEN2P degres du petit angle de coplanearite }       
+    5;         { NBITAT nombre iterations pour am'eliorer t'etraedrisation}
+
+   cubes; i;
+   51;         { union de plusieurs volumes avec 'MATERIAUX' }
+   2;          { nombre de volumes de l'union }
+   cube1_v18; cube2_v18;
+@;
+
+FERMER;

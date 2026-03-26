@@ -1,0 +1,5 @@
+variable TUER 'DELETE TMS or OBJECTS (at your risks...)' entier
+ ( 1  : 'DELETE a TMS'
+ , 2  : 'DELETE a PLSVO'
+ , 3  : 'DELETE Taille_Ideale(x,y,z)'
+ , 4  : 'DELETE Edge_Length(x,y,z)' ) ;

@@ -1,0 +1,152 @@
+deftms ~>LIGNE>>DEFINITION 'Definition of a LINE' 
+variable muet DATE 'date of creation of the TMS'    reel2  ;
+variable muet NUTD 'number of the descriptor array' entier ; 
+variable NTYTRL 'transformation (I for IDENTITY)' ^~>TRANSFO ;
+variable NUTYLI 'type of line'    entier 
+( 2  : 'STRAIGHT LINE' 
+, 3  : 'ARC of CIRCLE PASSING BY 3 POINTS of R**3'
+, 4  : 'ARC of CIRCLE PASSING BY 2+1 POINTS+RADIUS'
+, 5  : 'ARC of ELLIPSE of R2 BY CENTRE AND XYAXES'
+, 6  : 'LIST of POINTS NAMED BY YOU'
+, 7  : 'LIST of VERTICES DEFINED BY THEIRS X Y Z'
+, 8  : 'COMPLETE 3D CIRCLE'
+, 9  : 'COMPLETE 2D ELLIPSE'
+, 10 : 'DATA of ARRAYS XYZSOMMET ET NSEF'
+, 11 : 'OPENED B-SPLINE FROM INTERPOLATION POINTS'
+, 12 : 'OPENED B-SPLINE FROM CONTROL POINTS'
+, 20 : 'EXTRUDED LINES of a POLYGON'
+, 21 : 'CLOSED B-SPLINE FROM INTERPOLATION POINTS'
+, 22 : 'CLOSED B-SPLINE FROM CONTROL POINTS'
+, 24 : 'INTERSECTION of a PLANE - a TRUNCATED CONE'
+, 25 : 'INTERSECTION of a PLANE - AN ELLIPSOID'
+, 26 : 'INTERSECTION of 2 TRUNCATED CONES'
+, 27 : 'INTERSECTION of Z & X OR Y-AXIS CYLINDERS'
+, 28 : 'FILLET LINE WITH a TANGENT CIRCLE'
+, 30 : 'QUALITY IMPROVMENT of EDGES of a LINE'
+, 35 : 'EXTRACT EDGES FROM a LINE BY EDGE NUMBERS'
+, 36 : 'EXTRACT EDGES FROM a LINE BY a CRITERION(x,y,z)' 
+, 37 : 'EXTRACT INTERNAL OR BOUNDARY EDGES of a SURFACE'
+, 40 : 'RESTRUCTURATION of AN UNSTRUCTURED LINE'
+, 43 : 'INVERSE THE VERTICES of a STRUCTURED LINE'
+, 48 : 'IMPOSED POINTS ONTO the NEAREST VERTEX of the LINE'
+, 50 : 'MAPPING of AN ACTUAL LINE'
+, 51 : 'UNION of SEVERAL LINES'
+, 81 : 'RENAME THE LINE'
+, 82 : 'DELETE THE LINE' );
+ cas NUTYLI 
+  2: variable NBARLI 'number of edges of the line' entier ;
+     variable RAIGEO 'geometrical ratio between the edges' reel ;
+     variable NUPTIN 'initial point''s name of the line' ^~>POINT ;
+     variable NUPTFI 'final point''name of the line' ^~>POINT ;
+  3: variable NBARLI 'number of edges of the line' entier ;
+     variable RAIGEO 'geometrical ratio between the vertices' reel ;
+     variable NUPTIN 'initial point''s name of the line' ^~>POINT ;
+     variable NUPTFI 'final point''name of the line' ^~>POINT ;
+     variable NUPTEN 'internal point''s name of the line' ^~>POINT ;
+  4: variable NBARLI 'number of edges of the line' entier ;
+     variable RAIGEO 'geometrical ratio between the vertices' reel ;
+     variable NUPTIN 'initial point''s name of the line' ^~>POINT ;
+     variable NUPTFI 'final point''name of the line' ^~>POINT ;
+     variable NUPTAR 'point''s name of the plane and NEAREST from the centre'
+     ^~>POINT ;
+     variable RAYARC 'radius of the circle passing by the 2 points' reel ;
+  5: variable NBARLI 'number of edges of the line' entier ; 
+     variable NUCELL 'name of the centre point' ^~>POINT ;
+     variable AXXELL 'half X-axis' reel;
+     variable AXYELL 'half Y-axis' reel;
+     variable ANGLEI 'angle in [-180,180] of first point of the arc' reel ;
+     variable ANGLEF 'angle in [-180,180] of last point of the arc'  reel ;
+  6: variable NBPOLI 'number of points of the line (extremities included)'
+     entier ;
+     tableau  NUPOLI(1..NBPOLI) 'names of the points of the line' ^~>POINT ;
+  7: variable NBPOLI 'number of vertices of the line(extremities included)'
+     entier ;
+     tableau  XYZPLI(1..NBPOLI) 'X Y Z of each vertex of the line' xyz ;
+  8: variable NBARLI 'number of edges of the line' entier ;  
+     variable NUTYCI 'number of the type of the circle' entier
+  ( 1: 'circle defined by 3 points on the circle'
+  , 2: 'circle defined by centre, point on the circle, point of the plane'
+  , 3: 'circle defined by centre, radius, choice of plane=Constant' );
+  cas NUTYCI 
+   1: variable NUPT1C 'name 1-st point on the circle' ^~>POINT ;
+      variable NUPT2C 'name 2-nd point on the circle' ^~>POINT ;
+      variable NUPT3C 'name 3-rd point on the circle' ^~>POINT ;
+   2: variable NUPTCE 'name of the point of the centre' ^~>POINT ;
+      variable NUPTSC 'name of the point on the circle' ^~>POINT ;
+      variable NUPDPL 'name of point to define the circle plane'  ^~>POINT ;
+   3: variable NUPTCE 'name of the point of the centre' ^~>POINT ;
+      variable RAYDCI 'radius of circle' reel ;
+      variable NUPLCT 'number of plane X ou Y ou Z=Ct' entier
+    ( 1: 'circle in plane YZ with X=centre(1)=Ct'
+    , 2: 'circle in plane ZX with Y=centre(2)=Ct'
+    , 3: 'circle in plane XY with Z=centre(3)=Ct' ) ;
+  fincas ; 
+  9: variable NBARLI 'number of edges of the line' entier ;
+     variable NUCELL 'name of the centre point' ^~>POINT ;
+     variable AXXELL 'half X-axis' reel;
+     variable AXYELL 'half Y-axis' reel;
+ 10 : variable NUTSOL 'TMS XYZSOMMET of the vertices'  tms ~>>>XYZSOMMET ;
+      variable NUTSSL 'TMS NSEF number of the vertices of the edges' 
+      tms ~>>>NSEF ;
+ 11..12 : variable NBARLI 'number of edges of the line B-spline' entier ;
+      variable RAGEBL 'geometrical ratio between the vertices' reel ;
+      variable NDEGBL 'degree of polynomials of the B-spline' entier ;
+      variable NBPCBL 'number of control points (>degree)' entier ;
+      tableau  NUPCBL(1..NBPCBL) 'names of the control points' ^~>POINT ;
+ 20 : tableau  NUPTVT(1..2) 'name of 2 points of translation vector' ^~>POINT ;
+      variable OUFEEX 'OPENED(0) or CLOSED(1) POLYGON' entier ;
+      variable NBPTEX 'number of point vertices of the polygon' entier;
+      tableau  NUPTEX(1..NBPTEX) 'polygon point names' ^~>POINT ;
+ 21..22 : variable NBARLI 'number of edges of the line' entier ;
+      variable RAGEBL 'geometrical ratio between the vertices' reel ;
+      variable NDEGBL 'degree of polynomials of the B-spline' entier ;
+      variable NBPCBL 'number of the control points (>degree)' entier ;
+      tableau  NUPCBF(1..NBPCBL) 'names of the control points' ^~>POINT ;
+ 24 : variable NBARLI 'number of edges of the line intersection' entier ;
+      tableau  NPPTCN(1..3) 'name of 3 points to define the plane'  ^~>POINT ;  
+      tableau  NAXTCN(1..2) 'name 2 points to define the cone axis' ^~>POINT ;
+      tableau  RAYTCN(1..2) 'radius of cone at 2 points of the axis' reel ; 
+ 25 : variable NBARLI 'number of edges of the intersection line' entier ;
+      tableau  NUPTPL(1..3) 'name of 3 points to define the plane'  ^~>POINT ;  
+      tableau  NUPTEL(1..4) 'name of 4 points to define ellipsoid' ^~>POINT ;
+ 26 : variable NBARLI 'number of edges of the intersection line' entier ;
+      tableau  NAXCN1(1..2) 'name of 2 points to define axis of cone 1'
+      ^~>POINT ;
+      tableau  RYCON1(1..2) 'radius of cone 1 at 2 axis-points' reel ; 
+      tableau  NAXCN2(1..2) 'name of 2 points to define axis of cone 2'
+      ^~>POINT ;
+      tableau  RYCON2(1..2) 'radius of cone 2 at 2 axis-points' reel ;
+ 27 : variable NBARLI 'number of edges of the intersection line' entier ; 
+      variable NOAXCY 'axis of the cylinder with the greatest radius' entier
+                      ( 1 : 'X-axis',  2 : 'Y-axis' ) ; 
+      variable RAYCAY 'radius of the cylinder with X or Y-axis' reel ;     
+      variable RAYCAZ 'radius of the cylinder with Z-axis'      reel ;  
+      variable AL0CAZ 'initial longitude in degrees'  reel ;
+      variable AL1CAZ 'final longitude in degrees'    reel ; 
+      variable COTCAZ 'cote z>0 or z<0 (1 or -1)'     reel ;
+ 28 : variable NBARLI 'number of edges of the line' entier ; 
+      variable RAYCOL 'radius of the tangent circle' reel ; 
+      variable NUP1CL 'name of the initial point'   ^~>POINT ; 
+      variable NUP2CL 'name of the corner point'    ^~>POINT ;
+      variable NUP3CL 'name of the final point'     ^~>POINT ; 
+ 30 : variable NULIIN 'name of the initial line'    ^~>LIGNE ; 
+ 35 : variable NULIIN 'name of the initial line'    ^~>LIGNE ; 
+      variable NU1ARX 'number >0 of the first edge' entier ;
+      variable NUDARX 'number of the last edge'    entier ;
+ 36 : variable NULIIN 'name of the initial line'                ^~>LIGNE ;
+      variable NUFOCL 'name of the criterion function'          ^~>FONCTION ;
+ 37 : variable NUSULE 'name of the surface to extract the line' ^~>SURFACE ;
+      variable NUFOCL 'name of the criterion function'          ^~>FONCTION ;
+      variable NTYFLE 'type of the edges to be extracted'  entier 
+     ( 1  : 'boundary edges', 2  : 'internal edges' , 3  : 'any edges' ) ;
+ 40 : variable NULIIN 'name of the initial line'  ^~>LIGNE ;  
+ 43 : variable NULIIN 'name of the structured line to be inversed'  ^~>LIGNE ;
+ 48 : variable NULIIN 'NAME of the initial line' ^~>LIGNE ;
+      variable NBPOSL 'NUMBER of POINTS becoming VERTEX' entier ;
+      tableau  NUPOSL(1..NBPOSL) 'NAME of POINTS becoming VERTICES' ^~>POINT ;
+ 50 : variable NULIIN 'name of the initial line'  ^~>LIGNE ;
+ 51 : variable NBLIUN 'number of lines of the union' entier ;
+      tableau  NULIUN(1..NBLIUN) 'names of the lines of the union' ^~>LIGNE ;
+ 81 : variable NLAVAN 'name of the initial line to be renamed' ^~>LIGNE ;
+fincas ;
+fintms ;

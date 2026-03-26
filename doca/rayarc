@@ -1,0 +1,6 @@
+For P1 P2 the points on the arc of circle,
+give a circle radius > DISTANCE(P1,P2) / 2
+
+More precisely:
+if RADIUS-DISTANCE(P1,P2)*0.5 <= 1E-3*DISTANCE(P1,P2)
+then, the mesh of the circle arc is not create!

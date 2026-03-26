@@ -1,0 +1,11 @@
+#
+#  Alain PERRONNET  Novembre 2006
+#
+#  CHERCHE DANS MEFISTO-C1 DEUX CHAINES DE CARACTERES
+#   set -v  affiche les commandes telles que
+#   set -x  affiche les commandes apres interpretation des *?...
+#
+ch $1 | grep -i $2
+
+echo
+echo Toutes les librairies MEFISTO-LINUX ont ete parcourues

@@ -1,0 +1,9 @@
+variable COEFELAS 'Donnees de l''Elasticite' entier
+( 1 : 'Rot Densite Volumique de MASSE'
+, 2 : 'Module YOUNG & coefficient POISSON'
+, 3 : 'DILATATION & TEMPERATURE Reference'
+, 4 : 'FOmega les FORCES INTERNES'
+, 6 : 'Coefficient du DEPLACEMENT'
+, 7 : 'Sigma0 les CONTRAINTES INITIALES'
+, 8 : 'U0 le DEPLACEMENT INITIAL'
+, 9 : 'V0 la VITESSE INITIALE' ) ;

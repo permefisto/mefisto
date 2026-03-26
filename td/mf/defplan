@@ -1,0 +1,3 @@
+variable DEFPLAN 'SAISIE d un PLAN'  entier
+ ( 1 : '3 POINTS'
+ , 2 : '1 POINT 1 VECTEUR NORMAL' ) ;

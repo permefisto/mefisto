@@ -1,0 +1,6 @@
+variable TRACVOLU 'Trace des Volumes' entier
+( 1: 'TOUS les VOLUMES en 1 fois'
+, 2: 'TOUS les VOLUMES 1 par 1'
+, 3: 'UN VOLUME'
+, 5: 'UN VOLUME 1 PLAN de SECTION'
+, 6: 'TETRAEDRES OPPOSES d une TETRAEDRISATION' );

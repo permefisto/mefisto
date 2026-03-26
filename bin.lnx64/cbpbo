@@ -1,0 +1,40 @@
+#!/bin/bash
+#
+# compilation and bind of pppbo.f 
+# Alain Perronnet   Version LINUX 64bits    Mai 2012
+
+cd $MEFISTO
+#Creation of pp directory if it does not exist
+if !(test -d pp)
+then
+  mkdir pp
+fi
+
+echo
+echo ===========================================================
+echo MEFISTO-LINUX 64bits: Compilation + Link Editor of pppbo.f
+echo ===========================================================
+
+nompp=pp/pppbo
+if test -f $nompp
+then
+  rm $nompp
+fi
+
+echo "gfortran -m64 -O -I. $MEFISTO/prpr/pppbo.f -o $nompp"
+gfortran -m64 -O -I. prpr/pppbo.f pbo/lib -o $nompp
+
+if test -f pppbo.o
+then
+  rm pppbo.o
+fi
+
+if test -f $nompp
+then 
+  chmod 755 $nompp
+  ls -l $MEFISTO/pp
+  echo
+  echo "$MEFISTO/$nompp is CORRECT to be executed"
+else
+  echo "$MEFISTO/$nompp is NOT EXECUTABLE"
+fi

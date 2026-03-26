@@ -1,0 +1,217 @@
+      SUBROUTINE LIEX09( NTLXLI, LADEFI, RADEFI,
+     %                   NTARLI, MNARLI, NTSOLI, MNSOLI, IERR )
+C+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+C BUT :    GENERER LES ARETES D'UNE ELLIPSE ( TYPE DE LIGNE 9 )
+C -----    GEOMETRIE C1
+C
+C ENTREES:
+C --------
+C LADEFI : TABLEAU ENTIER DE DEFINITION DE LA LIGNE
+C RADEFI : idem        CF ~/td/d/a_ligne__definition
+C NTLXLI : NUMERO DU TABLEAU TS DU LEXIQUE DE LA LIGNE
+C
+C SORTIES:
+C --------
+C NTARLI : NUMERO      DU TMS 'NSEF' DES NUMEROS DES ARETES DE LA LIGNE
+C MNARLI : ADRESSE MCN DU TMS 'NSEF' DES NUMEROS DES ARETES DE LA LIGNE
+C          CF ~/td/d/a___nsef
+C NTSOLI : NUMERO      DU TMS 'XYZSOMMET' DE LA LIGNE
+C MNSOLI : ADRESSE MCN DU TMS 'XYZSOMMET' DE LA LIGNE
+C          CF ~/td/d/a___xyzsommet
+C IERR   : 0 SI PAS D'ERREUR
+C          > 0 SINON
+C+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+C AUTEUR:ALAIN PERRONNET ANALYSE NUMERIQUE LJLL UPMC PARIS NOVEMBRE 2003
+C2345X7..............................................................012
+      IMPLICIT INTEGER (W)
+      COMMON / UNITES / LECTEU , IMPRIM , INTERA , NUNITE(29)
+      include"./incl/gsmenu.inc"
+      include"./incl/a_ligne__definition.inc"
+      include"./incl/a___xyzsommet.inc"
+      include"./incl/a___nsef.inc"
+      include"./incl/ntmnlt.inc"
+      include"./incl/pp.inc"
+      COMMON            MCN(MOTMCN)
+      REAL              RMCN(1)
+      EQUIVALENCE      (MCN(1),RMCN(1))
+C
+      INTEGER           LADEFI(0:*)
+      REAL              RADEFI(0:*)
+      REAL              XYC(2)
+C
+C     LE TYPE DE LA LIGNE
+      N = LADEFI( WUTYLI )
+      IF( N .NE. 9 ) THEN
+         NBLGRC(NRERR) = 1
+         WRITE(KERR(MXLGER)(1:4),'(I4)') N
+         KERR(1) =  'LIEX09:TYPE INCORRECT '//KERR(MXLGER)(1:4)
+         CALL LEREUR
+         IERR = 1
+         GOTO 9999
+      ENDIF
+C
+C     LE NOMBRE D'ARETES ET DE SOMMETS DE LA LIGNE
+      NBARLI = LADEFI( WBARLI )
+      IF( NBARLI .LT. 3 ) THEN
+         NBLGRC(NRERR) = 1
+         WRITE(KERR(MXLGER)(1:8),'(I8)') NBARLI
+         KERR(1) = 'NOMBRE INCORRECT <2 D''ARETES '//KERR(MXLGER)(1:8)
+         CALL LEREUR
+         IERR = 1
+         GOTO 9999
+      ENDIF
+C
+C     LE POINT CENTRE DE L'ELLIPSE
+      NUCELL = LADEFI( WUCELL )
+      IF( NUCELL .LE. 0 ) THEN
+         NBLGRC(NRERR) = 1
+         KERR(1) = 'LIEX09: POINT CENTRE INCORRECT'
+         CALL LEREUR
+         IERR = 2
+         GOTO 9999
+      ENDIF
+      CALL LXNLOU( NTPOIN, NUCELL, NTPOI, MN )
+      CALL LXTSOU( NTPOI, 'XYZSOMMET', NTSOM, MNSOM )
+      MN = MNSOM + WYZSOM
+      XYC(1) = RMCN( MN )
+      XYC(2) = RMCN( MN + 1 )
+C
+C     DEMI AXE EN X
+      AXXELL = ABS( RADEFI( WXXELL ) )
+      IF( AXXELL .LE. 0 ) THEN
+         NBLGRC(NRERR) = 1
+         KERR(1) = 'LIEX09: DEMI-AXE EN X NUL'
+         CALL LEREUR
+         IERR = 3
+         GOTO 9999
+      ENDIF
+C
+C     DEMI AXE EN Y
+      AXYELL = ABS( RADEFI( WXYELL ) )
+      IF( AXYELL .LE. 0 ) THEN
+         NBLGRC(NRERR) = 1
+         KERR(1) = 'LIEX09: DEMI-AXE EN Y NUL'
+         CALL LEREUR
+         IERR = 4
+         GOTO 9999
+      ENDIF
+C
+C     1 TG EN CHAQUE SOMMET
+      NBTGS = NBARLI
+C
+C     CONSTRUCTION DU TABLEAU 'XYZSOMMET'
+C     -----------------------------------
+      CALL LXTNDC( NTLXLI , 'XYZSOMMET' , 'ENTIER' ,
+     %             WYZSOM + 3*NBARLI + 3*NBTGS )
+      CALL LXTSOU( NTLXLI , 'XYZSOMMET' ,  NTSOLI  , MNSOLI )
+C
+C     LE NOMBRE DE SOMMETS
+      MCN( MNSOLI + WNBSOM ) = NBARLI
+C     LE NOMBRE DE TANGENTES
+      MCN( MNSOLI + WNBTGS ) = NBTGS
+C
+C     ADRESSE DU DEBUT DES COORDONNEES DU 1-ER SOMMET DE LA LIGNE
+      MNS  = MNSOLI + WYZSOM
+C     ADRESSE DU DEBUT DES 3 COMPOSANTES DE LA 1-ERE TANGENTE
+      MNTG = MNS + 3 * NBARLI
+C
+C     LES COORDONNEES DES NBARLI POINTS ET TANGENTES DE L'ELLIPSE
+C     ========================================================
+C     FONCTION TAILLE_IDEALE NON PRISE EN COMPTE
+C     ANGLE CONSTANT ENTRE LES SOMMETS
+      A     = REAL( ATAN(1D0) * 8D0 / NBARLI )
+      ANGLE = 0
+      DO 40 I=1,NBARLI
+C
+C        LES COORDONNEES 2D DU POINT I
+         RMCN( MNS     ) = XYC(1) + AXXELL * COS( ANGLE )
+         RMCN( MNS + 1 ) = XYC(2) + AXYELL * SIN( ANGLE )
+         RMCN( MNS + 2 ) = 0
+         MNS = MNS + 3
+C
+C        LA TANGENTE AU POINT FINAL DE L'ARETE I
+C        L'INTERVALLE DU PARAMETRE T EST [0,1] POUR TOUTE L'ELLIPSE
+C        LE PARAMETRE T DE L'ARETE I EST DANS [(i-1)/NBARLI, i/NBARLI]
+         RMCN( MNTG     ) = - A * AXXELL * SIN(ANGLE)
+         RMCN( MNTG + 1 ) = + A * AXYELL * COS(ANGLE)
+         RMCN( MNTG + 2 ) = 0
+         MNTG  = MNTG + 3
+C
+C        L'ANGLE OX POINT I
+         ANGLE = ANGLE + A
+ 40   CONTINUE
+C
+C     AJOUT DE LA DATE
+      CALL ECDATE( MCN(MNSOLI) )
+C
+C     AJOUT DU NUMERO DU TABLEAU DESCRIPTEUR
+      MCN( MNSOLI + WBCOOR ) = 3
+      MCN( MNSOLI + MOTVAR(6) ) = NONMTD( '~>>>XYZSOMMET' )
+C
+C     CONSTRUCTION DU TABLEAU 'NSEF' LIGNE NON STRUCTUREE
+C     CAR LE DERNIER SOMMET EST AUSSI LE PREMIER
+C     ---------------------------------------------------------
+      CALL LXTNDC( NTLXLI , 'NSEF' , 'ENTIER' ,
+     %             WUSOEF+6*NBARLI )
+      CALL LXTSOU( NTLXLI , 'NSEF' ,  NTARLI  , MNARLI )
+C
+C     LE TYPE DE L'OBJET : ICI LIGNE
+      MCN( MNARLI + WUTYOB ) = 2
+C     LE TYPE FERME DE FERMETURE DU MAILLAGE
+      MCN( MNARLI + WUTFMA ) = 1
+C     LE NOMBRE DE SOMMETS PAR EF =2
+      MCN( MNARLI + WBSOEF ) = 2
+C     LES 2 TANGENTES DE CHAQUE EF (ARETE) SONT STOCKEES
+      MCN( MNARLI + WBTGEF ) = 2
+C     LE NOMBRE D'EF (ARETES) DU SEGMENT NON STRUCTURE
+      MCN( MNARLI + WBEFOB ) = NBARLI
+C     2 TANGENTES PAR ARETE
+      MCN( MNARLI + WBEFTG ) = NBARLI
+C     TOUTE ARETE A UN POINTEUR
+      MCN( MNARLI + WBEFAP ) = NBARLI
+C     LE TYPE DU MAILLAGE : ICI SEGMENT NON STRUCTURE
+      MCN( MNARLI + WUTYMA ) = 0
+C
+C     LE NUMERO DES 2 SOMMETS DES NBARLI ARETES
+      MN = MNARLI + WUSOEF
+      DO 58 I=1,NBARLI
+         MCN(MN  ) = I
+         MCN(MN+1) = I + 1
+         MN = MN + 2
+ 58   CONTINUE
+C     LE DERNIER SOMMET DE L'ELLIPSE EST LE PREMIER
+      MCN(MN-1) = 1
+C
+C     LE POINTEUR SUR CHAQUE EF A TG
+      DO 60 I=1,NBARLI
+         MCN(MN) = I
+         MN = MN + 1
+ 60   CONTINUE
+C
+C     LE CODE ELLIPSE 2 DE CHAQUE ARETE
+      DO 70 I=1,NBARLI
+         MCN(MN) = 2
+         MN = MN + 1
+ 70   CONTINUE
+C
+C     LE NUMERO DES 2 TANGENTES DES NBARLI ARETES
+C     ANGLE CONSTANT
+      DO 80 I=1,NBARLI
+         MCN(MN  ) = I
+         MCN(MN+1) = -(I+1)
+         MN = MN + 2
+ 80   CONTINUE
+C     LA DERNIERE TANGENTE DE L'ELLIPSE EST LA PREMIERE
+      MCN(MN-1) = -1
+C
+C     AJOUT DE LA DATE
+      CALL ECDATE( MCN(MNARLI) )
+C
+C     AJOUT DU NUMERO DU TABLEAU DESCRIPTEUR
+      MCN( MNARLI + MOTVAR(6) ) = NONMTD( '~>>>NSEF' )
+      IERR = 0
+C
+C     ERREUR
+C     ======
+ 9999 RETURN
+      END

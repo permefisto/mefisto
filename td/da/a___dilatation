@@ -1,0 +1,14 @@
+deftms ~>>>DILATATION 'DILATATION & REFERENCE TEMPERATURE'
+variable muet DATE 'date of creation of the TMS'   reel2  ;
+variable muet NUTD 'number of the descriptor array TD' entier ; 
+variable      LTDILA 'type of dilatation and temperature'  entier  
+ ( 1 : 'constant dilatation & reference temperature' 
+, -1 : 'function dilatation & reference temperature' 
+,  0 : 'delete these dilatation & reference temperature' ) ; 
+cas LTDILA
+ 1 : variable DILATA 'value of thermal dilatation' reel ; 
+     variable TEMPIN 'value of reference temperature' reel ; 
+-1 : variable NFDILA 'name of function dilatation' ^~>FONCTION ;
+     variable NFTEMI 'name of function reference temperature' ^~>FONCTION ;
+fincas ;
+fintms ;

@@ -1,0 +1,363 @@
+QUELQUES NOTIONS sur le MAILLAGE d'une LIGNE:
+=============================================
+
+Le maillage de chaque LIGNE,
+stocke dans 2 TMS a___xyzsommet et a___nesf,
+est un ensemble d'ARETES definies par
+- NBSOM 3D sommets de coordonnees (Xi,Yi,Zi) dans le TMS a___xyzsommet
+- le tableau  (numero sommet1, numero sommet2) des NBEFOB ARETES
+dans le TMS a___nsef.
+
+        S1*................*S2
+  Une arete DROITE (P1 interpolation de Lagrange sur [0,1])
+
+Eventuellement,
+- le tableau des (numero tangente1, numero tangente2) en chacun de
+2 sommets des NBEFTG ARETES COURBES
+
+Ce stockage permet une interpolation d'Hermite sur [0,1] avec
+pour composantes des polynomes de degre 3.
+
+             ^                  ^
+            /                    \
+           /                      \
+      TG1 /      .   .    .        \TG2
+         /   .                 .    \
+        / .                        . \
+       /.                            .\
+    S1*                                *S2
+Une ARETE COURBE (P3 interpolation d'Hermite sur [0,1])
+
+En fait, si la ligne est simplement connexe and opened, l'ordre implicite
+(i,i+1) pour les numeros des sommets (et tangentes) de l'arete i,
+et il est suffisant de stocker NBSOM=NBEFOB+1 pour eviter le stockage
+des numeros. Dans ce cas, le MAILLAGE est dit STRUCTURE,
+sinon, il est dit NON STRUCTURE.
+
+Un nombre d'aretes de la ligne est souvent demande.
+Estimer la longueur resultante des aretes selon ce nombre doit etre fait.
+L'heterogeneite des longueurs des aretes ne peut pas conduire
+a obtenir des EF de bonne qualite.
+A un meme sommet, 2 aretes, l'une grande et l'autre petite
+creera des triangles ou hexaedres de mauvaises qualites...
+
+La raison d'une progression geometrique sur la longueur des aretes
+consecutives est demandee:
+Pour avoir des longueurs d'aretes Li avec Li+1 / Li = RAISON
+- constante    choisir RAISON=1
+- croissante   choisir RAISON>1
+- decroissante choisir RAISON<1
+Il sera raisonnable de choisir la valeur de RAISON dans un voisinage de 1.
+
+Attention:
+Ces 2 valeurs, nombre d'aretes et raison de progression geometrique,
+deviennent INEFFICACES si l'Utilisateur a fourni la fonction
+TAILLE_IDEALE(x,y,z) qui sera appelee par les algorithmes pour
+former le maillage avec une longueur d'aretes voisine de la valeur
+retournee. Cela n'est pas compatible ni avec un nombre d'aretes donne
+ni une progression geometrique.
+
+Attention:
+Mais le contraire arrive aussi!
+Pour construire des maillages structures
+(triangles, quadrangles, tetrahedon, pentahedron, ...)
+l'algorithme demande beaucoup de regularite et 
+TAILLE_IDEALE(x,y,z) devient incompatible. Dans ce cas, cette fonction,
+si elle est presente n'est pas utilisee!
+Desole de cette complexite...!
+
+Exemple d'entree de la fonction Taille_Ideale:
+DefFonc taille_ideale(x,y,z);
+ defvar r2;
+ r2=x*x+y*y;
+ si r2>1.01 alors
+   taille_ideale=1;
+ sinon
+   si r2>=0.99 alors
+     taille_ideale=0.005;
+   sinon
+     taille_ideale=0.1;
+   finsi;
+ finsi;
+FinFonc;
+
+Moralite, pour obtenir un maillage regulier, il est preferable de
+definir une fonction ne variant pas trop rapidement et
+continue si possible...!
+
+
+Une LIGNE peut etre construite par l'une des OPTIONS SUIVANTES:
+
+2 : SEGMENT DE DROITE 
+    Exemple: LIGNE2; I; 2; 25; 1; P1; P2;
+    definit une ligne droite allant de P1 a P2, formee
+    de 25 aretes de meme longueur
+
+3 : ARC DE CERCLE PASSANT PAR 3 POINTS DE R**3
+    Exemple: LIGNE3; I; 3; 35; 1.1; P1; P2; P3;
+    definit 35 aretes de sommets sur l'arc de cercle P1-P2
+    passant par P3 (qui doit etre entre P1 et P2).
+    La longueur des aretes est une progression geometrique
+    de raison 1.1. Ainsi, les aretes proches de P1 sont plus
+    petites que celles proches de P2.
+
+4 : ARC DE CERCLE PASSANT PAR 2+1 POINTS + RAYON
+    Exemple: LIGNE4; I; 4; 35; 1.1; P1; P2; P3; 1.5;
+    definit 35 aretes de sommets sur l'arc de cercle P1-P2
+    de rayon 1.5 dans le plan P1 P2 P3.
+    Comme 2 cercles sont possibles, le centre du cercle
+    retenu est celui le plus proche du point P3
+
+5 : ARC D ELLIPSE DE R2 PAR SON CENTRE ET SES AXES PRINCIPAUX XY
+    Exemple: LIGNE5; I; 5; 22; CENTR; 5; 3; P1; P2; -1;
+    definit 22 aretes sur l'arc d'ellipse allant de P2 a P1
+    ellipse de centre le point CENTR et
+    d'axes principaux X de grand rayon 5 et Y de petit rayon 3.
+
+6 : LISTE DE POINTS NOMMES PAR L'UTILISATEUR
+    Exemple: LIGNE6; I; 1; 5; P1;P2;P3;P4;P5;
+    definit une ligne de 4 aretes P1-P2, P2-P3, P3-P4, P4-P5
+    Une seule arete entre 2 points successifs.
+
+7 : LISTE DE SOMMETS DEFINIS PAR LEURS 3 COORDONNEES X Y Z
+    Exemple: LIGNE7; I; 3;  0; 0; 0;  1; 0; 0;  1; 1; 0;
+    definit une ligne de 2 aretes definie par 3 sommets  
+    Une seule arete entre 2 sommets successifs.
+
+8 : CERCLE COMPLET 
+    Exemple: LIGNE8.1; I; 8; 24; 1; P1;P2;P3;
+    definit 24 aretes de taille constante, de sommets sur
+    le cercle passant par P1 P2 et P3. 
+    Exemple: LIGNE8.2; I; 8; 28; 2;
+             CENTRE; PT_SUR_CERCLE; P_PLAN;
+    definit une ligne fermee de 28 aretes de taille constante
+    de sommets sur le cercle defini par le point CENTRE,
+    passant par PT_SUR_CERCLE et dans le PLAN defini
+    par les 3 points CENTRE  PT_SUR_CERCLE  P_PLAN
+
+9 : ELLIPSE 2D COMPLETE
+    Exemple: LIGNE9; I; 9; 23; CENTRE; 5; 3;
+    definit 23 aretes sur l'ellipse de centre le point CENTR et
+    d'axes principaux X de grand rayon 5 et Y de petit rayon 3.
+
+10: DONNEE DES TABLEAUX XYZSOMMET ET NSEF
+    Ces 2 tableaux sont a initialiser valeur apres valeur
+    Le premier contient le nombre et les 3 coordonnees des
+    sommets des aretes.
+    Le second contient le numero des sommets extremites
+    des aretes.
+    Exemple: LIGNE10; I; 10;
+             3;   0;0;0; 1;0;0;  0.5;sqrt(3)/2;0;  {3 sommets Otg}
+             2; 0; 2; 0; {ligne nonfermee 2ST/arete 0TG}
+             3; 0; 0; 0; {3aretes ligne0tg non structuree}
+             1;2; 2;3; 3;1; {no des 2 sommets des 3 aretes}
+    definit une ligne composee de 3 aretes de longueur 1,
+    contour d'un triangle equilateral
+
+11: B-SPLINE OUVERTE (PREMIER ET DERNIER POINT SONT DIFFERENTS)
+    uniforme d'interpolation.
+    Une B-spline est une courbe parametree polynomiale par
+    morceaux (image de segments).
+    Il est ici possible de definir
+    le degre des polynomes
+    le nombre et le nom des points d'interpolation
+    le nombre d'aretes decoupant cette courbe 
+    les tailles des aretes peuvent former une progression
+    geometrique
+    ATTENTION: Le nombre de points d'interpolation doit
+               etre strictement superieur au degre des
+               polynomes 
+               La courbe est de classe de continuite degre-1
+    Exemple: LIGNE11; I; 11;
+             50; 1.2; 3; 5; P1;P2;P3;P4;P5;
+    definit une courbe formee de 50 aretes, de tailles en
+    progression geometrique de raison 1.2, polynomiale 
+    par morceaux de degre 3 et passant par les 5 points.
+    ATTENTION: Les aretes sont des segments de droite
+               qui approchent la courbe. Par suite, les
+               sommets des aretes ne contiennent pas
+               toujours les points d'interpolation.
+               Pour les obtenir, il faut une raison=1 et
+               le nombre d'aretes = un multiple de
+                                    (nombre de points-1)
+          
+12: B-SPLINE OUVERTE UNIFORME POLYNOMIALE 
+    Une B-spline est une courbe parametree polynomiale par
+    morceaux (image de segments). 
+    Il est ici possible de definir
+    le degre des polynomes
+    le nombre et le nom des points de controle
+    le nombre d'aretes decoupant cette courbe 
+    les tailles des aretes peuvent former une progression
+    geometrique
+    ATTENTION: Le nombre de points de controle doit etre
+               strictement superieur au degre des polynomes 
+               Les POINTS de CONTROLE, excepte le premier et
+               dernier ne sont pas sur la courbe.
+               La courbe est de classe de continuite degre-1
+    Exemple: LIGNE12; I; 12;
+             45; 1; 2; 5; P1;P2;P3;P4;P5;
+    definit une courbe formee de 45 aretes,
+    de tailles constantes, polynomiale par morceaux de
+    degre 2 et passant par P1 et P5 seulement,
+    tangente en P1 a P1-P2 et P4-P5 en P5.
+
+21: B-SPLINE FERMEE UNIFORME D'INTERPOLATION       
+22: B-SPLINE FERMEE UNIFORME POLYNOMIALE
+    Ce sont les memes types de ligne que precedemment
+    MAIS le PREMIER POINT intervient a la fois comme
+    PREMIER et DERNIER POINT de la B-SPLINE.
+    Les DONNEES sont du meme type qu'auparavant.
+
+    Exemple: LIGNE21; I; 21; 50; 1; 3; 8;  P1;P2;P3;P4;P5;P6;P7;P8; 
+  { sommets P2 P4 P6 P8 et milieux P1 P3 P5 P7 d'un carre }
+    definit une courbe fermee formee de 50 aretes,
+    polynomiale de degre 3 par morceaux et passant par les 8 points.
+    Le 9 eme point est implicitement P1.
+
+24: INTERSECTION D'UN PLAN AVEC UN TRONC DE CONE
+    Le plan est defini par 3 points.
+    Le tronc de cone est defini par 2 points de son axe,
+    le rayon du cercle de section dans le plan orthogonal
+    a l'axe en chacun de ces 2 points.
+    Remarque: un TRONC de CONE devient un CYLINDRE des que
+    ses 2 rayons sont egaux.
+    Attention, ces plans delimitent aussi les aretes de l'intersection
+    et la ligne peut etre ouverte ou fermee, composee de un ou 
+    plusieurs morceaux.
+
+25: INTERSECTION D'UN PLAN AVEC UN ELLIPSOIDE
+    Le plan est defini par 3 points.
+    L'ellipsoide est defini par son centre et
+    les 3 points places a l'extremite des demi-axes.
+    Bien sur, le repere defini par le CENTRE et les
+    3 POINTS extremites des 3 demi axes doit etre direct
+
+26: INTERSECTION DE 2 TRONCS DE CONES
+    Un tronc de cone est defini par 2 points de son axe,
+    le rayon du cercle de section dans le plan orthogonal a l'axe
+    en chacun de ces 2 points.
+    Remarque: un TRONC de CONE devient un CYLINDRE des que
+    ses 2 rayons sont egaux.
+    Attention, ces plans delimitent aussi les aretes de l'intersection
+    et la ligne peut etre ouverte ou fermee, composee de un
+    ou plusieurs morceaux.
+
+27: INTERSECTION DE 2 CYLINDRES L'UN D'AXE Z ET L'AUTRE D'AXE X OU Y 
+    CENTRES A L'ORIGINE DES AXES.
+    Le cylindre d'axe Z doit avoir le plus petit rayon.
+    La ligne intersection est definie 
+    d'une part par un secteur angulaire (longitude TETA0 et TETA1)
+    d'autre part par sa cote Z positive ou negative  
+    Exemple: INTERSECTION; I; 27; 15; 2; 10; 5; -90; 90; -1;
+    ligne intersection des cylindres d'axe Z de rayon 5 et
+    d'axe Y de rayon 10 selon 15 segments s'echelonnant entre
+    la longitude (angle avec x dans le plan XY) -90 degres (-Y)
+    et 90 degres (+Y) pour des cotes negatives pour choisir
+    la ligne d'intersection inferieure
+
+28: LIGNE AVEC CONGE 
+    En fait, il s'agit d'un segment, suivi d'un arc de cercle,
+    lui meme suivi d'un segment. L'arc de cercle est tangent en
+    ses 2 extremites aux segments.
+    Les 2 extremites sont des sommets des aretes.
+    La repartition des aretes est faite au mieux.
+
+                P1--------------- .      * P2      
+                                     .     
+                                       .   
+                                        . 
+                                        |
+                                        |  
+                                        |
+                                        P3
+    Exemple: L28; I; 28; 33; 1; {rayon de l'arc de cercle} 
+             P1;P2;P3;
+    definit une ligne partant de P1, formee de 33 aretes,
+    tangente a un arc de cercle de rayon 1 au segment P1-P2,
+    et tangente au segment P2-P3.
+    Le point P2 n'est pas sur la ligne. 
+
+35: EXTRACTION D'ARETES D'UNE LIGNE PAR NUMERO
+    Toute arete dont le numero est compris entre les 2 numeros
+    precises de la ligne est retenue dans la ligne extraite. 
+    Exemple: L35; I; 35; LIGNE_INITIALE; 5; 15;
+    extrait les aretes 5 A 15 de LIGNE_INITIALE.
+
+36: EXTRACTION D'ARETES D'UNE LIGNE SUR CRITERE 
+    Toute arete dont les 3 coordonnees des 2 sommets de la ligne
+    precisee ensuite donnent VRAI ou 1 a la fonction logique,
+    forme une arete de la ligne extraite. 
+    Exemple: L36; I; 36; LIGNE_INITIALE;
+             deffonc PLAN_X_POSITIF(x,y,z);
+               PLAN_X_POSITIF = (x>=0);
+             finfonc;
+             PLAN_X_POSITIF;
+    extrait les aretes dont les 2 sommets ont une abscisse
+    positive ou nulle
+
+37: EXTRACTION DES ARETES INTERNES ET/OU FRONTIERES D'UNE SURFACE 
+    Toute arete du maillage dont les 3 coordonnees des 2 sommets
+    donnent VRAI ou 1 a la fonction logique,
+    forme une arete de la ligne extraite 
+    Exemple: L37; I; 37; SURFACE_EXISTANTE;
+             deffonc CARRE_POSITIF(x,y,z);
+             CARRE_POSITIF = (x>=0) et (y>=0); finfonc;
+             CARRE_POSITIF; 3;
+    extrait les aretes dont les 2 sommets ont une abscisse
+    et une ordonnee positive ou nulle
+    Le dernier entier (ici 3) definit le type des aretes a extraire
+    1 : les seules aretes frontalieres (appartenant a 1 seul EF)
+    2 : les seules aretes internes     (appartenant a 2 EF)
+    3 : n'importe quel type d'arete
+
+40: RESTRUCTURATION D'UNE LIGNE NON STRUCTUREE 
+    Le stockage de la topologie (tableau NSEF) peut etre
+    -la liste des 2 sommets de chaque EF 
+    -le nombre des aretes 
+    Le stockage du second est nettement moindre
+    Il est possible de passer du mode non structure en
+    mode structure pour reduire le stockage a condition que
+    la ligne soit continue.
+    Exemple: L40_STRUCTUREE; I; 40; LIGNE_NON_STRUCTUREE; 
+    Si la ligne initiale etait deja structuree, L40_STRUCTUREE
+    n'est pas creee.
+
+43: INVERSER LES SOMMETS D'UNE LIGNE STRUCTUREE
+    Il suffit de donner le nom de la ligne structuree et
+    les sommets 1 a NB deviennent les sommets NB a 1.
+    Cette option peut etre utile pour definir la normale
+    opposee a la ligne.
+
+48: POINTS IMPOSES COMME PLUS PROCHE SOMMET de la LIGNE
+    Les 3 coordonnees du plus proche sommet de la ligne
+    se voit imposer les 3 coordonnees du point designe.
+    Attention, la qualite des elements finis peut en patir.
+  
+50: TRANSFORMATION D'UNE LIGNE EXISTANTE 
+    Une LIGNE deja existante est transformee a l'aide d'une
+    transformation predefinie
+    Exemple: L50; SYMETRIE_DROITE; 50; LIGNE_INITIALE;
+             Les sommets de la LIGNE L50 sont les images
+             des sommets de la LIGNE_INITIALE par 
+             la transformation SYMETRIE_DROITE
+
+51: UNION DE PLUSIEURS LIGNES 
+    La ligne est en fait une UNION de LIGNES regroupees 
+    sous un MEME NOM.
+    Une UNION de lignes se manipule comme n'importe quelle ligne.
+    Exemple: L51; I; 51; 5; L1;L2;L3;L4;L5;
+    Attention au seuil d'identification des sommets
+    (cf l'option 20; du menu debut initial)
+
+81: RENOMMER UNE LIGNE
+    ATTENTION a l'ORDRE des DONNEES!
+    Renomme le NOM d'une LIGNE comme suit
+    Un nom a ete fourni pour arriver ici.
+    C'est le NOUVEAU NOM de la LIGNE.
+    L'ANCIEN NOM de la ligne sera demande apres. 
+    Exemple: NOUVEAU_NOM; I; 81; ANCIEN_NOM;
+    Renomme la ligne ANCIEN_NOM en NOUVEAU_NOM
+
+82: DETRUIT LA LIGNE dont le nom vient d'etre donne.
+    Exemple: L82; I; 82;   detruit la ligne L82 si elle existait

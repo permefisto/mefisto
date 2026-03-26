@@ -1,0 +1,271 @@
+{ ==================================================================== }
+{ MEFISTO Software     : January 14-th 2010 Version                    }
+{ USER's Name          : alain                                         }
+{ Project Name         : suex16                                        }
+{ Date                 : 14/01/10   20h 43m 59s                        }
+{ ==================================================================== }
+1;
+ { POINTS vertices of the object }
+ 1;
+ { TYPING of VALUES }
+ { NAME of the POINT or ESCAPE? }
+ Or;
+ { NAME of TRANSFORMATION }
+ i; 1; 0; 0; 0;
+ { in LEXICON ~>TRANSFO }
+ { X Y Z COORDINATES }
+ { COORPO 'X Y Z of a point' xyz ; }
+ { NAME of the POINT or ESCAPE? }
+
+ x; i; 1; 1; 0; 0;
+ { in LEXICON ~>TRANSFO }
+ { X Y Z COORDINATES }
+ { COORPO 'X Y Z of a point' xyz ; }
+ { NAME of the POINT or ESCAPE? }
+
+ y; i; 1; 0; 1; 0;
+ { in LEXICON ~>TRANSFO }
+ { X Y Z COORDINATES }
+ { COORPO 'X Y Z of a point' xyz ; }
+ { NAME of the POINT or ESCAPE? }
+
+ xm; i; 1; -1; 0; 0;
+ { in LEXICON ~>TRANSFO }
+ { X Y Z COORDINATES }
+ { COORPO 'X Y Z of a point' xyz ; }
+ { NAME of the POINT or ESCAPE? }
+
+ ym; i; 1; 0; -1; 0;
+ { in LEXICON ~>TRANSFO }
+ { X Y Z COORDINATES }
+ { COORPO 'X Y Z of a point' xyz ; }
+ { NAME of the POINT or ESCAPE? }
+
+ xy;   i; 1;  1/sqrt(2);  1/sqrt(2); 0;
+ xmy;  i; 1; -1/sqrt(2);  1/sqrt(2); 0;
+ xmym; i; 1; -1/sqrt(2); -1/sqrt(2); 0;
+ xym;  i; 1;  1/sqrt(2); -1/sqrt(2); 0;
+ @;
+@;
+
+2;
+ { LINES edges of the object }
+ { NAME of the LINE or ESCAPE? }
+ c; i;
+ { in LEXICON ~>TRANSFO }
+ 8;
+ { COMPLETE 3D CIRCLE }
+ 30;
+ { NBARLI 'number of edges of the line' entier ; }
+ 2;
+ { circle defined by centre, point on the circle, point of the plane }
+ { NAME of POINT }
+ OR;
+ { in LEXICON ~>POINT }
+ { NAME of POINT }
+ X;
+ { in LEXICON ~>POINT }
+ { NAME of POINT }
+ Y;
+ { in LEXICON ~>POINT }
+ { NAME of the LINE or ESCAPE? }
+
+ c1; i;
+ { in LEXICON ~>TRANSFO }
+ 3;
+ { ARC OF CIRCLE PASSING BY 3 POINTS OF R**3 }
+ 10;
+ { NBARLI 'number of edges of the line' entier ; }
+ 1;
+ { RAIGEO 'geometrical ratio between the vertices' reel ; }
+ { NAME of POINT }
+ x;
+ { in LEXICON ~>POINT }
+ { NAME of POINT }
+ y;
+ { in LEXICON ~>POINT }
+ { NAME of POINT }
+ xy;
+ { in LEXICON ~>POINT }
+ { NAME of the LINE or ESCAPE? }
+
+ c2; i;
+ { in LEXICON ~>TRANSFO }
+ 3;
+ { ARC OF CIRCLE PASSING BY 3 POINTS OF R**3 }
+ 8;
+ { NBARLI 'number of edges of the line' entier ; }
+ 1;
+ { RAIGEO 'geometrical ratio between the vertices' reel ; }
+ { NAME of POINT }
+ xm; y;xmy;
+ { in LEXICON ~>POINT }
+ { in LEXICON ~>POINT }
+ { in LEXICON ~>POINT }
+ { NAME of the LINE or ESCAPE? }
+
+ c3; i;
+ { in LEXICON ~>TRANSFO }
+ 3;
+ { ARC OF CIRCLE PASSING BY 3 POINTS OF R**3 }
+ 10;
+ { NBARLI 'number of edges of the line' entier ; }
+ 1;
+ { RAIGEO 'geometrical ratio between the vertices' reel ; }
+ { NAME of POINT }
+ xm; ym; xmym;
+ { in LEXICON ~>POINT }
+ { in LEXICON ~>POINT }
+ { in LEXICON ~>POINT }
+
+ c4; i;
+ { in LEXICON ~>TRANSFO }
+ 3;
+ { ARC OF CIRCLE PASSING BY 3 POINTS OF R**3 }
+ 15;
+ { NBARLI 'number of edges of the line' entier ; }
+ 1;
+ { RAIGEO 'geometrical ratio between the vertices' reel ; }
+ { NAME of POINT }
+ x; ym; xym;
+ { in LEXICON ~>POINT }
+ { in LEXICON ~>POINT }
+ { in LEXICON ~>POINT }
+
+ { NAME of the LINE or ESCAPE? }
+ c1234; i;
+ { in LEXICON ~>TRANSFO }
+ 51;
+ { UNION OF SEVERAL LINES }
+ 4;
+ { NBLIUN 'number of lines of the union' entier ; }
+ { NAME of LINE }
+ C1;
+ { in LEXICON ~>LIGNE }
+ { NAME of LINE }
+ C3;
+ { in LEXICON ~>LIGNE }
+ { NAME of LINE }
+ C4; C2;
+ { in LEXICON ~>LIGNE }
+ { NAME of the LINE or ESCAPE? }
+ @;
+ @;
+
+
+ 3;
+ { SURFACES faces of the object }
+ { NAME of the SURFACE or ESCAPE? }
+ s16.1; i;
+ { in LEXICON ~>TRANSFO }
+ 16;
+ { MAGNIFYING OF A 2D-LINE INTO LAYERS }
+ { NAME of LINE }
+ c;
+ { in LEXICON ~>LIGNE }
+ 3;
+ { NBCOLI 'number of first boundary layers' entier ; }
+ 0.03;
+ { EPCOLI 'thickness of ONE first boundary layer' reel ; }
+ 5;
+ { NBDECO 'number of LAST layers' entier ; }
+ 0.2;
+ { EPDECO 'thickness of the LAST boundary layer' reel ; }
+ { NAME of the SURFACE or ESCAPE? }
+
+ s16.2; i;
+ { in LEXICON ~>TRANSFO }
+ 16;
+ { MAGNIFYING OF A 2D-LINE INTO LAYERS }
+ { NAME of LINE }
+ c;
+ { in LEXICON ~>LIGNE }
+ 2;
+ { NBCOLI 'number of first boundary layers' entier ; }
+-0.01;
+ { EPCOLI 'thickness of ONE first boundary layer' reel ; }
+ 3;
+ { NBDECO 'number of LAST layers' entier ; }
+ -0.1;
+ { EPDECO 'thickness of the LAST boundary layer' reel ; }
+ { NAME of the SURFACE or ESCAPE? }
+
+ s16.3; i;
+ { in LEXICON ~>TRANSFO }
+ 16;
+ { MAGNIFYING OF A 2D-LINE INTO LAYERS }
+ { NAME of LINE }
+ c1234;
+ { in LEXICON ~>LIGNE }
+ 3;
+ { NBCOLI 'number of first boundary layers' entier ; }
+ 0.03;
+ { EPCOLI 'thickness of ONE first boundary layer' reel ; }
+ 5;
+ { NBDECO 'number of LAST layers' entier ; }
+ 0.2;
+ { EPDECO 'thickness of the LAST boundary layer' reel ; }
+ { NAME of the SURFACE or ESCAPE? }
+
+ s16.4; i;
+ { in LEXICON ~>TRANSFO }
+ 16;
+ { MAGNIFYING OF A 2D-LINE INTO LAYERS }
+ { NAME of LINE }
+ c1234;
+ { in LEXICON ~>LIGNE }
+ 2;
+ { NBCOLI 'number of first boundary layers' entier ; }
+-0.01;
+ { EPCOLI 'thickness of ONE first boundary layer' reel ; }
+ 3;
+ { NBDECO 'number of LAST layers' entier ; }
+ -0.1;
+ { EPDECO 'thickness of the LAST boundary layer' reel ; }
+ { NAME of the SURFACE or ESCAPE? }
+
+ s16.5; i; 51; 2; s16.3; s16.4;
+
+@;
+
+10; 3; 1; 90;
+@;
+@;
+@;
+@;
+
+4;
+ { VOLUMES materials of the object }
+ { NAME of the VOLUME or ESCAPE? }
+ v16; i;
+ { in LEXICON ~>TRANSFO }
+ 16;
+ { MAGNIFYING OF A 3D-SURFACE INTO LAYERS }
+ { NAME of SURFACE }
+ s16.5;
+ { in LEXICON ~>SURFACE }
+ 5;
+ { NBCOLA 'number of first boundary layers' entier ; }
+ 0.05;
+ { EPCOLA 'thickness of ONE first boundary layer' reel ; }
+ 6;
+ { NBLACO 'number of LAST layers' entier ; }
+ 0.2;
+ { EPLACO 'thickness of the LAST boundary layer' reel ; }
+ { NAME of the VOLUME or ESCAPE? }
+@;
+
+
+10;
+ { DRAWING of PLSVO meshes }
+ 4;
+ { VOLUME or VOLUMES }
+ 1;
+ { ALL VOLUMES }
+ 75;
+ { Activate TRANSLATION ORBIT ZOOM }
+ 90;
+ { Continue the DRAWING }
+
+Close;
+

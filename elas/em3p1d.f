@@ -1,0 +1,58 @@
+      SUBROUTINE EM3P1D( X,      DELTA,
+     %                   NOOBVC, NUMIVO, NUMAVO, LTDEVO,
+     %                   NCODSM, MASSEF)
+C ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+C BUT :    CALCUL DE LA MATRICE DE MASSE (DIAGONALE)
+C -----    POUR UN TETRAEDRE DE TYPE TETR 3P1D
+C
+C ENTREES:
+C --------
+C X      : LES 3 COORDONNEES DES 4 SOMMETS DU TETRAEDRE
+C DELTA  : JACOBIEN DE LA TRASFORMATION EF REFERENCE -> EF
+C
+C NOOBVC : NUMERO DU VOLUME DE L'EF
+C NUMIVO : NUMERO MINIMAL DES VOLUMES DE L'OBJET
+C NUMAVO : NUMERO MAXIMAL DES VOLUMES DE L'OBJET
+C LTDEVO : TABLEAU DES ADRESSES DU TABLEAU DES DONNEES MASSE
+C          DES VOLUMES DE L'OBJET
+C
+C SORTIES:
+C --------
+C NCODSM : CODE DE STOCKAGE DE LA MATRICE ELEMENTAIRE DE MASSE
+C          0 DIAGONALE
+C MASSEF : MATRICE DE MASSE STOCKEE SOUS FORME DIAGONALE (1,1) (2,2) ...
+C          RANGEE PAR NOEUDS (U11,U12,U13, U21,U22,U23,..., U41,U42,U43)
+C ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+C AUTEUR : ALAIN PERRONNET ANALYSE NUMERIQUE UPMC PARIS    DECEMBRE 1997
+C23456---------------------------------------------------------------012
+      include"./incl/donela.inc"
+      DOUBLE PRECISION  MASSEF(12), RHO
+      REAL              X(4,3)
+      INTEGER           LTDEVO( 1:MXDOEL, NUMIVO:NUMAVO )
+      DOUBLE PRECISION  DELTA, XYZPI(3)
+C
+C     CONTRIBUTION DU VOLUME
+C     ======================
+      NC = 1
+      DO 10 L=1,4
+C
+C        RECHERCHE DE LA DENSITE SURFACIQUE DE MASSE
+C        AU POINT D'INTEGRATION L
+         XYZPI(1) = X(L,1)
+         XYZPI(2) = X(L,2)
+         XYZPI(3) = X(L,3)
+         CALL REMASS( 4, NOOBVC, 3, XYZPI,
+     %                LTDEVO(LPMASS,NOOBVC), RHO )
+C
+C        MASSE = MASSE * POIDS * DELTA
+         MASSEF(NC  ) = RHO * DELTA / 24D0
+         MASSEF(NC+1) = MASSEF(NC)
+         MASSEF(NC+2) = MASSEF(NC)
+         NC = NC + 3
+C
+ 10   CONTINUE
+C
+C     CODE MATRICE ELEMENTAIRE DE MASSE DIAGONALE
+      NCODSM = 0
+      RETURN
+      END

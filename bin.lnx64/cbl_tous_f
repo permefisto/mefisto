@@ -1,0 +1,146 @@
+#!/bin/bash
+#
+#  Compilation Bind et Mise en Librairie sous LINUX 64bits
+#  de tous les sp fortran d'une librairie Mefisto avec option -fopenmp
+#  A. Perronnet   Octobre 2012
+#
+#lecture et mise sous le directory
+cd $MEFISTO
+echo
+echo =================================================================================================
+
+if test -f $MEFISTO/td/m/anglais
+then
+ LANGAGE=1
+ LANGUE=ANGLAISE
+ echo Fortran and fortran95 Compilation -O, Archive LINUX 64bits of a LIBRARY $MEFISTO
+ echo Mefisto Library Name?
+ read dir
+else
+ LANGAGE=0
+ LANGUE=FRANCAISE
+ echo Compilation -O fortran et fortran95, Archivage LINUX 64bits d une LIBRAIRIE $MEFISTO
+ echo Nom de la librairie Mefisto?
+ read dir
+fi
+echo =================================================================================================
+
+nomdir=$MEFISTO/$dir
+nomlib=$MEFISTO/$dir/lib
+#
+# destruction de l'ancienne poubelle
+poubel=$MEFISTO/$dir/poubel
+# rm $poubel
+#
+# destruction de l'ancienne librairie
+rm $nomlib  2>$poubel
+#
+# boucle sur les fichiers .f
+for i in `ls $nomdir | grep .f$`
+do 
+  nomsp=`basename $i .f`
+  nomspf=$nomdir/$nomsp.f
+  nomspo=$nomsp.o 
+  nomspl=$nomdir/$nomsp
+  rm $nomspo  2>$poubel
+  rm $nomsp   2>$poubel
+#
+  echo "gfortran -Wall -mcmodel=large -fPIC -m64 -fopenmp -O -I. -c $nomspf -o $nomspo"
+        gfortran -Wall -mcmodel=large -fPIC -m64 -fopenmp -O -I. -c $nomspf -o $nomspo
+#       
+  if test -f $nomspo
+  then  
+#            
+#   edition de liens de nomspo
+#   ld -a -r $nomspo -o $nomspl
+#
+#   si le fichier nomdir/lib n'existe pas il est cree
+    if test -f $nomdir/lib
+    then  
+#     mise en librairie du module objet du sp
+      ar r $nomdir/lib $nomspo
+    else
+#     creation de ~/lib et mise en librairie du module objet du sp
+      ar rc $nomdir/lib $nomspo
+      chmod 750 $nomdir/lib
+    fi
+#
+#   destruction du module objet du sp 
+    rm $nomspo 2>$poubel
+    rm $nomspl 2>$poubel
+#
+  else
+    rm  $nomspo 2>$poubel
+    if [ $LANGAGE = 0 ]
+    then
+      echo COMPILATION INCORRECTE de $MEFISTO/$nomspf
+      echo CORRIGER $MEFISTO/$nomspf et RECOMPILER avec cbl
+    else
+      echo INCORRECT COMPILATION of $MEFISTO/$nomspf
+      echo CORRECT $MEFISTO/$nomspf and COMPILE AGAIN with cbl
+    fi
+    echo ==========================================================
+  fi  
+#
+done
+
+
+#
+# boucle sur les fichiers .f95  contenant des directives OpenMP
+echo
+if [ $LANGAGE = 0 ]
+then
+  echo "Les binaires OpenMP suivants ecrasent les precedents"
+else
+  echo "The following OpenMP binaries replace the previous"
+fi
+
+for i in `ls $nomdir | grep .f95$`
+do 
+  nomsp=`basename $i .f95`
+  nomspf=$nomdir/$nomsp.f95
+  nomspo=$nomsp.o 
+  nomspl=$nomdir/$nomsp
+  rm $nomspo  2>$poubel
+  rm $nomsp   2>$poubel
+#
+  echo "gfortran -Wall -mcmodel=large -fPIC -m64 -O -fopenmp -I. -c $nomspf -o $nomspo"
+        gfortran -Wall -mcmodel=large -fPIC -m64 -O -fopenmp -I. -c $nomspf -o $nomspo
+#       
+  if test -f $nomspo
+  then  
+#            
+#   edition de liens de nomspo
+#   ld -a -r $nomspo -o $nomspl
+#
+#   si le fichier nomdir/lib n'existe pas il est cree
+    if test -f $nomdir/lib
+    then  
+#     mise en librairie du module objet du sp
+      ar r $nomdir/lib $nomspo
+    else
+#     creation de ~/lib et mise en librairie du module objet du sp
+      ar rc $nomdir/lib $nomspo
+      chmod 750 $nomdir/lib
+    fi
+#
+#   destruction du module objet du sp 
+    rm $nomspo 2>$poubel
+    rm $nomspl 2>$poubel
+#
+  else
+    rm  $nomspo 2>$poubel
+    if [ $LANGAGE = 0 ]
+    then
+      echo COMPILATION INCORRECTE de $MEFISTO/$nomspf
+      echo CORRIGER $MEFISTO/$nomspf et RECOMPILER avec cbl
+    else
+      echo INCORRECT COMPILATION of $MEFISTO/$nomspf
+      echo CORRECT $MEFISTO/$nomspf and COMPILE AGAIN with cbl
+    fi
+    echo ==============================================================
+  fi  
+#
+done
+
+rm $poubel

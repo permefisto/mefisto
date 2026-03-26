@@ -1,0 +1,137 @@
+      SUBROUTINE T3AFP3( NBARFR, NBFPLA, NOFAFR,
+     %                   MOARFR, MXARFR, LAREFR, XYZPOI,
+     %                   TRIANG, NBCOPS, XYZSFP, TEMSFP,
+     %                   NCAS0,  NCAS1,  NCAS,
+     %                   TMIN,   TMAX  )
+C ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+C BUT :    TRACER LES ARETES FRONTALIERES ET EN COULEURS
+C ----     LA TEMPERATURE DES FACES DANS DES PLANS DE SECTION SELON UN AXE
+C
+C ENTREES:
+C --------
+C NBARFR : NOMBRE DES ARETES FRONTALIERES
+C NBFPLA : NOMBRE DE FACES INTERSECTIONS AVEC LES PLANS
+C NOFAFR : NUMERO DES FACES SELON LEUR DISTANCE DECROISSANTE A L'OEIL
+C MOARFR : NOMBRE DE MOTS PAR ARETE FRONTALIERE DU TABLEAU LAREFR
+C MXARFR : NOMBRE DE FACES DU TABLEAU LAREFR
+C LAREFR : TABLEAU NUMERO DES 2 SOMMETS ET LIEN
+C         LAREFR(1,I)= NO DU 1-ER  SOMMET DE L'ARETE FRONTALIERE
+C         LAREFR(2,I)= NO DU 2-EME SOMMET > 1-ER  SOMMET
+C         LAREFR(3,I)= 0 OU NUMERO DE L'ARETE FRONTALIERE SUIVANTE
+C                      DANS LE HACHAGE
+C XYZPOI : COORDONNEES DES SOMMETS DES FACES FRONTALIERES (ET INTERNES)
+C TRIANG : REEL VALEUR TEMOIN DE TRIANGLE DANS XYZSFP(3,4,*)
+C NBCOPS : NOMBRE DE COORDONNEES DU TABLEAU XYZSFP
+C XYZSFP : XYZ DES 4 SOMMETS DES FACES DES PLANS DE SECTION
+C TEMSFP : TEMPERATURE AUX 4 SOMMETS DES FACES DES PLANS DE SECTION
+C NCAS0  : NUMERO DU PREMIER CAS OU VECTEUR SOLUTION
+C NCAS1  : NUMERO DU DERNIER CAS OU VECTEUR SOLUTION
+C NCAS   : NUMERO DU CAS A TRACER
+C TMIN   : TEMPERATURE MINIMALE POUR LE CAS A TRACER
+C TMAX   : TEMPERATURE MAXIMALE POUR LE CAS A TRACER
+C+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+C AUTEUR : PERRONNET ALAIN UPMC ANALYSE NUMERIQUE PARIS    NOVEMBRE 1994
+C2345X7..............................................................012
+      PARAMETER    ( LIGCON=0, LIGTIR=1 )
+      include"./incl/trvari.inc"
+      include"./incl/mecoit.inc"
+      INTEGER        NOFAFR(1:NBFPLA+NBARFR)
+      INTEGER        LAREFR(1:MOARFR,1:MXARFR)
+      REAL           XYZPOI(1:3,1:*)
+      REAL           XYZSFP(1:NBCOPS, 1:4, 1:NBFPLA)
+      REAL           TEMSFP(1:4, NCAS0:NCAS1, 1:NBFPLA)
+      REAL           COUL(4)
+      REAL           XYZ(3,4), XYZP(3)
+C
+cccC     LA PALETTE ARC EN CIEL
+ccc      CALL PALCDE(11)
+C
+C     LE NOMBRE DE COULEURS DISPONIBLES
+      NBCOUL = NDCOUL - N1COUL
+C
+C     LES ARETES SONT TRACEES AVEC UNE EPAISSEUR
+      CALL XVEPAISSEUR( 1 )
+C
+C     LE TRACE DES FACES EN COMMENCANT PAR LES PLUS ELOIGNEES
+C     =======================================================
+      DO 50 NF = 1, NBARFR+NBFPLA
+C
+C        LE NUMERO DE LA FACE LA PLUS ELOIGNEE NON ENCORE TRACEE
+         NAOF = NOFAFR( NF )
+C
+         IF( NAOF .GT. 0 ) THEN
+C
+C           TRACE DE LA FACE INTERSECTION AVEC UN PLAN
+C           ------------------------------------------
+            CALL XVTYPETRAIT( NTLAPL )
+C           LE NOMBRE DE SOMMETS DE LA FACE
+            IF( XYZSFP(3,4,NAOF) .EQ. TRIANG ) THEN
+C              TRIANGLE
+               NAF = 3
+            ELSE
+C              QUADRANGLE
+               NAF = 4
+            ENDIF
+C
+C           LA COULEUR DES NAF SOMMETS DE LA FACE
+            DO 10 I=1,NAF
+C              LA COULEUR
+               IF( TMIN .NE. TMAX ) THEN
+                  COUL(I) = ( TEMSFP(I,NCAS,NAOF) - TMIN )
+     %                    / (TMAX-TMIN) * NBCOUL + N1COUL
+               ELSE
+                  COUL(I) = NDCOUL
+               ENDIF
+               IF( COUL(I) .GT. NDCOUL ) COUL(I)=NDCOUL
+               IF( COUL(I) .LT. N1COUL ) COUL(I)=N1COUL
+ 10         CONTINUE
+C
+C           LES XYZ DES SOMMETS DE LA FACE
+            DO 30 I=1,NAF
+               DO 20 J=1,3
+                  XYZ(J,I) = XYZSFP(J,I,NAOF)
+ 20            CONTINUE
+ 30         CONTINUE
+C
+            IF( PREDUF .GT. 0 ) THEN
+C
+C              REDUCTION DE LA FACE
+               REDUCF = PREDUF * 0.01
+               REDUC1 = 1.0 - REDUCF
+C              CALCUL DES COORDONNEES XYZP DU BARYCENTRE DE LA FACE
+               CALL COBAPO( NAF, XYZ, XYZP )
+C              L'HOMOTHETIE DE CENTRE LE BARYCENTRE DE LA FACE
+               DO 40 I=1,NAF
+                  XYZ(1,I) = XYZ(1,I) * REDUC1 + XYZP(1) * REDUCF
+                  XYZ(2,I) = XYZ(2,I) * REDUC1 + XYZP(2) * REDUCF
+                  XYZ(3,I) = XYZ(3,I) * REDUC1 + XYZP(3) * REDUCF
+ 40            CONTINUE
+C
+            ENDIF
+C
+            IF( NAF .EQ. 3 ) THEN
+C              LE TRACE DU TRIANGLE
+               CALL TRIACOUL3DBORD( XYZ, COUL, NCOAPL, 1 )
+            ELSE
+C              LE TRACE DU QUADRANGLE
+               CALL QUADCOUL3DBORD( XYZ, COUL, NCOAPL, 1 )
+            ENDIF
+C
+         ELSE
+C
+C           TRACE DE L'ARETE FRONTALIERE DU MAILLAGE
+C           ----------------------------------------
+C           LE NUMERO DE L'ARETE DANS LE TABLEAU LAREFR
+            IF( NCOAFR .GE. 0 ) THEN
+               CALL XVTYPETRAIT( NTLAFR )
+               NAOF = -NAOF
+               CALL TRAIT3D( NCOAFR, XYZPOI(1,LAREFR(1,NAOF)),
+     %                               XYZPOI(1,LAREFR(2,NAOF)) )
+            ENDIF
+         ENDIF
+ 50   CONTINUE
+C
+C     RETOUR AU TRACE CONTINU DES LIGNES
+      CALL XVTYPETRAIT( LIGCON )
+      RETURN
+      END

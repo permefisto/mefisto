@@ -1,0 +1,65 @@
+      SUBROUTINE QUADCOUL3DBORD( XYZ, COUL, NC, NF )
+C+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+C BUT :    TRACE LE QUADRANGLE DE SOMMETS XYZ ET DE COULEURS COUL
+C -----    SELON LES COULEURS INTERMEDIAIRES  (PALETTE 11 RECOMMANDEE)
+C          AINSI QUE LES ARETES DU QUADRANGLE SELON LA COULEUR NC
+C          ATTENTION (X,Y,Z) EN COORDONNEES OBJETS 3D
+C
+C ENTREES:
+C --------
+C XYZ    : 3 COORDONNEES DES 4 SOMMETS
+C COUL   : NUMERO REEL DE LA COULEUR AUX 4 SOMMETS DU QUADRANGLE
+C          REEL DE VALEURS COMPRISES ENTRE N1COUL ET NDCOUL
+C          (cf ~/incl/trvari.inc)
+C NC     : COULEUR DE TRACE DES 4 ARETES
+C          SI NC<0  PAS DE TRACE DU BORD
+C NF     : SI NF>=0 TRACE DE LA FACE
+C          SI NF<0  PAS DE TRACE DE LA FACE
+C+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+C AUTEUR : PERRONNET ALAIN ANALYSE NUMERIQUE UPMC  PARIS        MAI 1999
+C2345X7..............................................................012
+      REAL           XYZ(3,4),  COUL(4)
+      REAL           XYZT(3,3), COULT(3)
+C
+C     LE QUADRANGLE EST DIVISE EN 4 A PARTIR DU BARYCENTRE B
+      DO 10 I=1,3
+         XYZT(I,1) = (XYZ(I,1) + XYZ(I,2) + XYZ(I,3) + XYZ(I,4) ) * 0.25
+ 10   CONTINUE
+      COULT(1) = ( COUL(1) + COUL(2) + COUL(3) + COUL(4) ) * 0.25
+C
+      KM1 = 4
+      DO 30 K=1,4
+C
+C        LES XYZ ET COULEURS DU TRIANGLE B K-1 K
+         DO 20 I=1,3
+            XYZT(I,2) = XYZ(I,KM1)
+            XYZT(I,3) = XYZ(I,K  )
+ 20      CONTINUE
+         COULT(2) = COUL(KM1)
+         COULT(3) = COUL(K  )
+C
+C        TRACE DU TRIANGLE
+         CALL TRIACOUL3DBORD( XYZT, COULT, NC, NF )
+C
+C        PASSAGE AU TRIANGLE SUIVANT
+         KM1 = K
+ 30   CONTINUE
+C
+C     SI QUADRANGLE CROISE IL FAUT TRACER B24 ET B13
+      DO 50 K=1,2
+C
+C        LES XYZ ET COULEURS DU TRIANGLE B K K+2
+         DO 40 I=1,3
+            XYZT(I,2) = XYZ(I,K)
+            XYZT(I,3) = XYZ(I,K+2)
+ 40      CONTINUE
+         COULT(2) = COUL(K)
+         COULT(3) = COUL(K+2)
+C
+C        TRACE DU TRIANGLE
+         CALL TRIACOUL3DBORD( XYZT, COULT, NC, NF )
+C
+ 50   CONTINUE
+C
+      RETURN
+      END

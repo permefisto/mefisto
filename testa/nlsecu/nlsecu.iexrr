@@ -1,0 +1,139 @@
+{ ======================================================================== }
+{ Software MEFISTO : 2011 August 22, Version                               }
+{ USER's  Name     : Alain Perronnet                                       }
+{ Project Name     : NLSE on a cube [-1,1]**3   TEST with EXACT SOLUTION   }
+{         Semi-IMPLICIT SCHEME on i du/dt -Alfa LAPLACIAN u +Beta u**2 u=F }
+{ Date             : 2011/08/22                                            }
+{ ======================================================================== }
+DefVar Mass;  Mass = 1.0;
+DefVar Alfa;  Alfa = 1.0;
+DefVar Beta;  Beta = 1.0;
+
+DefFunc NLSECoef(t,x,y,z,ntyobj,nmobj,WaveR,WaveI);
+  NLSECoef = Beta * ( WaveR**2 + WaveI**2 );
+EndFunc;
+
+{To display the errors }
+DefFunc Exact_Real_Part(t,x,y,z);
+  Exact_Real_Part = (1+t) * (1-x*x) * (1-y*y) * (1-z*z);
+EndFunc;
+
+DefFunc Exact_Imaginary_Part(t,x,y,z);
+  Exact_Imaginary_Part = Exact_Real_Part(t,x,y,z);
+EndFunc;
+
+DefFunc ervdt(t,x,y,z);
+  ervdt = (1-x*x) * (1-y*y) * (1-z*z);
+EndFunc;
+
+DefFunc ervddx(t,x,y,z);
+  ervddx = -2 * (1+t) * (1-y*y * (1-z*z));
+EndFunc;
+
+DefFunc ervddy(t,x,y,z);
+  ervddy = -2 * (1+t) * (1-x*x) * (1-z*z);
+EndFunc;
+
+DefFunc ervddz(t,x,y,z);
+  ervddz = -2 * (1+t) * (1-x*x) * (1-y*y);
+EndFunc;
+
+DefFunc eiwdt(t,x,y,z);
+  eiwdt = ervdt(t,x,y,z);
+EndFunc;
+
+DefFunc eiwddx(t,x,y,z);
+  eiwddx = ervddx(t,x,y,z);
+EndFunc;
+
+DefFunc eiwddy(t,x,y,z);
+  eiwddy = ervddy(t,x,y,z);
+EndFunc;
+
+DefFunc eiwddz(t,x,y,z);
+  eiwddz = ervddz(t,x,y,z);
+EndFunc;
+
+DefFunc RealForce(t,x,y,z);
+DefVar ERP, EIP;
+  ERP = Exact_Real_Part(t,x,y,z);
+  EIP = Exact_Imaginary_Part(t,x,y,z);
+  RealForce = - Mass * eiwdt(t,x,y,z)
+              - Alfa * (ervddx(t,x,y,z)+ervddy(t,x,y,z)+ervddz(t,x,y,z))
+              + NLSECoef(t,x,y,z,3,0,ERP,EIP) * ERP;
+EndFunc;
+
+DefFunc ImaginaryForce(t,x,y,z);
+DefVar ERP, EIP;
+  ERP = Exact_Real_Part(t,x,y,z);
+  EIP = Exact_Imaginary_Part(t,x,y,z);
+  ImaginaryForce = Mass * ervdt(t,x,y,z)
+                 - Alfa * (eiwddx(t,x,y,z)+eiwddy(t,x,y,z)+eiwddz(t,x,y,z))
+                 + NLSECoef(t,x,y,z,3,0,ERP,EIP) * EIP;
+EndFunc;
+
+DefFunc ComplexForce(t,x,y,z,nutyob,nuobjt,partnb,waveRP,waveIP,zero);
+  If partnb=1 then
+    ComplexForce = RealForce(t,x,y,z);
+  Else
+    ComplexForce = ImaginaryForce(t,x,y,z);
+  EndIf;
+EndFunc;
+
+{ The initial conditions of the Wave }
+DefFunc InitWave(t,x,y,z,ntyob,nuobjt,partnb);
+  If partnb=1 then
+    InitWave = Exact_Real_Part(t,x,y,z);
+  else
+    InitWave = Exact_Imaginary_Part(t,x,y,z);
+  EndIf;
+EndFunc;
+@;
+
+
+{DATA for the Non Linear Schrodinger Equation ======================== }
+2; { NLSE INPUT DATA }
+  {Volume CUBE}
+   1; { Mass density }
+   1; Mass;
+
+   2; { Alfa heat conductivity Coefficient of Laplacians }
+   1; { 3D HOMOGENEOUS ISOTROPIC material }
+   Alfa; { Constant Coefficient of Laplacians }
+
+   6; { NLSE Coefficient of U: Beta * ( WaveR**2 + WaveI**2 ) }
+  -1;        { Function }
+   NLSECoef; { Function Name }
+
+   4;   { Density of Force }
+  -1;   { User function Force }
+   2;   { number of components of the force }
+   1; 2;{ number of each component of the force }
+   ComplexForce;  {Name of the Force Function }
+
+   8;   { Initial Wave on this volume }
+   -1;       { Real & Imaginary Part of INITIAL Wave FUNCTION of SQUARE }
+   InitWave; { NAME of the Initial Wave FUNCTION on the object }
+  @;
+
+ {Surface BOUNDARY}
+  3;    { Fixation }
+  1;    { Constant }
+  2;    { Number of Fixed Parts }
+  1; 2; { Part real and Imaginary }
+  0; 0; { Fixed Values }
+ @;
+@;
+
+5;   {Algo1: IMPLICIT i du(t,X)/dt -Alfa Laplacian u(t,X) +Beta u(t,X)**3=F }
+  0;       { Initial TIME }
+ -1;       { Real & Imaginary Part of INITIAL Wave FUNCTION of SQUARE }
+ InitWave; { NAME of the Initial Wave FUNCTION on the object }
+  20;      { Final TIME }
+  0.01;    { Step of TIME }
+  200;     { Number of Wave Vectors to Store }
+  1;       { Skyline Crout Factorization A=L D tL }
+@;
+
+99; {SAVE and EXIT}
+CLOSE;

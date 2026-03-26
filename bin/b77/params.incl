@@ -1,0 +1,15 @@
+      integer integer,real,logical,double,character,ivar,rvar
+      parameter (integer=1,real=2,logical=3,double=4,character=5,
+     +           ivar=8,rvar=9)
+c
+      integer integer_tab,real_tab,logical_tab,double_tab,char_tab,
+     +       external,ext_tab,itab,rtab
+      parameter ( integer_tab=101,real_tab=102,logical_tab=103,
+     +            double_tab=104,char_tab=105,external=106,
+     +            ext_tab = 107,itab=108,rtab=109)
+
+      integer declaration,format,if,elseif,dowhile,goto,call,aff,
+     +save,i_o
+      parameter ( declaration=1000,format=-1,if=-2,elseif=-3,
+     +            dowhile=-4,goto=-5,call=-6,aff=-7,save=-8,
+     +            i_o=-9,pas_un_do=-10,do=-11)

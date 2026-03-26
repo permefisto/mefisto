@@ -1,0 +1,165 @@
+      SUBROUTINE OBJPRE( NOMOBJ, NBOBPR, MOOBPR, MNOBPR, IERR )
+C+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+C BUT :    LISTER LES PLSV PREMIERS D'UN OBJET
+C -----    UN PLSV PREMIER EST UN POINT OU UNE LIGNE OU
+C                              UNE SURFACE OU UN VOLUME
+C          SI UN PLSV EST MULTIPLE, UN SEUL RESTE DANS LA LISTE
+C
+C ENTREES:
+C --------
+C NOMOBJ : NOM DE L'OBJET ( ICI SENS STRICT OBJET DE TYPE 5 )
+C
+C SORTIES:
+C --------
+C NBOBPR : NOMBRE DE PLSV PREMIERS
+C MOOBPR : NOMBRE D'ENTIERS DECLARES POUR LE TABLEAU OBPR
+C MNOBPR : ADRESSE MCN DU TABLEAU OBPR
+C          OBPR(1,I) = NUMERO DU TYPE DU PLSV PREMIER
+C                      1:POINT, 2:LIGNE, 3:SURFACE, 4:VOLUME
+C          OBPR(2,I) = NUMERO DU PLSV PREMIER DANS SON LEXIQUE
+C IERR   :  0 SI PAS D'ERREUR A L'EXECUTION
+C          >0 SI ERREUR
+C ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+C AUTEUR : ALAIN PERRONNET  ANALYSE NUMERIQUE UPMC PARIS       MARS 1989
+C2345X7..............................................................012
+      PARAMETER        (MXOBPR=256)
+      COMMON / UNITES / LECTEU, IMPRIM, INTERA, NUNITE(29)
+      include"./incl/a_objet__definition.inc"
+      include"./incl/ntmnlt.inc"
+      include"./incl/gsmenu.inc"
+      include"./incl/pp.inc"
+      COMMON            MCN(MOTMCN)
+      REAL              RMCN(1)
+      EQUIVALENCE      (MCN(1),RMCN(1))
+      CHARACTER*24      KNOM
+      CHARACTER*(*)     NOMOBJ
+C
+      IERR = 0
+C
+C     LE NUMERO DE L'OBJET
+      CALL NUOBNM( 'OBJET', NOMOBJ, NUOBJE )
+C
+C     LA PILE DU TYPE ET NUMERO DES OBJETS EST DECLAREE
+      MOPILE = 2 * MXOBPR
+      CALL TNMCDC( 'ENTIER', MOPILE, MNPILE )
+C
+C     LE TABLEAU DU TYPE ET NUMERO DES PLSV PREMIERS
+      MOOBPR = 2 * MXOBPR
+      CALL TNMCDC( 'ENTIER', MOOBPR, MNOBPR )
+      NBOBPR = 0
+C
+C     L'OBJET INITIAL EST EMPILE
+      LHPILE = 2
+      MCN( MNPILE ) = 5
+      MCN( MNPILE + 1 ) = NUOBJE
+C
+C     TANT QUE LA PILE EST NON VIDE DECOMPOSER EN OBJETS PREMIERS
+ 10   IF( LHPILE .GT. 0 ) THEN
+C        LE TYPE ET NUMERO DE L'OBJET
+         MN     = MNPILE - 2 + LHPILE
+         NUTYOB = MCN( MN )
+         NUOBJE = MCN( MN + 1 )
+C        CET OBJET EST DEPILE
+         LHPILE = LHPILE - 2
+C
+C        L'OBJET EST IL UN OBJET PREMIER ?
+         IF( NUTYOB .GT. 0 .AND. NUTYOB .LT. 5 ) THEN
+C           OUI : STOCKAGE DE CE PLSV PREMIER S'IL N'EXISTE PAS DEJA
+            DO 20 MNB=MNOBPR,MNOBPR+2*NBOBPR-2,2
+               IF(MCN(MNB).EQ.NUTYOB .AND. MCN(MNB+1).EQ.NUOBJE) THEN
+C                 CE PLSV EXISTE DEJA DANS LA LISTE. IL EST ABANDONNE
+                  GOTO 10
+               ENDIF
+ 20         CONTINUE
+C           CE PLSVO EST UNIQUE. IL EST AJOUTE A LA LISTE
+            IF( NBOBPR + NBOBPR .GE. MOOBPR ) THEN
+C              LE TABLEAU TROP PETIT . SA TAILLE EST AUGMENTEE
+               CALL TNMCAU( 'ENTIER', MOOBPR, MOOBPR+MOOBPR ,
+     %                       MOOBPR, MNOBPR )
+               MOOBPR = MOOBPR + MOOBPR
+            ENDIF
+            MN = MNOBPR + NBOBPR + NBOBPR
+            MCN( MN     ) = NUTYOB
+            MCN( MN + 1 ) = NUOBJE
+            NBOBPR = NBOBPR + 1
+            GOTO 10
+         ELSE IF( NUTYOB .NE. 5 ) THEN
+            NBLGRC(NRERR) = 1
+            WRITE(KERR(MXLGER)(1:4),'(I4)') NUTYOB
+            KERR(1) ='OBJPRE: TYPE INCORRECT '//KERR(MXLGER)(1:4)
+            CALL LEREUR
+            IERR = 1
+            RETURN
+         ENDIF
+C
+C        RECHERCHE DE L'OBJET DANS LE LEXIQUE DES OBJETS
+         CALL TAMSOU( NTOBJE, MNOBJE )
+         MN     = MNOBJE + MCN( MNOBJE ) * NUOBJE + MCN( MNOBJE+2 ) + 2
+         NTLXOB = MCN( MN )
+         IF( NTLXOB .LE. 0 ) THEN
+C           LE NOM DE L'OBJET
+            CALL NMOBNU( 'OBJET', NUOBJE, KNOM )
+            NBLGRC(NRERR) = 1
+            KERR(1) = 'OBJET INCONNU '//KNOM
+            CALL LEREUR
+            IERR = 1
+            GOTO 10
+         ENDIF
+C
+C        RECHERCHE DU TABLEAU DEFINITION DE L'OBJET
+         CALL LXTSOU( NTLXOB, 'DEFINITION', NTDFOB, MNDFOB )
+C        S'IL N'EXISTE PAS RETOUR A LA DEMANDE DU NOM DE L'OBJET
+         IF( NTDFOB .LE. 0 ) THEN
+C           LE NOM DE L'OBJET
+            CALL NMOBNU( 'OBJET', NUOBJE, KNOM )
+            NBLGRC(NRERR) = 1
+            KERR(1) = 'OBJET '//KNOM//' SANS DEFINITION'
+            CALL LEREUR
+            IERR = 1
+            GOTO  10
+         ENDIF
+C
+C        LES NBDOBJ DE CET OBJET SONT EMPILES
+         NBDOBJ = MCN( MNDFOB + WBDOBJ )
+         MN     = NBDOBJ * 2
+         IF( LHPILE + MN .GT. MOPILE ) THEN
+C           LE TABLEAU TROP PETIT. SA TAILLE EST AUGMENTEE
+            CALL TNMCAU( 'ENTIER', MOPILE, MOPILE+MOPILE ,
+     %                    MOPILE, MNPILE )
+            MOPILE = MOPILE + MOPILE
+         ENDIF
+         CALL TRTATA( MCN(MNDFOB+WTYOBJ), MCN(MNPILE+LHPILE) ,
+     %                NBDOBJ+NBDOBJ )
+         LHPILE = LHPILE + MN
+         GOTO 10
+      ENDIF
+C
+C     DESTRUCTION DE LA PILE DEVENUE INUTILE
+      CALL TNMCDS( 'ENTIER', MOPILE, MNPILE )
+C
+C     L'ORDRE DE LA PILE EST INVERSEE POUR RETROUVER L'ORDRE INITIAL
+C     DANS LA MESURE OU IL N'Y A PAS DE SOUS-OBJETS
+      MN0 = MNOBPR
+      MN1 = MNOBPR + 2 * NBOBPR - 2
+      DO 30 I=1,NBOBPR/2
+C        LE TYPE DU PLSV I
+         NUTY0 = MCN(MN0  )
+         NUPL0 = MCN(MN0+1)
+C        LE TYPE DU PLSV NBOBPR+1-I
+         NUTY1 = MCN(MN1  )
+         NUPL1 = MCN(MN1+1)
+C        ECHANGE DES 2 PLSV
+         MCN(MN0  ) = NUTY1
+         MCN(MN0+1) = NUPL1
+         MCN(MN1  ) = NUTY0
+         MCN(MN1+1) = NUPL0
+C        PASSAGE AU SUIVANT
+         MN0 = MN0 + 2
+         MN1 = MN1 - 2
+ 30   CONTINUE
+C
+C     TRI DES OBJETS PREMIERS SELON LE TYPE DECROISSANT V, S, L, P
+      CALL VSLPOB( NBOBPR, MNOBPR )
+C
+      RETURN
+      END

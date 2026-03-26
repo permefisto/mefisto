@@ -1,0 +1,15 @@
+deftms ~>>>CONTRINIT 'Initial stresses'
+variable muet DATE 'date of creation of the TMS'   reel2  ;
+variable muet NUTD 'number of the descriptor array TD' entier ; 
+variable      LTCOIN 'Type of initial stress'  entier   
+(  1 : 'constant initial stresses'
+, -1 : 'function initial stresses'
+,  0 : 'delete these initial stresses' ) ; 
+variable  NBCOIN 'number of components 3 or 4 or 6'  entier ;
+cas LTCOIN
+1 : tableau  CONINI(1..NBCOIN)
+'Stress SXX SYY SXY or axi SZZ SRR STETA SRZ or SXX SYY SZZ SXY SYZ SZX'
+ reel   ; 
+-1 : variable NFCOIN 'name of function initial stresses' ^~>FONCTION ;
+fincas ;
+fintms ;

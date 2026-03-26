@@ -1,0 +1,9 @@
+{ ==================================================================== }
+{ MEFISTO Software     : February 7-th, 2011 Version                   }
+{ USER's Name          : ap                                            }
+{ Project Name         : vvpt2d                                        }
+{ Date                 :  7/02/11   13h 41m 02s                        }
+{ ==================================================================== }
+ readf vvpt2d.sspace;
+ { SURFACE: CARRES }
+ { LIGNE: CARREL }

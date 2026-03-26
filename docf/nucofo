@@ -1,0 +1,4 @@
+NUCOFO est le tableau des NBCOFO numeros des composantes
+de la FORCE a traiter.
+Chaque numero est compris entre 1 et 3 en 3d, ou 1 et 2 en 2d.
+1 represente la direction en X,  2 Y et  3 Z.

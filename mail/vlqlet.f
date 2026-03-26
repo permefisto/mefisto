@@ -1,0 +1,71 @@
+      SUBROUTINE VLQLET( NS, XYZSOM, N1FEOC, NFETOI,
+     %                   VOLUM0, QUALIT )
+C+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+C BUT :   CALCULER LE VOLUME ET LA QUALITE DE L'ETOILE FORMEE
+C -----   A PARTIR DU POINT NS ET DES FACES DE L'ETOILE NE CONTENANT PAS
+C         LE SOMMET NS
+C
+C ENTREES:
+C --------
+C NS     : LE POINT EN COURS DE TRAITEMENT
+C XYZSOM : TABLEAU DES 3 COORDONNEES DES POINTS
+C N1FEOC : NUMERO DE LA PREMIERE FACE DE NFETOI
+C NFETOI : LES 3 SOMMETS DE CHAQUE FACE ET FACE SUIVANTE DE L'ETOILE
+C VOLUM0 : LE VOLUME INITIAL DE L'ETOILE
+C
+C SORTIES:
+C --------
+C QUALIT : LA QUALITE DES TETRAEDRES DE L'ETOILE
+C          0 SI LE VOLUME DE L'ETOILE DIFFERE DU VOLUME INITIAL
+C+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+C AUTEUR : ALAIN PERRONNET  ANALYSE NUMERIQUE PARIS UPMC   DECEMBRE 1991
+C....................................................................012
+      INTEGER           NFETOI(5,*)
+      REAL              XYZSOM(1:3,1:*),
+     %                  SURFTR(4),VOLUM0,VOLUME
+C
+C     VOLUME AVEC CE NOUVEAU POINT
+      VOLUME = 0
+      QUALIT = RINFO( 'GRAND' )
+C
+C     POSITION DANS NFETOI DE LA 1-ERE FACE DE L'ETOILE
+      NF = N1FEOC
+C
+C     TANT QU'IL EXISTE UNE FACE DE L'ETOILE FAIRE
+ 10   IF( NF .GT. 0 ) THEN
+C
+C        CETTE FACE CONTIENT ELLE LE SOMMET NS ?
+         DO 20 I=1,3
+            IF( NFETOI(I,NF) .EQ. NS ) GOTO 90
+ 20      CONTINUE
+C
+C        VOLUME ET QUALITE DU TETRAEDRE DE SOMMET NS ET DE LA FACE NF
+         CALL QUATET( XYZSOM(1,NFETOI(1,NF)),
+     %                XYZSOM(1,NFETOI(2,NF)),
+     %                XYZSOM(1,NFETOI(3,NF)),
+     %                XYZSOM(1,NS),
+     %                ARMIN, ARMAX, SURFTR, V, Q )
+         IF( V .LE. 0D0 ) THEN
+C            TETRAEDRE MAL ORIENTE
+             QUALIT = 0.0
+             RETURN
+         ENDIF
+C
+C        VOLUME DE L'ETOILE
+         VOLUME = VOLUME + ABS( V )
+C
+C        CALCUL DE LA QUALITE MINIMALE DES TETRAEDRES
+         QUALIT = MIN( QUALIT , Q )
+C
+C        LA FACE SUIVANTE
+ 90      NF = NFETOI(5,NF)
+         GOTO 10
+      ENDIF
+C
+      IF( ABS(VOLUM0-VOLUME) .GE. 0.0001*VOLUM0 ) THEN
+C         QUALITE MINIMALE CAR VOLUME INCORRECT
+          QUALIT = 0
+      ENDIF
+C
+      RETURN
+      END

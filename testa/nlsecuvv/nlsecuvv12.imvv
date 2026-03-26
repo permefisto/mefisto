@@ -1,0 +1,48 @@
+{ ======================================================================== }
+{ Software MEFISTO : 2011 September 7, Version                             }
+{ USER's  Name     : Alain Perronnet                                       }
+{ Project Name     : Stability of Eigenvector for NLSE on a cube [-1,1]**3 }
+{              IMPLICIT SCHEME on i du/dt -Alfa LAPLACIAN u +Beta u**2 u=0 }
+{ Date             : 2011/09/07                                            }
+{ ======================================================================== }
+DefVar Mass;  Mass = 1.0;
+DefVar Alfa;  Alfa = 1.0;
+DefVar Beta;  Beta = 1.0;
+
+DefFunc NLSECoef(t,x,y,z,ntyobj,nmobj,WaveR,WaveI);
+  NLSECoef = Beta * ( WaveR**2 + WaveI**2 );
+EndFunc;
+
+{DATA for the Non Linear Schrodinger Equation}
+2; { HEAT INPUT DATA }
+  {Volume CUBE}
+   1; { Mass density }
+   1; Mass;
+
+   2; { Alfa heat conductivity Coefficient of Laplacians }
+   1; { 3D HOMOGENEOUS ISOTROPIC material }
+   Alfa; { Constant Coefficient of Laplacians }
+
+   6; { NLSE Coefficient of U: Beta * ( WaveR**2 + WaveI**2 ) }
+  -1;        { Function }
+   NLSECoef; { Function Name }
+  @;
+
+ {Surface BOUNDARY}
+  3;    { Fixation }
+  1;    { Constant }
+  2;    { Number of Fixed Parts }
+  1; 2; { Part real and Imaginary }
+  0; 0; { Fixed Values }
+ @;
+@;
+
+5;   {Algo1: IMPLICIT i du(t,X)/dt -Alfa Laplacian u(t,X) +Beta u(t,X)**3=0 }
+  0;       { Initial TIME }
+  3; 12;   { Initial Wave: Eigenvector 12 as Real Part & Imaginary Part=0 }
+  5;       { Final TIME }
+  0.01;    { Step of TIME }
+  200;     { Number of Wave Vectors to Store }
+  1;       { Skyline Crout Factorization A=L D tL }
+@;
+CLOSE;

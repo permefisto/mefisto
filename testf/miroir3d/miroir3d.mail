@@ -1,0 +1,140 @@
+{ =============================================== }
+{ MEFISTO Version Octobre 1999   PROJET: miroir3d }
+{ Utilisateur: Perronnet Alain   Date: 25/10/94   }
+{ =============================================== }
+ defvar r,l,h1,h2,h3,h4;
+ r=0.09;
+ l=0.00175;
+ h1=0.017;
+ h2=0.06;
+ h3=0.062;
+ h4=0.092;
+
+ defvar nbac,nbar,nbac1,nbac2,nbac3,nbac4;
+ nbac1=2;
+ nbac2=3;
+ nbac3=2;
+ nbac4=5;
+ nbar=6;
+ nbac=2;
+
+19; 0; 0.2; 0; 0.2; -0.01; 0.12;
+
+
+6;  {TRANSFORMATIONS mathematiques sur les objets' }
+ translh1;
+ 3;  {'isometrie de R3 -> R3'}
+ 0;  {'translation definie par un vecteur de R3'}
+ 0; 0; h1;
+
+ translh2;
+ 3;  {'isometrie de R3 -> R3'}
+ 0;  {'translation definie par un vecteur de R3'}
+ 0; 0; h2;
+
+ translh3;
+ 3;  {'isometrie de R3 -> R3'}
+ 0;  {'translation definie par un vecteur de R3'}
+ 0; 0; h3;   
+
+ translh4;
+ 3;  {'isometrie de R3 -> R3'}
+ 0;  {'translation definie par un vecteur de R3'}
+ 0; 0; h4; 
+
+@;
+
+1;  { POINTS principaux de l objet }
+ 1;   { FRAPPE des valeurs }
+ p1; i; 1; 0;        0; 0;
+ p2; i; 1; r;        0; 0;
+ p3; i; 1; 0.089983; l; 0;
+ p4; i; 1; 0;        l; 0;
+ p5; i; 1; 0;        r; 0;
+ p6; i; 2; { rayon theta cote }  r; 45; { TETAC 'longitude en degres' reel ; }
+                                     0; { COTEC 'cote en cylindrique' reel ; }
+@;  
+
+2;  { LIGNES aretes de l objet }
+ p1p2; i; 2; nbar;  1;  p1; p2;
+ p2p3; i; 2; nbac;  1;  p2; p3;
+ p3p4; i; 2; nbar;  1;  p3; p4;
+ p1p4; i; 2; nbac;  1;  p1; p4;
+ p3p6p5; i; 3; { arc de cercle }  nbar; 1; p3; p5; p6;
+ p4p5; i;2; nbar;   1; p4; p5;
+@;      
+
+3;  { SURFACES contours de l objet }
+ calod; i; 1;  { quadrangle ALGEBRIQUE structure ou non }
+          p1p2; p2p3; p3p4; p1p4; 2;
+
+ dural; i;  6;   { triangle ALGEBRIQUE structure ou non }
+           p3p6p5;   p4p5;   p3p4;  
+
+ cercle4; i; 51; 2; calod; dural;  {union de plusieurs surfaces}
+
+ haut; translh4;  50; {'transformation d''une surface existante'}
+       cercle4; {'nom de la surface initiale' }
+@;  
+
+4;  { VOLUMES parties de l objet }
+ dural_bas;  i; 14;  { tranches a partir d une surface generatrice }
+          dural;     { DANS LE LEXIQUE ~>SURFACE }
+              2;     { surfaces translatees d une cote z>0 constante (empilement) }
+          nbac1;     { NBTRCS 'nombre de tranches du volume final' entier ; }
+             h1;     { ZMAXCS 'cote maximale Z a decouper en tranches' reel ; }   
+
+ dural_haut;  translh1;  14; { tranches a partir d une surface generatrice }
+         cercle4;    { DANS LE LEXIQUE ~>SURFACE }
+               2;    { surfaces translatees d une cote z>0 constante (empilement) }
+           nbac2;    { NBTRCS 'nombre de tranches du volume final' entier ; }
+           h2-h1;    { ZMAXCS 'cote maximale Z a decouper en tranches' reel ; } 
+
+ dural; i; 51; 2; dural_bas; dural_haut;
+
+ paille_fer;  translh2;  14; { tranches a partir d une surface generatrice }
+         cercle4;    { DANS LE LEXIQUE ~>SURFACE }
+               2;    { surfaces translatees d une cote z>0 constante (empilement) }
+           nbac3;    { NBTRCS 'nombre de tranches du volume final' entier ; }
+           h3-h2;    { ZMAXCS 'cote maximale Z a decouper en tranches' reel ; }  
+  
+ verre;  translh3;  14; { tranches a partir d une surface generatrice }
+         cercle4;    { DANS LE LEXIQUE ~>SURFACE }
+               2;    { surfaces translatees d une cote z>0 constante (empilement) }
+           nbac4;    { NBTRCS 'nombre de tranches du volume final' entier ; }
+           h4-h3;    { ZMAXCS 'cote maximale Z a decouper en tranches' reel ; } 
+@;   
+
+3;  { SURFACES contours de l objet }
+  caloduc; i; 37;  {'surface extraite d''un volume' }
+      dural;     {'nom du volume de surface a extraire' } 
+      deffonc critere(x,y,z);
+        critere = y>-0.0001 et y<l+0.0001 et z>-0.0001 et z<h1+0.0001 ;
+      finfonc;
+      critere;   {'nom de la fonction critere'}
+        1;       {'faces frontalieres' } 
+@;
+
+5;   {objet}
+  miroir;  0; 6;
+      volume;  dural;
+      volume;  paille_fer;
+      volume;  verre;
+      surface; caloduc;
+      surface; haut;
+      point;   p3;
+@;  
+
+7;  {interpolation}
+   miroir; 4;  {lagrange de degre 2}
+@; 
+
+10; { trace du maillage des plsvo }
+  5;{ tous les objets }
+ 90;{ execution du trace }
+
+FERMER;
+
+
+
+

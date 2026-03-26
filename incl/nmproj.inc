@@ -1,0 +1,8 @@
+C
+C     FICHIER ~/incl/nmproj.inc
+C
+      COMMON / MSNOM /    NMPROJ
+      CHARACTER*72        NMPROJ
+C     NOM DU PROJET
+      COMMON / NBEXEC /   NUEXEC
+C     LE NOMBRE D'EXECUTIONS DE MEFISTO

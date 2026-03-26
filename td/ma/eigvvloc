@@ -1,0 +1,4 @@
+variable EIGVVLOC 'Location of Eigenvalues around TARGET' entier
+ ( 1 : '|Eigenvalues| at LEFT    of the |TARGET|'
+ , 2 : '|Eigenvalues| CENTERED from the |TARGET|'
+ , 3 : '|Eigenvalues| at RIGHT   of the |TARGET|' ) ;

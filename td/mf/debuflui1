@@ -1,0 +1,13 @@
+variable DebuFLUI 'Ecoulement d''un FLUIDE INCOMPRESSIBLE' entier
+(1 : 'NOM de l''OBJET a traiter',
+ 2 : 'ENTRER les DONNEES du FLUIDE de l''OBJET',
+ 6 : 'RESOUDRE NAVIER-STOKES INSTATIONNAIRE',
+ 10: 'DESSINER des VITESSES et PRESSIONS',
+ 19: 'TRACER des MAILLAGES des PLSVO',
+ 20: 'PRECISION pour INVERSER A x = b',
+ 35: 'RESULTATS nsgt_2d du TOURBILLON de GREEN-TAYLOR',
+ 36: 'RESULTATS nsgt_3d du TOURBILLON de GREEN-TAYLOR',
+ 60: 'GERER la FENETRE GRAPHIQUE de Mefisto',
+ 70: 'GERER les TMS Fichiers Unites  de Mefisto',
+ 97: 'AFFICHER la DATE de la version de Mefisto',
+ 99: 'SAUVEGARDE des DONNEES et FIN du TRAITEMENT' ) ;

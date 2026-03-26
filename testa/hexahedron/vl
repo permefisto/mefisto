@@ -1,0 +1,13 @@
+@;
+@;
+4; { VOLUMES materials of the object }
+  hexa;
+  i;{ in the lexicon ~>TRANSFO }
+  1;{ transfinite hexahedron }
+ABCD0; ABCD1; ABAB; BCBC; CDCD; DADA; 
+@;
+
+10; {drawings}
+   4; 1; 90;
+CLOSE;
+

@@ -1,0 +1,98 @@
+{ ==================================================================== }
+{ MEFISTO Software     : May 18, 2023 version                          }
+{ USER's Name          : Alain Perronnet                               }
+{ Project Name         : torusstl                                      }
+{ Date                 : 24/12/17   17h 56m 40s                        }
+{ ==================================================================== }
+0;
+ { WISHED EDGE LENGTH>0 by DEFAULT }
+ { LENGTH by DEFAULT of MESH EDGES? }
+ 0.2;
+
+Defvar smallradius, greatradius; smallradius=1; greatradius=3;
+
+1;
+ { POINTS vertices of the object }
+ 1;
+ { TYPING of VALUES }
+ { NAME of the POINT or ESCAPE? }
+ Origin; i;
+ { in LEXICON ~>TRANSFO }
+ 1;
+ { X Y Z COORDINATES }
+ { VALUE of X? }
+ 0; 0; 0;
+ { COORPO 'X Y Z of a point' xyz ; }
+ { NAME of the POINT or ESCAPE? }
+
+ Xaxe; i; 1; greatradius; 0; 0;
+ { in LEXICON ~>TRANSFO }
+ { X Y Z COORDINATES }
+ { COORPO 'X Y Z of a point' xyz ; }
+ { NAME of the POINT or ESCAPE? }
+
+ yaxe; i; 1; 0; 1; 0;
+ { in LEXICON ~>TRANSFO }
+ { X Y Z COORDINATES }
+ { COORPO 'X Y Z of a point' xyz ; }
+ { NAME of the POINT or ESCAPE? }
+
+ @;
+
+3;
+ { SURFACES faces of the object }
+ { NAME of the SURFACE or ESCAPE? }
+ torusqu; i;
+ { in LEXICON ~>TRANSFO }
+ 23;
+ { CLOSED SURFACE of a TORUS }
+ smallradius;
+ { RAPCTO 'GENERATOR SMALL CIRCLE RADIUS' reel ; }
+ greatradius;
+ { RAGCTO 'TRAVEL GREAT CIRCLE RADIUS' reel ; }
+ { NAME of POINT }
+ ORIGIN;
+ { in LEXICON ~>POINT }
+ { NAME of POINT }
+ XAXE;
+ { in LEXICON ~>POINT }
+ { NAME of POINT }
+ YAXE;
+ { in LEXICON ~>POINT }
+ { NAME of the SURFACE or ESCAPE? }
+ @;
+ @;
+
+3;
+ { SURFACES faces of the object }
+ { NAME of the SURFACE or ESCAPE? }
+ torustr; i; { in LEXICON ~>TRANSFO }
+ 31;         { TRIANGULATION of a QUADRANGULATION }
+             { NAME of SURFACE }
+ torusqu;    { in LEXICON ~>SURFACE }
+ 1;          { Create an edge S1 S3 }
+ @;
+
+90; { EXPORT to SOFTWARES a PLSVO MESH }
+ 9; { a FILE STL a CLOSED SURFACE TRIANGULATION }
+    { NAME of the SURFACE? }
+ torustr;
+ { NAME of the SURFACE? }
+ @;
+ @;
+
+ 10;
+ { DRAWING of PLSVO meshes }
+ 3;
+ { SURFACE or SURFACES }
+ 3;
+ { ONE SURFACE }
+ { NAME of the SURFACE? }
+ torustr;
+ 75;
+ { Activate TRANSLATION ORBIT ZOOM }
+ 90;
+ { Continue the DRAWING }
+
+close;
+

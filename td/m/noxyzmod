@@ -1,0 +1,5 @@
+variable NoXYZMod 'No de la COMPOSANTE ou MODULE de la VITESSE' entier
+( 1: 'CHOIX de la COMPOSANTE X de la Vitesse'
+, 2: 'CHOIX de la COMPOSANTE Y de la Vitesse'
+, 3: 'CHOIX de la COMPOSANTE Z de la Vitesse'
+, 4: 'CHOIX du |MODULE de la Vitesse|' ) ;

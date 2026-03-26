@@ -1,0 +1,85 @@
+{ ======================================================================== }
+{ Software MEFISTO  : 2014/07/29, Version                                  }
+{ USER's  Name      : Alain Perronnet                                      }
+{ Project Name      : Gross-Pitaevskii Quartic Potential solved by NLSE    }
+{ GPE:                with V=r**2/2 +r**4/4  a quartic Potential           }
+{      i du(t,X)/dt + LAPLACIEN/2 u(t,X) - ( V + Beta |u(t,X)|**2 ) u(t,X) }
+{                   - i OmegaZ (x du(t,X)/dy - y du(t,X)/dx) = 0           }
+{ NLSE:i du(t,X)/dt - alfa LAPLACIEN u(t,X) + N(|u(t,X)|**2) u(t,X)        }
+{                   - i OmegaZ (x du(t,X)/dy - y du(t,X)/dx) = F           }
+{ IMPLICIT time method with A 2nx2n matrix  and Crout A=LDtL               }
+{ Date              : 2014/07/29                                           }
+{ ======================================================================== }
+DefVar Pi;     Pi    = atan(1) * 4;
+DefVar Rho;    Rho   = 1.0;
+DefVar Alfa;   Alfa  =-0.5;    {Laplacian Coefficient}
+DefVar Beta;   Beta  = 1000;   {Non linear term coefficient}
+DefVar OmegaZ; OmegaZ = 1.0;    {Angular velocity /Z}
+DefVar MuTFB;  MuTFB = sqrt( Abs(Beta) / Pi );
+DefVar Vx, r2;
+
+DefFunc NLSECoef(t,x,y,z,ntyobj,nuobj,WaveR,WaveI);
+  r2 = x*x + y*y;
+  Vx = r2 * ( 0.5 + r2 * 0.25 );
+  NLSECoef = -Vx -Beta * ( WaveR**2 + WaveI**2 );
+EndFunc;
+
+{ The initial conditions of the Wave }
+DefFunc InitWave(t,x,y,z,ntyob,nuobjt,partnb);
+  If partnb=1 then          {Real Part}
+    r2 = x*x + y*y;
+    Vx = r2 * ( 0.5 + r2 * 0.25 );
+   If MuTFB > Vx then
+      InitWave = sqrt( Abs( ( MuTFB - Vx ) / Beta ) ); 
+   Else
+      InitWave = 0;
+    EndIf;
+  Else                      {Imaginary Part}
+    InitWave = 0; 
+  EndIf;
+EndFunc;
+
+
+{DATA for the Non Linear Gross Pitaevskii Equation}
+2; { HEAT INPUT DATA }
+  {Surface SQUARE}
+  1;    { Mass density }
+  1;     { Mass density is a Constant }
+  Rho;   { Mass density Value }
+
+  2;    { Alfa Coefficient of Laplacians }
+  3;     { 2D material Homogenous isotropic constant conductivity }
+  Alfa;  { Constant Coefficient of Laplacian }
+
+  6;    { NLSE Coefficient of U: -Vx -Beta * ( WaveR**2 + WaveI**2 ) }
+  -1;        { Function }
+   NLSECoef; { Function Name }
+
+  9;    { Domain Angular Velocity Vector }
+  1;     { ANGULAR VELOCITY VECTOR is CONSTANT }
+  1;     { NBVIAN  Number of ANGULAR VELOCITY COMPONENTS }
+  OmegaZ;{ tableau VAVIAN(1..NBVIAN) Angular Velocity CONSTANT Vector }
+ @;
+
+ {Line BOUNDARY}
+  3;     { Homogeneous Dirichlet Fixation on 2 parts }
+  1;      { Constant }
+  2;      { 2 components }
+  1; 2;   { Each number of Components }
+  0; 0;   { Value of components }
+@;
+
+
+5; {IMPLICIT 2nx2n: Gross-Pitaevskii solved as a NLS Equation }
+   {i du(t,X)/dt +   Laplacian/2 u -Vu -Beta u**3 -i OmegaZ(xdu/dy-ydu/dx)=0}
+   {i du(t,X)/dt -Alfa Laplacian u +N(|u**2|) u   -i OmegaZ(xdu/dy-ydu/dx)=0}
+  0;       { Initial TIME }
+ -1;       { Real & Imaginary Part of INITIAL Wave FUNCTION of SQUARE }
+ InitWave; { NAME of the Initial Wave FUNCTION on the object }
+  10.0;    { Final TIME }
+  0.01;    { Step of TIME }
+  200;     { Number of Wave Vectors to Store }
+    1;     { Crout factorization }
+@;
+
+CLOSE;

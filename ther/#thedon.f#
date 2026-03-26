@@ -1,0 +1,483 @@
+      SUBROUTINE THEDON( NUMIOB, NBOBIN, MNOBIN, NBOBCL, MNOBCL,
+     %                   NBJEUX, MNDOEL,
+     %                   IEMAST, IECHMA, IECOND, IEDILA, IEVIFL, IECOET,
+     %                   IESOIN, IECONT, IEECHA, IESOCL, IESOPO,
+     %                   IETEIN, IEVIIN, IEVIANT,
+     %                   IERR )
+C+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+C BUT :    RETROUVER LES ADRESSES MCN DES DONNEES THERMIQUES ou ONDES
+C -----    DES L(1D) S(2D) V(3D) "OBJETS INTERNES"    DE L'OBJET
+C          DES PLS               "OBJETS AUX LIMITES" DE L'OBJET
+C
+C          RETRIEVE THE MCN ADDRESSES OF HEAT OR WAVE INPUT DATA
+C          OF MATERIALS L(in 1D) S(in 2D) V(in 3D) of the OBJECT
+C          OF BOUNDARY CONDITIONS on P(in 1D) PL(in 2D) PLS(in 3D)
+C
+C SI TESTNL=1 A 4  LE PROBLEME EST CELUI DE LA CHALEUR AVEC 1 INCONNUE
+C SI TESTNL=5,6,7,8 LE PROBLEME EST CELUI DE L'EQUATION COMPLEXE
+C                   NON LINEAIRE DE SCHRODINGER AVEC 2 INCONNUES
+C                   LA TEMPERATURE EST REMPLACEE PAR LA FONCTION D'ONDE
+C                   COMPLEXE QUI SE DECLINE EN PARTIE REELLE ET IMAGINAIRE
+C    TESTNL=5  NLSE Non Linear SCHRODINGER Equations
+C              CALCUL DES VALEURS ET VECTEURS PROPRES(1 SEULE INCONNUE)
+C              CE SP thed1t.f N'EST PAS APPELE DANS CE CAS Cf nlsevvp.f
+C    TESTNL=6  NLSE Non Linear SCHRODINGER Equation  (2 INCONNUES)
+C              INTEGRATION SEMI-IMPLICITE MODIFIEE AVEC MATRICE GLOBALE nxn
+C    TESTNL=7  NLSE Non Linear SCHRODINGER Equations (2 INCONNUES)
+C              INTEGRATION IMPLICITE AVEC MATRICE GLOBALE 2nx2n
+C    TESTNL=8  NLSE Non Linear SCHRODINGER Equations (2 INCONNUES)
+C              INTEGRATION EN TEMPS EXPLICITE SANS MATRICE GLOBALE
+C    TESTNL=9  SCHEMA SEMI-IMPLICITE MODIFIE en TEMPS avec Matrice GLOBALE nxn
+C              pour l'equation de GROSS-PITAEVSKI avec VITESSEANGULAIRE
+C
+C ENTREES:
+C --------
+C NUMIOB : NUMERO MINIMAL DU PLSV DANS LA DEFINITION DE L'OBJET
+C NBOBIN : NOMBRE DE VOLUMES en 3D, SURFACES en 2D DE L'OBJET
+C MNOBIN : ADRESSE MCN DU DEBUT DU TABLEAU NUOBIN (PARTIE DE TOPOLOGIE)
+C NBOBCL : NOMBRE DE PLS en 3D, PL en 2D DE L'OBJET
+C MNOBCL : ADRESSE MCN DU DEBUT DU TABLEAU NUOBCL (PARTIE DE TOPOLOGIE)
+C NBJEUX : NOMBRE DE JEUX DE DONNEES
+C          =1 en standard ou valeur par defaut
+C          >1 pour un POLYNOME P(Lambda) de VALEURS PROPRES a CALCULER
+C MNDOEL : LES 4 ADRESSES MCN DES TABLEAUX DES ADRESSES DES
+C          TABLEAUX DECRIVANT LES DONNEES THERMIQUES DES PLSV de l'OBJET
+C
+C SORTIES:
+C --------
+C IEMAST : NOMBRE DE TMS MASSE            DES SV DE L'OBJET RETROUVES
+C IECHMA : NOMBRE DE TMS CHALEURMASSIQUE  DES SV DE L'OBJET RETROUVES
+C IECOND : NOMBRE DE TMS CONDUCTIVITE     DES SV DE L'OBJET RETROUVES
+C IEDILA : NOMBRE DE TMS DILATATION       DES SV DE L'OBJET RETROUVES
+C IEVIFL : NOMBRE DE TMS VITESSEFLUIDE    DES SV DE L'OBJET RETROUVES
+C IECOET : NOMBRE DE TMS COEFTEMPERATURE  DES SV DE L'OBJET RETROUVES
+C                     ou COEFNLSE
+C IESOIN : NOMBRE DE TMS SOURCE "INTERNE" DES SV DE L'OBJET RETROUVES
+C
+C IECONT : NOMBRE DE TMS CONTACT              DES PLS DE L'OBJET RETROUVES
+C IEECHA : NOMBRE DE TMS ECHANGE              DES PLS DE L'OBJET RETROUVES
+C IESOCL : NOMBRE DE TMS SOURCE "AUX LIMITES" DES PLS DE L'OBJET RETROUVES
+C IESOPO : NOMBRE DE TMS SOURCE               DES P   DE L'OBJET RETROUVES
+C
+C IETEIN : NOMBRE DE TMS TEMPERINIT ou ONDEINIT DES PLSV DE L'OBJET RETROUVES
+C IEVIIN : NOMBRE DE TMS VITESSEINIT            DES PLSV DE L'OBJET RETROUVES
+C IEVIANT: NOMBRE DE TMS VITESSEANGULAIRE       DES PLSV DE L'OBJET RETROUVES
+C
+C IERR   : 0 SI PAS D'ERREUR, >0 SINON
+C ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+C AUTEUR : ALAIN PERRONNET  ANALYSE NUMERIQUE UPMC PARIS    FEVRIER 1999
+C2345X7..............................................................012
+      include"./incl/langue.inc"
+      include"./incl/gsmenu.inc"
+      include"./incl/ntmnlt.inc"
+      include"./incl/donthe.inc"
+      include"./incl/cnonlin.inc"
+C
+      include"./incl/pp.inc"
+      COMMON            MCN(MOTMCN)
+      COMMON / UNITES / LECTEU, IMPRIM, NUNITE(30)
+      INTEGER           NUMIOB(4), MNDOEL(4)
+C
+      CHARACTER*80      KNOM, NOMTS
+      CHARACTER*10      KNM
+      CHARACTER*1       KNOJEU
+      CHARACTER*2       KAJOUT
+C
+C     ============================
+C     BOUCLE SUR LES SV "INTERNES"
+C     ============================
+      IERR   = 0
+C     NOMBRE DE TMS RETROUVES SUR LES PLSV DE L'OBJET
+      IEMAST = 0
+      IECHMA = 0
+      IECOND = 0
+      IEDILA = 0
+      IEVIFL = 0
+      IECOET = 0
+      IESOIN = 0
+      IEECHA = 0
+      IECONT = 0
+      IESOCL = 0
+      IESOPO = 0
+      IETEIN = 0
+      IEVIIN = 0
+      IEVIANT= 0
+C
+C     POINTEUR SUR LE DEBUT DE OBIN
+      MN = MNOBIN - 2
+C
+      DO 50 I=1,NBOBIN
+C
+C        LE TYPE DU LSV INTERNE I
+         MN   = MN + 2
+         NYOB = MCN( MN )
+         NUOB = MCN( MN + 1 )
+C
+C        LE NOM KNM DU SV
+C        LE NOM DU SV DE TYPE KNM ET DE NO NUOB
+C        LE PREFIXE NOMTS "PLSV>NOM>"
+C        LE NUMERO DU CARACTERE DERRIERE LE DERNIER > DE NOMTS
+         CALL NMPLSV( NYOB, NUOB,  KNM, KNOM, NOMTS, L )
+C
+         IF( NYOB .LE. 1 ) THEN
+C           POINT OBJET INTERNE => SA DIMENSION EST <=1 => ERREUR
+C           RECUPERATION DANS KNOM DU NOM DU PLSV DE TYPE KNM ET DE NO NUOB
+            NBLGRC(NRERR) = 2
+            KERR(1) = KNM // ' : ' // KNOM
+            IF( LANGAG .EQ. 0 ) THEN
+               KERR(2) = 'NE PEUT ETRE INTERNE'
+            ELSE
+               KERR(2) = 'CAN''T BE INTERNAL'
+            ENDIF
+            CALL LEREUR
+            IERR = IERR + 1
+            GOTO 50
+         ENDIF
+C
+C        OUVERTURE DU SV INTERNE I
+C        =========================
+         CALL LXNLOU( NTMN(NYOB), NUOB, NTOB, MNOB )
+         IF( NTOB .LE. 0 ) THEN
+            NBLGRC(NRERR) = 2
+            IF( LANGAG .EQ. 0 ) THEN
+               KERR(1) = 'ERREUR: ' // KNOM
+               KERR(2) = KNM // ' INTERNE INCONNU'
+            ELSE
+               KERR(1) = 'ERROR: ' // KNOM
+               KERR(2) = KNM // ' INTERNAL UNKNOWN'
+            ENDIF
+            CALL LEREUR
+            IERR = IERR + 1
+            GOTO 50
+         ENDIF
+C
+C        BOUCLE SUR LES JEUX DE DONNEES THERMIQUES DU SV INTERNE I
+C        =========================================================
+         MN1 = MNDOEL( NYOB ) + MXDOTH*NBJEUX * ( NUOB - NUMIOB(NYOB) )
+     %       - MXDOTH - 1
+         DO 20 K = 1, NBJEUX
+C
+C           NO du JEU de 1 a NBJEUX=DEGRE+1 de P(Lambda)
+            NOJEU = K
+            WRITE( KNOJEU, '(I1)' ) NOJEU
+            KAJOUT = '"' // KNOJEU
+            IF( NBJEUX .LE. 1 ) KAJOUT = '  '
+C
+C           L'ADRESSE DU DEBUT DES TABLEAUX DES DONNEES DU SV
+C           -------------------------------------------------
+ccc            MN1 = MN1 + MXDOTH * K * ( NUOB - NUMIOB(NYOB) ) - 1
+            MN1 = MN1 + MXDOTH
+C
+C           OUVERTURE DU TABLEAU MASSE
+C           --------------------------
+            CALL LXTSOU( NTOB, 'MASSE'//KAJOUT, NT, MCN(MN1+LPMAST) )
+            IF( NT .GT. 0 ) THEN
+               IEMAST = IEMAST + 1
+               NOMTS(L:80)='MASSE'//KAJOUT
+               CALL AFTSTD( NOMTS )
+            ENDIF
+C
+C           OUVERTURE DU TABLEAU CHALEURMASSIQUE
+C           ------------------------------------
+            CALL LXTSOU( NTOB, 'CHALEURMASSIQUE'//KAJOUT,
+     %                   NT, MCN(MN1+LPCHMA) )
+            IF( NT .GT. 0 ) THEN
+               IECHMA = IECHMA + 1
+               NOMTS(L:80)='CHALEURMASSIQUE'//KAJOUT
+               CALL AFTSTD( NOMTS )
+            ENDIF
+C
+C           OUVERTURE DU TABLEAU CONDUCTIVITE
+C           ---------------------------------
+            CALL LXTSOU( NTOB, 'CONDUCTIVITE'//KAJOUT,
+     %                   NT, MCN(MN1+LPCOND) )
+            IF( NT .GT. 0 ) THEN
+               IECOND = IECOND + 1
+               NOMTS(L:80)='CONDUCTIVITE'//KAJOUT
+               CALL AFTSTD( NOMTS )
+            ENDIF
+C
+            IF( TESTNL .LT. 5 ) THEN
+C
+C              OUVERTURE DU TABLEAU SOURCE INTERNE FOmega
+C              ------------------------------------------
+               CALL LXTSOU( NTOB, 'SOURCE'//KAJOUT, NT, MCN(MN1+LPSOUR))
+               IF( NT .GT. 0 ) THEN
+                  IESOIN = IESOIN + 1
+                  NOMTS(L:80)='SOURCE'//KAJOUT
+                  CALL AFTSTD( NOMTS )
+               ENDIF
+C
+            ELSE
+C
+C              OUVERTURE DU TABLEAU FORCE INTERNE FiOmega
+C              ------------------------------------------
+               CALL LXTSOU( NTOB, 'FORCE'//KAJOUT, NT, MCN(MN1+LPSOUR))
+               IF( NT .GT. 0 ) THEN
+                  IESOIN = IESOIN + 1
+                  NOMTS(L:80)='FORCE'//KAJOUT
+                  CALL AFTSTD( NOMTS )
+               ENDIF
+C
+            ENDIF
+C
+C           OUVERTURE DU TABLEAU VITESSEFLUIDE
+C           ----------------------------------
+            CALL LXTSOU( NTOB, 'VITESSEFLUIDE'//KAJOUT,
+     %                   NT, MCN(MN1+LPVIFL) )
+            IF( NT .GT. 0 ) THEN
+               IEVIFL = IEVIFL + 1
+               NOMTS(L:80)='VITESSEFLUIDE'//KAJOUT
+               CALL AFTSTD( NOMTS )
+            ENDIF
+C
+            IF( TESTNL .LT. 5 ) THEN
+C
+C              OUVERTURE DU TABLEAU COEFTEMPERATURE
+C              ------------------------------------
+               CALL LXTSOU( NTOB, 'COEFTEMPERATURE'//KAJOUT,
+     %                      NT, MCN(MN1+LPCOET) )
+               IF( NT .GT. 0 ) THEN
+                  IECOET = IECOET + 1
+                  NOMTS(L:80)='COEFTEMPERATURE'//KAJOUT
+                  CALL AFTSTD( NOMTS )
+               ENDIF
+C
+            ELSE
+C
+C              OUVERTURE DU TABLEAU COEFNLSE
+C              -----------------------------
+               CALL LXTSOU( NTOB, 'COEFNLSE'//KAJOUT,
+     %                      NT, MCN(MN1+LPCOET) )
+               IF( NT .GT. 0 ) THEN
+                  IECOET = IECOET + 1
+                  NOMTS(L:80)='COEFNLSE'//KAJOUT
+                  CALL AFTSTD( NOMTS )
+               ENDIF
+C
+            ENDIF
+C
+C           OUVERTURE DU TABLEAU DILATATION
+C           -------------------------------
+            CALL LXTSOU( NTOB, 'DILATATION'//KAJOUT,
+     %                   NT, MCN(MN1+LPDILA) )
+            IF( NT .GT. 0 ) THEN
+               IEDILA = IEDILA + 1
+               NOMTS(L:80)='DILATATION'//KAJOUT
+               CALL AFTSTD( NOMTS )
+            ENDIF
+C
+            IF( TESTNL .LT. 5 ) THEN
+C
+C              OUVERTURE DU TABLEAU TEMPERINIT
+C              -------------------------------
+               CALL LXTSOU( NTOB, 'TEMPERINIT'//KAJOUT,
+     %                      NT, MCN(MN1+LPTEIN) )
+               IF( NT .GT. 0 ) THEN
+                  IETEIN = IETEIN + 1
+                  NOMTS(L:80)='TEMPERINIT'//KAJOUT
+                  CALL AFTSTD( NOMTS )
+               ENDIF
+C
+            ELSE
+C
+C              OUVERTURE DU TABLEAU ONDEINIT
+C              -----------------------------
+               CALL LXTSOU( NTOB, 'ONDEINIT'//KAJOUT,
+     %                      NT, MCN(MN1+LPTEIN) )
+               IF( NT .GT. 0 ) THEN
+                  IETEIN = IETEIN + 1
+                  NOMTS(L:80)='ONDEINIT'//KAJOUT
+                  CALL AFTSTD( NOMTS )
+               ENDIF
+C
+            ENDIF
+C
+C           OUVERTURE DU TABLEAU VITESSEINIT
+C           --------------------------------
+            CALL LXTSOU( NTOB, 'VITESSEINIT'//KAJOUT,
+     %                   NT, MCN(MN1+LPVIIN) )
+            IF( NT .GT. 0 ) THEN
+               IEVIIN = IEVIIN + 1
+               NOMTS(L:80)='VITESSEINIT'//KAJOUT
+               CALL AFTSTD( NOMTS )
+            ENDIF
+
+            IF( TESTNL .GE. 6 ) THEN
+C
+C              OUVERTURE DU TABLEAU VITESSEANGULAIRE
+C              -------------------------------------
+               CALL LXTSOU( NTOB, 'VITESSEANGULAIRE'//KAJOUT,
+     %                      NT, MCN(MN1+LPVIANT) )
+               IF( NT .GT. 0 ) THEN
+                  IEVIANT = IEVIANT + 1
+                  NOMTS(L:80)='VITESSEANGULAIRE'//KAJOUT
+                  CALL AFTSTD( NOMTS )
+               ENDIF
+
+            ENDIF
+C
+ 20      CONTINUE
+C
+ 50   CONTINUE
+C
+C     =========================================
+C     BOUCLE SUR LES PLS AUX LIMITES DE L'OBJET
+C     =========================================
+C     POINTEUR SUR LE DEBUT DE OBCL
+      MN = MNOBCL - 2
+C
+      DO 90 I=1,NBOBCL
+C
+C        LE TYPE DE PLS DU PLS I
+         MN   = MN + 2
+         NYOB = MCN( MN )
+         NUOB = MCN( MN + 1 )
+C
+C        LE NOM KNM DU PLS
+C        LE NOM DU PLS DE TYPE KNM ET DE NO NUOB
+C        LE PREFIXE "PLSV>NOM>"
+         CALL NMPLSV( NYOB, NUOB,  KNM, KNOM, NOMTS, L )
+C
+C        OUVERTURE DU PLS I
+         CALL LXNLOU( NTMN(NYOB), NUOB, NTOB, MNOB )
+         IF( NTOB .LE. 0 ) THEN
+            NBLGRC(NRERR) = 3
+            IF( LANGAG .EQ. 0 ) THEN
+               KERR(1) = 'ERREUR: AUX LIMITES de'
+               KERR(2) = KNOM
+               KERR(3) = KNM // ' INCONNU'
+            ELSE
+               KERR(1) = 'ERROR: ON BOUNDARY of'
+               KERR(2) = KNOM
+               KERR(3) = KNM // ' UNKNOWN'
+            ENDIF
+            CALL LEREUR
+            IERR = IERR + 1
+            GOTO 90
+         ENDIF
+C
+C        BOUCLE SUR LES JEUX DE DONNEES THERMIQUES DU PLS INTERNE I
+C        ==========================================================
+         MN1 = MNDOEL( NYOB ) + MXDOTH*NBJEUX * ( NUOB - NUMIOB(NYOB) )
+     %       - MXDOTH - 1
+         DO 70 K = 1, NBJEUX
+C
+C           NO du JEU de 1 a NBJEUX=DEGRE+1 de P(Lambda)
+            NOJEU = K
+            WRITE( KNOJEU, '(I1)' ) NOJEU
+            KAJOUT = '"' // KNOJEU
+            IF( NBJEUX .LE. 1 ) KAJOUT = '  '
+C
+C           L'ADRESSE DU DEBUT DES DONNEES DU PLS I
+ccc            MN1 = MNDOEL( NYOB )
+ccc            MN1 = MN1 + MXDOTH * K * ( NUOB - NUMIOB(NYOB) ) - 1
+            MN1 = MN1 + MXDOTH
+C
+C           OUVERTURE DU TABLEAU ECHANGE
+C           ----------------------------
+            CALL LXTSOU( NTOB, 'ECHANGE'//KAJOUT, NT, MCN(MN1+LPECHA) )
+            IF( NT .GT. 0 ) THEN
+               IEECHA = IEECHA + 1
+               NOMTS(L:80)='ECHANGE'//KAJOUT
+               CALL AFTSTD( NOMTS )
+            ENDIF
+C
+            IF( TESTNL .LT. 5 ) THEN
+C
+C              OUVERTURE DU TABLEAU SOURCE FRONTALIERE FGamma
+C              ----------------------------------------------
+               CALL LXTSOU( NTOB, 'SOURCE'//KAJOUT, NT, MCN(MN1+LPSOUR))
+               IF( NT .GT. 0 ) THEN
+C                 NOMBRE DE SOURCES AUX PLS DE L'OBJET
+                  IESOCL = IESOCL + 1
+                  IF( NYOB .EQ. 1 ) THEN
+C                    NOMBRE DE SOURCES PONCTUELLES DE L'OBJET
+                     IESOPO = IESOPO + 1
+                  ENDIF
+                  NOMTS(L:80)='SOURCE'//KAJOUT
+                  CALL AFTSTD( NOMTS )
+               ENDIF
+C
+            ELSE
+C
+C              OUVERTURE DU TABLEAU FORCE FRONTALIERE FiGamma
+C              ----------------------------------------------
+               CALL LXTSOU( NTOB, 'FORCE'//KAJOUT, NT, MCN(MN1+LPSOUR))
+               IF( NT .GT. 0 ) THEN
+C                 NOMBRE DE FORCES AUX PLS DE L'OBJET
+                  IESOCL = IESOCL + 1
+                  IF( NYOB .EQ. 1 ) THEN
+C                    NOMBRE DE FORCES PONCTUELLES DE L'OBJET
+                     IESOPO = IESOPO + 1
+                  ENDIF
+                  NOMTS(L:80)='FORCE'//KAJOUT
+                  CALL AFTSTD( NOMTS )
+               ENDIF
+C
+            ENDIF
+C
+            IF( TESTNL .LT. 5 ) THEN
+C
+C              OUVERTURE DU TABLEAU CONTACT Condition Dirichlet
+C              ------------------------------------------------
+               CALL LXTSOU( NTOB,'CONTACT'//KAJOUT, NT, MCN(MN1+LPCONT))
+               IF( NT .GT. 0 ) THEN
+                  IECONT = IECONT + 1
+                  NOMTS(L:80)='CONTACT'//KAJOUT
+                  CALL AFTSTD( NOMTS )
+               ENDIF
+C
+            ELSE
+C
+C              OUVERTURE DU TABLEAU FIXATION Condition Dirichlet
+C              -------------------------------------------------
+               CALL LXTSOU(NTOB,'FIXATION'//KAJOUT, NT, MCN(MN1+LPCONT))
+               IF( NT .GT. 0 ) THEN
+                  IECONT = IECONT + 1
+                  NOMTS(L:80)='FIXATION'//KAJOUT
+                  CALL AFTSTD( NOMTS )
+               ENDIF
+C
+            ENDIF
+C
+            IF( TESTNL .LT. 5 ) THEN
+C
+C              OUVERTURE DU TABLEAU TEMPERINIT FRONTALIERE
+C              -------------------------------------------
+               CALL LXTSOU( NTOB, 'TEMPERINIT'//KAJOUT,
+     %                      NT,   MCN(MN1+LPTEIN))
+               IF( NT .GT. 0 ) THEN
+                  IETEIN = IETEIN + 1
+                  NOMTS(L:80)='TEMPERINIT'//KAJOUT
+                  CALL AFTSTD( NOMTS )
+               ENDIF
+C
+            ELSE
+C
+C              OUVERTURE DU TABLEAU ONDEINIT FRONTALIERE
+C              -----------------------------------------
+               CALL LXTSOU( NTOB, 'ONDEINIT'//KAJOUT,
+     %                      NT,   MCN(MN1+LPTEIN) )
+               IF( NT .GT. 0 ) THEN
+                  IETEIN = IETEIN + 1
+                  NOMTS(L:80)='ONDEINIT'//KAJOUT
+                  CALL AFTSTD( NOMTS )
+               ENDIF
+C
+            ENDIF
+C
+C           OUVERTURE DU TABLEAU VITESSEINIT FRONTALIERE
+C           --------------------------------------------
+            CALL LXTSOU(NTOB,'VITESSEINIT'//KAJOUT, NT, MCN(MN1+LPVIIN))
+            IF( NT .GT. 0 ) THEN
+               IEVIIN = IEVIIN + 1
+               NOMTS(L:80)='VITESSEINIT'//KAJOUT
+               CALL AFTSTD( NOMTS )
+            ENDIF
+ 70      CONTINUE
+C
+ 90   CONTINUE
+C
+      RETURN
+      END

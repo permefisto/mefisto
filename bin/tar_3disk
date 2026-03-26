@@ -1,0 +1,89 @@
+#!/bin/bash
+# Alain Perronnet               7 Septembre 2006
+echo
+echo =======================================================================
+echo SAUVEGARDE Linux  sur 3 disquettes A: des librairies de $MEFISTO
+echo =======================================================================
+cd $MEFISTO
+rm *.tar.gz
+
+tar cvf LISEZ.tar LISEZ*;       gzip LISEZ.tar
+tar cvf bin.tar  bin*;          gzip bin.tar
+tar cvf doca.tar doca;          gzip doca.tar
+tar cvf docf.tar docf;          gzip docf.tar
+tar cvf incl.tar incl;          gzip incl.tar
+tar cvf td.tar   td;            gzip td.tar
+tar cvf test.tar test;          gzip test.tar
+#tar cvf testplus.tar testplus;  gzip testplus.tar
+tar cvf elas.tar elas/*.f;      gzip elas.tar
+tar cvf flui.tar flui/*.f;      gzip flui.tar
+tar cvf gcns.tar gcns/*.f;      gzip gcns.tar
+tar cvf mail.tar mail/*.f;      gzip mail.tar
+tar cvf prpr.tar prpr/*.f;      gzip prpr.tar
+tar cvf reso.tar reso/*.f;      gzip reso.tar
+tar cvf ther.tar ther/*.f;      gzip ther.tar
+tar cvf util.tar util/*.f;      gzip util.tar
+tar cvf xvuef.tar xvue/*.f;     gzip xvuef.tar
+tar cvf xvuec.tar xvue/*.c;     gzip xvuec.tar
+#tar cvf xvuasm.tar  xvue/*.*.[as]m;  gzip xvuasm.tar
+#tar cvf utilasm.tar util/*.*.[as]m;  gzip utilasm.tar
+
+ls -l *.tar.gz
+echo
+echo INTRODUIRE la disquette 1/3 dans le lecteur A:
+echo ==============================================
+echo ATTENTION: La disquette 1/3 sera reformatee!
+echo Puis taper un caractere pour lancer le transfert
+read bidon
+
+echo Formatage de la disquette 1/3 sur A:
+mformat a:
+echo Transfert sur a: elas incl mail prpr reso ther
+mcopy  elas.tar.gz  a:elas.tgz
+mcopy  incl.tar.gz  a:incl.tgz
+mcopy  mail.tar.gz  a:mail.tgz
+mcopy  prpr.tar.gz  a:prpr.tgz
+mcopy  reso.tar.gz  a:reso.tgz
+mcopy  ther.tar.gz  a:ther.tgz
+mdir a:
+
+echo
+echo CHANGER la disquette 1/3 par la disquette 2/3 dans le lecteur A:
+echo ================================================================
+echo ATTENTION: La disquette 2/3 sera reformatee!
+echo Puis taper un caractere pour lancer le transfert
+read bidon
+echo Formatage de la disquette 2/3 sur A:
+mformat a:
+echo Transfert sur a: flui gcns LISEZ util bin bin/tgz
+mcopy  flui.tar.gz     a:flui.tgz
+mcopy  gcns.tar.gz     a:gcns.tgz
+mcopy  LISEZ.tar.gz    a:LISEZ.tgz
+mcopy  util.tar.gz     a:util.tgz
+mcopy  bin.tar.gz      a:bin.tgz
+mcopy  bin/tgz         a:tgz
+mcopy  bin/targz       a:targz
+mdir a:
+
+echo
+echo CHANGER la disquette 2/3 par la disquette 3/3 dans le lecteur A:
+echo ================================================================
+echo ATTENTION: La disquette 3/3 sera reformatee!
+echo Puis taper un caractere pour lancer le transfert
+read bidon
+echo Formatage de la disquette 3/3 sur A:
+mformat a:
+echo Transfert sur a: doc td xvuec xvuef test testplus
+mcopy  doca.tar.gz     a:doca.tgz
+mcopy  docf.tar.gz     a:docf.tgz
+mcopy  td.tar.gz       a:td.tgz
+mcopy  xvuec.tar.gz    a:xvuec.tgz
+mcopy  xvuef.tar.gz    a:xvuef.tgz
+mcopy  test.tar.gz     a:test.tgz
+#mcopy  testplus.tar.gz a:testplus.tgz
+#mcopy  xvuasm.tar.gz   a:xvuasm.tgz
+#mcopy  utilasm.tar.gz  a:utilasm.tgz
+mdir a:
+echo
+echo FIN du TRANSFERT de $MEFISTO sur les 3 disquettes
+echo ===========================================================

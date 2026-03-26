@@ -1,0 +1,46 @@
+      SUBROUTINE TRIACOUL2DBORD( XY, COUL, NC )
+C+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+C BUT :    TRACE LE TRIANGLE DE SOMMETS XY ET DE COULEURS COUL
+C -----    SELON LES COULEURS INTERMEDIAIRES  (PALETTE 11 RECOMMANDEE)
+C          AINSI QUE LES ARETES DU TRIANGLE SELON LA COULEUR NC
+C          ATTENTION (X,Y) EN COORDONNEES OBJETS 2D
+
+C ENTREES:
+C --------
+C XY     : 2 COORDONNEES DES 3 SOMMETS
+C COUL   : NUMERO REEL DE LA COULEUR AUX 3 SOMMETS DU TRIANGLE
+C          REEL DE VALEURS COMPRISES ENTRE N1COUL ET NDCOUL
+C          (cf ~/incl/trvari.inc)
+C NC     : COULEUR DE TRACE DES 3 ARETES
+C          SI NC<0 PAS DE TRACE DU BORD
+C+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+C AUTEUR : PERRONNET ALAIN ANALYSE NUMERIQUE UPMC  PARIS    OCTOBRE 1994
+C2345X7..............................................................012
+      include"./incl/minint.inc"
+      REAL       XY(2,3), COUL(3)
+      INTEGER*2  XYPX(2,4)
+
+C     TRANSFORMATION EN PIXELS DANS LA FENETRE XV
+      DO I=1,3
+         NX = NUPXEX( XY(1,I) )
+         NY = NUPXEY( XY(2,I) )
+C        SI LE NUMERO PIXEL EST INCORRECT ABANDON DU TRACE DE LA FACE
+         IF( NX .EQ. MININT .OR. NY .EQ. MININT ) RETURN
+         XYPX(1,I) = INT2( NX )
+         XYPX(2,I) = INT2( NY )
+      ENDDO
+
+C     TRACE EFFECTIF DU REMPLISSAGE DU TRIANGLE SELON DES COULEURS PROGRESSIVES
+      CALL TRIACOUL( XYPX, COUL )
+
+C     TRACE SELON LA COULEUR NC DES 3 ARETES DU TRIANGLE
+      IF( NC .GE. 0 ) THEN
+         CALL XVCOULEUR( NC )
+         XYPX(1,4) = XYPX(1,1)
+         XYPX(2,4) = XYPX(2,1)
+         I = 4
+         CALL XVTRAITS( I, XYPX )
+      ENDIF
+
+      RETURN
+      END

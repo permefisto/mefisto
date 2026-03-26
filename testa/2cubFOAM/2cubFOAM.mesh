@@ -1,0 +1,79 @@
+{ ==================================================================== }
+{ MEFISTO Software     : March 7-th, 2011 Version                      }
+{ USER's Name          : Alain Perronnet                               }
+{ Project Name         : 2cub                                          }
+{ Date                 :  8/03/11   05h 26m 49s                        }
+{ ==================================================================== }
+
+
+ 4;
+ { VOLUMES materials of the object }
+ { NAME of the VOLUME or ESCAPE? }
+ 2cub;
+ { NAME of TRANSFORMATION }
+ i;
+ { in LEXICON ~>TRANSFO }
+ 11;
+ { RECTANGULAR HEXAHEDRON WITH EDGES of LENGTH 1 }
+ 2;
+ { NBINHX 'NUMBER of X-edges' entier ; }
+ 1;
+ { NBINHY 'NUMBER of Y-edges' entier ; }
+ 1;
+ { NBINHZ 'NUMBER of Z-edges' entier ; }
+ { NAME of the VOLUME or ESCAPE? }
+ @;
+
+
+ 3;
+ { SURFACES faces of the object }
+ { NAME of the SURFACE or ESCAPE? }
+ FrontAndBack; i;
+ { in LEXICON ~>TRANSFO }
+ 37;
+ { EXTRACT SURFACE FROM FACES OF A VOLUME }
+ { NAME of VOLUME }
+ 2cub;
+ { in LEXICON ~>VOLUME }
+ { NAME of FUNCTION }
+ DefFunc FAB(x,y,z); FAB=x<0.001 or x>1.999; EndFunc;
+ FAB;
+ { in LEXICON ~>FONCTION }
+ 1;
+ { boundary faces }
+ { NAME of the SURFACE or ESCAPE? }
+ @;
+
+
+ 5;
+ { NAME of the OBJECT or ESCAPE? }
+ 2cub;
+ 0;
+ { 1D or 2D or 3D classic }
+ 2;
+ { NBDOBJ 'number of Points Lines Surfaces Volumes Objects of the object' }
+ { POINT or LINE or SURFACE or VOLUME or OBJECT? }
+ V; 2cub;
+ { POINT or LINE or SURFACE or VOLUME or OBJECT? }
+ S; FrontAndBack;
+ { NTYOBJ(1..NBDOBJ) 'name of type PLSVO & PLSVO''s name' typeobjet ; }
+ { NAME of the OBJECT or ESCAPE? }
+ @;
+ 7;
+ { INTERPOLATION nodes of the mesh }
+ { NAME of the OBJECT to be INTERPOLATED? }
+ 2cub;
+ 3;
+ { LAGRANGE of DEGREE 1 }
+ { NAME of the OBJECT to be INTERPOLATED? }
+ @;
+ @;
+
+
+ 95;
+ { Files OpenFOAM of an OBJECT }
+ { NAME of the OBJECT? }
+ 2cub;
+ @;
+
+CLOSE;

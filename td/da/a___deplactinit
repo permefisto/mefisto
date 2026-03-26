@@ -1,0 +1,15 @@
+deftms ~>>>DEPLACTINIT 'initial displacement of nodes'
+variable muet DATE 'date of creation of the TMS'   reel2  ;
+variable muet NUTD 'number of the descriptor array TD' entier ; 
+variable      LTDEP0 'type of initial displacement' entier
+( 1 : 'constant initial displacement'
+, 2 : 'initial displacement already stored'
+, 3 : 'Displacement at time0-dt & time0 stored'
+,-1 : 'function initial displacement'
+, 0 : 'delete this initial displacement' ) ;
+cas LTDEP0
+1 : variable NBDEP0 'Number of components of displacement at a node' entier;
+    tableau  VADEP0(1..NBDEP0) 'values of the components of displacement' reel;
+-1: variable NFDEP0 'name of function initial displacement' ^~>FONCTION ;
+fincas ;   
+fintms ;

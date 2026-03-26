@@ -1,0 +1,86 @@
+      SUBROUTINE MODVITERR( NDIM,   NBNOVI,   NBVECT, VITEXA, VXVYVZ,
+     %                      ERRVIT, ERRMVMIN, NOEMIN, NCAMIN,
+     %                              ERRMVMAX, NOEMAX, NCAMAX )
+C+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+C BUT :    CALCULER LE TABLEAU DE L'ERREUR SUR LE MODULE DES VITESSES
+C -----    AUX NOEUDS DU MAILLAGE C-A-D
+C          AUX SOMMETS POUR  BREZZI-FORTIN et TAYLOR-HOOD
+C          + AUX BARYCENTRES DES EF POUR BREZZI-FORTIN
+C          + AUX MILIEUX DES ARETES POUR TAYLOR-HOOD
+C               (SOMME ERREURS AUX 2 SOMMETS)/2
+C
+C ENTREES:
+C --------
+C NDIM   : DIMENSION DE L'ESPACE DE L'OBJET (2 OU 3)
+C NBNOVI : NOMBRE DE NOEUDS SUPPORT DE LA VITESSE
+C NBVECT : NOMBRE TOTAL DE VECTEURS VITESSE PRESSION
+C VITEXA : LA VITESSE EXACTE   EN CHAQUE NONOEUD NOTEMPS NOCOMPOSANTE
+C VXVYVZ : LA VITESSE CALCULEE EN CHAQUE NONOEUD NOTEMPS NOCOMPOSANTE
+C
+C SORTIES:
+C --------
+C ERRVIT : ERREUR SQRT( Som (|VITESSE|Exacte -Calculee(Temps,Noeuds,nc))**2 )
+C                       nc=1,...,ndim
+C ERRMVMIN: ERREUR MINIMALE SUR |VITESSE|(Temps,Noeuds)
+C NOEMIN : NUMERO DU NOEUD   DE L'ERREUR MINIMALE SUR |VITESSE|(Temps,Noeuds)
+C NCAMIN : NUMERO DU VECTEUR DE L'ERREUR MINIMALE SUR |VITESSE|(Temps,Noeuds)
+C
+C ERRMVMAX: ERREUR MAXIMALE SUR |VITESSE|(Temps,Noeuds)
+C NOEMAX : NUMERO DU NOEUD   DE L'ERREUR MAXIMALE SUR |VITESSE|(Temps,Noeuds)
+C NCAMAX : NUMERO DU VECTEUR DE L'ERREUR MAXIMALE SUR |VITESSE|(Temps,Noeuds)
+C+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+C AUTEUR : ALAIN PERRONNET TEXAS A & M UNIVERSITY at QATAR  FEVRIER 2012
+C234567...............................................................12
+      DOUBLE PRECISION  VITEXA(NBNOVI,NBVECT,NDIM),
+     %                  VXVYVZ(NBNOVI,NBVECT,NDIM),
+     %                  ERRVIT(NBNOVI,NBVECT)
+      DOUBLE PRECISION  MVITEX, MVITCA, ERRMV, ERRMVMIN, ERRMVMAX
+      INTRINSIC         SQRT
+C
+C     INITIALISATION DU MIN MAX
+      NOEMIN = 1
+      NCAMIN = 1
+      ERRMVMIN = 1D100
+C
+      NOEMAX = 1
+      NCAMAX = 1
+      ERRMVMAX =-1D100
+C
+      DO K=1,NBVECT
+C
+C        LE TEMPS K
+C        TEMPS = TIMES(K)
+C
+         DO I=1,NBNOVI
+C
+C           CARRE DU MODULE DE LA VITESSE AU NOEUD ET TEMPS
+            MVITEX = VITEXA(I,K,1)**2 + VITEXA(I,K,2)**2
+            MVITCA = VXVYVZ(I,K,1)**2 + VXVYVZ(I,K,2)**2
+            IF( NDIM .EQ. 3 ) THEN
+               MVITEX = MVITEX + VITEXA(I,K,3)**2
+               MVITCA = MVITCA + VXVYVZ(I,K,3)**2
+            ENDIF
+C
+C           ERREUR AU NOEUD I AU TEMPS K DE |VITESSE|
+            MVITEX = SQRT(MVITEX)
+            MVITCA = SQRT(MVITCA)
+            ERRMV  = MVITEX - MVITCA
+            ERRVIT(I,K) = ERRMV
+C
+C           MIN ET MAX AU NOEUD
+            IF( ERRMV .LT. ERRMVMIN ) THEN
+               ERRMVMIN = ERRMV
+               NOEMIN = I
+               NCAMIN = K
+            ELSE IF( ERRMV .GT. ERRMVMAX ) THEN
+               ERRMVMAX = ERRMV
+               NOEMAX = I
+               NCAMAX = K
+            ENDIF
+C
+         ENDDO
+C
+      ENDDO
+C
+      RETURN
+      END

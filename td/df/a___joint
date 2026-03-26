@@ -1,0 +1,15 @@
+deftms ~>>>JOINT 'les lignes communes a plusieurs objets'
+variable muet DATE   'date de creation du tableau'   reel2 ;
+variable muet NUTD   'numero du tableau descripteur' entier ;  
+variable NBJOIN 'nombre de joints'   entier ;
+variable MXNOJO 'nombre maximal de noeuds dans un meme joint' entier ;
+tableau  NBOBJE(1..NBJOIN,1..4) 
+       'pour chaque joint les types et numeros des objets associes au joint'
+         entier ;
+tableau  NBNUJO(1..NBJOIN,1..2) 
+       'pour chaque joint le nombre des noeuds associes au joint' entier ;
+tableau  NUNOJO(1..NBJOIN,1..2,1..MXNOJO)                                          
+       'pour chaque joint les numeros des noeuds associes au joint' entier ;
+tableau  COOR(1..NBJOIN,1..2,1..MXNOJO,1..3)
+       'les coordonnees de chaque noeud des joints' reel ;
+fintms ;

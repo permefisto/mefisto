@@ -1,0 +1,14 @@
+Les tetraedres de mauvaise qualite sont rectifi\'es,
+soit directement, soit par leur voisinage.
+La QUALITE d'un EF mesure sa distance a l'EF EQUILATERAL.
+Sa valeur est comprise entre zero (EF degenere) et 1 (EF equilateral).
+
+Tout tetraedre de qualite inferieure a QUTEMN est retouche.  
+
+L'echange des diagonales de 2 faces triangulaires adjacentes par
+une arete n'est permis que si l'angle des normales a ces 2 face
+est inferieur a un seuil ANTE2P exprime en degres.
+
+Une valeur realiste de ANTE2P ne depasse pas quelques degres.
+Au dela, la geometrie initiale peut fortement etre modifiee.
+

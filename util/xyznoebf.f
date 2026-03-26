@@ -1,0 +1,125 @@
+      SUBROUTINE XYZNOEBF( NTLXOB, MNNPEF, NTXYZN, MNXYZN )
+C ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+C BUT :    CONSTRUCTION DU TMS XYZNOEUD DES SOMMETS ET AVEC
+C -----    AJOUT DU BARYCENTRE DES TRIANGLES ou TETRAEDRES
+C          de BREZZI-FORTIN du MAILLAGE
+C
+C ENTREES:
+C --------
+C NTLXOB : NUMERO DU TMS LEXIQUE DE L'OBJET
+C MNNPEF : ADRESSE MCN DU TABLEAU NPEF"2P1D ou NPEF"3P1D DU FLUIDE
+C
+C SORTIES:
+C --------
+C NTXYZN : NUMERO      DU TMS XYZNOEUD du MAILLAGE de l'OBJET
+C MNXYZN : ADRESSE MCN DU TMS XYZNOEUD du MAILLAGE de l'OBJET
+C          OU NOEUDS=SOMMETS+BARYCENTRES
+C+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+C AUTEUR: ALAIN PERRONNET LJLL UPMC Saint Pierre du Perray     Mars 2010
+C23456---------------------------------------------------------------012
+      include"./incl/langue.inc"
+      include"./incl/gsmenu.inc"
+      include"./incl/pp.inc"
+      COMMON            MCN(MOTMCN)
+      REAL              RMCN(1)
+      EQUIVALENCE      (MCN(1), RMCN(1))
+      COMMON / UNITES / LECTEU,IMPRIM,NUNITE(30)
+      include"./incl/a_objet__topologie.inc"
+      include"./incl/a___npef.inc"
+      include"./incl/a___xyzsommet.inc"
+      include"./incl/a___xyznoeud.inc"
+C
+C     NOMBRE DE MOTS D'UN REEL DOUBLE PRECISION
+      MOREE2 = MOTVAR(6)
+C
+C     MNELE : ADRESSE DU TABLEAU NPEF"TYPE EF
+C     (TRIA 2P1D ou 3P1D en FAIT ici EF de BREZZI-FORTIN)
+      MNELE  = MCN( MNNPEF )
+C
+C     NOMBRE D'ELEMENTS FINIS DE CE TYPE
+      NBELEM = MCN( MNELE + WBELEM )
+C
+C     LE NUMERO DU TYPE DE L'ELEMENT FINI (TRIA 2P1D ou 2P2C)
+C     NUTYEL : 13 TRIANGLE 2P1D, 19 TETRAEDRE 3P1D de BREZZI-FORTIN
+      NUTYEL = MCN( MNELE + WUTYEL )
+C
+      IF( NUTYEL .EQ. 13 .OR. NUTYEL .EQ. 19 ) THEN
+C
+C        TRIANGLE OU TETRAEDRE DE BREZZI-FORTIN
+C        ======================================
+C        RECUPERATION DU TABLEAU XYZSOMMET
+         CALL LXTSOU( NTLXOB, 'XYZSOMMET', NTXYZS, MNXYZS )
+C
+C        NOMBRE DE SOMMETS DU MAILLAGE
+         NBSOM = MCN(MNXYZS+WNBSOM)
+C
+C        LE TMS XYZNOEUD EXISTE-T-IL?
+         CALL LXTSOU( NTLXOB, 'XYZNOEUD', NTXYZN, MNXYZN )
+         IF( MNXYZN .GT. 0 ) THEN
+C           OUI: LE NOMBRE DE SOMMETS EST IL EGAL AU NOMBRE DE NOEUDS?
+            IF( NBSOM .GE. MCN( MNXYZN + WNBNOE ) ) THEN
+C              ICI, XYZNOEUD NE CONTIENT QUE LES SOMMETS, PAS LES BARYCENTRES
+C              => AJOUT DU BARYCENTRE DE TOUS LES EF
+C              LE TMS 'XYZNOEUD' EST DETRUIT PUIS REDECLARE AVEC LES BARYCENTRES
+               CALL LXTSDS( NTLXOB, 'XYZNOEUD' )
+               MNXYZN = 0
+            ELSE
+C              LE TMS XYZNOEUD CONTIENT DEJA LES XYZ DES SOMMETS ET BARYCENTRES
+C              RETOUR SANS MODIFICATION
+               GOTO 9000
+            ENDIF
+         ENDIF
+C
+C        CONSTRUCTION DU TMS XYZNOEUD DES NOEUDS=SOMMETS+BARYCENTRES
+C        -----------------------------------------------------------
+         IF( LANGAG .EQ. 0 ) THEN
+            WRITE(IMPRIM,*)
+     %'CONSTRUCTION du TMS XYZNOEUD avec SOMMETS+BARYCENTRES'
+         ELSE
+            WRITE(IMPRIM,*)
+     %'CONSTRUCTION of XYZNOEUD TMS with VERTICES+BARYCENTERS'
+         ENDIF
+C
+C        LE NOMBRE DE NOEUDS
+         NBNOE = NBSOM + NBELEM
+C
+C        LE NOMBRE DE MOTS DU TMS XYZNOEUD
+         L = WYZNOE + 3 * NBNOE
+C
+C        DECLARATION, PUIS OUVERTURE DU TMS XYZNOEUD
+         CALL LXTNDC( NTLXOB, 'XYZNOEUD', 'MOTS', L )
+         CALL LXTSOU( NTLXOB, 'XYZNOEUD', NTXYZN, MNXYZN )
+C
+C        COPIE DES 3 COORDONNEES DES NBSOM SOMMETS
+         CALL TRTATA( RMCN(MNXYZS+WYZSOM), RMCN(MNXYZN+WYZNOE), 3*NBSOM)
+C
+C        AJOUT DES XYZ DES BARYCENTRES DES NBELEM EF
+         CALL COBABF( NBSOM, MNNPEF, RMCN(MNXYZN+WYZNOE) )
+C
+C        NOMBRE DE NOEUDS=SOMMETS+BARYCENTRES
+         MCN( MNXYZN + WNBNOE ) = NBNOE
+C        NOMBRE DE TANGENTES
+         MCN( MNXYZN + WNBTGN ) = 0
+C        NOMBRE DE COORDONNEES DE CHAQUE NOEUD
+         MCN( MNXYZN + WBCOON ) = 3
+C
+C        LA DATE
+         CALL ECDATE( MCN(MNXYZN) )
+C
+C        LE NUMERO DU TABLEAU DESCRIPTEUR
+         MCN( MNXYZN + MOREE2 ) = NONMTD( '~>>>XYZNOEUD' )
+C
+C        NDPGST : CODE TRAITEMENT DES SOMMETS POINTS NOEUDS DU MAILLAGE
+C             0 : NOEUDS=POINTS=SOMMETS
+C             1 : NOEUDS=POINTS#SOMMETS
+C             2 : NOEUDS#POINTS=SOMMETS
+C             3 : NOEUDS#POINTS#SOMMETS
+cccC              CHANGEMENT: ICI NOEUDS#POINTS=SOMMETS
+cccC     NON MODIFIE car NPEF ne contient PAS le no du barycentre des EF!
+cccC     et il ne contient que le numero des sommets des EF
+ccc               MCN( MNTOPO + WDPGST ) = 2
+C
+      ENDIF
+C
+ 9000 RETURN
+      END

@@ -1,0 +1,19 @@
+Le NOM d'un POINT parmi les 6 POINTS de la surface CONGE. 
+                              P4--------------- .      *P5
+                                                   .
+                                                     .
+                        /              /              .
+              EPAISSEUR/              /                |
+                      /              /                 |
+                                                       |
+                                                       P6
+                P1--------------- .      *P2      
+                                      .           /
+                                        .       /
+                                              /     /
+                                         .        /
+                                         |      /
+                                         |  
+                                         |
+                                         P3
+La demande ne cessera qu'avec l'entree d'un nom de POINT EXISTANT

@@ -1,0 +1,5 @@
+variable TRACSURF 'Trace des Surfaces' entier
+( 1: 'TOUTES les SURFACES en 1 fois et 0Tangente'
+, 2: 'TOUTES les SURFACES 1 par 1 avec Tangentes'
+, 3: 'UNE SURFACE'
+, 6: 'UNE SURFACE NON FERMEE Ses ARETES SIMPLES' ) ;

@@ -1,0 +1,6 @@
+The approximative number of triangles of the sphere must be
+ >1  (for the sphere/8)
+ >20 (for the sphere) 
+To obtain the exact value, it is suffisient to choose
+N*N    for the sphere/8
+20*N*N for the sphere     for any integer N>0

@@ -1,0 +1,16 @@
+deftms ~>>>FORCE     'Forces exercees sur un PLSV'
+variable muet DATE   'date de creation du tableau'    reel2  ;
+variable muet NUTD   'numero du tableau descripteur'  entier ;
+variable      LTFORC 'Type des Forces' entier 
+(  1 : 'Force constante'
+, -1 : 'Fonction Force'
+,  0 : 'Force a supprimer' ) ;
+cas LTFORC
+-1 : variable NBCOFO 'Nombre de composantes de la Force' entier ; 
+     tableau  NUCOFO(1..NBCOFO) 'No des composantes de la Force' entier ;
+     variable NFFORC 'Nom de la fonction FORCE'  ^~>FONCTION ;
+ 1 : variable NBCOF0 'Nombre de composantes de la Force' entier ; 
+     tableau  NUCOF0(1..NBCOF0) 'No des composantes de la Force' entier ;
+     tableau  FORCE(1..NBCOF0) 'Valeur de ces composantes de la Force' reel ;
+fincas ;
+fintms ;

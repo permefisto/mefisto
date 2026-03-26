@@ -1,0 +1,267 @@
+      SUBROUTINE LIEX24( NTLXLI, LADEFI, RADEFI,
+     %                   NTNSEF, MNNSEF, NTXYZS, MNXYZS, IERR )
+C+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+C BUT :    GENERER LES ARETES DE LA LIGNE INTERSECTION D'UN TRONC
+C -----    DE CONE AVEC UN PLAN
+C
+C ENTREES:
+C --------
+C LADEFI : TABLEAU ENTIER DE DEFINITION DE LA LIGNE
+C          CF ~/td/d/a_ligne__definition
+C RADEFI : TABLEAU REEL   DE DEFINITION DE LA LIGNE
+C          CES 2 TABLEAUX LADEFI ET RADEFI ONT MEME ADRESSE A L'APPEL
+C NTLXLI : NUMERO DU TABLEAU TS DU LEXIQUE DE LA LIGNE
+C
+C SORTIES:
+C --------
+C NTNSEF : NUMERO      DU TMS 'NSEF' DES NUMEROS DES ARETES DE LA LIGNE
+C MNNSEF : ADRESSE MCN DU TMS 'NSEF' DES NUMEROS DES ARETES DE LA LIGNE
+C NTXYZS : NUMERO      DU TMS 'XYZSOMMET' DE LA LIGNE
+C MNXYZS : ADRESSE MCN DU TMS 'XYZSOMMET' DE LA LIGNE
+C IERR   : 0 SI PAS D'ERREUR
+C          1 SI LES 3 POINTS DU PLAN SONT ALIGNES
+C          2 SI LE PLAN EST TANGENT AU CONE
+C         10 SI LE NOMBRE D'ARETES EST INCORRECT
+C+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+C AUTEUR : ALAIN PERRONNET  ANALYSE NUMERIQUE PARIS UPMC    JANVIER 1998
+C....................................................................012
+      COMMON / UNITES / LECTEU, IMPRIM, INTERA, NUNITE(29)
+      include"./incl/a_ligne__definition.inc"
+      include"./incl/a___xyzsommet.inc"
+      include"./incl/a___nsef.inc"
+      include"./incl/ntmnlt.inc"
+      include"./incl/gsmenu.inc"
+      include"./incl/pp.inc"
+      COMMON            MCN(MOTMCN)
+      REAL              RMCN(1)
+      DOUBLE PRECISION  DMCN(1)
+      EQUIVALENCE      (MCN(1),RMCN(1),DMCN(1))
+C
+      INTEGER           LADEFI(0:*)
+      REAL              RADEFI(0:*)
+C
+      DOUBLE PRECISION  RYCONE(2), PTAXCO(3,2), HAUTCN, RPCONE(3,3),
+     %                  XYZGPL(3,3), XYZCPL(3,3), VN(3)
+C
+C     EN CAS D'ERREUR RENCONTREE
+      IERR   = 0
+      NTXYZS = 0
+      MNXYZS = 0
+      NTNSEF = 0
+      MNNSEF = 0
+      MNSUIV = 0
+      MNRPIN = 0
+C
+C     EXISTENCE OU NON DE LA FONCTION 'TAILLE_IDEALE(XYZ)' DES ARETES
+C     ===============================================================
+C     LE NOMBRE D'ARETES ET DE SOMMETS DE LA LIGNE
+      NBARLI = LADEFI( WBARLI )
+C
+C     ICI LA CARTE EST SUPPOSEE ISOTROPE
+      NOFOTI = NOFOTIEL()
+C     NOFOTI>0 SI CETTE FONCTION EXISTE
+      IF( NOFOTI .GT. 0 ) THEN
+C        LA FONCTION 'TAILLE_IDEALE(X,Y,Z)' EXISTE
+C        LE NOMBRE D'ARETES DE LA LIGNE EST INACTIF
+         IF( NBARLI .LE. 0 ) NBARLI = 10
+         GOTO 1
+      ENDIF
+      IF( NBARLI .LE. 0 ) THEN
+         NBLGRC(NRERR) = 1
+         KERR(1) = 'NOMBRE INCORRECT D''ARETES'
+         CALL LEREUR
+         IERR = 10
+         GOTO 9999
+      ENDIF
+C
+C     RECUPERATION DU NOM DES 3 POINTS DE DEFINITION DU PLAN
+ 1    DO 4 I=1,3
+C
+C        LE NUMERO DU POINT DANS LE LEXIQUE DES POINTS
+         NUPT = LADEFI( WPPTCN - 1 + I )
+C
+ 3       IF( NUPT .LE. 0 ) THEN
+            NBLGRC(NRERR) = 1
+            KERR(1) = 'UN POINT DEFINITION DU PLAN INCONNU'
+            CALL LEREUR
+            IERR = 2
+            GOTO 9999
+         ENDIF
+C
+C        RECUPERATION DES 3 COORDONNEES DES POINTS DU PLANL
+         CALL LXNLOU( NTPOIN, NUPT, NTPOI, MN )
+         CALL LXTSOU( NTPOI , 'XYZSOMMET', NTSOM, MNSOM )
+         IF( NTSOM .LE. 0 ) THEN
+            NUPT = 0
+            GOTO 3
+         ENDIF
+         MN = MNSOM + WYZSOM
+         XYZGPL( 1 , I ) = RMCN( MN )
+         XYZGPL( 2 , I ) = RMCN( MN + 1 )
+         XYZGPL( 3 , I ) = RMCN( MN + 2 )
+ 4    CONTINUE
+C
+C     LES 2 RAYONS DES 2 PLANS ORTHOGONAUX AU CONE
+      DO 5 I=1,2
+         RYCONE(I) = RADEFI(WAYTCN-1+I)
+C        RAYONS CORRECTS ?
+         IF( RYCONE(I) .LE. 0 ) THEN
+            NBLGRC(NRERR) = 1
+            WRITE(KERR(3),'(I1)') I
+            KERR(1) = 'RAYON <0 AU POINT ' // KERR(3)(1:1)
+     %                // ' DU CONE '
+            CALL LEREUR
+            IERR = 11
+            GOTO 9999
+         ENDIF
+ 5    CONTINUE
+C
+C     RECUPERATION DES 3 COORDONNEES DES 2 POINTS DE L'AXE DES 2 CONES
+      DO 15 I=1,2
+         NUPT = LADEFI(WAXTCN-1+I)
+         IF( NUPT .LE. 0 ) GOTO 12
+C        RECUPERATION DES 3 COORDONNEES DU POINT
+         CALL LXNLOU( NTPOIN, NUPT, NTPOI, MN )
+         CALL LXTSOU( NTPOI, 'XYZSOMMET', NTSOM, MNSOM )
+         IF( NTSOM .LE. 0 ) GOTO 12
+         MN = MNSOM + WYZSOM
+         PTAXCO( 1, I ) = RMCN( MN   )
+         PTAXCO( 2, I ) = RMCN( MN+1 )
+         PTAXCO( 3, I ) = RMCN( MN+2 )
+         GOTO 15
+C
+C        ERREUR: POINT INCORRECT
+ 12      NBLGRC(NRERR) = 1
+         WRITE(KERR(3),'(I1)') I
+         KERR(1) = 'POINT '// KERR(3)(1:1) //
+     %             ' INCORRECT DE L''AXE DU CONE '
+         CALL LEREUR
+         IERR = 12
+         GOTO 9999
+ 15   CONTINUE
+C
+C     CALCUL DES POINTS D'INTERSECTION DES GENERATRICES DU TRONC DE CONE
+C     AVEC LE PLAN DEFINI PAR SES 3 POINTS
+C     UNE GENERATRICE PAR DIXIEME DE DEGRE. CHAINAGE DES POINTS D'INTERSECTION
+C     ========================================================================
+      MXGENE = MAX( 3600, 3*NBARLI )
+      CALL TNMCDC( 'ENTIER', MXGENE+8, MNSUIV )
+      MN1COU = MNSUIV + MXGENE + 1
+      CALL TNMCDC( 'REEL2', 2*MXGENE+2,  MNRPIN )
+C
+C     CHAINAGE DES POINTS D'INTERSECTION ENTRE LES GENERATRICES ET LE PLAN
+      CALL PLCNCH( MXGENE, XYZGPL,
+     %             PTAXCO(1,1), RYCONE(1), PTAXCO(1,2), RYCONE(2),
+     %             HAUTCN, RPCONE, XYZCPL, VN,
+     %             MCN(MNSUIV),  MCN(MNRPIN),
+     %             NBIP, MCN(MN1COU), IERR )
+      IF( IERR .EQ. 1 ) THEN
+         NBLGRC(NRERR) = 1
+         KERR(1) = 'ERREUR: 3 POINTS DU PLAN ALIGNES'
+         GOTO 9998
+      ENDIF
+      IF( IERR .EQ. 2 ) THEN
+         NBLGRC(NRERR) = 2
+         KERR(1) = 'ERREUR: PLAN TANGENT AU CONE'
+         KERR(2) = 'UTILISER L''OPTION 2 SEGMENT DE DROITE'
+         GOTO 9998
+      ENDIF
+C
+C     CONSTRUCTION DU CHAINAGE DES SOMMETS DES ARETES DES INTERVALLES
+C     DE POINTS D'INTERSECTION
+C     ================================================================
+      CALL PLCNAR( NOFOTI, MXGENE, XYZCPL, VN,
+     %             PTAXCO(1,1), RYCONE(1), RYCONE(2),
+     %             HAUTCN, RPCONE,
+     %             MCN(MNSUIV), MCN(MNRPIN), NBIP, MCN(MN1COU),
+     %             NBARLI, NBSOML, IERR )
+      IF( IERR .GT. 0 ) GOTO 9998
+C
+      IF( NBARLI .LT. 1 ) THEN
+         NBLGRC(NRERR) = 1
+         KERR(1) = 'NOMBRE INCORRECT D''ARETES'
+         CALL LEREUR
+         IERR = 12
+         GOTO 9998
+      ENDIF
+C
+C     CONSTRUCTION DU TABLEAU 'XYZSOMMET'
+C     -----------------------------------
+C     LES 2 TANGENTES PAR ARETE SONT STOCKEES
+      NBTGS = 2 * NBARLI
+      CALL LXTNDC( NTLXLI, 'XYZSOMMET', 'ENTIER',
+     %             WYZSOM + 3*(NBSOML+NBTGS) )
+      CALL LXTSOU( NTLXLI, 'XYZSOMMET',  NTXYZS , MNXYZS )
+C
+C     ADRESSE DU DEBUT DES COORDONNEES DU 1-ER SOMMET DE LA LIGNE
+      MNS  = MNXYZS + WYZSOM
+      MNT  = MNS    + 3 * NBSOML
+C
+C     CONSTRUCTION DU TABLEAU 'NSEF' LIGNE STRUCTURE
+C     ----------------------------------------------
+      CALL LXTNDC( NTLXLI, 'NSEF', 'ENTIER', WUSOEF + 6*NBARLI )
+      CALL LXTSOU( NTLXLI, 'NSEF',  NTNSEF , MNNSEF )
+C
+C     ADRESSE DU DEBUT DES TABLEAUX NUSOAR, LPEFTG, NGEFTG, NUTGAR
+      MNSOAR = MNNSEF + WUSOEF
+      MNLPEF = MNSOAR + NBARLI*2
+      MNNGEF = MNLPEF + NBARLI
+      MNTGAR = MNNGEF + NBARLI
+C
+      CALL PLCNTG( MXGENE, XYZCPL, VN,
+     %             PTAXCO(1,1), RYCONE(1), RYCONE(2),
+     %             HAUTCN, RPCONE,
+     %             MCN(MNSUIV), MCN(MNRPIN), NBIP, MCN(MN1COU),
+     %             NBARLI, NBSOML,
+     %             NBARL,  NBSOM, NBTGS,
+     %             MCN(MNS), MCN(MNT),
+     %             MCN(MNSOAR), MCN(MNLPEF), MCN(MNNGEF), MCN(MNTGAR) )
+C
+C     MISE A JOUR DU TMS XYZSOMMET
+C     LE NOMBRE DE SOMMETS
+      MCN( MNXYZS + WNBSOM ) = NBSOM
+C     LE NOMBRE DE TANGENTES STOCKEES
+      MCN( MNXYZS + WNBTGS ) = NBTGS
+      MCN( MNXYZS + WBCOOR ) = 3
+      IF( NBSOM .LT. NBSOML ) THEN
+C        TRANSLATION DES TANGENTES
+         MNS = MNXYZS + WYZSOM + 3 * NBSOML
+         MNT = MNXYZS + WYZSOM + 3 * NBSOM
+         CALL TRTATA( RMCN(MNS), RMCN(MNT), 3*NBTGS )
+C        LE TMS EST RACOURCI
+         CALL TAMSRA( NTXYZS, WYZSOM + 3*(NBSOM+NBTGS) )
+      ENDIF
+C     AJOUT DE LA DATE POUR LE TMS XYZSOMMET
+      CALL ECDATE( MCN(MNXYZS) )
+C     AJOUT DU NUMERO DU TABLEAU DESCRIPTEUR
+      MCN( MNXYZS + MOTVAR(6) ) = NONMTD( '~>>>XYZSOMMET' )
+C
+C     MISE A JOUR DU TMS NSEF
+C     LE TYPE DE L'OBJET : ICI LIGNE
+      MCN( MNNSEF + WUTYOB ) = 2
+C     LE TYPE DE FERMETURE DU MAILLAGE : ICI INCONNU
+      MCN( MNNSEF + WUTFMA ) = -1
+C     LE NOMBRE DE SOMMETS PAR EF=ARETE
+      MCN( MNNSEF + WBSOEF ) = 2
+C     LE NOMBRE DE TANGENTES PAR EF
+      MCN( MNNSEF + WBTGEF ) = 2
+C     LE NOMBRE D'ARETES DE LA LIGNE
+      MCN( MNNSEF + WBEFOB ) = NBARL
+C     NOMBRE D'EF AVEC TG
+      MCN( MNNSEF + WBEFTG ) = NBARL
+C     NOMBRE DES EF AVEC POINTEUR SUR EF A TG
+      MCN( MNNSEF + WBEFAP ) = NBARL
+C     NUMERO DU TYPE DE MAILLAGE: ICI NON STRUCTURE
+      MCN( MNNSEF + WUTYMA ) = 0
+C     AJOUT DE LA DATE
+      CALL ECDATE( MCN(MNNSEF) )
+C     AJOUT DU NUMERO DU TABLEAU DESCRIPTEUR
+      MCN( MNNSEF + MOTVAR(6) ) = NONMTD( '~>>>NSEF' )
+C
+ 9998 IF( MNSUIV .GT. 0 ) CALL TNMCDS( 'ENTIER', MXGENE+8,  MNSUIV )
+      IF( MNRPIN .GT. 0 ) CALL TNMCDS( 'REEL2', 2*MXGENE+2, MNRPIN )
+C
+C     ERREUR
+C     ======
+ 9999 RETURN
+      END

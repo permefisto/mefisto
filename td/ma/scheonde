@@ -1,0 +1,3 @@
+variable SCHEONDE 'Time Scheme of WAVE Equation' entier
+(1 : 'Implicit NEWMARK''s scheme (unconditional STABLE)',
+ 2 : 'Implicit DECENTRED scheme (unconditional STABLE)') ;

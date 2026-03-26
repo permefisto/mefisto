@@ -1,0 +1,7 @@
+In ELASTICITY, 2 types of boundary conditions are possible:
+- an exterior FORCE
+  input a FORCE (1) with the number of components and value of this force
+
+- FIXED one or more components of the displacement
+  input a FIXATION (2) with the number of components and value of the
+imposed displacement

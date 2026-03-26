@@ -1,0 +1,4 @@
+The 2 vertices of every edge of this LINE are joined to
+the POINT to form the triangles of the surface
+
+Example: S32; I; 32; CENTRE; LINE_TO_JOIN;

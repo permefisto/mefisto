@@ -1,0 +1,33 @@
+deftms ~>>>ARETE 
+'les aretes d''un maillage 2D traitees par hachage c''est a dire que la position
+ de l''arete est la somme des numeros des sommets si la place est libre et sinon
+ un chainage donne l''arete suivante'
+variable muet DATE 'date de creation du tableau'       reel2  ;
+variable muet NUTD 'numero du tableau descripteur'     entier ;
+variable MOARET 'nombre d''entiers stockes par arete'  entier ;
+variable MXARET 'nombre maximal d''aretes'             entier ; 
+variable NBARFB 'nombre total d''aretes frontalieres'  entier ;
+variable L1ARFB 'no 1-ere arete frontaliere NON sur une ligne' entier ;
+variable NBARIN 'nombre total d''aretes interfaces'            entier ;
+variable L1ARIN 'no 1-ere arete interface NON sur une ligne'   entier ; 
+variable NBARTG 'nombre d''aretes avec des tangentes'     entier ;
+variable NUMILF 'numero minimal des lignes de la surface' entier ;
+variable NUMXLF 'numero maximal des lignes de la surface' entier ;
+tableau L1LGFR(NUMILF..NUMXLF) 'no 1ere arete d''une ligne frontaliere' entier ;
+tableau LARETE(1..MOARET,1..MXARET)
+'st1,st2,lien,ef1,ef2,arete bord ou interne suivante,no arete a tg' entier ;
+tableau  NUTGAR(1..2,1..NBARTG) 'no des 2 tangentes des aretes a tg' entier ;
+fintms ;
+
+
+Pour memoire : 
+Si NUMXLF=0 alors PAS de tableau L1LGFR
+C'est le cas pour un maillage avec seulement NSEF 
+Ce n'est pas le cas avec un maillage TOPOLOGIE + NPEF"...
+Si NBARTG=0 alors Pas de tableau NUTGAR
+
+Pour une SURFACE PAS de NO de TYPE de l'EF.
+Pour un OBJET (et non pas un PLSV), le sp hac2af ajoute NUCYEF dans
+NoEFVoisin = ( NUCYEF + NUELEM ) * ISENS
+ou NUCYEF=NCTYEF*NTYEF le type (1 a NBTYEL) au numero d'ef1 ou ef2
+avec incl/nctyef.inc:1:      PARAMETER (NCTYEF = 100 000 000)

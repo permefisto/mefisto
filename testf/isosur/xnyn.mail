@@ -1,0 +1,40 @@
+{ ================================================ }
+{ MEFISTO Version Juin 1999        PROJET: xnyn=1  }
+{ Utilisateur: Alain Perronnet     Date: 22/6/99   }
+{ ================================================ }
+DefVar n; n=50;
+
+1; 1;
+ A; I; 1; 0; 0; 0;
+ B; I; 1; 1; 0; 0;
+ C; I; 1; 1; 1; 0;
+ D; I; 1; 0; 1; 0;
+@; 
+@;
+
+2; {LIGNES}
+ AB; I; 2; n; 1; A; B;
+ BC; I; 2; n; 1; B; C;
+ CD; I; 2; n; 1; C; D;
+ DA; I; 2; n; 1; D; A;
+@;
+
+3;
+ { SURFACE }
+ carre; I; 1; AB; BC; CD; DA; 1;
+@;
+
+5; { OBJETS parties de l OBJET }
+ carre;
+ 0;{ classique 2D ou 3D }
+ 2;{ NBDOBJ 'nombre des Points Lignes Surfaces Volumes Objets de l''objet' }
+   { POINT ou LIGNE ou SURFACE ou VOLUME ou OBJET? }
+ s; carre; p; a;
+@;
+
+7; 
+  carre; 4;
+@;
+
+10; 5; 90;
+FERMER;

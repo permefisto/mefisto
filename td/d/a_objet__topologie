@@ -1,0 +1,24 @@
+deftms ~>OBJET>>TOPOLOGIE
+'Topologie des Elements Finis apres INTERPOLATION du maillage d''un objet'
+variable muet DATE 'date de creation du tableau'    reel2  ;
+variable muet NUTD 'numero du tableau descripteur'  entier ; 
+variable NBOBIN 'nombre d''objets internes a interpoler'   entier ;
+variable NBOBCL 'nombre d''objets aux limites de l''objet' entier ;
+variable NBTYEL 'nombre de types d''Elements Finis' entier ; 
+variable NDPGST 'comparaison des noeuds points geometriques et sommets' entier
+ ( 0 : 'noeuds = points = sommets seul le tms XYZSOMMET de l''objet existe'
+ , 1 : 'noeuds = points # sommets les tms XYZSOMMET XYZNOEUD existent'
+ , 2 : 'noeuds # points = sommets les tms XYZSOMMET XYZNOEUD existent'
+ , 3 : 'noeuds # points # sommets les tms XYZSOMMET XYZNOEUD XYZPOINT existent'
+ ) ; 
+tableau NMTYEL(1..NBTYEL) 'nom de 4 caracteres des types d''EF'  caractere ;
+tableau NUOBIN(1..NBOBIN) 'type des objets internes a interpoler'   typeobjet ;
+tableau NUOBCL(1..NBOBCL) 'type des objets aux limites de l''objet' typeobjet ;
+fintms ;
+                                                                       
+
+------------------------------------------------------------------------------- 
+Pour memoire : La creation de l'interpolation a aussi genere NBTYEL tms 
+               de noms ~>OBJET>NomObjet>NPEF"NMTYEL(i)   i=1,...,NBTYEL
+-------------------------------------------------------------------------------
+

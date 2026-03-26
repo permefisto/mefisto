@@ -1,0 +1,70 @@
+      SUBROUTINE QUAHEX( NOSOEL, XYZSOM,  QUALIT )
+C+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+C BUT :    CALCUL DE LA QUALITE D'UN HEXAEDRE COMME
+C -----    QUALITE MINIMALE DE SES 6 FACES
+C
+C ENTREES:
+C --------
+C NOSOEL : NUMERO DES 8 SOMMETS DANS XYZSOM DES SOMMETS DE L'HEXAEDRE
+C XYZSOM : 3 COORDONNEES DES SOMMETS DU MAILLAGE
+C
+C SORTIE :
+C --------
+C QUALIT : QUALITE DE L'HEXAEDRE (VALEUR COMPRISE ENTRE 0 ET 1)
+C+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+C AUTEUR : ALAIN PERRONNET ANALYSE NUMERIQUE PARIS UPMC       AVRIL 1998
+C2345X7..............................................................012
+      INTEGER   NOSOEL(1:8)
+      REAL      XYZSOM(3,*), QUALIT
+C
+      INTEGER   NOSOFA(4)
+C
+C     FACE 1
+      NOSOFA(1) = NOSOEL(1)
+      NOSOFA(2) = NOSOEL(4)
+      NOSOFA(3) = NOSOEL(3)
+      NOSOFA(4) = NOSOEL(2)
+      CALL QUAQUA( NOSOFA, XYZSOM, QUALIT )
+C
+C     FACE 2
+      NOSOFA(1) = NOSOEL(1)
+      NOSOFA(2) = NOSOEL(5)
+      NOSOFA(3) = NOSOEL(8)
+      NOSOFA(4) = NOSOEL(4)
+      CALL QUAQUA( NOSOFA, XYZSOM, Q )
+      QUALIT = MIN( QUALIT, Q )
+C
+C     FACE 3
+      NOSOFA(1) = NOSOEL(1)
+      NOSOFA(2) = NOSOEL(2)
+      NOSOFA(3) = NOSOEL(6)
+      NOSOFA(4) = NOSOEL(5)
+      CALL QUAQUA( NOSOFA, XYZSOM, Q )
+      QUALIT = MIN( QUALIT, Q )
+C
+C     FACE 4
+      NOSOFA(1) = NOSOEL(5)
+      NOSOFA(2) = NOSOEL(6)
+      NOSOFA(3) = NOSOEL(7)
+      NOSOFA(4) = NOSOEL(8)
+      CALL QUAQUA( NOSOFA, XYZSOM, Q )
+      QUALIT = MIN( QUALIT, Q )
+C
+C     FACE 5
+      NOSOFA(1) = NOSOEL(2)
+      NOSOFA(2) = NOSOEL(3)
+      NOSOFA(3) = NOSOEL(7)
+      NOSOFA(4) = NOSOEL(6)
+      CALL QUAQUA( NOSOFA, XYZSOM, Q )
+      QUALIT = MIN( QUALIT, Q )
+C
+C     FACE 6
+      NOSOFA(1) = NOSOEL(4)
+      NOSOFA(2) = NOSOEL(8)
+      NOSOFA(3) = NOSOEL(7)
+      NOSOFA(4) = NOSOEL(3)
+      CALL QUAQUA( NOSOFA, XYZSOM, Q )
+      QUALIT = MIN( QUALIT, Q )
+C
+      RETURN
+      END

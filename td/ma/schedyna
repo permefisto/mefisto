@@ -1,0 +1,3 @@
+variable SCHEDYNA 'Time Scheme of DYNAMIC ELASTICITY' entier
+(1 : 'Implicit NEWMARK''s scheme (unconditional STABLE)' ) ;
+

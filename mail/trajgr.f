@@ -1,0 +1,351 @@
+      SUBROUTINE TRAJGR( COMXMI, ARETMX, NBSXGR, NBSYGR, NOSTGR,
+     %                   NOFOTI, NUTYSU, RAP2P3,
+     %                   ORIGIN, D2D3,   XMIN,   YMIN,   XYMXMI,
+     %                   MXSOMM, NBSOMM, PXYD,
+     %                   MOSOAR, MXSOAR, N1SOAR, NOSOAR,
+     %                   MOARTR, MXARTR, N1ARTR, NOARTR, NOARST,
+     %                   IERR  )
+C+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+C BUT :    AJOUTER LES SOMMETS D'UNE GRILLE DE TRIANGLES EQUILATERAUX
+C -----    DE COTE LA TAILLE SOUHAITEE DES ARETES
+C          ET MISE EN DELAUNAY DES TRIANGLES
+C
+C ENTREES:
+C --------
+C COMXMI : MINIMUM ET MAXIMUM DES COORDONNEES DE L'OBJET
+C ARETMX : LONGUEUR MAXIMALE DES ARETES DES TRIANGLES
+C NBSXGR : NOMBRE DE SOMMETS DE LA GRILLE EN X
+C NBSYGR : NOMBRE DE SOMMETS DE LA GRILLE EN Y
+C NOFOTI : NUMERO DANS LE LX DES FONCTIONS DE LA FONCTION TAILLE_IDEALE(X,Y,Z)
+C          >0 SI ELLE EXISTE ET 0 SINON
+C NUTYSU : NUMERO D'OPTION DE GENERATION DU MAILLAGE DE CETTE SURFACE
+C          19 APPEL DIRECT A PARTIR DU SP SUEX19
+C          1 APPEL PAR LE SP SUEX01-QUNSAL (QUADRANGLE ALGEBRIQUE)
+C          3 APPEL PAR LE SP SUEX03        (B-SPLINE POLYNOMIALE )
+C          6 APPEL PAR LE SP SUEX06-TRNSAL (TRIANGLE   ALGEBRIQUE)
+C RAP2P3 : RAPPORT DU PERIMETRE DE L'ENVELOPPE DU DOMAINE PLAN SUR
+C                  LE PERIMETRE DE L'ENVELOPPE DU DOMAINE DE R**3
+C          APPROXIMATION POUR CALCULER RAPIDEMENT LA TAILLE DE L'ARETE
+C          DANS LE PLAN CONNAISSANT SA TAILLE DANS R**3
+C ORIGIN : POINT ORIGINE DANS LE PLAN DE MAILLAGE
+C D2D3   : MATRICE DE PASSAGE DES COORDONNEES 3D EN COORDONNEES 2D
+C XMIN   : ABSCISSE MINIMALE APRES TRANSFORMATION 3D->2D
+C YMIN   : ORDONNEE MINIMALE APRES TRANSFORMATION 3D->2D
+C XYMXMI : ECART MAXIMAL ENTRE XMAX-XMIN ET YMAX-YMIN
+C
+C MXSOMM : NOMBRE MAXIMAL DE SOMMETS DECLARABLES DANS PXYD
+C NBSOMM : NOMBRE DE SOMMETS ACTUELS DANS PXYD
+C PXYD   : TABLEAU DES COORDONNEES 2D DES POINTS
+C          PAR POINT: X  Y  DISTANCE_SOUHAITEE
+C
+C MOSOAR : NOMBRE MAXIMAL D'ENTIERS PAR ARETE DU TABLEAU NOSOAR
+C MXSOAR : NOMBRE MAXIMAL D'ARETES STOCKABLES DANS LE TABLEAU NOSOAR
+C MOARTR : NOMBRE MAXIMAL D'ENTIERS PAR ARETE DU TABLEAU NOARTR
+C MXARTR : NOMBRE MAXIMAL DE TRIANGLES STOCKABLES DANS LE TABLEAU NOARTR
+C
+C MODIFIES:
+C ---------
+C N1SOAR : NUMERO DE LA PREMIERE ARETE VIDE DANS LE TABLEAU NOSOAR
+C          UNE ARETE I DE NOSOAR EST VIDE  <=>  NOSOAR(1,I)=0
+C NOSOAR : NUMERO DES 2 SOMMETS , NO LIGNE, 2 TRIANGLES DE L'ARETE,
+C          CHAINAGE DES ARETES FRONTALIERES, CHAINAGE DU HACHAGE DES ARETES
+C          HACHAGE DES ARETES = H(NS1,NS2)=MIN(NS1,NS2)
+C NOARST : NOARST(I) NUMERO DANS NOSOAR D'UNE ARETE DE SOMMET I
+C
+C SORTIES:
+C --------
+C NOSTGR : >0 NO DU POINT PXYD DU SOMMET (I,J) DE LA GRILLE
+C          =0 SI LE SOMMET (I,J) DANS AUCUN TRIANGLE
+C N1ARTR : NUMERO DU PREMIER TRIANGLE VIDE DANS LE TABLEAU NOARTR
+C          LE CHAINAGE DES TRIANGLES VIDES SE FAIT SUR NOARTR(2,.)
+C NOARTR : LES 3 ARETES DES TRIANGLES +-ARETE1, +-ARETE2, +-ARETE3
+C          ARETE1 = 0 SI TRIANGLE VIDE => ARETE2 = TRIANGLE VIDE SUIVANT
+C IERR   : = 0 SI PAS D'ERREUR
+C          =51 SI LE TABLEAU NOSOAR EST SATURE
+C          =52 SI LE TABLEAU NOARTR EST SATURE
+C          =53 SI LE TABLEAU PXYD   EST SATURE
+C+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+C AUTEUR : ALAIN PERRONNET LJLL UPMC & ST PIERRE DU PERRAY  FEVRIER 2008
+C2345X7..............................................................012
+      DOUBLE PRECISION  EPSARETE
+      PARAMETER        (EPSARETE=1D-15)
+      PARAMETER        (LCHAIN=6)
+C
+      include"./incl/langue.inc"
+      include"./incl/trvari.inc"
+ccc      LOGICAL           TRATRI
+ccc      COMMON / DV2DCO / TRATRI
+      COMMON / UNITES / LECTEU, IMPRIM, INTERA, NUNITE(29)
+C
+      INTEGER           NOSTGR(NBSXGR,NBSYGR)
+      DOUBLE PRECISION  PXYD(3,MXSOMM)
+      DOUBLE PRECISION  RAP2P3
+      DOUBLE PRECISION  D2D3(3,3)
+      REAL              ORIGIN(3)
+      REAL              COMXMI(3,2)
+      INTEGER           NOSOAR(MOSOAR,MXSOAR),
+     %                  NOARTR(MOARTR,MXARTR),
+     %                  NOARST(MXSOMM)
+C
+      DOUBLE PRECISION  XYSGR(2), XDECAL, ARETM2, ARETM4, AR3S2, AR3S4
+C
+ccc      TRATRI = .TRUE.
+C
+C     QUELQUES INITIALISATIONS DU TRIANGLE EQUILATERAL GENERIQUE
+      NBSOM0 = NBSOMM
+      ARETM2 = ARETMX / 2
+      AR3S2  = ARETMX * SQRT(3D0) / 2
+      NBSUBD = 0
+C
+C     AJOUT DES SOMMETS DE LA GRILLE DE TRIANGLES EQUILATERAUX D'ARETE ARETGR
+C     =======================================================================
+C     PREMIER NO DE TRIANGLE ACTIF: BOUCLE SUR LES TRIANGLES
+      DO 2 NTR1=1,MXARTR
+         IF( NOARTR(1,NTR1) .GT. 0 ) GOTO 4
+ 2    CONTINUE
+C
+C     NOMBRE DE SOMMETS EN X ET Y DE LA GRILLE DE TRIANGLES EQUILATERAUX
+C     Cf trlfpi.f
+ 4    WRITE(IMPRIM,*)'TRAJGR: GRILLE ',NBSXGR,' X ',NBSYGR,' POINTS'
+C
+      DO 90 JGR=1,NBSYGR
+C
+         JGR0 = JGR - 1
+C
+C        ORDONNEE DES POINTS JGR DE LA GRILLE DE TRIANGLES EQUILATERAUX
+         XYSGR(2) = COMXMI(2,1) + JGR * AR3S2
+C
+C        DECALAGE DES ABSCISSES SELON LA PARITE DE JGR
+         IF( MOD(JGR,2) .EQ. 0 ) THEN
+            XDECAL =  0D0
+         ELSE
+            XDECAL = -ARETM2
+         ENDIF
+C
+         DO 80 IGR=1,NBSXGR
+C
+C           NO DE POINT PXYD DU SOMMET IGR, JGR
+            NOSTGR( IGR, JGR ) = 0
+C
+C           LE SOMMET (IGR,JGR) DE LA GRILLE
+            XYSGR(1) = COMXMI(1,1) + XDECAL + IGR * ARETMX
+C
+C           CHOIX DU SOMMET NS PRECEDANT DE DEPART
+            NTR2 = 0
+            IF( JGR0 .GT. 0 ) THEN
+C              NO DU POINT PXYD DU SOMMET IGR,JGR-1
+               NS = ABS( NOSTGR( IGR, JGR0 ) )
+               IF( NS .GT. 0 ) GOTO 10
+               IF( IGR .LT. NBSXGR ) THEN
+                  NS = ABS( NOSTGR( IGR+1, JGR0 ) )
+                  IF( NS .GT. 0 ) GOTO 10
+                  IF( IGR .GT. 1 ) THEN
+                     NS = ABS( NOSTGR( IGR-1, JGR0 ) )
+                     IF( NS .GT. 0 ) GOTO 10
+                  ENDIF
+               ENDIF
+            ENDIF
+            GOTO 20
+C
+C           UNE ARETE NA DE SOMMET NS
+ 10         NA = NOARST( NS )
+C           UN TRIANGLE D'ARETE NA
+            NTR2 = NOSOAR(4,NA)
+            IF( NTR2 .LE. 0 ) NTR2 = NOSOAR(5,NA)
+C
+C           AJOUT DU SOMMET (IGR,JGR) AU TRIANGLE LE CONTENANT
+C           => 3 SOUS-TRIANGLES ou RIEN
+ 20         CALL TRAJGR1( XYSGR,  NTR1,   NTR2,
+     %                    ARETMX, NOFOTI, NUTYSU, RAP2P3,
+     %                    ORIGIN, D2D3,   XMIN,   YMIN,   XYMXMI,
+     %                    MXSOMM, NBSOMM, PXYD,
+     %                    MOSOAR, MXSOAR, N1SOAR, NOSOAR,
+     %                    MOARTR, MXARTR, N1ARTR, NOARTR, NOARST,
+     %                    IERR  )
+            IF( IERR .GT. 0 ) GOTO 9900
+            IF( IERR .EQ. 0 ) THEN
+C              LE POINT XYSGR = NBSOMM EST DANS UN TRIANGLE
+C              NO DE POINT PXYD DU SOMMET IGR, JGR
+               NOSTGR( IGR, JGR ) = NBSOMM
+            ELSE IF( IERR .EQ. -1 ) THEN
+C              LE POINT XYSGR N'EST DANS AUCUN TRIANGLE OU TROP PROCHE
+C              NO DE POINT PXYD DU SOMMET IGR, JGR
+               NOSTGR( IGR, JGR ) = 0
+               IERR = 0
+            ELSE
+C              -NO DE POINT PXYD TRES PROCHE DU SOMMET IGR, JGR
+               NOSTGR( IGR, JGR ) = IERR
+               IERR = 0
+            ENDIF
+C
+ 80      CONTINUE
+ 90   CONTINUE
+C
+C     BILAN ACTUEL DES SOMMETS DE TRIANGLES EQUILATERAUX AJOUTES
+      NBPTAJ = NBSOMM-NBSOM0
+      IF( LANGAG .EQ. 0 ) THEN
+         WRITE(IMPRIM,10090) NBSUBD+1, NBPTAJ, NBSOMM
+      ELSE
+         WRITE(IMPRIM,20090) NBSUBD+1, NBPTAJ, NBSOMM
+      ENDIF
+10090 FORMAT(' TRAJGR: SUBDIVISION',I3,' NOMBRE POINTS AJOUTES=',I8,
+     %' NOMBRE SOMMETS=',I8)
+20090 FORMAT(' TRAJGR: SUBDIVISION',I3,' ADDED POINTS NUMBER=',I8,
+     %' VERTICES NUMBER=',I8)
+C
+      IF( NOFOTI .LE. 0 ) GOTO 9900
+C
+C     FONCTION TAILLE_IDEALE(X,Y,Z) EXISTE => AJOUT DE POINTS MEDIANS
+C     ===============================================================
+      NBSOM1 = NBSOMM
+      NTR2   = 0
+      ARETM2 = ARETMX
+      AR3S4  = AR3S2
+C
+C     BOUCLE SUR LES GRILLES REGULIERES MEDIANES
+C     ------------------------------------------
+C     A CHAQUE ITERATION LA LONGUEUR DE L'ARETE EST DIVISEE PAR 2
+      DO 300 NBSUBD=1,8
+C
+C        LONGUEUR DES ARETES et HAUTEUR
+         ARETM2 = ARETM2 / 2
+         ARETM4 = ARETM2 / 2
+         AR3S4  = AR3S4  / 2
+C
+C        PARCOURS DES SOMMETS TROP PROCHE D'UN SOMMET REJETE DE LA GRILLE 1
+C        ------------------------------------------------------------------
+         DO 140 JGR=1,NBSYGR
+            DO 130 IGR=1,NBSXGR
+               NS = NOSTGR( IGR, JGR )
+               IF( NS .LT. 0 ) THEN
+                  NS = -NS
+                  IF( PXYD(3,NS) .GT. ARETM2 ) GOTO 130
+C                 ARETE ACTUELLE PLUS LONGUE QUE LA LONGUEUR SOUHAITEE
+C
+C                 UN TRIANGLE VOISIN DU SOMMET NS
+                  NA   = NOARST(NS)
+                  NTR1 = NOSOAR(4,NA)
+                  IF( NTR1 .LE. 0 ) NTR1 = NOSOAR(5,NA)
+C
+                  DO 120 K=1,6
+C
+                     IF( K .EQ. 1 ) THEN
+C                       AJOUT DU SOMMET ALIGNE GAUCHE DE LA GRILLE DE COTE ARETM
+                        XYSGR(1) = PXYD(1,NS) - ARETM2
+                        XYSGR(2) = PXYD(2,NS)
+                     ELSE IF( K .EQ. 2 ) THEN
+C                       AJOUT DU SOMMET INFERIEUR GAUCHE DE LA GRILLE DE COTE AR
+                        XYSGR(1) = PXYD(1,NS) - ARETM4
+                        XYSGR(2) = PXYD(2,NS) - AR3S4
+                     ELSE IF( K .EQ. 3 ) THEN
+C                       AJOUT DU SOMMET INFERIEUR DROIT DE LA GRILLE DE COTE ARE
+                        XYSGR(1) = PXYD(1,NS) + ARETM4
+                        XYSGR(2) = PXYD(2,NS) - AR3S4
+                     ELSE IF( K .EQ. 4 ) THEN
+C                       AJOUT DU SOMMET GAUCHE DE LA GRILLE DE COTE ARETM2
+                        XYSGR(1) = PXYD(1,NS) + ARETM2
+                        XYSGR(2) = PXYD(2,NS)
+                     ELSE IF( K .EQ. 5 ) THEN
+C                       AJOUT DU SOMMET SUPERIEUR DROIT DE LA GRILLE DE COTE ARE
+                        XYSGR(1) = PXYD(1,NS) + ARETM4
+                        XYSGR(2) = PXYD(2,NS) + AR3S4
+                     ELSE
+C                       AJOUT DU SOMMET SUPERIEUR GAUCHE DE LA GRILLE DE COTE AR
+                        XYSGR(1) = PXYD(1,NS) - ARETM4
+                        XYSGR(2) = PXYD(2,NS) + AR3S4
+                     ENDIF
+C
+C                    AJOUT DU SOMMET XYSGR AU TRIANGLE LE CONTENANT
+C                    => 3 SOUS-TRIANGLES ou RIEN
+                     CALL TRAJGR1( XYSGR,  NTR1,   NTR2,
+     %                       ARETMX, NOFOTI, NUTYSU, RAP2P3,
+     %                       ORIGIN, D2D3,   XMIN,   YMIN,   XYMXMI,
+     %                       MXSOMM, NBSOMM, PXYD,
+     %                       MOSOAR, MXSOAR, N1SOAR, NOSOAR,
+     %                       MOARTR, MXARTR, N1ARTR, NOARTR, NOARST,
+     %                       IERR  )
+                     IF( IERR .GT. 0 ) GOTO 9900
+                     IF( IERR .LT. 0 ) IERR = 0
+ 120              CONTINUE
+               ENDIF
+ 130        CONTINUE
+ 140     CONTINUE
+C
+C        BOUCLE SUR LES SOMMETS AJOUTES DES GRILLES PRECEDENTES
+C        ------------------------------------------------------
+         DO 200 NS = NBSOM0+1, NBSOM1
+C
+            IF( PXYD(3,NS) .GT. ARETM2 ) GOTO 200
+C
+C           ARETE ACTUELLE PLUS LONGUE QUE LA LONGUEUR SOUHAITEE
+C           UN TRIANGLE VOISIN DU SOMMET NS
+            NA   = NOARST(NS)
+            NTR1 = NOSOAR(4,NA)
+            IF( NTR1 .LE. 0 ) NTR1 = NOSOAR(5,NA)
+C
+            DO 180 K=1,6
+C
+               IF( K .EQ. 1 ) THEN
+C                 AJOUT DU SOMMET ALIGNE GAUCHE DE LA GRILLE DE COTE ARETM2
+                  XYSGR(1) = PXYD(1,NS) - ARETM2
+                  XYSGR(2) = PXYD(2,NS)
+               ELSE IF( K .EQ. 2 ) THEN
+C                 AJOUT DU SOMMET INFERIEUR GAUCHE DE LA GRILLE DE COTE ARETM2/2
+                  XYSGR(1) = PXYD(1,NS) - ARETM4
+                  XYSGR(2) = PXYD(2,NS) - AR3S4
+               ELSE IF( K .EQ. 3 ) THEN
+C                 AJOUT DU SOMMET INFERIEUR DROIT DE LA GRILLE DE COTE ARETM2/2
+                  XYSGR(1) = PXYD(1,NS) + ARETM4
+                  XYSGR(2) = PXYD(2,NS) - AR3S4
+               ELSE IF( K .EQ. 4 ) THEN
+C                 AJOUT DU SOMMET GAUCHE DE LA GRILLE DE COTE ARETM2
+                  XYSGR(1) = PXYD(1,NS) + ARETM2
+                  XYSGR(2) = PXYD(2,NS)
+               ELSE IF( K .EQ. 5 ) THEN
+C                 AJOUT DU SOMMET SUPERIEUR DROIT DE LA GRILLE DE COTE ARETM2/2
+                  XYSGR(1) = PXYD(1,NS) + ARETM4
+                  XYSGR(2) = PXYD(2,NS) + AR3S4
+               ELSE
+C                 AJOUT DU SOMMET SUPERIEUR GAUCHE DE LA GRILLE DE COTE ARETM2/2
+                  XYSGR(1) = PXYD(1,NS) - ARETM4
+                  XYSGR(2) = PXYD(2,NS) + AR3S4
+               ENDIF
+C
+C              AJOUT DU SOMMET XYSGR AU TRIANGLE LE CONTENANT
+C              => 3 SOUS-TRIANGLES ou RIEN
+               CALL TRAJGR1( XYSGR,  NTR1,   NTR2,
+     %                       ARETMX, NOFOTI, NUTYSU, RAP2P3,
+     %                       ORIGIN, D2D3,   XMIN,   YMIN,   XYMXMI,
+     %                       MXSOMM, NBSOMM, PXYD,
+     %                       MOSOAR, MXSOAR, N1SOAR, NOSOAR,
+     %                       MOARTR, MXARTR, N1ARTR, NOARTR, NOARST,
+     %                       IERR  )
+               IF( IERR .GT. 0 ) GOTO 9900
+               IF( IERR .LT. 0 ) IERR = 0
+ 180        CONTINUE
+C
+ 200     CONTINUE
+C
+C        BILAN ACTUEL DES SOMMETS AJOUTES POUR CETTE ITERATION
+         NBPTAJ = NBSOMM - NBSOM1
+         IF( LANGAG .EQ. 0 ) THEN
+            WRITE(IMPRIM,10090) NBSUBD+1, NBPTAJ, NBSOMM
+         ELSE
+            WRITE(IMPRIM,20090) NBSUBD+1, NBPTAJ, NBSOMM
+         ENDIF
+C
+cccC        TRACE DE LA TRIANGULATION ACTUELLE
+ccc         CALL TETRMA( NCROUG, NCNOIR,
+ccc     %                COMXMI, PXYD,
+ccc     %                MOSOAR, MXSOAR, NOSOAR,
+ccc     %                MOARTR, MXARTR, NOARTR,
+ccc     %                NBTRIA, QUAMOY, QUAMIN )
+C
+         IF( NBPTAJ .LE. 0 ) GOTO 9900
+         NBSOM1 = NBSOMM
+ 300  CONTINUE
+C
+ccc 9900 TRATRI = .FALSE.
+C
+ 9900 RETURN
+      END

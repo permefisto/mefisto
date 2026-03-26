@@ -1,0 +1,5 @@
+variable TRACSURF 'Drawing of Surfaces' entier
+( 1: 'ALL SURFACES with 0 Tangent'
+, 2: 'ALL SURFACES 1 by 1 with Tangents'
+, 3: 'ONE SURFACE'
+, 6: 'ONE SURFACE NOT CLOSED Its SINGLE EDGES' ) ;

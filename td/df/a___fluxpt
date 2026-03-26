@@ -1,0 +1,13 @@
+deftms ~>>>FLUXPT 'Flux Normal de Chaleur aux Points des faces des EF'
+variable muet DATE 'date de creation du tableau'   reel2 ;
+variable muet NUTD 'numero du tableau descripteur' entier ;  
+variable NBCAFX 'Nombre de cartes de flux de chaleur' entier ; 
+variable NDIMFX 'Dimension de l''Espace de l''Objet 1 ou 2 ou 3' entier ; 
+variable NUTYFX 'No du Type des elements finis'  entier ; 
+variable NBELFX 'Nombre d''Elements Finis de ce type' entier ;        
+variable NBPNFX 'Nombre de Points de calcul du flux normal sur 1 EF' entier ;
+tableau  FLUXNP(1..NBPNFX,1..NBELFX,1..NBCAFX)
+'Flux Normal aux points des faces des EF' reel2 ; 
+tableau  COPNFX(1..3,1..NBPNFX,1..NBELFX,1..2)
+'XYZ des Points et Normales des Flux Normaux' reel ;
+fintms ;

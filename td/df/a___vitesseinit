@@ -1,0 +1,14 @@
+deftms ~>>>VITESSEINIT 'Vitesse INITIALE'
+variable muet DATE 'Date de creation du tableau'   reel2  ;
+variable muet NUTD 'Numero du tableau descripteur' entier ; 
+variable    LTVIT0 'Type de la Vitesse INITIALE' entier 
+(  2 : 'Vitesse INITIALE EXISTANTE'
+   1 : 'Vitesse INITIALE CONSTANTE' 
+, -1 : 'FONCTION Vitesse INITIALE' 
+,  0 : 'Vitesse INITIALE a SUPPRIMER' ) ;
+cas LTVIT0
+ 1 : variable NBVIT0 'Nombre composantes en un noeud' entier ;
+     tableau  VAVIT0(1..NBVIT0) 'Vitesse INITIALE constante' reel ; 
+-1 : variable NFVIT0 'NOM FONCTION Vitesse INITIALE' ^~>FONCTION ;
+fincas ;   
+fintms ;

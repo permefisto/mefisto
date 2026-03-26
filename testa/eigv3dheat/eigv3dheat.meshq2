@@ -1,0 +1,94 @@
+{=================================================================}
+{ MEFISTO Version July 2007    PROJECT: eigv3d  Mesh 3Q2C         }
+{ User: Perronnet Alain        Date:   4 August 2007              }
+{=================================================================}
+ defvar t0,a,b,c,eps;
+ t0=1;
+ a=6;
+ b=6;
+ c=6;
+ eps=0.0001;
+
+1; 1; {POINTS}
+ORIGINE; I; 1; 0; 0; 0;
+Z;       I; 1; 0; 0; 1;
+@;
+@;
+
+6; {Mappings}
+ DILATION;
+  3; {isometry of R3 -> R3}
+  1; {translation+rotation+dilation defined by 2 points and 7 reals}
+  ORIGINE; {name of 1-st point of rotation axis}
+  Z;       {name of 2-nd point of rotation axis}
+  0;       {angle in degrees of the rotation around the axis}
+  0;       {abscissae of translation vector}
+  0;       {ordinate  of translation vector}
+  0;       {height    of translation vector}
+ 1/a;      {X dilation coefficient}
+ 1/b;      {Y dilation coefficient}
+ 1/c;      {Z dilation coefficient}
+@;
+
+4; { VOLUMES materials of the OBJECT }
+  cube;
+  DILATION;{ in the LEXICON ~>TRANSFO }
+ 11;{ regular rectangle of unity squares}
+  a;{ NBINHX number of edges in X direction}
+  b;{ NBINHY number of edges in Y direction}
+  c;{ NBINHZ number of edges in Z direction}
+@;
+
+3;{ SURFACES faces of the object }
+
+ base; i;{in the LEXICON ~>TRANSFO }
+   37;   { extracted surface from a volume }
+ cube;   {in the LEXICON ~>VOLUME }
+ DefFunc base(x,y,z); base=z<eps; EndFunc;
+ base;   {in the LEXICON ~>FONCTION }
+    1;   { boundary faces }
+
+ haut; i; 37; cube;
+ DefFunc haut(x,y,z); haut=z>1-eps; EndFunc;
+ haut; 1; { boundary faces }
+
+
+ derriere; i; 37; cube;
+ DefFunc derriere(x,y,z); derriere=x<eps; EndFunc;
+ derriere; 1;
+
+ devant; i; 37; cube;
+ DefFunc devant(x,y,z); devant=x>1-eps; EndFunc;
+ devant; 1; { boundary faces }
+
+ gauche; i; 37; cube;
+ DefFunc gauche(x,y,z); gauche=y<eps; EndFunc;
+ gauche; 1; { boundary faces }
+
+ droite; i; 37; cube;
+ DefFunc droite(x,y,z); droite=y>1-eps; EndFunc;
+ droite; 1; { boundary faces }
+
+ boundary; i; 51;
+    6; base; haut; derriere; devant; gauche; droite;
+
+@;
+
+5;{ OBJECTS parties de l OBJECT }
+ cube; 0; { classique 2D ou 3D }
+  2; { number of Points Lignes Surfaces Volumes Objects of the object}
+ v; cube; {type PLSVO name and  PLSVO name}
+ s; boundary;
+@;
+
+7; { INTERPOLATION definition of mesh NODES }
+   cube;
+   {3;  LAGRANGE of DEGREE 1 }
+    4; {LAGRANGE of DEGREE 2 }
+@;
+
+10; { Object DRAWING}
+  5; 1; { All OBJECTS }
+ 90;    { CONTINUE THE DRAWING }
+@;
+FERMER;

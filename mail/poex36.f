@@ -1,0 +1,131 @@
+      SUBROUTINE POEX36( NTLXPO, LADEFI, NTSOPO, MNSOPO, IERR )
+C+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+C BUT :    EXTRAIRE DES SOMMETS D'UN PLSV A PARTIR D'UN CRITERE LOGIQUE
+C -----    CREER LE TABLEAU 'XYZSOMMET' DE CE "POINT"
+C          AUCUNE TANGENTE N'EST EXTRAITE
+C
+C ENTREES:
+C --------
+C NTLXPO : NUMERO DU TABLEAU TS DU LEXIQUE DU POINT
+C LADEFI : TABLEAU ENTIER DE DEFINITION DU POINT
+C          CF ~/td/d/a_point__definition
+C
+C SORTIES:
+C --------
+C NTSOPO : NUMERO      DU TMS 'XYZSOMMET' DU POINT
+C MNSOPO : ADRESSE MCN DU TMS 'XYZSOMMET' DU POINT
+C IERR   : 0 SI PAS D'ERREUR
+C          1 SI PLSV INITIAL INCONNU
+C          3 SI PLSV INITIAL SANS XYZSOMMET
+C          4 SI FONCTION INCONNUE
+C         10 SI AUCUN SOMMET EXTRAIT
+C+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+C AUTEUR : ALAIN PERRONNET ANALYSE NUMERIQUE UPMC PARIS        MARS 1991
+C2345X7..............................................................012
+      IMPLICIT           INTEGER(W)
+      include"./incl/gsmenu.inc"
+      include"./incl/a_point__definition.inc"
+      include"./incl/a___xyzsommet.inc"
+      include"./incl/ntmnlt.inc"
+      COMMON / UNITES / LECTEU, IMPRIM, INTERA, NUNITE(29)
+      include"./incl/pp.inc"
+      COMMON            MCN(MOTMCN)
+      REAL              RMCN(1)
+      EQUIVALENCE      (MCN(1),RMCN(1))
+      INTEGER           LADEFI(0:*)
+      DOUBLE PRECISION  DXYZ(3),DOUI
+C
+C     LE PLSV INITIAL
+C     ===============
+C     LE TYPE DU PLSV
+      NUPLS1 = LADEFI( WUPLSV )
+C     LE NUMERO DU PLSV DANS SON TYPE
+      NUPLS2 = LADEFI( WUPLSV + 1 )
+C     LE TABLEAU LEXIQUE DE CE PLSV
+      CALL LXNLOU( NTMN( NUPLS1), NUPLS2, NTPLSV, MN )
+      IF( NTPLSV .LE. 0 ) THEN
+         NBLGRC(NRERR) = 1
+         KERR(1) = 'PLSV INITIAL INCONNU'
+         CALL LEREUR
+         IERR = 1
+         RETURN
+      ENDIF
+C
+C     LE TABLEAU 'XYZSOMMET' DE CE PLSV
+      CALL LXTSOU( NTPLSV, 'XYZSOMMET', NTSPLV, MNSPLV )
+      IF( NTSPLV .LE. 0 ) THEN
+         NBLGRC(NRERR) = 1
+         KERR(1) = 'PLSV SANS XYZSOMMET'
+         CALL LEREUR
+         IERR = 3
+         RETURN
+      ENDIF
+      NBSOM = MCN( MNSPLV + WNBSOM )
+C
+C     LE NUMERO DE LA FONCTION
+      NUFOCP = LADEFI( WUFOCP )
+      IF( NUFOCP .LE. 0 ) THEN
+         NBLGRC(NRERR) = 1
+         KERR(1) = 'FONCTION CRITERE INCONNUE'
+         CALL LEREUR
+         IERR = 4
+         RETURN
+      ENDIF
+C
+C     RESERVATION DE LA PLACE NECESSAIRE AUX SOMMETS EXTRAITS
+      CALL TNMCDC( 'ENTIER', NBSOM, MNOUIS )
+      MNO = MNOUIS - 1
+C
+C     CALCUL DU CRITERE EN CHACUN DES SOMMETS DU MAILLAGE
+      NBSOEX = 0
+      MNS    = MNSPLV + WYZSOM - 3
+      DO 10 N=1,NBSOM
+C
+C        LES 3 COORDONNEES EN DOUBLE PRECISION DU SOMMET N
+         MN = MNS + 3 * N
+         DXYZ(1) = RMCN( MN   )
+         DXYZ(2) = RMCN( MN+1 )
+         DXYZ(3) = RMCN( MN+2 )
+C
+C        LE SOMMET N VERIFIE T IL LE CRITERE ?
+         CALL FONVAL( NUFOCP, 3, DXYZ, NCODEV, DOUI )
+         IF( NCODEV .EQ. 0 ) DOUI = 0
+C
+C        LA VALEUR DU CRITERE
+         IF( NINT( DOUI ) .EQ. 1 ) THEN
+C           UN SOMMET DE PLUS
+            NBSOEX = NBSOEX + 1
+            MCN( MNO+NBSOEX ) = N
+         ENDIF
+ 10   CONTINUE
+C
+C     CONSTRUCTION DU TABLEAU 'XYZSOMMET' DU POINT FINAL
+C     --------------------------------------------------
+      CALL LXTNDC( NTLXPO, 'XYZSOMMET', 'MOTS'  , WYZSOM+3*NBSOEX )
+      CALL LXTSOU( NTLXPO, 'XYZSOMMET',  NTSOPO , MNSOPO )
+C
+C     LE NOMBRE DE SOMMETS DU POINT
+      MCN( MNSOPO + WNBSOM ) = NBSOEX
+C
+C     LES 3 COORDONNEES DES SOMMETS DU POINT
+      MN0 = MNSPLV + WYZSOM - 3
+      MN1 = MNSOPO + WYZSOM
+      DO 500 I=1,NBSOEX
+         N  = MCN(MNO+I)
+         MN = MN0 + 3 * N
+         RMCN(MN1  ) = RMCN(MN  )
+         RMCN(MN1+1) = RMCN(MN+1)
+         RMCN(MN1+2) = RMCN(MN+2)
+         MN1 = MN1 + 3
+ 500  CONTINUE
+C
+C     AJOUT DE LA DATE
+      CALL ECDATE( MCN(MNSOPO) )
+C     AJOUT DU NUMERO DU TABLEAU DESCRIPTEUR
+      MCN( MNSOPO + WNBTGS ) = 0
+      MCN( MNSOPO + WBCOOR ) = 3
+      MCN( MNSOPO + MOTVAR(6) ) = NONMTD( '~>>>XYZSOMMET' )
+C
+C     DESTRUCTION DES TABLEAUX AUXILIAIRES
+      CALL TNMCDS( 'ENTIER', NBSOM  , MNOUIS )
+      END

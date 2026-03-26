@@ -1,0 +1,71 @@
+#!/bin/bash
+#
+# compilation et edition de liens de ppmail.f 
+# Alain Perronnet   Version LINUX 64bits    Septembre 2009
+
+cd $MEFISTO
+#Creation du repertoire pp s'il n'existe pas
+if !(test -d pp)
+then
+  mkdir pp
+fi
+
+if test -f $MEFISTO/td/m/anglais
+then
+  LANGAGE=1
+  LANGUE=ANGLAISE
+  echo
+  echo ====================================================================
+  echo MEFISTO-LINUX 64bits: Compilation f+OpenMp + Link Editor of ppmail.f
+  echo ====================================================================
+else
+  LANGAGE=0
+  LANGUE=FRANCAISE
+  echo
+  echo =========================================================================
+  echo MEFISTO-LINUX 64bits: Compilation f+OpenMp + Edition de liens de ppmail.f
+  echo =========================================================================
+fi
+
+#  
+# compilation de xvuelc.c
+if !(test -f xvue/xvuelc.o)
+then
+  bin/ccxvue
+fi
+
+nompp=pp/ppmail
+if test -f $nompp
+then
+  rm $nompp
+fi
+
+echo "gfortran -Wall  -mcmodel=large -m64 -O -fopenmp -I. $MEFISTO/prpr/ppmail.f -o $nompp"
+gfortran -Wall -mcmodel=large -m64 -O -fopenmp -I. prpr/ppmail.f \
+     mail/lib util/lib xvue/lib xvue/xvuelc.o \
+    -lgfortran -L/usr/X11R6/lib64 -lX11 -o $nompp
+
+if test -f ppmail.o
+then
+  rm ppmail.o
+fi
+
+if test -f $nompp
+then 
+  chmod 755 $nompp
+  ls -l $MEFISTO/pp
+  echo
+  if [ $LANGAGE = 0 ]
+  then
+    echo "$MEFISTO/$nompp est CORRECT pour executer MAILLER"
+  else
+    echo "$MEFISTO/$nompp is CORRECT to execute MESHER"
+  fi
+else
+  if [ $LANGAGE = 0 ]
+  then
+    echo "$MEFISTO/$nompp est INCORRECT. MAILLER est NON EXECUTABLE"
+  else
+    echo "$MEFISTO/$nompp is INCORRECT. MESHER is NOT EXECUTABLE"
+  fi
+fi

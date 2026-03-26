@@ -1,0 +1,69 @@
+      SUBROUTINE VDFAVR( POINT, NOSOTE, XYZSOM, NOFMAX )
+C+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+C BUT :   CALCUL DE LA FACE DU TETRAEDRE PAR LAQUELLE IL FAUT
+C -----   SORTIR POUR SE RAPPROCHER DU POINT DE COORDONNEES REELLES
+C
+C ENTREES:
+C --------
+C POINT  : LES 3 COORDONNEES ENTIERES DU POINT
+C NOSOTE : NUMERO DES 4 SOMMETS DU TETRAEDRE
+C XYZSOM : X Y Z DES SOMMETS DU MAILLAGE
+C
+C SORTIE :
+C --------
+C NOFMAX : NUMERO DE 1 A 4 DE LA FACE DU TETRAEDRE QUI PERMET
+C          LA MEILLEURE PROGRESSION EN DIRECTION DU POINT
+C+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+C AUTEUR : ALAIN PERRONNET LABORATOIRE ANALYSE NUMERIQUE PARIS JUIN 1991
+C2345X7..............................................................012
+      INTEGER           NOSOTE(1:4), NOSOFA(1:3,1:4)
+      REAL              POINT(3), XYZSOM(1:3,1:*)
+      DOUBLE PRECISION  COSA, COSMAX
+      DOUBLE PRECISION  X21, Y21, Z21, X31, Y31, Z31,
+     %                  XYZNOR(3), D, XG, YG, ZG
+      DATA              NOSOFA/ 1,3,2,  2,3,4,  3,1,4,  4,1,2 /
+C
+      COSMAX = -1D100
+C
+      DO 10 NOFACE=1,4
+C
+C        LE VECTEUR NORMAL A LA FACE NOFACE (NON NORMALISE A 1)
+C        NUMERO DES SOMMETS DE LA FACE POUR OBTENIR LA NORMALE
+C        DIRIGEE VERS L'EXTERIEUR
+         NS1 = NOSOTE( NOSOFA( 1 , NOFACE ) )
+         NS2 = NOSOTE( NOSOFA( 2 , NOFACE ) )
+         NS3 = NOSOTE( NOSOFA( 3 , NOFACE ) )
+C
+C        LE BARYCENTRE DE LA FACE NOFACE
+         XG = POINT(1) -
+     %      ( XYZSOM(1,NS1) + XYZSOM(1,NS2) + XYZSOM(1,NS3) ) / 3D0
+         YG = POINT(2) -
+     %      ( XYZSOM(2,NS1) + XYZSOM(2,NS2) + XYZSOM(2,NS3) ) / 3D0
+         ZG = POINT(3) -
+     %      ( XYZSOM(3,NS1) + XYZSOM(3,NS2) + XYZSOM(3,NS3) ) / 3D0
+C
+         X21 = XYZSOM(1,NS2) - XYZSOM(1,NS1)
+         Y21 = XYZSOM(2,NS2) - XYZSOM(2,NS1)
+         Z21 = XYZSOM(3,NS2) - XYZSOM(3,NS1)
+         X31 = XYZSOM(1,NS3) - XYZSOM(1,NS1)
+         Y31 = XYZSOM(2,NS3) - XYZSOM(2,NS1)
+         Z31 = XYZSOM(3,NS3) - XYZSOM(3,NS1)
+C
+         XYZNOR(1) = Y21 * Z31 - Y31 * Z21
+         XYZNOR(2) = Z21 * X31 - Z31 * X21
+         XYZNOR(3) = X21 * Y31 - X31 * Y21
+         D = SQRT( XYZNOR(1)**2 + XYZNOR(2)**2 + XYZNOR(3)**2 )
+C
+C        LE COSINUS DE L'ANGLE (NORMALE,POINT-BARYCENTRE)
+         COSA = (XG*XYZNOR(1) + YG*XYZNOR(2) + ZG*XYZNOR(3)) / D
+C
+C        LE COSINUS MAXIMAL
+         IF( COSA .GT. COSMAX ) THEN
+C           LE NOUVEAU COSINUS MAXIMAL
+            COSMAX = COSA
+            NOFMAX = NOFACE
+         ENDIF
+ 10   CONTINUE
+C
+      RETURN
+      END

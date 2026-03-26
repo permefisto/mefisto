@@ -1,0 +1,5 @@
+variable MODE_ES 'Data Input Interactivity types' entier
+( 0: 'without INTERACTIVITY (BLIND BATCH)'
+, 1: 'INTERACTIVITY with DRAWING without KEYBOARD without MOUSE'
+, 3: 'INTERACTIVITY with DRAWING with    KEYBOARD with    MOUSE' ) ;
+

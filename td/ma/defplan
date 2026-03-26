@@ -1,0 +1,3 @@
+variable DEFPLAN 'DEFINITION of a PLANE'  entier
+ ( 1 : '3 POINTS'
+ , 2 : '1 POINT 1 NORMAL VECTOR' ) ;

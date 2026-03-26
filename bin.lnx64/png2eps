@@ -1,0 +1,15 @@
+#!/bin/bash
+#
+#  Conversion de fichiers.png en fichiers.eps
+#  A. Perronnet  Mai 2011
+#
+# boucle sur les fichiers .png
+for i in `ls $nomdir | grep .png$`
+do
+  nomsp=`basename $i .png`
+  nomspng=$nomsp.png
+  nomseps=$nomsp.eps
+  echo "Convert $nomspng en $nomseps"
+  convert $nomspng $nomseps
+done
+

@@ -1,0 +1,5 @@
+This POINT of coordinates X, Y, Z define
+- the cylinder axis with the ORIGIN of the reference system
+- the PLANE of the SUPERIOR CIRCLE with the COTE Z of this POINT
+
+Thus, the angle XY Plane - Axis is not necessary equal to 90 degrees

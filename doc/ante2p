@@ -1,0 +1,19 @@
+The quality of a tetrahedron measures its "distance" to 
+the regular tetrahedron and is a real from 0 to 1.
+A flat tetrahedron quality is 0.
+A regular tetrahedron quality is 1.
+It is the quotient c r/h where
+r is the radius of the inscribed sphere
+h is the greatest length of the edges
+c is a constant to obtain 1 with the regular tetrahedron.
+
+The tetrahedra with a wrong quality are modified if its
+quality is under QUTEMN<1
+
+The swapping of 2 triangular faces with a common edge
+is possible if the angle between the 2 normal vectors
+is under ANTE2P in degrees.
+
+
+A reasonabily value is under some degrees.
+If more, the geometry can be strongly modified!

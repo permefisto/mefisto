@@ -1,0 +1,37 @@
+1: Pour definir un nom generique de point qui sera concatene
+   avec un numero croissant a partir de 1.
+   Exemple : P => P1 P2 P3 ...
+2: Si la TRANSFORMATION donnee est differente de I, tous les
+   points saisis ensuite subiront la transformation indiquee.
+   Cette transformation a du etre definie auparavant.   
+
+   Les bornes MINIMALE et MAXIMALE du CADRE de SAISIE de 
+   l'ensemble des points saisis peuvent etre fournies :
+3: pour les abscisses X
+4: pour les ordonnees Y
+5: pour les cotes Z     
+
+6: provoque le trace du cadre et la saisie peut commencer
+   Deplacer la souris dans l'un des 3 quarts d'ecran
+   Cliquer pour definir 2 des 3 coordonnees
+   Une droite apparait dans les 2 autres quarts d'ecran 
+   Deplacer la souris dans un de ces 2 quarts d'ecran.
+   Cliquer a l'endroit voulu pour fixer la 3-eme coordonnee.
+
+   Pour detruire un point :
+   Deplacer la souris dans le cadre TUER LE POINT et cliquer.
+   Deplacer la souris pres du point a detruire et cliquer.
+
+   ATTRACTER en X :     
+   Deplacer la souris dans le cadre ATTRACTER EN X et cliquer.
+   Tout POINT saisi sera projete sur la graduation la plus
+   proche en X   
+   NE PAS ATTRACTER EN X apparait a la place de ATTRACTER EN X
+   et il suffit de cliquer dans ce cadre pour supprimer cette
+   projection ...
+
+   De meme en Y et Z.
+
+   Pour ABANDONNER 
+   Deplacer la souris dans le cadre ABANDONNER et cliquer.
+   L'execution remonte d'un niveau dans l'arbre des menus.

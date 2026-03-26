@@ -1,0 +1,12 @@
+variable TRAROT3D 'ROTATIONAL(VELOCITY) 3D DRAWINGS' entier
+( 0 : 'COMPONENT NUMBER X Y Z or MAGNITUDE of Rotational'
+, 1 : 'ISO-|Rot VELOCITY| MAGNITUDES'
+, 2 : '|Rot VELOCITY| COLOR ZONES'
+, 3 : '|Rot VELOCITY| on CROSS SECTIONS X or Y or Z=Const'
+, 4 : '|Rot VELOCITY| PROFILE on CROSS SECTION X or Y or Z=Const'
+, 5 : '|Rot VELOCITY| ALONG A 3D LINE DEFINED BY 2 3D POINTS'
+, 6 : '|Rot VELOCITY| On ONE 3D SURFACE or more of the 3D OBJECT'
+, 11: 'Drawing of X-COMPONENT of Rot Velocity'
+, 12: 'Drawing of Y-COMPONENT of Rot Velocity'
+, 13: 'Drawing of Z-COMPONENT of Rot Velocity'
+, 14: 'Drawing of |MAGNITUDE of Rot Velocity|' ) ;

@@ -1,0 +1,19 @@
+The generic surface is rotated N-times which create N slices
+or levels. The triangles become pentahedra and the quadrangles
+become hexahedra.
+
+
+ATTENTION: NO VERTEX of the surface must be on the rotation axis
+because a such vertex transform a triangle into a pyramid which
+is NOT a Mefisto finite element!
+
+The total rotation angle can reach 360 degrees.
+
+Example: 
+V15.1; I; 15; INITIAL_SURFACE; P1_AXE; P2_AXE; 4; {rotations}
+1; {angles for each rotation}
+20; 30; 40; 50; {degrees}
+{The rotations add from the initial surface}
+
+Define a volume by 4 rotations of 20, 50, 90 and 140 degrees
+of the initial surface around the axis P1_AXE  P2_AXE

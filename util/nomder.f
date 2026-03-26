@@ -1,0 +1,58 @@
+      SUBROUTINE NOMDER( NTLX,  KNOM, NONOM, MNLX )
+C+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+C BUT :    RETROUVER LE NOM ET LE NUMERO NONOM DU DERNIER NOM
+C -----    CREE DANS LE LEXIQUE NTLX
+C
+C ENTREE :
+C --------
+C NTLX   : NUMERO DU TABLEAU MS CONTENANT LE LEXIQUE
+C
+C SORTIES:
+C ---------
+C KNOM   : CHAINE DE CARACTERES NOM DU DERNIER DECLARE DANS LE LEXIQUE
+C NONOM  : NUMERO DU NOM KNOM DANS LE LEXIQUE S'IL EN EXISTE UN
+C          =0 SI PAS DE NOM DANS CE LEXIQUE
+C MNLX   : ADRESSE MCN DU LEXIQUE NTLX
+C          =0 SI LEXIQUE INCONNU
+C+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+C AUTEUR : PERRONNET ALAIN UPMC ANALYSE NUMERIQUE PARIS    NOVEMBRE 1998
+C2345X7..............................................................012
+      include"./incl/langue.inc"
+      include"./incl/pp.inc"
+      COMMON            MCN(MOTMCN)
+      CHARACTER*(*)     KNOM
+C
+C     OUVERTURE DU TABLEAU MS = LEXIQUE NTLX
+      CALL TAMSOU( NTLX , MNLX )
+C     MNLX: ADRESSE MCN DU LEXIQUE
+      IF( MNLX .LE. 0 ) GOTO 9999
+C
+C     NBENNM : NOMBRE D'ENTIERS POUR STOCKER LES CARACTERES D'UN NOM
+      NBENNM = MCN( MNLX + 2 )
+      IF( NBENNM.LE.0 .OR. NBENNM.GT.32 ) GOTO 9999
+C
+C     DEBUT DU CHAINAGE DES NOMS OCCUPES: C'EST LE DERNIER AJOUTE
+      NONOM = MCN( MNLX + 5 )
+C
+C     CE NOM EST IL OCCUPE?
+      IF( NONOM .GT. 0 ) THEN
+C
+C        IL EXISTE UN NOM
+         MN = MNLX + MCN( MNLX ) * NONOM
+C
+C        COPIE DE SON NOM DANS KNOM
+         CALL ENTNOM( NBENNM, MCN(MN), KNOM )
+         RETURN
+C
+      ENDIF
+C
+C     ERREUR
+ 9999 IF( LANGAG .EQ. 0 ) THEN
+         KNOM  = 'INCONNU '
+      ELSE
+         KNOM  = 'UNKNOWN '
+      ENDIF
+      NONOM = 0
+C
+      RETURN
+      END

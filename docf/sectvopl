@@ -1,0 +1,15 @@
+Definir le plan de section des EF
+a X=Constante ou Y=Constante ou Z=Constante
+ou un plan defini par son vecteur normal
+lui-meme defini par ses 3 composantes.
+
+Ensuite, le MOUVEMENT de la SOURIS deplacera ce plan de section
+Seuls les EF intersectes sont traces.
+
+Le BOUTON GAUCHE enfonce deplace l'objet
+Le BOUTON MILIEU enfonce deplace:
+ verticalement fait une rotation autour de l'axe horizontal
+ horizontalement fait une rotation autour de l'axe vertical
+Le BOUTON DROIT enfonce deplace:
+ vers le bas fait un zoom avant
+ vers le bas haut un zoom arriere

@@ -1,0 +1,156 @@
+      SUBROUTINE LIEXW5( NBARSE , NARETE , SOMINI ,
+     S                   NBSOLI , INDEX  , SOMFIN ,
+     S                   NBCPCO , NBARSO , IERR  )
+C+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+C BUT :    RECHERCHE ET IDENTIFICATION DES SOMMETS COMMUNS AUX ARETES
+C -----    D'UNE LIGNE NON STRUCTUREE
+C          RECHERCHE DES COMPOSANTES CONNEXES DE LA LIGNE
+C
+C ENTREES:
+C --------
+C NBARSE : NOMBRE D'ARETES DE LA LIGNE A STRUCTURER
+C NARETE : LISTE DES SOMMETS DES ARETES DE LA LIGNE
+C SOMINI : COORDONNEES DES EXTREMITES DES ARETES
+C NBSOLI : NOMBRE DE SOMMETS DE LA LIGNE STRUCTUREE
+C
+C SORTIES:
+C --------
+C INDEX  : TABLEAU DE TRAVAIL
+C SOMFIN : LES COORDONNEES DES SOMMETS APRES RECLASSEMENT
+C NBCPCO : NOMBRE DE COMPOSANTES CONNEXES DE LA LIGNE
+C NBARSO : NOMBRE DE SOMMETS DE CHAQUE COMPOSANTE CONNEXE
+C IERR   : 0 SI PAS D'ERREUR
+C          1 ERREUR LIGNE EN PLUSIEURS MORCEAUX
+C          2 LIGNE FERMEE MAIS NON STRUCTUREE CAR DERNIERE ARETE N->1
+C+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+C AUTEUR : PASCAL JOLY ANALYSE NUMERIQUE UPMC  PARIS   DECEMBRE 1988
+C...............................................................................
+      DIMENSION SOMINI(3,NBSOLI),SOMFIN(3,NBSOLI),INDEX(3,NBARSE)
+      DIMENSION NARETE(2,NBARSE),INV(2),NBARSO(NBARSE)
+      LOGICAL   DIRECT
+C
+      DATA INV/2,1/
+C
+      IERR = 0
+C     INITIALISATION
+      DO 1 NB=1,NBARSE
+         INDEX(1,NB) = 0
+         NBARSO(NB)  = 0
+ 1    CONTINUE
+C     NOMBRE DE COMPOSANTES CONNEXES
+      NBCPCO = 0
+      NBARRE = 0
+C
+C     PARCOURS DE LA LIGNE NON STRUCTUREE A PARTIR DE LA PREMIERE ARETE
+C     =================================================================
+C
+C     RECHERCHE D'UNE ARETE DE DEPART
+ 25   NUARDE = 0
+      DO 30 NUM = 1 , NBARSE
+         IF (INDEX(1,NUM) .EQ. 0 ) THEN
+            NUARDE = NUM
+            GO TO 31
+         END IF
+ 30   CONTINUE
+ 31   CONTINUE
+      NUMARE = NUARDE
+      NBARRE = NBARRE + 1
+      INDEX(1,NUMARE) = NBARRE
+      IND = 1
+      INDEX(3,NUMARE) = IND
+      DIRECT = .TRUE.
+      NBARCP = 1
+      INDEX(2,NBARCP) = NUMARE
+C
+C     EXPLORATION DE LA LISTE DES ARETES
+C     ----------------------------------
+C
+C     LE NUMERO DE L'EXTREMITE DE L'ARETE
+ 10   NUM2 = NARETE(INV(IND),NUMARE)
+C     RECHERCHE DE CE SOMMET PARMI LES AUTRES
+      DO 2 NA=1,NBARSE
+         IF(INDEX(1,NA).EQ.0) THEN
+            DO 4 IND = 1 , 2
+               NUM1 = NARETE(IND,NA)
+               CALL XYZIDE(SOMINI(1,NUM1),SOMINI(1,NUM2),IDENT)
+               IF (IDENT.NE.1) GOTO 4
+C              LE SOMMET EST RETROUVE
+               NBARRE = NBARRE + 1
+               NBARCP = NBARCP + 1
+               NUMARE = NA
+               INDEX(1,NUMARE) = NBARRE
+               INDEX(2,NBARCP) = NUMARE
+               INDEX(3,NUMARE) = IND
+               GO TO 10
+ 4          CONTINUE
+         END IF
+ 2    CONTINUE
+C     L'EXPLORATION DANS CE SENS EST TERMINEE
+      NBARNR = NBARSE-NBARRE
+C
+C     ARRET SI TOUTES LES ARETES SONT RETROUVEES
+      IF (NBARNR .EQ. 0) THEN
+         NBCPCO = NBCPCO + 1
+         NBARSO(NBCPCO) = NBARCP
+         GO TO 100
+      ELSE IF (DIRECT) THEN
+C        EXPLORATION DANS L'AUTRE SENS
+         NUMARE = NUARDE
+         IND = 2
+         DIRECT = .FALSE.
+         DO 20 NB = 1 , NBARCP
+            NUMA = INDEX(2,NB)
+            INDEX(1,NUMA) = INDEX(1,NUMA)+NBARCP+1-2*NB
+            INDEX(3,NUMA) = INV(INDEX(3,NUMA))
+ 20      CONTINUE
+         GO TO 10
+      ELSE
+C        LA LIGNE N'EST PAS CONNEXE
+         NBCPCO = NBCPCO + 1
+         NBARSO(NBCPCO) = NBARCP
+         GO TO 25
+      END IF
+C
+C     LE TABLEAU SOMFIN DE LA LIGNE STRUCTUREE
+C     =========================================
+C
+C     RANGEMENT DES ARETES
+ 100  DO 9 NA=1,NBARSE
+         NB = INDEX(1,NA)
+         INDEX(2,NB) = NA
+ 9    CONTINUE
+      NBAC = 0
+      NUM0 = 0
+      DO 110 NBC = 1 , NBCPCO
+         NBA = NBARSO(NBC)
+         NUM1 = NUM0 + 1
+         DO 11 NB=1,NBA
+            NA  = INDEX(2,NBAC+NB)
+            IND = INDEX(3,NA)
+            NUM0 = NUM0 + 1
+            NUM  = NARETE(IND,NA)
+            DO 12 J=1,3
+               SOMFIN(J,NUM0) = SOMINI(J,NUM)
+ 12         CONTINUE
+ 11      CONTINUE
+         NA = INDEX(2,NBAC+NBA)
+         IND = INV(INDEX(3,NA))
+         NUM0 = NUM0 + 1
+         NUM  = NARETE(IND,NA)
+         DO 13 J=1,3
+            SOMFIN(J,NUM0) = SOMINI(J,NUM)
+ 13      CONTINUE
+         NBAC = NBAC + NBA
+         NUM2 = NUM0
+C        LA LIGNE EST ELLE FERMEE ?
+         CALL XYZIDE(SOMFIN(1,NUM1),SOMFIN(1,NUM2),IDENT)
+         IF (IDENT.NE.1) GOTO 18
+C        OUI
+         IERR = 2
+         GO TO 110
+C        NON
+ 18      NBARSO(NBC) = NBARSO(NBC) + 1
+ 110  CONTINUE
+C
+      RETURN
+      END

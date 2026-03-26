@@ -1,0 +1,186 @@
+Mefisto-NLSER resoud le probleme de l'Equation Non Lineaire de Schrodinger
+NLSE dans un domaine 2d ou 3d a l'aide des elements finis de Lagrange
+(triangle et/ou quadrangle en 2d; tetraedre, pentaedre ou hexaedre en 3d).
+Cf la web page https://www.ljll.math.upmc.fr/perronnet/NLSE/NLSE.html
+Cf les fichiers des tests nlsesqri, nlsecu, cylbreak2d, solitonsph20,
+nlsecuvv, nlsgpe de $MEFISTO/testa executables par la frappe de
+readf NomFichier;
+
+Soit a calculer l'onde complexe U(t,X) = V(t,X) + i W(t,X)
+solution du probleme NLSE:
+
+Masse i dU(t,X)/dt -Alfa Laplacien U(t,X) + N(|U|**2) U(t,X) 
+    - i OmegaZ (x dU/dy - y dU/dx) = F(t,X) dans le domaine
+
+N(|U|**2)(t,X) = Beta |U(t,X)|**2 ou Beta |U(t,X)|**2 + Gama |U(t,X)|**4 or ...
+
+avec les conditions aux limites
+soit, U(t,X) = UD(t,X) sur la frontiere GammaD
+soit, Alfa dU(t,X)/dn = UN(t,X) sur la frontiere GammaN
+soit,-Alfa dU(t,X)/dn = g(X) ( U(t,X) - UR(t,X) ) sur la frontiere GammaR
+
+et les conditions initiales
+U(t=t0,X) = U0 sur le domaine et sa frontiere
+
+Un exemple de definition de la fonction utilisateur  N(|U|**2):
+DefFunc NLSECoef(t,x,y,z,ntyobj,nuobj,OndeR,OndeI);
+  DefVar nlc; nlc = OndeR**2 + OndeI**2;
+  NLSECoef = nlc * ( Beta + Gama * nlc );
+EndFunc;
+OndeR et OndeI sont les parties reelle et imaginaire de l'onde U(t,X)
+calculees a l'iteration precedente.
+Beta et Gama sont des constantes definies par l'utilisateur.
+
+L'integration en temps emploie un schéma à un pas de temps qui s'adapte
+selon les valeurs de l'onde U au cours du temps.
+
+Pour resoudre le probleme, il est necessaire
+- par execution au prealable de la commande MAILLER,
+  d'avoir construit le maillage du domaine c'est à dire l'objet Mefisto
+  et de l'avoir interpolé avec des polynomes de Lagrange;
+- entrer les donnees physiques Masse, Alfa, fonction utilisateur N(|U|),
+  force, conditions aux limites et conditions initiales;
+- choisir le probleme à resoudre et un algorithme.
+- visualiser les resultats |Onde U| ou V partie reelle ou W partie imaginaire
+
+Le menu debuNLSE permet d'enchainer les etapes vues ci-dessus
+  1; NOM de l'OBJET a TRAITER (inutile si UN SEUL objet est maille)
+  2; ENTREE des DONNEES du Probleme des NLSE
+  5; IMPLICIT idU(t)/dt -Alfa Laplacien U(t) +N(t,|U|**2)U(t)=F(t,X)
+  6; i-TIME methode idU(t)/dt -Alfa Laplacian U(t) +N(|U|**2)U(t)=F(t,X)
+ 11; DESSIN du MODULE               de l'ONDE NLSE
+ 12; DESSIN de la PARTIE REELLE     de l'ONDE NLSE
+ 13; DESSIN de la PARTIE IMAGINAIRE de l'ONDE NLSE
+ 14; DESSIN des VALEURS du TEST d'ARRET des ITERATIONS
+ 15; DESSIN des Max|U(Noeud)|(Temps)
+ 16; DESSIN des ERREUR(Temps) = ER(Temps) + i EI(Temps)
+ 19; DESSIN du MAILLAGE des PLSVO
+ 20; PRECISION pour INVERSER les systemes lineaires A x = b
+ 38; LARGEUR HAUTEUR PIXELS de la FENETRE de VISUALISATION
+ 39; COULEUR du FOND de la FENETRE de VISUALISATION
+ 71; SUIVI des TMS AFFICHAGE MODIFICATION
+ 72; SUIVI des FICHIERS de la MS
+ 73; GESTION des UNITES lecture affichage
+ 74; TUER des TMS de PLSVO
+ 97; DATE de version de Mefisto
+ 99; SAUVEGARDE des donnees FIN TRAITEMENT    <= TRES IMPORTANT pour CONTINUER
+
+
+2; offre une entree des donnees, volume par volume en 3d ou surface par surface en 2d
+(densite de masse, Alfa, fonction utilisateur N(|U|), Force F, U initiale, 
+puis les conditions aux limites UD, UN, g, URpour les surfaces, lignes, points.
+
+Ces donnees peuvent etre entrees, soit par constantes, soit par fonctions.
+Par fonction, il est possible de faire dependre ces donnees de la position
+du point x,y,z, du temps, du materiau, ...
+Exemple de definition de la fonction N(|U|):
+DefFunc NLSECoef(t,x,y,z,ntyobj,nuobj,WaveR,WaveI);
+  r2 = x*x + y*y;
+  Vx = r2 * ( 0.5 + r2 * 0.25 );
+  NLSECoef = -Vx -Beta * ( WaveR**2 + WaveI**2 );
+EndFunc;
+
+Exemple pour la definition d'une force:
+DefFunc ComplexForce(t,x,y,z,nutyob,nuobjt,partnb,ondeRP,ondeIP,zero);
+  If partnb=1 then
+    ComplexForce = RealForce(t,x,y,z);
+  Else
+    ComplexForce = ImaginaryForce(t,x,y,z);
+  EndIf;
+EndFunc;
+
+L'onde initiale peut etre donnee, ou retrouvee parmi les ondes deja calculees
+a differents temps, ou encore un NLSE vecteur propre deja calcule et
+pris pour partie reelle de l'onde.
+
+5; IMPLICITE      idU(t)/dt -Alfa Laplacien U(t) +N(t,|U|)U(t)=F(t,X)
+L'equation NLSE de onde complexe U(t,X) = V(t,X) + i W(t,X) est decomposee
+en partie reelle et imaginaire ce qui donne un systeme couple.
+
+   Integration en temps par EULER a PAS CONSTANT et SEMI-IMPLICITE MODIFIE
+    n=0  V=v0      W=w0
+(3) m=0  Vn+10=Vn  Wn+10=Wn
+(4)-Rho Wn+1m+1 -dt Alfa LAPLACIEN Vn+1m+1 =-Rho Wn -dt Beta (Vn+1m**2+Wn+1m**2) Vn+1m +dt Fr(t,X)
+    Rho Vn+1m+1 -dt Alfa LAPLACIEN Wn+1m+1 = Rho Vn -dt Beta (Vn+1m**2+Wn+1m**2) Wn+1m +dt Fi(t,X)
+     Si ||Vn+1m+1-Vm n+1||>Eps||Vm n+1|| ou ||Wn+1m+1-Wm n+1||>Eps||Wm+1 n+1||
+     Alors m=m+1  Aller en (4)
+     Sinon Vn+1=Vn+1m+1  Wn+1=Wn+1m+1
+   Si TPSINI+(n+1)dt < TPSFIN Alors n=n+1; Aller en (3)
+   Fin
+
+En fait, a un temps tn+1 et a l'etape m+1, le probleme consiste a trouver Un+1 solution de (4)
+[ K(-DeltaT (-Alfa Laplac + Beta(V0,W0));       M(Rho) ] { Vn+1 m+1 } = 
+[ M(Rho)        ; K(DeltaT (-Alfa Laplac +Beta(V0,W0)) ] { Wn+1 m+1 }
+
+{ [N(DeltaT (Beta(Vn+1m,Wn+1m)-Beta(V0,W0))] {Vn+1m} + [M(Rho)]{Wn}    } +
+{ [M(Rho)]{Vn} + [N(-DeltaT (Beta(Vn+1m,Wn+1m))-Beta(V0,W0))]  {Wn+1m} }
+
+{-DeltaT FOmegaR(tn+1,Vn+1m,Wn+1m) } + {-DeltaT FGamaR(tn+1,Vn+1m,Wn+1m) }
+{ DeltaT FOmegaI(tn+1,Vn+1m,Wn+1m) }   { DeltaT FGamaI(tn+1,Vn+1m,Wn+1m) }
+
+L'IDEE est de calculer UNE SEULE FOIS la matrice globale profil
+[ K(-DeltaT (-Alfa Laplac + Beta(V0,W0));       M(Rho) ]
+[ M(Rho)        ; K(DeltaT (-Alfa Laplac +Beta(V0,W0)) ]
+et de la FACTORISER L D tL de CROUT UNE SEULE FOIS pour resoudre
+ensuite a chaque iteration le systeme lineaire par descente de L,
+division diagonale D et remontee de tL.
+Le pas de temps demande est le pas de temps initial.
+Il est ensuite ADAPTE selon les valeurs successives de l'onde
+au cours des iterations.
+Attention, l'onde peut etre STATIONNAIRE, EXPLOSER ou s'ANNULER.
+Cf testa/nlsgpe/nlsgp.imp pour les donnees a fournir.
+
+
+6; i-TIME methode idU(t)/dt -Alfa Laplacian U(t) +N(|U|**2)U(t)=F(t,X)
+   SCHEMA SEMI-IMPLICITE MODIFIE en TEMPS (t -> it) avec Matrice GLOBALE
+   nxn pour l'equation de GROSS-PITAEVSKII
+   n=0  V=v0      W=w0
+(7)m=0  V0n+1=Vn  W0n+1=Wn
+
+(8)(Rho/dt -LAPLACIEN/2 + ( V +N(V0**2+W0**2) ) Vn+1m+1 =
+        Rho Vn/dt + OmegaZ (x dWn+1m/dy - y dWn+1m/dx) 
+        -( N(Vn+1m**2+Wn+1m**2)-N(V0**2-W0**2) ) Vn+1m + Fr
+
+   (Rho/dt -LAPLACIEN/2 + ( V +N(V0**2+W0**2) ) Wn+1m+1 =
+        Rho Wn/dt - OmegaZ (x dVn+1m/dy - y dVn+1m/dx) 
+        -( N(Vn+1m**2+Wn+1m**2)-N(V0**2-W0**2) ) Wn+1m + Fi
+
+    NormeL2 = (Integrale |Vn+1m+1**2+Wn+1m+1**2| dX)**1/2
+    Vn+1m+1 = Vn+1m+1 / NormeL2, Wn+1m+1 = Wn+1m+1 / NormeL2
+
+     Si ||Vn+1m+1-Vn+1m||>Eps||Vn+1m+1|| ou ||Wn+1m+1-Wn+1m||>Eps||Wn+1m+1||
+     Alors m=m+1  Aller en (8)
+     Sinon Vn+1=Vn+1m+1  Wn+1=Wn+1m+1
+   Si TPSINI+(n+1)dt < TPSFIN Alors n=n+1; Aller en (7)
+   Fin
+
+Cf testa/nlsgpe/nlsgp.itime pour les données à fournir.
+
+
+11; Apres le calcul de l'onde, il est agreable de visualiser,
+soit 11; son module, soit 12; sa partie reelle, soit 13; sa partie imaginaire.
+
+Pour mieux comprendre l'onde, choisir nul le nombre de cas a visualiser
+ce qui donne le trace de l'onde aux temps stockes avec une impression de petit film.
+
+14; Le DESSIN des VALEURS du TEST d'ARRET des ITERATIONS
+montre la convergence des iterations au cours du temps.
+
+15; Le DESSIN des Max|U(Noeud)|(Temps) montre les fluctuations, les oscillations
+eventuellement l'explosion de l'onde en fonction du temps.
+
+16; Il est aussi possible de calculer et visualiser l'erreur commise
+lorsque l'expression de l'onde exacte est connue.
+Il faut alors fournir les 2 fonctions utilisateur:
+DefFunc Exact_Real_Part(t,x,y,z);
+  Exact_Real_Part = (1+t*t) * (1-x*x) * (1-y*y); { par exemple }
+EndFunc;
+
+DefFunc Exact_Imaginary_Part(t,x,y,z);
+  Exact_Imaginary_Part = (1+t) * cos(Pis2*x) * cos(Pis2*y); { par exemple }
+EndFunc;
+
+19..97; Classiques
+
+99; La SAUVEGARDE des DONNEES et la FIN du TRAITEMENT
+ABSOLUMENT NECESSAIRE pour exploiter ensuite les resultats acquis.

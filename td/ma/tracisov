@@ -1,0 +1,8 @@
+variable TRACISOV 'Drawings of ISOVALUES' entier
+( 1 : 'CASE NUMBER of ISOVALUES'
+, 2 : 'Nombre d''ISOVALEURS'
+, 5 : 'COLOR of MESH''s EDGES'
+, 6 : 'DRAWING TYPE of EDGES'
+, 7 : 'COLOR of EDGES of ISOVALUES'
+, 8 : 'DRAWING TYPE of ISOVALUE EDGES'
+,90 : 'EXECUTION of the DRAWING' ) ;

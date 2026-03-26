@@ -1,0 +1,109 @@
+{ ==================================================================== }
+{ MEFISTO Software     : Version December 2008                         }
+{ USER's Name          : Alain Perronnet                               }
+{ Project Name         : cavity3d                                      }
+{ Date                 : January 5-th 2008                             }
+{ ==================================================================== }
+DefVar t0,a,b,c,eps;
+t0=1;
+a=7;
+b=7;
+c=7;
+eps=0.0001;
+
+ 6; { MAPPINGS R3-->R3 }
+    { NAME of the TRANSFORMATION or ESCAPE? }
+ reduction;
+ 6;  { F:R3->R3 define by 3 functions (Fi) }
+
+ DefFunc FX(x,y,z);
+ FX=X/a;
+ EndFunc;
+ FX;
+
+ { NAME of FUNCTION }
+ DefFunc FY(x,y,z);
+ FY=Y/b;
+ EndFunc;
+ FY;
+
+ { NAME of FUNCTION }
+ DefFunc FZ(x,y,z);
+ FZ=Z/c;
+ EndFunc;
+ FZ;
+
+ { in LEXICON ~>FONCTION }
+ { NAME of the TRANSFORMATION or ESCAPE? }
+ @;
+
+4; { VOLUMES materials of the object }
+  cubeabc;
+  i;{ in the lexicon ~>TRANSFO }
+  11;{ regular cube with unit edges }
+   a;{ NBINHX number of X-edges }
+   b;{ NBINHY number of Y-edges }
+   c;{ NBINHZ number of Z-edges }
+
+  cube;  { the unity cube }
+  reduction; { in the lexicon ~>TRANSFO }
+  31;    { TETRAHEDRIZATION of a PYRA-PENTA-HEXAHEDRIZATION }
+  cubeabc; { NAME of VOLUME with tetra-penta-hexaedra }
+@;
+
+3;{ SURFACES faces of the object }
+
+ base; i;{ in the lexicon ~>TRANSFO }
+   37;   { EXTRACTED SURFACE FROM FACES OF the VOLUME cube }
+ cube;   { in the lexicon ~>VOLUME }
+ DefFunc base(x,y,z); base=z<eps; EndFunc;
+ base;   { in the lexicon ~>FONCTION }
+    1;   { faces on boundary }
+
+ top; i; 37; cube;
+ DefFunc top(x,y,z); top=z>1-eps; EndFunc;
+ top; 1; { faces on boundary }
+
+ back; i; 37; cube;
+ DefFunc back(x,y,z); back=x<eps; EndFunc;
+ back; 1; { faces on boundary }
+
+ front; i; 37; cube;
+ DefFunc front(x,y,z); front=x>1-eps; EndFunc;
+ front; 1; { faces on boundary }
+
+ left; i; 37; cube;
+ DefFunc left(x,y,z); left=y<eps; EndFunc;
+ left; 1; { faces on boundary }
+
+ right; i; 37; cube;
+ DefFunc right(x,y,z); right=y>1-eps; EndFunc;
+ right; 1; { faces on boundary }
+@;
+
+5; { OBJECTS parts of the object }
+ cavity3d; 0; { classic 2D ou 3D }
+  7; { number of Points Lines Surfaces Volumes Objects of the object }
+ v; cube; { POINT or LINE or SURFACE or VOLUME or OBJECT? }
+ s; top;        { name of type PLSVO and name of PLSVO}
+ s; base;
+ s; right;
+ s; left;
+ s; front;
+ s; back;
+ { NAME of the OBJECT or ESCAPE? }
+@;
+
+7; { INTERPOLATION definition of nodes of the mesh }
+ cavity3d; { NAME of the OBJECT to be INTERPOLATED }
+ { 3;   LAGRANGE of DEGREE 1 => BREZZI-FORTIN finite elements }
+   4; { LAGRANGE of DEGREE 2 => TAYLOR-HOOD finite elements }
+ { NAME of the OBJECT to be INTERPOLATED? }
+@;
+
+10;  { DRAWINGS of the cavity3d }
+ 5;  { OBJECT }
+ 1;  { ALL OBJECTS 1 by 1 }
+ 90; { Continue the DRAWING }
+
+CLOSE;

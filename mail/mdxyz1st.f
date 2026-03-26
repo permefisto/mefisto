@@ -1,0 +1,171 @@
+      SUBROUTINE MDXYZ1ST( QUAMINEX, NTE,    NOTETR, PTXYZD, NPSOFR,
+     %                     NBSTCF,   NOSTCF, NSDEPL )
+C+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+C BUT :   TOUT SOMMET DU TETRAEDRE NTE S'IL N'EST PAS UN SOMMET DU CF
+C -----   EST DEPLACE EN UNE POSITION LE LONG DE LA NORMALE A SA FACE
+C         OPPOSEE POUR FORMER UN TETRAEDRE A VOLUME>0 ET QUALITE<QUAMINEX
+C         SI LE DEPLACEMENT DEVIENT TROP GRAND RETOUR SANS MODIFIER SES XYZ
+
+C ENTREES:
+C --------
+C QUAMINEX:QUALITE MINIMALE EXIGEE POUR CREER UN TETRAEDRE
+C NTE    : NUMERO NOTETR DU TETRAEDRE A TRAITER
+C NOTETR : LISTE DES TETRAEDRES
+C          SOMMET1,    SOMMET2,    SOMMET3,    SOMMET4,
+C          TETRAEDRE1, TETRAEDRE2, TETRAEDRE3, TETRAEDRE4
+C          DE L'AUTRE COTE DE LA FACE
+C          1: 123      2: 234      3: 341      4: 412
+C PTXYZD : TABLEAU DES COORDONNEES DES POINTS
+C          PAR POINT : X  Y  Z DISTANCE_SOUHAITEE
+C NBSTCF : NOMBRE DE SOMMETS DU CF DES FACES PERDUES CONTIGUES
+C NOSTCF : NUMERO PTXYZD DES NBSTCF SOMMETS DU CF
+
+C MODIFIE:
+C --------
+C NPSOFR : =  0  SI POINT AJOUTE NON SUR LA SURFACE DE L'OBJET
+C          =  1 SI LE POINT EST AJOUTE SUR UNE ARETE DE LA SURFACE
+C          =  2 SI LE POINT EST AJOUTE COMME BARYCENTRE SUR LA SURFACE
+C          =  1 000 000  + NUMERO DU  POINT INTERNE UTILISATEUR
+C          = (1 000 000) * (NO SURFACE + 1) + NUMERO DU SOMMET DANS
+C              LA NUMEROTATION DES SOMMETS DE LA SURFACE
+C          = -4 SI LE POINT EST SOMMET NON TROP PROCHE PT OU FACE
+C          = -1 SI LE POINT EST SOMMET TROP PROCHE PT OU FACE
+C          = -3 SI LE POINT EST SOMMET REFUSE DANS LA TETRAEDRISATION
+C          = -NPSOFR(I) SI POINT DEPLACE SUR LA SURFACE
+C             DANS LEUR SURFACE FERMEE INITIALE ou NO DE POINT INTERNE
+
+C SORTIE :
+C --------
+C NSDEPL : =0 PAS DE SOMMET DEPLACE
+C          >0 NUMERO PTXYZD DU SOMMET DEPLACE
+C+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+C AUTEUR : ALAIN PERRONNET LJLL UPMC & St PIERRE du PERRAY  Octobre 2017
+C2345X7..............................................................012
+      DOUBLE PRECISION  PTXYZD(4,*)
+      INTEGER           NOTETR(8,*), NPSOFR(*), NOSTCF(NBSTCF)
+
+      DOUBLE PRECISION  ARMIN,  ARMAX, SURFTR(4), V, VN(3), LONGAR,
+     %                  DEPLAC, XYZ(3)
+      INTEGER           NOSOFATE(3,4)
+      DATA              NOSOFATE / 1,3,2,  2,3,4,  3,1,4,  4,1,2 /
+C     NO DES SOMMETS DES 4 FACES AVEC LA NORMALE DIRIGEE VERS L'EXTERIEUR
+      INTEGER           NOSOARTE(2,6)
+      DATA              NOSOARTE / 1,2, 2,3, 3,1, 4,1, 4,2, 4,3 /
+C     NO DES 2 SOMMETS EXTREMITES DES 6 ARETES D'UN TETRAEDRE
+
+      DO 100 K=1,4
+
+C        NUMERO PTXYZD DU SOMMET K DU TETRAEDRE NTE
+         NSDEPL = NOTETR( K, NTE )
+
+C        NSDEPL EST IL UN SOMMET FRONTALIER?    TEST PERTINENT?...
+         L = ABS( NPSOFR( NSDEPL ) )
+         IF( L .GT. 1 000 000 ) THEN
+C            OUI: IL N'EST PAS DEPLACE
+            GOTO 100
+         ENDIF
+
+C        NSDEPL EST IL UN SOMMET DU CF?
+         DO L=1,NBSTCF
+            IF( NSDEPL .EQ. NOSTCF(L) ) THEN
+C              OUI
+               GOTO 100
+            ENDIF
+         ENDDO
+
+C        NSDEPL N'EST PAS UN SOMMET DU CF
+C        TENTATIVE DE MODIFIER SES XYZ
+C        LE NO DE LA FACE OPPOSEE AU SOMMET K EST K+1
+         IF( K .LT. 4 ) THEN
+            NOFA = K+1
+         ELSE
+            NOFA = 1
+         ENDIF
+
+C        LE VECTEUR NORMAL A LA FACE TRIANGULAIRE NOFA DE NTE DE NORME 1
+         CALL VECNOR3D( PTXYZD( 1, NOTETR( NOSOFATE(1,NOFA), NTE ) ),
+     %                  PTXYZD( 1, NOTETR( NOSOFATE(2,NOFA), NTE ) ),
+     %                  PTXYZD( 1, NOTETR( NOSOFATE(3,NOFA), NTE ) ),
+     %                  VN )
+         CALL NORME1( 3, VN, IERR )
+
+C        SOMME DES LONGUEURS DES 6 ARETES DU TETRAEDRE NTE
+         LONGAR = 0D0
+         DO L=1,6
+            NS1 = NOTETR( NOSOARTE(1,L), NTE )
+            NS2 = NOTETR( NOSOARTE(2,L), NTE )
+            LONGAR = LONGAR+SQRT( (PTXYZD(1,NS2) - PTXYZD(1,NS1)) ** 2 +
+     %                            (PTXYZD(2,NS2) - PTXYZD(2,NS1)) ** 2 +
+     %                            (PTXYZD(3,NS2) - PTXYZD(3,NS1)) ** 2 )
+         ENDDO
+
+C        LONGUEUR MOYENNE DES ARETES DU TETRAEDRE NTE
+         LONGAR = LONGAR / 6D0
+
+C        LONGUEUR INITIALE DU DEPLACEMENT DU SOMMET NSDEPL
+         DEPLAC = LONGAR / 300D0
+
+C        PROTECTION DES XYZ INITIALES DU SOMMET NSDEPL
+         DO L=1,3
+            XYZ( L ) = PTXYZD( L, NSDEPL )
+         ENDDO
+
+C        NOUVELLES COORDONNEES DU SOMMET NSDEPL
+ 50      DO L=1,3
+            PTXYZD( L, NSDEPL ) = XYZ( L ) + VN( L ) * DEPLAC
+         ENDDO
+
+C        VOLUME ET QUALITE DU TETRAEDRE NTE
+         CALL QUATETD( PTXYZD(1,NOTETR(1,NTE)),
+     %                 PTXYZD(1,NOTETR(2,NTE)),
+     %                 PTXYZD(1,NOTETR(3,NTE)),
+     %                 PTXYZD(1,NOTETR(4,NTE)),
+     %                 ARMIN, ARMAX, SURFTR, V, Q )
+
+         PRINT*,'mdxyz1st: TETRAEDRE',NTE,' St:',(NOTETR(L,NTE),L=1,4),
+     %          ' V=',V,' Q=',Q,' Deplt=',DEPLAC,
+     %          ' du St',NSDEPL,' NPSOFR=',NPSOFR(NSDEPL)
+
+         IF( V .LT. 0D0 ) THEN
+C           CHANGEMENT DU SENS SUR LA NORMALE
+            DEPLAC = -2D0 * DEPLAC
+            GOTO 50
+         ENDIF
+
+         IF( Q .LE. QUAMINEX ) THEN
+
+            DEPLAC = DEPLAC * 2D0
+
+            IF( ABS(DEPLAC) .GT. LONGAR/4D0 ) THEN
+C              DEPLACEMENT TROP GRAND
+C              => PAS DE DEPLACEMENT DU SOMMET NSDEPL
+               DO L=1,3
+                  PTXYZD( L, NSDEPL ) = XYZ( L )
+               ENDDO
+               PRINT*,'mdxyz1st: TETRAEDRE',NTE,' St',NSDEPL,
+     %                ' Deplt=',DEPLAC,
+     %                ' TROP GRAND. RETOUR AUX XYZ INITIALES',XYZ
+               PRINT*
+               GOTO 100
+            ENDIF
+
+            GOTO 50
+
+         ENDIF
+
+C        MARQUAGE NPSOFR DU SOMMET DEPLACE
+         L = ABS( NPSOFR( NSDEPL ) )
+         IF( L .GT. 1 000 000 ) THEN
+C           SOMMET = POINT ou SUR UNE SURFACE UTILISATEUR
+            NPSOFR( NSDEPL ) = -L
+         ENDIF
+
+         GOTO 9999
+
+ 100  ENDDO
+
+C     PAS DE SOMMET DEPLACE
+      NSDEPL = 0
+
+ 9999 RETURN
+      END

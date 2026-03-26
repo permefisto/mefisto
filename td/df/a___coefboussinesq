@@ -1,0 +1,12 @@
+deftms ~>>>COEFBOUSSINESQ 'Coefficient de Boussinesq du Fluide'
+variable muet DATE   'Date de creation du tableau'   reel2  ;
+variable muet NUTD   'Numero du tableau descripteur' entier ;  
+variable      LTCBOU 'Type du coefficient Boussinesq' entier
+( 1 : 'Coefficient Boussinesq constant'
+,-1 : 'Fonction Coefficient Boussinesq'
+, 0 : 'Coefficient Boussinesq a supprimer' ) ;
+cas LTCBOU
+ 1: variable CBOUSS 'Coefficient Boussinesq du Fluide'  reel ;
+-1: variable NFCBOU 'Nom fonction Coefficent Boussinesq' ^~>FONCTION ;
+fincas ;   
+fintms ;

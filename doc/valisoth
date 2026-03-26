@@ -1,0 +1,35 @@
+These menu options define the drawing of ISO-VALUES
+LINES in 2D and SURFACES in 3D:
+A palette of colors is used from blue (minimum) 
+to magenta (maximum)
+
+1: Number of ISO-TEMPERATURES. Default value 10
+
+and the DRAWING MODE
+2: REGULAR ISO between the MIN MAX values of the solution
+The i-th ISO drawn has for value
+    MIN + (i-1)*(MAX-MIN)/(number of ISO-1)
+
+3: DEFINE MIN MAX of ISO
+and give after the MIN and MAX of ISO
+The i-th ISO drawn will have for value
+    MIN + (i-1)*(MAX-MIN)/(number of ISO-1)
+   
+4: DEFINE VALUES of ISO
+and draw these ISOVALUES
+
+5 : COLOR of MESH's EDGES
+To define the color of FE edges to locate them
+
+6 : TYPE of LINES of  MESH's EDGES
+continuous line or dotted line to draw the edges
+
+7 : COLOR of EDGES of ISO
+
+8 : TYPE of LINES of EDGES of ISO
+continuous line or dotted line to draw the edges
+
+19 : REDUCTION % of FACES
+to see better the position of edges of faces
+or to see the interior of the materials or the other side
+A percentage is demanded.

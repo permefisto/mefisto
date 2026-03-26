@@ -1,0 +1,4 @@
+Give the NAME of the GENERIC LINE of EXTRUSION
+which creates a surface by a displacement.
+The input stops only with the input
+of an existing LINE.

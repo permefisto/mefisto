@@ -1,0 +1,4 @@
+The value of this integer define the type of EDGES which will be extracted
+ 1 : ONLY the BOUNDARY EDGES (belong to only one Finite Element)
+ 2 : ONLY the INTERIOR EDGES (belong to      two Finite Elements)
+ 3 : ANY TYPE of EDGES (INTERIOR or on BOUNDARY)

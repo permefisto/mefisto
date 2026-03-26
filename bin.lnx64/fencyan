@@ -1,0 +1,2 @@
+xterm -geometry 150x36+1024+0 -j -cr red -ls -sb -sl 600000 -name xterm \
+-bg lightcyan -fg black -fn 7x14bold -fb 7x14bold -title "xterm cyan" &

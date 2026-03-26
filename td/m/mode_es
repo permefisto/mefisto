@@ -1,0 +1,4 @@
+variable MODE_ES 'Mode d''entree des DONNEES' entier
+( 0: 'Sans INTERACTION (BATCH aveugle)'
+, 1: 'InterActif avec DESSINS sans CLAVIER sans SOURIS'
+, 3: 'InterActif avec DESSINS avec CLAVIER avec SOURIS' ) ;

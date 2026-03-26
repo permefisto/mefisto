@@ -1,0 +1,66 @@
+{==========================================================}
+{  MEEFISTO  VERSION Octobre 1999   PROJET: NAFEMS LE1     }
+{  CONSTRUCTION DU MAILLAGE DE LA MEMBRANE ELASTIQUE       }
+{==========================================================}
+
+1; 1;  {POINTS} 
+ A; I; 1;  0. ; 1.  ; 0.;
+ B; I; 1;  0. ; 2.75; 0.;
+ C; I; 1; 3.25; 0.  ; 0.;
+ D; I; 1;  2. ; 0.  ; 0.;
+ Q; I; 1;  0. ; 0.  ; 0.; { CENTRE DE PROJECTION }
+ @;      
+                          { LA DEFINITION DES ELLIPSES }
+ DEFFONC  F1(X,Y,Z);
+ F1 = (X/2.)**2+Y**2-1.;
+ FINFONC;
+ DEFFONC  F3(X,Y,Z);             
+ F3 = (X/3.25)**2+(Y/2.75)**2-1.;       
+ FINFONC;
+ @;      
+
+ 6; {TRANSFORMATIONS}     { LES PROJECTIONS A PARTIR DU CENTRE }
+ PR1; 4; F1; 4;  Q;
+ PR3; 4; F3; 4;  Q;
+ @;      
+         
+ DEFVAR NBARD,NBARC;
+ NBARD =  4;             { NOMBRE D'ARETES SUR LES COTES DROITS }
+ NBARC =  6;             { NOMBRE D'ARETES SUR LES ELLIPSES }   
+   
+ 2; {LIGNES}
+ AB; I;   2; NBARD; 1.1; A; B;
+ BC; PR3; 2; NBARC; 0.9; B; C;
+ CD; I;   2; NBARD; 0.9; C; D;
+ DA; PR1; 2; NBARC; 1.1; D; A;
+ @;           
+
+ 3; {SURFACES}
+ ABCD; I; 1; DA; CD; BC; AB;  2;
+ @;    
+
+ 5; {OBJETS}
+ MEMBRANE;
+ 0;             { TRAITEMENT CLASSIQUE avec RENUMEROTATION DES NOEUDS}
+ 8;             { NOMBRE d'OBJETS AVEC CONDITIONS PHYSIQUES A FOURNIR}
+ SURFACE; ABCD;
+ LIGNE; AB;
+ LIGNE; BC;
+ LIGNE; CD;
+ POINT; A;      { POUR IMPOSER LES DEPLACEMENTS }  
+ POINT; B;
+ POINT; C;
+ POINT; D; 
+ @;       
+                                                                        
+ 7;             { INTERPOLATION DE L'OBJET }
+ MEMBRANE;      { NOM DE L'OBJET A INTERPOLER }
+ 4;             { INTERPOLATION LAGRANGE DE DEGRE 2 }
+ @;
+
+10;    { TRACE du MAILLAGE des PLSVO }
+ 5;    { Tous les OBJETS }
+90;    { EXECUTION du TRACE }
+ @;
+
+FERMER;

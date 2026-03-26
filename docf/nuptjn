@@ -1,0 +1,3 @@
+Ce POINT est joint aux 2 sommets de chaque arete de la ligne
+pour former autant de triangles.      
+Exemple: S32; I; 32; CENTRE; LIGNE_A_JOINDRE;

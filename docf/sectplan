@@ -1,0 +1,42 @@
+Les options de ce MENU definissent les plans de section
+lesquels sont cumulables
+
+1 : X=Constante  Trace de la section des EF avec les PLANS X=CTE
+2 : Y=Constante  Trace de la section des EF avec les PLANS Y=CTE
+3 : Z=Constante  Option par defaut.
+
+4 : Plan defini par la donnee de 3 POINTS non alignes
+
+5 : COULEUR des ARETES de la FRONTIERE pour la localiser
+6 : TYPE continu tirette ou double tirette du TRAIT des ARETES FRONTIERE
+
+7 : COULEUR des ARETES intersection des EF et des PLANS
+8 : TYPE continu tirette ou double tirette du TRAIT des ARETES dans les PLANS
+
+11: Nombre de PLANS de SECTIONS   Par defaut, 10.
+
+12: Distance REGULIERE entre MIN et MAX 
+    Les COORDONNEES MIN et MAX sont calculees pour cet objet
+    La coordonnee CTE du i-eme PLAN trace aura pour valeur 
+      CMIN + (i-1)*(CMAX-CMIN)/(nombre des PLANS-1)
+
+13: COORDONNEE MIN et MAX des PLANS 
+    Les COORDONNEES MIN et MAX des plans sont demandees
+    La coordonnee CTE du i-eme PLAN trace aura pour valeur 
+      CMIN + (i-1)*(CMAX-CMIN)/(nombre des PLANS-1)
+
+14: COORDONNEE des PLANS de SECTIONS
+    Chaque COORDONNEE CTE est demandee ensuite. 
+                                    
+La temperature est tracee dans ces plans s'ils intersectent
+l'objet et selon une palette de couleurs allant du BLEU (froid)
+au ROUGE (chaud)
+
+80: REINITIALISER la DONNEE des PLANS
+    permet de redefinir un nouveau jeu de PLANS
+
+90: EXECUTER le TRACE
+    Il est possible de definir des sections selon X et Y et Z ...
+    et de cumuler les intersections sur un seul trace
+    Reinitialiser par 80 s'avere alors necessaire pour redefinir
+    un nouveau jeu de plans.

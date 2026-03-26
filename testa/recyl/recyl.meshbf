@@ -1,0 +1,91 @@
+{ ==================================================================== }
+{ MEFISTO Software     : June 1-st 2010 Version                        }
+{ USER's  Name         : Alain Perronnet                               }
+{ Project Name         : recyl Flow around a cylinder                  }
+{ Date                 : 2011/06/01                                    }
+{ ==================================================================== }
+ Defvar DistCircle; DistCircle=12;
+ DefVar Large;   Large=8*DistCircle;
+ DefVar High;    High=DistCircle*1.2;
+ DefVar Radius;  Radius=1;
+ DEfvar Nelarg;  Nelarg=10;
+ DEfvar NeHigh;  NeHigh=10;
+ DefVar EdgeL;   EdgeL=0.5;
+
+DefFunc Edge_Length(x,y,z);
+Edge_Length = EdgeL;
+if y>-High/3 and y<High/3 then
+   Edge_Length = EdgeL/2;
+endif;
+if (x-DistCircle)**2+y**2 < 4*Radius then
+   Edge_Length = EdgeL/4;
+endif;
+EndFunc;
+
+1; { POINTS vertices of the object }
+ 1;{ TYPING of VALUES }
+ { NAME of the POINT or ESCAPE? }
+ A; i; 1; { in LEXICON ~>TRANSFO }
+ 0; -High; 0; { COORPO 'X Y Z of a point' xyz }
+ B;       i; 1; Large; -High; 0;
+ C;       i; 1; Large;  High; 0;
+ D;       i; 1; 0;      High; 0;
+ Centre;  i; 1; DistCircle;        0; 0;
+ CircleE; i; 1; DistCircle+Radius; 0; 0;
+ CircleN; i; 1; DistCircle;        Radius; 0;
+ @;
+@;
+
+ 2; { LINES edges of the object }
+ { NAME of the LINE or ESCAPE? }
+ AB; i; 2;{ STRAIGHT LINE }
+ Nelarg;{ NBARLI 'number of edges of the line' entier ; }
+ 1; { RAIGEO 'geometrical ratio between the edges' reel ; }
+ A; { NAME of POINT }
+ B; { NAME of POINT }
+ BC; i; 2; NeHigh; 1; B; C;
+ CD; i;2; Nelarg; 1; C; D;
+ DA; i; 2; NeHigh; 1; D; A;
+ 
+ circle; i;{ in LEXICON ~>TRANSFO }
+ 8;{ COMPLETE 3D CIRCLE }
+ NeHigh;{ NBARLI 'number of edges of the line' entier ; }
+ 2;{ circle defined by centre, point on circle, point of plane }
+ Centre; { NAME of POINT }
+ CircleE;{ NAME of POINT }
+ CircleN;{ NAME of POINT }
+
+ rectangle; i;{ in LEXICON ~>TRANSFO }
+ 51;{ UNION OF SEVERAL LINES }
+ 4;{ NBLIUN 'number of lines of the union' entier ; }
+ AB; BC; CD; DA;   { NAME of LINE }
+ @;
+
+ 3;{ SURFACES faces of the object }
+ recyl; i;{ in LEXICON ~>TRANSFO }
+ 9;{ TRIANGULATION1 BETWEEN CLOSED LINES }
+ EdgeL;{ ARETMX 'max length of edges of regular triangles' reel ; }
+ 2;{ NBLFTR 'number of closed lines contour of the surface' entier ; }
+ 0;{ NBPTIT 'number of internal points future vertices' entier ; }
+ rectangle;{ NAME of LINE }
+ circle;
+ @;
+
+ 5; { OBJECTS parts of the object }
+ { NAME of the OBJECT or ESCAPE? }
+ recyl;
+ 0;{ 1D or 2D or 3D classic }
+ 7;{ NBDOBJ 'number of Points Lines Surfaces Volumes Objects of the object' }
+ S; recyl; { POINT or LINE or SURFACE or VOLUME or OBJECT? }
+ l; ab;  l; bc;  l; cd;  l; da;  l; circle;  p; D;
+ @;
+
+ 7; { INTERPOLATION nodes of the mesh }
+ recyl; { NAME of the OBJECT to be INTERPOLATED? }
+ 3; { LAGRANGE of DEGREE 1 => BREZZI-FORTIN FE }
+{4;   LAGRANGE of DEGREE 2 => TAYLOR-HOOD   FE }
+ @;
+ @;
+
+10; 5; 1; 90;
+CLOSE;

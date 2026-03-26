@@ -1,0 +1,72 @@
+#!/bin/bash
+#  execution du solveur ELASTICITE de Mefisto par ELASTICER
+#  Alain Perronnet Mars 2013 Version LINUX 64 bits + Fortran95 + OpenMP + Batch
+#  Appel:
+#  ELASTICER Nom du fichier des donnees de ELASTICER  (AVEC Nom =>Batch ou SANS   =>Interactif)
+#  ELASTICER Data File Name of ELASTICER              (WITH Name=>Batch ou WITHOUT=>Interactif)
+ 
+if test -f $MEFISTO/td/m/anglais
+then
+  LANGAGE=1
+  LANGUE=ANGLAISE
+  echo "Arguments Number=$#"
+  echo "arg0=$0"
+  echo "arg1=$1"
+  echo "ELASTICER data file NAME=$*"
+  echo
+  echo '======================================================================'
+  echo 'MEFISTO-ELASTICER: Solver of an ELASTICITY PROBLEM under LINUX 64 bits'
+  echo '======================================================================'
+  echo 'Project (low case) name' \?
+else
+  LANGAGE=0
+  LANGUE=FRANCAISE
+  echo "Nombre Arguments=$#"
+  echo "arg0=$0"
+  echo "arg1=$1"
+  echo "Nom du Fichier des Donnees de ELASTICER=$*"
+  echo
+  echo '================================================================='
+  echo 'MEFISTO-ELASTICER: Resoudre un PB d ELASTICITE sous LINUX 64 bits'
+  echo '================================================================='
+  echo 'nom (en minuscules) du projet' \?
+fi
+read nomproj
+
+echo
+# Demande du nombre de threads
+#if [ $LANGAGE = 0 ]
+#then
+#   echo 'Nombre de threads en execution de ELASTICER' \?
+#else
+#   echo 'Number of threads on ELASTICER execution' \?
+#fi
+#read   OMP_NUM_THREADS
+#export OMP_NUM_THREADS
+echo OMP_NUMBER_THREADS=$OMP_NUM_THREADS
+
+direxec=$MEFISTOX/$nomproj
+echo
+if [ $LANGAGE = 0 ]
+then
+  echo "Execution MEFISTO ELASTICER dans le repertoire $direxec"
+else
+  echo "Execution MEFISTO ELASTICER in the directory $direxec"
+fi
+
+if test -d $direxec
+then
+  cd  $direxec 
+  time $MEFISTO/pp/ppelas $*
+else  
+  if [ $LANGAGE = 0 ]
+  then
+    echo Commande INITIER non prealablement executee
+    echo "avec ce nom de projet $nomproj"
+    echo Executer INITIER puis MAILLER
+  else
+    echo Command INITIER NOT EXECUTED BEFORE
+    echo "with this project name $nomproj"
+    echo Execute INITIER and after MESHER
+  fi
+fi

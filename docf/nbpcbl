@@ -1,0 +1,4 @@
+Le nombre de points de controle de la ligne B-spline doit etre
+strictement superieur au degre de la B-spline.
+Si la B-spline est fermee, le point final est implicitement le premier
+et ne doit pas etre redonne ni compte dans le nombre de points.

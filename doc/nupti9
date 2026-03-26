@@ -1,0 +1,16 @@
+NBPTIT INTERNAL POINTS may be given to ADJUST the LENGTH
+of edges around these points.
+
+The wished length is a MAXIMUM BOUND.
+   
+Example:
+1;  {enveloppe closed line}
+2;  {interior points}
+L1; {the closed line}
+PTI1; PTI2; {the 2 interiors points}
+0.01; 0.5; {the wished lengths around PTI1 and PTI2}
+
+Define 2 INTERIOR POINTS, future vertices of the triangulation
+with edges around PTI1 of length 0.01
+with edges around PTI2 of length 0.5
+PTI1 and PTI2 can not be on the boundary lines.

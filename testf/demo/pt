@@ -1,0 +1,186 @@
+{ ==================================================================== }
+{ Logiciel MEFISTO     : Version Decembre 1999                         }
+{ Nom de l'Utilisateur : perronnet                                     }
+{ Nom du Projet        : cardan                                        }
+{ Date                 : 28/05/00                                      }
+{ Heure                : 09h 11m 06s                                   }
+{ ==================================================================== }
+@;
+@;
+@;
+
+DEfVar r1,r2,r3,r4;
+ r1=0.02; r2=0.05; r3=0.06; r4=0.025;
+defvar zb,zc,ze,zd;
+ zb=0.05; zc=0.08; ze=0.16; zd=(zc+ze)/2;
+defvar rac2; rac2=1/sqrt(2);
+
+19; { min MAX des XYZ des PLSVO }
+ { X MINIMUM? }
+ 0; r3;
+ { Y MINIMUM? }
+ 0; r3;
+ { Z MINIMUM? }
+ -0.01; ze+0.05;
+
+1; 1;{ POINTS sommets de l objet }
+ { NOM du POINT ou ABANDON? }
+ a0; i; 1; 0;      0;       0;
+ x;  i; 1; r3*1.5; 0;       0;
+ y;  i; 1; 0;      r3*1.5;  0;
+ z;  i; 1; 0;      0;       ze*1.06;
+ { DANS LE LEXIQUE ~>TRANSFO }
+ { coordonnees x y z }
+ { COORPO '3 coordonnees cartesiennes du point' xyz ; }
+ { NOM du POINT ou ABANDON? }
+
+ { DANS LE LEXIQUE ~>TRANSFO }
+ { coordonnees x y z }
+ { COORPO '3 coordonnees cartesiennes du point' xyz ; }
+ { NOM du POINT ou ABANDON? }
+ ax1; i; 1; r1; 0; 0;
+ { DANS LE LEXIQUE ~>TRANSFO }
+ { coordonnees x y z }
+ { COORPO '3 coordonnees cartesiennes du point' xyz ; }
+ { NOM du POINT ou ABANDON? }
+ ax2; i; 1; r2; 0; 0;
+ { DANS LE LEXIQUE ~>TRANSFO }
+ { coordonnees x y z }
+ { COORPO '3 coordonnees cartesiennes du point' xyz ; }
+ { NOM du POINT ou ABANDON? }
+ ay1; i; 1; 0; r1; 0;
+ { DANS LE LEXIQUE ~>TRANSFO }
+ { coordonnees x y z }
+ { COORPO '3 coordonnees cartesiennes du point' xyz ; }
+ { NOM du POINT ou ABANDON? }
+ ay2; i; 1; 0; r2; 0;
+ { DANS LE LEXIQUE ~>TRANSFO }
+ { coordonnees x y z }
+ { COORPO '3 coordonnees cartesiennes du point' xyz ; }
+ { NOM du POINT ou ABANDON? }
+ am1; i; 1; r1*rac2; r1*rac2; 0;
+ am2; i; 1; r2*rac2; r2*rac2; 0;
+
+ bx1; i; 1; r1; 0; zb;
+ { DANS LE LEXIQUE ~>TRANSFO }
+ { coordonnees x y z }
+ { COORPO '3 coordonnees cartesiennes du point' xyz ; }
+ { NOM du POINT ou ABANDON? }
+ bx2; i; 1; r2; 0; zb;
+ { DANS LE LEXIQUE ~>TRANSFO }
+ { coordonnees x y z }
+ { COORPO '3 coordonnees cartesiennes du point' xyz ; }
+ { NOM du POINT ou ABANDON? }
+ bx3; i; 1; r3; 0; zb;
+ { DANS LE LEXIQUE ~>TRANSFO }
+ { coordonnees x y z }
+ { COORPO '3 coordonnees cartesiennes du point' xyz ; }
+ { NOM du POINT ou ABANDON? }
+ by1; i; 1; 0; r1; zb;
+ { DANS LE LEXIQUE ~>TRANSFO }
+ { coordonnees x y z }
+ { COORPO '3 coordonnees cartesiennes du point' xyz ; }
+ { NOM du POINT ou ABANDON? }
+ by2; i; 1; 0; r2; zb;
+ { DANS LE LEXIQUE ~>TRANSFO }
+ { coordonnees x y z }
+ { COORPO '3 coordonnees cartesiennes du point' xyz ; }
+ { NOM du POINT ou ABANDON? }
+ by3; i; 1; 0; r3; zb;
+ { DANS LE LEXIQUE ~>TRANSFO }
+ { coordonnees x y z }
+ { COORPO '3 coordonnees cartesiennes du point' xyz ; }
+ { NOM du POINT ou ABANDON? }
+ bm1; i; 1; r1*rac2; r1*rac2; zb;
+ bm2; i; 1; r2*rac2; r2*rac2; zb;
+ bm3; i; 1; r3*rac2; r3*rac2; zb;
+
+ cx1; i; 1; r1; 0; zc;
+ { DANS LE LEXIQUE ~>TRANSFO }
+ { coordonnees x y z }
+ { COORPO '3 coordonnees cartesiennes du point' xyz ; }
+ { NOM du POINT ou ABANDON? }
+ cx3; i; 1; r3; 0; zc;
+ { DANS LE LEXIQUE ~>TRANSFO }
+ { coordonnees x y z }
+ { COORPO '3 coordonnees cartesiennes du point' xyz ; }
+ { NOM du POINT ou ABANDON? }
+ cy1; i; 1; 0; r1; zc;
+ { DANS LE LEXIQUE ~>TRANSFO }
+ { coordonnees x y z }
+ { COORPO '3 coordonnees cartesiennes du point' xyz ; }
+ { NOM du POINT ou ABANDON? }
+ cy3; i; 1; 0; r3; zc;
+ { DANS LE LEXIQUE ~>TRANSFO }
+ { coordonnees x y z }
+ { COORPO '3 coordonnees cartesiennes du point' xyz ; }
+ { NOM du POINT ou ABANDON? }
+ cm1; i; 1; r1*rac2; r1*rac2; zc;
+ cm3; i; 1; r3*rac2; r3*rac2; zc;
+
+ defvar yp; yp=r1+0.01;
+ cpd; i; 1; 0; yp; zc;
+ { DANS LE LEXIQUE ~>TRANSFO }
+ { coordonnees x y z }
+ { COORPO '3 coordonnees cartesiennes du point' xyz ; }
+ { NOM du POINT ou ABANDON? }
+ defvar alfa,beta; alfa=asin(yp/r3); beta=atan(1)*2-alfa;
+ cpg;   i; 1; r3*cos(alfa);        r3*sin(alfa);        zc;
+ cmpg;  i; 1; r3*cos(alfa/2);      r3*sin(alfa/2);      zc;
+{ cmmpg; i; 1; r3*cos(alfa+beta/2); r3*sin(alfa+beta/2); zc;}
+{ DANS LE LEXIQUE ~>TRANSFO }
+ { coordonnees x y z }
+ { COORPO '3 coordonnees cartesiennes du point' xyz ; }
+ { NOM du POINT ou ABANDON? }
+ epg;   i; 1; r3*cos(alfa);        r3*sin(alfa);        ze;
+
+ { DANS LE LEXIQUE ~>TRANSFO }
+ { coordonnees x y z }
+ { COORPO '3 coordonnees cartesiennes du point' xyz ; }
+ { NOM du POINT ou ABANDON? }
+ epd; i; 1; 0; yp; ze;
+ { DANS LE LEXIQUE ~>TRANSFO }
+ { coordonnees x y z }
+ { COORPO '3 coordonnees cartesiennes du point' xyz ; }
+ { NOM du POINT ou ABANDON? }
+ ey3; i; 1; 0; r3; ze;
+ { DANS LE LEXIQUE ~>TRANSFO }
+ { coordonnees x y z }
+ { COORPO '3 coordonnees cartesiennes du point' xyz ; }
+ { NOM du POINT ou ABANDON? }
+
+ em3; i; 1; r3*rac2; r3*rac2; ze;
+
+ dyp; i; 1; 0; yp; zd;
+ { DANS LE LEXIQUE ~>TRANSFO }
+ { coordonnees x y z }
+ { COORPO '3 coordonnees cartesiennes du point' xyz ; }
+ { NOM du POINT ou ABANDON? }
+ dy3; i; 1; 0; r3; zd;
+ { DANS LE LEXIQUE ~>TRANSFO }
+ { coordonnees x y z }
+ { COORPO '3 coordonnees cartesiennes du point' xyz ; }
+ { NOM du POINT ou ABANDON? }
+ dm3; i; 1; r4; r3; zd;
+
+ cdy3; i; 1; 0; r3; zd-r4;
+ dey3; i; 1; 0; r3; zd+r4;
+ cdyp; i; 1; 0; yp; zd-r4;
+ deyp; i; 1; 0; yp; zd+r4;
+ dmp;  i; 1; r4; yp; zd;
+ @;
+@;
+
+2; {LIGNES}
+ a0x;  i; 2; 100; 1; a0; x;
+ a0y;  i; 2; 100; 1; a0; y;
+ a0z;  i; 2; 100; 1; a0; z;
+@;
+@;
+
+10;
+ 1;
+@;
+
+fermer;
+

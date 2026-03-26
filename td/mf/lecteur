@@ -1,0 +1,4 @@
+variable LECTEUR 'UNITE de LECTURE' entier
+( 1: 'CLAVIER classique'
+, 2: 'FICHIER a son DEBUT (avec rembobinage)'
+, 3: 'FICHIER dans l''ETAT de son dernier abandon' ) ;

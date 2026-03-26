@@ -1,0 +1,80 @@
+{ ==================================================================== }
+{ MEFISTO Software     : Version Version September 16-th 2009          }
+{ USER's  Name         : Alain Perronnet                               }
+{ Project Name         : 1dwall  Test Mefisto for 1-dimension FE       }
+{                        Steady Heat Transfer Data                     }
+{ Date                 : 19/9/2009                                     }
+{ ==================================================================== }
+@;
+DefVar aCoating;   aCoating=0.5;      {HEAT CONDUCTIVITY of Coating}
+DefVar aParpen;    aParpen=1.05;      {HEAT CONDUCTIVITY of Parpen}
+DefVar aInsulator; aInsulator=0.036;  {HEAT CONDUCTIVITY of Insulator}
+DefVar aPlaster;   aPlaster=0.7;      {HEAT CONDUCTIVITY of Plaster}
+
+DefVar TemperA;  TemperA=0.0;   {Temperature at point A}
+DefVar TemperE;  TemperE=20;    {Temperature at point E of AIR}
+DefVar TranCoef; TranCoef=0.5;  {Heat transfer coefficient with AIR}
+
+2; { DATA for the STEADY HEAT PROBLEM }
+
+ { LINE: Coating }
+   2; { density HEAT CONDUCTIVITY }
+     3;        { HOMOGENOUS ISOTROPIC material }
+     aCoating; { CONDUC constant value of the material conductivity }
+   @;
+
+ { LINE: Parpen }
+   2; { density HEAT CONDUCTIVITY }
+     3;       { HOMOGENOUS ISOTROPIC material }
+     aParpen; { CONDUC constant value of the material conductivity }
+   @;
+
+ { LINE: Insulator }
+   2; { density HEAT CONDUCTIVITY }
+     3;        { HOMOGENOUS ISOTROPIC material }
+     aInsulator; { CONDUC constant value of the material conductivity }
+   @;
+
+ { LINE: Plaster }
+   2; { density HEAT CONDUCTIVITY }
+     3;       { HOMOGENOUS ISOTROPIC material }
+     aPlaster; { CONDUC constant value of the material conductivity }
+   @;
+
+ { POINT: A  OUTSIDE}
+   3; { CONTACT imposed temperature  Dirichlet condition }
+     1; { contact constant }
+     TemperA; { imposed temperature at this point }
+   @;
+
+ { POINT: E INSIDE}
+   1; { g heat transfer coefficient with the interior air}
+     0; { deleted }
+
+   2; {Source = g * Temperature of fluid at D}
+     0; { deleted }
+
+   3; { CONTACT imposed temperature  Dirichlet condition }
+     1; { contact constant }
+     TemperE; { imposed temperature at this point }
+   @;
+
+
+3; { SOLUTION of the STEADY LINEAR HEAT PROBLEM }
+   1; { Independent Coefficients of the TEMPERATURE }
+   1; { Solution by factorization CHOLESKY on skyline storage }
+@;
+
+CLOSE;
+
+
+
+ { POINT: E INSIDE}
+   1; { g heat transfer coefficient with the interior air}
+   1; { constant }
+   TranCoef; { ECHANG heat coefficient coefficient }
+
+   2; {Source = g * Temperature of fluid at D}
+   1; {Constant}
+   TranCoef*TemperE;
+   @;

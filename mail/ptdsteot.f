@@ -1,0 +1,54 @@
+      SUBROUTINE PTDSTEOT( PT, PTXYZD, NOSOTE, NONOUI )
+C+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+C BUT :  LE POINT PT EST IL DANS LE TETRAEDRE D'UN OT DE SOMMETS NOSOTE?
+C -----
+C
+C ENTREES:
+C --------
+C PT     : LES 3 COORDONNEES DU POINT
+C PTXYZD : X Y Z DISTANCE SOUHAITEE DES POINTS
+C NOSOTE : LE NUMERO DES 4 SOMMETS DU TETRAEDRE
+C
+C SORTIES:
+C --------
+C NONOUI  :  1 SI LE POINT EST DANS LE TETRAEDRE
+C            0 SI LE POINT P EST EXTERIEUR AU TETRAEDRE
+C+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+C AUTEUR : ALAIN PERRONNET  ANALYSE NUMERIQUE PARIS UPMC   DECEMBRE 1992
+C....................................................................012
+      INTEGER           NOSOTE(4)
+      DOUBLE PRECISION  PTXYZD(4,*),PT(3),D,DT,VOLTET
+C
+C     CALCUL DU DETERMINANT DE 1 2 3 4
+      D = VOLTET( PTXYZD(1,NOSOTE(1)), PTXYZD(1,NOSOTE(2)),
+     %            PTXYZD(1,NOSOTE(3)), PTXYZD(1,NOSOTE(4)) )
+CCC chgt le 8/1/99      D = -1D-8 * D
+      D = -5D-8 * D
+C
+C     CALCUL DU DETERMINANT DE 1 2 3 PT
+      DT = VOLTET( PTXYZD(1,NOSOTE(1)), PTXYZD(1,NOSOTE(2)),
+     %             PTXYZD(1,NOSOTE(3)), PT )
+      IF( DT .LT. D ) GOTO 9000
+C
+C     CALCUL DU DETERMINANT DE 2 4 3 PT
+      DT = VOLTET( PTXYZD(1,NOSOTE(2)), PTXYZD(1,NOSOTE(4)),
+     %             PTXYZD(1,NOSOTE(3)), PT )
+      IF( DT .LT. D ) GOTO 9000
+C
+C     CALCUL DU DETERMINANT DE 3 4 1 PT
+      DT = VOLTET( PTXYZD(1,NOSOTE(3)), PTXYZD(1,NOSOTE(4)),
+     %             PTXYZD(1,NOSOTE(1)), PT )
+      IF( DT .LT. D ) GOTO 9000
+C
+C     CALCUL DU DETERMINANT DE 4 2 1 PT
+      DT = VOLTET( PTXYZD(1,NOSOTE(4)), PTXYZD(1,NOSOTE(2)),
+     %             PTXYZD(1,NOSOTE(1)), PT )
+      IF( DT .LT. D ) GOTO 9000
+C
+C     PT EST DANS OU SUR LE TETRAEDRE
+      NONOUI = 1
+      RETURN
+C
+C     POINT NON DANS LE TETRAEDRE
+ 9000 NONOUI = 0
+      END

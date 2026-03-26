@@ -1,0 +1,73 @@
+---------------------------------------------------------------
+Logiciel MEFISTO       Version Francaise             Mai 2011
+---------------------------------------------------------------
+NOUVEAUTES:
+MAILLER
+- Option 19 des surfaces: un TRIANGULEUR par ajout du
+  barycentre de triangles avec les memes donnees que 9;
+- Option 26 des surfaces 2D ou 3D: un editeur de maillages
+  d'une surface par des clics de la souris
+- Option 38 des surfaces pour designer dans un rectangle
+  defini par 2 clics souris les triangles ou quadrangles
+  a extraire
+- Option 39 tout triangle ou quadrangle du maillage initial
+  est decoupe en 4 sous elements du meme type
+- Ajout de VOLUMES MULTI-MATERIAUX (un materiau=un volume):
+  Une union de plusieurs volumes est un VOLUME MULTI-MATERIAUX
+  Un volume de type 9 avec plusieurs volumes de type 8 est
+  un VOLUME MULTI-MATERIAUX
+  Les surfaces, interfaces entre 2 materiaux, sont tracees.
+- Volume 19 un TETRAEDRISEUR par ajout du barycentre des
+  tetraedres avec les memes donnees que volume 9;
+- Volume 16 un generateur de penta-hexaedres a partir des 
+  triangles ou quadrangles d'une surface par deplacement
+  le long des vecteurs normaux aux sommets
+- Volume 31 la tetraedrisation decoupe maintenant les
+  pyramides(issues d'un volume 15), pentaedres, hexaedres.
+  Si le volume est MULTI-MATERIAUX, ses materiaux (volumes
+  qui le constituent) sont tetraedrises et ecrasent l'ancien
+  maillage de pyramides, pentaedres, hexaedres.
+  Idem pour l'option 30; amelioration d'une tetraedrisation.
+  Cet ecrasement permet la compatibilite des triangles
+  sur les interfaces entre materiaux
+- Volume 39 tout tetraedre ou pentaedre ou hexaedre est
+  decoupe en 8 sous ef du meme type et toute pyramide est
+  decoupee en 6 sous-pyramides et 4 sous tetraedres
+- Volume 48 impose les 3 coordonnees du point indique au plus
+  proche sommet du maillage
+- Volume 51 une union de volumes en un volume multi-materiaux
+- Volume 53 un volume multi-materiaux union de volumes est
+  separe en autant de volumes mono-materiau
+- Volume 54 un volume multi-materiaux union de volumes devient
+  un seul volume mono-materiau
+- Objet 1d possible sous la forme d'intervalles avec 2
+  POINTS extremites support des conditions aux limites
+THERMICER:
+- Traces continus de la solution aux diffents temps
+- Calcul de l'integrale approchee de solution**expo sur l'objet
+- Calcul de la temperature stationnaire ou non et trace de la
+  temperature, gradient, flux, erreur d'un objet 1d
+- Affichage des gradients aux points d'integration numerique
+- Affichage des flux aux points des interfaces entre EF
+ELASTICER:
+- Visualisation du mouvement des modes propres
+FLUIDER:
+- Resolution du probleme de STOKES stationnaire ou
+  instationnaire ou NAVIER-STOKES instationnaire
+  pour un fluide 2D ou 3D incompressible pour des elements
+  finis de Taylor-Young et Brezzi-Fortin avec un
+  stockage profil des matrices et factorisation de CROUT.
+  Resolution instationnaire de Navier-Sokes 2d et 3d par une
+  methode de pas fractionnaires et factorisation de Cholesky
+  ou gradient conjugue (=> moins de memoire utilisee)
+- Trace de particules en mouvement dans le fluide
+- Trace 2d de la fonction courant
+- Trace de la norme de la vitesse  dans le fluide
+- Traces continus des solutions aux diffents temps
+- Trace de la pression sur des surfaces du fluide
+  Cf la documentation: User's Manual of Mefisto-FLUIDER
+---------------------------------------------------------------
+En cas de probleme, prevenir Alain PERRONNET
+E-mail  : perronnet@ann.jussieu.fr
+Internet: http://www.ann.jussieu.fr/~perronnet
+---------------------------------------------------------------

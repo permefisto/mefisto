@@ -1,0 +1,345 @@
+      SUBROUTINE SUEX22( NUSURF, LADEFI, RADEFI,
+     %                   NTNSCY, MNNSCY, NTSTCY, MNSTCY, IERR )
+C+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+C BUT :     GENERER LE MAILLAGE DE LA SURFACE FERMEE
+C -----     D'UN TRONC DE CONE OU CYLINDRE
+C           2 CAS: 1) EMPLOI DE LA LONGUEUR PAR DEFAUT DES ARETES
+c                  2) EMPLOI DE LA FONCTION TAILLE_IDEALE(X,Y,Z)
+C                                        ou EDGE_LENGTH(X,Y,Z)
+C
+C ENTREES :
+C --------
+C NUSURF  : NUMERO DE LA SURFACE DANS LE LEXIQUE DES SURFACES
+C LADEFI  : TABLEAU ENTIER DE DEFINITION DE LA SURFACE
+C RADEFI  : TABLEAU REEL   DE DEFINITION DE LA SURFACE
+C           CF '~td/d/a_surface__definition'
+C
+C SORTIES :
+C ---------
+C NTNSCY  : NUMERO      DU TMS 'NSEF' DES NUMEROS DES ELEMENTS FINIS
+C MNNSCY  : ADRESSE MCN DU TMS 'NSEF' DES NUMEROS DES ELEMENTS FINIS
+C           CF '~td/d/a___nsef'
+C NTSTCY  : NUMERO      DU TMS 'XYZSOMMET' DE LA SURFACE
+C MNSTCY  : ADRESSE MCN DU TMS 'XYZSOMMET' DE LA SURFACE
+C           CF '~td/d/a___xyzsommet'
+C IERR    : 0 SI PAS D'ERREUR
+C         > 0 SINON
+C+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+C AUTEUR : PERRONNET Alain LJLL UPMC & St Pierre du Perray Novembre 2011
+C2345X7..............................................................012
+      COMMON / UNITES / LECTEU, IMPRIM, INTERA, NUNITE(29)
+      include"./incl/langue.inc"
+      include"./incl/gsmenu.inc"
+      include"./incl/ntmnlt.inc"
+      include"./incl/a___xyzsommet.inc"
+      include"./incl/a___nsef.inc"
+      include"./incl/a_ligne__definition.inc"
+      include"./incl/a_surface__definition.inc"
+      include"./incl/darete.inc"
+C
+      include"./incl/pp.inc"
+      COMMON             MCN(MOTMCN)
+      REAL              RMCN( 1 )
+      EQUIVALENCE      (MCN(1),RMCN(1))
+      INTEGER           LADEFI(0:*)
+      REAL              RADEFI(0:*)
+      CHARACTER*1       KNBRE
+      CHARACTER*24      NMSURF, NOMLIG(2), NOMSUR(3)
+      INTEGER                   NUMLIG(2), NUMSUR(3)
+      REAL              DIST2P
+      INTRINSIC         ATAN, MAX
+C
+      IERR  = 0
+      MXSOM = 0
+      MNSOM = 0
+      MXEF  = 0
+      MNEF  = 0
+C
+C     EXISTE-T-IL UNE FONCTION TAILLE_IDEALE(X,Y,Z)
+C                             ou EDGE_LENGTH(X,Y,Z)?
+C     ----------------------------------------------
+      NOFOTI = NOFOTIEL()
+      IF( NOFOTI .LE. 0 ) THEN
+C
+C        NON: LA LONGUEUR PAR DEFAUT DES ARETES EST ELLE DEFINIE?
+C        --------------------------------------------------------
+         IF( DARETE .LE. 0D0 ) THEN
+            NBLGRC(NRERR) = 2
+            IF( LANGAG .EQ. 0 ) THEN
+               KERR(1)='LONGUEUR PAR DEFAUT DES ARETES NON INITIALISEE'
+               KERR(2)='UTILISER L''OPTION 0 DU MENU DEBUT'
+            ELSE
+               KERR(1)='DEFAULT LENGTH of EDGES NOT INITIALIZED'
+               KERR(2)='USE THE OPTION 0 of THE DEBUT MENU'
+            ENDIF
+            CALL LEREUR
+            IERR = 1
+            GOTO 9999
+         ENDIF
+      ENDIF
+C
+C     RECUPERATION et VERIFICATION des PARAMETRES DU MAILLAGE
+C     =======================================================
+C     NUMERO DE LA SURFACE DANS LE LX DES SURFACES
+      CALL NMOBNU( 'SURFACE', NUSURF, NMSURF )
+C     variable RAINCN 'rayon du cercle inferieur' reel ;
+      RAYOCI = RADEFI(WAINCN)
+C     variable RASUCN 'rayon du cercle superieur' reel ;
+      RAYOCS = RADEFI(WASUCN)
+C     variable PTINCN 'nom du point inferieur du tronc de cone' ^~>POINT ;
+      NUPBCY = LADEFI(WTINCN)
+C     variable PTSUCN 'nom du point superieur du tronc de cone' ^~>POINT ;
+      NUPHCY = LADEFI(WTSUCN)
+C
+      IF( RAYOCI .LE. 0.0 ) THEN
+         NBLGRC(NRERR) = 1
+         WRITE(KERR(MXLGER)(1:15),'(G15.7)') RAYOCI
+         IF( LANGAG .EQ. 0 ) THEN
+            KERR(1)='RAYON INCORRECT du CERCLE INFERIEUR='
+     %            // KERR(MXLGER)(1:15)
+         ELSE
+            KERR(1)='INCORRECT INFERIOR CIRCLE RADIUS='
+     %             // KERR(MXLGER)(1:15)
+         ENDIF
+         CALL LEREUR
+         IERR = 1
+         RETURN
+      ENDIF
+C
+      IF( RAYOCS .LE. 0.0 ) THEN
+         NBLGRC(NRERR) = 1
+         WRITE(KERR(MXLGER)(1:15),'(G15.7)') RAYOCS
+         IF( LANGAG .EQ. 0 ) THEN
+            KERR(1)='RAYON INCORRECT du CERCLE SUPERIEUR='
+     %            // KERR(MXLGER)(1:15)
+         ELSE
+            KERR(1)='INCORRECT SUPERIOR CIRCLE RADIUS='
+     %            // KERR(MXLGER)(1:15)
+         ENDIF
+         CALL LEREUR
+         IERR = 1
+         RETURN
+      ELSE
+      ENDIF
+C
+C     RECUPERATION DES 3 COORDONNEES DU CENTRE INFERIEUR DU CYLINDRE
+      CALL LXNLOU( NTPOIN, NUPBCY, NTLXSC, MN )
+      CALL LXTSOU( NTLXSC, 'XYZSOMMET', NTSOSC, MNSOSC )
+      MNCB = MNSOSC + WYZSOM
+C
+C     RECUPERATION DES 3 COORDONNEES DU CENTRE SUPERIEUR DU CYLINDRE
+      CALL LXNLOU( NTPOIN, NUPHCY, NTLXSC, MN )
+      CALL LXTSOU( NTLXSC, 'XYZSOMMET', NTSOSC, MNSOSC )
+      MNCH = MNSOSC + WYZSOM
+C
+C     LES 2 CENTRES SONT ILS IDENTIQUES?
+      CALL XYZIDE( RMCN(MNCB), RMCN(MNCH), IDENTQ )
+      IF( IDENTQ .NE. 0 ) THEN
+         NBLGRC(NRERR) = 1
+         IF( LANGAG .EQ. 0 ) THEN
+            KERR(1) = 'CENTRES INFERIEUR et SUPERIEUR CONFONDUS'
+         ELSE
+            KERR(1) = 'INFERIOR and SUPERIOR CENTRES are IDENTICAL'
+         ENDIF
+         CALL LEREUR
+         IERR = 1
+         RETURN
+      ENDIF
+C
+      IF( NOFOTI .LE. 0 ) THEN
+C
+C        LA LONGUEUR DARETE>0 PAR DEFAUT DES ARETES EST ICI UTILISEE
+C        ===========================================================
+C        NOMBRE D'ARETES SUR L'AXE
+         R = REAL( DIST2P( RMCN(MNCB), RMCN(MNCH) ) / DARETE )
+         NBARAX = NINT( R )
+         IF( NBARAX .LE. 0 ) NBARAX=1
+C
+C        NOMBRE D'ARETES SUR LE RAYON MAX DU CERCLE
+         R = REAL( MAX( RAYOCI, RAYOCS ) / DARETE )
+         NBARRA = NINT( R )
+         IF( NBARRA .LE. 0 ) NBARRA=1
+C
+C        NOMBRE D'ARETES SUR LES CERCLES
+         NBARCE = NINT(ATAN(1D0) * 8D0 * MAX( RAYOCI, RAYOCS ) / DARETE)
+C
+C        NOMBRE APPROXIMATIF DE SOMMETS ET EF A PARTIR DE L'ARETE PAR DEFAUT
+C        ET DE LA SURFACE DU CYLINDRE MAXIMUM
+         MXSOM = (1+NBARAX)*NBARCE + 4 * NBARCE * (1+NBARRA)
+         MXEF  =   NBARAX * NBARCE + 4 * NBARCE * NBARRA
+C
+C        TABLEAUX AUXILIAIRES
+         CALL TNMCDC( 'REEL',   MXSOM*3, MNSOM )
+         CALL TNMCDC( 'ENTIER', MXEF*4,  MNEF  )
+C
+C        QUADRANGULATION DE LA SURFACE LATERALE DU CYLINDRE OU CONE
+C        CONSTRUCTION DES 2 LIGNES FERMEES DES CERCLES INFERIEUR et SUPERIEUR
+         CALL CYCOSLDA( NMSURF, RAYOCI, RAYOCS, RMCN(MNCB), RMCN(MNCH),
+     %                  MXSOM,  NBSOM,RMCN(MNSOM), MXEF, NBEF,MCN(MNEF),
+     %                  NOMLIG, NUMLIG, IERR )
+C
+C        CREATION DE LA SURFACE NOMSUR(1) LATERALE DU CYLINDRE ou CONE
+C        CONSTRUCTION DES TMS XYZSOMMET et NSEF
+         NOMSUR(1) = NMSURF
+         N         = NUDCNB( NOMSUR(1) )
+         N         = MIN(N,21)
+         NOMSUR(1) = NOMSUR(1)(1:N) // '_C1'
+C        SI CETTE SURFACE EXISTE, ELLE EST DETRUITE
+         CALL LXLXOU( NTSURF, NOMSUR(1), NT1SF, MN1SF )
+         IF( MN1SF .GT. 0 ) CALL LXTSDS( NTSURF, NOMSUR(1) )
+C
+         CALL LXLXDC( NTSURF, NOMSUR(1), 24, 8 )
+         CALL LXLXOU( NTSURF, NOMSUR(1), NT1SF, MN1SF )
+C        NUMERO DE LA SURFACE DANS LE LX DES SURFACES
+         CALL NUOBNM( 'SURFACE', NOMSUR(1), NUMSUR(1) )
+C
+C        LA SURFACE A UN TMS DEFINITION IDENTIQUE A LADEFI
+         CALL LXTNDC( NT1SF, 'DEFINITION', 'MOTS', WTSUCN+1 )
+         CALL LXTSOU( NT1SF, 'DEFINITION', NT1SDE, MN1SDE )
+         CALL TRTATA( LADEFI, MCN(MN1SDE), WTSUCN+1 )
+C        AJOUT DU NUMERO DU TABLEAU DESCRIPTEUR
+         MCN( MN1SDE + MOTVAR(6) ) = NONMTD( '~>SURFACE>>DEFINITION' )
+C        AJOUT DE LA DATE
+         CALL ECDATE( MCN(MN1SDE) )
+C
+C        GENERATION DES XYZ DES SOMMETS DE LA SURFACE LATERALE
+C        CONSTRUCTION DU TABLEAU 'XYZSOMMET'
+         CALL LXTNDC( NT1SF, 'XYZSOMMET', 'MOTS', WYZSOM+3*NBSOM )
+         CALL LXTSOU( NT1SF, 'XYZSOMMET', NTSTS1, MNSTS1 )
+C
+C        GENERATION DES NUMEROS DES NOEUDS DES EF DE LA SURFACE LATERALE
+C        CONSTRUCTION DU TABLEAU 'NSEF'
+         CALL LXTNDC( NT1SF, 'NSEF', 'ENTIER', WUSOEF+4*NBEF )
+         CALL LXTSOU( NT1SF, 'NSEF', NTNSS1,   MNNSS1 )
+C
+C        MISE A JOUR DU TABLEAU 'XYZSOMMET' DE CETTE SURFACE LATERALE
+C        NBSOM 'nombre de sommets'
+         MCN( MNSTS1 + WNBSOM ) = NBSOM
+C        LE NOMBRE DE TANGENTES
+         MCN( MNSTS1 + WNBTGS ) = 0
+C        LE NOMBRE DE COORDONNEES PAR SOMMET
+         MCN( MNSTS1 + WBCOOR ) = 3
+C        LES 3 COORDONNEES DES NBSOM SOMMETS
+         CALL TRTATA( MCN(MNSOM), MCN(MNSTS1+WYZSOM), 3*NBSOM )
+C
+C        LA DATE DE CREATION
+         CALL ECDATE( MCN(MNSTS1) )
+C        LE NUMERO DU TABLEAU DESCRIPTEUR
+         MCN( MNSTS1 + MOTVAR(6) ) = NONMTD( '~>>>XYZSOMMET' )
+C
+C        MISE A JOUR DU TABLEAU 'NSEF' DE CETTE SURFACE FERMEE
+C        TYPE DE L'OBJET : SURFACE
+         MCN( MNNSS1 + WUTYOB ) = 3
+C        LE TYPE FERME DE FERMETURE DU MAILLAGE
+         MCN( MNNSS1 + WUTFMA ) = 1
+C        PAS DE TANGENTES STOCKEES
+         MCN( MNNSS1 + WBTGEF ) = 0
+         MCN( MNNSS1 + WBEFAP ) = 0
+         MCN( MNNSS1 + WBEFTG ) = 0
+C        NUMERO DU TYPE DE MAILLAGE : NON STRUCTURE
+         MCN( MNNSS1 + WUTYMA ) = 0
+C        NBSOEF 'nombre de sommets par sous-objets'
+         MCN( MNNSS1 + WBSOEF ) = 4
+C        NBEFOB 'nombre de sous-objets de l''objet'
+         MCN( MNNSS1 + WBEFOB ) = NBEF
+C        LES 4 NUMEROS DES SOMMETS DES NBEF EF
+         CALL TRTATA( MCN(MNEF), MCN(MNNSS1+WUSOEF), 4*NBEF )
+C
+C        LA DATE DE CREATION
+         CALL ECDATE( MCN(MNNSS1) )
+C        LE NUMERO DU TABLEAU DESCRIPTEUR
+         MCN( MNNSS1 + MOTVAR(6) ) = NONMTD ( '~>>>NSEF' )
+C
+      ELSE
+C
+C        EMPLOI DE LA FONCTION TAILLE_IDEALE(X,Y,Z) ou EDGE_LENGTH(X,Y,Z)
+C        ================================================================
+C        QUADRANGULATION DE 2/2 SURFACE LATERALE DU CYLINDRE OU CONE
+C        CONSTRUCTION DES 2 LIGNES FERMEES DES CERCLES INFERIEUR et SUPERIEUR
+         CALL CYCOSLTI( NMSURF, RAYOCI, RAYOCS, RMCN(MNCB), RMCN(MNCH),
+     %                  NOMLIG, NUMLIG, NOMSUR(1), NUMSUR(1), IERR )
+C
+      ENDIF
+C
+      IF( IERR .NE. 0 ) THEN
+C        PAS DE TMS XYZSOMMET ET NSEF
+         NTNSCY=0
+         MNNSCY=0
+         NTSTCY=0
+         MNSTCY=0
+         GOTO 9999
+      ENDIF
+C
+C     LES SURFACES DES 2 CERCLES INFERIEUR et SUPERIEUR DU CYLINDRE ou CONE
+C     =====================================================================
+C     ARETMX MAX LENGTH OF EDGES OF REGULAR TRIANGLES
+      ARETMX = 1E25
+      IF( DARETE .GT. 0D0 ) THEN
+         ARETMX = REAL( DARETE )
+      ENDIF
+C
+      DO NUSF=2,3
+C
+C        CONSTRUCTION DES TMS DEFINITION, NSEF et XYZSOMMET DE LA
+C        SURFACE DU CERCLE NUSF (1:INFERIEUR, 2:SUPERIEUR)
+         NOMSUR(NUSF) = NMSURF
+         N = NUDCNB( NOMSUR(NUSF) )
+         WRITE(KNBRE,'(I1)') NUSF
+         N = MIN(N,21)
+         NOMSUR(NUSF) = NOMSUR(NUSF)(1:N) // '_C' // KNBRE
+C
+C        SI CETTE SURFACE EXISTE, ELLE EST DETRUITE
+         CALL LXLXOU( NTSURF, NOMSUR(NUSF), NT1SF, MN1SF )
+         IF( MN1SF .GT. 0 ) CALL LXTSDS( NTSURF, NOMSUR(NUSF) )
+C
+C        CONSTRUCTION DE LA SURFACE TRIANGULATION DU CERCLE
+         CALL LXLXDC( NTSURF, NOMSUR(NUSF), 24, 8 )
+         CALL LXLXOU( NTSURF, NOMSUR(NUSF), NT1SF, MN1SF )
+C        NUMERO DE LA SURFACE DANS LE LX DES SURFACES
+         CALL NUOBNM( 'SURFACE', NOMSUR(NUSF), NUMSUR(NUSF) )
+C
+C        LA SURFACE A UN TMS DEFINITION DE SURFACE 9:
+C        TRIANGULATION ENTRE LIGNES FERMEES
+         CALL LXTNDC( NT1SF, 'DEFINITION', 'MOTS', WULFTR+1 )
+         CALL LXTSOU( NT1SF, 'DEFINITION', NT1SDE, MN1SDE )
+C        TRANSFORMATION (I POUR IDENTITE)
+         MCN( MN1SDE + WTYTRS ) = 1
+C        TYPE DE LA SURFACE
+         MCN( MN1SDE + WUTYSU ) = 9
+C        ARETMX MAX LENGTH OF EDGES OF REGULAR TRIANGLES
+         RMCN( MN1SDE + WRETMX ) = ARETMX
+C        NBLFTR  NUMBER OF CLOSED LINES CONTOUR OF THE SURFACE
+         MCN( MN1SDE + WBLFTR ) = 1
+C        NBPTIT NUMBER OF INTERNAL POINTS FUTURE VERTICES
+         MCN( MN1SDE + WBPTIT ) = 0
+C        TABLEAU  NULFTR(1..NBLFTR) NAME OF CLOSED LINES ^~>LIGNE
+         MCN( MN1SDE + WULFTR ) = NUMLIG(NUSF-1)
+C        TABLEAU NUPTIT(1..NBPTIT) NAME OF INTERNAL POINTS FUTURE VERTICES
+C        INEXISTANT CAR NBPTIT=0
+C        AJOUT DU NUMERO DU TABLEAU DESCRIPTEUR
+         MCN( MN1SDE + MOTVAR(6) ) = NONMTD( '~>SURFACE>>DEFINITION' )
+C        AJOUT DE LA DATE
+         CALL ECDATE( MCN(MN1SDE) )
+C
+C        TRIANGULATION DU CERCLE NUSF
+         CALL SUEX09( 9, NT1SF, MCN(MN1SDE), RMCN(MN1SDE),
+     %                NTFASU, MNFASU, NTSOFA, MNSOFA, IERR )
+         IF( IERR .GT. 0 ) GOTO 9999
+C
+      ENDDO
+C
+C     UNION DES 3 SURFACES POUR LE MAILLAGE DE LA SURFACE FERMEE du CONE
+C     ------------------------------------------------------------------
+C     PERMUTATION POUR AVOIR UNE NORMALE VERS L'EXTERIEUR
+      N         = NUMSUR(1)
+      NUMSUR(1) = NUMSUR(3)
+      NUMSUR(3) = N
+      CALL UNPLSV( 51,  3, NUSURF, 3, NUMSUR,
+     %             NTNSCY, MNNSCY, NTSTCY, MNSTCY,
+     %             NTUNIL, MNUNIL, IERR   )
+C
+C     DESTRUCTION DES TABLEAUX INUTILES
+ 9999 IF( MXSOM .GT. 0 ) CALL TNMCDS( 'REEL',   MXSOM*3, MNSOM )
+      IF( MXEF  .GT. 0 ) CALL TNMCDS( 'ENTIER', MXEF*4,  MNEF  )
+      RETURN
+      END

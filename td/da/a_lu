@@ -1,0 +1,18 @@
+deftms ~>LU 'backup between 2 executions of constantes and variables of LU'
+variable muet DATE 'date of creation of the TMS'    reel2  ;
+variable muet NUTD 'number of the descriptor array' entier ; 
+variable NBCTE  'number of declared constantes'   entier ;
+variable NBVARU 'number of declared variables'  entier ;
+variable MXCAVA 'a name of a variable has up to mxcava*4 characters' entier ;
+variable NBVATS 'number of users''s variables'  entier ;
+variable MXCATS 'a name of a variable TMS has up to mxcats*4 characters'
+         entier ;  
+variable NBPACH 'number of strings of characters'  entier ;
+variable MXCACH 'a name of a string  has up to mxcats*4 characters' entier ;
+tableau  DCTE(1..NBCTE)  'the values of the constantes' reel2 ;
+tableau DVARU(1..NBVARU) 'the values of the variables' reel2 ;
+tableau KVARU(1..MXCAVA,1..NBVARU) 'the names of variables' caractere ;  
+tableau KVATS(1..MXCATS,1..NBVATS) 'the names of variables tms' caractere ;
+tableau KPACH(1..MXCACH,1..NBPACH) 'the names of strings of characters'
+        caractere;
+fintms ;

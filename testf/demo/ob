@@ -1,0 +1,22 @@
+{ ==================================================================== }
+{ Logiciel MEFISTO     : Version Decembre 1999                         }
+{ Nom de l'Utilisateur : perronnet                                     }
+{ Nom du Projet        : demo                                          }
+{ Date                 : 03/06/00                                      }
+{ ==================================================================== }
+@;
+@;
+@;
+
+5;
+ cardan; 0; 4;
+ volume;  cardan;
+ surface; cyl4;
+ surface; cyl4_sym;
+ surface; base;
+@;
+
+7;
+ cardan;3;
+@;
+fermer;

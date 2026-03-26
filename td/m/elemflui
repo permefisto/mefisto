@@ -1,0 +1,3 @@
+variable ELEMFLUI 'Choix de l''ef en fluide' entier
+ ( 1  : 'BREZZI-FORTIN P1+P3BULLE en VITESSES & P1 en PRESSION'
+ , 2  : 'TAYLOR-HOOD   P2         en VITESSES & P1 en PRESSION' );

@@ -1,0 +1,14 @@
+deftms ~>>>COEFDEPLACEMENT     'Coefficients du DEPLACEMENT'
+variable muet DATE   'date de creation du tableau'    reel2  ;
+variable muet NUTD   'numero du tableau descripteur'  entier ;
+variable      LTCOED 'Type des Coefficients' entier 
+(  1 : 'Coefficients constant'
+, -1 : 'Fonction Coefficients'
+,  0 : 'Coefficient a supprimer' ) ;
+variable NBCOED 'Nombre des coefficients' entier ; 
+tableau  NUCOED(1..NBCOED) 'No du coefficient' entier ;
+cas LTCOED
+ 1 : tableau  COEDEP(1..NBCOED) 'Valeur des Coefficients' reel ;
+-1 : variable NFCOED 'Nom de la fonction Coefficients'  ^~>FONCTION ;
+fincas ;
+fintms ;

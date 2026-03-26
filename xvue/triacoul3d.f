@@ -1,0 +1,45 @@
+      SUBROUTINE TRIACOUL3D( XYZ, COUL )
+C+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+C BUT :    TRACE LE TRIANGLE DE SOMMETS XYZ ET DE COULEURS COUL
+C -----    SELON LES COULEURS INTERMEDIAIRES  (PALETTE 11 RECOMMANDEE)
+C          ATTENTION (X,Y,Z) EN COORDONNEES OBJETS 3D
+C
+C ENTREES:
+C --------
+C XYZ    : 3 COORDONNEES DES 3 SOMMETS
+C COUL   : NUMERO REEL DE LA COULEUR AUX 3 SOMMETS DU TRIANGLE
+C          REEL DE VALEURS COMPRISES ENTRE N1COUL ET NDCOUL
+C          (cf ~/incl/trvari.inc)
+C+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+C AUTEUR : PERRONNET ALAIN ANALYSE NUMERIQUE UPMC  PARIS    OCTOBRE 1994
+C2345X7..............................................................012
+      include"./incl/trvari.inc"
+      include"./incl/minint.inc"
+      REAL           XYZ(3,3), COUL(3)
+      REAL           AXYZ(3)
+      INTEGER*2      XYPX(2,3)
+C
+C     TRANSFORMATION EN PIXELS DANS LA FENETRE XV
+      DO 10 I=1,3
+C        TRANSFORMATION EN COORDONNEES AXONOMETRIQUES
+         CALL XYZAXO( XYZ(1,I), AXYZ )
+C        SI UN POINT EST EXTERIEUR AUX 2 PLANS LA FACE N'EST PAS TRACEE
+         IF( AXOARR .NE. 0 .OR. AXOAVA .NE. 0 ) THEN
+C           AXOARR ET AXOAVA SONT ACTIFS
+            IF( AXYZ(3) .LT. AXOARR ) RETURN
+            IF( AXYZ(3) .GT. AXOAVA ) RETURN
+         ENDIF
+C        TRANSFORMATION EN PIXELS DANS LA FENETRE XV
+         NX = NUPXEX( AXYZ(1) )
+         NY = NUPXEY( AXYZ(2) )
+C        SI LE NUMERO PIXEL EST INCORRECT ABANDON DU TRACE DE LA FACE
+         IF( NX .EQ. MININT .OR. NY .EQ. MININT ) RETURN
+         XYPX(1,I) = INT2( NX )
+         XYPX(2,I) = INT2( NY )
+ 10   CONTINUE
+C
+C     TRACE EFFECTIF DU REMPLISSAGE DU TRIANGLE SELON DES COULEURS INTERMEDIAIRE
+      CALL TRIACOUL( XYPX, COUL )
+
+      RETURN
+      END

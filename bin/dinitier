@@ -1,0 +1,67 @@
+#!/bin/bash
+#      creation des fichiers d'un projet
+#      A. Perronnet  Mars 1999   Version PC sous LINUX
+# 
+echo '==================================================='
+echo '    INITIER sous ddd un projet MEFISTO sur PC LINUX'
+echo '==================================================='
+echo 
+echo Etat actuel de la memoire
+free
+echo
+df
+#echo
+#echo Les variables d environnement
+#env
+echo
+echo 'Les modules executables de MEFISTO'
+ls -l $MEFISTO/pp
+#
+# creation eventuelle du repertoire $MEFISTOX
+if test -d $MEFISTOX
+then
+   cd    $MEFISTOX
+else
+   mkdir $MEFISTOX
+   cd    $MEFISTOX
+fi
+cd $MEFISTOX
+echo
+echo 'Les projets actuels dans $MEFISTOX'
+ls -l
+#
+# mise sous le directory
+echo
+echo MEFISTO INITIER: nom du projet \? 
+read nomproj 
+#
+# creation eventuelle du repertoire $MEFISTOX/$nomproj
+direxec=$MEFISTOX/$nomproj
+if test -d $direxec
+then
+   cd    $direxec     
+else
+   mkdir $direxec
+   cd    $direxec
+fi
+#
+# creation eventuelle du repertoire $HOME/mefistox/core
+# pour eviter la creation inutile de ce fichier en cas de TILT
+if test -d core
+then
+   echo
+else
+   mkdir core
+   chmod 500 core
+fi          
+# 
+# destruction des fichiers  frappe et ms du repertoire          
+rm -f frappe.*
+rm -f ms1*
+#
+# appel du programme 
+echo Execution MEFISTO INITIER dans $direxec
+time ddd $MEFISTO/pp/ppinit
+echo
+echo "Contenu du repertoire $direxec"
+ls $direxec

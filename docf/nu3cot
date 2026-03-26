@@ -1,0 +1,19 @@
+Le TRIANGLE, eventuellement deforme,est defini a partir 
+de 3 lignes definissant ses 3 cotes.
+Chacune des 3 lignes peut etre une ligne union de lignes.
+ATTENTION: 
+Les 3 COTES sont donnes, pour une direction de visee quelconque 
+et seulement de preference, selon l'ordre ci-dessous
+
+           |\ 
+           |  \ 
+          L3    L2
+           |      \ 
+           ---L1---\
+ATTENTION:   
+Le nombre de trianles est egal au carre du nombre constant d'aretes
+des 3 lignes.
+
+Exemple: T91; I; 9; L1; L2; L3; 
+         Definit une triangulation de contour les aretes
+         des lignes L1 L2 L3 

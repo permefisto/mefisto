@@ -1,0 +1,69 @@
+      SUBROUTINE TAMSFE( NOTAMS )
+C+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+C BUT : FERMER EN MEMOIRE CENTRALE LE TABLEAU MS NOTAMS
+C -----
+C
+C ENTREE :
+C --------
+C NOTAMS : NUMERO DU TABLEAU MS A FERMER
+C+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+C PROGRAMMEUR : PERRONNET ALAIN ANALYSE NUMERIQUE PARIS  DECEMBRE 1983
+C.......................................................................
+      include"./incl/motmcg.inc"
+      include"./incl/ppmck.inc"
+      include"./incl/pp.inc"
+      COMMON            MCN(MOTMCN)
+      COMMON / UNITES / LECTEU,IMPRIM,NUNITE(30)
+      COMMON / MSSFTA / NOFISF,NBPASF,MOPASF,MGBUSF,NSFLIB,
+     %                  M1FIMS,M2FIMS,MGFIMS,NSFIMS,LPFIMS,
+     %                  M1TAMS,M2TAMS,MGBUTA,NBBUTA,NPTAMS,NATAMS,
+     %                  NBCTMS,LLTAMS,LFTAMS,MGNPSF,NSFNPS,NPSNPS,
+     %                  MGZLMG,MGZLMK,MGZLMN,MOTSMG,MOTSMK,MOTSMN,NTADAM
+      COMMON / MSIMTA / NOIMPR
+C
+C     RECHERCHE DU DESCRIPTEUR RETAMS(1..6,NOTAMS)
+C
+      CALL TAMSRE( NOTAMS , MGTAMS )
+C     RETAMS(1)=NTTAMS NO DU TYPE DU TABLEAU MS
+C                      0 SI LE TABLEAU N EST PAS DECLARE
+C     RETAMS(2)=NVTAMS NOMBRE DE VARIABLES DU TABLEAU MS
+C     RETAMS(3)=NFTAMS NUMERO DU FICHIER MS (1 A M2FIMS) DU TABLEAU MS
+C                      0 SI NON DECLARE
+C     RETAMS(4)=N1TAMS NUMERO DE LA PREMIERE PAGE DU TABLEAU SUR
+C                      LE FICHIER NFTAMS QUI LE SAUVEGARDE
+C     RETAMS(5)=MCTAMS ADRESSE MC DU PREMIER MOT DU TABLEAU MS
+C                      >0 LE TABLEAU EST OUVERT( VERROUILLE ) EN MC
+C                         IL EST PRET A ETRE UTILISE
+C                         IL NE PEUT ETRE SAUVEGARDE SUR SON FICHIER
+C                         TANT QU IL N EST PAS FERME
+C                      =0 LE TABLEAU N EST PAS EN MC
+C                         IL EST DECLARE MAIS PAS OUVERT
+C                      <0 LE TABLEAU EST FERME,SUSCEPTIBLE
+C                         D ETRE SAUVEGARDE SUR SON FICHIER MS
+C                         IL EST UTILISABLE SEULEMENT S IL EST REOUVERT
+C     RETAMS(6)=LSTAMS CHAINAGE AVAL DES TABLEAUX MS LIBRES OU FERMES
+C
+C     FERMETURE : L'ADRESSE MC EST RENDUE NEGATIVE
+C     ============================================
+C
+      IF( MCG(MGTAMS + 4 ) .GT. 0 ) THEN
+C        LE TABLEAU ETAIT OUVERT.IL EST FERME
+         MCG( MGTAMS + 4 ) = - MCG( MGTAMS + 4 )
+C
+C        LE TABLEAU EST AJOUTE AU CHAINAGE DES TABLEAUX FERMES
+C        =====================================================
+         MCG( MGTAMS + 5 ) = LFTAMS
+         LFTAMS            = NOTAMS
+C
+         IF( NOIMPR .NE. 0 ) WRITE(IMPRIM,19000) NOTAMS
+19000 FORMAT(' FERMETURE   TABLEAU MS NO',I9)
+C
+CCC      ELSE IF( MCG(MGTAMS + 4 ) .EQ. 0 ) THEN
+CCCC        LE TABLEAU EST DECLARE MAIS PAS OUVERT
+CCC         WRITE(IMPRIM,10000) ERREUR,NOTAMS,(MCG(MGTAMS+I),I=0,M1TAMS-1)
+CCC10000 FORMAT(A16,'TABLEAU MS',I8,' DECLARE MAIS PAS OUVERT'/
+CCC     %       ' RETAMS=',8I8)
+      ENDIF
+C
+      RETURN
+      END

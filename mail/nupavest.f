@@ -1,0 +1,59 @@
+      SUBROUTINE NUPAVEST( NOSOMM,   PTXYZD,
+     %                     HEXAPAVE, NBIPAV, ECHPAV, N1SPAVE, NOPTSUIV )
+C+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+C BUT :     CALCULER LE NUMERO DU PAVE DE PTXYZD(NOSOMM) DANS HEXAPAVE
+C -----     ET LE CHAINER DANS LE PAVAGE
+
+C ENTREES :
+C ---------
+C NOSOMM  : NUMERO DANS PTXYZD
+C PTXYZD  : X Y Z D DES POINTS
+C HEXAPAVE: MIN ET MAX DES COORDONNEES DU PAVAGE
+C NBIPAV  : NOMBRE D'ARETES DANS LA DIRECTION I
+C ECHPAV  : ECHELLE DANS LA DIRECTION I
+
+C MODIFIES:
+C ---------
+C N1SPAVE : NO DU 1-ER SOMMET DANS PTXYZD DU PAVE
+C NOPTSUIV: NO DU POINT SUIVANT DANS LE CHAINAGE DES POINTS DES PAVES
+C+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+C AUTEUR : ALAIN PERRONNET ANALYSE NUMERIQUE UPMC PARIS     OCTOBRE 2005
+C2345X7..............................................................012
+      DOUBLE PRECISION  PTXYZD(4,*)
+      INTEGER           NBIPAV(3), N1SPAVE(0:*), NOPTSUIV(1:*)
+      DOUBLE PRECISION  HEXAPAVE(3,2), ECHPAV(3)
+      INTEGER           NPAV(3)
+
+C     LE NUMERO EN X Y Z DES PAVES SUSCEPTIBLES DE CONTENIR CE POINT XYZ
+      DO K=1,3
+C        RECHERCHE DES INDICES DU PAVAGE EN XK POUVANT CONTENIR LE SOMMET
+         L = INT( ( PTXYZD(K,NOSOMM) - HEXAPAVE(K,1) ) * ECHPAV(K) )
+         IF( L .LE. 0 ) THEN
+            NPAV(K) = 0
+         ELSE IF( L .GE. (NBIPAV(K)-1) ) THEN
+            NPAV(K) = NBIPAV(K)-1
+         ELSE
+            NPAV(K) = L
+         ENDIF
+      ENDDO
+
+C     CHAINAGE DU NOUVEAU SOMMET EN DEBUT DE PAVE SI CE N'EST DEJA FAIT
+      NUPAVE = NPAV(1) + NBIPAV(1) * ( NPAV(2) + NBIPAV(2) * NPAV(3) )
+      NS = N1SPAVE( NUPAVE )
+ 10   IF( NS .GT. 0 ) THEN
+         IF( NS .EQ. NOSOMM ) THEN
+ccc arrive souvent  print *,'nupavest: deja execute pour le sommet',nosomm
+            GOTO 9999
+         ELSE
+C           LE SOMMET SUIVANT DANS LE PAVE NUPAVE
+            NS = NOPTSUIV( NS )
+            GOTO 10
+         ENDIF
+      ENDIF
+
+C     NOSOMM EST AJOUTE EN TETE DU CHAINAGE DU PAVE NUPAVE
+      NOPTSUIV( NOSOMM ) = N1SPAVE( NUPAVE )
+      N1SPAVE(  NUPAVE ) = NOSOMM
+
+ 9999 RETURN
+      END

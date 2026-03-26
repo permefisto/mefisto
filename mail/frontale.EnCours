@@ -1,0 +1,2841 @@
+      subroutine frontale( aretgr, nbfape, nofape,
+     %                     mxfaco, lefaco, n1fasc,
+     %                     mxsomm, nbsomm, ptxyzd,
+     %                     hexapave, nbipav, echpav, n1spave, noptsuiv,
+     %                     n1tets, n1tevi, notetr, cetetr,
+     %                     nostis,
+     %                     mxtetra1s, notetra1s,
+     %                     mxstcf, nostcf,
+     %                     mxtrcf, notrcf,
+     %                     mxtecf, notecf,
+     %                     mxteaj, noteaj,
+     %                     ierr )
+c+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+c but :    Recuperation des faces perdues de la frontiere en
+c -----    tetraedrisant les volumes adjacents fermes dessus et dessous
+c          par une methode frontale face-sommet
+c
+c entrees:
+c --------
+c aretgr : longueur max des aretes de la tetraedrisation
+c nbfape : nombre de faces perdues
+C nofape : no lefaco des nbfape faces perdues
+c mxfaco : max de faces declarables dans lefaco
+c lefaco : face=triangle de la peau ou des interfaces entre volumes
+c          il contient dans cet ordre
+c          numero (dans ptxyzd) du sommet 1, sommet 2, sommet 3
+c          numero (dans nuvopa 0 sinon) du volume1, volume2 de la face
+c          numero (dans lefaco) de la face adjacente par l'arete 1 2 3
+c
+c          attention: une arete peut appartenir a plus de 2 faces
+c          => chainage circulaire de ces faces dans lefaco
+c          lefaco(9,*)  -> face suivante (*=0:vide, *<>0:non vide)
+c          hachage avec la somme des 3 sommets modulo mxfaco
+c          lf = mod( nosofa(1)+nosofa(2)+nosofa(3) , mxfaco ) + 1
+c          nf = lefaco( 10, lf ) le numero de la 1-ere face dans lefaco
+c          si la face ne convient pas. passage a la suivante
+c          nf  = lefaco( 9, nf )  ...
+c          lefaco(10,*) premiere face dans le hachage
+c          lefaco(11,.) = no notetr d'un tetraedre ayant cette face, 0 sinon
+c          ( pour NEF lefaco(12,.) = no FaceOC de 1 a NbFaces d'OC )
+c n1fasc : n1fasc(i) numero d'un triangle de lefaco de sommet i
+c
+c mxsomm  : nombre maximal declarable de points dans ptxyzd
+c nbsomm  : nombre actuel de sommets de la tetraedrisation
+c ptxyzd  : x y z distance souhaitee des points
+c hexapave: min et max des coordonnees du pavage
+c nbipav  : nombre d'aretes dans la direction i
+c echpav  : echelle dans la direction i
+c n1spave : no du 1-er sommet dans ptxyzd du pave
+c noptsuiv: no du point suivant dans le chainage des points des paves
+c
+c n1tets : n1tets(i) numero d'un tetraedre ayant pour sommet i
+c n1tevi : no du premier tetraedre vide dans notetr
+c notetr : liste des tetraedres
+c          sommet1,    sommet2,    sommet3,    sommet4,
+c          tetraedre1, tetraedre2, tetraedre3, tetraedre4
+c          de l'autre cote de la face
+c          1: 123      2: 234      3: 341      4: 412
+c cetetr : coordonnees du centre de la boule circonscrite
+c          et carre du rayon des tetraedres
+c
+c mxtetra1s: nombre max de tetraedres d'un sommet de la tetraedrisation
+c notetra1s: no des tetraedres d'un sommet de la tetraedrisation
+c
+c nbsomm : nombre de sommets actuels
+c
+c tableaux auxiliaires :
+c ----------------------
+c nostis : tableau des sommets isoles   d'un cf lefaco
+c mxstcf : nombre max de sommets        d'un cf lefaco
+c nostcf : numero notetr des sommets    d'un cf lefaco
+c mxtrcf : nombre max de triangles      d'un cf lefaco
+c notrcf : numero lefaco des triangles  d'un cf lefaco
+c mxtecf : nombre max de tetraedres     d'un cf lefaco
+c notecf : numero notetr des tetraedres d'un cf lefaco
+c mxetoi : nombre maximal de faces declarables dans une etoile
+c nfetoi : entier (1:10,1:mxetoi)
+c
+c sorties :
+c ---------
+c ierr   : 0 si pas d'erreur , 1 saturation d'un tableau
+c+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+c auteur : Alain Perronnet Laboratoire J.-L. Lions Paris UPMC avril 2006
+c2345x7..............................................................012
+      parameter        (mxetoi=1000, mx1acf=100, mxarcf=1000, mxnfnf=16)
+      parameter        (mxpile=1000, mxarpf=100)
+      common / unites / lecteu,imprim,intera,nunite(29)
+      double precision  aretgr, ptxyzd(1:4,1:*)
+      integer           nbipav(3), n1spave(0:*), noptsuiv(1:*)
+      double precision  hexapave(3,2), echpav(3)
+      integer           notetr(8,1:*), n1tets(1:*)
+      integer           nofape(nbfape),
+     %                  lefaco(11,0:mxfaco),
+     %                  n1fasc(*)
+      integer           notetra1s(mxtetra1s)
+      integer           nostis(nbsomm),
+     %                  nostcf(mxstcf),
+     %                  notrcf(mxtrcf),
+     %                  notecf(mxtecf),
+     %                  noteaj(mxteaj)
+c
+      integer           naetoi(4,mxetoi),
+     %                  n1arcf(0:mx1acf),
+     %                  noarcf(3,mxarcf),
+     %                  nfetoi(10,mxetoi),
+     %                  nv1feoc(2)
+c
+      integer           nostarp(1000), nosttr(6,mxnfnf),
+     %                  nofare(2), nostarincf(2,500), nostarexcf(2,500),
+     %                  nostar(2,mxarpf)
+      integer           nosoar(2,6)
+      data              nosoar / 1,2, 2,3, 3,1, 1,4, 2,4, 3,4 /
+      integer           nosofi(3,4)
+      data              nosofi/ 1,2,3, 2,4,3, 3,4,1, 4,2,1 /
+      double precision  cetetr(4,*)
+      double precision  pt(3), cobary(3),
+     %                  a, x21, y21, z21
+      double precision  v,volet0,volet1,voltet
+      integer           noae(8,3), nostex(2,6), ns(3), nsfc(3)
+      integer           nfte0(2,3)
+      integer           lapile(mxpile)
+c
+c     initialisation des mxetoi faces vides de l'etoile, 0 occupee
+      n1fevi = 1
+      n1feoc = 0
+      do 2 i=1,mxetoi
+c        numero du tetraedre de l'autre cote de la face
+         nfetoi(1,i) = 0
+c        numero local au tetraedre de la face
+         nfetoi(2,i) = 0
+c        numero dans nfetoi de la face suivante
+         nfetoi(3,i) = i+1
+c        temoin de traitement ou non
+         nfetoi(4,i) = 0
+ 2    continue
+      nfetoi(3,mxetoi) = 0
+c
+c     nombre de faces perdues dans lefaco et retrouvees
+      nbfre = 0
+      nb3ft = 0
+      nfp   = 0
+c
+c     **************************************
+c     Boucle sur les faces perdues de nofape
+c     **************************************
+ 3    ierr = 0
+      nfp  = nfp + 1
+      if( nfp .le. nbfape ) then
+c
+c        le numero de la face perdue dans lefaco
+         nf0 = nofape( nfp )
+ 5       if( nf0 .le. 0 ) goto 3
+c
+         print *
+         print *,'====================================================='
+         print *,'frontale: traitement face perdue',nfp,' lefaco(',
+     %            nf0,') de st:',(lefaco(kk,nf0),kk=1,3)
+         nbpass = 0
+c
+c        formation du premier contour ferme forme des triangles perdus
+c        adjacents coplanaires ou non a partir de nf0
+c        les aretes peripheriques des faces perdues sont dans la tetraedrisation
+c        -----------------------------------------------------------------------
+         call startrcf( nf0,    nbfape, nofape,
+     %                  mxfaco, lefaco, n1fasc,
+     %                  mxetoi, naetoi,
+     %                  nbtrcf, mxtrcf, notrcf,
+     %                  mx1acf, n1arcf, mxarcf, noarcf,
+     %                  nbstis, nbsomm, nostis,
+     %                  ierr )
+c        n1arcf: numero noarcf du 1-er sommet ou arete du contour ferme
+c        noarcf: 1:numero pxyzd du 1-er sommet de l'arete du contour ferme
+c                2:numero noarcf de l'arete suivante
+c                3:numero lefaco du triangle adjacent oppose a l'arete
+c        nbstis: nombre de sommets isoles des triangles perdus du cf
+c        nostis: numero des sommets isoles internes au cf des triangles perdus
+         if( ierr .ne. 0 ) goto 3
+c
+c        nombre d'aretes externes du cf
+         nbarcf = 0
+         na = n1arcf(1)
+ 8       nbarcf = nbarcf + 1
+         print *,'frontale: noarcf',na,': ns1 ',noarcf(1,na),
+     %           ' suivante ',noarcf(2,na),' triangle ',noarcf(3,na)
+         na = noarcf(2,na)
+         if( na .ne. n1arcf(1) ) goto 8
+c
+         print *,'frontale: nb aretes cf=',nbarcf,' nb st isoles='
+     %          ,nbstis,' nb triangles cf=',nbtrcf
+         print *,'no st isoles=',(nostis(mm),mm=1,nbstis)
+         print *,'no triangles cf=',(notrcf(mm),mm=1,nbtrcf)
+         do 10 nf=1,nbtrcf
+            ntr = notrcf( nf )
+            print *,'triangle lefaco du cf',ntr,' st=',
+     %              (lefaco(mm,ntr),mm=1,3)
+ 10      continue
+c
+c        les nbtrcf faces lefaco sont supposees traitees
+c        pour ne pas recommencer le traitement d'un cf pour chacun de ses triangles
+         do 14 nf=1,nbtrcf
+            ntr = notrcf( nf )
+            do 12 n=nfp,nbfape
+               if( ntr .eq. abs(nofape(n)) ) then
+c                 la face lefaco est traitee momentanement
+                  nofape( n ) = - ntr
+                  goto 14
+               endif
+ 12         continue
+ 14       continue
+c
+c        tableau des no pxyzd des sommets des triangles lefaco du cf
+         nbstcf = 0
+         do 20 nf=1,nbtrcf
+            do 18 m=1,3
+c              le no du sommet ns de la face du cf
+               nsf = lefaco(m,notrcf(nf))
+               do 16 n=1,nbstcf
+                  if( nsf .eq. nostcf(n) ) goto 18
+ 16            continue
+c              ajout eventuel du sommet dans le tableau nostcf
+               if( nbstcf .ge. mxstcf ) then
+                  write(imprim,*)'frontale: augmenter mxstcf=',mxstcf
+                  ierr=1
+                  return
+               endif
+               nbstcf = nbstcf + 1
+               nostcf( nbstcf ) = nsf
+ 18         continue
+ 20      continue
+c
+c        recensensement des sommets des aretes perforant une face lefaco
+c        liste des tetraedres ayant une arete commune perforant lefaco
+c        ---------------------------------------------------------------
+         nbtecf  = 0
+         nbstarp = 0
+         do 90 nss=1,nbstcf
+c           le no de sommet du cf
+            nsf = nostcf( nss )
+c           recherche des tetraedres de sommet nsf
+            nbte = 0
+            call tetr1s( nsf,  n1tets, notetr,
+     %                   nbte, mxtetra1s, notetra1s )
+            if( nbte .le. 0 ) goto 3
+c
+            do 85 nt=1,nbte
+c              un tetraedre de sommet nsf
+               nte = notetra1s( nt )
+c
+c              parcours des 6 aretes du tetraedre nte
+               do 80 na = 1,6
+c
+c                 les 2 sommets de l'arete na du tetraedre nte
+                  ns1 = notetr( nosoar(1,na), nte )
+                  if( ns1 .eq. nsf ) goto 80
+                  ns2 = notetr( nosoar(2,na), nte )
+                  if( ns2 .eq. nsf ) goto 80
+c
+c                 l'arete ns1-ns2 n'a pas le sommet nsf
+                  do 70 m=1,nbtrcf
+c
+c                    le triangle du cf
+                     ntr = notrcf(m)
+                     if( lefaco(11,ntr) .gt. 0 ) goto 70
+c
+c                    calcul du point d'intersection de ns1-ns2 et du triangle ntr
+                     call indrpl( ptxyzd(1,ns1), ptxyzd(1,ns2),
+     %                            ptxyzd(1,lefaco(1,ntr)),
+     %                            ptxyzd(1,lefaco(2,ntr)),
+     %                            ptxyzd(1,lefaco(3,ntr)),
+     %                            pt, ierr )
+                     if( ierr .ne. 0 ) then
+c                       s1=s2 ou s1-s2 parallele a la face frontiere
+                        ierr = 0
+                        goto 70
+                     endif
+c
+c                    il existe un point d'intersection s1-s2
+c                    avec la face frontiere perdue
+c                    le point d'intersection est il dans le triangle ?
+                     call ptdstr(pt,ptxyzd,lefaco(1,ntr),cobary,nonoui)
+                     if( nonoui .gt. 0 ) then
+c                       oui: pt est dans ou sur le triangle
+c                            pt est il entre ns1 et ns2 ?
+                        x21 = ptxyzd(1,ns2) - ptxyzd(1,ns1)
+                        y21 = ptxyzd(2,ns2) - ptxyzd(2,ns1)
+                        z21 = ptxyzd(3,ns2) - ptxyzd(3,ns1)
+                        a = ( (pt(1)-ptxyzd(1,ns1)) * x21
+     %                      + (pt(2)-ptxyzd(2,ns1)) * y21
+     %                      + (pt(3)-ptxyzd(3,ns1)) * z21 )
+     %                      / ( x21 * x21 + y21 * y21 + z21 * z21 )
+                        if( 1d-3 .lt. a .and. a .lt. 0.999d0 ) then
+c                          oui: pt est entre ns1 et ns2 et dans le triangle frontiere
+                           do 55 mm=1,3
+                              if( 0.999d0 .le. cobary(mm) .and.
+     %                            cobary(mm) .le. 1.0001d0 ) then
+c                                pt est un sommet du triangle ou tres pres
+                print *,'frontale: pt TROP PROCHE sommet du triangle a='
+     %                   ,a,' cobary=',cobary
+                                 goto 70
+                              endif
+ 55                        continue
+c                          oui: pt est entre ns1 et ns2 et dans le triangle frontiere
+c                               et n'est pas trop pres d'un sommet du triangle
+c                               => le tetraedre est juge intersectant le cf
+c                          stockage des 2 sommets des aretes perforantes
+                           do 58 mm=1,nbstarp
+                              if( ns1 .eq. nostarp(mm) ) goto 60
+ 58                        continue
+                           nbstarp = nbstarp + 1
+                           nostarp( nbstarp ) = ns1
+c
+ 60                        do 65 mm=1,nbstarp
+                              if( ns2 .eq. nostarp(mm) ) goto 66
+ 65                        continue
+                           nbstarp = nbstarp + 1
+                           nostarp( nbstarp ) = ns2
+c
+c                          ajout des tetraedres d'arete commune ns1-ns2
+ 66                        call tetr1a( ns1, ns2, n1tets, notetr,
+     %                                  nbtecf, mxtecf, notecf )
+                           if( nbtecf .le. 0 ) goto 70
+                           print *,'arete perforante st',ns1,' -',ns2
+c
+                           if( nbtrcf .eq. 1 .and. nbtecf .eq. 3 ) then
+c                             traitement du cas 1 triangle ntr lefaco est perfore
+c                             par une arete commune a 3 tetraedres
+c                             3 tetraedres toupie => 2 tetraedres avec une face commune
+c                             ---------------------------------------------------------
+                              call te3te2( ntr, lefaco, n1fasc, notecf,
+     %                                     ptxyzd,n1tets,notetr,n1tevi,
+     %                                     cetetr, ierr )
+                              if( ierr .eq. 2 ) then
+                                 ierr = 0
+                                 goto 3
+                              endif
+                              if( ierr .ne. 0 ) return
+                              print *,
+     %           'frontale: 3te => 2te par te3te2 1 => 1 face retrouvee'
+c                             la face ntr=notrcf(m) lefaco traitee n'est plus perdue
+                              do 68 kk=1,nbfape
+                                 if( abs(nofape(kk)) .eq. ntr ) then
+                                    nofape( kk ) = - ntr
+                                    nbfre = nbfre + 1
+c                                   traitement de la face perdue suivante
+                                    nf0 = nofape( nfp )
+                                    goto 5
+                                 endif
+ 68                           continue
+                           endif
+                           goto 85
+                        endif
+                     endif
+ 70               continue
+ 80            continue
+ 85         continue
+ 90      continue
+c
+c        ici nbtecf tetraedres intersectent les triangles du cf
+         print *,'nb stp cf=',nbstcf,
+     %           ' no stp cf=',(nostcf(mm),mm=1,nbstcf)
+c
+c       ajout des tetraedres d'une arete de 2 sommets du cf
+c       mais non arete des triangles perdus du cf
+c       ---------------------------------------------------
+        nbarincf = 0
+        nbarexcf = 0
+        do 150 ns1=1,nbstcf-1
+            nost1 = nostcf( ns1 )
+            do 140 ns2=ns1+1,nbstcf
+               nost2 = nostcf( ns2 )
+               do 130 nf=1,nbtrcf
+                  notr = notrcf( nf )
+                  do 120 na=1,3
+                     if( na .lt. 3 ) then
+                        na1 = na + 1
+                     else
+                        na1 = 1
+                     endif
+                     nsa1 = lefaco( na , notr )
+                     nsa2 = lefaco( na1, notr )
+                     if((nsa1 .eq. nost1 .and. nsa2 .eq. nost2) .or.
+     %                  (nsa2 .eq. nost1 .and. nsa1 .eq. nost2)) then
+c                       cette arete est l'une des triangles du cf
+c                       cette arete est elle une de la tetraedrisation?
+                        call vdarte( nost1,nost2,n1tets,notetr,ptxyzd,
+     %                               mxtetra1s, notetra1s, nte )
+                        if( nte .gt. 0 ) then
+c                          oui: elle est ajoutee aux aretes externes du cf
+                           nbarexcf = nbarexcf + 1
+                           nostarexcf(1,nbarexcf) = nost1
+                           nostarexcf(2,nbarexcf) = nost2
+                           goto 140
+                        endif
+                     endif
+ 120              continue
+ 130           continue
+c              aucune arete des triangles du cf n'est cette arete
+c              cette arete est elle une arete de la tetraedrisation?
+               call vdarte( nost1, nost2, n1tets, notetr, ptxyzd,
+     %                      mxtetra1s, notetra1s, nte )
+               if( nte .gt. 0 ) then
+c                 oui:il existe un tetraedre contenant l'arete nost1-nost2
+c                 ajout des tetraedres d'arete nost1-nost2
+                  call tetr1a( nost1,  nost2,  n1tets, notetr,
+     %                         nbtecf, mxtecf, notecf )
+c                 stockage des 2 sommets de l'arete interne au cf
+c                 et appartenant a la tetraedrisation
+                  nbarincf = nbarincf + 1
+                  nostarincf(1,nbarincf) = nost1
+                  nostarincf(2,nbarincf) = nost2
+                  print *,'sommets',nost1,' +',nost2,
+     %           ' arete de tetraedre avec ces 2 st du cf'
+               endif
+ 140        continue
+ 150     continue
+c
+c        affichage des sommets, triangles et tetraedres du cf
+         if( nbstarp .gt. 0 ) then
+            write(imprim,*)'frontale:',nbstarp/2,' triangles perfores'
+            write(imprim,*)'no st ar perfo=', (nostarp(mm),mm=1,nbstarp)
+         endif
+         write(imprim,*)'frontale: nb st du cf=',nbstcf,
+     %                  ' nb aretes bord cf=',nbarexcf,
+     %                  ' nb aretes internes cf=',nbarincf
+         write(imprim,*)'nostcf=',  (nostcf(mm), mm=1,nbstcf)
+         write(imprim,*)'nostarexcf=',
+     %                  ((nostarexcf(k,mm),k=1,2),'  ',mm=1,nbarexcf)
+         write(imprim,*)'nostarincf=',
+     %                  ((nostarincf(k,mm),k=1,2),'  ',mm=1,nbarincf)
+c
+ 152     write(imprim,*)
+         write(imprim,*)'Passage',nbpass,' nb tetra du cf=',nbtecf
+         do 155 ii=1,nbtecf
+            n = notecf(ii)
+            write(imprim,*)'tetraedre',n,
+     %       ': st',(notetr(mm,n),mm=1,4),' tetra',(notetr(mm,n),mm=5,8)
+ 155     continue
+c
+c        formation des faces simples de l'"etoile" des tetraedres du cf
+c        ce sont les triangles simples du cf sans les triangles perdus
+c        les tetraedres opposes aux faces lefaco ne sont pas interdits!
+c        --------------------------------------------------------------
+c        reinitialisation a vide des faces de nfetoi
+         call etoivi( 3, 7, n1feoc, n1fevi, nfetoi )
+c
+c        ajout des nouveaux triangles et suppressions des triangles doubles
+         do 180 i=1,nbtecf
+c           le tetraedre
+            nt1 = notecf( i )
+            do 170 j=1,4
+c              ajout de la face j du tetraedre nt1
+c             (sans consideration si elle appartient a lefaco)
+c              si la face j du tetraedre nt1 n'est pas dans nfetoi
+c              alors elle est ajoutee et nfa est sa place dans nfetoi
+c              sinon elle est supprimee de nfetoi et nfa=0
+               call ajtret( nt1, j, notetr, mxfaco, lefaco,
+     %                      n1feoc, n1fevi, nfetoi, nfa )
+ 170        continue
+ 180     continue
+c
+c        Transformation du contenu de nfetoi faces de l'etoile
+c        passage aux tetraedres opposes de l'autre cote de l'etoile
+c        le no de tetraedre interne etoile  => no tetraedre oppose au dela du triangle
+c        le no triangle local dans le tetraedre => no triangle dans le tetraedre oppose
+         nf1 = n1feoc
+c        boucle sur les faces
+ 190     if( nf1 .gt. 0 ) then
+c
+c           le no du tetraedre nt1 interne a l'etoile et no local de la face
+            nt1 = nfetoi( 1, nf1 )
+            i1  = abs( nfetoi( 2, nf1  ) )
+c           le numero du tetraedre ntop au dela de la face
+            ntop = notetr( i1+4, nt1 )
+            if( ntop . gt. 0 ) then
+c              ce tetraedre ntop devient le tetraedre de la face
+               nfetoi( 1, nf1 ) = ntop
+c              nfop le numero local de la face concernee dans ce tetraedre
+               if( notetr(5,ntop) .eq. nt1 ) then
+                  nfop = 1
+               else if( notetr(6,ntop) .eq. nt1 ) then
+                  nfop = 2
+               else if( notetr(7,ntop) .eq. nt1 ) then
+                  nfop = 3
+               else if( notetr(8,ntop) .eq. nt1 ) then
+                  nfop = 4
+               else
+                  print *,'frontale:PB tetraedre',nt1,
+     %                    ' non oppose a',ntop
+               endif
+c              le no de face dans le tetraedre ntop
+               nfetoi( 2, nf1 ) = nfop
+            else
+c              pas de tetraedre ntop oppose a la face
+               nfetoi( 1, nf1 ) = 0
+c              le no de face dans le tetraedre ntop
+               nfetoi( 2, nf1 ) = 0
+            endif
+c
+c           passage a la face suivante
+            nf1 = nfetoi( 3, nf1 )
+            goto 190
+         endif
+c
+c        ici notecf contient les tetraedres formant le volume total de l'etoile
+c        le bord est fait des nfetoi triangles simples bord du volume de l'etoile
+c        construction du chainage des triangles adjacents de chaque triangle nfetoi
+c        sans que les triangles perdus de lefaco soient pris en compte
+c        recherche des triangles adjacents du bord par les aretes
+c        --------------------------------------------------------------------------
+         nf1 = n1feoc
+c        boucle sur les faces nfetoi
+ 200     if( nf1 .gt. 0 ) then
+            do 210 j=1,3
+c              arete j du triangle nf1
+               if( nfetoi(7+j,nf1) .eq. 0 ) then
+c                 triangle adjacent i inconnu => les 2 sommets de l'arete
+                  nstr1 = nfetoi(4+j,nf1)
+                  if( j .lt. 3 ) then
+                     nstr2 = j + 1
+                  else
+                     nstr2 = 1
+                  endif
+                  nstr2 = nfetoi(4+nstr2,nf1)
+c
+c                 recherche du triangle nfetoi adjacent par l'arete j de nf1
+                  nf2 = nfetoi(3,nf1)
+c                 boucle sur les faces nfetoi au dela
+ 205              if( nf2 .gt. 0 ) then
+                     do 207 k=1,3
+                        ns1 = nfetoi(4+k,nf2)
+                        if( k .lt. 3 ) then
+                           ns2 = k+1
+                        else
+                           ns2 = 1
+                        endif
+                        ns2 = nfetoi(4+ns2,nf2)
+                        if( ( ns1 .eq. nstr1 .and. ns2 .eq. nstr2 ) .or.
+     %                      ( ns2 .eq. nstr1 .and. ns1 .eq. nstr2 ))then
+c                          l'arete j de nf1 est l'arete k de nf2
+c                          adjacences realisees dans nfetoi
+                           nfetoi(7+j,nf1) = nf2
+                           nfetoi(7+k,nf2) = nf1
+c                          passage a l'arete suivante de nf1
+                           goto 210
+                        endif
+c                       passage a l'arete suivante de nf2
+ 207                 continue
+c                    passage a la face nfetoi suivante
+                     nf2 = nfetoi(3,nf2)
+                     goto 205
+                  endif
+               endif
+c              passage a l'arete suivante de nf1
+ 210        continue
+c
+c           passage a la face nfetoi suivante
+            nf1 = nfetoi(3,nf1)
+            goto 200
+         endif
+c
+         print *
+         nf1 = n1feoc
+c        boucle sur les faces nfetoi
+ 211     if( nf1 .gt. 0 ) then
+            print 10211,nf1,(nfetoi(mm,nf1),mm=1,10)
+c           passage a la face nfetoi suivante
+            nf1 = nfetoi(3,nf1)
+            goto 211
+         endif
+10211    format('Face simple etoile ',i6,':',10i6)
+c
+cccc        trace des sommets, triangles et triangles nfetoi simples de l'etoile totale
+ccc         call traceetoile( aretgr, ptxyzd, mxfaco, lefaco, notetr,
+ccc     %     	           nbstcf, nostcf,
+ccc     %                     nbtrcf, notrcf,
+ccc     %                     n1feoc, nfetoi, 0 )
+c
+c        ajout aux triangles nfetoi des triangles lefaco perdus
+c        notrcf sans recherche des triangles nfetoi adjacents
+c        ------------------------------------------------------
+         n0feoc = n1feoc
+         do 220 nf=1,nbtrcf
+c           le triangle lefaco perdu
+            notr = notrcf( nf )
+c
+c           ajout aux triangles nfetoi
+            nf2    = n1fevi
+            n1fevi = nfetoi( 3, n1fevi )
+c
+c           mise a jour du chainage: nf2 vient avant n1feoc
+            nfetoi(3,nf2) = n1feoc
+c
+c           nf2 est la premiere face de l'etoile
+            n1feoc = nf2
+c
+c           no notetr du tetraedre du triangle => inconnu
+            nfetoi( 1, nf2 ) = 0
+c           no (1 a 4) de sa face dans le tetraedre => inconnu
+            nfetoi( 2, nf2 ) = 0
+c           la face n'est pas traitee
+            nfetoi( 4, nf2 ) = 0
+c
+c           numero des 3 sommets de la face  stockage dans nfetoi(5:7,nf2)
+c           tri croissant des 3 sommets de la face et rangement dans nfetoi
+            call tri3no( lefaco(1,notr), nfetoi(5,nf2) )
+c
+c           triangles adjacents par les 3 aretes
+            nfetoi( 8, nf2 ) = 0
+            nfetoi( 9, nf2 ) = 0
+            nfetoi(10, nf2 ) = 0
+ 220     continue
+c
+c        la 1-ere arete externe du cf appartient a 2 triangles simples et un perdu
+c        recherche de ces 3 triangles qui se partagent cette premiere arete externe
+c        --------------------------------------------------------------------------
+         print *
+c        les 2 sommets de l'arete 1 externe du cf
+         ns1a1 = nostarexcf(1,1)
+         ns2a1 = nostarexcf(2,1)
+         nbtr  = 0
+         nf1   = n1feoc
+c        boucle sur les faces nfetoi
+ 222     if( nf1 .gt. 0 ) then
+            do 230 na=1,3
+c              l'arete na du triangle nfetoi
+               if( na .lt. 3 ) then
+                  na1 = na + 1
+               else
+                  na1 = 1
+               endif
+c              les 2 sommets de l'arete na du triangle nf1
+               ns1 = nfetoi(4+na ,nf1)
+               ns2 = nfetoi(4+na1,nf1)
+               if( ( ns1 .eq. ns1a1 .and. ns2 .eq. ns2a1 ) .or.
+     %             ( ns2 .eq. ns1a1 .and. ns1 .eq. ns2a1 ) ) then
+c                 le triangle nfetoi nf1 contient l'arete externe 1
+                  nbtr = nbtr + 1
+c                 no nfetoi du triangle
+                  nfte0(1,nbtr) = nf1
+c                 no de l'arete
+                  nfte0(2,nbtr) = na
+                  print *,'frontale: st',ns1a1,ns2a1,
+     %                    ' arete',na,' du triangle',nf1
+                  if( nbtr .eq. 3 ) goto 232
+               endif
+ 230        continue
+c           passage a la face nfetoi suivante
+            nf1 = nfetoi(3,nf1)
+            goto 222
+         endif
+c        nfte0(1) est le triangle nfetoi = triangle perdu de cette arete 1
+c        d'apres l'ordre d'ajout des triangles dans nfetoi
+c        les derniers entres sont les premiers retrouves
+c        nfte0(2) contient le triangle du bord du volume 1
+c        nfte0(3) contient le triangle du bord du volume 2
+c
+c        -----------------------------------------------------------------
+c        construction du premier volume se partageant les triangles perdus
+c        -----------------------------------------------------------------
+c        chainage des 2-ers triangles pour demarrer le premier volume
+ 232     nfetoi( 7+nfte0(2,1), nfte0(1,1) ) = nfte0(1,2)
+         nfetoi( 7+nfte0(2,2), nfte0(1,2) ) = nfte0(1,1)
+c
+c        parcours des triangles nfetoi non triangles perdus
+c        en empilant les faces non au dela d'une arete externe
+c        ceci est necessaire pour ne pas passer au "dessous" des triangles perdus
+c        ------------------------------------------------------------------------
+         lhpile = 1
+c        nf1 = nfte0(1,2) aura sa normale dirigee vers l'interieur du volume
+         nf1 = nfte0(1,2)
+         lapile( lhpile ) = nf1
+c        triangle nf1 est empile et oriente => no volume= +1
+         nfetoi( 4, nf1 ) = 1
+c
+ 235     if( lhpile .gt. 0 ) then
+c
+c           le triangle non perdu est depile
+            nf1 = lapile( lhpile )
+            lhpile = lhpile - 1
+c
+c           recherche des aretes de nf1 parmi les aretes externes
+            do 250 j=1,3
+c
+c              les 2 sommets de l'arete j du triangle nf1 de nfetoi
+c              ce triangle est oriente pour que sa normale soit dirigee
+c              vers l'interieur du volume
+               nsa1 = nfetoi( 4+j, nf1 )
+               if( j .lt. 3 ) then
+                  nsa2 = j+1
+               else
+                  nsa2 = 1
+               endif
+               nsa2 = nfetoi( 4+nsa2, nf1 )
+c
+c              cette arete j de nf1 est elle une arete externe?
+               do 240 i=1,nbarexcf
+c                 les 2 sommets de l'arete i externe
+                  ns1 = nostarexcf(1,i)
+                  ns2 = nostarexcf(2,i)
+                  if( ( ns1 .eq. nsa1 .and. ns2 .eq. nsa2 ) .or.
+     %                ( ns2 .eq. nsa1 .and. ns1 .eq. nsa2 ) ) then
+c
+c                    oui: arete externe => recherche du triangle perdu
+c                                          adjacent par cette arete
+                     nf2 = n1feoc
+ 236                 if( nf2 .ne. n0feoc ) then
+c                       nf2 triangle nfetoi perdu
+                        do 238 k=1,3
+c                          les 2 sommets de l'arete k de la face nf2 nfetoi
+                           ns1 = nfetoi( 4+k, nf2 )
+                           if( k .lt. 3 ) then
+                              ns2 = k+1
+                           else
+                              ns2 = 1
+                           endif
+                           ns2 = nfetoi( 4+ns2, nf2 )
+                           if(( ns1.eq.nsa1 .and. ns2.eq.nsa2 ) .or.
+     %                        ( ns2.eq.nsa1 .and. ns1.eq.nsa2 ) ) then
+c                             l'arete j de nf1 est l'arete k de nf2
+                              nfetoi( 7+j, nf1 ) = nf2
+                              nfetoi( 7+k, nf2 ) = nf1
+                              goto 250
+                           endif
+ 238                    continue
+c                       passage au triangle nfetoi perdu suivant
+                        nf2 = nfetoi( 3, nf2 )
+                        goto 236
+                     endif
+                  endif
+ 240           continue
+c
+c              l'arete j de nf1 n'est pas externe
+c               => le triangle adjacent est empile s'il n'a pas ete traite
+               nf2 = nfetoi( 7+j, nf1 )
+               if( nfetoi( 4, nf2 ) .eq. 1 ) then
+c                 triangle nf2 a deja ete empile
+                  goto 250
+               endif
+c              triangle nf2 non traite => il est empile et oriente marque +1
+               lhpile = lhpile + 1
+               if( lhpile .gt. mxpile ) then
+                  write(imprim,*) 'Erreur frontale: augmenter mxpile=',
+     %                             mxpile
+                  ierr = 1
+                  return
+               endif
+               lapile( lhpile ) = nf2
+c              triangle nf2 empile => marque volume +1
+               nfetoi( 4, nf2 ) = 1
+ 250        continue
+            goto 235
+         endif
+c
+c        chainage des triangles adjacents nfetoi de perdu a perdu
+c        les triangles nfetoi perdus sont entre n1feoc et n0feoc
+c        --------------------------------------------------------
+         nf1 = n1feoc
+ 254     if( nf1 .ne. n0feoc ) then
+c           nf1 triangle nfetoi perdu est traite ensuite
+            nfetoi( 4, nf1 ) = 1
+c
+            do 260 j=1,3
+c              le triangle adjacent est il connu?
+               if( nfetoi( 7+j, nf1 ) .gt. 0 ) goto 260
+c              les 2 sommets de l'arete j de la face nf1 nfetoi
+               nsa1 = nfetoi( 4+j, nf1 )
+               if( j .lt. 3 ) then
+                  nsa2 = j+1
+               else
+                  nsa2 = 1
+               endif
+               nsa2 = nfetoi( 4+nsa2, nf1 )
+c
+               nf2 = nfetoi( 3, nf1 )
+ 256           if( nf2 .ne. n0feoc ) then
+c                 nf2 triangle nfetoi perdu
+                  do 258 k=1,3
+c                    les 2 sommets de l'arete k de la face nf2 nfetoi
+                     ns1 = nfetoi( 4+k, nf2 )
+                     if( k .lt. 3 ) then
+                        ns2 = k+1
+                     else
+                        ns2 = 1
+                     endif
+                     ns2 = nfetoi( 4+ns2, nf2 )
+                     if((ns1.eq.nsa1 .and. ns2.eq.nsa2 ) .or.
+     %                  (ns2.eq.nsa1 .and. ns1.eq.nsa2 ) ) then
+c                       l'arete j de nf1 est l'arete k de nf2
+                        nfetoi( 7+j, nf1 ) = nf2
+                        nfetoi( 7+k, nf2 ) = nf1
+                        goto 260
+                     endif
+ 258              continue
+c                 passage au triangle nfetoi perdu suivant
+                  nf2 = nfetoi( 3, nf2 )
+                  goto 256
+               endif
+ 260        continue
+c           passage au triangle nfetoi perdu suivant
+            nf1 = nfetoi( 3, nf1 )
+            goto 254
+         endif
+c
+c        chainage des triangles adjacents aux aretes externes 2 a nbarexcf
+         do 280 i=2,nbarexcf
+c           les 2 sommets de l'arete i externe
+            nsa1 = nostarexcf(1,i)
+            nsa2 = nostarexcf(2,i)
+c
+c           1-er triangle perdu
+            nf1 = n1feoc
+ 270        if( nf1 .ne. n0feoc ) then
+cc               if( nfetoi(4,nf1) .eq. 1 ) then
+                  do 278 na=1,3
+cccc                 arete deja traitee?
+cccc a ne pas faire! if( nfetoi(7+na,nf1) .gt. 0 ) goto 278
+c
+c                    les 2 sommets de l'arete na de nf1
+                     ns1 = nfetoi( 4+na, nf1 )
+                     if( na .lt. 3 ) then
+                        ns2 = na + 1
+                     else
+                        ns2 = 1
+                     endif
+                     ns2 = nfetoi( 4+ns2, nf1 )
+                     if( ( ns1 .eq. nsa1 .and. ns2 .eq. nsa2 ) .or.
+     %                   ( ns2 .eq. nsa1 .and. ns1 .eq. nsa2 ) ) then
+c
+c                       oui: arete externe => recherche du triangle du bord
+c                            ayant la meme arete externe
+                        nf2 = n0feoc
+ 274                    if( nf2 .gt. 0 ) then
+                           if( nfetoi(4,nf2) .eq. 1 ) then
+c                             nf2 triangle nfetoi du volume 1
+                              do 276 k=1,3
+c                                les 2 sommets de l'arete k de la face nf2 nfetoi
+                                 ns1 = nfetoi( 4+k, nf2 )
+                                 if( k .lt. 3 ) then
+                                    ns2 = k+1
+                                 else
+                                    ns2 = 1
+                                 endif
+                                 ns2 = nfetoi( 4+ns2, nf2 )
+                                 if((ns1.eq.nsa1 .and. ns2.eq.nsa2) .or.
+     %                              (ns2.eq.nsa1 .and. ns1.eq.nsa2))then
+c                                   l'arete na de nf1 est l'arete k de nf2
+                                    nfetoi( 7+na, nf1 ) = nf2
+                                    nfetoi( 7+k,  nf2 ) = nf1
+                                    goto 280
+                                 endif
+ 276                          continue
+                           endif
+c                          passage au triangle nfetoi perdu suivant
+                           nf2 = nfetoi( 3, nf2 )
+                           goto 274
+                        endif
+                     endif
+ 278              continue
+cc               endif
+c              passage au triangle nfetoi perdu suivant
+               nf1 = nfetoi( 3, nf1 )
+               goto 270
+            endif
+ 280     continue
+c        ici les triangles nfetoi debutant a n1feoc et marques 1 en nfetoi(4,.)
+c        enferment le 1-er volume
+c
+         print *
+         nf1 = n1feoc
+c        boucle sur les faces nfetoi
+ 290     if( nf1 .gt. 0 ) then
+            if( nfetoi(4,nf1) .eq. 1 ) then
+c              triangle du bord du volume 1
+               print 10290,nf1,(nfetoi(mm,nf1),mm=1,10)
+10290          format('Face simple volume1',i6,':',10i6)
+            endif
+c           passage a la face nfetoi suivante
+            nf1 = nfetoi(3,nf1)
+            goto 290
+         endif
+c
+cccc        trace des sommets, triangles et triangles nfetoi du 1-er volume
+ccc         call traceetoile( aretgr, ptxyzd, mxfaco, lefaco, notetr,
+ccc     %     	              nbstcf, nostcf,
+ccc     %                     nbtrcf, notrcf,
+ccc     %                     n1feoc, nfetoi, 1 )
+c
+c        ----------------------------------------------------------------
+c        construction du second volume se partageant les triangles perdus
+c        ----------------------------------------------------------------
+c        chainage des triangles de nfetoi dans chacun des 2 volumes
+c        n1feoc appartient au volume 1 (dernier triangle perdu ajoute)
+         nf1     = n1feoc
+         nv1feoc(1) = 0
+         nv1feoc(2) = 0
+         n1feoc  = 0
+ 300     if( nf1 .gt. 0 ) then
+c           le triangle suivant dans le chainage nfetoi
+            nf2 = nfetoi(3,nf1)
+            if( nfetoi(4,nf1) .eq. 0 ) then
+c              triangle du bord du volume 2 => tete du chainage volume 2
+               nfetoi(3,nf1) = nv1feoc(2)
+               nv1feoc(2) = nf1
+c              no du volume 2 du triangle
+               nfetoi(4,nf1) = 2
+            else
+c              triangle du bord du volume 1 => tete du chainage volume 1
+               nfetoi(3,nf1) = nv1feoc(1)
+               nv1feoc(1) = nf1
+            endif
+c           passage au triangle chaine suivant
+            nf1 = nf2
+            goto 300
+         endif
+c
+c        ajout aux triangles nfetoi des triangles lefaco perdus dans
+c        le volume 2 sans recherche des triangles nfetoi adjacents
+c        -----------------------------------------------------------
+         n0feoc = nv1feoc(2)
+         do 302 nf=1,nbtrcf
+c           le triangle lefaco perdu
+            notr = notrcf( nf )
+c
+c           ajout aux triangles nfetoi
+            nf2    = n1fevi
+            n1fevi = nfetoi( 3, n1fevi )
+c
+c           mise a jour du chainage: nf2 vient avant nv1feoc(2)
+            nfetoi(3,nf2) = nv1feoc(2)
+c
+c           nf2 est la premiere face de l'etoile
+            nv1feoc(2) = nf2
+c
+c           no notetr du tetraedre du triangle => inconnu
+            nfetoi( 1, nf2 ) = 0
+c           no (1 a 4) de sa face dans le tetraedre => inconnu
+            nfetoi( 2, nf2 ) = 0
+c           la face est dans le volume 2
+            nfetoi( 4, nf2 ) = 2
+c
+c           numero des 3 sommets de la face  stockage dans nfetoi(5:7,nf2)
+c           tri croissant des 3 sommets de la face et rangement dans nfetoi
+            call tri3no( lefaco(1,notr), nfetoi(5,nf2) )
+c
+c           triangles adjacents par les 3 aretes
+            nfetoi( 8, nf2 ) = 0
+            nfetoi( 9, nf2 ) = 0
+            nfetoi(10, nf2 ) = 0
+ 302     continue
+c
+c        recherche des triangles adjacents par les aretes
+c        ------------------------------------------------
+         nf1 = nv1feoc(2)
+c        boucle sur les faces nfetoi
+ 303     if( nf1 .gt. 0 ) then
+            do 310 j=1,3
+c              arete j du triangle nf1
+               nfa = nfetoi(7+j,nf1)
+               if( nfa .gt. 0 ) then
+                  if( nfetoi(4,nfa) .eq. 1 ) then
+c                    le triangle adjacent appartient au volume1
+                     nfetoi(7+j,nf1)=0
+c                    le triangle adjacent est suppose inconnu
+c                    car c'est un perdu a rechercher
+                     nfa = 0
+                  endif
+               endif
+               if( nfa .eq. 0 ) then
+c                 triangle adjacent i inconnu => les 2 sommets de l'arete
+                  nstr1 = nfetoi(4+j,nf1)
+                  nstr2 = j + 1
+                  if( nstr2 .gt. 3 ) nstr2 = 1
+                  nstr2 = nfetoi(4+nstr2,nf1)
+c
+c                 recherche du triangle nfetoi adjacent par l'arete j de nf1
+                  nf2 = nfetoi(3,nf1)
+c                 boucle sur les faces nfetoi au dela
+ 305              if( nf2 .gt. 0 ) then
+                     do 307 k=1,3
+                        ns1 = nfetoi(4+k,nf2)
+                        if( k .lt. 3 ) then
+                           ns2 = k+1
+                        else
+                           ns2 = 1
+                        endif
+                        ns2 = nfetoi(4+ns2,nf2)
+                        if( ( ns1 .eq. nstr1 .and. ns2 .eq. nstr2 ) .or.
+     %                      ( ns2 .eq. nstr1 .and. ns1 .eq. nstr2 ))then
+c                          l'arete j de nf1 est l'arete k de nf2
+c                          adjacences realisees dans nfetoi
+                           nfetoi(7+j,nf1) = nf2
+                           nfetoi(7+k,nf2) = nf1
+c                          passage a l'arete suivante de nf1
+                           goto 310
+                        endif
+c                       passage a l'arete suivante de nf2
+ 307                 continue
+c                    passage a la face nfetoi suivante
+                     nf2 = nfetoi(3,nf2)
+                     goto 305
+                  endif
+               endif
+c              passage a l'arete suivante de nf1
+ 310        continue
+c
+c           passage a la face nfetoi suivante
+            nf1 = nfetoi(3,nf1)
+            goto 303
+         endif
+c
+c        affichage des triangles du bord du volume 1
+         print *
+         nf1 = nv1feoc(1)
+c        boucle sur les faces nfetoi
+ 316     if( nf1 .gt. 0 ) then
+            print 10316,1,nf1,(nfetoi(mm,nf1),mm=1,10)
+c           passage a la face nfetoi suivante
+            nf1 = nfetoi(3,nf1)
+            goto 316
+         endif
+10316    format('Face simple volume',i1,i6,':',10i6)
+c
+c        affichage des triangles du bord du volume 2
+         print *
+         nf1 = nv1feoc(2)
+c        boucle sur les faces nfetoi
+ 318     if( nf1 .gt. 0 ) then
+            print 10316,2,nf1,(nfetoi(mm,nf1),mm=1,10)
+c           passage a la face nfetoi suivante
+            nf1 = nfetoi(3,nf1)
+            goto 318
+         endif
+c
+cccc        trace des sommets, triangles et triangles nfetoi du volume 2
+ccc         call traceetoile( aretgr, ptxyzd, mxfaco, lefaco, notetr,
+ccc     %     	              nbstcf, nostcf,
+ccc     %                     nbtrcf, notrcf,
+ccc     %                     nv1feoc(2), nfetoi, 2 )
+c
+c        orientation des triangles du volume 1 pour que leur normale
+c        soit dirigee vers l'interieur du volume
+c        -----------------------------------------------------------
+         novol = 1
+         call orientface( novol, nv1feoc(1), nfetoi,
+     %                    ns1a1, ns2a1, nfte0(1,2), nfte0(1,1),
+     %                    ptxyzd, mxpile, lapile,
+     %                    ierr )
+         if( ierr .ne. 0 ) return
+c        trace des sommets, triangles et triangles nfetoi du volume 1
+         call traceetoile( aretgr, ptxyzd, mxfaco, lefaco, notetr,
+     %                     nbstcf, nostcf, nbtrcf, notrcf,
+     %                     nv1feoc(1), nfetoi, 1 )
+c
+c        orientation des triangles du volume 2 pour que leur normale
+c        soit dirigee vers l'interieur du volume
+c        -----------------------------------------------------------
+         novol = 2
+         call orientface( novol, nv1feoc(2), nfetoi,
+     %                    ns1a1, ns2a1, nfte0(1,3), nfte0(1,1),
+     %                    ptxyzd, mxpile, lapile,
+     %                    ierr )
+         if( ierr .ne. 0 ) return
+cccc        trace des sommets, triangles et triangles nfetoi du volume 2
+ccc         call traceetoile( aretgr, ptxyzd, mxfaco, lefaco, notetr,
+ccc     %     	              nbstcf, nostcf,
+ccc     %                     nbtrcf, notrcf,
+ccc     %                     nv1feoc(2), nfetoi, 2 )
+c
+c        volume des tetraedres initiaux de l'etoile totale et destruction
+         volet0 = 0d0
+         do 320 i=1,nbtecf
+c           le tetraedre initial
+            nt = notecf( i )
+c           le volume de l'etoile avant
+            v = voltet( ptxyzd(1,notetr(1,nt)), ptxyzd(1,notetr(2,nt)),
+     %                  ptxyzd(1,notetr(3,nt)), ptxyzd(1,notetr(4,nt)))
+            volet0 = volet0 + v
+            print *,'A supprimer le tetra',nt,'=',(notetr(j,nt),j=1,8),
+     %              ' v=',v
+ 320     continue
+c
+c        tetraedrisation frontale des 2 volumes de triangles nfetoi
+c        ----------------------------------------------------------
+         nbteaj = 0
+         do 325 novol = 1,2
+            call tetrafr( nbpass, novol, mxsomm, nbsomm, ptxyzd,
+     %                    hexapave, nbipav, echpav, n1spave,noptsuiv,
+     %                    n1fevi, nv1feoc(novol), nfetoi,
+     %                    mxtetr, n1tevi, notetr, n1tets, cetetr,
+     %                    mxteaj, nbteaj, noteaj, 
+     %                    mxarpf, nbarpf, nostar, ierr )
+            if( ierr .eq. 5 .and. nbarpf .gt. 0 ) then
+c              les tetraedres s'enroulant autour de ces aretes
+c              sont ajoutes a l'etoile
+               nbpass = nbpass + 1
+               if( nbpass .gt. 6 ) then
+                 write(imprim,*)'Algo tetrafr INSUFFISANT dans frontale'
+                  call vupause
+                  return
+               endif
+               do 322 j=1,nbarpf
+c                 ajout des tetraedres d'arete nost1-nost2
+                  call tetr1a( nostar(1,j), nostar(2,j),
+     %                         n1tets, notetr,
+     %                         nbtecf, mxtecf, notecf )
+ 322           continue
+               goto 152 
+            endif
+            if( ierr .ne. 0 ) return
+ 325     continue
+c
+c        volume des tetraedres ajoutes
+         volet1 = 0d0
+         do 330 i=1,nbteaj
+c           le tetraedre i ajoute
+            nt = noteaj( i )
+c           le volume apres
+            volet1 = volet1 +
+     %           voltet( ptxyzd(1,notetr(1,nt)), ptxyzd(1,notetr(2,nt)),
+     %                   ptxyzd(1,notetr(3,nt)), ptxyzd(1,notetr(4,nt)))
+ 330     continue
+c
+c        bilan sur le volume de l'etoile avant et apres
+c        ----------------------------------------------
+         volet1 = volet0
+         print *,'Volume etoile avant=',volet0,' apres=',volet1
+         if( abs(volet1-volet0) .gt. abs(volet1)*1d-12 ) then
+            write(imprim,10331) nf0,volet0,volet1
+            ierr = 10
+            call vupause
+            return
+         endif
+10331    format('frontale: Triangle perdu',i6,
+     %' volume etoile avant',g25.16,' apres',g25.16,' trop differents'/)
+c
+c        destruction des tetraedres initiaux
+         do 332 i=1,nbtecf
+c           le tetraedre initial
+            nt = notecf( i )
+            print *,'frontale: moins tetra nt=',nt,
+     %              ' st:',(notetr(j,nt),j=1,4),
+     %              ' teop:',(notetr(j,nt),j=5,8)
+c           nt detruit devient le premier tetraedre vide
+            notetr(1,nt) = 0
+            notetr(5,nt) = n1tevi
+            n1tevi       = nt
+ 332     continue
+c
+c        mise a jour des adjacences des tetraedres des volumes 1 2
+         nbteaj0 = nbteaj
+         call tetradj( nbteaj0, noteaj, notetr )
+c
+c        affichage pour info...
+         do 333 i=1,nbteaj
+            nt = noteaj(i)
+            print *,'frontale: plus  tetra nt=',nt,' st:',
+     %              (notetr(kk,abs(nt)),kk=1,4),
+     %              ' teop:',(notetr(kk,abs(nt)),kk=5,8)
+            noteaj(i) = abs( nt )
+ 333     continue
+c
+c        mise a jour lefaco des faces retrouvees
+         do 350 i=1,nbteaj
+            nt = noteaj(i)
+            do 340 j=1,4
+               call vdfalf( j, notetr(1,nt), mxfaco, lefaco, nofaco )
+               if( nofaco .gt. 0 ) then
+c                  le tetraedre nt contient la face nofaco
+                   lefaco(11,nofaco) = nt
+                   do 336 k=1,nbfape
+                      if( nofape(k) .eq. nofaco ) then
+c                        la face retrouvee n'est plus perdue
+                         nofape(k) = 0
+                         goto 340
+                      endif
+ 336               continue
+               endif
+ 340        continue
+ 350     continue
+c
+c        ============================================
+c        traitement de la face lefaco perdue suivante
+c        ============================================
+         goto 3
+c
+      endif
+c
+      write(imprim,*)'frontale: recuperation de',nbfre,' faces perdues'
+      return
+      end
+
+
+      subroutine orientface( novol, nvfeoc, nfetoi,
+     %                       ns1a1, ns2a1, nf1, nf0,
+     %                       ptxyzd, mxpile, lapile,
+     %                       ierr )
+c+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+c but :    Orienter les triangles pour que leur normale soit dirigee
+c -----    vers l'interieur du volume novol
+c          le volume nf1-ns3 3-eme sommet de nf0 doit etre positif
+c          L'orientation est propagee par les triangles adjacents
+c          aux aretes a partir du triangle nf1
+c
+c entrees:
+c --------
+c novol  : no du volume de bord les triangles de nfetoi
+c nvfeoc : premier triangle nfetoi du volume dans le chainage nfetoi(3,.)
+c nfetoi : nfetoi(1,.) no notetr du tetraedre oppose au triangle
+c          nfetoi(2,.) no face du triangle dans le tetraedre oppose
+c          nfetoi(3,.) suivant nfetoi du triangle, 0 si pas de suivant
+c          nfetoi(4,.) no volume du triangle
+c          nfetoi(4+i,.) no ptxyzd du sommet i du triangle
+c          nfetoi(7+i,.) no nfetoi du triangle adjacent par l'arete i
+c ns1a1,ns2a1: no ptxyzd des 2 sommets de l'arete commune a nf1 et nf0
+c nf1    : 1-er triangle a orienter a partir du 3-eme sommet de nf0
+c nf0    : triangle de 3-eme sommet montrant la normale a nf1
+c ptxyzd : x y z distance souhaitee des points
+c mxpile : nombre max de triangles a empiler dans lapile
+c lapile : pile des triangles lors du parcours par les aretes
+c
+c sortie :
+c --------
+c ierr   : 0 si pas d'erreur, 1 si saturation de lapile
+c+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+c auteur : Alain Perronnet Laboratoire J.-L. Lions Paris UPMC avril 2006
+c2345x7..............................................................012
+      double precision  ptxyzd(1:4,1:*), v
+      integer           nfetoi(10,*), lapile(mxpile)
+c
+c     Attention: orientation du triangle nf1 pour que
+c     le volume nf1-3eme sommet de nf0 non sur l'arete commune a nf1-nf0
+c     soit positif => la normale de nf1 dirigee vers l'interieur du volume
+c     --------------------------------------------------------------------
+      do 10 j=1,3
+         ns3 = nfetoi( 4+j, nf0 )
+         if( ns3 .ne. ns1a1 .and. ns3 .ne. ns2a1 ) goto 20
+ 10   continue
+c
+c     calcul du volume signe du tetraedre nf1-ns3
+ 20   v = voltet( ptxyzd(1,nfetoi(5,nf1)), ptxyzd(1,nfetoi(6,nf1)),
+     %            ptxyzd(1,nfetoi(7,nf1)), ptxyzd(1,ns3) )
+      if( v .lt. 0d0 ) then
+c        le triangle nf1 est suppose mal oriente => re-orientation
+c        permutation des sommets 2-3
+         m             = nfetoi(6,nf1)
+         nfetoi(6,nf1) = nfetoi(7,nf1)
+         nfetoi(7,nf1) = m
+c        permutation des aretes 1-3
+         m              = nfetoi( 8,nf1)
+         nfetoi( 8,nf1) = nfetoi(10,nf1)
+         nfetoi(10,nf1) = m
+      endif
+c     le no de volume devient positif <=> triangle nf1 est oriente!
+c     l'orientation des triangles adjacents va se faire maintenant
+c     en choisissant le sens oppose a l'arete commune!
+c
+c     le triangle nf1 devient la tete de chainage des triangles du volume
+c     recherche du triangle qui precede nf1 dans  les triangles du volume
+      nf2 = 0
+      nf3 = nvfeoc
+ 30   if( nf3 .gt. 0 ) then
+         if( nf3 .eq. nf1 ) then
+c           nf2 est le triangle precedent nf1
+c           nf1 est mis en tete de chainage des triangles du volume
+            if( nf2 .ne. 0 ) then
+               nfetoi(3,nf2) = nfetoi(3,nf1)
+               nfetoi(3,nf1) = nvfeoc
+               nvfeoc = nf1
+c           else
+c              rien a faire car nf1=nf3=nvfeoc
+            endif
+            goto 32
+         endif
+c        passage au triangle suivant
+         nf2 = nf3
+         nf3 = nfetoi(3,nf3)
+         goto 30
+      endif
+c
+c     mise a zero du no volume des triangles pour les marquer ensuite
+ 32   nf3 = nvfeoc
+ 35   if( nf3 .gt. 0 ) then
+         nfetoi(4,nf3) = 0
+         nf3 = nfetoi(3,nf3)
+         goto 35
+      endif
+c
+c     orientation des triangles adjacents par les aretes
+      lhpile = 1
+      lapile(1) = nvfeoc
+c
+c     parcours des triangles adjacents par les aretes pour les orienter
+c     -----------------------------------------------------------------
+ 50   if( lhpile .gt. 0 ) then
+c        le triangle de haut de pile
+         nf1 = lapile(lhpile)
+c        le triangle nf1 est deja oriente et empile => marque novol
+         nfetoi(4,nf1) = novol
+c        on depile le triangle
+         lhpile = lhpile - 1
+c
+c        ce triangle nf1 est oriente => parcours des triangles adjacents
+         do 90 j=1,3
+c
+c           arete j du triangle nf1 => triangle adjacent nf2>0
+            nf2 = nfetoi(7+j,nf1)
+            if( nfetoi(4,nf2) .eq. novol ) then
+c              nf2 a deja ete oriente et empile
+               goto 90
+            endif
+c
+c           arete j du triangle nf1 => 2 sommets
+            nstr1 = nfetoi(4+j,nf1)
+            if( j .lt. 3 ) then
+               nstr2 = j + 1
+            else
+               nstr2 = 1
+            endif
+            nstr2 = nfetoi(4+nstr2,nf1)
+c
+c           nf2 doit etre oriente puis empile
+c           => recherche no arete commune entre nf1 et nf2
+            do 70 k=1,3
+               ns1 = nfetoi(4+k,nf2)
+               if( k .lt. 3 ) then
+                  ns2 = k + 1
+               else
+                  ns2 = 1
+               endif
+               ns2 = nfetoi(4+ns2,nf2)
+               if( ( ns1 .eq. nstr1 .and. ns2 .eq. nstr2 ) .or.
+     %             ( ns2 .eq. nstr1 .and. ns1 .eq. nstr2 ))then
+c                 l'arete j de nf1 est l'arete k de nf2
+c                 => orientation du triangle nf2
+c                    pour que l'arete commune soit dans le
+c                    sens oppose a l'arete nstr1-nstr2
+                  if( ns1.eq.nstr1 .and. ns2.eq.nstr2 ) then
+c                    le triangle nf2 est mal oriente
+c                    => re-orientation par permutation des sommets 2-3
+                     m             = nfetoi(6,nf2)
+                     nfetoi(6,nf2) = nfetoi(7,nf2)
+                     nfetoi(7,nf2) = m
+c                    permutation des aretes 1-3
+                     m              = nfetoi( 8,nf2)
+                     nfetoi( 8,nf2) = nfetoi(10,nf2)
+                     nfetoi(10,nf2) = m
+                  endif
+c                 nf2 est oriente et maintenant empile
+                  lhpile = lhpile + 1
+                  if( lhpile .gt. mxpile ) then
+                     print *,'orientface: pile saturee avec mxpile=',
+     %                        mxpile
+                     ierr = 1
+                     return
+                  endif
+                  lapile( lhpile ) = nf2
+c                 passage a l'arete j suivante de nf1
+                  goto 90
+               endif
+c              passage a l'arete k suivante de nf2
+ 70         continue
+c           passage a l'arete j suivante de nf1
+ 90      continue
+c
+c        passage a la face nfetoi empilee suivante
+         goto 50
+      endif
+c
+c     affichage des triangles du bord du volume
+      print *
+      print *,'Orientation du Volume',novol,'-----------------'
+      nf3 = nvfeoc
+c     boucle sur les faces nfetoi
+ 100  if( nf3 .gt. 0 ) then
+         print 10100,novol,nf3,(nfetoi(m,nf3),m=1,10)
+c        passage a la face nfetoi suivante
+         nf3 = nfetoi(3,nf3)
+         goto 100
+      endif
+10100 format('Face orientee bord volume',i1,i6,':',10i6)
+c
+      ierr = 0
+      return
+      end
+
+
+      subroutine tetradj( nbteaj, noteaj, notetr )
+c+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+c but : completion des adjacences par les faces des tetraedres ajoutes
+c ----- 
+c
+c entrees:
+c --------
+c nbteaj : nombre de tetraedres ajoutes a la tetraedrisation
+c noteaj : no notetr des tetraedres ajoutes pour combler le volume
+c notetr : sommet1   < sommet2    sommet3     sommet4
+c          ordre classique 1 2 3 direct en bas et 4 en haut
+c          le sommet 1 est le plus petit
+c          le volume est positif => un ordre
+c
+c          tetraedre1  tetredre2  tetraedre3  tetredre4  voisins
+c          de l'autre cote de la face
+c          1: 123      2: 234      3: 341      4: 412
+c+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+c auteur : Alain Perronnet Laboratoire J.-L. Lions Paris UPMC avril 2006
+c2345x7..............................................................012
+      common / unites / lecteu, imprim, nunite(30)
+      integer  noteaj(nbteaj), notetr(8,*), ns(3), nsfc(3)
+      integer  nosofi(3,4)
+      data     nosofi/ 1,2,3, 2,4,3, 3,4,1, 4,2,1 /
+c
+c     completion des chainages d'adjacences des tetraedres ajoutes
+c     -----------------------------------------------------------
+ 10   if( nbteaj .gt. 0 ) then
+c
+c        le haut de la pile
+         nt = noteaj( nbteaj )
+c        le tetraedre est depile
+         nbteaj = nbteaj - 1
+         if( nt .le. 0 ) goto 10
+c
+c        quel est le tetraedre oppose aux faces 1 2 3 4
+         do 30 j=1,4
+            if( notetr(4+j,nt) .gt. 0 ) goto 30
+c
+c           face non traitee. ses sommets
+            ns(1) = notetr( nosofi(1,j) , nt )
+            ns(2) = notetr( nosofi(2,j) , nt )
+            ns(3) = notetr( nosofi(3,j) , nt )
+c           tri croissant des 3 sommets de la face
+            call tri3no( ns , nsfc )
+c
+c           recherche de la face parmi les tetraedres ajoutes
+            do 20 i=1,nbteaj
+               nt1 = noteaj(i)
+               if( nt1 .le. 0 ) goto 20
+c
+c              recherche de la face de sommets nsfc dans ce tetraedre
+               call no1f1t( nsfc, notetr(1,nt1), nf1 )
+               if( nf1 .le. 0 ) goto 20
+c
+c              la face j de nt est la face nf1 de nt1
+               notetr(4+j  ,nt ) = nt1
+               notetr(4+nf1,nt1) = nt
+c
+               if( notetr(5,nt1) .gt. 0 .and.
+     %             notetr(6,nt1) .gt. 0 .and.
+     %             notetr(7,nt1) .gt. 0 .and.
+     %             notetr(8,nt1) .gt. 0 )     noteaj(i) = -noteaj(i)
+c                  si face totalement traitee suppression de l'etoile
+               goto 30
+c
+ 20         continue
+c           l'affichage suivant n'est pas une erreur.... info seulement
+            write(imprim,*) 'tetradj: face sommet',ns,
+     %                      ' sans tetraedre oppose nt=',nt
+ 30      continue
+c        retour en haut de pile
+         goto 10
+      endif
+      return
+      end
+
+
+      subroutine c1tetra( ns4, nofate, n1feoc, nfetoi,
+     %                    n1tevi, notetr, n1tets,
+     %                    ptxyzd, cetetr,
+     %                    mxteaj, nbteaj, noteaj,
+     %                    ierr )
+c+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+c but :     construction du tetraedre ns4 - 3 sommets de nofate(1)
+c -----
+c entrees:
+c --------
+c ns4    : no ptxyzd du 4-eme sommet du tetraedre a creer
+c nofate : no nfetoi des 4 faces du tetraedre a construire
+c          0 si la face du tetraedre n'est pas dans nfetoi
+c          nofate(1) donne les 3 sommets de la face 1 du tetraedre a creer
+c n1feoc : pointeur nfetoi du 1-er triangle du bord du volume
+c nfetoi : nfetoi(1,.) no notetr du tetraedre oppose au triangle
+c          nfetoi(2,.) no face du triangle dans le tetraedre oppose
+c          nfetoi(3,.) suivant nfetoi du triangle, 0 si pas de suivant
+c          nfetoi(4,.) no volume du triangle
+c          nfetoi(4+i,.) no ptxyzd du sommet i du triangle de vecteur
+c          normal s1s2^s1s3 dirige vers l'interieur du volume
+c          nfetoi(7+i,.) no nfetoi du triangle adjacent par l'arete i
+c n1tevi : numero du premier tetraedre vide dans le chainage notetr(5,*)
+c notetr : sommet1   < sommet2    sommet3     sommet4
+c          ordre classique 1 2 3 direct en bas et 4 en haut
+c          le sommet 1 est le plus petit
+c          le volume est positif => un ordre
+c
+c          tetraedre1  tetredre2  tetraedre3  tetredre4  voisins
+c          de l'autre cote de la face
+c          1: 123      2: 234      3: 341      4: 412
+c
+c n1tets : n1tets(i) no notetr d'un tetraedre du sommet i ptxyzd
+c ptxyzd : x y z distance souhaitee des points
+c cetetr : coordonnees du centre de la boule circonscrite
+c          et carre du rayon des tetraedres notetr existants
+c mxteaj : max de tetraedres a ajouter dans le tableau noteaj
+c
+c sorties:
+c --------
+c nbteaj : nombre de tetraedres ajoutes a la tetraedrisation
+c noteaj : no notetr des tetraedres ajoutes pour combler le volume
+c ierr   : 0 si pas d'erreur, >0 sinon
+c+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+c auteur : Alain Perronnet Laboratoire J.-L. Lions Paris UPMC avril 2006
+c2345x7..............................................................012
+      include"./incl/gsmenu.inc"
+      common / unites / lecteu, imprim, nunite(30)
+      double precision  ptxyzd(4,*)
+      integer           nofate(4)
+      integer           nfetoi(10,*)
+      integer           notetr(8,*)
+      integer           n1tets(*)
+      integer           noteaj(mxteaj)
+      double precision  cetetr(4,*), v, quatet
+      integer           ns(4)
+      equivalence      (ns(1),ns1), (ns(2),ns2), (ns(3),ns3)
+c
+      ierr = 0
+c
+c     le tetraedre a creer est le premier tetraedre vide
+      nt = n1tevi
+c     mise a jour du 1-er tetraedre vide
+      n1tevi = notetr(5,n1tevi)
+c
+c     remplissage du tetraedre nt de sommets ceux du triangle nofate(1)
+      nf1 = nofate(1)
+      ns1 = nfetoi(5,nf1)
+      ns2 = nfetoi(6,nf1)
+      ns3 = nfetoi(7,nf1)
+      ns(4) = ns4
+c
+c     ns1 ns2 ns3 sommets du triangle dans le sens direct du tetraedre nt
+      notetr(1,nt) = ns1
+      notetr(2,nt) = ns2
+      notetr(3,nt) = ns3
+      notetr(4,nt) = ns4
+c
+c     le chainage des tetraedres adjacents par les 4 faces
+c     attention: le tetraedre adjacent peut ne pas exister
+c     le tetraedre adjacent par la face 1
+      ntop = nfetoi(1,nf1)
+      notetr(5,nt) = ntop
+      if( ntop .gt. 0 ) then
+c        no k de la face commune du tetraedre adjacent ntop et nt
+         k = nfetoi(2,nf1)
+         notetr(4+k,ntop) = nt
+      endif
+c
+c     les faces 2 3 4 du tetraedre nt
+      do 10 i=2,4
+c        le triangle i du bord
+         nf2 = nofate(i)
+         if( nf2 .gt. 0 ) then
+c           la face i du tetraedre est dans nfetoi bord du volume
+c           le tetraedre adjacent
+            ntop = nfetoi(1,nf2)
+c           no k de la face commune du tetraedre adjacent et nt
+            k = nfetoi(2,nf2)
+c           le triangle nf2 est la face i du tetraedre nt
+c           et la face k du tetraedre ntop
+            notetr(4+i, nt  ) = ntop
+            notetr(4+k, ntop) = nt
+         else
+c           pas de tetraedre adjacent pour l'instant
+            notetr(4+i, nt) = 0
+         endif
+ 10   continue
+      print *,'c1tetra: ajout tetra',nt,' st:',(notetr(i,nt),i=1,4),
+     %        ' teop:',(notetr(i,nt),i=5,8)
+c
+c     mise a jour d'un tetraedre contenant chaque sommet
+c     tous les tetraedres ont pu disparaitre
+c     cas de l'etoile reduite aux 2 tetraedres initiaux
+      n1tets(ns1) = nt
+      n1tets(ns2) = nt
+      n1tets(ns3) = nt
+      n1tets(ns4) = nt
+c
+c     complements des donnees du tetraedre nt
+c     les coordonnees du centre de la boule circonscrite
+c     au tetraedre nt et carre de son rayon
+c     ns en equivalence avec ns1 ... ns4
+      call ceboqu( 0d0, ns, ptxyzd, cetetr(1,nt), v, quatet )
+      if( quatet .le. 0 ) then
+c        tetraedre degenere
+         print *,'c1tetra: ATTENTION Tetra',nt,' qualite=',quatet
+         ierr = 2
+         return
+      endif
+c
+c     ajout du tetraedre ajoute au tableau noteaj
+      if( nbteaj .ge. mxteaj ) then
+c        saturation des tetraedres de l'etoile
+         nblgrc(nrerr) = 1
+         kerr(1) = 'c1tetra: saturation des tetraedres'
+         call lereur
+         ierr = 1
+         goto 9999
+      endif
+c     stockage du no notetr du tetraedre ajoute
+      nbteaj = nbteaj + 1
+      noteaj( nbteaj ) = nt
+c
+ 9999 return
+      end
+
+
+      subroutine ajfacevol( notet1, nf, notetr, novol,
+     %                      n1feoc, n1fevi, nfetoi, nf2 )
+c+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+c but :  si la face nf du tetraedre notet1 n'est pas dans nfetoi
+c -----  alors elle est ajoutee et nf2 est sa place dans nfetoi
+c        sinon elle est supprimee et nf2=0
+c        attention: les triangles nfetoi adjacents par les 3 aretes
+c                   ne sont pas ici retrouves. A faire a la suite ...
+c entrees:
+c --------
+c notet1 : numero du tetraedre
+c nf     : numero 1 a 4 de la face du tetraedre notet1
+c novol  : no du volume a traiter
+c notetr : liste des tetraedres
+c          sommet1,    sommet2,    sommet3,    sommet4,
+c          tetraedre1, tetraedre2, tetraedre3, tetraedre4
+c          de l'autre cote de la face
+c          1: 123      2: 234      3: 341      4: 412
+c
+c entrees et sorties :
+c --------------------
+c n1feoc : pointeur sur la premiere face de l'etoile
+c          chainage suivant dans nfetoi(3,*)
+c n1fevi : pointeur sur la premiere face vide de l'etoile
+c          chainage suivant dans nfetoi(3,*)
+c nfetoi : 1: numero du tetraedre dans notetr
+c          2: numero local au tetraedre de la face de l'etoile
+c             un signe negatif indique un traitement effectue
+c          3: chainage suivant des faces occupees et vides
+c          4: temoin ou non de traitement
+c             (anciennement numero dans lefaco de la face, 0 sinon)
+c          567: numero des 3 sommets de la face
+c          8910: numero de la face adjacente par l'arete 1-2 2-3 3-1
+c
+c sortie :
+c --------
+c nf2    : >0 numero dans nfetoi de la face si elle a ete ajoutee
+c          =0 si la face a ete supprimee
+c+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+c auteur : Alain Perronnet Laboratoire J.-L. Lions UPMC Paris avril 2006
+c23456...............................................................012
+      integer  notetr(8,*), nfetoi(10,*)
+      integer  ns(3), nsf(3)
+      integer  nosofi(3,4)
+      data     nosofi/ 1,2,3, 2,4,3, 3,4,1, 4,2,1 /
+c
+c     no des 3 sommets de la face i du tetraedre notet1
+      ns(1) = notetr( nosofi(1,nf), notet1 )
+      ns(2) = notetr( nosofi(2,nf), notet1 )
+      ns(3) = notetr( nosofi(3,nf), notet1 )
+c     tri croissant des 3 sommets de la face
+      call tri3no( ns, ns )
+c
+c     le debut du chainage des faces de l'etoile
+c     et boucle sur les faces de l'etoile
+c     ==========================================
+      nf1 = 0
+      nf2 = n1feoc
+c
+ 10   if( nf2 .gt. 0 ) then
+c        tri croissant des 3 sommets de la face nf2
+         call tri3no( nfetoi(5,nf2), nsf )
+         if( ns(1) .eq. nsf(1) ) then
+            if( ns(2) .eq. nsf(2) ) then
+               if( ns(3) .eq. nsf(3) ) then
+c                 la face nf du tetraedre notet1 est identique a nf2
+c                 le tetraedre oppose a la face nf2
+                  notet2 = nfetoi(1,nf2)
+                  nfop   = nfetoi(2,nf2)
+                  if( notet2 .ne. 0 .and.  notet2 .ne. notet1 ) then
+                     notetr(4+nf,  notet1) = notet2
+                     notetr(4+nfop,notet2) = notet1
+                  endif
+c
+c                 destruction de la face nf2 du volume
+                  print *,'ajfacevol: Destruction face de st=',nsf
+                  if( nf1 .ne. 0 ) then
+c                    la face nf2,precedee de nf1,n'est pas la
+c                    premiere de l'etoile
+                     nfetoi(3,nf1) = nfetoi(3,nf2)
+c                    la face nf2 devient la premiere vide de l'etoile
+                     nfetoi(3,nf2) = n1fevi
+                     n1fevi = nf2
+                  else
+c                    la face nf2=n1feoc est la 1-ere de l'etoile
+                     nf1    = nfetoi(3,n1feoc)
+                     nfetoi(3,n1feoc) = n1fevi
+                     n1fevi = n1feoc
+                     n1feoc = nf1
+                  endif
+                  nf2 = 0
+                  return
+               endif
+            endif
+         endif
+c
+c        la face est differente.passage a la suivante
+         nf1 = nf2
+         nf2 = nfetoi(3,nf2)
+         goto 10
+      endif
+c
+c     la face i de notet1 n'est pas retrouvee
+c     elle est ajoutee a l'etoile au debut des faces occupees
+c     =======================================================
+c     recherche d'une face vide
+      nf2    = n1fevi
+      n1fevi = nfetoi(3,n1fevi)
+c
+c     mise a jour du chainage: nf2 vient avant n1feoc
+      nfetoi(3,nf2) = n1feoc
+c     nf2 est la premiere face de l'etoile
+      n1feoc = nf2
+c
+c     no notetr du tetraedre de la face i
+      nfetoi(1,nf2) = notet1
+c     no (1 a 4) de sa face dans le tetraedre notet1
+      nfetoi(2,nf2) = nf
+c
+c     face du volume novol
+      nfetoi(4,nf2) = novol
+c
+c     numero des 3 sommets de la face orientee stockage dans nfetoi(5:7,nf2)
+c     l'orientation inversee de la face du tetraedre donne celle de nfetoi
+c     la normale doit etre dirigee vers l'interieur du volume
+c     la permutation 2<->3 dans nosofi ci-dessous n'est pas une erreur!
+      nfetoi(5,nf2) = notetr( nosofi(1,nf), notet1 )
+      nfetoi(6,nf2) = notetr( nosofi(3,nf), notet1 )
+      nfetoi(7,nf2) = notetr( nosofi(2,nf), notet1 )
+c
+c     triangles adjacents par les 3 aretes
+      nfetoi( 8,nf2) = 0
+      nfetoi( 9,nf2) = 0
+      nfetoi(10,nf2) = 0
+      print *,'ajfacevol: Addition    face de st=',(nfetoi(k,nf2),k=5,7)
+      end
+
+
+      subroutine triadj( n1feoc, nfetoi )
+c+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+c but:     retrouver les triangles adjacents des triangles
+c ----     du bord du volume
+c entree :
+c --------
+c n1feoc : pointeur sur la premiere face de l'etoile
+c          chainage suivant dans nfetoi(3,*)
+c
+c modifie:
+c --------
+c nfetoi : 1: numero du tetraedre dans notetr
+c          2: numero local au tetraedre de la face de l'etoile
+c             un signe negatif indique un traitement effectue
+c          3: chainage suivant des faces occupees et vides
+c          4: temoin ou non de traitement
+c             (anciennement numero dans lefaco de la face, 0 sinon)
+c          567: numero des 3 sommets de la face
+c          8910: numero de la face adjacente par l'arete 1-2 2-3 3-1
+c+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+c auteur : Alain Perronnet Laboratoire J.-L. Lions UPMC Paris avril 2006
+c23456...............................................................012
+      integer  nfetoi(10,*)
+c
+c     recherche des triangles adjacents par les aretes
+c     ------------------------------------------------
+      nf1 = n1feoc
+c     boucle sur les faces nfetoi
+ 3    if( nf1 .gt. 0 ) then
+         do 50 j=1,3
+c
+c           arete j du triangle nf1 => les 2 sommets de l'arete
+            nstr1 = nfetoi(4+j,nf1)
+            if( j .lt. 3 ) then
+               nstr2 = j + 1
+            else
+               nstr2 = 1
+            endif
+            nstr2 = nfetoi(4+nstr2,nf1)
+c
+c           recherche du triangle nfetoi adjacent par l'arete j de nf1
+            nf2 = nfetoi(3,nf1)
+c           boucle sur les faces nfetoi au dela
+ 20         if( nf2 .gt. 0 ) then
+               do 30 k=1,3
+                  ns1 = nfetoi(4+k,nf2)
+                  if( k .lt. 3 ) then
+                     ns2 = k+1
+                  else
+                     ns2 = 1
+                  endif
+                  ns2 = nfetoi(4+ns2,nf2)
+                  if( ( ns1 .eq. nstr1 .and. ns2 .eq. nstr2 ) .or.
+     %                ( ns2 .eq. nstr1 .and. ns1 .eq. nstr2 ))then
+c                    l'arete j de nf1 est l'arete k de nf2
+c                     adjacences realisees dans nfetoi
+                     nfetoi(7+j,nf1) = nf2
+                     nfetoi(7+k,nf2) = nf1
+c                    passage a l'arete suivante de nf1
+                     goto 50
+                  endif
+c                 passage a l'arete suivante de nf2
+ 30            continue
+c              passage a la face nfetoi suivante
+               nf2 = nfetoi(3,nf2)
+               goto 20
+            endif
+c           passage a l'arete suivante de nf1
+ 50      continue
+c
+c        passage a la face nfetoi suivante
+         nf1 = nfetoi(3,nf1)
+         goto 3
+      endif
+c
+      return
+      end
+
+
+      subroutine tetrafr( nbpass, novol,  mxsomm, nbsomm, ptxyzd,
+     %                    hexapave, nbipav, echpav, n1spave, noptsuiv,
+     %                    n1fevi, n1feoc, nfetoi,
+     %                    mxtetr, n1tevi, notetr, n1tets, cetetr,
+     %                    mxteaj, nbteaj, noteaj,
+     %                    mxarpf, nbarpf, nostar,
+     %                    ierr )
+c+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+c but :     Tetraedrisation d'un volume de bord triangule par nfetoi
+c -----     methode frontale triangle du bord-"meilleur" sommet
+c           la triangulation du bord reste la meme en sortie
+c
+c entrees :
+c ---------
+c nbpass  : nombre d'appels de tetrafr
+c novol   : numero du volume
+c mxsomm  : nombre maximal declarable de points dans ptxyzd
+c nbsomm  : nombre actuel de sommets de la tetraedrisation
+c ptxyzd  : x y z distance souhaitee des points
+c hexapave: min et max des coordonnees du pavage
+c nbipav  : nombre d'aretes dans la direction i
+c echpav  : echelle dans la direction i
+c
+c modifies:
+c ---------
+c n1spave : no du 1-er sommet dans ptxyzd du pave
+c noptsuiv: no du point suivant dans le chainage des points des paves
+c
+c n1fevi : pointeur nfetoi du 1-er triangle vide
+c n1feoc : pointeur nfetoi du 1-er triangle du bord du volume
+c nfetoi : nfetoi(1,.) no notetr du tetraedre oppose au triangle
+c          nfetoi(2,.) no face du triangle dans le tetraedre oppose
+c          nfetoi(3,.) suivant nfetoi du triangle, 0 si pas de suivant
+c          nfetoi(4,.) no volume du triangle
+c          nfetoi(4+i,.) no ptxyzd du sommet i du triangle de vecteur
+c          normal s1s2^s1s3 dirige vers l'interieur du volume
+c          nfetoi(7+i,.) no nfetoi du triangle adjacent par l'arete i
+c mxtetr : nombre maximal de tetraedres declarables
+c n1tevi : numero du premier tetraedre vide dans le chainage notetr(5,*)
+c notetr : sommet1   sommet2    sommet3     sommet4
+c          ordre classique 1 2 3 direct en bas et 4 en haut
+c          le volume est positif => un ordre impose
+c          tetraedre1  tetredre2  tetraedre3  tetredre4  voisins
+c          de l'autre cote de la face
+c          1: 123      2: 234      3: 341      4: 412
+c
+c n1tets : n1tets(i) no notetr d'un tetraedre du sommet i ptxyzd
+c cetetr : coordonnees du centre de la boule circonscrite
+c          et carre du rayon des tetraedres notetr existants
+c mxteaj : max de tetraedres a ajouter dans le tableau noteaj
+c
+c sorties:
+c --------
+c nbteaj : nombre de tetraedres ajoutes a la tetraedrisation
+c noteaj : no notetr des tetraedres ajoutes pour combler le volume
+c mxarpf : max d'aretes perforantes declarables dans nostar
+c nbarpf : nombre d'aretes perforant un triangle du bord
+c nostar : no des 2 sommets des aretes perforantes
+c ierr   : 0 si pas d'erreur
+c         =5 si nbarpf aretes ont perforees des triangles du bord
+c+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+c auteur : Alain Perronnet Laboratoire J.-L. Lions Paris UPMC  juin 2006
+c2345x7..............................................................012
+      parameter (mxs456=12)
+      include"./incl/gsmenu.inc"
+      common / unites / lecteu, imprim, nunite(30)
+      double precision  ptxyzd(1:4,1:mxsomm)
+      integer           nbipav(3), n1spave(0:*), noptsuiv(1:*)
+      double precision  hexapave(3,2), echpav(3)
+      integer           nfetoi(10,*)
+      integer           notetr(8,mxtetr)
+      integer           n1tets(mxsomm)
+      integer           noteaj(mxteaj)
+      integer           nostar(2,mxarpf)
+      double precision  cetetr(4,mxtetr)
+      double precision  surtrd, s, smin, dmin, d
+      double precision  bary(3), voltet, v, quatet, quamin, 
+     %                  qualmx(mxs456)
+      double precision  armin, armax, surftr(4), normal(3)
+c
+c     no des 3 sommets des 4 faces du tetraedre
+      integer           nosofi(3,4)
+      data              nosofi/ 1,2,3, 2,4,3, 3,4,1, 4,2,1 /
+c     no de face du tetraedre adjacent aux 3 aretes de la face 1 du tetraedre
+      integer           nofaar(3)
+      data              nofaar/ 4, 2, 3 /
+      integer           ns4max(mxs456), nofate(4), nostr(3,3)
+      integer           ns(4)
+      equivalence (ns(1),ns1),(ns(2),ns2),(ns(3),ns3),(ns(4),ns4)
+c
+      nbarpf = 0
+      ierr   = 0
+      if( n1feoc .le. 0 ) return
+c
+c     ------------------------------------------------------------------
+c     Essai de plusieurs points pour construire a partir du
+c     plus petit triangle du bord un tetraedre licite (cf Lohner)
+c     ------------------------------------------------------------------
+ 10   print *
+      print *,'--------------------------------------------------------'
+      print *,'Debut tetrafr: volume',novol,' passage',nbpass
+      print *,'(1) recherche triangle aire min .......................'
+      smin = 1d111
+      nf1  = n1feoc
+c     nombre de tetraedres ajoutes actuellement
+      nbtea0 = nbteaj
+c
+ 300  if( nf1 .gt. 0 ) then
+c        les 3 sommets du triangle nf1
+         ns1 = nfetoi(5,nf1)
+         ns2 = nfetoi(6,nf1)
+         ns3 = nfetoi(7,nf1)
+c        surface du triangle
+         s = surtrd( ptxyzd(1,ns1), ptxyzd(1,ns2), ptxyzd(1,ns3) )
+         print *,'Triangle',nf1,' st=',ns1,ns2,ns3,' surface=',s
+         if( s .lt. smin ) then
+            nf1min = nf1
+            smin   = s
+         endif
+c        passage au triangle suivant
+         nf1 = nfetoi(3,nf1)
+         goto 300
+      endif
+      print *,'Triangle aire min',nf1min,' surface min=',smin
+      nbsom0 = nbsomm
+      nb4max = 0
+c
+c     recherche des sommets ns4 des triangles adjacents aux 3 aretes de nf1min
+c     ------------------------------------------------------------------------
+c     les 3 sommets du triangle nf1min
+      ns1 = nfetoi(5,nf1min)
+      ns2 = nfetoi(6,nf1min)
+      ns3 = nfetoi(7,nf1min)
+      do 380 i=1,3
+c
+c        nf2 est le triangle adjacent par l'arete i de nf1min
+c        recherche de ns4 sommet de nf2 non sommet de nf1min
+         nf2 = nfetoi(7+i,nf1min)
+         do 305 j=1,3
+            ns4 = nfetoi(4+j,nf2)
+            if(ns4.ne.ns1 .and. ns4.ne.ns2 .and. ns4.ne.ns3) goto 310
+ 305     continue
+         print *,'Anomalie pas de ns4 dans nf1min=',nf1min
+         goto 380
+c
+c        tetraedre nf1min-ns4: calcul du volume et qualite + ...
+ 310     call qualtetra( ptxyzd(1,ns1), ptxyzd(1,ns2),
+     %                   ptxyzd(1,ns3), ptxyzd(1,ns4),
+     %                   armin, armax, surftr, v, quatet )
+c        armin  : longueur de la plus petite arete du tetraedre
+c        armax  : longueur de la plus grande arete du tetraedre
+c        surftr : surface (>=0) des 4 faces triangulaires du tetraedre
+c                 face 1: 123 face 2: 234 face 3: 341 face 4: 412
+c        v      : le volume du tetraedre (>0 si oriente comme un repere
+c                                         <0 si tetraedre degenere ou mal oriente)
+c        quatet : qualite du tetraedre (valeur comprise entre 0 et 1)
+c                 i.e. alfa rayon inscrit / h longueur de la plus longue arete
+c                 avec alfa = 4/(sin(arcos(1/sqrt(3)))
+c       (rappel: r = 3 volume tetra / surface des 4 faces)
+         print *,'Triangle',nf2,' Tetra',ns1,ns2,ns3,ns4,
+     %           ' v=',v,' Qualite=',quatet
+         if( quatet .le. 0 ) goto 380
+c
+c        numero des 2 faces du tetraedre nf1min-ns4 a creer
+c        c-a-d differentes de nf1min et nf2 = nfetoi(7+i,nf1min)
+         j = 0
+         do 330 m=1,3
+            if( m .ne. i ) then
+               j = j + 1
+               do 325 k=1,3
+                  nostr(k,j) = ns( nosofi( k, nofaar(m) ) )
+ 325           continue
+            endif
+ 330     continue
+c
+c        nostr les 2 faces issues du tetraedre ns4-3 sommets de nf1min
+c        a ajouter sur le bord sont elles intersectees par une arete
+c        des triangles du bord?
+         do 350 j=1,2
+c           parcours des aretes des triangles du bord sauf nf1min et nf2
+            nf = n1feoc
+ 333        if( nf .gt. 0 ) then
+               if( nf .ne. nf1min .and. nf .ne. nf2 ) then
+                  do 340 m=1,3
+c                    les 2 sommets de l'arete m du triangle nf
+                     nsa1 = nfetoi(4+m,nf)
+                     if( m .lt. 3 ) then
+                        nsa2 = m + 1
+                     else
+                        nsa2 = 1
+                     endif
+                     nsa2 = nfetoi(4+nsa2,nf)
+c
+c                    intersection du triangle nostr(,j) avec 
+c                    l'arete nsa1-nsa2 du bord?
+                     call interaretetriangle( nsa1, nsa2, nostr(1,j),
+     %                                        ptxyzd, nonoui )
+                     if( nonoui .ne. 0 ) then
+                        print *,'arete',nsa1,nsa2,
+     %                          ' intersecte triangle',
+     %                         (nostr(k,j),k=1,3)
+                        if( nsa1 .gt. nsa2 ) then
+                           k    = nsa1
+                           nsa1 = nsa2
+                           nsa2 = k
+                        endif
+                        do 337 k=1,nbarpf
+                           if( nsa1 .eq. nostar(1,k) ) then
+                              if( nsa2 .eq. nostar(2,k) ) goto 380
+                           endif
+ 337                    continue
+c                       arete intersectante ajoutee
+                        nbarpf = nbarpf + 1
+                        if( nbarpf .gt. mxarpf ) then
+                           write(imprim,*) 'tableau nostar sature'
+                           ierr = 6
+                           goto 9999
+                        endif
+                        nostar(1,nbarpf) = nsa1
+                        nostar(2,nbarpf) = nsa2
+                        goto 380
+                     endif
+ 340              continue
+               endif
+c              passage au triangle suivant du bord
+               nf = nfetoi(3,nf)
+               goto 333
+            endif
+ 350     continue
+c
+c        ici le tetraedre nf1min-ns4 est possible
+c        ns4 est ajoute aux sommets possibles a tetraedriser avec nf1min
+         do 360 k=1,nb4max
+            if( ns4 .eq. ns4max(k) ) goto 380
+ 360     continue
+         nb4max = nb4max + 1
+         ns4max( nb4max ) = ns4
+         qualmx( nb4max ) = quatet
+         print *,ns4,' sommet tetraedrisable avec face min q=',quatet
+ 380  continue
+      print *,nb4max,' sommets tetraedrisables avec face nfmin',nf1min
+c
+c     recherche du sommet du bord le plus proche du barycentre de nf1min
+c     ------------------------------------------------------------------
+      print *
+      print *,'(2) recherche plus proche point nf1min ................'
+      bary(1) = 0d0
+      bary(2) = 0d0
+      bary(3) = 0d0
+      do 405 i=1,3
+         ns5 = ns(i)
+         do 400 j=1,3
+            bary(j) = bary(j) + ptxyzd( j, ns5 )
+ 400     continue
+ 405  continue
+      bary(1) = bary(1) / 3d0
+      bary(2) = bary(2) / 3d0
+      bary(3) = bary(3) / 3d0
+c
+c     parcours des triangles du bord
+      quamin = 2
+      dmin   = 1d111
+      ns5min = 0
+      nf     = n1feoc
+ 410  if( nf .gt. 0 ) then
+         do 420 i=1,3
+c           sommet i de la face nf
+            ns5 = nfetoi(4+i,nf)
+            if(ns5.eq.ns1 .or. ns5.eq.ns2 .or. ns5.eq.ns3) goto 420
+c
+c           tetraedre nf1min-ns5: calcul du volume et qualite + ...
+            call qualtetra( ptxyzd(1,ns1), ptxyzd(1,ns2),
+     %                      ptxyzd(1,ns3), ptxyzd(1,ns5),
+     %                      armin, armax, surftr, v, quatet )
+            print *,' Tetra',ns1,ns2,ns3,ns5,
+     %              ' v=',v,' Qualite=',quatet
+            if( quatet .le. 0 ) goto 420
+c
+c           distance de ns5 au barycentre du triangle nf1min
+            d = (ptxyzd(1,ns5)-bary(1))**2
+     %        + (ptxyzd(2,ns5)-bary(2))**2
+     %        + (ptxyzd(3,ns5)-bary(3))**2
+            if( d .lt. dmin ) then
+               dmin   = d
+               ns5min = ns5
+               quamin = quatet
+            endif
+ 420     continue
+c
+c        passage au triangle suivant
+         nf = nfetoi(3,nf)
+         goto 410
+      endif
+      if( ns5min .eq. 0 ) goto 500
+      print *,ns5min,' est le sommet le plus proche de nf1min',nf1min
+      do 422 k=1,nb4max
+         if( ns5min .eq. ns4max(k) ) goto 500
+ 422  continue
+c
+c     no des 3 faces du tetraedre nf1min-ns5min a creer differentes de nf1min
+      ns(4) = ns5min
+      do 430 m=1,3
+         do 425 k=1,3
+            nostr(k,m) = ns( nosofi( k, m+1 ) )
+ 425     continue
+ 430  continue
+c
+c     nostr les 3 faces issues du tetraedre ns5min-3 sommets de nf1min
+c     a ajouter sur le bord sont elles intersectees par une arete
+c     des triangles du bord?
+      do 450 j=1,3
+c        parcours des aretes des triangles du bord sauf nf1min
+         nf = n1feoc
+ 433     if( nf .gt. 0 ) then
+            if( nf .ne. nf1min ) then
+               do 440 m=1,3
+c                 les 2 sommets de l'arete m du triangle nf
+                  nsa1 = nfetoi(4+m,nf)
+                  if( m .lt. 3 ) then
+                     nsa2 = m + 1
+                  else
+                     nsa2 = 1
+                  endif
+                  nsa2 = nfetoi(4+nsa2,nf)
+c
+c                 intersection du triangle nostr(,j) avec 
+c                 l'arete nsa1-nsa2 du bord?
+                  call interaretetriangle( nsa1, nsa2, nostr(1,j),
+     %                                     ptxyzd, nonoui )
+                  if( nonoui .ne. 0 ) then
+                     print *,'arete',nsa1,nsa2,
+     %                       ' intersecte le triangle',
+     %                        (nostr(k,j),k=1,3)
+                     if( nsa1 .gt. nsa2 ) then
+                        k    = nsa1
+                        nsa1 = nsa2
+                        nsa2 = k
+                     endif
+                     do 437 k=1,nbarpf
+                        if( nsa1 .eq. nostar(1,k) ) then
+                           if( nsa2 .eq. nostar(2,k) ) goto 500
+                        endif
+ 437                 continue
+c                    arete intersectante ajoutee
+                     nbarpf = nbarpf + 1
+                     if( nbarpf .gt. mxarpf ) then
+                        write(imprim,*) 'tetrafr: tableau nostar sature'
+                        ierr = 6
+                        goto 9999
+                     endif
+                     nostar(1,nbarpf) = nsa1
+                     nostar(2,nbarpf) = nsa2
+                     goto 500
+                  endif
+ 440           continue
+            endif
+c           passage au triangle suivant du bord
+            nf = nfetoi(3,nf)
+            goto 433
+         endif
+ 450  continue
+c
+c     ici le tetraedre nf1min-ns5min est possible
+c     ns5min est ajoute aux sommets possibles a tetraedriser avec nf1min
+      print *,ns5min,' sommet +proche est tetraedrisable'
+      nb4max = nb4max + 1
+      ns4max( nb4max ) = ns5min
+      qualmx( nb4max ) = quamin
+c
+c     essai de points sur la normale au barycentre de la face nf1min
+c     --------------------------------------------------------------
+ 500  if( nb4max .gt. 0 ) goto 600
+c
+      print *
+      print *,'(3) recherche de points sur la normale a nf1min',nf1min
+      call vnormal( ptxyzd(1,ns1), ptxyzd(1,ns2), ptxyzd(1,ns3),
+     %              d, normal )
+c     d=2 x surface du triangle => d=longueur du carre de meme surface
+      d = sqrt(d)
+c
+      do 590 i=1,8
+c        distance au barycentre de la face nf1min
+         v = d * i / 5d0
+c
+c        le point a envisager est ajouter a ptxyzd
+         nbsomm = nbsomm + 1
+         if( nbsomm .gt. mxsomm ) then
+            write(imprim,*)'saturation de ptxyzd avec',mxsomm,' sommets'
+            ierr = 1
+            return
+         endif
+         do 510 j=1,3
+            ptxyzd(j,nbsomm) = bary(j) + normal(j) * v
+ 510     continue
+c
+c        tetraedre nf1min-ns5: calcul du volume et qualite + ...
+         call qualtetra( ptxyzd(1,ns1), ptxyzd(1,ns2),
+     %                   ptxyzd(1,ns3), ptxyzd(1,nbsomm),
+     %                   armin, armax, surftr, v, quatet )
+         print *,'Triangle',nf1min,' Tetra',ns1,ns2,ns3,nbsomm,
+     %           ' v=',v,' Qualite=',quatet
+         if( quatet .le. 0 ) then
+c           le point est supprime de ptxyzd
+            nbsomm = nbsomm - 1
+            goto 590
+         endif
+c
+c        numero des 3 faces du tetraedre nf1min-nbsomm a creer differentes de nf1min
+         ns(4) = nbsomm
+         do 530 m=1,3
+            do 525 k=1,3
+               nostr(k,m) = ns( nosofi( k, m+1 ) )
+ 525        continue
+ 530     continue
+c
+c        nostr les 3 faces issues du tetraedre nbsomm-3 sommets de nf1min
+c        a ajouter sur le bord sont elles intersectees par une arete
+c        des triangles du bord?
+         do 550 j=1,3
+c           parcours des aretes des triangles du bord sauf nf1min
+            nf = n1feoc
+ 533        if( nf .gt. 0 ) then
+               if( nf .ne. nf1min ) then
+                  do 540 m=1,3
+c                    les 2 sommets de l'arete m du triangle nf
+                     nsa1 = nfetoi(4+m,nf)
+                     if( m .lt. 3 ) then
+                        nsa2 = m + 1
+                     else
+                        nsa2 = 1
+                     endif
+                     nsa2 = nfetoi(4+nsa2,nf)
+c
+c                    intersection du triangle nostr(,j) avec 
+c                    l'arete nsa1-nsa2 du bord?
+                     call interaretetriangle( nsa1, nsa2, nostr(1,j),
+     %                                        ptxyzd, nonoui )
+                     if( nonoui .ne. 0 ) then
+                        print *,'arete',nsa1,nsa2,
+     %                          ' intersecte le triangle',
+     %                          (nostr(k,j),k=1,3)
+c                       le point est supprime de ptxyzd
+c                       l'arete intersectante n'est pas stockee
+                        nbsomm = nbsomm - 1
+                       goto 590
+                     endif
+ 540              continue
+               endif
+c              passage au triangle suivant du bord
+               nf = nfetoi(3,nf)
+               goto 533
+            endif
+ 550     continue
+c
+c        ici le tetraedre nf1min-nbsomm est possible
+c        nbsomm est ajoute aux sommets possibles a tetraedriser avec nf1min
+         nb4max = nb4max + 1
+         ns4max( nb4max ) = nbsomm
+         qualmx( nb4max ) = quatet
+         print*,nbsomm,' sommet sur la normale de nf1min tetraedrisable'
+ 590  continue
+c
+c     bilan des sommets possibles tetraedrisables
+c     -------------------------------------------
+ 600  print *
+      print *,'(4) bilan face nf1min + sommets tetraedrisables'
+      do 602 i=1,nb4max
+         print *,'sommet',ns4max(i),' tetra qualite=',qualmx(i)
+ 602  continue
+      if( nb4max .le. 0 ) then
+         write(imprim,*) 'Passage',nbpass,
+     %  '  tetrafr a RELANCER avec ajout tetraedres des aretes intersec'
+         ierr = 5
+         do 605 k=1,nbarpf
+            print *,'arete intersectante:',nostar(1,k),nostar(2,k)
+ 605     continue
+         goto 9999
+      endif
+c
+c     le sommet donnant la meilleure qualite
+      imax   = 1
+      quatet = qualmx( imax )
+      do 610 i=2,nb4max
+         if( qualmx(i) .gt. quatet ) then
+            imax = i
+            quatet = qualmx( imax )
+         endif
+ 610  continue
+c
+      ns4 = ns4max( imax )
+      if( ns4 .gt. nbsom0 ) then
+c        sommet sur la normale ajoute en nbsomm
+c        translate en nbsom0+1
+         nbsomm = nbsom0 + 1
+         do 620 j=1,3
+            ptxyzd(j,nbsomm) = ptxyzd(j,ns4)
+ 620     continue
+c        taille d'arete autour du sommet = aretgr celle du point 1
+         ptxyzd(4,nbsomm) = ptxyzd(4,1)
+         ns4 = nbsomm
+      else
+         nbsomm = nbsom0
+      endif
+c
+c     construction du tetraedre de meilleure qualite a partir
+c     du sommet ns4 tetraedrisable et du triangle aire min nf1min
+c     -----------------------------------------------------------  
+      print *,'(5) construction tetraedre st:',ns
+      nofate(1) = nf1min
+      nofate(2) = 0
+      nofate(3) = 0
+      nofate(4) = 0
+      call c1tetra( ns4, nofate, n1feoc, nfetoi,
+     %              n1tevi, notetr, n1tets,
+     %              ptxyzd, cetetr,
+     %              mxteaj, nbteaj, noteaj,
+     %              ierr )
+c
+c     mise a jour des triangles nfetoi du bord du volume par
+c     ajout-retrait des 4 faces du tetraedre nt cree
+      do 980 j = nbtea0+1, nbteaj
+c        le tetraedre ajoute j
+         nt1 = noteaj( j )
+         do 970 i=1,4
+c           ajout de la face i du tetraedre nt1
+c          (sans consideration si elle appartient a lefaco)
+c           si la face i du tetraedre nt1 n'est pas dans nfetoi
+c           alors elle est ajoutee et nfa est sa place dans nfetoi
+c           sinon elle est supprimee de nfetoi et nfa=0
+            call ajfacevol( nt1, i, notetr, novol,
+     %                      n1feoc, n1fevi, nfetoi, nfa )
+ 970     continue
+ 980  continue
+c
+ccc 982  nf1 = nf1eoc
+ccc      if( nf1 .gt. 0 ) then
+ccc         print *,'face restante',nf1,' st=',(nfetoi(k,nf1),k=5,7)
+cccc        passage au triangle suivant
+ccc         nf1 = nfetoi(3,nf1)
+ccc         goto 982
+ccc      endif
+c
+c     mise a jour des triangles adjacents des triangles nfetoi crees
+      call triadj( n1feoc, nfetoi )
+c
+ 984  nf1 = nf1eoc
+      if( nf1 .gt. 0 ) then
+         print *,'face restante',nf1,' st=',(nfetoi(k,nf1),k=1,10)
+c        passage au triangle suivant
+         nf1 = nfetoi(3,nf1)
+         goto 984
+      endif
+c
+c     passage a la suppression d'un nouveau triangle
+      if( n1feoc .gt. 0 ) goto 10
+c
+c     plus aucun triangle a traiter selon cette methode ns-triangle nf1min
+ 9999 print *,'Sortie de tetrafr avec n1feoc=',n1feoc,
+     %        ' volume',novol,' passage',nbpass
+      print *
+      call vupause
+      return
+      end
+
+      subroutine startrcf( nf0,    nbfape, nofape,
+     %                     mxfaco, lefaco, n1fasc,
+     %                     mxetoi, naetoi,
+     %                     nbtrcf, mxtrcf, notrcf,
+     %                     mx1acf, n1arcf, mxarcf, noarcf,
+     %                     nbstis, mxstis, nostis, ierr )
+c+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+c but :    liste des triangles issus du triangle nf0 lefaco perdu
+c -----    liste des aretes peripheriques, des sommets des triangles
+c          2 triangles peuvent appartenir a 2 FacesOC differentes
+c          (issu de vdr1cf.f)
+c entrees:
+c --------
+c nf0    : numero lefaco de la face initiale
+c mxstis : nombre actuel de sommets dans la tetraedrisation
+c nbfape : nombre de  faces perdues de   lefaco
+c nofape : numero des faces perdues dans lefaco
+c mxfaco : nombre maximal de triangles permis pour la triangulation
+c mxtrcf : nombre maximal de triangles stockables dans notrcf
+c mx1acf : nombre maximal de cf declarables dans n1arcf
+c
+c entrees et sorties:
+c -------------------
+c lefaco : les 3 sommets, 2 materiaux, 3 faces voisines et chainage
+c          des faces triangulaires du contour et interfaces, faceOC
+c n1fasc : n1fasc(i) numero d'un triangle de lefaco ayant pour sommet i
+c
+c auxiliaires:
+c ------------
+c mxetoi : nombre maximal declarable d'aretes dans l'etoile
+c naetoi : liste des aretes de l'etoile du point courant
+c          pointee pour les aretes occupees par n1aeoc
+c                                  vides    par n1aevi
+c          inutilisable en sortie  tableau auxiliaire
+c
+c sorties :
+c ---------
+c nbtrcf : nombre de triangles du tableau notrcf
+c          c-a-d du polygone contour ferme encore dit ensuite etoile
+c notrcf : tableau du numero dans lefaco des triangles de l'etoile
+c n1arcf : numero du 1-er sommet ou arete du contour ferme
+c noarcf : 1:numero du sommet initial de l'arete du contour ferme
+c          2:numero dans noarcf de l'arete suivante
+c          3:numero dans lefaco du triangle adjacent oppose a l'arete
+c nbstis : nombre de sommets isoles dans l'etoile
+c nostis : numero des sommets isoles n'appartenant pas au contour
+c ierr   : 0 si pas d'erreur, 1 cf non ferme,
+c          3 saturation des triangles de l'etoile
+c+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+c auteur : alain perronnet Laboratoire J.-L. Lions UPMC Paris  mars 2006
+c2345x7..............................................................012
+      include"./incl/gsmenu.inc"
+      include"./incl/trvari.inc"
+ccc      include"./incl/xyzext.inc"
+      common / unites / lecteu,imprim,intera,nunite(29)
+      integer           n1fasc(*),
+     %                  lefaco(11,0:mxfaco),
+     %                  naetoi(4,mxetoi),
+     %                  notrcf(mxtrcf),
+     %                  n1arcf(0:mx1acf),
+     %                  noarcf(3,mxarcf),
+     %                  nostis(mxstis),
+     %                  nofape(nbfape)
+c
+c     protection de nbfape initial. au dela ils viennent d'etre ajoutes
+      nbfap0 = nbfape
+c
+c     reinitialisation a vide des aretes de l'etoile
+c     formee des aretes vues une fois dans les triangles de l'etoile
+ 1    n1aevi = 1
+      n1aeoc = 0
+      do 3 i=1,mxetoi
+c        numero dans naetoi de l'arete suivante
+         naetoi(4,i) = i+1
+ 3    continue
+      naetoi(4,mxetoi) = 0
+c
+c     le premier triangle perdu a traiter
+c     nbtrcf : nombre de triangles du cf a partir de nf0
+      lhtria = 1
+      nbtrcf = 1
+      notrcf( 1 ) = nf0
+c
+c     les volumes de la face nf0
+      nv1 = lefaco(4,nf0)
+      nv2 = lefaco(5,nf0)
+c
+cccc     la faceOC de la face nf0
+ccc      nufaOC = lefaco(12,nf0)
+c
+c     parcours des triangles adjacents a nf0
+c     ======================================
+ 8    if( lhtria .le. nbtrcf ) then
+c
+c        le numero du triangle a traiter
+         nt = notrcf( lhtria )
+c
+c        le nombre de triangles adjacents deja traites
+         lhtria = lhtria + 1
+c
+c        traitement des 3 aretes du triangle nt
+         do 80 i=1,3
+c
+c           le triangle oppose par l'arete i de nt
+            ntop = lefaco(5+i,nt)
+c
+c           le triangle ntop est il perdu dans la tetraedrisation?
+            do 15 nfp1=1,nbfape
+               if( nofape(nfp1) .eq. ntop ) goto 20
+ 15         continue
+c           le triangle ntop n'est pas perdu
+c           l'arete i de nt doit etre traitee dans l'etoile
+            goto 50
+c
+c           les faces perdues nt et ntop ont l'arete ns1-ns2 commune
+c           les volumes de ces 2 triangles sont ils les memes ?
+ 20         nw1 = lefaco(4,ntop)
+            nw2 = lefaco(5,ntop)
+            if( nv1 .ne. nw1  .or.  nv2 .ne. nw2 ) goto 50
+c              oui : les 2 volumes sont identiques
+c
+cccc           les facesOC sont elles les memes?
+ccc            if( lefaco(12,ntop) .ne. nufaOC ) goto 50
+cccc           oui : les 2 facesOC sont identiques
+
+c
+c           ici les 2 triangles nt et ntop sont adjacents perdus
+c           ----------------------------------------------------
+c           ajout du triangle oppose dans la liste des triangles
+c           de l'etoile s'il ne s'y trouve deja
+            do 30 j=1,nbtrcf
+               if( ntop .eq. notrcf(j) ) goto 50
+ 30         continue
+c
+c           le triangle oppose est ajoute a l'etoile
+            nbtrcf = nbtrcf + 1
+ccc            if( nbtrcf .gt. 64 ) then
+cccc              etoile trop compliquee => abandon
+ccc               ierr = 2
+ccc               return
+ccc            endif
+            if( nbtrcf .gt. mxtrcf ) then
+               nblgrc(nrerr) = 2
+               kerr(1) = 'sp startrcf'
+               kerr(2) = 'saturation des triangles de l''etoile'
+               call lereur
+               ierr = 3
+               return
+            endif
+            notrcf( nbtrcf ) = ntop
+c
+c           ajout ou retrait de l'arete
+c           si    ( l'arete i du triangle nt n'appartient pas
+c                   aux aretes de l'etoile naetoi )
+c           alors elle est ajoutee a l'etoile dans naetoi
+c           sinon elle est empilee dans npile pour etre detruite ensuite
+c                 elle est supprimee de l'etoile naetoi
+c
+c           le naop numero de l'arete concernee dans le triangle oppose
+ 50         if( lefaco(6,ntop) .eq. nt ) then
+               naop = 1
+            else if( lefaco(7,ntop) .eq. nt ) then
+               naop = 2
+            else if( lefaco(8,ntop) .eq. nt ) then
+               naop = 3
+            else
+               print *,'startrcf ANOMALIE: nt=',nt,' NON OPPOSE dans'
+               print *,'lefaco(',ntop,')=',(lefaco(j,ntop),j=1,12)
+               call vupause
+               goto 80
+            endif
+c
+c           le debut du chainage des aretes de l'etoile
+c           et boucle sur les aretes de l'etoile
+            na1 = 0
+            na2 = n1aeoc
+ 75         if( na2 .gt. 0 ) then
+               if( naetoi(1,na2) .ne. ntop   .or.
+     %             naetoi(2,na2) .ne. naop ) then
+c                 l'arete est differente.passage a la suivante
+                  na1 = na2
+                  na2 = naetoi(4,na2)
+                  goto 75
+               else
+c                 l'arete naop du triangle ntop est identique a na2
+c                 destruction de l'arete de l'etoile
+                  if( na1 .ne. 0 ) then
+c                    l'arete na2,precedee de na1,n'est pas la
+c                    premiere de l'etoile
+                     naetoi(4,na1) = naetoi(4,na2)
+c                    l'arete na2 devient la premiere vide de l'etoile
+                     naetoi(4,na2) = n1aevi
+                     n1aevi = na2
+                  else
+c                    l'arete na2=n1aeoc est la 1-ere de l'etoile
+                     na1    = naetoi(4,n1aeoc)
+                     naetoi(4,n1aeoc) = n1aevi
+                     n1aevi = n1aeoc
+                     n1aeoc = na1
+                  endif
+                  goto 80
+               endif
+            endif
+c
+c           l'arete naop n'est pas retrouvee
+c           elle est ajoutee a l'etoile au debut des aretes occupees
+            na1    = n1aevi
+            n1aevi = naetoi(4,n1aevi)
+c           numero du triangle de cette arete
+            naetoi(1,na1) = nt
+c           numero local de cette arete dans le triangle
+            naetoi(2,na1) = i
+c           numero dans naetoi de l'arete suivante
+            naetoi(4,na1) = n1aeoc
+            n1aeoc        = na1
+ 80      continue
+c
+c        passage au triangle suivant non traite de l'etoile
+         goto 8
+      endif
+c
+c     ==============================================================
+c     modification du contenu du tableau naetoi
+c     le no de triangle => no triangle au dela de l'arete
+c     le no local dans le triangle => no 1-er sommet de l'arete
+c     le no inutilise              => no 2-me sommet de l'arete
+c     ==============================================================
+      nbar = 0
+      na1 = n1aeoc
+c     boucle sur les aretes
+ 110  if( na1 .gt. 0 ) then
+         nbar = nbar + 1
+c        le no du triangle et local de l'arete
+         nt   = naetoi(1,na1)
+         i    = naetoi(2,na1)
+c        le numero du triangle au dela de l'arete
+         ntop = lefaco(i+5,nt)
+         naetoi(1,na1) = ntop
+c        le numero des 2 sommets de l'arete i du triangle nt
+         if( i .eq. 3 ) then
+            ns2 = 1
+         else
+            ns2 = i + 1
+         endif
+c        numero du sommet 1 de l'arete
+         ns1 = lefaco(i,nt)
+         naetoi(2,na1) = ns1
+c        numero du triangle contenant encore ns1
+         n1fasc( ns1 ) = ntop
+c        numero du sommet 2 de l'arete
+         ns2 = lefaco(ns2,nt)
+         naetoi(3,na1) = ns2
+c        numero du triangle contenant encore ns2
+         n1fasc( ns2 ) = ntop
+c
+c        passage a l'arete suivante
+         na1 = naetoi(4,na1)
+         goto 110
+      endif
+c
+c     les aretes sont reordonnees pour former une ligne fermee
+c     ========================================================
+      na1 = n1aeoc
+c     la premiere arete
+      ns0 = naetoi(2,na1)
+      ns1 = naetoi(3,na1)
+c
+c     le 1-er sommet ou arete du contour ferme
+      n1arcf( 1 ) = 1
+c     le nombre de sommets du contour ferme de l'etoile
+      nbarcf = 1
+c     le premier sommet de l'etoile
+      noarcf( 1, nbarcf ) = ns0
+c     le sommet suivant
+      noarcf( 2, nbarcf ) = nbarcf + 1
+c     le numero du triangle lefaco de l'autre cote de cette arete
+      noarcf( 3, nbarcf ) = naetoi(1,na1)
+c
+c     l'arete suivante
+      na1    = naetoi(4,na1)
+      n1aeoc = na1
+c
+ 150  if( n1aeoc .gt. 0 ) then
+c
+c        recherche de l'arete de 1-er sommet ns1
+         na0 = n1aeoc
+         na1 = na0
+ 160     if( na1 .gt. 0 ) then
+c
+c           le numero du premier sommet de l'arete
+            if ( ns1 .ne. naetoi(2,na1) .and.
+     %           ns1 .ne. naetoi(3,na1) ) then
+c              passage a l'arete suivante
+               na0 = na1
+               na1 = naetoi(4,na1)
+               goto 160
+            endif
+c
+c           nouvelle arete peripherique
+            nbarcf = nbarcf + 1
+c           le numero des 2 sommets de l'arete
+            if( ns1 .eq. naetoi(2,na1) ) then
+               ns1 = naetoi(3,na1)
+               ns2 = 2
+            else
+               ns1 = naetoi(2,na1)
+               ns2 = 3
+            endif
+c           le no de sommet initial de l'arete
+            noarcf( 1, nbarcf ) = naetoi(ns2,na1)
+c           le no de l'arete suivante dans noarcf
+            noarcf( 2, nbarcf ) = nbarcf + 1
+c           le numero du triangle de l'autre cote
+            noarcf( 3, nbarcf ) = naetoi(1,na1)
+c
+c           suppression de l'arete
+            if( n1aeoc .eq. na1 ) then
+                n1aeoc = naetoi(4,na1)
+            else
+                naetoi(4,na0) = naetoi(4,na1)
+            endif
+            goto 150
+         endif
+      endif
+c
+      if( ns1 .ne. ns0 ) then
+c        arete non retrouvee : l'etoile ne se referme pas
+         write(imprim,*) 'startrcf: anomalie startrcf a corriger'
+         write(imprim,*) 'startrcf: cf non referme'
+         ierr = 1
+         return
+      endif
+c
+c     le sommet suivant du dernier sommet du cf est le premier
+c     car chainage circulaire
+      noarcf( 2, nbarcf ) = 1
+c
+c     chainage des sommets de arcf vides
+      n1arcf(0) = nbarcf+1
+      do 190 i=nbarcf+1,mxarcf
+         noarcf(2,i) = i+1
+ 190  continue
+      noarcf(2,mxarcf) = 0
+c
+c     le cf a t il toutes ses aretes peripheriques ?
+c     ==============================================
+      if( n1aeoc .ne. 0 .or. nbar .ne. nbarcf ) then
+c        il manque des aretes => ajout des triangles opposes aux faces perdues
+ 192     if( n1aeoc .gt. 0 ) then
+            nt = naetoi( 1, n1aeoc )
+            do 195 i=1,nbfape
+               if( nofape(i) .eq. nt ) goto 198
+ 195        continue
+c           face ajoutee comme etant perdue
+            nbfape = nbfape + 1
+            nofape( nbfape ) = nt
+c
+c           suppression de l'arete
+ 198        n1aeoc = naetoi(4,n1aeoc )
+            goto 192
+         endif
+c        redepart
+         goto 1
+      endif
+c
+c     le cf a t il un circuit interne ?
+c     =================================
+c     recherche d'un sommet 2 fois dans le cf
+      na0 = n1arcf( 1 )
+      na1 = na0
+c
+ 200  na2 = noarcf( 2, na1 )
+c
+ 202  if( na2 .ne. na0 ) then
+         if( noarcf(1,na1) .eq. noarcf(1,na2) ) then
+c
+c           croisement dans les aretes du cf
+c           tous les triangles opposes entre na1 et le precedent de na2
+c           sont consideres comme perdus
+c           attention: lequel des 2 parcours possibles est il le bon?
+c           choix pouvant etre incorrect => le plus court en nombre d'aretes
+            nbar = 0
+            na0  = na1
+c
+ 203        na0 = noarcf(2,na0)
+            nbar = nbar + 1
+            if( na0 .ne. na2 ) goto 203
+            if( nbar .gt. nbarcf-nbar ) then
+c              l'autre parcours de na2 a na1 est choisi
+               na0 = na2
+               na2 = na1
+               na1 = na0
+            endif
+c
+ 206        nt = noarcf( 3, na1 )
+            do 208 i=1,nbfape
+               if( nofape(i) .eq. nt ) goto 210
+ 208        continue
+c           face ajoutee comme etant perdue
+            nbfape = nbfape + 1
+            nofape( nbfape ) = nt
+c
+ 210        na1 = noarcf( 2, na1 )
+            if( na1 .ne. na2 ) goto 206
+c           redepart
+            goto 1
+         else
+c           passage a l'arete suivante
+            na2 = noarcf( 2, na2 )
+            goto 202
+         endif
+      endif
+c
+c     passage a l'arete suivante
+      na1 = noarcf( 2, na1 )
+      if( na1 .ne. na0 ) goto 200
+c
+c     ici le cf n'a pas de trous ni de croisements
+c
+c     listage des sommets des triangles de l'etoile qui
+c     n'appartiennent pas au contour ferme encore dits sommets isoles
+c     ===============================================================
+      do 215 i=1,mxstis
+         nostis(i) = 0
+ 215  continue
+      do 230 j=1,nbtrcf
+         nt = notrcf(j)
+         do 220 i=1,3
+c           les sommets du triangle sont marques
+            nostis( lefaco(i,nt) ) = 1
+ 220     continue
+ 230  continue
+      do 250 j=1,nbarcf
+c        un sommet du contour n'est pas isole
+         nostis( noarcf(1,j) ) = 0
+ 250  continue
+c     le nombre de sommets isoles
+      nbstis = 0
+      do 260 i=1,mxstis
+         if( nostis(i) .ne. 0 ) then
+c           ce sommet est isole
+            nbstis = nbstis + 1
+            nostis( nbstis ) = i
+         endif
+ 260  continue
+c
+      return
+      end

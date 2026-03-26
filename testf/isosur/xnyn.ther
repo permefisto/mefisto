@@ -1,0 +1,15 @@
+{ ================================================ }
+{ MEFISTO Version Juin 1999        PROJET: xnyn=1  }
+{ Utilisateur: Alain Perronnet     Date: 22/6/99   }
+{ ================================================ }
+DefVar n; n=10;
+DefFonc xnyn(x,y,z);
+  xnyn=x**n+y**n;
+FinFonc;
+
+11;{ DESSIN des ISO-LIGNES f(x,y,z)=Ctes }
+ xnyn;  { NOM DE LA FONCTION F(X,Y,Z) }
+1; 1;   { Nombre d ISOVALEURS }
+4; 1.0; { DEFINIR la VALEUR de l'ISOVALEUR a 1 }
+  90;   { EXECUTER le TRACE }
+FERMER;

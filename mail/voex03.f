@@ -1,0 +1,252 @@
+        SUBROUTINE VOEX03( NTLXVO, LADEFI,
+     %                     NTVOOB, MNVOOB, NTSOVO, MNSOVO, IERR )
+C+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+C BUT :    GENERER LE MAILLAGE D'UN TETRAEDRE DEFINI PAR LES
+C -----    SURFACES STRUCTUREES DE CHACUNE DE SES 4 FACES PAR
+C          INTERPOLATION TRANSFINIE DE DEGRE 1 (cf CRAS A. PERRONNET)
+C
+C ENTREES:
+C --------
+C NTLXVO : NUMERO DU TABLEAU TS DU LEXIQUE DU VOLUME
+C LADEFI : TABLEAU DE DEFINITION DE LE VOLUME PARTITIONNEE
+C          cf '~/td/d/a_volume__definition'
+C
+C SORTIES:
+C --------
+C NTVOOB : NUMERO      DU TMS 'NSEF' DES NUMEROS DES VOLUMES
+C MNVOOB : ADRESSE MCN DU TMS 'NSEF' DES NUMEROS DES VOLUMES
+C          cf '~/td/d/a___nsef'
+C NTSOVO : NUMERO      DU TMS 'XYZSOMMET' DE L'OBJET
+C MNSOVO : ADRESSE MCN DU TMS 'XYZSOMMET' DE L'OBJET
+C          cf '~/td/d/a___xyzsommet'
+C IERR   : 0 SI PAS D'ERREUR
+C        > 0 SINON
+C+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+C AUTEUR : PASCAL JOLY      ANALYSE NUMERIQUE UPMC PARIS   DECEMBRE 1988
+C MODIFS : ALAIN PERRONNET  ANALYSE NUMERIQUE UPMC PARIS   NOVEMBRE 1997
+C23456---------------------------------------------------------------012
+      IMPLICIT INTEGER (W)
+      include"./incl/gsmenu.inc"
+      COMMON / UNITES / LECTEU, IMPRIM, INTERA, NUNITE(29)
+      include"./incl/ntmnlt.inc"
+      include"./incl/a___xyzsommet.inc"
+      include"./incl/a___nsef.inc"
+      include"./incl/a_surface__definition.inc"
+      include"./incl/a_volume__definition.inc"
+      include"./incl/pp.inc"
+      COMMON            MCN(MOTMCN)
+      REAL              RMCN(1)
+      EQUIVALENCE       (MCN(1),RMCN(1))
+C
+      INTEGER           LADEFI(0:*)
+C
+      INTEGER           NBSOFA(4),MNSOFA(4),NUSOFA(4),
+     %                  NUFACE(4),NSENS(4),NPSOM(4)
+      REAL              XYZ(3,3,4)
+      CHARACTER*24      KNOMSU
+C
+      IERR = 0
+C
+C     VERIFICATION DU TYPE DE CHAQUE FACE
+C     ===================================
+      DO 100 NF=1,4
+C
+C        LE NUMERO DE LA FACE
+         NOFA   = LADEFI(WU4FAC-1+NF)
+         IF( NOFA .LE. 0 ) THEN
+            NBLGRC(NRERR) = 1
+            WRITE(KERR(MXLGER)(1:10),'(I10)') NOFA
+            KERR(1) = 'SURFACE DE NUMERO' // KERR(MXLGER)(1:10)
+     %             // ' INCORRECT'
+            CALL LEREUR
+            RETURN
+         ENDIF
+C        LE TABLEAU LEXIQUE DE CETTE FACE
+         CALL LXNLOU( NTSURF, NOFA, NTLXSU, MN )
+         IF( NTLXSU .LE. 0 ) THEN
+            NBLGRC(NRERR) = 1
+            WRITE(KERR(MXLGER)(1:10),'(I10)') NF
+            KERR(1) = 'SURFACE INCONNUE SUR LA FACE '
+     %             // KERR(MXLGER)(1:10)
+            CALL LEREUR
+            RETURN
+         ENDIF
+C        LE TABLEAU 'NSEF' DE CETTE FACE
+         CALL LXTSOU( NTLXSU, 'NSEF', NTFASU, MNFASU )
+         IF( NTFASU .LE. 0 ) THEN
+            NBLGRC(NRERR) = 1
+            KERR(1) = 'SURFACE SANS NSEF : ' // KNOMSU
+            CALL LEREUR
+            IERR = 5
+            RETURN
+         ENDIF
+C
+C        LA FACE EST ELLE STRUCTUREE ?
+         NUTYMA = MCN( MNFASU + WUTYMA )
+         IF( NUTYMA .NE. 3 ) THEN
+            NBLGRC(NRERR) = 2
+            WRITE(KERR(MXLGER)(1:10),'(I10)') NOFA
+            KERR(1) =  ' VOEX03 : FACE' // KERR(MXLGER)(1:10)
+     %                 // ' TYPE DIFFERENT DE 3'
+            KERR(2) = 'SURFACE NON STRUCTUREE : ' // KNOMSU
+            CALL LEREUR
+            IERR = 1
+         ENDIF
+C        LE NOMBRE DE SOMMETS DANS CHAQUE DIRECTION
+         NBSOFA(NF) = MCN ( MNFASU + WBARTR ) + 1
+C        LE TABLEAU 'XYZSOMMET' DE CETTE FACE
+         CALL LXTSOU( NTLXSU, 'XYZSOMMET', NTSOMM, MNSOMM )
+         IF( NTSOMM .LE. 0 ) THEN
+            NBLGRC(NRERR) = 1
+            KERR(1) = 'SURFACE SANS XYZSOMMET : ' // KNOMSU
+            CALL LEREUR
+            IERR = 8
+            RETURN
+         ENDIF
+C        LE NOMBRE DE SOMMETS
+         NBSO = MCN( MNSOMM + WNBSOM)
+C        L'ADRESSE DU TABLEAU DES COORDONNEES DES SOMMETS DE LA FACE
+         MNSOFA(NF) = MNSOMM + WYZSOM
+C        TEST SUR LE NOMBRE DE SOMMETS
+         NBSF = NBSOFA(NF) * ( NBSOFA(NF) + 1 ) / 2
+         IF( NBSO .NE. NBSF ) THEN
+            NBLGRC(NRERR) = 4
+            KERR(1) = 'SURFACE : ' // KNOMSU
+            WRITE(KERR(MXLGER)(1:2),'(I2)') NF
+            KERR(2) = ' ERREUR : FACE' // KERR(MXLGER)(1:2)
+            WRITE(KERR(MXLGER)(1:6),'(I6)') NBSO
+            KERR(3) = ' DE ' // KERR(MXLGER)(1:6) // ' SOMMETS'
+            WRITE(KERR(MXLGER)(1:6),'(I6)') NBSF
+            KERR(4) = ' AU LIEU DE' // KERR(MXLGER)(1:6)
+            CALL LEREUR
+            IERR = 4
+            RETURN
+         ENDIF
+C
+ 100  CONTINUE
+C
+      IF( IERR .GT. 0 ) RETURN
+C
+C    VERIFICATION DE LA GEOMETRIE
+C    ============================
+C
+C     1) RANGEMENT DES FACES SUIVANT L'ORDRE USUEL :
+C
+      DO 200 NF=1,4
+C        LES NUMEROS DES SOMMETS
+         NBSA = NBSOFA(NF)
+         NUSOFA(1) = 1
+         NUSOFA(2) = NBSA * ( NBSA - 1 ) / 2 + 1
+         NUSOFA(3) = NBSA * ( NBSA + 1 ) / 2
+C        LES COORDONNEES DES SOMMETS
+         DO 201 NS=1,3
+            IA = MNSOFA(NF) - 1 + 3 * ( NUSOFA(NS) - 1 )
+            DO 202 J=1,3
+               XYZ(J,NS,NF)=RMCN(IA+J)
+ 202        CONTINUE
+ 201     CONTINUE
+ 200  CONTINUE
+C
+      CALL VOEXT1( NUFACE, NSENS, NPSOM, XYZ, IERR )
+      IF (IERR.NE.0) RETURN
+C
+C     2) VERIFICATION DU NOMBRE DE SOMMETS SUR CHAQUE ARETE
+C
+      NBS1 = NBSOFA(1)
+      NBS2 = NBSOFA(2)
+      NBS3 = NBSOFA(3)
+      NBS4 = NBSOFA(4)
+      NBSA = NBS1
+      IF ( NBS2 .NE. NBSA .OR.
+     %     NBS3 .NE. NBSA .OR.
+     %     NBS4 .NE. NBSA ) THEN
+         NBLGRC(NRERR) = 2
+         KERR(1) = 'ERREUR: LE NOMBRE DE SOMMETS DOIT ETRE'
+         KERR(2) = 'IDENTIQUE SUR LES ARETES COMMUNES'
+         CALL LEREUR
+         WRITE (IMPRIM,10100) (NF,NBSOFA(NF),NF=1,4)
+10100 FORMAT(' ERREUR : LE NOMBRE DE SOMMETS DOIT ETRE IDENTIQUE SUR
+     % LES ARETES COMMUNES',/,4(' FACE',I6,I4,' SOMMETS'/))
+         IERR = 4
+         RETURN
+      ENDIF
+C
+C     GENERATION DES SOMMETS ET DES VOLUMES
+C     =====================================
+C     LE NOMBRE DE SOMMETS PAR FACE
+      NBSF  = NBSA * ( NBSA + 1 ) / 2
+C     LE NOMBRE DE SOMMETS DU TETRAEDRE
+      NBS  = NBSA * ( NBSA + 1 ) * ( NBSA + 2 ) / 6
+C     LE NOMBRE DE VOLUMES DU TETRAEDRE
+CCC   NBVOTE = ( NBSA - 1 ) ** 3
+C
+C     1) CONSTRUCTION DU TABLEAU 'XYZSOMMET' DE CE VOLUME
+      CALL LXTNDC( NTLXVO, 'XYZSOMMET', 'MOTS',  WYZSOM + 3 * NBS )
+      CALL LXTSOU( NTLXVO, 'XYZSOMMET',  NTSOVO, MNSOVO )
+C     LE NOMBRE DE SOMMETS
+      MCN( MNSOVO + WNBSOM) = NBS
+C     L'ADRESSE DU DEBUT DES COORDONNEES DES SOMMETS
+      MNCOSO = MNSOVO + WYZSOM
+C
+C     2) REMPLISSAGE DU TABLEAU 'XYZSOMMET' : LES SOMMETS DU BORD
+C     RESERVATION DE LA PLACE NECESSAIRE AU TABLEAU DES
+C     2 COORDONNEES DES SOMMETS DES 4 FACES TRIANGULAIRES UNITE
+      MNXYF1 = 0
+      CALL TNMCDC( 'REEL', 2*NBSF*4, MNXYF1 )
+C     RESERVATION DE LA PLACE NECESSAIRE AU TABLEAU TEMPORAIRE
+      MNTEC = 0
+      CALL TNMCDC( 'REEL', NBSF*3, MNTEC )
+      CALL VOEXT2(NBSA,NBSF,
+     %            RMCN(MNSOFA(NUFACE(1))),RMCN(MNSOFA(NUFACE(2))),
+     %            RMCN(MNSOFA(NUFACE(3))),RMCN(MNSOFA(NUFACE(4))),
+     %            RMCN(MNTEC), NSENS, NPSOM,
+     %            RMCN(MNXYF1), RMCN(MNCOSO))
+C     DESTRUCTION DU TABLEAU AUXILIAIRE
+      CALL TNMCDS( 'REEL', NBSF*3, MNTEC )
+C
+C     3) CONSTRUCTION DU TABLEAU 'NSEF' DE CE VOLUME
+      CALL LXTNDC( NTLXVO, 'NSEF', 'ENTIER' ,
+     %             1 + WBARTE )
+      CALL LXTSOU( NTLXVO, 'NSEF',  NTVOOB, MNVOOB )
+C     TYPE DE L'OBJET : VOLUME
+      MCN ( MNVOOB + WUTYOB ) = 4
+C     NUMERO DU TYPE DU MAILLAGE : TETRAEDRE STRUCTURE
+      MCN ( MNVOOB + WUTYMA ) = 5
+C     VARIABLE NBARTE : NOMBRE D'ARETES DE CHACUN DES COTES
+      MCN ( MNVOOB + WBARTE ) = NBSA - 1
+C     LE NOMBRE DE SOMMETS PAR CUBE
+      MCN ( MNVOOB + WBSOEF ) = 8
+C     LE NOMBRE DE TANGENTES STOCKEES PAR EF : VOLUME C0
+      MCN ( MNVOOB + WBTGEF ) = 0
+C     LE NOMBRE D'EF DE LA SURFACE
+      MCN ( MNVOOB + WBEFOB ) = (NBSA-1) ** 3
+C
+C     4) INTERPOLATION TRANSFINIE DE DEGRE 1 SUR LE TETRAEDRE
+C     RESERVATION DE LA PLACE NECESSAIRE AU TABLEAU TEMPORAIRE
+      CALL VOEXT6( NBSA, NBSF, RMCN(MNXYF1), RMCN(MNCOSO) )
+C     DESTRUCTION DU TABLEAU AUXILIAIRE
+      CALL TNMCDS( 'REEL', 2*NBSF*4, MNXYF1 )
+C
+C     FIN DE LA CONSTRUCTION DU VOLUME
+C     ================================
+C     LA DATE DE CREATION
+      CALL ECDATE( MCN(MNSOVO) )
+C     LE NUMERO DU TABLEAU DESCRIPTEUR
+      MCN( MNSOVO + WNBTGS ) = 0
+      MCN( MNSOVO + WBCOOR ) = 3
+      MCN( MNSOVO + MOTVAR(6) ) = NONMTD( '~>>>XYZSOMMET' )
+C
+C     LE TYPE INCONNU DE FERMETURE DU MAILLAGE
+      MCN( MNVOOB + WUTFMA ) = -1
+C     PAS DE TANGENTES STOCKEES
+      MCN( MNVOOB + WBTGEF ) = 0
+      MCN( MNVOOB + WBEFAP ) = 0
+      MCN( MNVOOB + WBEFTG ) = 0
+C
+C     LA DATE DE CREATION
+      CALL ECDATE( MCN(MNVOOB) )
+C     LE NUMERO DU TABLEAU DESCRIPTEUR
+      MCN( MNVOOB + MOTVAR(6) ) = NONMTD( '~>>>NSEF' )
+C
+      RETURN
+      END

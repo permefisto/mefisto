@@ -1,0 +1,299 @@
+      SUBROUTINE QUMTNT( NT,     IAR,
+     %                   XYZSOM, NBSOTE, N1TEVI, NSTETR, NBDM, NUDMEF,
+     %                   NO1TSO, N1TESO, NOTESO,
+     %                   NBTEDS, NOTEDS, NOARCF,
+     %                   MXTETA, VOLUMT, QUALIT, IERR )
+C+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+C BUT :   TRANSFORMER LES M EVENTUELS TETRAEDRES AYANT EN COMMUN
+C -----   L'ARETE IAR DU TETRAEDRE NT EN CREANT 2(M-2) TETRAEDRES
+C         MT => 2(M-2)T TETRAEDRES (EN PARTICULIER M=3T => 2T)
+C
+C ENTREES :
+C ---------
+C NT     : NUMERO DU TETRAEDRE
+C IAR    : NUMERO DE L'ARETE A TRAITER
+C XYZSOM : COORDONNEES X Y Z DES NBSOMM SOMMETS DES TETRAEDRES
+C NBSOTE : VALEUR MAXIMALE DE DECLARATION DU PREMIER INDICE DE NSTETR(>3)
+C NBDM   : 0 SI 1 MATERIAU=VOLUME, SINON NOMBRE DE MATERIAUX DU VOLUME
+C
+C MODIFIES :
+C ----------
+C N1TEVI : NUMERO DU PREMIER TETRAEDRE VIDE DANS NSTETR
+C NSTETR : NUMERO DES 4 SOMMETS DE CHAQUE TETRAEDRE
+C NUDMEF : NUMERO DE MATERIAU DE CHAQUE TETRAEDRE DU MAILLAGE
+C          ATTENTION: CE TABLEAU EXISTE SEULEMENT SI NBDM>0
+C NO1TSO : NUMERO DU 1-ER TETRAEDRE DANS NOTESO DE CHAQUE SOMMET
+C N1TESO : NUMERO DU PREMIER TETRAEDRE NON UTILISE DANS NOTESO
+C          CHAINAGE DES PLACES VIDES DANS NOTESO(2,*)
+C NOTESO : NOTESO(1,*) NUMERO DANS NSTETR DU TETRAEDRE
+C          NOTESO(2,*) NUMERO DANS NOTESO DU TETRAEDRE SUIVANT
+C                      0 SI C'EST LE DERNIER
+C NBTEDS : NOMBRE DE  TETRAEDRES D'ARETE IAR
+C NOTEDS : NUMERO DES TETRAEDRES D'ARETE IAR
+C MXTETA : NUMERO MAXIMAL DES TETRAEDRES ACTUELS
+C VOLUMT : VOLUME  DES TETRAEDRES DE LA TETRAEDRISATION
+C QUALIT : QUALITE DES TETRAEDRES DE LA TETRAEDRISATION
+C IERR   : =-1 SI ECHANGE FAIT SANS ERREUR
+C          = 0 SI PAS D'ERREUR MAIS PAS D'ECHANGE
+C          > 0 EN CAS DE SATURATION D'UN TABLEAU
+C+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+C AUTEUR : ALAIN PERRONNET  ANALYSE NUMERIQUE PARIS UPMC    JANVIER 1992
+C....................................................................012
+      include"./incl/gsmenu.inc"
+      COMMON / UNITES / LECTEU,IMPRIM,NUNITE(30)
+      INTEGER           NSTETR(NBSOTE,*),
+     %                  NUDMEF(*),
+     %                  NO1TSO(*),
+     %                  NOTESO(2,*),
+     %                  NOTEDS(*)
+      REAL              XYZSOM(3,*),VOLUMT(*),QUALIT(*)
+      REAL              ARMIN,ARMAX,SURFTR(4),P(3)
+      INTEGER           NOARCF(2,*)
+C
+      GRAND = RINFO( 'GRAND' )
+C
+C     LES 2 SOMMETS NS4 NS5 DE L'ARETE IAR DU TETRAEDRE NT
+      IF( IAR .LE. 3 ) THEN
+C        NUMEROTATION SELON LE SP LON6AR DE UTIL
+         NS4 = IAR
+         IF( IAR .EQ. 3 ) THEN
+            NS5 = 1
+         ELSE
+            NS5 = IAR + 1
+         ENDIF
+      ELSE
+         NS4 = 4
+         NS5 = IAR - 3
+      ENDIF
+      NS4 = NSTETR(NS4,NT)
+      NS5 = NSTETR(NS5,NT)
+C
+C     NBTEDS TETRAEDRES ONT L'ARETE NS4-NS5 COMMUNE
+      CALL NOTEAR( NS4,    NS5,
+     %             NBSOTE, NSTETR, NO1TSO, NOTESO,
+     %             NBTEDS, NOTEDS )
+      IF( NBTEDS .LT. 3 ) RETURN
+C
+C     RECHERCHE DES ARETES DU CF AUTOUR DE L'ARETE NS4 NS5
+      DO 20 I=1,NBTEDS
+         NT1 = NOTEDS( I )
+         L   = 0
+         DO 10 J=1,4
+            NS1 = NSTETR( J, NT1 )
+            IF( NS1 .NE. NS4 .AND. NS1 .NE. NS5 ) THEN
+               L = L + 1
+               NOARCF( L, I ) = NS1
+            ENDIF
+ 10      CONTINUE
+ 20   CONTINUE
+C
+C     FORMATION DU CF
+      NS1 = NOARCF( 2, 1 )
+C     RECHERCHE DE L'ARETE SUIVANTE
+      DO 50 I=2,NBTEDS
+         DO 40 J=I,NBTEDS
+            DO 30 L=1,2
+               NS = NOARCF( L, J )
+               IF( NS .EQ. NS1 ) THEN
+C                 ARETE RETROUVEE
+                  IF( L .EQ. 2 ) THEN
+C                    LE SUIVANT EN TETE DE NOARCF
+                     NOARCF( 2, J ) = NOARCF( 1, J )
+                     NOARCF( 1, J ) = NS1
+                  ENDIF
+                  NS1 = NOARCF( 2, J )
+C                 PERMUTATION DES ARETES I ET J
+                  NOARCF( 1, J ) = NOARCF( 1, I )
+                  NOARCF( 2, J ) = NOARCF( 2, I )
+                  NOARCF( 1, I ) = NS
+                  NOARCF( 2, I ) = NS1
+                  GOTO 50
+               ENDIF
+ 30         CONTINUE
+ 40      CONTINUE
+C        ICI CONTOUR NON FERME
+         RETURN
+ 50   CONTINUE
+C
+C     VERIFICATION DE LA FERMETURE DU CF
+      IF( NOARCF( 2, NBTEDS ) .NE. NOARCF( 1, 1 ) ) THEN
+C        CONTOUR NON FERME
+         RETURN
+      ENDIF
+C
+C     FORMATION DU CHAINAGE CIRCULAIRE
+      DO 60 I=1,NBTEDS
+         NOARCF( 2, I ) = I+1
+ 60   CONTINUE
+      NOARCF( 2, NBTEDS ) = 1
+C
+C     QUALITE INITIALE DE L'ETOILE DE L'ARETE
+      IF( NBDM .GT. 0 ) THEN
+C        LE NUMERO DE VOLUME DU 1-ER TETRAEDRE DE L'ETOILE
+         NUVOLT = NUDMEF( NOTEDS( 1 ) )
+      ELSE
+         NUVOLT = 0
+      ENDIF
+      QUALI0 = GRAND
+      VOLUM0 = 0
+      DO 65 I=1,NBTEDS
+         NT1 = NOTEDS( I )
+         CALL QUATET( XYZSOM(1,NSTETR(1,NT1)), XYZSOM(1,NSTETR(2,NT1)),
+     &                XYZSOM(1,NSTETR(3,NT1)), XYZSOM(1,NSTETR(4,NT1)),
+     &                ARMIN, ARMAX, SURFTR, V, Q )
+         QUALI0 = MIN( QUALI0, Q )
+         VOLUM0 = VOLUM0 + ABS( V )
+         IF( NBDM .GT. 0 ) THEN
+C           LE NUMERO DE VOLUME DU TETRAEDRE DE L'ETOILE
+            NUVOL = NUDMEF( NT1 )
+         ELSE
+            NUVOL = 0
+         ENDIF
+         IF( NUVOL .NE. NUVOLT ) GOTO 9900
+C        L'ETOILE NE PEUT ETRE SUR 2 MATERIAUX DIFFERENTS
+ 65   CONTINUE
+C
+C     LE MILIEU DE L'ARETE NS4-NS5
+      DO 70 I=1,3
+         P(I) = ( XYZSOM(I,NS4) + XYZSOM(I,NS5) ) * 0.5
+ 70   CONTINUE
+C
+C     CHOIX DE NS4 NS5 POUR QUE LE VOLUME DES TETRAEDRES SOIT POSITIF
+      CALL QUATET( XYZSOM(1,NOARCF(1,1)), XYZSOM(1,NOARCF(1,2)),
+     &             P                    , XYZSOM(1,NS4),
+     &             ARMIN, ARMAX, SURFTR, V, Q )
+      IF( V .LT. 0 ) THEN
+C        PERMUTATION DE NS4 NS5
+         L   = NS4
+         NS4 = NS5
+         NS5 = L
+      ENDIF
+C
+C     RECHERCHE DU MEILLEUR SOMMET POUR TRIANGULER LE CF
+      IMAX = 0
+      DO 90 I=1,NBTEDS
+
+         QUALI1 = GRAND
+         VOLUM1 = 0
+         NS = NOARCF( 1, I )
+         K  = NOARCF( 2, I )
+         DO 80 J=3,NBTEDS
+C
+C           ARETE NS1-NS2 => TETRAEDRE NS-NS1-NS2-NS4 ET NS-NS2-NS1-NS5
+            NS1 = NOARCF( 1, K )
+            NS2 = NOARCF( 1, NOARCF(2,K) )
+            CALL QUATET( XYZSOM(1,NS ), XYZSOM(1,NS1),
+     &                   XYZSOM(1,NS2), XYZSOM(1,NS4),
+     &                   ARMIN, ARMAX, SURFTR, V, Q )
+            IF( Q .LE. QUALI0 ) GOTO 90
+            QUALI1 = MIN( QUALI1, Q )
+            VOLUM1 = VOLUM1 + ABS( V )
+C
+            CALL QUATET( XYZSOM(1,NS ), XYZSOM(1,NS2),
+     &                   XYZSOM(1,NS1), XYZSOM(1,NS5),
+     &                   ARMIN, ARMAX, SURFTR, V, Q )
+            IF( Q .LE. QUALI0 ) GOTO 90
+            QUALI1 = MIN( QUALI1, Q )
+            VOLUM1 = VOLUM1 + ABS( V )
+
+C           PASSAGE A L'ARETE SUIVANTE
+            K = NOARCF( 2, K )
+
+ 80      CONTINUE
+
+C        BILAN VOLUME EGAUX ET QUALITE MEILLEURE ?
+         IF( ABS(VOLUM1-VOLUM0) .LE. 0.001*VOLUM0 .AND.
+     &       QUALI1-QUALI0 .GT. 0.001 ) THEN
+C           QUALITE SUPERIEURE
+            IMAX   = I
+            QUALI0 = QUALI1
+         ENDIF
+
+ 90   CONTINUE
+
+C     BILAN
+      IF( IMAX .EQ. 0 ) RETURN
+
+C     GENERATION DES 2 (NBTEDS-2 ) TETRAEDRES A LA PLACE DES NBTEDS TETRAEDRES
+C     ------------------------------------------------------------------------
+      DO 100 I=1,NBTEDS
+C        SUPPRESSION DU TETRAEDRE I DE L'ETOILE
+         NT1 = NOTEDS(I)
+         CALL DS1TET( NT1, NBSOTE, N1TEVI, NSTETR,
+     &                NO1TSO, N1TESO, NOTESO )
+         QUALIT( NT1 ) = GRAND
+         IF( NBDM .GT. 0 ) NUDMEF( NT1 )=0
+ 100  CONTINUE
+
+      NS = NOARCF( 1, IMAX )
+      K  = NOARCF( 2, IMAX )
+      DO 200 I=3,NBTEDS
+
+C        ARETE NS1-NS2 => TETRAEDRE NS-NS1-NS2-NS4 ET NS-NS2-NS1-NS5
+         NS1 = NOARCF( 1, K )
+         NS2 = NOARCF( 1, NOARCF(2,K) )
+
+C        EXISTE T IL UN TETRAEDRE LIBRE?
+ 110     IF( N1TEVI .LE. 0 ) THEN
+C           SATURATION DES TETRAEDRES
+            NBLGRC(NRERR) = 1
+            KERR(1) = ' SATURATION DES TETRAEDRES NSTETR'
+            CALL LEREUR
+            IERR = 1
+            RETURN
+         ENDIF
+
+C        NT1 EST LE NOUVEAU TETRAEDRE
+         NT1    = N1TEVI
+C        MISE A JOUR DU 1-ER TETRAEDRE VIDE
+         N1TEVI = NSTETR(2,N1TEVI)
+         MXTETA = MAX( MXTETA, NT1 )
+C        LE TETRAEDRE DANS NSTETR
+         NSTETR(1,NT1) = NS
+         NSTETR(2,NT1) = NS1
+         NSTETR(3,NT1) = NS2
+         NSTETR(4,NT1) = NS4
+
+         IF( NBDM .GT. 0 ) NUDMEF(NT1)=NUVOLT
+
+C        LES CHAINAGES DES SOMMETS
+         CALL CHTESO( NT1,    NBSOTE, NSTETR,
+     &                NO1TSO, N1TESO, NOTESO, IERR )
+
+C        QUALITE DU TETRAEDRE
+         CALL QUATET( XYZSOM(1,NSTETR(1,NT1)), XYZSOM(1,NSTETR(2,NT1)),
+     &                XYZSOM(1,NSTETR(3,NT1)), XYZSOM(1,NSTETR(4,NT1)),
+     &                ARMIN, ARMAX, SURFTR, VOLUMT(NT1), QUALIT(NT1) )
+
+C        NT1 EST LE NOUVEAU TETRAEDRE DU CHAINAGE
+         IF( N1TEVI .LE. 0 ) GOTO 110
+C        MISE A JOUR DU 1-ER TETRAEDRE VIDE
+         NT1    = N1TEVI
+         N1TEVI = NSTETR(2,N1TEVI)
+         MXTETA = MAX( MXTETA, NT1 )
+C        LE TETRAEDRE DANS NSTETR
+         NSTETR(1,NT1) = NS
+         NSTETR(2,NT1) = NS2
+         NSTETR(3,NT1) = NS1
+         NSTETR(4,NT1) = NS5
+         IF( NBDM .GT. 0 ) NUDMEF(NT1)=NUVOLT
+
+C        LES CHAINAGES DES SOMMETS
+         CALL CHTESO( NT1,    NBSOTE, NSTETR,
+     &                NO1TSO, N1TESO, NOTESO, IERR )
+
+C        QUALITE DU TETRAEDRE
+         CALL QUATET( XYZSOM(1,NSTETR(1,NT1)), XYZSOM(1,NSTETR(2,NT1)),
+     &                XYZSOM(1,NSTETR(3,NT1)), XYZSOM(1,NSTETR(4,NT1)),
+     &                ARMIN, ARMAX, SURFTR, VOLUMT(NT1), QUALIT(NT1) )
+
+C        PASSAGE A L'ARETE SUIVANTE
+         K = NOARCF( 2, K )
+
+ 200  CONTINUE
+
+C     ECHANGE EFFECTUE SANS ERREUR
+      IERR = -1
+
+ 9900 RETURN
+      END

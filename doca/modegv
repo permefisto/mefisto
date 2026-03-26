@@ -1,0 +1,3 @@
+The DELAUNAY tetrahedrization joins by edges all the boundary points.
+To generate INTERIOR POINTS (future vertices of the tetrahedrization)
+input the code 1, else 0.

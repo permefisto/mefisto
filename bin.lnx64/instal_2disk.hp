@@ -1,0 +1,47 @@
+# Alain PERRONNET   Septembre 1997
+echo
+echo INSTALLER tar_2disk issu de LINUX
+echo Mettre la disquette 1/2 dans le lecteur a:
+cd
+read bidon
+rm -R mefisto.0
+mv mefisto mefisto.0
+
+mkdir mefisto
+mdir a:
+cd $MEFISTO
+echo Copie de 1/2 dans $MEFISTO
+mcopy a:* .
+ls -l
+
+echo
+echo Mettre la disquette 2/2 dans le lecteur a:
+read bidon
+echo Copie de 2/2 dans $MEFISTO
+mcopy a:* .
+ls -l
+echo
+echo Fin lecture des 2 disquettes
+
+chmod 700 *
+for i in `ls *.tgz`
+do
+  tar xzvf $i
+done
+ls -l
+
+mv bin bin.lnx
+mkdir bin
+cp $MEFISTO.0/bin/* bin
+
+rm *.tgz
+
+echo
+echo modifiez incl/pp.inc et incl/homdir.inc et proc() dans xvue/xvuelc.c
+echo puis taper un caractere pour lancer la compilation generale
+read bidon
+
+$MEFISTO/bin/sansMOTIF
+
+$MEFISTO/bin/cbl_tout
+

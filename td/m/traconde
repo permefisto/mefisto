@@ -1,0 +1,6 @@
+variable TRACONDE 'traces d''une ONDE' entier  
+ (  0 : 'AMPLIFICATION du DEPLACEMENT'
+  , 1 : 'NUMERO du TEMPS a tracer'
+ ,  2 : 'DEPLACEMENT DE L''ONDE'
+ ,  3 : 'VITESSE DE L''ONDE'
+ ,  4 : 'FLUX NORMAUX' ) ;

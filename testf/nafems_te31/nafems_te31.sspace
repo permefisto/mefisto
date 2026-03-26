@@ -1,0 +1,47 @@
+{==========================================================}
+{  MEEFISTO  VERSION August 2006   PROJECT: nafems_te31    }
+{  TEST 31 NAFEMS CANTILEVER SQUARE MEMBRANE               }
+{  CONSTRUCTION of the MEMBRANE MESH                       }
+{  QUADRANGLE of DEGREE 2   QUAD 2Q2C                      }
+{==========================================================}
+
+1; MEMBRANE;
+
+2;
+
+ {surface MEMBRANE}
+  1; {volumic mass density}
+  1; 8000;  {kg/m**3}
+
+  2; {Young and Poisson}
+ {3; 200e9; N/m**2  0.3;  for PLANE STRESSES }
+  4; 200e9;  {N/m**2}   0.3;  {for PLANE DEFORMATIONS}
+ @;
+
+ {ligne S4S1}
+ 2; {fixation}
+  1; {constant}
+  2; {components}
+  1; 2; {number of components of fixed displacements}
+  0; 0; {fixed value}
+ @;
+@;
+
+DefVar DeuxPi; DeuxPi=atan(1)*8;
+
+6; {computation of eigenvalues  Omega**2}
+  1; {sub-space method}
+(DeuxPi*0  )**2; {inferior limit of eigenvalues}
+(DeuxPi*300)**2; {superior limit of eigenvalues}
+@;
+
+7; {Drawing of the deformed object amplified 100 times}
+  2; 2; 100; 90; 90;
+
+FERMER;
+
+{See the frequencies}
+{To obtain the NAFEMS results from the eigenvalues (omega**2)
+the frequecies are , il faut calculer la frequence par la formule
+   frequency = sqrt( eigenvalue ) / ( 2 Pi ) }
+

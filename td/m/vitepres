@@ -1,0 +1,14 @@
+variable VITEPRES 'Traces des VITESSE PRESSION ERREURS' entier
+ ( 1 : 'TRACES de la PRESSION'
+,  2 : 'TRACES de la VITESSE sous FORME de FLECHES'
+,  3 : 'TRACES de la COMPOSANTE X Y Z ou MODULE de la VITESSE'
+,  5 : 'CALCUL et TRACE du PARCOURS de PARTICULES dans le FLUIDE'
+,  9 : 'FONCTION COURANT en 2D seulement'
+, 10 : 'VORTICITE=TOURBILLON=ROTATIONNEL de la VITESSE'
+, 12 : 'INTEGRALE de la PRESSION sur les SURFACES de l OBJET'
+, 13 : 'FLUX NORMAL de la VITESSE a TRAVERS LES SURFACES 3D'
+, 90 : 'Affichage VITESSE et PRESSION et ERREURS aux Noeuds'
+, 91 : 'ERREURS |VITESSE| si Vitesse_exacte(t,x,y,z,nc)'
+, 92 : 'ERREURS PRESSION  si Pression_Exacte(t,x,y,z)'
+, 93 : '|VITESSE|Moy |VITESSE|Max PRESSIONMax-Min=f(Temps)'
+, 94 : 'NORMES ||VITESSE||L2 et ||PRESSION||L2=f(Temps)' ) ;

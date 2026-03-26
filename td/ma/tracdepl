@@ -1,0 +1,9 @@
+variable TRACDEPL 'Drawings of DISPLACEMENTS' entier
+(  1 : 'CASE NUMBER of DISPLACEMENTS'
+,  2 : 'AMPLIFICATION of DISPLACEMENTS'
+,  5 : 'COLOR of MESH''s EDGES'
+,  6 : 'DRAWING TYPE of EDGES'
+,  7 : 'COLOR of DEFORMED EDGES'
+,  9 : 'Printing of DISPLACEMENTS' 
+, 50 : 'ERASE the WINDOW'
+, 90 : 'EXECUTION of the DRAWING' ) ;

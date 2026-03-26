@@ -1,0 +1,235 @@
+      SUBROUTINE TRTOUTR( XYZSOM, M1TRIA, NBTRIA, NOTRIA,
+     %                    QTRMOY, QTRMIN )
+C+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+C BUT : TRACE DES NBTRIA TRIANGLES DE NOTRIA DE XYZ SOMMETS DANS XYZSOM
+C -----
+C ENTREES:
+C --------
+C XYZSOM : X  Y  Z DES SOMMETS DU MAILLAGE
+C M1TRIA : NOMBRE D'ENTIERS DU PREMIER INDICE DU TABLEAU NOTRIA
+C          =4 POUR STOCKER PAR TRIANGLE LE NO DES 3 SOMMETS + 0
+C M1TRIA : NOMBRE DE MOTS POUR CHAQUE TRIANGLE NOTRIA (6 ou 4)
+C NBTRIA : NOMBRE DE TRIANGLES DU TABLEAU LITRIA
+C NOTRIA : TABLEAU DU NUMERO DES 3 SOMMETS + 0 DES NBTRIA TRIANGLES
+
+C SORTIES:
+C --------
+C QTRMOY : QUALITE MOYENNE  DES NBTRIA TRIANGLES
+C QTRMIN : QUALITE MINIMALE DES NBTRIA TRIANGLES
+C+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+C AUTEUR : ALAIN PERRONNET LJLL UPMC & St PIERRE DU PERRAY    AVRIL 2017
+C2345X7..............................................................012
+      include"./incl/trvari.inc"
+      include"./incl/mecoit.inc"
+      include"./incl/xyzext.inc"
+C     DECLARATION DU SUPER-TABLEAU NUMERIQUE MCN
+      include"./incl/pp.inc"
+      COMMON            MCN(MOTMCN)
+      REAL              RMCN(1)
+      EQUIVALENCE      (MCN(1),RMCN(1))
+      COMMON / TRTETR / STOPTE,TRACTE
+      LOGICAL           STOPTE,TRACTE
+
+      CHARACTER*80      KTITRE
+      INTEGER           NOTRIA(M1TRIA,*)
+      REAL              XYZSOM(3,*), XYZ(3), XYZT(3,3)
+
+C     CADRE DES NBTRIA TRIANGLES
+C     ==========================
+      QTRMOY = 0.
+      QTRMIN = 2.
+      IF( NBTRIA .LE. 0 ) RETURN
+
+C     LES TABLEAUX DES XYZB + DISTANCES A L'OEIL ET NUMERO DES FACES POUR LE TRI
+      MNXYZB= 0
+      MNNOFA = 0
+      CALL TNMCDC( 'REEL'  , NBTRIA*4, MNXYZB )
+      MNDIST = MNXYZB + NBTRIA * 3
+      CALL TNMCDC( 'ENTIER', NBTRIA,   MNNOFA )
+
+C     RECHERCHE DU MIN ET MAX DES NBTRIA TRIANGLES
+      RMAX = RINFO( 'GRAND' )
+C     MINIMUM
+      COOEXT(1,1) = RMAX
+      COOEXT(2,1) = RMAX
+      COOEXT(3,1) = RMAX
+C     MAXIMUM
+      COOEXT(1,2) = -RMAX
+      COOEXT(2,2) = -RMAX
+      COOEXT(3,2) = -RMAX
+
+      MNX = MNXYZB - 1
+      MNN = MNNOFA - 1
+      NBTR = 0
+      DO 5 NT=1,NBTRIA
+
+C        CALCUL DE LA QUALITE DU TRIANGLE NT
+         IF( NOTRIA(1,NT) .LE. 0 ) GOTO 5
+         CALL QUATRI( NOTRIA(1,NT), XYZSOM,  QUALTR )
+         IF( QUALTR .LT. QTRMIN ) THEN
+            QTRMIN = QUALTR
+         ENDIF
+         QTRMOY = QTRMOY + QUALTR
+         NBTR   = NBTR + 1
+
+         DO K=1,3
+            XYZ(K) = 0
+         ENDDO
+         DO J=1,3
+C           LE J-EME SOMMET DE LA FACE NT
+            NS = NOTRIA( J, NT )
+            DO K=1,3
+               R = XYZSOM(K,NS)
+               COOEXT(K,1) = MIN( COOEXT(K,1), R )
+               COOEXT(K,2) = MAX( COOEXT(K,2), R )
+               XYZ(K) = XYZ(K) + R
+            ENDDO
+         ENDDO
+C        XYZ DU BARYCENTRE DU TRIANGLE NT
+         DO K=1,3
+            RMCN( MNX + K ) = XYZ(K) / 3
+         ENDDO
+         MNX = MNX + 3
+
+ 5    ENDDO
+      QTRMOY = QTRMOY / NBTR
+
+      IF( .NOT. TRACTE  ) GOTO 9900
+C     SORTIE MAIS LES QUALITES MOYENNE et MINIMALE DES TRIANGLES
+C     SONT CALCULEES
+
+C     ELARGISSEMENT DU CADRE
+      DO K=1,3
+         R = ( COOEXT(K,2) - COOEXT(K,1) ) * 0.3
+         COOEXT(K,1) = COOEXT(K,1) - R
+         COOEXT(K,2) = COOEXT(K,2) + R
+      ENDDO
+
+C     LA MEMOIRE PIXELS EST EFFACEE
+      CALL EFFACEMEMPX
+
+C     PARAMETRES DE VISEE
+      AXOLAR = 0
+      DO K=1,3
+         AXOPTV(K) = ( COOEXT(K,1) + COOEXT(K,2) ) * 0.5
+         AXOEIL(K) = AXOPTV(K) + COOEXT(K,2)
+         AXOLAR = MAX( AXOLAR, COOEXT(K,2) - COOEXT(K,1) )
+      ENDDO
+      AXOLAR = AXOLAR * 0.5
+      AXOHAU = AXOLAR * 0.75
+C     PAS DE PLAN ARRIERE ET AVANT
+      AXOARR = 0
+      AXOAVA = 0
+      CALL AXONOMETRIE( AXOPTV, AXOEIL, AXOLAR, AXOHAU, AXOARR, AXOAVA )
+
+C     TRACE EN MODE 3 BOUTONS POUR DEPLACEMENT ROTATIONS ZOOM
+      PREDU0  = PREDUF
+      PREDUF  = 12.0
+      LORBITE = 1
+      KTITRE='trtoutr:          TRIANGLES de la SURFACE'
+      WRITE(KTITRE(10:17),'(I8)') NBTRIA
+
+      IAVNSO0 = IAVNSO
+      IAVNSO  = 0
+
+      IF( LORBITE .EQ. 0 ) GOTO 20
+C
+C     INITIALISATION DE L'ORBITE
+C     ==========================
+      CALL ORBITE0( NOTYEV )
+      GOTO 20
+C
+C     TRACE SELON L'ORBITE OU ZOOM OU TRANSLATION ACTIFS
+C     ==================================================
+ 10   CALL ORBITE1( NOTYEV )
+      IF( NOTYEV .EQ. 0 ) GOTO 9000
+C
+C     TRACE DES AXES 3D
+ 20   CALL TRAXE3
+
+C     CALCUL DE LA DISTANCE A L'OEIL DU BARYCENTRE DES NBTRIA FACES
+      MNDIS1 = MNDIST - 1
+      MNNOF1 = MNNOFA - 1
+      MNX    = MNXYZB
+      DO NT=1,NBTRIA
+
+C        AXONOMETRIE DU BARYCENTRE
+         CALL XYZAXO( RMCN(MNX), XYZ )
+         MNX = MNX + 3
+
+C        DISTANCE A L'OEIL
+         RMCN( MNDIS1 + NT ) = XYZ(3)
+
+C        IDENTITE INITIALE POUR LE NUMERO DE FACE DANS NOSTTR
+         MCN( MNNOF1 + NT ) = NT
+
+      ENDDO
+
+C     LE TRI CROISSANT SELON LA DISTANCE (COTE Z) A L'OEIL
+      CALL TRITRP( NBTRIA, RMCN(MNDIST), MCN(MNNOFA) )
+
+C     TRACE DES TRIANGLES ET DE LEURS TRIANGLES ADJACENTS
+      DO 50 N = 1, NBTRIA
+
+C        LE NUMERO DE LA FACE LA PLUS ELOIGNEE NON TRACEE
+         NT = MCN( MNNOF1 + N )
+
+C        TRACE DU TRIANGLE ET SES ADJACENTS D'ADJACENTS
+         IF( NOTRIA(1,NT) .LE. 0 ) GOTO 50
+
+C        LES 3 COORDONNEES DES 3 SOMMETS DU TRIANGLE
+         DO J=1,3
+            NS = NOTRIA( J, NT )
+            DO K=1,3
+               XYZT( K, J ) = XYZSOM( K, NS )
+            ENDDO
+         ENDDO
+
+C        TRACE DES 3 NO DE SOMMETS
+         IF( IAVNSO .NE. 0 ) THEN
+            DO J=1,3
+               CALL ENTIER3D( NCORAN, XYZT(1,J), NOTRIA(J,NT) )
+            ENDDO
+         ENDIF
+
+         IF( PREDUF .GT. 0.0 ) THEN
+C           REDUCTION DU TRIANGLE A TRACER
+            REDUCF = PREDUF * 0.01
+            REDUC1 = 1.0 - REDUCF
+C           L'HOMOTHETIE DE CENTRE LE BARYCENTRE DE LA FACE
+            MNB1 = MNXYZB + 3 * NT - 4
+            DO J=1,3
+               DO K=1,3
+                  XYZT(K,J) = XYZT(K,J) * REDUC1 + RMCN(MNB1+K) * REDUCF
+               ENDDO
+            ENDDO
+         ENDIF
+
+C        CALCUL DE LA QUALITE DE L'ELEMENT FINI
+         CALL QUATRI( NOTRIA(1,NT), XYZSOM,  QUALTR )
+
+C        LA COULEUR VISUALISE LA QUALITE
+         NCOUFA = NCOQUA( QUALTR )
+
+C        TRACE DU TRIANGLE NT
+         CALL FACE3D( NCOUFA, NCGRIS, 3, XYZT )
+
+ 50   ENDDO
+
+      CALL TRFINS( KTITRE )
+
+C     REPRISE DE L'ORBITE
+C     ===================
+      IF( LORBITE .NE. 0 ) GOTO 10
+
+ 9000 PREDUF = PREDU0
+      IAVNSO = IAVNSO0
+
+ 9900 CALL TNMCDS( 'REEL'  , NBTRIA*4, MNXYZB )
+      CALL TNMCDS( 'ENTIER', NBTRIA,   MNNOFA )
+
+      PRINT*,'trtoutr: QUALITE MOYENNE=',QTRMOY,' et QUALITE MIN=',
+     %        QTRMIN,' des',NBTRIA,' TRIANGLES'
+
+      RETURN
+      END

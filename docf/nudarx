@@ -1,0 +1,4 @@
+NUDARX est le numero de la derniere arete a extraire de la ligne.
+Cet entier doit etre strictement positif.
+Si sa valeur excede le nombre maximal d'aretes de la ligne, cette
+valeur sera ramenee au nombre maximal d'aretes.

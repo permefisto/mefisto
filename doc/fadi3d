@@ -1,0 +1,41 @@
+The Winslow method constructs an hexahedrization of a curved hexahedron.
+
+. One value fadi3d by face of the curved hexaedron is associated.
+This value is the heigth of normal edges of nearest sub-hexahedra.
+Their input must be in the same order as the 6 surfaces)
+
+. After a pure Winslow method, these values are used to improve,
+to control the orthogonality and lengths of the closed sub-hexaedra.
+
+. The value fadi2d in ]0,1]  define the quotient height/length of edges
+near the edges of the curved quadrangles:
+. For example a value=1.  gives "squares"
+.             a value=0.1 gives a sub-quadrangle ten times large than height.
+.
+.          d computed = fadi3d * (d1+d2+d3+d4)/4
+.
+.                       d ?/                     
+.                   d1  | /d4                      
+.              --*------*-----*-- 
+.                   d3 /  d2
+.
+. By convention :
+.   a value=0.  => NO indication on lengths of edges
+.                  The angles will be improved with no other data.
+.   a value=-1  => Distances are conserved during the improvement of angles.
+.   a value=-2  => The distance d is the interpolation from d1 d2 d3 d4
+.                  on the boundary of this edge
+.
+.       d interpolated function from d1 d2 d3 d4
+.                          *
+.                          | d4
+.                          *
+.       *                  /
+.    d1 |          <--- d ?/ --->          *
+.       |               |/                 | d2
+.       *---*----*------*-----*----*---*---*
+.                   *  /
+.                   | /
+.                d3 |/
+.                   *
+. In all cases, the angles of edges are improved.

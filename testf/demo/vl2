@@ -1,0 +1,41 @@
+{ ==================================================================== }
+{ Logiciel MEFISTO     : Version Decembre 1999                         }
+{ Nom de l'Utilisateur : perronnet                                     }
+{ Nom du Projet        : demo                                          }
+{ Date                 : 03/06/00                                      }
+{ ==================================================================== }
+@;
+@;
+@;
+
+6;
+ symyz; 3; 4; a0; ay2; z;
+ symxz; 3; 4; a0; ax2; z;
+@;
+
+4;  { volumes symetriques }
+ cardan4_yz; symyz; 50; cardan4;
+ cardan2;    i; 51; 2; cardan4; cardan4_yz;
+
+ cardan2_xz; symxz; 50; cardan2;
+ cardan;     i; 51; 2; cardan2; cardan2_xz;
+@;
+
+3;
+ deffonc extrac_cyl4(x,y,z);
+ extrac_cyl4 = (y>0) et ((x**2 + (z-zd)**2) < (r4+0.001)**2) et (x>-0.001);
+ finfonc;
+ cyl4; i; 37; cardan; extrac_cyl4; 1;
+
+ deffonc extrac_cyl4_sym(x,y,z);
+ extrac_cyl4_sym = (y<0) et ((x**2 + (z-zd)**2) < (r4+0.001)**2) et (x<0.001);
+ finfonc;
+ cyl4_sym; i; 37; cardan; extrac_cyl4_sym; 1;
+
+ deffonc base(x,y,z);                                                                        
+    base = z<0.001;
+ finfonc;
+ base;  i; 37; cardan; base; 1;
+@;
+
+fermer;

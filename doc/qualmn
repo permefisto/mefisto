@@ -1,0 +1,8 @@
+QUALMN is the QUALITY FE VALUE Q ( 0 < Q < 1 )
+( 0 degenerated FE, 1 regular FE )
+MINIMUM under which a triangle must be deleted.
+
+A correct value is 0.1  .
+
+A too greater value (>0.5) transforms too the object geometry!
+In this case, the value will be fixed to 0.5.

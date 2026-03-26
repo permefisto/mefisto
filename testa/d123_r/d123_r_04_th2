@@ -1,0 +1,187 @@
+{ ======================================================================= }
+{ MEFISTO Software      : December 2, 2021 version                        }
+{ USER's  Name          : Alain Perronnet                                 }
+{ Project Name          : Air around 3 DENNIS in a box: the OBJECT Mesh   }
+{                         3 Dennis TRIANGULATION before MOUTHs EXTRACTION }
+{ Date                  : December 3, 2021 10h 45m                        }
+{ ======================================================================= }
+
+DefVar Pi,              DegRad; 
+       Pi=atan(1.) * 4; DegRad = Pi / 180; {Conversion degrees -> Radians}
+
+DefVar Hight, WishEdge, AnglePlan;
+       Hight = 2.8;      { meter }
+       WishEdge = 0.05;  { meter }
+       AnglePlan = 45;   { degrees }
+
+DefVar xmin; xmin= -2.5;
+DefVar ymin; ymin= -2.25;
+DefVar zmin; zmin=  0.0;
+
+DefVar xmax; xmax= 3.5;
+DefVar ymax; ymax= 2.25;
+DefVar zmax; zmax= Hight;
+
+DefVar xmin_DENNIS; xmin_DENNIS= -0.225969;
+DefVar ymin_DENNIS; ymin_DENNIS= -0.351256;
+DefVar zmin_DENNIS; zmin_DENNIS=  0.0;
+
+DefVar xmax_DENNIS; xmax_DENNIS= 0.224773;
+DefVar ymax_DENNIS; ymax_DENNIS= 0.289920;
+DefVar zmax_DENNIS; zmax_DENNIS= 1.860307;
+
+DefVar D1MOUTH_X,      D1MOUTH_Y,       D1MOUTH_Z;
+       D1MOUTH_X=0.18; D1MOUTH_Y=-0.03; D1MOUTH_Z=1.615; { XYZ D1 Mouth coordinates }
+
+DefVar distance; distance=1.0;  { meter mouth DENNIS i to mouth DENNIS j }
+
+DefVar D2MOUTH_X; D2MOUTH_X=D1MOUTH_X + distance * cos(-20*DegRad);
+DefVar D2MOUTH_Y; D2MOUTH_Y=D1MOUTH_Y + distance * sin(-20*DegRad);
+DefVar D2MOUTH_Z; D2MOUTH_Z=D1MOUTH_Z;
+
+DefVar D3MOUTH_X; D3MOUTH_X=D1MOUTH_X + distance * cos(40*DegRad);
+DefVar D3MOUTH_Y; D3MOUTH_Y=D1MOUTH_Y + distance * sin(40*DegRad);
+DefVar D3MOUTH_Z; D3MOUTH_Z=D1MOUTH_Z;
+
+{ Radius of Circle DENNIS 1 2 3 }
+DefVar RC123;   RC123 = distance / 2 / cos(30*DegRad);
+
+20;    { PRECISION to IDENTIFY 2 POINTS }
+ 1; 1e-4; { EPSXYZ LOIN DE ZERO }
+ 2; 1e-5; { EPZERO PRET DE ZERO }
+@;
+
+0;     { WISHED EDGE LENGTH>0 by DEFAULT }
+       { LENGTH by DEFAULT of MESH EDGES? }
+ WishEdge;
+@;
+
+
+{ The surfaces BELOW has been obtain from the surfaces SDENNIS1 2 3
+  with the option 29 of SURFACE with a mouse and menus
+  by suppression of the mouth triangles and extraction
+  SDENNIS - SDENIS WITHOUT MOUTH TO OBTAIN sdenis 1 2 3 and mouth 1 2 3}
+
+80;   { IMPORTER un MAILLAGE de PLSVO }
+ 1;             { Un Fichier xyznsef.plsv.nom }
+                { NOM en minuscules du FICHIER xyznsef.plsv.nomplsv? }
+ xyznsef.s.sdenis1;
+
+80;             { IMPORTER un MAILLAGE de PLSVO }
+ 1;             { Un Fichier xyznsef.plsv.nom }
+                { NOM en minuscules du FICHIER xyznsef.plsv.nomplsv? }
+ xyznsef.s.mouth1;
+
+80;   { IMPORTER un MAILLAGE de PLSVO }
+ 1;             { Un Fichier xyznsef.plsv.nom }
+                { NOM en minuscules du FICHIER xyznsef.plsv.nomplsv? }
+ xyznsef.s.sdenis2;
+
+80;             { IMPORTER un MAILLAGE de PLSVO }
+ 1;             { Un Fichier xyznsef.plsv.nom }
+                { NOM en minuscules du FICHIER xyznsef.plsv.nomplsv? }
+ xyznsef.s.mouth2;
+
+
+80;   { IMPORTER un MAILLAGE de PLSVO }
+ 1;             { Un Fichier xyznsef.plsv.nom }
+                { NOM en minuscules du FICHIER xyznsef.plsv.nomplsv? }
+ xyznsef.s.sdenis3;
+
+80;             { IMPORTER un MAILLAGE de PLSVO }
+ 1;             { Un Fichier xyznsef.plsv.nom }
+                { NOM en minuscules du FICHIER xyznsef.plsv.nomplsv? }
+ xyznsef.s.mouth3;
+
+@;
+
+DefFunc ALL(x,y,z); ALL=1; EndFunc;
+
+2; { LINES ------------------------------------------------------}
+               { NOM de la LIGNE ou ABANDON? }
+ lmouth1;
+ i;            { dans le LEXIQUE ~>TRANSFO }
+ 37;           { ARETES INTERNES OU FRONTIERES d une SURFACE }
+               { NOM de SURFACE }
+ mouth1;       { dans le LEXIQUE ~>SURFACE }
+               { NOM de FONCTION }
+ ALL;          { dans le LEXIQUE ~>FONCTION }
+ 1;            { aretes frontalieres }
+
+               { NOM de la LIGNE ou ABANDON? }
+ lmouth2; i;   { dans le LEXIQUE ~>TRANSFO }
+ 37;           { ARETES INTERNES OU FRONTIERES d une SURFACE }
+               { NOM de SURFACE }
+ mouth2;       { dans le LEXIQUE ~>SURFACE }
+ ALL;          { dans le LEXIQUE ~>FONCTION }
+ 1;            { aretes frontalieres }
+
+               { NOM de la LIGNE ou ABANDON? }
+ lmouth3; i;   { dans le LEXIQUE ~>TRANSFO }
+ 37;           { ARETES INTERNES OU FRONTIERES d une SURFACE }
+               { NOM de SURFACE }
+ mouth3;       { dans le LEXIQUE ~>SURFACE }
+               { NOM de FONCTION }
+ ALL;          { dans le LEXIQUE ~>FONCTION }
+ 1;            { aretes frontalieres }
+               { NOM de la LIGNE ou ABANDON? }
+@;
+@;
+
+
+1;   { A POINT corner of the Sbottom rectangle -------------------- }
+ 1;            { TYPING of VALUES }
+ Pxyzmin;      { NAME of the POINT or ESCAPE? }
+ i;            { in LEXICON ~>TRANSFO }
+ 1;            { X Y Z COORDINATES }
+ xmin; ymin; zmin; { COORPO 'X Y Z of a point' xyz ; }
+ @;
+@;
+
+
+5;  { OBJECTS parts of the object --------------------------------------}
+ d123_r_th;
+ 0;  { 1D or 2D or 3D classic }
+ 17; { NBDOBJ number of Points Lines Surfaces Volumes Objects of object}
+     { Point or Line or Surface or Volume or Object; Name; ? }
+
+ V; d123_r_te;
+
+ S; SInlet;
+ S; SOutlet;
+ S; Sbottom;
+ S; Sleft;
+ S; Sright;
+ S; STop;
+
+ S; SDENIS1;
+ S; MOUTH1;
+
+ S; SDENIS2;
+ S; MOUTH2;
+
+ S; SDENIS3;
+ S; MOUTH3;
+
+ L; LMOUTH1;
+ L; LMOUTH2;
+ L; LMOUTH3;
+
+ P; Pxyzmin;
+@;
+@;
+
+
+7; { INTERPOLATION nodes of the object  d123_r_th ---------------------}
+ d123_r_th; { NAME of the OBJECT to be INTERPOLATED? }
+ 4;         { Choice: LAGRANGE of DEGREE 2 => Tetrahedra Taylor_Hood }
+ @;
+@;
+
+10; { DRAWING of PLSVO meshes ------------------------------------------}
+ 5;  { OBJECT or OBJECTS }
+ 1;  { ALL OBJECTS 1 by 1 }
+ 75; { Activate TRANSLATION ORBIT ZOOM }
+ 90; { Continue the DRAWING }
+
+CLOSE;

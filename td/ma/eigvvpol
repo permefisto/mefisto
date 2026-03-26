@@ -1,0 +1,5 @@
+variable EIGVVPOL 'Options of Polynom of Eigenvalues' entier
+ ( 1 : 'TARGET Real Part and Imaginary Part'
+ , 2 : 'Number of Eigenvalues to compute'
+ , 3 : 'Location of these Eigenvalues'
+ , 9 : 'Computation of Eigenvalues' )  ;

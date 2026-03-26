@@ -1,0 +1,575 @@
+      SUBROUTINE TETRARBO( NUVOLU, KNMVOLU, QUAMINEX, QTEAME, VOLMOY,
+     %                     NBSOMM, MXSOMM,  PTXYZD, NPSOFR,
+     %                     HEXAPAVE,NBIPAV, ECHPAV, N1SPAVE, NOPTSUIV,
+     %                     MXTETR,  N1TEVI, NOTETR, NUDTETR, NBTETR,
+     %                     N1TETS,
+     %                     INFACO, MXFACO, LEFACO, N1FASC,
+     %                     IVOLTE, NVOLTE,
+     %                     MXETOI, NFETOI, NTETOI, LISPOI,
+     %                     IERR )
+C+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+C BUT :    TETRAEDRISATION DE POINTS SUR LES SEGMENTS SOMMET-BARYCENTRE
+C -----    DES TETRAEDRES TROP VOLUMINEUX AU REGARD DU VOLUME IDEAL
+C          CALCULE A PARTIR DE LA TAILLE SOUHAITEE AU SOMMET ou
+C          de la FONCTION TAILLE_IDEALE(x,y,z) ET
+C          SUR LES ARETES DES TETRAEDRES ISSUES D'UN SOMMET
+
+C ENTREES:
+C --------
+C NUVOLU :  NUMERO DANS LE LEXIQUE DES VOLUMES DU VOLUME A TETRAEDRISER
+C KNMVOLU:  NOM DU VOLUME A TETRAEDRISER
+C QUAMINEX: QUALITE MINIMALE EXIGEE POUR CREER UN TETRAEDRE
+C QTEAME : QUALITE DES TETRAEDRES AU DESSOUS DE LAQUELLE UNE
+C          AMELIORATION DE LA QUALITE DES TETRAEDRES EST DEMANDEE
+C ARETGR : LONGUEUR DE L'ARETE SOHAITEE POUR L'ENSEMBLE DES TETRAEDRES
+C NOFOTI : NUMERO DE LA FONCTION 'TAILLE_IDEALE' DES ARETES SINON 0
+C VOLMOY : VOLUME MOYEN DES TETRAEDRES DE LA TETRAEDRISATION
+
+C MXSOMM  : NOMBRE MAXIMAL DE SOMMETS DECLARABLES
+C HEXAPAVE: MIN ET MAX DES COORDONNEES DU PAVAGE
+C NBIPAV  : NOMBRE D'ARETES DANS LA DIRECTION I
+C ECHPAV  : ECHELLE DANS LA DIRECTION I
+C N1SPAVE : NO DU 1-ER SOMMET DANS PTXYZD DU PAVE
+C NOPTSUIV: NO DU POINT SUIVANT DANS LE CHAINAGE DES POINTS DES PAVES
+
+C MXTETR : NOMBRE MAXIMAL DE TETRAEDRES DECLARABLES
+C MXPILE : MAXIMUM D'ELEMENTS DE LAPILE(2,MXPILE)
+
+C ENTREE ET SORTIE :
+C ------------------
+C NBSOMM : NOMBRE DES (FUTURS) SOMMETS (DE LA TETRAEDRISATION
+C          EN ENTREE ET EN SORTIE APRES AJOUT DES POINTS SUR LES ARETES
+C PTXYZD : X Y Z DISTANCE SOUHAITEE DES POINTS
+C NPSOFR : NUMERO DE POSITION PAR RAPPORT A LA FRONTIERE DE CHAQUE POINT
+C          =0 SI SOMMET INTERNE
+C          =1 SI SOMMET FRONTALIER
+C          =2 SI SOMMET SUR INTERFACE ENTRE 2 MATERIAUX
+
+C HEXAPAVE: MIN ET MAX DES COORDONNEES DU PAVAGE
+C NBIPAV  : NOMBRE D'ARETES DANS LA DIRECTION I
+C ECHPAV  : ECHELLE DANS LA DIRECTION I
+C N1SPAVE : NO DU 1-ER SOMMET DANS PTXYZD DU PAVE
+C NOPTSUIV: NO DU POINT SUIVANT DANS LE CHAINAGE DES POINTS DES PAVES
+
+C N1TEVI : NUMERO DU PREMIER TETRAEDRE VIDE DANS LE CHAINAGE NOTETR(5,*)
+C NOTETR : LISTE DES TETRAEDRES
+C          SOMMET1,    SOMMET2,    SOMMET3,    SOMMET4,
+C          TETRAEDRE1, TETRAEDRE2, TETRAEDRE3, TETRAEDRE4
+C          DE L'AUTRE COTE DE LA FACE
+C          1: 123      2: 234      3: 341      4: 412
+C NUDTETR: PLUS GRAND NUMERO DANS NOTETR DE TETRAEDRE OCCUPE
+C N1TETS : NUMERO DANS NOTETR D'UN TETRAEDRE DE CHAQUE SOMMET
+
+C INFACO : = 0 PAS DE TABLEAU LEFACO NI DE CONSERVATION DES
+C              FACES FRONTIERE CAR LE NO DE VOLUME EST CONNU PAR NVOLTE
+C          = 1 EXISTENCE DU TABLEAU LEFACO ET CONSERVATION DES
+C              FACES DE LA FRONTIERE
+C MXFACO : NOMBRE MAXIMAL DECLARABLE DE FACES DU CONTOUR
+C LEFACO : FACE DU CONTOUR OU INTERFACES ENTRE VOLUMES
+C          IL CONTIENT DANS CET ORDRE
+C          NUMERO (DANS PTXYZD) DU SOMMET 1, SOMMET 2, SOMMET 3
+C          NUMERO (DANS NUVOPA 0 SINON) DU VOLUME1 , VOLUME2 DE LA FACE
+C          NUMERO (DANS LEFACO) DE LA FACE ADJACENTE PAR L'ARETE 1 2 3
+C          ATTENTION: UNE ARETE PEUT APPARTENIR A PLUS DE 2 FACES
+C          => CHAINAGE CIRCULAIRE DE CES FACES DANS LEFACO
+C          LEFACO(9,*)  -> FACE SUIVANTE (*=0:VIDE, *<>0:NON VIDE)
+C          HACHAGE AVEC LA SOMME DES 3 SOMMETS MODULO MXFACO
+C          LF = MOD( NOSOFA(1)+NOSOFA(2)+NOSOFA(3) , MXFACO ) + 1
+C          NF = LEFACO( 10, LF ) LE NUMERO DE LA 1-ERE FACE DANS LEFACO
+C          SI LA FACE NE CONVIENT PAS. PASSAGE A LA SUIVANTE
+C          NF  = LEFACO( 9, NF )  ...
+C          11: >0  NO NOTETR D'UN TETRAEDRE AYANT CETTE FACE,
+C              =0  SINON
+cccC          12: = NO FACEOC DE 1 A NBFACES D'OC
+C N1FASC : N1FASC(NS)=NUMERO (DANS LEFACO) D'UNE FACE DE SOMMET NS
+C IVOLTE : =0 PAS DE TABLEAU NVOLTE A L'APPEL
+C             CORRECT SI VOLUME MONO-MATERIAU
+C             ERREUR SI VOLUME MULTI-MATERIAUX
+C          =1 EXISTENCE DU TABLEAU NVOLTE A L'APPEL
+C NVOLTE : >0 NUMERO DU VOLUME DE 1 A NBVOPA DE CHAQUE TETRAEDRE
+C          -1 SI TETRAEDRE INACTIF ou SUPPRIME
+C LISPOI  : LISPOI(I)=I OU 0 EN ENTREE POUR PERMETTRE LA PERMUTATION
+C           DES POINTS LORSQUE DES TETRAEDRES DEGENERES SONT RENCONTRES
+C           PERMET DE TETRAEDRISER LES POINTS DANS UN ORDRE NON INITIAL
+
+
+C TABLEAUX AUXILIAIRES :
+C ----------------------
+C MXETOI : NOMBRE MAXIMAL DE FACES OU TETRAEDRES DECLARABLES DANS UNE ETOILE
+C NFETOI : ENTIER (1:5,1:MXETOI)
+C NTETOI : ENTIER (1:MXETOI)
+
+C SORTIES:
+C --------
+C NBTETR : NOMBRE DE TETRAEDRES ACTIFS DANS NOTETR
+C IERR   : 0 SI PAS D'ERREUR
+C          1 SATURATION DES SOMMETS    TABLEAU PTXYZD
+C          3 SATURATION DES TETRAEDRES TABLEAU NOTETR
+C          5 TABLEAU NVOLTE NON PRESENT A L'APPEL DE tetrarbo.f
+C+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+C AUTEUR: ALAIN PERRONNET St PIERRE du PERRAY & VEULETTES   Janvier 2019
+C23456...............................................................012
+      PARAMETER        (MXSTAR=1024, QUAMED=0.005)
+      include"./incl/langue.inc"
+      include"./incl/gsmenu.inc"
+      include"./incl/darete.inc"
+      COMMON / UNITES / LECTEU,IMPRIM,INTERA,NUNITE(29)
+      COMMON / TRTETR / STOPTE, TRACTE
+      LOGICAL           STOPTE, TRACTE, TRACTE0
+
+      CHARACTER*24      KNMVOLU
+      DOUBLE PRECISION  PTXYZD(4,MXSOMM), VTE, BARYCE(4), POINT(4),
+     %                  VOLUMT, VOLMOY, VOLTID, D, DA, TARETE,
+     %                  ARMIN, ARMAX, SURFTR(4)
+      DOUBLE PRECISION  HEXAPAVE(3,2), ECHPAV(3)
+      INTEGER           NBIPAV(3), N1SPAVE(0:*), NOPTSUIV(1:*)
+      INTEGER           NPSOFR(MXSOMM), LEFACO(1:11,0:MXFACO),
+     %                  N1FASC(MXSOMM),NOTETR(8,MXTETR), N1TETS(MXSOMM),
+     %                  NFETOI(5,MXETOI), NTETOI(MXETOI),
+     %                  LISPOI(0:MXSOMM), NVOLTE(*), NOSTAR(MXSTAR)
+      CHARACTER*100     KTITRE
+
+C     NUMERO LOCAL DES 2 SOMMETS DES 6 ARETES DU TETRAEDRE
+      INTEGER           NOSOARTE(2,6)
+      DATA              NOSOARTE/ 1,2, 2,3, 3,1, 1,4, 2,4, 3,4 /
+
+C     NUMERO LOCAL DE L'ARETE OPPOSEE A UNE ARETE DANS UN TETRAEDRE
+      INTEGER           NOAROPTE(6)
+      DATA              NOAROPTE/ 6, 4, 5, 2, 3, 1 /
+
+C     NUMERO DES 2 FACES DU TETRAEDRE AYANT UNE ARETE COMMUNE K
+      INTEGER           NOFAARTE(2,6)
+      DATA              NOFAARTE / 1,4,  1,2,  1,3,  3,4,  2,4,  2,3 /
+
+C     LES SOMMETS SONT VUS A PARTIR DU BARYCENTRE DANS LE SENS DIRECT
+      INTEGER           NOSOFATE(3,4)
+      DATA              NOSOFATE/ 1,2,3, 2,4,3, 3,4,1, 4,2,1 /
+
+C     NO (DE 1 A 9) DES 3 ARETES DES 4 FACES DU TETRAEDRE
+      INTEGER           NOARFATE(3,4)
+      DATA              NOARFATE / 1,2,3, 2,5,6, 3,6,4, 5,1,4 /
+
+      PRINT*
+      PRINT*,'tetrarbo: Volume: ',KNMVOLU
+      PRINT*,'tetrarbo: AJOUT de POINTS (No au DELA de NBSOMM=',NBSOMM,
+     %') sur la BOULE AUTOUR de CHAQUE SOMMET de RAYON la TAILLE IDEALE 
+     %des ARETES'
+      TRACTE0 = TRACTE
+ccc      TRACTE  = .TRUE.
+      NBT     = 0
+      NBPTSUP = 0
+      N2SOM   = NBSOMM
+      NBSOM0  = NBSOMM
+      NBSOM00 = NBSOMM
+      VOLUMT  = 0D0
+      ITERAT  = 0
+
+C     BOUCLE D'ITERATIONS SUR LA RECHERCHE DES TETRAEDRES TROP VOLUMINEUX
+C     PAR RAPPORT A LA TAILLE IDEALE DES ARETES ISSUES D'UN SOMMET ET
+C     DES ARETES TROP LONGUES ISSUES D'UN SOMMET
+C     ===================================================================
+ 10   ITERAT = ITERAT + 1
+      PRINT*,'tetrarbo: Iteration',ITERAT,' NBSOMM=',NBSOMM
+
+      DO 100 NSt = N2SOM, 1, -1
+
+C        BOUCLE SUR LES SOMMETS INTERNES ET DES SURFACES DE L'OBJET
+C        ----------------------------------------------------------
+         IF( NPSOFR( NSt ) .NE. 0 ) GOTO 100
+
+         NTE0 = N1TETS( NSt )
+         IF( NTE0           .LE. 0 ) GOTO 100
+         IF( NOTETR(1,NTE0) .EQ. 0 ) GOTO 100
+ 
+         IF( IVOLTE .NE. 0 ) THEN
+            NOVOLU = NVOLTE( NTE0 )
+         ELSE
+            NOVOLU = 0
+         ENDIF
+
+C        NO PTXYZD DU DERNIER SOMMET TETRAEDRISE
+         NBNST0 = NBSOMM
+
+C        VOLUME AUGMENTE du TETRAEDRE IDEAL DE SOMMET NSt
+         VOLTID = ( PTXYZD(4,NSt) **3 ) / 6 * 1.2D0
+
+C        CONSTRUCTION DU TABLEAU DES NO NOTETR DES TETRAEDRES DE SOMMET NST
+         CALL TETR1S( NSt, N1TETS, NOTETR, NBTE1S, MXETOI, NTETOI, IERR)
+         IF( NBTE1S .LE. 0 ) GOTO 100
+
+cccC        TRACE DES NBTE1S TETRAEDRES DE SOMMET NSt
+ccc         IF( nbte1s .GT. 256 ) then
+ccc            tracte = .true.
+ccc            KTITRE='tetrarbo: NSt=          des            TETRAEDRES'
+ccc            WRITE(KTITRE(15:22),'(I8)') NSt
+ccc            WRITE(KTITRE(29:33),'(I5)') NBTE1S
+ccc            CALL SANSDBL( KTITRE, NBC )
+ccc            CALL TRACEETOILE( KTITRE(1:NBC), PTXYZD, NOTETR, NSt,
+ccc     %                        NBTE1S, NTETOI )
+ccc         endif
+
+C        CONSTRUCTION DU TABLEAU DES NO DES SOMMETS DES ARETES DES
+C        TETRAEDRES DE SOMMET NSt
+         CALL NOSTDA1S( NSt,    NBTE1S, NTETOI, NOTETR,
+     %                  MXSTAR, NBSTAR, NOSTAR )
+
+C        BOUCLE SUR LES TETRAEDRES DE SOMMET NSt
+C        ---------------------------------------
+         DO 20 N = 1, NBTE1S
+
+            NTE = NTETOI( N )
+
+            IF( NOTETR(1,NTE) .EQ. 0 ) THEN
+               IF( IVOLTE .NE. 0 ) THEN
+C                 NUMERO DE VOLUME INCONNU
+                  NVOLTE( NTE ) = -1
+                  GOTO 20
+               ENDIF
+            ENDIF
+
+ccc            IF( IVOLTE .NE. 0 .AND. NVOLTE(NTE) .NE. NOVOLU ) THEN
+ccc               GOTO 20
+ccc            ENDIF
+
+C           QUALITE ET VOLUME DU TETRAEDRE NTE
+            IERR = 0
+            CALL QUATETD( PTXYZD( 1, NOTETR(1,NTE) ),
+     %                    PTXYZD( 1, NOTETR(2,NTE) ),
+     %                    PTXYZD( 1, NOTETR(3,NTE) ),
+     %                    PTXYZD( 1, NOTETR(4,NTE) ),
+     %                    ARMIN, ARMAX, SURFTR, VTE, QTE )
+
+            IF( ARMAX .LE. 1.414D0 * PTXYZD(4,NSt) ) GOTO 20
+            IF( VTE   .LT.  0.05D0 * VOLTID ) GOTO 20
+
+C           LE BARYCENTRE DU TETRAEDRE SUFFISAMMENT VOLUMINEUX
+            DO I=1,4
+               BARYCE(I) = ( PTXYZD(I,NOTETR(1,NTE))
+     %                     + PTXYZD(I,NOTETR(2,NTE))
+     %                     + PTXYZD(I,NOTETR(3,NTE))
+     %                     + PTXYZD(I,NOTETR(4,NTE)) ) / 4
+            ENDDO
+
+C           DISTANCE NSt-BARYCENTRE
+            D = SQRT( ( PTXYZD(1,NSt)-BARYCE(1) ) **2
+     %              + ( PTXYZD(2,NSt)-BARYCE(2) ) **2
+     %              + ( PTXYZD(3,NSt)-BARYCE(3) ) **2 )
+
+            IF( D .GE. PTXYZD(4,NSt) ) THEN
+
+C              LE POINT DU SEGMENT NSt-BARYCENTRE A DISTANCE PTXYZD(4,NSt)
+               D = PTXYZD( 4, NSt ) / D
+               DO I=1,4
+                  POINT(I) = PTXYZD(I,NSt) 
+     %                     + ( BARYCE(I) - PTXYZD(I,NSt) ) * D
+               ENDDO
+
+C              CALCUL DE TAILLE_IDEALE( POINT )
+               CALL TAILIDEA( NOFOTI, POINT, NCODEV, POINT(4) )
+
+C              CE POINT EST IL A UNE DISTANCE INFERIEURE OU EGALE
+C              A LA TAILLE IDEALE D'ARETE D'UN POINT DEJA AJOUTE?
+               DO K = NBNST0+1, NBSOMM
+                  IF( ( POINT(1)-PTXYZD(1,K) )**2 +
+     %                ( POINT(2)-PTXYZD(2,K) )**2 +
+     %                ( POINT(3)-PTXYZD(3,K) )**2 .LT.
+     %                ( 0.354D0*( POINT(4)+PTXYZD(4,K) )/2 )**2 ) THEN
+C                    ABANDON DU POINT
+                     GOTO 20
+                  ENDIF
+               ENDDO
+
+C              CE POINT EST IL A UNE DISTANCE INFERIEURE OU EGALE A
+C              LA DISTANCE D'UN POINT SOMMET D'UNE ARETE ISSUE DE NSt?
+               DO K = 1, NBSTAR
+                  NS = NOSTAR( K )
+                  IF( ( POINT(1)-PTXYZD(1,NS) )**2 +
+     %                ( POINT(2)-PTXYZD(2,NS) )**2 +
+     %                ( POINT(3)-PTXYZD(3,NS) )**2 .LT.
+     %                ( 0.354D0*( POINT(4)+PTXYZD(4,NS) )/2 )**2 ) THEN
+C                    ABANDON DU POINT
+                     GOTO 20
+                  ENDIF
+               ENDDO
+
+C              LE POINT DU SEGMENT NSt-BARYCENTRE A DISTANCE PTXYZD(4,NSt)
+C              DE NSt EST AJOUTE AUX POINTS A TETRAEDRISER
+               IF( NBSOMM .GE. MXSOMM ) THEN
+                  GOTO 9910
+               ENDIF
+C              NUMERO PTXYZD DU POINT AJOUTE
+               NBSOMM = NBSOMM + 1
+               DO I=1,4
+                  PTXYZD(I,NBSOMM) = POINT(I)
+               ENDDO
+
+C              CALCUL DE TAILLE_IDEALE( NBSOMM )
+               CALL TAILIDEA( NOFOTI, PTXYZD(1,NBSOMM),
+     %                        NCODEV, PTXYZD(4,NBSOMM))
+
+C              NO NOTETR D'UN TETRAEDRE DE SOMMET NBSOMM
+               N1TETS( NBSOMM ) = 0
+
+C              NBSOMM EST UN POINT INTERNE
+               NPSOFR( NBSOMM ) = 0
+
+C              TRACE DES TETRAEDRES DE SOMMET NST et POINT NBSOMM
+               KTITRE='tetrarbo: NSt=          des            TETRAEDRES
+     % NBSOMM=         Barycentre'
+               WRITE(KTITRE(15:22),'(I8)') NSt
+               WRITE(KTITRE(29:33),'(I5)') NBTE1S
+               WRITE(KTITRE(58:65),'(I8)') NBSOMM
+               CALL SANSDBL( KTITRE, NBC )
+               CALL TRACEETOILE( KTITRE(1:NBC), PTXYZD, NOTETR, NBSOMM,
+     %                           NBTE1S, NTETOI )
+
+            ENDIF
+
+ 20      ENDDO
+
+
+C        BOUCLE SUR LES ARETES ISSUES de NSt
+C        -----------------------------------
+         DO 30 N = 1, NBSTAR
+
+C           TAILLE DE L'ARETE N NSt->NOSTAR(N)
+            NSAR = NOSTAR( N )
+            TARETE = SQRT( ( PTXYZD(1,NSAR) - PTXYZD(1,NSt) ) ** 2
+     %                   + ( PTXYZD(2,NSAR) - PTXYZD(2,NSt) ) ** 2
+     %                   + ( PTXYZD(3,NSAR) - PTXYZD(3,NSt) ) ** 2 )
+
+ccc            IF( TARETE .LT. 1.414D0 * PTXYZD(4,NSt) ) GOTO 30
+ccc            au dessous equivaut a 1.5D0 dans le test ci-dessus
+
+C           AJOUT DE NBPTAD POINTS SUR L'ARETE NSt->NOSTAR(N)
+            NBPTAD = NINT( TARETE / PTXYZD(4,NSt) ) - 1
+            IF( NBPTAD .LE. 0 ) GOTO 30
+
+cccC           ON NE GENERE QUE LE POINT A DISTANCE PTXYZD(4,NSt) SUR
+cccC           L'ARETE NSt-NSAR POUR EVITER LES TETRAEDRES DE MEDIOCRE QUALITE
+ccc            NBPTAD = 1
+
+            D = PTXYZD(4,NSt) / TARETE
+
+            DO 25 M = NBPTAD, 1, -1
+
+C              POINT A M * DISTANCE PTXYZD(4,NSt) du SOMMET NSt
+               DO I=1,4
+                  POINT(I) = PTXYZD(I,NSt) + M * D *
+     %                     ( PTXYZD(I,NSAR) - PTXYZD(I,NSt) )
+               ENDDO
+
+C              CE POINT EST IL A UNE DISTANCE INFERIEURE OU EGALE
+C              A LA TAILLE IDEALE D'ARETE D'UN POINT DEJA AJOUTE?
+               DO K = NBNST0+1, NBSOMM
+                  DA = ( POINT(1)-PTXYZD(1,K) )**2 +
+     %                 ( POINT(2)-PTXYZD(2,K) )**2 +
+     %                 ( POINT(3)-PTXYZD(3,K) )**2
+                  IF( DA.LT.( 0.354D0*(POINT(4)+PTXYZD(4,K))/2 )**2)THEN
+C                    ABANDON DU POINT DE L'ARETE NSt-NSAR
+                     GOTO 25
+                  ENDIF
+               ENDDO
+
+C              CE POINT EST IL A UNE DISTANCE INFERIEURE OU EGALE
+C              LA DISTANCE D'UN POINT D'UNE ARETE ISSUE DE NSt?
+               DO K = 1, NBSTAR
+                  NS = NOSTAR( K )
+                  IF( ( POINT(1)-PTXYZD(1,NS) )**2 +
+     %                ( POINT(2)-PTXYZD(2,NS) )**2 +
+     %                ( POINT(3)-PTXYZD(3,NS) )**2 .LT.
+     %                ( 0.354D0*( POINT(4)+PTXYZD(4,NS) )/2 )**2 )THEN
+C                    ABANDON DU POINT
+                     GOTO 25
+                  ENDIF
+               ENDDO
+
+C              AJOUT DU POINT AUX POINTS A TETRAEDRISER
+               IF( NBSOMM .GE. MXSOMM ) THEN
+                  GOTO 9910
+               ENDIF
+
+C              NBSOMM NUMERO PTXYZD DU POINT AJOUTE SUR L'ARETE NSt-NSAR
+               NBSOMM = NBSOMM + 1
+               DO I=1,4
+                  PTXYZD(I,NBSOMM) = POINT(I)
+               ENDDO
+
+C              CALCUL DE TAILLE_IDEALE( NBSOMM )
+               CALL TAILIDEA( NOFOTI, PTXYZD(1,NBSOMM),
+     %                        NCODEV, PTXYZD(4,NBSOMM) )
+
+C              NO NOTETR D'UN TETRAEDRE DE SOMMET NBSOMM
+               N1TETS( NBSOMM ) = 0
+
+C              NBSOMM EST UN POINT INTERNE
+               NPSOFR( NBSOMM ) = 0
+
+C              TRACE DES TETRAEDRES DE SOMMET NST et POINT NBSOMM
+               KTITRE='tetrarbo: NSt=          des            TETRAEDRES
+     % NBSOMM=          sur ARETE NSAR=           '
+               WRITE(KTITRE(15:22),'(I8)') NSt
+               WRITE(KTITRE(29:33),'(I5)') NBTE1S
+               WRITE(KTITRE(58:65),'(I8)') NBSOMM
+               WRITE(KTITRE(83:90),'(I8)') NSAR
+               CALL SANSDBL( KTITRE, NBC )
+               CALL TRACEETOILE( KTITRE(1:NBC), PTXYZD, NOTETR, NBSOMM,
+     %                           NBTE1S, NTETOI )
+
+ 25         ENDDO
+ 30      ENDDO
+         TRACTE = TRACTE0
+
+C        TETRAEDRISATION DES POINTS AJOUTES SUR LES ARETES ET DANS NTE0
+C        --------------------------------------------------------------
+         IF( NBNST0 .EQ. NBSOMM ) GOTO 100
+
+C        NO DU PREMIER ET DERNIER POINT A TETRAEDRISER
+         NOSOM1 = NBNST0 + 1
+         NOSOM2 = NBSOMM
+
+         DO NS = NOSOM1, NOSOM2
+C           LE NUMERO DU SOMMET NS DANS LE TABLEAU LIPO
+            LISPOI( NS ) = NS
+         ENDDO
+
+
+C        TETRAEDRISATION DES SOMMETS FRONTIERE NOSOM1 A NOSOM2
+         CALL TETRAPTS( NUVOLU, KNMVOLU, QUAMINEX, QTEAME,
+     %                  NOSOM1, NOSOM2, NTE0,
+     %                  MXSOMM, NBSOMM, PTXYZD, NPSOFR,
+     %                  HEXAPAVE,NBIPAV,ECHPAV, N1SPAVE,NOPTSUIV,
+     %                  INFACO, MXFACO, LEFACO, N1FASC,
+     %                  IVOLTE, NVOLTE,
+     %                  MXTETR, N1TEVI, NOTETR, N1TETS,
+     %                  MXETOI, NFETOI, NTETOI, LISPOI,
+     %                  NUDTETR,NBPTSUP,IERR )
+
+         IF( IERR .EQ. 1 ) GOTO 9910
+         IF( IERR .EQ. 3 ) GOTO 9950
+
+C        PASSAGE AU SOMMET SUIVANT
+ 100  ENDDO
+
+
+C     QUALITE DES TETRAEDRES APRES AJOUT DES POINTS AUTOUR DES SOMMETS
+C     ----------------------------------------------------------------
+      CALL QUALTETR( PTXYZD, MXTETR, NOTETR,
+     %               NBTETR, NUDTETR, QUAMIN, QUAMOY, VOLUMT )
+      VOLMOY = VOLUMT / NBTETR
+
+      PRINT*
+      PRINT*,'tetrarbo 1: ITERATION', ITERAT,' de NBSOM0+1=',NBSOM0+1,
+     %' a NBSOMM=',NBSOMM,' soit',NBSOMM-NBSOM0,
+     %' POINTS AJOUTES TETRAEDRISES'
+      PRINT*,'QUAMOY=',QUAMOY,' QUAMIN=',QUAMIN,' VOLUME=',VOLUMT,
+     %' Nb TETRA=',NBTETR,' No Dernier TETRA=',NUDTETR
+      PRINT*
+
+
+cccC     SUPPRESSION DES TETRAEDRES SE TROUVANT DANS AUCUN VOLUME  UTILE?...
+cccC     --------------------------------------------------------
+ccc      NBELIM = 0
+ccc      DO NTE = 1, NUDTETR
+ccc         IF( NOTETR(1,NTE) .NE. 0 .AND. NVOLTE(NTE) .LT. 0 ) THEN
+cccC           LE TETRAEDRE EST ACTIF MAIS DE VOLUME INCONNU
+ccc            NBELIM = NBELIM + 1
+ccc            PRINT*,'tetrarbo: NOTETR(',NTE,')=',(NOTETR(K,NTE),K=1,8),
+ccc     %             ' MAIS No de VOLUME=',NVOLTE(NTE),'???'
+cccccc            NOTETR(1,NTE) = 0
+cccccc            NOTETR(5,NTE) = N1TEVI
+cccccc            N1TEVI        = NTE
+ccc         ENDIF
+ccc      ENDDO
+ccc      IF( NBELIM .GT. 0 ) THEN
+ccc         PRINT*,'tetrarbo: ITERATION',ITERAT,
+ccc     %          ' Nombre de TETRAEDRES dans AUCUN VOLUME=',NBELIM
+ccc      ENDIF
+
+
+C     BARYCENTRAGE DES SOMMETS INTERNES DE LA TETRAEDRISATION
+C     AVEC RECHERCHE D'UNE QUALITE MINIMALE DES TETRAEDRES
+C     DE LEUR ETOILE
+C     -------------------------------------------------------
+C     QUALITE D'UN TETRAEDRE AU DESSOUS DUQUEL IL EST DECLARE MEDIOCRE
+C     ET LEUR NOMBRE EST RECENSE DANS qualgrte.f
+      CALL BARYSTTE( QUAMED, NBSOMM,  PTXYZD, NPSOFR,
+     %               NBTETR, NUDTETR, MXTETR, NOTETR, N1TETS,
+     %               MXETOI, NTETOI )
+
+C     QUALITE DES TETRAEDRES APRES AJOUT DES POINTS
+      CALL QUALTETR( PTXYZD, MXTETR, NOTETR,
+     %               NBTETR, NUDTETR, QUAMIN, QUAMOY, VOLUMT )
+      VOLMOY = VOLUMT / NBTETR
+
+      PRINT*
+      PRINT*,'tetrarbo 2: ITERATION', ITERAT,' de NBSOM0+1=',NBSOM0+1,
+     %' a NBSOMM=',NBSOMM,' soit',NBSOMM-NBSOM0,
+     %' POINTS AJOUTES TETRAEDRISES'
+      PRINT*,'QUAMOY=',QUAMOY,' QUAMIN=',QUAMIN,' VOLUME=',VOLUMT,
+     %' Nb TETRA=',NBTETR,' No Dernier TETRA=',NUDTETR
+      PRINT*
+
+
+C     TENTATIVE D'AMELIORER LA QUALITE DE TOUS LES TETRAEDRES
+C     DE QUALITE MEDIOCRE PAR DIFFERENTES TECHNIQUES SELON
+C     LE TYPE DU TETRAEDRE PLAT ( TRIANGLE ou QUADRANGLE ) :
+C     SUPPRESSION DES TETRAEDRES D'UNE ARETE TRES COURTE
+C     CHANGEMENTS 3 TETRAEDRES -> 2 TETRAEDRES
+C     DECOMPOSITION DE TETRAEDRES EN 2 TETRAEDRES
+C     AMELIORER LA QUALITE DES TETRAEDRES AUTOUR 
+C     DU TETRAEDRE NTE DE MEDIOCRE QUALITE ET DE LUI-MEME
+C     -------------------------------------------------------
+      CALL AMQALLTE( QTEAME,  MXTETR, N1TEVI, NOTETR, N1TETS,
+     %               MXSOMM,  NBSOMM, PTXYZD, NPSOFR,
+     %               INFACO,  MXFACO, LEFACO, IVOLTE, NVOLTE,
+     %               MXETOI,  NTETOI, MXETOI, NFETOI,
+     %               MXSTAR,  NOSTAR,
+     %               NUDTETR, VOLMOY, MODIFT, IER )
+
+C     QUALITE DES TETRAEDRES APRES AJOUT DES POINTS
+      CALL QUALTETR( PTXYZD, MXTETR, NOTETR,
+     %               NBTETR, NUDTETR, QUAMIN, QUAMOY, VOLUMT )
+      VOLMOY = VOLUMT / NBTETR
+
+      PRINT*
+      PRINT*,'tetrarbo 3: ITERATION', ITERAT,' de NBSOM0+1=',NBSOM0+1,
+     %' a NBSOMM=',NBSOMM,' soit',NBSOMM-NBSOM0,
+     %' POINTS AJOUTES TETRAEDRISES'
+      PRINT*,'QUAMOY=',QUAMOY,' QUAMIN=',QUAMIN,' VOLUME=',VOLUMT,
+     %' Nb TETRA=',NBTETR,' No Dernier TETRA=',NUDTETR
+      PRINT*
+
+      IF( IERR   .EQ. 0      .AND. ITERAT .LT. 2  .AND.
+     %    NBSOMM .LT. MXSOMM .AND. NBSOM0 .LT. NBSOMM ) THEN
+
+C        UNE ITERATION D'AJOUT DE POINTS AUTOUR DES SOMMETS
+C        --------------------------------------------------
+         N2SOM  = NBSOMM
+         NBSOM0 = NBSOMM
+         GOTO 10
+
+      ENDIF
+
+
+C     FIN D'AJOUT DES POINTS DES TETRAEDRES TROP VOLUMINEUX
+C     =====================================================
+      PRINT*,'tetrarbo: FIN des ITERATIONS: IERR=',IERR,
+     %NBSOMM,' SOMMETS',
+     %NBSOMM-NBSOM00,' SOMMETS AJOUTES et TETRAEDRISES avec QUAMOY=',
+     %QUAMOY,' QUAMIN=',QUAMIN,' VOLUME=',VOLUMT,' NBTETR=',NBTETR,
+     %' NUDTETR=',NUDTETR
+
+      IERR = 0
+      TRACTE = TRACTE0
+      GOTO 9999
+
+ 9910 PRINT *,'tetrarbo: TABLEAU PTXYZD SATURE MXSOMM=',MXSOMM
+      IERR = 1
+      GOTO 9999
+
+ 9950 PRINT *,'tetrarbo: TABLEAU NOTETR SATURE MXTETR=',MXTETR
+      IERR = 3
+
+ 9999 RETURN
+      END

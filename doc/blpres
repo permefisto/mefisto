@@ -1,0 +1,7 @@
+BLPRESS is the value of the pressure to be imposed,
+with values chosen according to good unities, MKSA, ...
+
+If p is the pressure solution of the steady Stokes' problem,
+then p+Constant, forall real Constant, is also solution.
+A pressure, imposed at one point, fixes this constant.
+

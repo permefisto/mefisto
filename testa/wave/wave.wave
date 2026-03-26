@@ -1,0 +1,87 @@
+{ ==================================================================== }
+{ Software MEFISTO     : June 2007 Version                             }
+{ USER's Name          : Alain Perronnet                               }
+{ Project Name         : wave by Newmark and decentred schemes         }
+{ Date                 : 31/07/2007   11h 21m 38s                      }
+{ ==================================================================== }
+@;
+@;
+DefVar Tmin, Tmax; Tmin=0; Tmax=2;
+DefVar NbStepTime; NbStepTime=50;
+DefVar dist; dist=1.0001;
+
+2;{ HEAT TRANSFER INPUT DATA }
+  { SURFACE: S }
+  1;    { Rho MASS Density }
+  1;    { constant mass density }
+  1.2;  { DMASSE 'value of the density of MASS' reel ; }
+
+ 2;     { [A] TENSION as the HEAT CONDUCTIVITY }
+ 3;     { 2D HOMOGENOUS ISOTROPIC material }
+ 100;   { CONDUC 'constant material conductivity' reel ; }
+
+ 4;     { FOmega INTERNAL FORCE as an HEAT SOURCE }
+ 1;     { constant source }
+-0.1;   { SOURCE 'value of the source' reel ; }
+ @;
+
+ { LINE: BOUNDARY }
+ 3;    { Theta_D CONTACT imposed displacement as temperature }
+ 1;    { constant imposed temperature }
+ 0.0;  { CONTAC 'imposed temperature value' reel ; }
+ @;
+
+5;  { 2D WAVE solver from Tmin to Tmax ===================================== }
+ Tmin; { INITIAL TIME }
+
+ -1;   { function INITIAL DISPLACEMENT }
+ DefFunc Displacement0(t,x,y,z,nbtyob,nbob,nbcomp);
+ if abs(x-a/2)<dist and abs(y-b/2)<dist
+ then
+    Displacement0=10.0;
+ else
+    Displacement0=0;
+ endif;
+ endfunc;
+ { NAME of function INITIAL DISPLACEMENT }
+ Displacement0;
+
+ -1;  { function INITIAL SPEED OF DISPLACEMENTS }
+ DefFunc Velocity0(t,x,y,z,nbtyob,nbob,nbcomp);
+ if abs(x-a/2)<dist and abs(y-b/2) < dist then
+    Velocity0=2.0;
+ else
+    Velocity0=0;
+ endif;
+ endfunc;
+ { NAME of FUNCTION initial speed of displacements }
+ Velocity0;      { in LEXICON ~>FONCTION }
+
+ Tmax; { FINAL TIME }
+
+ { STEP of TIME }
+ DefVar StepTime; StepTime=(Tmax-Tmin)/NbStepTime;
+ StepTime;
+
+ { NUMBER of SOLUTION VECTORS to be STORED }
+ NbStepTime/2;
+
+ 1;  { CHOLESKY with SKYLINE STORAGE }
+ 1;  { Implicit NEWMARK s scheme (unconditional STABLE) }
+@;
+
+
+5;  { 2D WAVE solver from Tmax to Tmax+Tmax*2 ============================== }
+ Tmax;        { INITIAL TIME }
+ 3;           { Displacement at t0-dt & t0 stored }
+ Tmax+Tmax*2; { FINAL TIME }
+ StepTime;    { STEP of TIME with respect of NEWMARK }
+ NbStepTime;  { NUMBER of SOLUTION VECTORS to be STORED }
+ 2;           { PRECONDITIONNED CONJUGUATE GRADIENT }
+ 1;           { INCOMPLETE FACTORISATION LEVEL }
+ 2;           { Implicit DECENTRED scheme (unconditional STABLE) }
+
+9; { DRAWING of a WAVE }
+ 2;  { DISPLACEMENT of the WAVE }
+ 4;  { 2D SURFACE(X,Y,DEPLACEMENT(X,Y)) }
+CLOSE;

@@ -1,0 +1,62 @@
+{ ==================================================================== }
+{ Logiciel MEFISTO     : Version Decembre 2006                         }
+{ Nom de l'Utilisateur : Alain Perronnet                               }
+{ Nom du Projet        : vp21c                                         }
+{ Date                 :  5/01/2007   18h 21m 55s                      }
+{ ==================================================================== }
+ defvar a; a=0.5;
+ defvar R; R=60;
+
+
+1;  { POINTS sommets de l objet }
+ 1; { FRAPPE des valeurs }
+
+ origine;i; { NOM du POINT ou ABANDON? }
+            1;  0; 0; 0;  { coordonnees x y z }
+ amoins; i; 1; -a; 0; 0;
+ aplus;  i; 1;  a; 0; 0;
+@;
+
+4; { VOLUMES materiaux de l objet }
+ cube;
+ i;  { NOM de TRANSFORMATION }
+ 33; { HEXAEDRISATION d un CUBE ou SPHERE }
+ 1;  { CUBE }
+ 8;  { CUBSPN 'nombre d''aretes d''une direction du noyau' entier; }
+ 8;  { CUBSPC 'nombre de couches homothetiques' entier; }
+ 4;  { CUBSPL 'largeur du noyau du cube ou sphere' reel ; }
+ 2*R;{ CUBSPD 'largeur totale du cube ou sphere' reel ; }
+@;
+
+3; { SURFACES faces de l objet }
+ surfcube; i; { NOM de la SURFACE ou ABANDON? }
+ 37;     { surface extraite d un volume }
+ cube; { DANS LE LEXIQUE ~>VOLUME }
+ { NOM de FONCTION }
+ deffunc vrai(x,y,z);
+   vrai=1;
+ endfunc;
+ vrai;   { DANS LE LEXIQUE ~>FONCTION }
+ 1;      { faces frontalieres }
+ @;
+
+5;  { OBJETS parties de l OBJET }
+ electron_wave_functions;  { NOM de l'OBJET ou ABANDON? }
+ 0;   { classique 2D ou 3D }
+ 2;   { NBDOBJ 'nombre des Points Lignes Surfaces Volumes Objets de l''objet' }
+ vol;  cube;     { POINT ou LIGNE ou SURFACE ou VOLUME ou OBJET? }
+ surf; surfcube; { NTYOBJ(1..NBDOBJ) nom du type PLSVO et nom du PLSVO typeobjet; }
+@;
+
+7;  { INTERPOLATION NOEUDS du maillage }
+ electron_wave_functions; { NOM de l'OBJET a INTERPOLER? }
+ 4;  { LAGRANGE de DEGRE 2 }
+@;
+
+10;  { TRACE du MAILLAGE des PLSVO }
+ 5;  { OBJET }
+ 1;  { TOUS les OBJETS 1 par 1 }
+ 90; { Suite du TRACE }
+ @;
+
+fermer;

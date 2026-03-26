@@ -1,0 +1,5 @@
+Les POIDS ponderent les sommes
+- au numerateur des produits: point de controle-polynome
+- au numerateur des polynomes. 
+Ce sont generalement des valeurs reelles strictement positives
+Cependant seule la non-nullite est verifiee.

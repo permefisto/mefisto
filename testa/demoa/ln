@@ -1,0 +1,124 @@
+{ ================================================================ }
+{ MEFISTO software : Version August 2006                           }
+{ USER name        : Alain Perronnet                               }
+{ PROJECT name     : dema = demo anglaise                          }
+{ DATE             : 14/9/2006                                     }
+{ ================================================================ }
+@;
+@;
+@;
+defvar pis2; pis2=atan(1)*2;
+defvar ledge; ledge=0.007;   {length of edges}
+
+10;  { DRAWING of PLSVO }
+ 2;  { All LINES }
+ 1;  { All POINTS }
+ @;
+@;
+
+ 2; {LINES}
+ ax1ax2; i; 2; (r2-r1)/ledge; 1; ax1; ax2; { straight segment }
+ { IN LEXICON ~>TRANSFO }
+ { straight segment }
+ { NBARLI edge number of the line }
+ { RAIGEO geometrical ratio between vertices of the line }
+ { IN LEXICON ~>POINT }
+ { IN LEXICON ~>POINT }
+ { LINE NAME or ABANDON? }
+ ay1ay2; i; 2; (r2-r1)/ledge;  1; ay1; ay2; { straight segment }
+ ax1am1ay1; i; 3; pis2*r1/ledge; 1; ax1; ay1; am1; { arc of circle }
+ ax2am2ay2; i; 3; pis2*r2/ledge; 1; ax2; ay2; am2; { arc of circle }
+
+ ax1bx1; i; 2; zb/ledge;  1; ax1; bx1;
+ ay1by1; i; 2; zb/ledge;  1; ay1; by1;
+
+ ax2bx2; i; 2; zb/ledge;       1; ax2; bx2; { straight segment }
+ ay2by2; i; 2; zb/ledge;       1; ay2; by2; { straight segment }
+
+ bx1bx2; i; 2; (r2-r1)/ledge;    1; bx1; bx2; { straight segment }
+ by1by2; i; 2; (r2-r1)/ledge;    1; by1; by2; { straight segment }
+ bx1bm1by1; i; 3; pis2*r1/ledge; 1; bx1; by1; bm1; { arc of circle }
+ bx2bm2by2; i; 3; pis2*r2/ledge; 1; bx2; by2; bm2; { arc of circle }
+
+ bx1cx1; i; 2; (zc-zb)/ledge;    1; bx1; cx1;
+ by1cy1; i; 2; (zc-zb)/ledge;    1; by1; cy1;
+
+ bx2bx3; i; 2; (r3-r2)/ledge;    1; bx2; bx3; { straight segment }
+ by2by3; i; 2; (r3-r2)/ledge;    1; by2; by3; { straight segment }
+ bx3bm3by3; i; 3; pis2*r3/ledge; 1; bx3; by3; bm3; { arc of circle }
+
+ bx3cx3; i; 2; (zc-zb)/ledge;  1; bx3; cx3; { straight segment }
+ by3cy3; i; 2; (zc-zb)/ledge;  1; by3; cy3; { straight segment }
+
+ cx1cx3;     i; 2; (r3-r1)/ledge; 1; cx1; cx3; { straight segment }
+ cx1cm1cy1;  i; 3; pis2*r1/ledge; 1; cx1; cy1; cm1;   { arc of circle }
+ cy1cpd;     i; 2; (yp-r1)/ledge; 1; cy1; cpd; { straight segment }
+ cx3cmpgcpg; i; 3; r3*alfa/ledge; 1; cx3; cpg; cmpg;  { arc of circle }
+ cpgcm3cy3;  i; 3; r3*beta/ledge; 1; cpg; cy3; cm3;   { arc of circle }
+ cpgcpd;     i; 2; r3*cos(alfa)/ledge; 1; cpg; cpd; { straight segment }
+ cpdcy3;     i; 2; (r3-yp)/ledge; 1; cpd; cy3; { straight segment }
+
+ cpdcdyp;     i; 2; (zd-r4-zc)/ledge;   1; cpd;  cdyp;
+ cdypdmpdeyp; i; 3; pis2*2*r4/ledge;    1; cdyp; deyp; dmp;
+ deypepd;     i; 2; (ze-r4-zd)/ledge;   1; deyp; epd;
+ epgepd;      i; 2; r3*cos(alfa)/ledge; 1; epg;  epd;
+ epdey3;      i; 2; (r3-yp)/ledge;      1; epd;  ey3;
+ epgem3ey3;   i; 3; r3*beta/ledge;      1; epg;  ey3;  em3;
+
+ deypdey3;    i; 2; (r3-yp)/ledge;      1; deyp; dey3;
+ cdypcdy3;    i; 2; (r3-yp)/ledge;      1; cdyp; cdy3;
+
+ cpgepg;  i; 2; (ze-zc)/ledge;    1; cpg;  epg;
+ cy3cdy3; i; 2; (zd-r4-zc)/ledge; 1; cy3; cdy3;
+ dey3ey3; i; 2; (ze-r4-zd)/ledge; 1; dey3; ey3;
+ cdy3dm3dey3; i; 3; pis2*2*r4/ledge; 1; cdy3; dey3; dm3;
+ cx3cy3; i; 51; 2; cx3cmpgcpg; cpgcm3cy3;
+@;
+
+6; {mappings}
+ proj_cyl3; 4; {projection on the cylinder of radius r3 in direction -oY}
+ deffunc cylinder3(x,y,z); cylinder3= x**2 + y**2 - r3**2; endfunc;
+ cylinder3;
+ -2; {projection selon -oY}
+
+ c3;  6;  { mapping R3 -> R3 defined by 3 functions }
+ deffunc c3x(x,y,z); c3x=r3*sin(x/r3); endfunc;   c3x;
+ deffunc c3y(x,y,z); c3y=r3*cos(x/r3); endfunc;   c3y;
+ deffunc c3z(x,y,z); c3z=z;            endfunc;   c3z;
+
+ c3m1; 6; { mapping R3 -> R3 defined by 3 functions }
+ deffunc c3m1x(x,y,z);
+    if y<1e-5          { traitement de la tangente infinie }
+    then  if y>0 
+           then c3m1x= r3*pis2;
+           else c3m1x=-r3*pis2;
+           endif;
+    else   c3m1x=r3*atan(x/y); 
+    endif;
+ endfunc;    
+ deffunc c3m1y(x,y,z); c3m1y=r3; endfunc;
+ deffunc c3m1z(x,y,z); c3m1z=z;  endfunc;
+ c3m1x;  c3m1y;  c3m1z; 
+@;
+
+2;
+ intersec; proj_cyl3; 50; cdy3dm3dey3;
+ bx;    i; 51; 2; bx1bx2; bx2bx3;
+ by;    i; 51; 2; by1by2; by2by3;
+ cy;    i; 51; 2; cy1cpd; cpdcy3;
+ cxypd; i; 51; 5; cx1cx3; cx3cmpgcpg; cpgcpd; cy1cpd; cx1cm1cy1;
+ cepg;  i; 51; 6; cpgcpd; cpdcdyp; cdypdmpdeyp; deypepd; epgepd; cpgepg;
+ cy3;   i; 51; 3; cy3cdy3; intersec; dey3ey3;
+ cyl3;  i; 51; 4; cpgcm3cy3; cy3; epgem3ey3; cpgepg;
+ cyce3plan; c3m1; 50; cyl3;
+ edg;   i; 51; 3; epgem3ey3; epdey3; epgepd;
+ la;    i; 51; 4; ax1ax2; ax2am2ay2; ay1ay2; ax1am1ay1;
+
+@;
+
+10;    { DRAWING of PLSVO }
+ 2; 1; { All LINES }
+90;    { EXECUTE the DRAWING }
+@;
+
+close;

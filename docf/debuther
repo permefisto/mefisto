@@ -1,0 +1,168 @@
+Resolution d'un PROBLEME THERMIQUE :  
+
+0: Nombre de JEUX de DONNEES (par defaut 1) de l'operateur 
+   -div A grad u + CT u
+   La valeur 1 par defaut est generalement correcte. Seules les
+   resolutions de valeurs propres solution d'un polynome de matrices
+   et d'un probleme non lineaire necessite un nombre >1.
+   Ces 2 cas sont en cours de programmation ...
+
+1: Avant tout le NOM de l'OBJET a traiter doit etre connu.
+   Cet objet a du etre maille et interpole auparavant.
+   S'il existe un seul objet, Mefisto le retrouve automatiquement
+   et ce nom peut ne pas etre donne
+
+2: L'entree des donnees du probleme thermique:
+
+  -La MASSE, la CHALEUR MASSIQUE, la CONDUCTIVITE, la DILATATION 
+   les SOURCES INTERNES de CHALEUR, l'eventuelle VITESSE du FLUIDE
+   le COEFFICIENT de la TEMPERATURE doivent etre donnees
+   au niveau de chaque composant de l'objet: volume en 3D ou surface en 2D;
+
+  -La temperature imposee (Condition de DIRICHLET) ici nommee CONTACT, 
+   le FLUX normal encore dit ici SOURCE (Condition de NEUMANN)
+   ou le produit du coefficient d'ECHANGE par la TEMPERATURE du FLUIDE
+   qui baigne la paroi frontiere, produit encore dit ici SOURCE par abus
+   de notation, doivent etre donnes pour chaque composant de la frontiere.
+
+   @ permet l'abandon des donnees d'un composant d'objet.  
+
+   EXEMPLE :
+                         L3
+       P4 *----------------------------------* P3
+          |                                  |
+          |                                  |    
+          |                                  |
+          |                                  |
+          |                                  |
+       L4 |              S                   | L2    
+          |                                  |
+          |                                  |
+          |                                  |
+          |                                  |    
+          |                                  |
+          |                                  |
+       P1 *----------------------------------* P2
+                         L1
+
+   LES CARACTERISTIQUES PHYSIQUES pour le probleme stationnaire : 
+
+   sur S  : CONDUCTIVITE et SOURCE de chaleur INTERNE 
+   * designe ensuite l'un des 4 caracteres 1 ou 2 ou 3 ou 4
+   sur L* : CONTACT (temperature imposee) ou
+            SOURCE  (flux normal de chaleur) ou
+            ECHANGE et SOURCE ( echange * temperature du fluide exterieur ) 
+   sur P* : CONTACT si le point P* est aussi sur une L* avec conditions
+            aux limites differentes  et cela afin de lever l'ambiguite.  
+
+   si L4 est en contact : temperature=0   degre
+      L2 est en contact : temperature=100 degres
+      L3 subit une condition de FOURIER,
+   alors, il est necessaire de definir
+      P3 en CONTACT : temperature=100 degres
+      P4 en CONTACT : temperature=0   degre      
+   afin d'etre sur de la condition de Dirichlet appliquee en ces points.
+
+   Se rappeler aussi qu'au moins, une condition de CONTACT en un point
+   ou une condition de FOURIER sur une ligne est NECESSAIRE pour que
+   la MATRICE du systeme soit INVERSIBLE !  
+
+   Si l'objet OB est defini par : 
+   surface S  ligne L2  ligne L3  ligne L4  point P3  point P4 
+   alors le flux normal de chaleur sur L1 est impose nul!
+
+3: RESOLUTION du probleme THERMIQUE LINEAIRE STATIONNAIRE
+   Les donnees fournies, la resolution du probleme peut debuter.
+   Le choix entre methode directe (CHOLESKY) ou iterative (GRADIENT CONJUGUE)
+   sera demande ensuite.
+
+4: RESOLUTION du probleme THERMIQUE LINEAIRE INSTATIONNAIRE
+   Les donnees fournies, la resolution du probleme peut debuter.
+   Le choix entre methode directe (CHOLESKY) ou iterative (GRADIENT CONJUGUE)
+   sera demande ensuite.
+
+5: CALCUL d'ONDE INSTATIONNAIRE rot d2 u/dt2 -div A grad u = f
+   L'int\'egration en temps est faite selon le sch\'ema de Newmark ou decentre
+   qui sont inconditionnellement stables.
+
+6: CALCUL des petites VALEURS et VECTEURS PROPRES de l'operateur -div A grad
+   peut etre effectue selon 2 methodes: SOUS ESPACES ou ITERATIONS INVERSES.
+
+8: DESSIN  des Temperatures,Flux, ...
+   Apres le calcul des temperatures, il est possible de tracer les isothermes,
+   ou des fleches representant le gradient de temperature en differents points.
+
+9: DESSIN de la PROPAGATION d'une ONDE
+   Apres calcul, il est interessant de tracer l'onde plane aux differents 
+   pas de temps
+
+10: DESSIN du MAILLAGE des PLSVO
+    pour revoir la qualite du maillage et la forme et les composants
+    de l'objet.
+
+11: DESSIN des ISO-SURFACES definies par f(x,y,z)=Ctes
+   Il s'agit de tracer une surface definie dans un maillage 3d a partir 
+   d'une fonction implicite utilisateur sous la forme f(x,y,z)=Ctes.
+  (Une carte de pseudo-temperatures aux noeuds est definie; puis,
+   le trace de ses isothermes est effectue)
+
+13: ENERGIES des SOLUTIONS
+    Apres calcul, l'energie cinetique ( T [K] Tt )
+    et l'energie potentielle ( T [M] Tt ) de la temperature T
+    sont calculees.
+
+20: PRECISION  pour INVERSER A x = b
+    pour donner la valeur du seuil de convergence des iterations
+    du gradient conjugue ou de la factorisation de Cholesky
+
+Les autres options servent a faire le suivi de votre projet. 
+
+39 : COULEUR du FOND
+A changer si la couleur par defaut ne convient pas.
+
+71: SUIVI des TMS AFFICHAGE ou MODIFICATION ...
+Avec cette option, il est possible de 
+- AFFICHER un TMS (Tableau Memoire Secondaire)
+- ENTRER   les VALEURS d'un TMS
+- AFFICHER la VALEUR d'une variable d'un TMS
+- IMPOSER  la VALEUR d'une variable d'un TMS
+- CHANGER  un NOM dans un LEXIQUE
+
+72: SUIVI des FICHIERS de la Memoire Secondaire  
+Notamment il est possible d'AJOUTER un fichier a la MS
+si celle ci vient a etre saturee.
+
+73: GESTION des unites de lecture et affichages 
+Les ENTREES/SORTIES peuvent etre faites selon differentes options 
+1 a 3 : mode INTERACTIF         Il est   possible de dialoguer
+5     : mode BATCH ou AVEUGLE   Il est impossible de dialoguer 
+1: pas de trace graphique possible, pas de souris
+2:        trace graphique         , pas de souris 
+3:        trace graphique         , une    souris 
+Le CLAVIER permet la SAISIE par frappe de CARACTERES.
+La SOURIS  permet la SAISIE par clic sur une OPTION ou par
+PROXIMITE d'un PLSV.
+L'option 3 s'avere la plus pratique. (Valeur par defaut)
+L'option 2 permet de reutiliser le contenu de fichiers, alors
+injectables dans la fenetre d'entree.
+Dans ce cas, sur materiel APOLLO, le trace graphique est reduit
+a une partie "carree" de l'ecran, le restant devenant une fenetre
+ENTREE/SORTIE.
+
+74: TUER des TMS PLSVO... mais A VOS RISQUES et PERILS ...
+Il est possible de DETRUIRE un TMS ou un PLSVO
+Mais sans possibilite de les recuperer. 
+Attention a ne pas d'etruire un tableau encore utile!
+Sinon, gare aux resultats ... 
+
+ATTENTION:
+99: SAUVEGARDE des donnees et FIN du TRAITEMENT
+Cette OPTION EST OBLIGATOIRE pour recuperer les TMS calcules
+au cours de cette execution.
+Un ARRET sans passage par cette option peut etre CATASTROPHIQUE
+ensemble de TMS incoherent, redemarrage impossible, ...
+(Heureusement dans ces malheureux cas, il existe tout de meme
+les fichiers frappe.001 .002 , ... qui permettent de relancer
+toutes les executions.
+Mais ce n'est pas a recommander.
+

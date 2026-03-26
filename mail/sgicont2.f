@@ -1,0 +1,252 @@
+      SUBROUTINE SGICONT2( NBSGI,   LCHSGI, MXSGI,  NSTSGI,
+     %                     L1CHSGI, NBSU,   NUSU,   NUARET,
+     %                     LCH2 )
+C+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+C BUT :    REORDONNER LES SGI (SEGMENT D'INTERSECTION ENTRE TRIANGLES)
+C -----    CHAINES POUR EN FAIRE 2 SUITES CONTINUES D'ARETES A PARTIR
+C          DU SOMMET NUSU(1)
+C          ATTENTION: LA FIN DE CHAINAGE DE LA PREMIERE SUITE
+c                     DONNE LE SGI SUIVANT AVEC UN CHAINAGE NEGATIF!...
+C
+C ENTREES:
+C --------
+C NBSGI  : NOMBRE DE SGI CHAINES DANS LCHSGI
+C MXSGI  : NOMBRE MAXIMAL DE SGI DECLARABLES DANS NSTSGI
+C
+C MODIFIES:
+C----------
+C LCHSGI : LCHSGI(1,.) NUMERO DU SGI DANS NSTSGI
+C          LCHSGI(2,.) CHAINAGE SUR LE SGI SUIVANT DANS LCHSGI
+C NSTSGI : NSTSGI(1,.) NUMERO DANS XYZPTA DU PREMIER POINT DU SGI
+C          NSTSGI(2,.) NUMERO DANS XYZPTA DU SECOND  POINT DU SGI
+C          NSTSGI(3,.) NUMERO DU TRIANGLE DANS LA TRIANGULATION NUSTS1
+C          NSTSGI(4,.) NUMERO DU TRIANGLE DANS LA TRIANGULATION NUSTS2
+C L1CHSGI: POINTEUR DANS LCHSGI SUR 1-ER SGI DU CHAINAGE
+C NBSU   : NOMBRE DE SOMMETS UNIQUES DES SGI
+C NUSU   : NUMERO DES NBSU SOMMETS SIMPLES DES SGI
+C          SUITE 1 DE NUSU(1) A NUSU(2) FIN DE CHAINAGE SUIVANT <0
+C          SUITE 2 DE NUSU(3) A NUSU(4) FIN DE CHAINAGE SUIVANT <0
+C          SUITE 3 DE NUSU(5) A NUSU(6) FIN DE CHAINAGE SUIVANT =0
+C NUARET : NUARET(M) NUMERO DU COTE DU TRIANGLE OU EST LE SOMMET NUSU(M)
+C
+C SORTIES:
+C --------
+C LCH2   : NUMERO DANS LCHSGI DU DERNIER SGI DE SOMMET FINAL NUSU(NBSU-2)
+C+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+C AUTEUR : PERRONNET Alain LJLL UPMC & St Pierre du Perray  Octobre 2011
+C2345X7..............................................................012
+      INTEGER   LCHSGI(2,NBSGI), NSTSGI(4,MXSGI),
+     %          NUSU(NBSU), NUARET(NBSU)
+C
+C     NOMBRE DE CHAINAGES DE SGI TRAITES DE NUSU(2i-1) a NUSU(2i)
+C     PARMI LES NBSU/2 CHAINAGES
+      NBCH1 = 0
+C
+C     RECHERCHE DU SGI DE SOMMET NUSU(1) NUMERO 1-ER SOMMET SIMPLE DES SGI
+C     --------------------------------------------------------------------
+      NSG0 = NUSU(1)
+      LCH0 = 0
+      LCH  = L1CHSGI
+C     NUMERO DANS LCHSGI DU SGI
+ 10   NSGI = LCHSGI( 1, LCH )
+C     NSG1 NUMERO DU SOMMET 1 DU SGI DANS XYZPTA
+      NSG1 = NSTSGI( 1, NSGI )
+C     NSG2 NUMERO DU SOMMET 2 DU SGI DANS XYZPTA
+      NSG2 = NSTSGI( 2, NSGI )
+C
+      IF( NSG1 .NE. NSG0 .AND. NSG2 .NE. NSG0 ) THEN
+C        NSG1 et NSG2 DIFFERENTS DE NSG0
+         LCH0 = LCH
+         LCH  = LCHSGI( 2, LCH )
+         IF( LCH .GT. 0 ) GOTO 10
+C        IMPOSSIBLE D'ARRIVER APRES LE IF CAR NUSU(1) EXISTE DANS LES SGI
+      ENDIF
+C
+C     NUSU(1) 1-ER OU SECOND SOMMET DU SGI LCH?
+      IF( NSG2 .EQ. NSG0 ) THEN
+C        NSG2=NSG0  => PERMUTATION NSG1 ET NSG2 SOMMETS DU SGI
+         NSTSGI( 1, NSGI ) = NSG2
+         NSTSGI( 2, NSGI ) = NSG1
+         N    = NSG1
+         NSG1 = NSG2
+         NSG2 = N
+      ENDIF
+C
+C     ICI NSG1=NUSU(1) EST LE PREMIER SOMMET DU SGI LCH
+C     SI LE PREMIER SGI  CONTIENT NUSU(1) => RIEN A FAIRE
+      IF( LCH0 .EQ. 0 ) GOTO 18
+C
+C     NUSU(1) EST SUR UN SGI QUI N'EST PAS LE PREMIER DU CHAINAGE
+C     CHAINAGES POUR LE METTRE EN PREMIER ET RACCORDER LA SUITE
+C     A PARTIR DU DERNIER ACTUEL
+C     -----------------------------------------------------------
+      LCH1 = LCH
+C
+C     RECHERCHE DU DERNIER SGI ACTUEL
+ 15   LCHDER = LCH1
+      LCH1   = LCHSGI( 2, LCH1 )
+      IF( LCH1 .GT. 0 ) GOTO 15
+C
+C     LE DERNIER A POUR SUIVANT LE PREMIER ACTUEL
+      LCHSGI( 2, LCHDER ) = L1CHSGI
+C
+C     LE PRECEDENT DU PREMIER SGI DEVIENT LE DERNIER SGI
+      LCHSGI( 2, LCH0 ) = 0
+C
+C     LE SGI DE SOMMET 1 NUSU(1) EST LCH ET DEVIENT LE PREMIER DES SGI
+      L1CHSGI = LCH
+C
+C     ICI, LE SGI DE SOMMET 1 NUSU(1) EST EN TETE DES SGI
+C     CHAINAGE DES SGI EN CONTINU A PARTIR DE CE SOMMET NSG1=NUSU(1)
+C     --------------------------------------------------------------
+ 18   NBSG = 0
+C
+C     RECHERCHE DE NSG2 LE SECOND SOMMET DU SGI PARMI LES AUTRES SGI
+ 20   LCH00 = LCH
+      NSG00 = NSG2
+C
+C     PARCOURS DES SGI RESTANTS POUR TROUVER NSG00
+      LCH0 = LCH
+      LCH  = LCHSGI( 2, LCH )
+C
+ 30   IF( LCH .GT. 0 ) THEN
+C
+C        NUMERO DANS LCHSGI DU SGI
+         NSGI = LCHSGI( 1, LCH )
+C        NSG1 NUMERO DU SOMMET 1 DU SGI DANS XYZPTA
+         NSG1 = NSTSGI( 1, NSGI )
+C        NSG2 NUMERO DU SOMMET 2 DU SGI DANS XYZPTA
+         NSG2 = NSTSGI( 2, NSGI )
+C
+         IF( NSG1 .NE. NSG00 .AND. NSG2 .NE. NSG00 ) THEN
+C           NSG1 et NSG2 DIFFERENTS DE NSG00
+            LCH0 = LCH
+            LCH  = LCHSGI( 2, LCH )
+            GOTO 30
+         ENDIF
+C
+C        NSG00 EST RETROUVE
+         NBSG = NBSG + 1
+C
+         IF( NSG2 .EQ. NSG00 ) THEN
+C           NSG2=NSG0
+C           PERMUTATION NSG1 ET NSG2 SOMMETS DU SGI
+            NSTSGI( 1, NSGI ) = NSG2
+            NSTSGI( 2, NSGI ) = NSG1
+            N    = NSG1
+            NSG1 = NSG2
+            NSG2 = N
+         ENDIF
+C
+C        ICI NSG1=NSG00 DE LCH  CHAINAGE A LA SUITE DE LCH00
+         IF( LCHSGI( 2, LCH00 ) .EQ. LCH ) GOTO 20
+C
+         LC1 = LCHSGI( 2, LCH00 )
+         LC2 = LCHSGI( 2, LCH )
+         LCHSGI( 2, LCH00 ) = LCH
+         LCHSGI( 2, LCH   ) = LC1
+         LCHSGI( 2, LC1   ) = LC2
+         IF( LC1 .GT. 0 ) THEN
+C           ENCORE UN SGI A TRAITER
+            GOTO 20
+         ENDIF
+C
+      ENDIF
+C
+      IF( NBSG+1 .LT. NBSGI ) THEN
+C
+C        NSG00 N'A PAS ETE RETROUVE. IL EST DONC SOMMET UNIQUE
+C        FIN DU CHAINAGE NUSU(NBCH:NBCH1)
+C        -----------------------------------------------------
+         NBCH1 = NBCH1 + 2
+         NBCH  = NBCH1 - 1
+C
+C        RECHERCHE DE M TQ NSG00=NUSU(M) PARMI NUSU(NBCH1:NBSU)
+C        CE CHAINAGE EST FINI. IL FAUT EN REPRENDRE UN AUTRE
+         LCH2 = LCH00
+         LCH0 = LCHSGI( 2, LCH00 )
+C
+C        CHAINAGE NEGATIF POUR MONTRER LA DISCONTINUITE DES SUITES DE SGI
+         LCHSGI( 2, LCH00 ) = -LCH0
+C
+C        PERMUTATION POUR METTRE NSG00 DANS NUSU(NBCH1)
+         DO M=NBCH1,NBSU
+            IF( NSG00 .EQ. NUSU(M) ) THEN
+C              PERMUTATION NUSU(M) ET NUSU(NBCH1)
+               L             = NUSU(M)
+               NUSU(M)       = NUSU(NBCH1)
+               NUSU(NBCH1)   = L
+C              PERMUTATION NUARET(M) ET NUARET(NBCH1)
+               L             = NUARET(M)
+               NUARET(M)     = NUARET(NBCH1)
+               NUARET(NBCH1) = L
+               GOTO 40
+            ENDIF
+         ENDDO
+C
+C        RECHERCHE DU SOMMET NUSU(NBCH+2) PARMI NUSU(NBCH+2:NBSU)
+C        COMME CELUI SUR LA MEME ARETE QUE NUSU(NBCH1)
+C        --------------------------------------------------------
+ 40      NBCH2 = NBCH1 + 1
+         DO M = NBCH2, NBSU
+            IF( NUARET(NBCH1) .EQ. NUARET(M) ) THEN
+C              PERMUTATION NUSU(NBCH2) ET NUSU(NBSU)
+               L           = NUSU(NBCH2)
+               NUSU(NBCH2) = NUSU(NBSU)
+               NUSU(NBSU)  = L
+               L             = NUARET(NBCH2)
+               NUARET(NBCH2) = NUARET(NBSU)
+               NUARET(NBSU)  = L
+            ENDIF
+         ENDDO
+C        ICI PAS D'AUTRE SOMMET UNIQUE SUR L'ARETE NUARET(NBCH1)
+         print *
+         print *,'sgicont2: PAS DE SOMMET UNIQUE NON', NSG00,
+     %           ' sur l''arete',NUARET(NBCH1)
+         print *,'LE CHAINAGE SUIVANT PART AVEC L''ACTUEL NUSU(NBCH2)=',
+     %           NUSU(NBCH2)
+C        LE CHAINAGE SUIVANT PART AVEC L'ACTUEL NUSU(NBCH2)
+C
+C        DEPART DU CHAINAGE NBCH1/2+1 AVEC NUSU(NBCH2)
+C        ---------------------------------------------
+         LCH  = LCH0
+ 50      LCH  = LCHSGI( 2, LCH )
+         IF( LCH .LE. 0 ) GOTO 60
+         NSGI = LCHSGI( 1, LCH )
+C        NSG1 NUMERO DU SOMMET 1 DU SGI DANS XYZPTA
+         NSG1 = NSTSGI( 1, NSGI )
+         NSG2 = NSTSGI( 2, NSGI )
+         IF( NSG1 .NE. NUSU(NBCH2) ) THEN
+            IF( NSG2 .NE. NUSU(NBCH2) ) GOTO 50
+C           NSG2=NUSU(NBCH2)  PERMUTATION NSG1 NSG2
+            NSTSGI( 1, NSGI ) = NSG2
+            NSTSGI( 2, NSGI ) = NSG1
+         ENDIF
+         NSG1 = NUSU(NBCH2)
+         NSG2 = NSTSGI( 2, NSGI )
+         GOTO 20
+      ENDIF
+C
+C     ICI LES NBSGI/2 SGI SONT ORDONNES CONTINUS DE NUSU(2i-1) A NUSU(2i)
+C     -------------------------------------------------------------------
+ 60   LCH4 = LCH0
+      NSGI = LCHSGI( 1, LCH4 )
+C     VERIFIER QUE CES 2 TERMES SONT EGAUX
+      print*,' NUSU(NBSU)=',NUSU(NBSU),
+     %       ' =? NSTSGI(2,NSGI)=',NSTSGI(2,NSGI)
+C
+C     AFFICHAGE DES SGI CONTINUS
+      print *
+      DO M=1,NBSU/2
+         L = 2 * M
+         print *,'sgicont2:   NUSU(',L-1,')=',NUSU(L-1),
+     %                      ' NUSU(',L,  ')=',NUSU(L),
+     %                  '  NUARET(',L-1,')=',NUARET(L-1),
+     %                  '  NUARET(',L  ,')=',NUARET(L)
+      ENDDO
+C
+C     AFFICHAGE DU CHAINAGE FINAL DES SGI
+      CALL SGIIMPR( L1CHSGI, LCHSGI, NSTSGI )
+C
+      RETURN
+      END

@@ -1,0 +1,270 @@
+deftms ~>SURFACE>>DEFINITION 'Definition of a SURFACE'
+variable muet DATE 'date of creation of the TMS'   reel2  ;
+variable muet NUTD 'number of the descriptor array TD' entier ; 
+variable NTYTRS 'transformation (I for IDENTITY)' ^~>TRANSFO ;
+variable NUTYSU 'type of the surface'   entier
+ ( 1  : 'TRANSFINITE QUADRANGLE'
+ , 2  : '2D STRUCTURED ELLIPTICAL QUADRANGLE'
+ , 3  : 'SPLINE QUADRANGLE INTERPOLATION of POINTS'
+ , 4  : 'SPLINE QUADRANGLE INTERPOLATION of VERTICES of LINES'
+ , 6  : 'TRANSFINITE TRIANGLE DEFINED BY 3 EDGE LINES'
+ , 8  : 'QUADRANGULATION of a SQUARE or a CIRCLE'
+ , 9  : 'TRIANGULATION1 BETWEEN CLOSED LINES'
+ , 10 : 'INPUT DATA of XYZSOMMET & NSEF TMS'
+ , 11 : '2D STRUCTURED RECTANGLE of EDGES 1'
+ , 12 : '2D STRUCTURED RECTANGULAR TRIANGLE of EDGES 1'
+ , 13 : 'QUADRANGULATION of a CONVEX CLOSED CURVE'
+ , 14 : 'SLICES FROM A GENERIC LINE (EXTRUSION)'
+ , 15 : 'ROTATION of a LINE AROUND AN AXIS'
+ , 16 : 'MAGNIFYING of a 2D-LINE INTO LAYERS'
+ , 17 : '1/8 SPHERE SURFACE'
+ , 18 : '1/1 SPHERE SURFACE'
+ , 19 : 'TRIANGULATION2 of CLOSED LINES BY SUBDIVISION'
+ , 20 : 'EXTRUDED SURFACES of a PLANE POLYGON'
+ , 21 : 'CLOSED SURFACE of a BOX'
+ , 22 : 'CLOSED SURFACE of a CYLINDER or a CONE'
+ , 23 : 'CLOSED SURFACE of a TORUS'
+ , 25 : 'a TREE from Z Cst PLANE-CIRCLES PIECES'
+ , 27 : 'ANGULAR SECTOR of a TRUCATED CONE or A CYLINDER'
+ , 28 : 'FILLET SURFACE WITH TANGENT CONE'
+ , 29 : 'MODIFY a 2D or 3D MESH WITH MENUS AND MOUSE'
+ , 30 : 'QUALITY IMPROVEMENT of a TRIANGULATION'
+ , 31 : 'TRIANGULATION of a QUADRANGULATION'
+ , 32 : 'JUNCTION 1 POINT TO EDGES of a LINE'
+ , 33 : 'JUNCTION BETWEEN EDGES of LINES'
+ , 34 : 'EXTRACT QUADRANGLES FROM STRUCTURED HEXAHEDRON'
+ , 35 : 'EXTRACT QUADRANGLES FROM STRUCTURED QUADRANGLE'
+ , 36 : 'EXTRACT SURFACE FROM A CRITERION(x,y,z)'
+ , 37 : 'EXTRACT SURFACE FROM FACES of a VOLUME'
+ , 38 : 'EXTRACT SURFACE BY CLICKING FROM a SURFACE'
+ , 39 : 'SUBDIVISION INTO 4 FE of EVERY 2D FE'
+ , 40 : 'EXTRACT SURFACE = SURFACE1 - SURFACE2'
+ , 41 : 'EXTRACT 3D SURFACE if (NORMAL,VECTOR)>=0'
+ , 42 : 'G1-CONTINUITY of SURFACES WITH TANGENTS'
+ , 45 : 'LOGICAL OPERATORS on 2 2D or 3D-SURFACE MESHES'
+ , 46 : 'SEW SINGLE EDGES only in 1 FE of a MESHED SURFACE'
+ , 48 : 'IMPOSED POINTS ONTO the NEAREST VERTEX of the SURFACE'
+ , 50 : 'MAPPING of a SURFACE'
+ , 51 : 'C0-CONTINUITY UNION of SURFACES'
+ , 52 : 'G1-CONTINUITY UNION of SURFACES'
+ , 81 : 'RENAME A SURFACE'
+ , 82 : 'DELETE THIS SURFACE' ) ;
+cas NUTYSU
+  1: tableau  NU4COT(1..4) 'NAMES of the 4 lines' ^~>LIGNE ; 
+     variable LAGHER 'type of mesh'   entier 
+    (  1: 'regular mesh'
+    ,  2: 'irregular mesh' );
+  2: tableau  NU4COR(1..4)  'NAMES of the 4 lines' ^~>LIGNE ; 
+     variable NITC2D 'NUMBER of iterations to improve quality' entier ; 
+     cas NITC2D
+   1..100: tableau FADI2D(1..4) 'ratio to define the boundary distance' reel ;
+     fincas ;
+  3: variable NBAXQB 'NUMBER of edges of first parameter U' entier ;
+     variable NBAYQB 'NUMBER of edges of second parameter V' entier ;
+     variable RAGXQB 'geometrical ratio between the U-vertices' reel ;
+     variable RAGYQB 'geometrical ratio between the V-vertices' reel ;
+     variable LDEXSB 'U-degree of polynomials' entier ;
+     variable LDEYSB 'V-degree of polynomials' entier ; 
+     variable NBPIEX 'NUMBER of U interpolation points' entier;
+     variable NBPIEY 'NUMBER of V interpolation points' entier;
+     tableau  POINSB(1..NBPIEX,1..NBPIEY) 
+             'NAMES of interpolation points (U first)' ^~>POINT ; 
+  4: variable NBAXQB 'NUMBER of edges of first parameter U' entier ;
+     variable NBAYQB 'NUMBER of edges of second parameter V' entier ;
+     variable RAGXQB 'geometrical ratio between the U-vertices' reel ;
+     variable RAGYQB 'geometrical ratio between the V-vertices' reel ;
+     variable LDEXSB 'U-degree of polynomials' entier ;
+     variable LDEYSB 'V-degree of polynomials' entier ; 
+     variable NBLISB 'NUMBER in V of interpolation lines(U)' entier;
+     tableau  LIGNSB(1..NBLISB)
+             'NAME of interpolation lines(U)' ^~>LIGNE ; 
+  5: variable NBARTB 'NUMBER of subdivision of an edge' entier ;
+     variable LDEGTB 'degree of polynomials' entier ;
+     variable NBPTTB 'NUMBER of control points' entier ;
+     tableau  NUPTTB(1..NBPTTB) 'NAMES of control points' ^~>POINT ;
+  6: tableau  NU3COT(1..3) 'NAMES of 3 lines of the triangle' ^~>LIGNE ;
+  8: variable CARCER '2d SQUARE or 2d CIRCLE' entier
+      ( 1: '2d SQUARE', 2: '2d CIRCLE' );
+      variable CARCEN 'NUMBER of EDGES in a direction of KERNEL' entier;
+      variable CARCEC 'NUMBER of HOMOTHETIC LAYERS beyond KERNEL' entier;
+      variable CARCEL 'LENGTH of square or circle KERNEL' reel ;
+      variable CARCED 'TOTAL LENGTH of the square or circle' reel ;
+  9: variable ARETMX 'MAX LENGTH of edges of regular triangles' reel ;
+     variable NBLFTR 'NUMBER of closed lines contour of the surface' entier ; 
+     variable NBPTIT 'NUMBER of internal points future vertices' entier ;
+     tableau  NULFTR(1..NBLFTR) 'NAME of closed lines'  ^~>LIGNE ;
+     tableau  NUPTIT(1..NBPTIT) 'NAME of internal points future vertices'
+     ^~>POINT ; 
+     tableau  DISOSV(1..NBPTIT) 'wished distance to the near vertices' reel ; 
+ 10 : variable NUTSOS 'xyzsommet tms'  tms ~>>>XYZSOMMET ;
+      variable NUTSSS 'nsef tms' tms ~>>>NSEF ; 
+ 11 : variable NBINQX 'NUMBER of X-edges' entier ;   
+      variable NBINQY 'NUMBER of Y-edges' entier ;   
+ 12 : variable NBINTR 'NUMBER of edges' entier ; 
+ 13 : variable NULICE 'NAME of the convex closed line'  ^~>LIGNE ;
+ 14 : variable NULICL 'NAME of the generic line'  ^~>LIGNE ;
+      variable NUTYCL 'type NUMBER of SLICES' entier 
+( 0: '3 points for each SLICE define the displacements' ,
+  1: '3 line vertices define the displacements of the line' ,
+  2: 'Translation of a constant cote z>0 (a stack)' ,
+  3: 'Translation of a cote z>0 for each displacement' ,
+  4: 'Translation vector (x y z) valuable for all SLICES' ,
+  5: 'Translation vectors (x y z) defined one by SLICE' ,
+  6: '3 functions X Y Z(no_slice,x,y,z) displace the generic line' ) ;
+      cas NUTYCL
+      0 : variable NBTRCL 'NUMBER of SLICES of the final surface'  entier ;
+          tableau  NPTRCL(1..3,0..NBTRCL)
+         'NAME of 3 points to define each plane of SLICES' ^~>POINT ; 
+      1 : tableau  NLTRCL(1..3) 'NAME of lines to define each plane of SLICES'
+          ^~>LIGNE ;
+      2 : variable NBTRCL 'NUMBER of SLICES of the final surface' entier ;
+          variable ZMAXCL 'MAX Z cote to be cut in SLICES' reel ;
+      3 : variable NBTRCL 'NUMBER of SLICES of the final surface' entier ;
+          tableau  ZCTRCL(1..NBTRCL)
+         'absolute cote (z>0) of each line of SLICES'  reel  ;
+      4 : variable NBTRCL 'NUMBER of SLICES of the final surface' entier ;
+          tableau  TRCOCL(1..3)
+         'X Y Z of CONSTANT VECTOR of translation of SLICES' reel ;
+      5 : variable NBTRCL 'NUMBER of SLICES of the final surface' entier ;
+          tableau  TRVACL(1..3,1..NBTRCL)
+         'X Y Z du vecteur of translation of each SLICE / previous' reel ;
+      6 : variable NBTRCL 'NUMBER of SLICES of the final surface' entier ;
+      variable FONXCL 'function abscisse X(no_slice,x0,y0,z0)' ^~>FONCTION ;
+      variable FONYCL 'function ordinate Y(no_slice,x0,y0,z0)' ^~>FONCTION ;
+      variable FONZCL 'function cote     Z(no_slice,x0,y0,z0)' ^~>FONCTION ;
+      fincas ;
+ 15 : variable NULIAS 'NAME of the line to be rotated' ^~>LIGNE ;
+      variable NUP1AS 'NAME of the first point of the axis' ^~>POINT ; 
+      variable NUP2AS 'NAME of the second point of the axis' ^~>POINT ;
+      variable NBANAS 'NUMBER of angles of rotation around the axis' entier ;
+      variable NTYPAS 'TYPE of angles of rotation'  entier
+         ( 0 : 'CONSTANT ANGLES' , 1 : 'VARIABLE ANGLES' ) ;
+      cas NTYPAS 
+      0 : variable ANMXAS 'total angle (degrees) of rotations' reel ;
+      1 : tableau  ANGLAS(1..NBANAS) 'relative angles (degrees) of rotations'
+          reel ;
+      fincas ; 
+ 16 : variable NULFAG 'NAME of the line to be magnify' ^~>LIGNE ;
+      variable NBCOLI 'NUMBER of first boundary layers' entier ;
+      variable EPCOLI 'THICKNESS of ONE first boundary layer' reel ;
+      variable NBDECO 'NUMBER of LAST layers' entier ;
+      variable EPDECO 'THICKNESS of the LAST boundary layer' reel ;
+ 17..18 : variable NBTRSP 'NUMBER of triangles (20*n**2)' entier ;
+      variable RAYOSP 'RADIUS of the sphere' reel ;
+      variable NUPCSP 'POINT''s NAME of the centre of the sphere' ^~>POINT ;
+ 19: variable ARETMX 'MAX LENGTH of edges of regular triangles' reel ;
+     variable NBLFTR 'NUMBER of closed lines contour of the surface' entier ;
+     variable NBPTIT 'NUMBER of internal points future vertices' entier ;
+     tableau  NULFT9(1..NBLFTR) 'NAME of closed lines'  ^~>LIGNE ;
+     tableau  NUPTI9(1..NBPTIT) 'NAME of internal points future vertices'
+     ^~>POINT ;
+     tableau  DISOS9(1..NBPTIT) 'wished distance to the near vertices' reel ; 
+ 20: tableau  N2PTVT(1..2) 'NAME of 2 points of translation vector' ^~>POINT ;
+     variable OUFEES 'OPENED(0) or CLOSED(1) POLYGON' entier ;
+     variable NBPTES 'NUMBER of point vertices of the plane polygon' entier;
+     tableau  NUPTES(1..NBPTES) 'plane polygon point NAMES' ^~>POINT ;
+ 21 :variable LONXBX 'X LENGTH of the BOX' reel ;
+     variable LARYBX 'Y WIDTH  of the BOX' reel ;
+     variable HAUZBX 'Z HEIGHT of the BOX' reel ;
+     variable PTCEBX 'NAME of the BOX CENTRE POINT' ^~>POINT ;
+ 22 :variable RAINCN 'INFERIOR CIRCLE RADIUS' reel ;
+     variable RASUCN 'SUPERIOR CIRCLE RADIUS' reel ;
+     variable PTINCN 'NAME of the AXIS INFERIOR POINT' ^~>POINT ;
+     variable PTSUCN 'NAME of the AXIS SUPERIOR POINT' ^~>POINT ;
+ 23 :variable RAPCTO 'GENERATOR SMALL CIRCLE RADIUS' reel ;
+     variable RAGCTO 'TRAVEL GREAT CIRCLE RADIUS'    reel ;
+     variable PTCETO 'NAME of the TORUS CENTRE POINT' ^~>POINT ;
+     variable PTAXTO 'NAME of the POINT on the TORUS X AXIS' ^~>POINT ;
+     variable PTAYTO 'NAME of the POINT on the TORUS Y AXIS' ^~>POINT ;
+ 25 :variable NBLGZC 'Cst Z-CIRCLE LIGN number' entier ;
+     variable NBPIEC 'TREE PIECES number' entier ;
+     variable NTZCPI 'TOTAL number of Z-CIRCLES describing the PIECES' entier ;
+     tableau  NUPTZC(1..NBLGZC) 'Z-CIRCLE centre name' ^~>POINT ; 
+     tableau  RAYZC(1..NBLGZC)  'Z-CIRCLE radius' reel ;
+     tableau  NBZCPI(1..NBPIEC) 'Z-CIRCLES number of each PIECE' entier ;
+     tableau  PTZCPI(1..NTZCPI) 'Z-CIRCLE CENTRE names of each PIECE' ^~>POINT ;
+ 27 :variable NBACCS 'NUMBER of edges on the ANGULAR SECTOR' entier ;
+     variable PGSACS 'GEOMETRICAL RATIO on the ANGULAR SECTOR' reel ;
+     variable RAYBAS 'RADIUS of the INFERIOR circle' reel ;
+     variable RAYHAU 'RADIUS of the SUPERIOR circle' reel ;
+     variable ANGLCS 'ANGLE (degrees) of the angular sector' reel ; 
+     variable NBAHCS 'NUMBER of edges on the height' entier ; 
+     variable PGHACS 'GEOMETRICAL RATIO on the height' reel ;
+     variable PTSABA 'POINT''s NAME of the centre of INFERIOR angular sector'
+     ^~>POINT ;  
+     variable PTSAHA 'POINT''s NAME of the centre of SUPERIOR angular sector'
+     ^~>POINT ;  
+ 28 :variable RAY1CS 'RADIUS of tangent circle to the INITIAL ANGLE' reel ;
+     variable RAY2CS 'RADIUS of tangent circle to the FINAL ANGLE' reel ;
+     variable NBIYCS 'NUMBER of edges on one ANGLE'  entier ;
+     variable NBIXCS 'NUMBER of edges in the SLICES between angles' entier ;
+     variable NUP1CS 'NAME of INITIAL ANGLE point 1'  ^~>POINT ;
+     variable NUP2CS 'NAME of INITIAL ANGLE point 2 between 1-3' ^~>POINT ;
+     variable NUP3CS 'NAME of INITIAL ANGLE point 3'  ^~>POINT ;
+     variable NUP4CS 'NAME of FINAL ANGLE point 4'  ^~>POINT ;
+     variable NUP5CS 'NAME of FINAL ANGLE point 5 between 4-6'  ^~>POINT ;
+     variable NUP6CS 'NAME of FINAL ANGLE point 6'  ^~>POINT ;
+ 29 :variable NUSUIN 'NAME of the initial surface' ^~>SURFACE ;
+ 30 :variable NUSUQU 'NAME of the TRIANGULATION to be IMPROVED' ^~>SURFACE ;
+     variable ARETXS 'MAX LENGTH of TRIANGLE EDGES' reel ;
+     variable QUALMN 'MAX QUALITY to be improved' reel;
+     variable ANGL2P 'MAX angle degrees of coplanearity' reel;
+ 31 :variable NUSUQU 'Quadrangulation surface NAME' ^~>SURFACE ; 
+      variable NDECOU 'Type of partition of quadrangles' entier
+      ( 1 : 'Create an edge S1 S3'
+      , 2 : 'Create an edge S2 S4'
+      , 3 : 'Cut the biggest angle'
+      , 4 : 'MAX of MIN of triangle qualities' ) ; 
+ 32 : variable NBARPL 'NUMBER of edges from point to line' entier;
+      variable NUPTJN 'POINT''s NAME to join to the edges' ^~>POINT ;
+      variable NULGJN 'LINE''s NAME to join to the point' ^~>LIGNE ;    
+ 33 : variable NBLGJD 'NUMBER of lines with edges to be joined' entier ;
+      tableau  NULGJD(1..NBLGJD) 'NAME of lines to be joined' ^~>LIGNE ;
+ 34 : variable NUVOST 'NAME of the structured volume' ^~>VOLUME ;
+      variable I2MIN 'MIN NUMBER>=1 of the vertex of I-axis' entier ;      
+      variable I2MAX 'MAX NUMBER of the vertex of I-axis' entier ;
+      variable J2MIN 'MIN NUMBER>=1 of the vertex of J-axis' entier ;      
+      variable J2MAX 'MAX NUMBER of the vertex of J-axis' entier ;
+      variable K2MIN 'MIN NUMBER>=1 of the vertex of K-axis' entier ;      
+      variable K2MAX 'MAX NUMBER of the vertex of K-axis' entier ;
+ 35 : variable NUSUST 'NAME of the structured quadrangle' ^~>SURFACE ;
+      variable I2MIN 'MIN NUMBER>=1 of the edge of I-axis' entier ;      
+      variable I2MAX 'MAX NUMBER of the edge of I-axis' entier ;
+      variable J2MIN 'MIN NUMBER>=1 of the edge of J-axis' entier ;      
+      variable J2MAX 'MAX NUMBER of the edge of J-axis' entier ;
+      variable QUADES 'KEEP the'           entier
+                     ( 0 : 'QUADRANGLES NOT NAMED => 1 HOLE'
+                     , 1 : 'QUADRANGLES NAMED' );
+ 36 : variable NUSUIN 'NAME of the initial surface'    ^~>SURFACE ;
+      variable NUFOCS 'NAME of the criterion function' ^~>FONCTION ; 
+ 37 : variable NUVOSE 'NAME of the volume to extract a surface' ^~>VOLUME ;
+      variable NUFOCS 'NAME of  the criterion function' ^~>FONCTION ;
+      variable NTYFSE 'type of faces to be extracted'  entier 
+                      ( 1  : 'BOUNDARY FACES'
+                      , 2  : 'INTERNAL FACES'
+                      , 3  : 'ANY FACES' ) ;
+ 38 : variable NUSUIN 'NAME of the initial surface'    ^~>SURFACE ;
+      variable NORMON 'IF the NORMAL VECTOR POINTS towards the EYE in 3D' entier
+      ( 0 : 'NO USING of the NORMAL', 1 : 'YES USING of the NORMAL' ) ;
+ 39 : variable NUSU4E 'NAME of surface to cut FE into 4 sub FE' ^~>SURFACE ;
+ 40 : variable NUSUIN 'NAME of the initial surface'     ^~>SURFACE ;
+      variable NUSUI2 'NAME of the surface to take off' ^~>SURFACE ;
+ 41 : variable NUSUIN 'NAME of the initial surface'    ^~>SURFACE ;
+      variable VECDIR '3 cartesian components of the VECTOR' xyz ;      
+ 42 : variable NUSUIN 'NAME of the initial surface'  ^~>SURFACE ;
+ 45 : variable NUTRI1 'NAME of the surface 1'   ^~>SURFACE ;
+      variable NUTRI2 'NAME of the surface 2'   ^~>SURFACE ;
+      variable NUOPER 'NAME of the operateur' entier
+      ( 1: 'intersection' , 2: 'addition' , 3: 'substraction' ) ;
+ 46 : variable NUSUIN 'NAME of the initial surface' ^~>SURFACE ;
+ 48 : variable NUSUIN 'NAME of the initial surface' ^~>SURFACE ;
+      variable NBPOSS 'NUMBER of POINTS becoming VERTEX' entier ;
+      tableau  NUPOSS(1..NBPOSS) 'NAME of POINTS becoming VERTICES' ^~>POINT ;
+ 50 : variable NUSUIN 'NAME of the INITIAL SURFACE'  ^~>SURFACE ;
+ 51..52 : variable NBSUUN 'NUMBER of UNION SURFACES' entier ;
+      tableau  NUSUUN(1..NBSUUN) 'NAME of EACH UNION SURFACE' ^~>SURFACE ;
+ 55 : variable NUVOL1 'NAME of the volume 1'  ^~>VOLUME ;
+      variable NUVOL2 'NAME of the volume 2'  ^~>VOLUME ;
+ 81 : variable NSAVAN 'NAME of the surface to be renamed' ^~>SURFACE ;
+fincas ;
+fintms ;

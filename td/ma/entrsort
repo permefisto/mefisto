@@ -1,0 +1,7 @@
+variable EntrSort 'Input Output units management' entier
+( 1: 'Interactivity level'
+, 2: 'Printing level'
+, 3: 'Array addresses listing'
+, 4: 'Echo or not of taped input data values'
+, 5: 'Output redirection on a file'
+, 6: 'Input redirection from a file' ) ;

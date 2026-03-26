@@ -1,0 +1,12 @@
+Pour effectuer l'echange des diagonales de 2 triangles
+adjacents par l'une d'entre elles et afin d'ameliorer
+la qualite, il est necessaire que les triangles soient
+dans le meme plan, ou dans des plans de normales
+faisant un petit angle.
+
+ANGL2P est cet angle, en degres, au dessous duquel, 
+2 triangles sont juges coplanaires .
+
+Une valeur RAISONNABLE est inferieure a 10 DEGRES.
+
+Au dela, ATTENTION au changement de geometrie !

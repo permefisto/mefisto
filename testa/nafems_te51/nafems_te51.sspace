@@ -1,0 +1,74 @@
+{================================================================}
+{ MEFISTO Version July 2007           PROJET: nafems_te51 SSPACE }
+{ TEST 51  AGENCE NAFEMS DEEP SIMPLY-SUPPORTED SOLID BEAM        }
+{ COMPUTATION of LOWEST EIGENVALUES of the SOLID BEAM            }
+{================================================================}
+1; beam;
+
+2;
+ {volume BEAM}
+  1; {volumic mass density}
+  1; 8000;  {kg/m**3}
+
+  2; {Young and Poisson}
+  1; 200e9; {N/m**2}  0.3;
+ @;
+
+ {surface RIGHT}
+ 2; {fixation}
+  1; {constant}
+  1; {components}
+  2; {no de la component des displacements a fixer}
+  0; {fixed value}
+ @;
+
+ {ligne B4=AA A}
+ 2; {fixation}
+  1;    {constante}
+  2;    {components}
+  1; 3; {number of components of fixed displacements}
+  0; 0; {fixed values}
+ @;
+
+ {ligne B2=BB AA}
+ 2; {fixation}
+  1; {constante}
+  1; {component}
+  3; {number of components of fixed displacements}
+  0; {fixed values}
+ @;
+
+ {point AA}
+ 2; {fixation}
+  1;       {constante}
+  3;       {components}
+  1; 2; 3; {number of components of fixed displacements}
+  0; 0; 0; {fixed values}
+ @;
+
+ {point BB}
+ 2; {fixation}
+  1;    {constante}
+  2;    {components}
+  2; 3; {number of components of fixed displacements}
+  0; 0; {fixed values}
+ @;
+
+@;
+
+DefVar DeuxPi; DeuxPi=atan(1)*8;
+
+6; {computation of lowest eigenvalues Omega**2}
+  1; {sub-space method}
+(DeuxPi*0  )**2; {inferior limit of eigenvalues}
+(DeuxPi*330)**2; {superior limit of eigenvalues}
+@;
+
+8; {Drawing of the eigenvectors}
+ 2; 2; 100; 90; 90;
+
+CLOSE;
+
+{See the frequencies}
+{To obtain the NAFEMS results from the eigenvalues (omega**2)
+the frequency = sqrt( eigenvalue=omega**2 ) / ( 2 Pi ) }

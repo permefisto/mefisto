@@ -1,0 +1,11 @@
+variable COEFTHER 'Operator divAgrad INPUT' entier
+( 1 : 'Rho MASS Density'
+, 2 : '[A] HEAT CONDUCTIVITY'
+, 3 : 'DILATATION & TEMPERATURE REFERENCE'
+, 4 : 'FOmega INTERIOR HEAT SOURCE'
+, 5 : 'Vf Coefficient of GradTEMPERATURE'
+, 6 : 'CT Coefficient of TEMPERATURE'
+, 7 : 'Cp MASSIC HEAT Density'
+, 8 : 'To INITIAL TEMPERATURE'
+, 9 : 'Vo INITIAL WAVE SPEED'
+,10 : 'CoBOUS BOUSSINESQ THERMAL EXPANSION' ) ;

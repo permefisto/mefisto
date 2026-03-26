@@ -1,0 +1,132 @@
+{ ==================================================================== }
+{ MEFISTO Software     : Version December 2008                         }
+{ Name of User         : Alain Perronnet                               }
+{ Name of Project      : pipe3d                                        }
+{ Date                 : 13/01/2009                                    }
+{ ==================================================================== }
+DefVar rho; rho=1000;  {Rappel: densite volumique de l'eau=1000 kg/m3}
+
+ 2; { ENTREE DONNEES DES FLUIDES }
+
+ { VOLUME: PIPETETR }
+ 1;    { rho la DENSITE de MASSE }
+ 1;    { MASSE constante }
+ rho;  { Masse constante: eau 1000 kg / m3}
+
+ 2;      { nu la VISCOSITE du FLUIDE }
+ 1;      { Viscosite constante de l'eau a 20C }
+ 0.001;  { VISCOS  Viscosite du Fluide }
+ @;
+
+ { SURFACE: CYL }
+ 2;       { BLocage de la VITESSE imposee }
+ 1;       { vitesse fixee constante }
+ 3;       { NBCOBV 'nombre composantes vitesse fixee' entier ; }
+ 1; 2; 3; { NUCOBV(1..NBCOBV) 'no composantes de la vitesse fixee' entier ; }
+ 0; 0; 0; { BLVITE(1..NBCOBV) }
+ @;
+
+ { SURFACE: SECTIONB }
+ 2;       { BLocage de la VITESSE imposee }
+ -1;      { fonction vitesse fixee }
+ 3;       { NBCOBV 'nombre composantes vitesse fixee' entier ; }
+ 1; 2; 3; { NUCOBV(1..NBCOBV) 'no composantes de la vitesse fixee' }
+ deffonc vitesse(t, x, y, z, ntyobj, nuobjt, nocomp);
+   si nocomp=3 alors
+      vitesse=(t+1.0)*(1-(x*x+y*y)/(r*r));
+   sinon
+      vitesse=0.0;
+   finsi;
+ finfonc;
+ vitesse; { NOM de FONCTION }
+ @;
+
+ { SURFACE: SECTIONH }
+ 2;       { BLocage de la VITESSE imposee }
+ -1;      { fonction vitesse fixee }
+ 3;       { NBCOBV 'nombre composantes vitesse fixee' entier ; }
+ 1; 2; 3; { NUCOBV(1..NBCOBV) 'no composantes de la vitesse fixee' }
+ vitesse; { NOM de FONCTION }
+ @;
+
+ { POINT: ORIGH }
+ { 3;     BLocage de la PRESSION imposee }
+ { 1;     PRESSION constante }
+ { 0.0;   BLPRESSION 'pression imposee' reel ; }
+ @;
+@;
+
+5;  { RESOUDRE FLUIDE STATIONNAIRE }
+ 1; { CROUT L D tL }
+@;
+
+
+6;  { UNSTEADY FLUID SOLVER =====================================}
+ 1;    { CROUT L D tL }
+ 0;    { INITIAL TIME }
+ 1.0;  { FINAL TIME }
+ 0.1;  { STEP of TIME }
+ 5;    { NUMBER of ADDED SOLUTION VECTORS }
+@;
+FERMER;
+
+
+
+
+
+
+8;   { DESSIN des VITESSES PRESSIONS ... }
+ 2;  { VITESSE }
+ 90; { TRACE des VITESSES }
+ 2;  { Trace de toutes les VITESSES }
+ 90; { SUITE du TRACE }
+@;
+@;
+@;
+
+8;   { DRAWING of VELOCITIES PRESSURES }
+ 3;  { PRESSURE }
+ 1;  { ISO-PRESSURE }
+ 2;  { REGULAR ISO between MIN MAX }
+ 90; { Continue the DRAWING }
+@;
+@;
+
+FERMER;
+
+
+
+
+
+
+
+
+
+
+
+
+ 4;    { FOmega INTERNAL FORCES }
+ 1;    { constant force }
+ 1;    { NBCOFO 'number of components of the force' entier ; }
+ 3;    { NUCOFO(1..NBCOFO) 'number of each component of the force' entier ; }
+ 0;    { -9.81*rho;  Pesanteur terrestre }
+ @;
+
+ 4;    { FOmega INTERNAL FORCES }
+ 0;    { Force a supprimer }
+
+
+
+ { SURFACE: SECTIONH }
+ 3;    { BLocage de la PRESSION imposee }
+ 1;    { PRESSION constante }
+ 0.0;  { BLPRESSION 'pression imposee' reel ; }
+ @;
+
+
+
+ { POINT: ORIGH }
+ 3;    { BLocage de la PRESSION imposee }
+ 1;    { PRESSION constante }
+ 0.0;  { BLPRESSION 'pression imposee' reel ; }
+ @;

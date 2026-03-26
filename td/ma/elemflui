@@ -1,0 +1,3 @@
+variable ELEMFLUI 'Choice of the fluid Finite Element' entier
+ ( 1  : 'BREZZI-FORTIN VELOCITIES P1+P3BUBLE & PRESSURE P1'
+ , 2  : 'TAYLOR-HOOD   VELOCITIES P2         & PRESSURE P1' );

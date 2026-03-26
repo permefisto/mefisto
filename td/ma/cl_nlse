@@ -1,0 +1,4 @@
+variable CL_NLSE 'SCHRODINGER Equation Boundary Condition' entier
+( 2 : 'FGamma IMPOSED Complex WAVE FLUX  at Boundary'
+, 3 : 'WAVE_D IMPOSED Complex WAVE VALUE at Boundary'
+, 8 : 'WAVE_0 INITIAL Complex WAVE VALUE at Boundary') ;

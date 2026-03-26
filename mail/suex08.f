@@ -1,0 +1,216 @@
+      SUBROUTINE SUEX08( NTLXVO, LADEFI, RADEFI,
+     %                   NTEFCC, MNEFCC, NTSTCC, MNSTCC, IERR )
+C+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+C BUT :    GENERER LE MAILLAGE NON STRUCTURE EN QUADRANGLES D'UN CARRE
+C -----    ou D'UNE CERCLE CENTRE A L'ORIGINE AVEC UN NOYAU DE
+C          n DIFFERENCES FINIES et des COUCHES GENEREES PAR HOMOTHETIE
+C          EN PROGRESSION GEOMETRIQUE
+C
+C ENTREES:
+C --------
+C NTLXVO : NUMERO DU TABLEAU TS DU LEXIQUE DU SURFACE
+C LADEFI : TABLEAU DE DEFINITION DES SURFACES
+C          CF '~td/d/a_surface__definition'
+C
+C SORTIES:
+C --------
+C NTEFCC : NUMERO      DU TMS 'NSEF' DES NUMEROS DES QUADRANGLES
+C MNEFCC : ADRESSE MCN DU TMS 'NSEF' DES NUMEROS DES QUADRANGLES
+C          CF '~td/d/a___nsef'
+C NTSTCC : NUMERO      DU TMS 'XYZSOMMET' DU MAILLAGE DES QUADRANGLES
+C MNSTCC : ADRESSE MCN DU TMS 'XYZSOMMET' DU MAILLAGE DES QUADRANGLES
+C          CF '~td/d/a___xyzsommet'
+C IERR   : 0 SI PAS D'ERREUR
+C        > 0 SINON
+C+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+C AUTEUR: ALAIN PERRONNET LJLL UPMC & LJUBLJANA SLOVENIE   Novembre 2011
+C.......................................................................
+      COMMON / UNITES / LECTEU , IMPRIM , INTERA , NUNITE(29)
+      include"./incl/langue.inc"
+      include"./incl/gsmenu.inc"
+      include"./incl/ntmnlt.inc"
+      include"./incl/a___xyzsommet.inc"
+      include"./incl/a___nsef.inc"
+      include"./incl/a_surface__definition.inc"
+      include"./incl/pp.inc"
+      COMMON            MCN(MOTMCN)
+      REAL              RMCN(1)
+      EQUIVALENCE      (MCN(1),RMCN(1))
+      INTEGER           LADEFI(0:*)
+      REAL              RADEFI(0:*)
+      REAL              COIN(6,2)
+C
+      IERR = 0
+C
+C     NOMBRE DE COORDONNEES DES SOMMETS En fait en 2D
+C     ===============================================
+      NBCOOR = 3
+C
+C     CARRE (0) ou CERCLE (1)
+C     =======================
+      LCaouce = LADEFI( WARCER ) - 1
+C
+C     NOMBRE D'ARETES DANS UNE DIRECTION DU NOYAU
+C     ===========================================
+      NACACE = LADEFI(WARCEN)
+      IF( NACACE .LT. 1 ) THEN
+         NBLGRC(NRERR) = 1
+         WRITE(KERR(MXLGER)(1:4),'(I4)') NACACE
+         KERR(1)='NOMBRE INCORRECT (<1) d ARETES DU NOYAU='
+     %           // KERR(MXLGER)(1:4)
+         CALL LEREUR
+         IERR = 1
+         RETURN
+      ENDIF
+C
+C     NOMBRE DE COUCHES OU HOMOTHETIES
+C     ================================
+      NCCACE = LADEFI(WARCEC)
+      IF( NCCACE .LT. 0 ) THEN
+         NBLGRC(NRERR) = 1
+         WRITE(KERR(MXLGER)(1:4),'(I4)') NCCACE
+         KERR(1)='NOMBRE INCORRECT (<0) DE COUCHES ='//KERR(MXLGER)(1:4)
+         CALL LEREUR
+         IERR = 2
+         RETURN
+      ENDIF
+C
+C     LARGEUR du NOYAU du CARRE ou CERCLE DANS UNE DIRECTION
+C     ======================================================
+      CACELA = RADEFI(WARCEL)
+      IF( CACELA .LT. 0.0 ) THEN
+         NBLGRC(NRERR) = 1
+         WRITE(KERR(MXLGER)(1:14),'(E14.6)') CACELA
+         KERR(1) =  'LARGEUR INCORRECTE du NOYAU du CARRE ou CERCLE='
+     %           //  KERR(MXLGER)(1:4)
+         CALL LEREUR
+         IERR = 3
+         RETURN
+      ENDIF
+C
+C     LARGEUR TOTALE du CARRE ou CERCLE dans une DIRECTION
+C     ====================================================
+      CACEDI = RADEFI(WARCED)
+      IF( CACEDI .LT. CACELA .OR.
+     %   (CACEDI .EQ. CACELA .AND. NCCACE .GT. 0) ) THEN
+         NBLGRC(NRERR) = 1
+         WRITE(KERR(MXLGER)(1:14),'(E14.6)') CACEDI
+         KERR(1) =  'LARGEUR TOTALE INCORRECTE du CARRE ou CERCLE='
+     %           //  KERR(MXLGER)(1:4)
+         CALL LEREUR
+         IERR = 3
+         RETURN
+      ENDIF
+C
+C     RAISON GEOMETRIQUE D''HOMOTHETIE DANS LES 2 DIMENSIONS
+C     ======================================================
+      IF( NCCACE .GT. 0 ) THEN
+         CACERG = REAL( ( CACEDI / CACELA ) ** (1d0/NCCACE) )
+      ELSE
+         CACERG = 1.0
+      ENDIF
+      IF( CACERG .LT. 1.0 ) THEN
+         NBLGRC(NRERR) = 1
+         WRITE(KERR(MXLGER)(1:14),'(E14.6)') CACERG
+         KERR(1) =  'RAISON GEOMETRIQUE INCORRECTE (<=1.0) ='
+     %           //  KERR(MXLGER)(1:14)
+         CALL LEREUR
+         IERR = 2
+         RETURN
+      ENDIF
+C
+C     GENERATION DES SOMMETS DES QUADRANGLES du CARRE ou CERCLE
+C     =========================================================
+C     CONSTRUCTION DU TABLEAU 'XYZSOMMET' DE CE SURFACE
+C     NOMBRE DE SOMMETS DANS UNE DIRECTION = NOMBRE D'ARETES DU NOYAU + 1
+      NSCACE = NACACE + 1
+C     NOMBRE DE SOMMETS DE LA DERNIERE PEAU DES DIFFERENCES FINIES DU NOYAU
+      NBSTCH = NSCACE ** 2 - (NACACE-1) ** 2
+C     NOMBRE TOTAL DE SOMMETS DU MAILLAGE DES QUADRANGLES
+      NBSOM  = NSCACE ** 2 + NBSTCH * NCCACE
+C     DECLARATION OUVERTURE DU TMS XYZSOMMET
+      CALL LXTNDC( NTLXVO, 'XYZSOMMET', 'MOTS' , WYZSOM+NBCOOR*NBSOM )
+      CALL LXTSOU( NTLXVO, 'XYZSOMMET',  NTSTCC, MNSTCC )
+C
+C     CONSTRUCTION DU TABLEAU XYZ des SOMMETS des QUADRANGLES
+C     NO DES SOMMETS SUR LA FRONTIERE DIFFERENCES FINIES
+      CALL TNMCDC( 'ENTIER', NSCACE**2, MNSTNOY )
+      CALL AZEROI( NSCACE**2, MCN(MNSTNOY) )
+C     LONGUEUR D'UNE ARETE DU NOYAU
+      ARCACE = CACELA / NACACE
+      MNXCH  = MNSTCC + WYZSOM + NBCOOR * ( NSCACE ** 2 )
+      CALL XYZCACE( LCaouce, ARCACE, NACACE,
+     %              CACEDI, CACERG, NCCACE,NBSTCH,
+     %              MCN(MNSTNOY), RMCN(MNSTCC+WYZSOM), RMCN(MNXCH) )
+C
+C     LA DIMENSION DE L'ESPACE = NOMBRE DES COORDONNEES D'UN SOMMET
+      MCN( MNSTCC + WBCOOR ) = NBCOOR
+C     LE NOMBRE DE SOMMETS
+      MCN( MNSTCC + WNBSOM ) = NBSOM
+C     LE NOMBRE DE TANGENTES
+      MCN( MNSTCC + WNBTGS ) = 0
+C     LA DATE DE CREATION
+      CALL ECDATE( MCN(MNSTCC) )
+C     LE NUMERO DU TABLEAU DESCRIPTEUR
+      MCN( MNSTCC + MOTVAR(6) ) = NONMTD( '~>>>XYZSOMMET' )
+C
+C     MIN ET MAX DES COORDONNEES
+      CALL CADEXT( MNSTCC, COIN )
+C
+C     GENERATION DES NUMEROS DES SOMMETS DE CHAQUE EF=QUADRANGLE
+C     ==========================================================
+C     CONSTRUCTION DU TABLEAU 'NSEF' DE CES QUADRANGLES NON STRUCTURES
+      NBSOEF = 2 ** 2
+C     UNE COUCHE = NB ARETES DE LA FRONTIERE DES DIFFERENCES FINIES DU NOYAU
+C     NBARET = 2 * NOMBRE DE CHOIX DE 1 PARMI 2
+C     NBARET = 2 * 2 = 4 ARETES DANS UN QUADRANGLE
+      NBEF1C = NACACE * 4
+C     NOMBRE TOTAL D'EF DU MAILLAGE
+      NBEFOB = NACACE ** 2 + NBEF1C * NCCACE
+      MOTS   = WUSOEF + NBSOEF * NBEFOB
+      CALL LXTNDC( NTLXVO, 'NSEF', 'ENTIER', MOTS   )
+      CALL LXTSOU( NTLXVO, 'NSEF',  NTEFCC,  MNEFCC )
+C
+C     TABLEAU  NUSOEF(1..NBSOEF,1..NBEFOB)
+C     CONSTRUCTION DU TABLEAU DU NO DES 4 SOMMETS DES EF DU CARRE ou CERCLE
+C     EN 3 MORCEAUX: LES DF, LA 1-ERE COUCHE, LES AUTRES COUCHES
+      MNEFNOY = MNEFCC  + WUSOEF
+      MNEFCH  = MNEFNOY + NBSOEF * (NACACE**2)
+      CALL NSEFCACE( NACACE, NCCACE, NBSTCH, MCN(MNSTNOY), NBEF1C,
+     %               MCN(MNEFNOY), MCN(MNEFCH) )
+      CALL TNMCDS( 'ENTIER', NSCACE**2, MNSTNOY )
+C
+C     PERMUTATION DES SOMMETS 3 et 4 POUR OBTENIR L'ORDRE
+C     DE STOCKAGE DES SOMMETS D'UN QUADRANGLE
+      MN = MNEFNOY - 1
+      DO N=1,NBEFOB
+         NS = MCN( MN + 3 )
+         MCN( MN + 3 ) = MCN( MN + 4 )
+         MCN( MN + 4 ) = NS
+         MN = MN + NBSOEF
+      ENDDO
+C
+C     MISE A JOUR DU TABLEAU 'NSEF' DE CE MAILLAGE
+C     TYPE DE L'OBJET : CARRE ou CERCLE est une SURFACE => 3
+      MCN( MNEFCC + WUTYOB ) = 3
+C     LE TYPE INCONNU DE FERMETURE DU MAILLAGE
+      MCN( MNEFCC + WUTFMA ) = -1
+C     VARIABLE NBSOEF 'NOMBRE DE SOMMETS PAR EF' ( 4: 'QUADRANGLE' )
+      MCN( MNEFCC + WBSOEF ) = NBSOEF
+C     VARIABLE NBTGEF 'NOMBRE DE TANGENTES PAR EF' ( 0: '0 TG PAR EF' )
+      MCN( MNEFCC + WBTGEF ) = 0
+C     VARIABLE NBEFOB 'NOMBRE DES EF DU PLSV'
+      MCN( MNEFCC + WBEFOB ) = NBEFOB
+C     variable NBEFTG 'Nombre des EF avec TG'
+      MCN( MNEFCC + WBEFTG ) = 0
+C     variable NBEFAP 'Nombre des EF avec POINTEUR sur EF a TG'
+      MCN( MNEFCC + WBEFAP ) = 0
+C     VARIABLE NUTYMA 'NUMERO DE TYPE DU MAILLAGE' ( 0: 'NON STRUCTURE')
+      MCN( MNEFCC + WUTYMA ) = 0
+C     LA DATE DE CREATION
+      CALL ECDATE( MCN(MNEFCC) )
+C     LE NUMERO DU TABLEAU DESCRIPTEUR
+      MCN( MNEFCC + MOTVAR(6) ) = NONMTD( '~>>>NSEF' )
+C
+      RETURN
+      END

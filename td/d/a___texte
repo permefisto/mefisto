@@ -1,0 +1,7 @@
+deftms ~>>>TEXTE  'un texte compose de lignes de caracteres'
+ variable muet DATE 'date de creation du tableau'   reel2  ;
+ variable muet NUTD 'numero du tableau descripteur' entier ; 
+ variable NBCLTX 'nombre de fois 4 caracteres d''une ligne de texte' entier ;
+ variable NBLITX 'nombre de lignes du texte' entier ;
+ tableau  LECATX(1..NBCLTX,1..NBLITX) 'le texte' caractere ;
+fintms ;

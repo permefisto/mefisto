@@ -1,0 +1,102 @@
+{ ==================================================================== }
+{ Logiciel MEFISTO     : Version Juillet 2003                          }
+{ Nom de l'Utilisateur : alain                                         }
+{ Nom du Projet        : vp21                                          }
+{ Date                 : 15/10/2003                                    }
+{ Heure                : 14h 04m 05s                                   }
+{ ==================================================================== }
+ defvar a; a=0.5;
+ defvar R; R=60;
+ {nbsubarete de la sphere est ajuste pour avoir une aretemax=R/1.25}
+ defvar nbsubarete; nbsubarete=nint(3.14159*cos(atan(0.5)));
+ afficher nbsubarete;
+ defvar aretemax; aretemax=R;
+
+1;  { POINTS sommets de l objet }
+ 1; { FRAPPE des valeurs }
+
+ origine;i;       { NOM du POINT ou ABANDON? }
+            1;  0; 0; 0;  { coordonnees x y z }
+ amoins; i; 1; -a; 0; 0;
+ aplus;  i; 1;  a; 0; 0;
+@;
+
+
+3; { SURFACES faces de l objet }
+ sphere; i;  { NOM de la SURFACE ou ABANDON? }
+ 18;      { 1/1 de la surface d une SPHERE }
+ 20*3**2; {nbsubarete**2; NBTRSP 'nombre approximatif de triangles a generer' }
+ R;       { RAYOSP 'rayon de la sphere' reel ; }
+ ORIGINE; { DANS LE LEXIQUE ~>POINT }
+ @;
+
+
+4; { VOLUMES materiaux de l objet }
+ v8; i;  { NOM du VOLUME ou ABANDON? }
+ 8;      { un volume ferme d un volume pour option 9 }
+ 1;      { NBSF1V 'nombre de surfaces fermees contour du volume' }
+ sphere; { DANS LE LEXIQUE ~>SURFACE }
+
+ v9; i;    { NOM du VOLUME ou ABANDON? }
+ 9;        { tetraedrisation de volumes de type 8 }
+ 500000;   { MXSOVO 'nombre maximal de sommets de la tetraedrisation' }
+ aretemax; { ARETGR 'longueur de l''arete de la grille reguliere' }
+ deffunc taille_ideale(x,y,z);
+ defvar d; d=sqrt(x*x+y*y+z*z);
+ if d<2.75*a then
+    taille_ideale=a*0.5;
+ else
+    taille_ideale=(a*(R-d)+aretemax*d)/R;
+ endif;
+ endfunc;
+ 8;   { ANEN2P 'degres du petit angle de coplanearite' reel; }
+ 3;   { NBPTIV 'nombre de points internes fournis par l''utilisateur' }
+ 1;   { NBVOPA 'nombre de volumes de type 8 de la partition' entier ; }
+ v8;  { DANS LE LEXIQUE ~>VOLUME }
+ amoins; origine; aplus; { DANS LE LEXIQUE ~>POINT }
+ a/4;    a/4;     a/4;   { distance souhaitee aux sommets voisins }
+
+ sphere; i; { NOM du VOLUME ou ABANDON? }
+ { DANS LE LEXIQUE ~>TRANSFO }
+ 30;  { amelioration d une tetraedrisation }
+ v9;  { DANS LE LEXIQUE ~>VOLUME }
+ 0.5; { QUTEMN 'qualite au dessous de laquelle ameliorer' reel; }
+ 8;   { ANTE2P 'degres du petit angle de coplanearite' reel; }
+ 15;  { NBITAT 'nombre des iterations pour ameliorer' entier ; }
+ @;
+
+
+3; { SURFACES faces de l objet }
+ surfsphere; i; { NOM de la SURFACE ou ABANDON? }
+ { NOM de TRANSFORMATION }
+ 37;     { surface extraite d un volume }
+ sphere; { DANS LE LEXIQUE ~>VOLUME }
+ { NOM de FONCTION }
+ deffunc vrai(x,y,z);
+   vrai=1;
+ endfunc;
+ vrai;     { DANS LE LEXIQUE ~>FONCTION }
+ 1;      { faces frontalieres }
+ @;
+
+5;  { OBJETS parties de l OBJET }
+ electron_wave_functions;  { NOM de l'OBJET ou ABANDON? }
+ 0;   { classique 2D ou 3D }
+ 2;   { NBDOBJ 'nombre des Points Lignes Surfaces Volumes Objets de l''objet' }
+ vol;    sphere;   { POINT ou LIGNE ou SURFACE ou VOLUME ou OBJET? }
+ surf; surfsphere; { NTYOBJ(1..NBDOBJ) nom du type PLSVO et nom du PLSVO typeobjet; }
+ { NOM de l'OBJET ou ABANDON? }
+@;
+
+7;  { INTERPOLATION NOEUDS du maillage }
+ electron_wave_functions; { NOM de l'OBJET a INTERPOLER? }
+ 4;        { LAGRANGE de DEGRE 2 }
+@;
+
+10;  { TRACE du MAILLAGE des PLSVO }
+ 5;  { OBJET }
+ 1;  { TOUS les OBJETS 1 par 1 }
+ 90; { Suite du TRACE }
+@;
+
+fermer;

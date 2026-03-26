@@ -1,0 +1,7 @@
+deftms ~>>>MATERIAUX 'numero de materiau de chaque element fini du maillage'
+variable muet DATE 'date de creation du tableau'   reel2  ;
+variable muet NUTD 'numero du tableau descripteur' entier ;
+variable NBDM   'nombre de materiaux' entier ;
+variable NBDMEF 'nombre d''elements finis du maillage' entier ;
+tableau  NUDMEF(1..NBDMEF) 'numero du materiau dans son LX de chaque EF' entier ;
+fintms ;

@@ -1,0 +1,29 @@
+Input Output units management:
+
+1. Interactivity level
+The mode of interactivity may be active or not, with drawings or not,
+with the using of a mouse or not.
+
+2. Printing level
+From 0 to 10, the number of printings may be reduced or augmented
+
+3. Array addresses listing
+To obtain the memory adress of each array or not.
+Use it for debugging only.
+
+4. Echo or not of taped input data values
+The LU language interprets the data. 
+The resulted value may be interesting, notably with User's functions.
+
+5. Output redirection on a file
+The displays a priori on screen, may be rediriged on a file.
+Its name must be given after.
+
+6. Input redirection from a file
+All data saved on a file may be read and uses as data from the keyboard.
+It is possible to constitute sets of data to construct objects.
+The key word QUITTER or EXIT returns to the calling file.
+The key word FERMER or CLOSE closes the file and returns to 
+the calling file.
+A file can call an other file, and so on,...
+Several levels of files are possible.

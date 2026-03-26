@@ -1,0 +1,4 @@
+variable TRACPR2D 'Trace des PRESSIONS Objet 2D' entier
+ (  1 : 'COURBES ISO-PRESSIONS'
+ ,  2 : 'SURFACES COULEURS ISO-PRESSIONS'
+ ,  9 : 'En 2D SURFACE(X,Y,PRESSION(X,Y))' ) ;

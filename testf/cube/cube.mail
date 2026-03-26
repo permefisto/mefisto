@@ -1,0 +1,106 @@
+{========================================================================}
+{ MEFISTO Version Decembre 2003       PROJET: Test THER sur CUBE         }
+{ Utilisateur: Perronnet Alain        Date:   19/12/2003                 }
+{========================================================================}
+defvar t0,a,b,c,d,eps;
+t0=1;
+a=3;
+b=3;
+c=3;
+d=max(a,b); d=max(d,c);
+eps=0.0001;
+
+DefFonc XX(x,y,z); XX=x/d; FinFonc;
+DefFonc YY(x,y,z); YY=y/d; FinFonc;
+DefFonc ZZ(x,y,z); ZZ=z/d; FinFonc;
+
+6; { TRANSFORMATIONS mathematiques }
+ reduc;
+  6; { F:R3->R3 definie par 3 fonctions (Fi) }
+  XX; YY; ZZ;
+@;
+
+1; 1;
+Origine; i; 1; 0;0;0;
+PTa; i; 1; a;0;0;
+PTb; i; 1; 0;b;0;
+PTc; i; 1; 0;0;c;
+@;
+@;
+
+4; { VOLUMES materiaux de l objet }
+  hexabc;
+  reduc;{ DANS LE LEXIQUE ~>TRANSFO }
+  11;{ hexaedre rectangle regulier d aretes 1 }
+   a;{ NBINHX 'nombre d''aretes en x' entier ; }
+   b;{ NBINHY 'nombre d''aretes en y' entier ; }
+   c;{ NBINHZ 'nombre d''aretes en z' entier ; }
+
+  hexaedre; i; 31; {Tetraedriser une hexaedrisation}
+    hexabc;
+@;
+
+{Les coordonnees reduites}
+a=a/d; b=b/d; c=c/d;
+
+3;{ SURFACES faces de l objet }
+
+ base; i;{ DANS LE LEXIQUE ~>TRANSFO }
+   37;   { surface extraite d un volume }
+ hexaedre;   { DANS LE LEXIQUE ~>VOLUME }
+ deffonc base(x,y,z); base=z<eps; finfonc;
+ base;   { DANS LE LEXIQUE ~>FONCTION }
+    1;   { faces frontalieres }
+
+ haut; i; 37; hexaedre;
+ deffonc haut(x,y,z); haut=z>c-eps; finfonc;
+ haut; 1; { faces frontalieres }
+
+
+ derriere; i; 37; hexaedre;
+ deffonc derriere(x,y,z); derriere=x<eps; finfonc;
+ derriere; 1;
+
+ devant; i; 37; hexaedre;
+ deffonc devant(x,y,z); devant=x>a-eps; finfonc;
+ devant; 1; { faces frontalieres }
+
+ gauche; i; 37; hexaedre;
+ deffonc gauche(x,y,z); gauche=y<eps; finfonc;
+ gauche; 1;
+
+ droite; i; 37; hexaedre;
+ deffonc droite(x,y,z); droite=y>b-eps; finfonc;
+ droite; 1;
+
+@;
+
+5;{ OBJETS parties de l OBJET }
+ hexaedre; 0; { classique 2D ou 3D }
+ 8; { nombre des Points Lignes Surfaces Volumes Objets de l''objet}
+ v; hexaedre; {'nom du type PLSVO et nom du PLSVO'}
+ s; haut;
+ s; droite;
+ s; devant;
+ s; gauche;
+ s; derriere;
+ s; base;
+ p; origine;
+@;
+
+7; { INTERPOLATION definition NOEUDS du maillage }
+   hexaedre;
+   3;  { LAGRANGE de DEGRE 1 }
+@;
+
+10; { TRACE du MAILLAGE des PLSVO }
+
+ 26;{ RE-DEFINITION des XYZ EXTREMES }
+ 0; 1;{ X MINIMUM X MAXIMUM }
+ 0; 1;{ Y MINIMUM Y MAXIMUM }
+ 0; 1;{ Z MINIMUM Z MAXIMUM }
+
+ 5;{ Tous les OBJETS }
+ 90;{ EXECUTION du TRACE }
+@;
+FERMER;

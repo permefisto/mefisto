@@ -1,0 +1,22 @@
+Unites MKSA (pour Metre Kilogramme Seconde Ampere)
+--------------------------------------------------
+
+NEWTON: Force accelerant 1 Kg de 1m par s^-2:   Kg m s-2
+
+JOULE: Quantite de chaleur capable de faire un travail de 1 Newton sur 1m : Kg m2 s-2
+
+WATT: Debit de chaleur ou puissance de 1 joule en 1 seconde : Kg m2 s-3
+
+PASCAL: Pression d'une force de 1 Newton sur 1 m2 : Kg m-1 s-2
+
+KELVIN: -273.15 CELSIUS degres ou zero absolu des temperatures
+
+CONDUCTIVITE: w m-1 K-1
+
+MASSE VOLUMIQUE: Kg m-3
+
+CHALEUR SPECIFIQUE MASSIQUE: J Kg-1 K-1
+
+COEFFICIENT d'ECHANGE: w m-2 K-1
+
+DENSITE D'UN FLUX NORMAL DE CHALEUR: w m-2

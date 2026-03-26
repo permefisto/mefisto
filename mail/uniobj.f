@@ -1,0 +1,379 @@
+      SUBROUTINE UNIOBJ( NUOBUN, NBOBUN, NTYOBP,
+     %                   NTSOMM, MNSOMM, NBSOM ,
+     %                   NTUNIO, MNUNIO, IERR   )
+C+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+C BUT :  GENERER LES TABLEAUX 'XYZSOMMET' ET 'UNION'
+C -----  DE L'OBJET UNION DE NBOBUN OBJETS PREMIERS
+C        APRES IDENTIFICATION DES SOMMETS COMMUNS
+C
+C ENTREES :
+C ---------
+C NUOBUN : NUMERO DE L'OBJET (TYPE 5) UNION D'OBJETS PREMIERS
+C NBOBUN : NOMBRE D'OBJETS DE L'UNION
+C NTYOBP : NTYOBP(1,I) NUMERO DU TYPE DE L'OBJET PREMIER I ( 1 A 4 )
+C                      1:POINT 2:LIGNE 3:SURFACE 4:VOLUME 5:OBJET
+C          NTYOBP(2,I) NUMERO DE CET OBJET DANS LE LEXIQUE DE CE TYPE
+C                      D'OBJET
+C
+C SORTIES :
+C ---------
+C NTSOMM : NUMERO      DU TMS 'XYZSOMMET'
+C MNSOMM : ADRESSE MCN DU TMS 'XYZSOMMET'
+C NBSOM  : NOMBRE DE SOMMETS APRES IDENTIFICATION
+C NTUNIO : NUMERO      DU TMS 'UNION'
+C MNUNIO : ADRESSE MCN DU TMS 'UNION' DE L'OBJET UNION
+C IERR   : 0 SI PAS D'ERREUR, >0 SINON
+C+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+C AUTEUR : ALAIN PERRONNET ANALYSE NUMERIQUE UPMC PARIS        MARS 1989
+C23456---------------------------------------------------------------012
+      IMPLICIT          INTEGER (W)
+      include"./incl/langue.inc"
+      include"./incl/gsmenu.inc"
+      include"./incl/trvari.inc"
+      include"./incl/pp.inc"
+      COMMON            MCN(MOTMCN)
+      REAL             RMCN(1)
+      EQUIVALENCE     (RMCN(1),MCN(1))
+      COMMON / UNITES / LECTEU,IMPRIM,NUNITE(30)
+      COMMON / EPSSSS / EPZERO,EPSXYZ
+      INTEGER           NBIPAV(6)
+      REAL              COIN(6,2), COINMX(6,2), ECHPAV(6)
+C
+      include"./incl/ntmnlt.inc"
+      include"./incl/a___nsef.inc"
+      include"./incl/a___xyzsommet.inc"
+      include"./incl/a___union.inc"
+C
+      CHARACTER*10      NMTYOB,KNOMTY
+      CHARACTER*24      KNOM
+      INTEGER           NTYOBP(1:2,1:NBOBUN)
+      REAL              R
+C
+C     INITIALISATIONS
+      IERR   = 0
+      MNXYOB = 0
+      MNDESO = 0
+      MNPAVE = 0
+      MNCHAI = 0
+C
+C     POUR ACCELERER L'IDENTIFICATION UN PAVAGE DE L'ESPACE EST FAIT
+C     RECHERCHE DU MIN_MAX DES SOMMETS DES 2 OBJETS POUR LIMITER LE PAVAGE
+C
+C     LES TABLEAUX DE SAUVEGARDE DES ADRESSES MCN
+C     DES SOMMETS ET DES NO SOMMET DES OBJETS PREMIERS
+      CALL TNMCDC( 'ENTIER', NBOBUN, MNXYOB )
+C
+C     LE TABLEAU POINTEUR SUR LE DERNIER SOMMET DE CHAQUE OBJET
+      CALL TNMCDC( 'ENTIER', 1 + NBOBUN, MNDESO )
+      MCN( MNDESO ) = 0
+C
+C     LE NOMBRE DE COORDONNEES D'UN SOMMET
+      NBCOOR = 0
+C
+      DO 2 K=1,6
+         COINMX(K,1) = 1E28
+         COINMX(K,2) =-1E28
+ 2    CONTINUE
+C
+C     OUVERTURE DES TABLEAUX 'XYZSOMMET' DE CHAQUE OBJET
+      NBSOMM = 0
+      NBTGUN = 0
+      DO 10 I=1,NBOBUN
+C
+C        LE TYPE DE L'OBJET PREMIER I
+         NUTYOB = NTYOBP(1,I)
+C        LE NUMERO DE L'OBJET PREMIER DANS SON LEXIQUE
+         NUOBPR = NTYOBP(2,I)
+C
+C        L'ADRESSE MCN DU NUMERO DU TMS LEXIQUE DE L'OBJET
+         CALL TAMSOU( NTMN(NUTYOB), MNLX )
+         MN = MNLX + MCN( MNLX ) * NUOBPR + MCN( MNLX+2 ) + 2
+C
+C        LE NUMERO DE TMS DU LEXIQUE DE L'OBJET
+         NTLXOB = MCN( MN )
+         IF( NTLXOB .LE. 0 ) THEN
+            KNOMTY = NMTYOB( NUTYOB )
+            CALL NMOBNU( KNOMTY, NUOBPR, KNOM )
+            NBLGRC(NRERR) = 2
+            KERR(1) =  KNOMTY//' '//KNOM
+            KERR(2) = 'SANS LEXIQUE'
+            CALL LEREUR
+            IERR = IERR + 1
+            GOTO 10
+         ENDIF
+C
+C        LE TMS 'XYZSOMMET' DE L'OBJET I
+         CALL LXTSOU( NTLXOB, 'XYZSOMMET', NT2, MNS )
+         MCN(MNXYOB-1+I) = MNS
+C
+C        LE NOMBRE DE COORDONNEES D'UN SOMMET
+         NBCOO0 = MCN( MNS + WBCOOR )
+         IF( NBCOOR .EQ. 0 ) THEN
+            NBCOOR = NBCOO0
+         ELSE IF( NBCOO0 .NE. NBCOOR ) THEN
+            NBLGRC(NRERR) = 2
+            KERR(1) =  KNOMTY//' '//KNOM
+            WRITE(KERR(6)(1:3),'(I3)') NBCOO0
+            WRITE(KERR(7)(1:3),'(I3)') NBCOOR
+            IF( LANGAG .EQ. 0 ) THEN
+               KERR(2) = 'ACTUEL    en DIMENSION ' // KERR(6)(1:3)
+               KERR(3) = 'PRECEDENT en DIMENSION ' // KERR(7)(1:3)
+            ELSE
+               KERR(2) = 'ACTUAL   in DIMENSION ' // KERR(6)(1:3)
+               KERR(3) = 'PREVIOUS in DIMENSION ' // KERR(7)(1:3)
+            ENDIF
+            CALL LEREUR
+            IERR = IERR + 1
+            GOTO 10
+         ENDIF
+C
+C        LE NOMBRE DE SOMMETS DE L'OBJET I ET DE L'UNION
+         NBSOMM = NBSOMM + MCN( MNS + WNBSOM )
+C
+C        LE DERNIER SOMMET DE L'OBJET I APRES SOMMATION
+         MCN( MNDESO + I ) = NBSOMM
+C
+C        LE NOMBRE DE TANGENTES DE L'OBJET I ET DE L'UNION
+         NBTGUN = NBTGUN + MCN( MNS + WNBTGS )
+C
+C        LE CADRE EXTREME DES COORDONNEES
+         CALL CADEXT( MNS, COIN )
+         DO 5 K=1,NBCOOR
+            COINMX(K,1) = MIN( COINMX(K,1), COIN(K,1) )
+            COINMX(K,2) = MAX( COINMX(K,2), COIN(K,2) )
+ 5       CONTINUE
+ 10   CONTINUE
+C
+      IF( IERR .NE. 0 ) THEN
+C        ERREUR
+         NTSOMM = 0
+         MNSOMM = 0
+         NTUNIO = 0
+         MNUNIO = 0
+         GOTO 9900
+      ENDIF
+C
+C     INITIALISATION DU PAVAGE
+C     DECLARATION ET OUVERTURE EN MC DU TABLEAU 'PAVES'
+      CALL TNMCDC( 'ENTIER', 4096, MNPAVE )
+C     MISE A ZERO DU CHAINAGE DES PAVES
+      CALL AZEROI( 4096, MCN( MNPAVE) )
+C
+C     LE TABLEAU DES CHAINAGES DES SOMMETS DANS LES PAVES
+      CALL TNMCDC( 'ENTIER', NBSOMM, MNCHAI )
+      CALL AZEROI( NBSOMM, MCN(MNCHAI) )
+C
+C     CALCUL DU NOMBRE D'INTERVALLES DANS CHAQUE DIRECTION
+      IF( NBCOOR .EQ. 3 ) THEN
+         N = 15
+      ELSE
+         N = 3
+      ENDIF
+      MXPAVE = 1
+      DO 12 J=1,NBCOOR
+C        NOMBRE D'INTERVALLES DU PAVE SELON LA COORDONNEE
+         NBIPAV(J) = N
+         MXPAVE = MXPAVE * (NBIPAV(J)+1)
+C        CALCUL DES 'ECHELLES' SELON LA COORDONNEE
+         ECHPAV(J) = COINMX(J,2) - COINMX(J,1)
+         IF( ECHPAV(J) .LE. EPSXYZ ) ECHPAV(J) = 1.
+         ECHPAV(J) = NBIPAV(J) / ECHPAV(J)
+ 12   CONTINUE
+      MXPAVE = MXPAVE - 1
+C
+      DO 14 J=2,NBCOOR
+         DO 13 K=J-1,1,-1
+            ECHPAV(J) = ECHPAV(J) * (NBIPAV(K)+1)
+ 13      CONTINUE
+ 14   CONTINUE
+C
+C     DECLARATION OUVERTURE DU TABLEAU 'XYZSOMMET' DE L'OBJET UNION
+      CALL TAMSOU( NTOBJE, MNLX )
+      MN   = MNLX + MCN( MNLX ) * NUOBUN + MCN( MNLX+2 ) + 2
+      NTLXOB = MCN( MN )
+      CALL LXTSOU( NTLXOB, 'XYZSOMMET', NTSOMM, MNSOMM )
+      IF( NTSOMM .GT. 0 ) THEN
+C        DESTRUCTION DU TABLEAU
+         CALL LXTSDS( NTLXOB, 'XYZSOMMET' )
+      ENDIF
+C
+C MODIF 7/2005  MOT = WYZSOM + (NBSOMM+NBTGUN) * MOTVAR( 12 ) DEVIENT
+      MOT = WYZSOM + (NBSOMM+NBTGUN) * NBCOOR
+      CALL LXTNDC( NTLXOB, 'XYZSOMMET', 'MOTS', MOT )
+      CALL LXTSOU( NTLXOB, 'XYZSOMMET', NTSOMM, MNSOMM )
+C
+C     DECLARATION OUVERTURE DU TABLEAU 'UNION' DE L'OBJET UNION
+      CALL LXTSOU( NTLXOB, 'UNION', NTUNIO, MNUNIO )
+      IF( NTUNIO .GT. 0 ) THEN
+C        DESTRUCTION DU TABLEAU
+         CALL LXTSDS( NTLXOB, 'UNION' )
+      ENDIF
+      MOT = WDSCOU + 1 + NBOBUN + NBSOMM + 1 + NBOBUN + NBTGUN
+      CALL LXTNDC( NTLXOB, 'UNION', 'MOTS', MOT )
+      CALL LXTSOU( NTLXOB, 'UNION', NTUNIO, MNUNIO )
+C
+C     INITIALISATIONS
+C     LE NOMBRE DE SOMMETS DE L'UNION APRES IDENTIFICATION
+      NBSOM = 0
+C     ADRESSE -1 DE LA 1-ERE COORDONNEE DU 1-ER SOMMET DE L'UNION D'OBJETS
+      MNSU = MNSOMM + WYZSOM - 1 - NBCOOR
+C
+      DO 1000 J=1,NBOBUN
+C        ADRESSE DU TABLEAU 'SOMMET' DE L'OBJET J
+         MN = MCN( MNXYOB - 1 + J )
+C        ADRESSE DE LA 1-ERE COORDONNEE DU 1-ER SOMMET
+         MNS = MN + WYZSOM - 1 - NBCOOR
+C        LE NOMBRE DE SOMMETS
+         NBS = MCN( MN + WNBSOM )
+C        ADRESSE -1 DU 1-ER NUMERO DE SOMMET DE L'OBJET UNION
+         MNUN = MNUNIO+WDSCOU+NBOBUN+MCN(MNDESO+J-1)
+C
+         DO 900 I=1,NBS
+C           LE NUMERO DE PAVE DE CE SOMMET I
+            MNS = MNS + NBCOOR
+            R   = 0.0
+            DO 15 K=1,NBCOOR
+               R = R + ( RMCN(MNS+K) - COINMX(K,1) ) * ECHPAV(K)
+ 15         CONTINUE
+            NUPAVE = NINT( R )
+C
+C           PROJECTION DANS LES PAVES EXTREMES
+            NUPAVE = MAX( 0     , NUPAVE )
+            NUPAVE = MIN( MXPAVE, NUPAVE )
+C
+C           LE PREMIER SOMMET DU PAVE NUPAVE
+            NOSOMM = MCN( MNPAVE + NUPAVE )
+C
+ 18         IF( NOSOMM .GT. 0 ) THEN
+C              LE SOMMET NOSOMM EXISTE
+C              COMPARAISON DES NBCOOR COORDONNEES
+               MN1 = MNSU + NBCOOR * NOSOMM
+               DO 20 K=1,NBCOOR
+                  R1 = ABS( RMCN( MN1 + K ) )
+                  R2 = ABS( RMCN( MNS + K ) )
+                  IF     ( R1 .LE. EPZERO ) THEN
+                     IF  ( R2 .GT. EPZERO ) GOTO 30
+                  ELSE IF( R2 .LE. EPZERO ) THEN
+                     GOTO 30
+                  ELSE IF( ABS( RMCN(MNS+K)-RMCN(MN1+K) ) .GT.
+     %                     R1 * EPSXYZ    ) THEN
+                     GOTO 30
+                  ENDIF
+ 20            CONTINUE
+C
+C              LES 2 SOMMETS NOSOMM ET XYZ SONT IDENTIQUES
+C              AFFICHAGE SI LE 6-EME CHIFFRE SIGNIFICATIF EST DIFFERENT
+               DO 22 K=1,NBCOOR
+                  R = RMCN(MNS+K)
+                  IF( ABS(RMCN(MN1+K)-R) .GT. 1E-6*ABS(R) ) THEN
+                   IF( NBCOOR .EQ. 6 ) THEN
+                    IF( LANGAG .EQ. 0 ) THEN
+                   WRITE(IMPRIM,10022) (RMCN(MN1+KK),KK=1,NBCOOR),
+     %                                 (RMCN(MNS+KK),KK=1,NBCOOR),NOSOMM
+                    ELSE
+                   WRITE(IMPRIM,20022) (RMCN(MN1+KK),KK=1,NBCOOR),
+     %                                 (RMCN(MNS+KK),KK=1,NBCOOR),NOSOMM
+                    ENDIF
+                   ELSE
+                   IF( LANGAG .EQ. 0 ) THEN
+                      WRITE(IMPRIM,10023) (RMCN(MN1+KK),KK=1,NBCOOR),
+     %                                 (RMCN(MNS+KK),KK=1,NBCOOR),NOSOMM
+                   ELSE
+                      WRITE(IMPRIM,20023) (RMCN(MN1+KK),KK=1,NBCOOR),
+     %                                 (RMCN(MNS+KK),KK=1,NBCOOR),NOSOMM
+                   ENDIF
+                  ENDIF
+                  GOTO 800
+                 ENDIF
+ 22            CONTINUE
+               GOTO 800
+C
+10022 FORMAT(' REMARQUE  :  SOMMET=',6G15.7/
+     %       ' IDENTIFIE AU SOMMET=',6G15.7,' NUMERO:',I10)
+10023 FORMAT(' REMARQUE  :  SOMMET=',3G15.7/
+     %       ' IDENTIFIE AU SOMMET=',3G15.7,' NUMERO:',I10)
+20022 FORMAT(' REMARK:       VERTEX=',6G15.7/
+     %       ' IDENTIFIED to VERTEX=',6G15.7,' NUMBER:',I10)
+20023 FORMAT(' REMARK:       VERTEX=',3G15.7/
+     %       ' IDENTIFIED at VERTEX=',3G15.7,' NUMBER:',I10)
+C
+C              LE SOMMET N'EST PAS XYZ . PASSAGE AU SOMMET SUIVANT
+  30           NOSOMM = MCN( MNCHAI - 1 + NOSOMM )
+               GOTO 18
+            ENDIF
+C
+C           SOMMET NON IDENTIFIE . AJOUT DE CE SOMMET
+            NBSOM  = NBSOM + 1
+            NOSOMM = NBSOM
+C           CHAINAGE DU NOUVEAU SOMMET EN DEBUT DE PAVE
+            MCN( MNCHAI-1+NOSOMM ) = MCN( MNPAVE+NUPAVE )
+            MCN( MNPAVE+NUPAVE   ) = NOSOMM
+C           LES NBCOOR COORDONNEES
+            MN1 = MNSU + NBCOOR * NOSOMM
+            DO 40 K=1,NBCOOR
+               RMCN( MN1 + K ) = RMCN( MNS + K )
+ 40         CONTINUE
+C
+C           LE NUMERO DU SOMMET I DE L'OBJET J DANS L'UNION EST NOSOMM
+ 800        MCN( MNUN + I ) = NOSOMM
+ 900     CONTINUE
+1000  CONTINUE
+C
+C     LE NOMBRE DE SOMMETS DE L'UNION
+      MCN( MNSOMM + WNBSOM ) = NBSOM
+      IF( LANGAG .EQ. 0 ) THEN
+         PRINT*,'uniobj:',NBSOM,' SOMMETS   apres IDENTIFICATION'
+      ELSE
+         PRINT*,'uniobj:',NBSOM,' VERTICES after IDENTIFICATION'
+      ENDIF
+C
+C     LE NOMBRE DE COORDONNEES DES SOMMETS DE L'UNION
+      MCN( MNSOMM + WBCOOR ) = NBCOOR
+C
+C     IDENTIFICATION DES TANGENTES
+C     ============================
+C     ADRESSE -1 DU 1-ER NUMERO DE SOMMET DE L'OBJET UNION
+      MNDETG = MNUNIO+WDSCOU+1+NBOBUN+MCN(MNDESO+NBOBUN)
+      MNNUTG = MNDETG + 1 + NBOBUN
+      CALL IDETGS( NBOBUN, MNXYOB, MNSOMM, NBTGUN,
+     %             MNDETG, MNNUTG, NBTGS )
+C
+C     LE NOMBRE DE TANGENTES DE L'OBJET UNION
+      MCN( MNSOMM + WNBTGS ) = NBTGS
+      IF( LANGAG .EQ. 0 ) THEN
+         PRINT*,'uniobj:',NBTGS,' TANGENTES apres IDENTIFICATION'
+      ELSE
+         PRINT*,'uniobj:',NBTGS,' TANGENTS after IDENTIFICATION'
+      ENDIF
+
+C
+C     MISE A JOUR DU TABLEAU 'XYZSOMMET' DE L'OBJET UNION
+C     ---------------------------------------------------
+C     LA DATE ET LE NUMERO DE TD
+      CALL ECDATE( MCN(MNSOMM) )
+      MCN( MNSOMM + MOTVAR(6) ) = NONMTD( '~>>>XYZSOMMET' )
+C     LE TMS XYZSOMMET EST RACCOURCI A SA VALEUR EXACTE
+      CALL TAMSRA( NTSOMM, WYZSOM + (NBSOM+NBTGS) * NBCOOR )
+C
+C     MISE A JOUR DU TABLEAU 'UNION' DE L'OBJET UNION
+C     -----------------------------------------------
+C     LE NOMBRE D'OBJETS DE L'UNION
+      MCN( MNUNIO + WBOBUN ) = NBOBUN
+C     COPIE DU TABLEAU POINTEUR SUR LE DERNIER SOMMET DE CHAQUE OBJET
+      CALL TRTATA( MCN(MNDESO), MCN(MNUNIO+WDSCOU), 1+NBOBUN )
+C     LA DATE ET LE NUMERO DE TD
+      CALL ECDATE( MCN(MNUNIO) )
+      MCN( MNUNIO + MOTVAR(6) ) = NONMTD( '~>>>UNION' )
+C
+C     DESTRUCTION DES TABLEAUX TEMPORAIRES
+C     LES TABLEAUX DE SAUVEGARDE DES ADRESSES MCN DES OBJETS
+ 9900 IF( MNXYOB .GT. 0 ) CALL TNMCDS( 'ENTIER', NBOBUN, MNXYOB )
+C     LE TABLEAU POINTEUR SUR LE DERNIER SOMMET ET TG DE CHAQUE OBJET
+      IF( MNDESO .GT. 0 ) CALL TNMCDS( 'ENTIER', 1 + NBOBUN, MNDESO )
+C     DECLARATION ET OUVERTURE EN MC DU TABLEAU 'PAVES'
+      IF( MNPAVE .GT. 0 ) CALL TNMCDS( 'ENTIER', 4096, MNPAVE )
+C     LE TABLEAU DES CHAINAGES DES SOMMETS DANS LES PAVES
+      IF( MNCHAI .GT. 0 ) CALL TNMCDS( 'ENTIER', NBSOMM, MNCHAI )
+
+      RETURN
+      END

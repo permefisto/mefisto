@@ -1,0 +1,53 @@
+Ces options definissent les plans de trace du profil de la solution
+lesquels plans sont cumulables (X=CTE et Y=CTE ...)
+La solution est evaluee dans le plan et tracee en valeur selon
+la direction normale (Plan X=Cte => X=Solution(Cte,y,z) ...)
+
+1 : X=Constante  Trace du profil des EF avec les PLANS X=CTE
+2 : Y=Constante  Trace du profil des EF avec les PLANS Y=CTE
+3 : Z=Constante  Option par defaut.
+
+4 : Plan defini par la donnee de 3 POINTS non alignes
+
+5 : COULEUR des ARETES des faces de la FRONTIERE pour la localiser
+6 : TYPE continu tirete ou double tirete du TRAIT des ARETES FRONTIERE
+
+7 : COULEUR des ARETES sur les PROFILS
+    Avantage: montre l'intersection du profil avec le maillage
+8 : TYPE continu tirete ou double tirete du TRAIT des ARETES sur PROFILS
+
+11: Nombre de PLANS des PROFILS   Par defaut, 1.
+
+12: Distance REGULIERE entre MIN et MAX 
+    Les COORDONNEES MIN et MAX sont calculees pour cet objet
+    La coordonnee CTE du i-eme PLAN trace aura pour valeur 
+      CMIN + (i-1)*(CMAX-CMIN)/(nombre des PLANS-1)
+
+13: COORDONNEE MIN et MAX des PLANS 
+    Les COORDONNEES MIN et MAX des plans sont demandees
+    La coordonnee CTE du i-eme PLAN trace aura pour valeur 
+      CMIN + (i-1)*(CMAX-CMIN)/(nombre des PLANS-1)
+
+14: COORDONNEE des PLANS des PROFILS
+    Chaque COORDONNEE CTE est demandee ensuite.
+
+15: Coefficient d'AMPLIFICATION de la solution dans la direction normale
+
+19: POURCENTAGE de REDUCTION des FACES 
+    Le trace des faces peut etre reduit pour voir
+    - les aretes manquantes
+    - derriere les faces les plus apparentes pour la direction de visee
+
+
+La SOLUTION est calculee dans ces plans et tracee dans la direction normale
+l'objet et selon une palette de couleurs allant du BLEU (froid)
+au MAGENTA (chaud)
+
+80: REINITIALISER la DONNEE des PLANS
+    permet de redefinir un nouveau jeu de PLANS
+
+90: EXECUTER le TRACE
+    Il est possible de definir des profils selon X et Y et Z ...
+    et de cumuler les intersections sur un seul trace
+    Reinitialiser par 80 s'avere alors necessaire pour redefinir
+    un nouveau jeu de plans des profils.

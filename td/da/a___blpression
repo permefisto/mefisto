@@ -1,0 +1,12 @@
+deftms ~>>>BLPRESSION 'imposed pressure'
+variable muet DATE 'date of creation of the TMS'   reel2  ;
+variable muet NUTD 'number of the descriptor array TD' entier ; 
+variable LTBLPR    'type of imposed pressure' entier
+(  1 : 'constant pressure'
+, -1 : 'function pressure'
+,  0 : 'delete actual pressure' ) ;
+cas LTBLPR
+ 1 : variable BLPRES 'imposed pressure' reel ;
+-1 : variable NFBLPR 'name of the function BLPRESSION' ^~>FONCTION ;
+fincas ;
+fintms ;

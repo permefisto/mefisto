@@ -1,0 +1,266 @@
+      SUBROUTINE FAPTVPSI( XYZPT,  PTXYZD, N1FEOC, NFETOI,
+     %                     MXVPSI, NBVPSI, NFVPSI,
+     %                     NBFETO, NBVPIN, QUAMIN )
+C+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+C  BUT :   DETERMINER LE NOMBRE DE TETRAEDRES POINT XYZPT-FACES DE
+C ------   L'ETOILE DE VOLUME STRICTEMENT POSITIF et SANS INTERSECTION
+C          AVEC LES FACES SIMPLES DES TETRAEDRES DE L'ETOILE
+
+C ENTREES:
+C --------
+C XYZPT  : COORDONNEES XYZ DU POINT A TESTER COMME CENTRE DE TETRAEDRISATION
+C PTXYZD : TABLEAU DES COORDONNEES DES POINTS
+C          PAR POINT : X  Y  Z DISTANCE_SOUHAITEE
+C N1FEOC : POINTEUR SUR LA PREMIERE FACE DE L'ETOILE
+C          CHAINAGE SUIVANT DANS NFETOI(5,*)
+C NFETOI : LES FACES TRIANGULAIRES DE L'ETOILE
+C          1: NUMERO DU TETRAEDRE DANS NOTETR OPPOSE A CETTE FACE
+C          2: NUMERO PTXYZD DU SOMMET 1 DE LA FACE
+C          3: NUMERO PTXYZD DU SOMMET 2 DE LA FACE
+C          4: NUMERO PTXYZD DU SOMMET 3 DE LA FACE
+C          S1S2 x S1S3 VERS L'INTERIEUR DE L'ETOILE
+C MXVPSI : NOMBRE MAXIMAL DE FACES DU TABLEAU NFVPSI
+
+C SORTIES:
+C --------
+C NBVPSI : NOMBRE DE TETRAEDRES DE VOLUME>0 SANS INTERSECTION AVEC
+C          LES FACES DE L'ETOILE
+C NFVPSI : NUMERO NFETOI DES NBVPSI FACES DONNANT AVEC XYZPT UN VOLUME>0
+C          ET SANS INTERSECTION AVEC LES FACES DE L'ETOILE
+C NBFETO : NOMBRE DE FACES DE L'ETOILE NFETOI A PARTIR DE N1FEOC
+C NBVPIN : NOMBRE D'INTERSECTIONS TETRAEDRE Pt XYZPT+FACE AVEC LES FACES
+C QUAMIN : QUALITE MINIMALE  DES TETRAEDRES Pt XYZPT+FACES DE VOLUME>0
+C+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+C AUTEUR : ALAIN PERRONNET LJLL UPMC & St PIERRE du PERRAY DECEMBRE 2014
+C MODIFS : ALAIN PERRONNET Saint Pierre du Perray           Janvier 2020
+C2345X7..............................................................012
+      include"./incl/trvari.inc"
+      COMMON / TRTETR / STOPTE, TRACTE
+      LOGICAL           STOPTE, TRACTE, TRACTE0
+      INTEGER           NFETOI(5,*), NFVPSI(MXVPSI)
+      DOUBLE PRECISION  PTXYZD(4,*), XYZPT(3), V,
+     %                  SURTRD, SF, SFMIN, SFMAX
+      DOUBLE PRECISION  ARMIN, ARMAX, SURFTR(4)
+      CHARACTER*80      KTITRE
+
+      TRACTE0 = TRACTE
+      LORBITE = 1
+
+      NOPASS = 0
+      QMEDIO0= 3.
+
+ 5    NBFETO = 0
+      NBVPSI = 0
+      NBVPIN = 0
+      NBVNEG = 0
+      QUAMIN = 2.
+      QMEDIO = 2.
+      SFMIN  = 1D100
+      SFMAX  =-1D100
+
+C     PARCOURS DES FACES SIMPLES NFETOI ISSUES DE N1FEOC
+C     CALCUL DU VOLUME DES TETRAEDRES XYZPT-FACES DE L'ETOILE
+      NF1 = N1FEOC
+
+ 10   IF( NF1 .GT. 0 ) THEN
+
+C        UNE FACE DE PLUS DANS L'ETOILE
+         NBFETO = NBFETO + 1
+
+C        LA SURFACE NON SIGNEE DE LA FACE SIMPLE NF1
+         NS1 = ABS( NFETOI(2,NF1) )
+         NS2 = NFETOI(3,NF1)
+         NS3 = NFETOI(4,NF1)
+         SF = SURTRD( PTXYZD(1,NS1), PTXYZD(1,NS2), PTXYZD(1,NS3) )
+
+         IF( SF .LT. SFMIN ) THEN
+            SFMIN = SF
+            NFMIN = NF1
+         ENDIF
+
+         IF( SF .GT. SFMAX ) THEN
+            SFMAX = SF
+            NFMAX = NF1
+         ENDIF
+
+C        LE VOLUME et QUALITE DU TETRAEDRE FACE NF1 + XYZPT
+         CALL QUATETD(  PTXYZD(1,NS1), PTXYZD(1,NS2),
+     %                  PTXYZD(1,NS3), XYZPT,
+     %                  ARMIN, ARMAX, SURFTR, V, Q )
+
+         IF( Q .LT. QMEDIO ) THEN
+            QMEDIO = Q
+         ENDIF
+
+C        UN TETRAEDRE DE VOLUME NEGATIF DE PLUS?
+         IF( V .LT. 0D0 ) THEN
+            NBVNEG = NBVNEG + 1
+C           VOLUME TETRAEDRE NEGATIF => ABANDON DE CETTE FACE
+C           DE PLUS C'EST EQUIVALENT A UNE INTERSECTION
+            NBVPIN = NBVPIN + 1
+            GOTO 20
+         ENDIF
+
+C        LE TETRAEDRE NFETOI(NF1)-XYZPT INTERSECTE T IL
+C        UNE FACE DE L'ETOILE?
+         NF2 = N1FEOC
+ 15      IF( NF2 .GT. 0 ) THEN
+
+            IF( NF2 .NE. NF1 ) THEN
+
+C              INTERSECTION TRIANGLE NF2-TETRAEDRE NF1+XYZPT?
+ccc               tracte = .true.
+               CALL INTRITET( PTXYZD(1,ABS(NFETOI(2,NF2))),
+     %                        PTXYZD(1,NFETOI(3,NF2)),
+     %                        PTXYZD(1,NFETOI(4,NF2)),
+     %                        PTXYZD(1,NS1),
+     %                        PTXYZD(1,NS2),
+     %                        PTXYZD(1,NS3),
+     %                        XYZPT, LINTER )
+C              LINTER : 0 PAS D'INTERSECTION
+C              1 SI UNE ARETE DU TRIANGLE INTERSECTE UNE FACE DU TETRAEDRE
+C              2 SI LE TRIANGLE EST INTERSECTE PAR UNE ARETE DU TETRAEDRE
+C              3 SI UN DES SOMMETS DU TRIANGLE EST STRICTEMENT INTERNE
+C                   AU TETRAEDRE
+               IF( LINTER .NE. 0 ) THEN
+C                 OUI: UN POINT D'INTERSECTION => ABANDON DE CETTE FACE
+                  NBVPIN = NBVPIN + 1
+                  GOTO 20
+               ENDIF
+
+            ENDIF
+
+C           PASSAGE A LA FACE SUIVANTE DE L'ETOILE
+            NF2 = NFETOI(5,NF2)
+            GOTO 15
+
+         ENDIF
+
+C        NF1-XYZPT FORME UN TETRAEDRE DE VOLUME>0 ET
+C        N'EST PAS INTERSECTE PAR UNE AUTRE FACE DE L'ETOILE
+         IF( NBVPSI .GE. MXVPSI ) THEN
+            PRINT*,'faptvpsi: MXVPSI=',MXVPSI,' ATTEINT. A AUGMENTER'
+            GOTO 9000
+         ENDIF
+C        UN TETRAEDRE DE PLUS DE VOLUME POSITIF et SANS INTERSECTION
+         NBVPSI = NBVPSI + 1
+         NFVPSI( NBVPSI ) = NF1
+
+         IF( Q .LT. QUAMIN ) THEN
+            QUAMIN = Q
+         ENDIF
+
+C        PASSAGE A LA FACE SUIVANTE DE L'ETOILE
+ 20      NF1 = NFETOI(5,NF1)
+         GOTO 10
+
+      ENDIF
+
+C     ICI IL EXISTE NBVPSI TETRAEDRES DE VOLUME POSITIF
+C     SANS INTERSECTION AVEC LES FACES DE L'ETOILE A CREER
+
+ccc 9000 PRINT*,'faptvpsi:',NBFETO,' FACES SIMPLES: Surface NFMIN=',NFMIN,
+ccc     %       ' SFMIN=',SFMIN,' Surface NFMAX=',NFMAX,' SFMAX=',SFMAX,
+ccc     %       ' SFMIN/SFMAX=',SFMIN/SFMAX
+ccc      PRINT*,'faptvpsi: FACE+XYZ=',XYZPT,' => NBVPSI=',NBVPSI,
+ccc     %       ' V>0  NBVPIN=',NBVPIN,' QMIN=',QUAMIN
+ccc      PRINT*,'faptvpsi: NFVPSI=',(NFVPSI(K),K=1,NBVPSI)
+
+
+      IF( NOPASS .EQ. 0 ) THEN
+
+         IF( NBVPIN .EQ. 0 .AND. NBVNEG .GT. NBFETO/2 ) THEN
+
+C           AUCUNE INTERSECTION du TETRAEDRE XYZPT-FACE aux AUTRES FACES
+C           MAIS BEAUCOUP DE TETRAEDRES DE VOLUME NEGATIF =>
+C           PEUT ETRE QUE TOUTES LES FACES DE L'ETOILE SONT MAL ORIENTEES
+C           VERS L'EXTERIEUR DE L'ETOILE PLUTOT QUE VERS L'INTERIEUR?
+C           CE CAS NE DEVRAIT PAS ARRIVER !...
+            QMEDIO0 = QMEDIO
+
+            PRINT*
+            PRINT*,'$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$'
+            PRINT*,'faptvpsi: ATTENTION NBVNEG=',NBVNEG,
+     % ' RE-ORIENTATION DEMANDEE des FACES. CELA NE DEVRAIT PAS ARRIVER'
+
+            TRACTE = .TRUE.
+           KTITRE='faptvpsi: RE-ORIENTATION de TOUTES les FACES ENSUITE'
+            CALL TRFETO3( KTITRE, XYZPT, XYZPT, PTXYZD,
+     %                    N1FEOC, NFETOI, NBVPSI, NFVPSI)
+
+C           ORIENTATION OPPOSEE DES FACES NFETOI PAR PERMUTATION
+C           DES SOMMETS 2 et 3 DE CHAQUE FACE NFETOI
+            NF1 = N1FEOC
+ 50         IF( NF1 .GT. 0 ) THEN
+               K                = NFETOI( 3, NF1 )
+               NFETOI( 3, NF1 ) = NFETOI( 4, NF1 )
+               NFETOI( 4, NF1 ) = K
+C              PASSAGE A LA FACE SUIVANTE DE L'ETOILE
+               NF1 = NFETOI( 5, NF1 )
+               GOTO 50
+            ENDIF
+
+C           TRACE DE L'ETOILE REORIENTEE
+            KTITRE='faptvpsi: APRES RE-ORIENTATION de TOUTES les FACES'
+            CALL TRFETO3( KTITRE, XYZPT, XYZPT, PTXYZD,
+     %                    N1FEOC, NFETOI, NBVPSI, NFVPSI)
+
+C           RE-EXECUTION AVEC CETTE REORIENTATION DE NFETOI
+            NOPASS = 1
+            GOTO 5
+
+         ENDIF
+
+      ENDIF
+
+
+      IF( NOPASS .EQ. 1 ) THEN
+
+         KTITRE='faptvpsi: RE-ORIENTATION de TOUTES les FACES EFFECTUEE'
+         CALL TRFETO3( KTITRE, XYZPT, XYZPT, PTXYZD,
+     %                 N1FEOC, NFETOI, NBVPSI, NFVPSI)
+
+C        BILAN APRES REORIENTATION
+         IF( NBVPIN .EQ. 0 .AND. QMEDIO0 .LT. QMEDIO ) THEN
+
+C           LA RE-ORIENTATION REUSSIE => SORTIE
+            PRINT*,'faptvpsi: ATTENTION NBVNEG=',NBVNEG,
+     %             ' RE-ORIENTATION REUSSIE des FACES'
+            PRINT*,'$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$'
+            PRINT*
+           KTITRE='faptvpsi: RE-ORIENTATION REUSSIE de TOUTES les FACES'
+            CALL TRFETO3( KTITRE, XYZPT, XYZPT, PTXYZD,
+     %                    N1FEOC, NFETOI, NBVPSI, NFVPSI)
+            GOTO 9000
+
+         ELSE
+
+C           LA RE-ORIENTATION ECHOUEE => REMISE EN L'ORIENTATION INITIALE
+C           C-A-D ORIENTATION OPPOSEE DES FACES NFETOI PAR PERMUTATION
+C           DES SOMMETS 2 et 3 DE CHAQUE FACE NFETOI
+            NOPASS = 2
+            NF1 = N1FEOC
+ 70         IF( NF1 .GT. 0 ) THEN
+               K                = NFETOI( 3, NF1 )
+               NFETOI( 3, NF1 ) = NFETOI( 4, NF1 )
+               NFETOI( 4, NF1 ) = K
+C              PASSAGE A LA FACE SUIVANTE DE L'ETOILE
+               NF1 = NFETOI( 5, NF1 )
+               GOTO 70
+            ENDIF
+
+C           LA RE-ORIENTATION A ECHOUE => SORTIE
+            PRINT*,'faptvpsi: ATTENTION NBVNEG=',NBVNEG,
+     %' RE-ORIENTATION ECHOUEE des FACES. Retour a l''ORIENTATION INITIA
+     %LE'
+            PRINT*,'$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$'
+C           RE-EXECUTION AVEC CETTE REORIENTATION DE NFETOI
+            GOTO 5
+
+         ENDIF
+
+      ENDIF
+
+ 9000 TRACTE = TRACTE0
+      RETURN
+      END

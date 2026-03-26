@@ -1,0 +1,168 @@
+Avec cette option, le MENU suivant s'affiche
+1; AFFICHER un TMS (Tableau Memoire Secondaire associe a un PLSVO)
+2; ENTRER   les VALEURS d'un TMS
+3; AFFICHER la VALEUR d'une variable d'un TMS
+4; IMPOSER  la VALEUR d'une variable d'un TMS
+5; CHANGER  un NOM dans un LEXIQUE 
+
+Un Tableau ou TMS est un ensemble d informations stockees,
+sauvegardees sur uneMemoire Secondaire (disque) et donc accessible
+a tout instant, meme si l execution s effectue en plusieurs etapes.
+
+Le NOM demande d un TABLEAU MS est defini comme suit :
+- ~> son debut (nom de la racine de l'arborescence)
+- point ou ligne ou surface ou volume ou objet;
+- > comme separateur;
+
+Exemples : 
+~>ligne>l1>nsef; donne la liste des EF de la ligne nommee l1.   
+
+~>surface>sphere>xyzsommet; donne la liste des coordonnees des sommets
+de la surface nommee sphere. 
+
+La liste actuelle des noms de tableaux est 
+~>FONCTION>>ARBRE
+~>LIGNE>>BSPLINE
+~>LIGNE>>DEFINITION
+~>LU
+~>OBJET>>DEFINITION
+~>OBJET>>ERREURTH
+~>OBJET>>NOUVNOEUD
+~>OBJET>>TOPOLOGIE
+~>POINT>>DEFINITION
+~>SURFACE>>BSPLINE
+~>SURFACE>>DEFINITION
+~>TRANSFO>>DEFINITION
+~>VOLUME>>DEFINITION
+~>>>ARETE
+~>>>ARETEFR
+~>>>CAPACITE
+~>>>CONDUCTIVITE
+~>>>CONTACT
+~>>>CONTRAINTE
+~>>>CONTRINIT
+~>>>DCONDUCTIVITE
+~>>>DILATATION
+~>>>DTEMPERATURE
+~>>>ECHANGE
+~>>>FACE 
+~>>>FIXATION
+~>>>FLUX
+~>>>FORCE
+~>>>INTERFACE
+~>>>JOINT
+~>>>MASSE
+~>>>MORSE
+~>>>NPEF
+~>>>NSEF
+~>>>PROFIL
+~>>>SOURCE
+~>>>TABLEAU1R
+~>>>TEMPERINIT
+~>>>TEXTE
+~>>>TRACE
+~>>>UNION
+~>>>VECTEUR
+~>>>XYZNOEUD
+~>>>XYZPOINT
+~>>>XYZSOMMET
+~>>>YOUNG
+~>>>DEPLACTINIT
+~>>>VITESSEINIT
+~>>>VITESSEFLUIDE
+
+Lorsque le nom comprend 2 caracteres > qui se suivent, il faut
+intercaler le nom donne par l'utilisateur entre ces 2 >
+Par exemple : 
+Si le tableau de definition de la surface RECTANGLE doit etre affiche
+il faut taper comme nom : ~>surface>rectangle>definition;
+
+Lorsque le nom debute par ~>>, il faut faire intercaler le nom par un prefixe
+point ou ligne ou surface ou volume ou objet ou transfo ou ...
+Par exemple : ~>>>CONDUCTIVITE permet ~>volume>moteur>conductivite;
+(Sauf pour le nom d'un fichier, minuscule et majuscule sont equivalentes)
+
+Si le nom est ampute des derniers termes, la liste des tableaux MS
+est affichee.
+Par exemple : ~>point; fait afficher la liste des points actuels.
+
+~>ligne>axe; fait afficher la liste des tableaux MS de la ligne de nom axe.
+
+Pour obtenir la liste des tableaux de la racine de cet arbre, taper ~>;  
+
+Un LEXIQUE est un NOM de TMS, au moins ampute de son DERNIER TERME
+EXEMPLE : ~>point;  ou ~>point>p1;  ou ~>surface>rectangle;
+
+Le nom d une variable d un tableau TMS est par definition forme a partir 
+- du nom du tableau 
+- suivi de (
+- suivi de lidentificateur de la variable 
+- suivi de )
+- termine par ;
+Exemple :  ~>point>p1>xyzsommet(nbsom);  
+
+Si la variable est celle d un tableau, il faut faire suivre le
+nom de l'identificateur de
+- (
+- la valeur (entier positif seulement) du premier indice 
+- , la valeur du second indice
+- )
+Exemple : ~>surface>octogone>nsef(nusoef(2,5));
+affiche le numero du sommet 2 de l'EF 5 du maillage de la surface
+nommee octogone.
+
+
+1; AFFICHER un TMS associe a un PLSVO)
+Les regles de generation du NOM du TMS ont ete donnees auparavant.
+Exemple :
+ 1;
+ ~>ligne>axe>xyzsommet; 
+ {Les coordonnees des sommets de la ligne de nom axe}
+
+
+2; ENTRER les VALEURS d'un TMS
+Les regles de generation du NOM du TMS ont ete donnees auparavant.
+Il faut apres l'entree du nom, taper dans l'ordre indique par la definition
+du tableau (cf le fichier td/d et la grammaire dans td/d/grammaire) les
+valeurs des variables du tableau. 
+
+Exemple :  2;   ~>ligne>axe>xyzsommet; 
+ {Les coordonnees des sommets de la ligne de nom axe} 
+ 3;            { nombre de sommets }
+ 0;            { nombre de tangentes }
+ 3;            { nombre de coordonnees }
+ 0; 0;   0;    { 3 coordonnees du sommet 1 }
+ 0; 0.5; 0;    { 3 coordonnees du sommet 2 }
+ 0; 0;   1;    { 3 coordonnees du sommet 3 }
+
+3; AFFICHER la VALEUR d'une variable d'un TMS
+Les regles de generation du NOM d'une VARIABLE ont ete donnees auparavant.
+Exemple :
+ 3;
+ ~>ligne>axe>xyzsommet(nbsom); 
+ {Le nombre de sommets de la ligne de nom axe}
+
+4; {IMPOSER la VALEUR d'une variable d'un TMS}}
+Les regles de generation du NOM d'une VARIABLE ont ete donnees auparavant.
+Exemples :
+ 4;
+ ~>ligne>axe>xyzsommet(nbsom);   {Le NOM de la variable}
+ 5;      {sommets sur la ligne de nom axe}
+
+ 4;
+ ~>surface>s>xyzsommet(xyzsom(varut)(3))
+ 0; { la nouvelle cote z du sommet de numero la valeur entiere de la
+      variable utilisateur VARUT de la surface s. }
+
+ATTENTION :Toute MODIFICATION est sous la responsabilite de l'UTILISATEUR.  
+Si nbsom est superieur a son ancienne valeur, tout APPEL a ce TMS
+va afficher des ERREURS!
+Cette option ne peut servir qu'a un debogage local.
+
+5; {CHANGER un NOM dans un LEXIQUE}}}  
+Les regles de generation du NOM du LEXIQUE ont ete donnees auparavant.
+Exemple :
+ 5;
+ point;   {Changement d'un NOM de POINT}
+ p1;      {l'ANCIEN NOM du POINT}
+ p2;      {le NOUVEAU NOM du POINT}

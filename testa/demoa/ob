@@ -1,0 +1,27 @@
+{ ================================================================ }
+{ MEFISTO software : Version August 2006                           }
+{ USER name        : Alain Perronnet                               }
+{ PROJECT name     : dema = demo anglaise                          }
+{ DATE             : 14/9/2006                                     }
+{ ================================================================ }
+@;
+@;
+@;
+
+5;  {THE OBJECT DEFINITION}
+ cardan; 0; 4;     { 1 volume + 3 surfaces }
+ volume;  cardan;  { for elasticity characteristics + internal force }
+ surface; cyl4;    { for boundary condition }
+ surface; cyl4_sym;
+ surface; base;
+@;
+
+7;  {THE INTERPOLATION DEFINITION}
+ cardan;3;  {Lagrange of degree 1}
+@;
+
+@;
+10; 5; {drawing of Object}
+1; 90; {all objects}
+
+close;

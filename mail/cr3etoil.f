@@ -1,0 +1,237 @@
+      SUBROUTINE CR3ETOIL( KTITRE, PTXYZD, NOTETR,
+     %                     MXFACO, LEFACO, NO0FAR, NBTRCF, NOTRCF, 
+     %                     NBSTIS, NOSTIS, NBSTCF, NOSTCF,
+     %                     MXFETO, N1FEOC, N1FEVI, NFETOI,
+     %                     MXTECF, NBTECF, NOTECF, IERR )
+C+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+C BUT :    CONSTRUCTION 3 DE L'ETOILE DES NBTRCF FACES PERDUES
+C -----    DE LA FRONTIERE PAR AJOUT DU TETRAEDRE OPPOSE DE TOUTE FACE
+C          SIMPLE DES TETRAEDRES DE L'ETOILE AYANT SES 3 SOMMETS SUR LE CF
+
+C ENTREES:
+C --------
+C KTITRE : TITRE D'UN TRACE
+C PTXYZD : TABLEAU DES COORDONNEES DES POINTS
+C          PAR POINT : X  Y  Z DISTANCE_SOUHAITEE
+C NOTETR : LISTE DES TETRAEDRES
+C          SOMMET1,    SOMMET2,    SOMMET3,    SOMMET4,
+C          TETRAEDRE1, TETRAEDRE2, TETRAEDRE3, TETRAEDRE4
+C          DE L'AUTRE COTE DE LA FACE
+
+C MXFACO : NOMBRE MAXIMAL DECLARABLE DE FACES DU CONTOUR
+C LEFACO : FACE DU CONTOUR OU INTERFACES ENTRE VOLUMES
+C          IL CONTIENT DANS CET ORDRE
+C          1:   =0 POUR UNE FACE VIDE
+C          123: NO (DANS PTXYZD) DU SOMMET 1, SOMMET 2, SOMMET 3
+C          45:  NO (DANS NUVOPA 0 SINON) DU VOLUME1 , VOLUME2 DE LA FACE
+C          678: NO (DANS LEFACO) DE LA FACE ADJACENTE PAR L'ARETE 1 2 3
+C          9: ATTENTION: UNE ARETE PEUT APPARTENIR A PLUS DE 2 FACES
+C             => CHAINAGE CIRCULAIRE DE CES FACES DANS LEFACO
+C             LEFACO(9,*) -> FACE SUIVANTE (*=0:VIDE, *<>0:NON VIDE)
+C          10: HACHAGE AVEC LA SOMME DES 3 SOMMETS MODULO MXFACO
+C              LF = MOD( NOSOFA(1)+NOSOFA(2)+NOSOFA(3) , MXFACO ) + 1
+C              NF = LEFACO( 10, LF ) LE NUMERO DE LA 1-ERE FACE DANS LEFACO
+C              SI LA FACE NE CONVIENT PAS. PASSAGE A LA SUIVANTE
+C              NF = LEFACO( 9, NF )  ...
+C          11: >0  NO NOTETR D'UN TETRAEDRE AYANT CETTE FACE,
+C              =0  SINON
+cccC          12: = NO FACEOC DE 1 A NBFACES D'OC
+C NO0FAR : NUMERO DES 3 SOMMETS DES FACES AJOUTEES AU CF
+
+C NBTRCF : NOMBRE DE FACES DE NOTRCF
+C NOTRCF : >0 NUMERO DANS LEFACO DES TRIANGLES PERDUS  DU CF
+C          <0 NUMERO DANS NO0FAR DES TRIANGLES AJOUTES AU CF
+C NBSTIS : NOMBRE DE SOMMETS ISOLES DU CF
+C NOSTIS : NUMERO PTXYZD DES NBSTIS SOMMETS ISOLES
+C NBSTCF : NOMBRE DE SOMMETS DES ARETES PERIPHERIQUES DU CF
+C NOSTCF : NUMERO PTXYZD DES NBSTCF SOMMETS DES ARETES PERIPHERIQUES
+C MXFETO : NOMBRE MAXIMAL DE FACES DECLARABLES DANS LE CHAINAGE NFETOI
+
+C SORTIES:
+C --------
+C N1FEOC : NUMERO NFETOI DE LA PREMIERE FACE SIMPLE DES TETRAEDRES
+C N1FEVI : NUMERO NFETOI DE LA PREMIERE FACE VIDE DE NFETOI
+C NFETOI : AU DEBUT VERSION1  FACES DE L'ETOILE
+C          1: NUMERO DU TETRAEDRE DANS NOTETR AYANT CETTE FACE
+C          2: NUMERO LOCAL AU TETRAEDRE DE LA FACE DE L'ETOILE
+C             UN SIGNE NEGATIF INDIQUE UN TRAITEMENT EFFECTUE
+C          3: NON UTILISE ICI
+C          4: NUMERO DE CETTE FACE DANS LEFACO, 0 SI PAS DANS LEFACO
+C          5: CHAINAGE SUIVANT DES FACES OCCUPEES ET VIDES
+C          ENSUITE VERSION2
+C          1: NUMERO DU TETRAEDRE DANS NOTETR OPPOSE A CETTE FACE
+C          2: NUMERO PTXYZD DU SOMMET 1 DE LA FACE
+C          3: NUMERO PTXYZD DU SOMMET 2 DE LA FACE
+C          4: NUMERO PTXYZD DU SOMMET 3 DE LA FACE
+C             S1S2xS1S3 EST DIRIGE VERS L'INTERIEUR DE L'ETOILE
+C          5: CHAINAGE SUIVANT DES FACES OCCUPEES ET VIDES
+C NBTECF : NOMBRE DE TETRAEDRES DE L'ETOILE
+C NOTECF : NUMERO NOTETR DES NBTECF TETRAEDRES DE L'ETOILE
+C IERR   : =0  SI PAS D'ERREUR DETECTEE
+C+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+C AUTEUR : ALAIN PERRONNET  Saint PIERRE du PERRAY             Mars 2018
+C2345X7..............................................................012
+      CHARACTER*(*)     KTITRE
+
+      DOUBLE PRECISION  PTXYZD(4,*), ARMIN, ARMAX, SURFTR(4), V
+
+      INTEGER           NOTETR(8,*), NFETOI(5,MXFETO),
+     %                  LEFACO(11,0:MXFACO), NO0FAR(3,*),
+     %                  NOTRCF(NBTRCF), NOSTIS(NBSTIS), NOSTCF(NBSTCF),
+     %                  NOTECF(MXTECF)
+
+      INTEGER           NOSOTR(3), NOSOARTE(2,6), NOSOFATE(3,4)
+      DATA              NOSOARTE / 1,2,  2,3,  3,1,  1,4,  2,4,  3,4 /
+      DATA              NOSOFATE / 1,3,2,  2,3,4,  3,1,4,  4,1,2 /
+C     => LA NORMALE A LA FACE EST ORIENTEE VERS L'EXTERIEUR DU TETRAEDRE
+
+      IERR    = 0
+      IF( NBTECF .LE. 0 ) RETURN
+
+      NBTECF0 = NBTECF
+
+C     ----------------------------------------------------------------
+C     6) AJOUT DU TETRAEDRE OPPOSE DE TOUTE FACE SIMPLE DES TETRAEDRES
+C        DE L'ETOILE AYANT SES 3 SOMMETS SUR LE CF
+C     ----------------------------------------------------------------
+
+C     CONSTRUCTION NFETOI VERSION 1 DES TRIANGLES FACES SIMPLES
+C     DES TETRAEDRES. LES FACES VUES 2 FOIS SONT ELIMINEES
+      CALL CRFETOI1( NBTECF, NOTECF, NOTETR,
+     %               MXFETO, N1FEOC, N1FEVI, NFETOI )
+
+C     BOUCLE SUR LES FACES DE L'ETOILE
+      NF1 = N1FEOC
+ 52   IF( NF1 .GT. 0 ) THEN
+
+C        NOSOTR(1:3 LES 3 NO DES SOMMETS DE LA FACE NF1
+         IF( NFETOI(3,NF1) .EQ. 0 ) THEN
+
+C           NFETOI VERSION 1
+C           NUMERO NOTETR DU TETRAEDRE DE LA FACE SIMPLE
+            NTE = ABS( NFETOI(1,NF1) )
+C           NUMERO DE LA FACE SIMPLE DANS LE TETRAEDRE NTE
+            I = ABS( NFETOI(2,NF1) )
+C           LA FACE EST REINITIALISEE NON TRAITEE
+            NFETOI(2,NF1) = I
+            DO K=1,3
+               NOSOTR(K) = NOTETR( NOSOFATE(K,I), NTE )
+            ENDDO
+C           TETRAEDRE OPPOSE DANS L'ETOILE
+            NTEOP = NOTETR( 4+I, NTE )
+
+         ELSE
+
+C           NFETOI VERSION 2
+            DO K=1,3
+               NOSOTR(K) = NFETOI( 1+K, NF1 )
+            ENDDO
+C           TETRAEDRE OPPOSE DANS L'ETOILE
+            NTEOP = NFETOI( 1, NF1 )
+
+         ENDIF
+
+C        LES 3 SOMMETS DE LA FACE SIMPLE DE L'ETOILE
+C        SONT ILS DES SOMMETS DU CF?
+         DO 54 K=1,3
+            NS = NOSOTR( K )
+            DO N=1,NBSTCF
+               IF( NOSTCF(N) .EQ. NS ) GOTO 54
+            ENDDO
+            DO N=1,NBSTIS
+               IF( NOSTIS(N) .EQ. NS ) GOTO 54
+            ENDDO
+            GOTO 60
+ 54      ENDDO
+
+C        LA FACE A SES 3 SOMMETS COMME SOMMETS DU CF
+C        AJOUT DU TETRAEDRE OPPOSE NTEOP DANS L'ETOILE SAUF DEJA LE CAS
+C        --------------------------------------------------------------
+         IF( NTEOP .GT. 0 .AND. NOTETR(1,NTEOP) .GT. 0 ) THEN
+            DO K=1,NBTECF
+               IF( NTEOP .EQ. NOTECF(K) ) GOTO 60
+            ENDDO
+            IF( NBTECF .GE. MXTECF ) THEN
+C              ABANDON
+               GOTO 9900
+            ENDIF
+            NBTECF = NBTECF + 1
+            NOTECF(NBTECF) = NTEOP
+
+C           VOLUME ET QUALITE DE NTEOP
+            CALL QUATETD( PTXYZD(1,NOTETR(1,NTEOP)),
+     %                    PTXYZD(1,NOTETR(2,NTEOP)),
+     %                    PTXYZD(1,NOTETR(3,NTEOP)),
+     %                    PTXYZD(1,NOTETR(4,NTEOP)),
+     %                    ARMIN, ARMAX, SURFTR, V, Q )
+            PRINT*,'cr3etoil: 6) AJOUT du tetraedre OPPOSE NOTETR(',
+     %              NTEOP,')=',(NOTETR(KK,NTEOP),KK=1,8),
+     %             ' V=',V,' Q=',Q
+
+ccccccC           QUAMINEX:QUALITE MINIMALE EXIGEE POUR CREER UN TETRAEDRE
+cccccc            IF( Q .LT. QUAMINEX ) THEN
+ccc            IF( Q .LT. 1E-3 ) THEN
+cccC              NTEOP DE MAUVAISE QUALITE => AJOUT DES 4 TETRAEDRES OPPOSES
+cccC              AUX 4 FACES DU TETRAEDRE NTEOP DE MAUVAISE QUALITE
+cccC              -----------------------------------------------------------
+ccc               DO 55 M=1,4
+ccc                  NTOPOP=NOTETR(4+M,NTEOP)
+ccc                  IF( NTOPOP .GT. 0 .AND. NOTETR(1,NTOPOP) .GT. 0 ) THEN
+ccc                     DO K=1,NBTECF
+ccc                        IF( NTOPOP .EQ. NOTECF(K) ) GOTO 55
+ccc                     ENDDO
+ccc                     IF( NBTECF .GE. MXTECF ) THEN
+cccC                       ABANDON
+ccc                        GOTO 9900
+ccc                     ENDIF
+ccc                     NBTECF = NBTECF + 1
+ccc                     NOTECF(NBTECF) = NTOPOP
+cccC                    VOLUME ET QUALITE DE NTOPOP
+ccc                     CALL QUATETD( PTXYZD(1,NOTETR(1,NTOPOP)),
+ccc     %                             PTXYZD(1,NOTETR(2,NTOPOP)),
+ccc     %                             PTXYZD(1,NOTETR(3,NTOPOP)),
+ccc     %                             PTXYZD(1,NOTETR(4,NTOPOP)),
+ccc     %                             ARMIN, ARMAX, SURFTR, V, Q )
+ccc                PRINT*,'cr3etoil: 6) ajout tetraedre OP-OPPOSE NOTETR(',
+ccc     %            NTOPOP,')=',(NOTETR(KK,NTOPOP),KK=1,8),' V=',V,' Q=',Q
+ccc                     GOTO 50
+ccc                  ENDIF
+ccc 55            ENDDO
+ccc            ENDIF
+
+         ENDIF
+
+C        PASSAGE A LA FACE SUIVANTE DE L'ETOILE
+ 60      NF1 = NFETOI(5,NF1)
+         GOTO 52
+
+      ENDIF
+
+      IF( NBTECF0 .NE. NBTECF ) THEN
+
+C        CONSTRUCTION NFETOI VERSION 1 DES TRIANGLES FACES SIMPLES DES
+C        TETRAEDRES ENVELOPPANTS. LES FACES VUES 2 FOIS SONT ELIMINEES
+         CALL CRFETOI1( NBTECF, NOTECF, NOTETR,
+     %                  MXFETO, N1FEOC, N1FEVI, NFETOI )
+
+C        TRACE DE L'ETOILE AVEC LES TETRAEDRES AJOUTES
+         KTITRE ='cr3etoil: 6)           TETRAEDRES apres AJOUT de      
+     % TETRAEDRES OPPOSES avec 3 SOMMETS du CF'
+         WRITE(KTITRE(14:18),'(I5)') NBTECF
+         WRITE(KTITRE(50:53),'(I4)') NBTECF-NBTECF0
+         CALL SANSDBL( KTITRE, L )
+         PRINT *,KTITRE(1:L)
+         CALL TRFETO4( KTITRE, PTXYZD, N1FEOC, NFETOI,
+     %                 NBTRCF, NOTRCF, LEFACO, NO0FAR,
+     %                 NBTECF, NOTECF, NOTETR )
+      ENDIF
+
+      GOTO 9999
+
+
+ 9900 PRINT*,'cr3etoil: SATURATION du TABLEAU NOTECF NBTECF=',
+     %        NBTECF,' AUGMENTER MXTECF=',MXTECF
+      IERR = 5
+
+ 9999 RETURN
+      END

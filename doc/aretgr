@@ -1,0 +1,40 @@
+ARETGR is the length of a regular grid which covers
+completely the object.
+Regular tetrahedra with an edge length ARETGR will be created.
+
+If the User has NOT given the 
+DefFunc Taille_Ideale(x,y,z); ...  (as wished length!...)
+then
+  the tetrahedra with a too great volume will be
+  reduced by the introduction of their barycentre.
+  Let
+  MXED the maximum of edges of the triangles of the object boundary
+  MXED the minimum of edges of the triangles of the object boundary
+
+  If ARETGR<MXED, few barycentres will be added
+  If ARETGR>2 MXED then ARETGR takes the value MXED
+  If ARETGR<MIED   then ARETGR takes the value (MXIN+2MXED)/3
+else
+  The tetrahedra will be made with edge lengths which
+  verify Taille_Ideale(x,y,z)
+
+  This the way to indicate around the point (x,y,z) what
+  the length of edges has to be!
+
+Example for the input of Taille_Ideale:
+
+DefVar lxf,lh2,lh3;
+lh2=0.3;
+lh3=0.7;
+lxf=max(lh2,lh3);
+
+DefFunc Taille_Ideale(x,y,z);
+  Taille_Ideale=0.45;
+  If x<lxf and y>-(lh3+lh2)*1.2
+    Then Taille_Ideale=0.15;
+  Else
+    If x<lxf and y>-(lh3+lh2)*1.8
+    Then Taille_Ideale=0.28;
+    EndIf;
+  EndIf;
+EndFunc;

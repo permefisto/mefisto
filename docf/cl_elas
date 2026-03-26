@@ -1,0 +1,7 @@
+EN ELASTICITE, 2 types de conditions aux limites sont possibles :
+- une FORCE exterieure s'exerce
+  fournir une FORCE (1) en precisant le numero et la valeur de cette force
+
+- IMPOSER une ou plusieurs composantes du deplacement
+  fournir une FIXATION (2) en precisant le numero de la composante et
+          la valeur du deplacement a imposer

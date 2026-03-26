@@ -1,0 +1,165 @@
+!     TOUTES LES OPTIONS DE TRACE GRAPHIQUE
+!     fichier mecoit.inc95
+
+      PARAMETER        (MLATTR=54)
+
+      COMMON / MECOI1 / MNITEP, MNITEL, MNITES, MNITEV, MNITEO, &
+                        MNITST, MNITAR, MNITFA, MNITEF
+      INTEGER           MNITEM(9)
+      EQUIVALENCE      (MNITEM(1),MNITEP)
+!     MNITEP,...,MNITEO : ADRESSE MCN DU TABLEAU DES ITEMS
+!                         1:POINTS,  2:LIGNES, 3:SURFACES, 4:VOLUMES, 5:OBJETS,
+!                         6:SOMMETS, 7:ARETES, 8:FACES,    9:EF3D
+
+!     MCN(MNITE.  ) = NOMBRE DE MOTS PAR ITEM (=4 ou PLUS)
+!     MCN(MNITE.+1) = NOMBRE MAXIMAL D'ITEMS STOCKABLES DANS CE TABLEAU MC
+!     MCN(MNITE.+2) = NOMBRE ACTUEL  D'ITEMS
+
+
+!     RMCN(MNITE.+3*I  ) = X ABSCISSE DU BARYCENTRE DU POINT ou ... ou EF3D I
+!     RMCN(MNITE.+3*I+1) = Y ORDONNEE DU BARYCENTRE DU POINT ou ... ou EF3D I
+!     RMCN(MNITE.+3*I+2) = Z COTE     DU BARYCENTRE DU POINT ou ... ou EF3D I
+!                        = Cte SI NDIM=2. EN FAIT LA COTE Z EST INACTIVE
+!      MCN(MNITE.+3*I+3) = NUMERO DU POINT ou ... ou EF3D I
+!                   I VARIANT DE 1 A MCN(MNIT..+2)
+
+!     LA GESTION DES COULEURS A TRACER -----------------------
+      COMMON / MECOI2 / LCRITR, LATTRI(MLATTR)
+      REAL              RATTRI(1:MLATTR) 
+      EQUIVALENCE      (RATTRI( 1),LATTRI(1),NBRCOU), &
+                       (LATTRI( 2),NCOFON),(LATTRI( 3),IAVARE), &
+                       (LATTRI( 4),NPREDA),(LATTRI( 5),NEPARL), &
+                       (LATTRI( 6),NCOUAL),(LATTRI( 7),IAVFAC), &
+                       (LATTRI( 8),NPREDF),(LATTRI( 9),NEPARF), &
+                       (LATTRI(10),NCOUFA),(LATTRI(11),NCOUAF), &
+                       (LATTRI(12),IAVELO),(LATTRI(13),IAVNSO), &
+                       (LATTRI(14),NCONSO),(LATTRI(15),IAVNEF), & 
+                       (LATTRI(16),NCONEF),(LATTRI(17),IAVTIT), &
+                       (LATTRI(18),LPPOIN),(LATTRI(19),LPLIGN), &
+                       (LATTRI(20),LPSURF),(LATTRI(21),LPVOLU), &
+                       (LATTRI(22),LPOBJE),(LATTRI(23),NBSUAR), &
+                       (LATTRI(24),NBSUAF),(LATTRI(25),IAVTGA), &
+                       (LATTRI(26),NCOTGA),(LATTRI(27),NTRTGA), &
+                       (LATTRI(28),IAVTGF),(LATTRI(29),NCOTGF), &
+                       (LATTRI(30),NTRTGF),(LATTRI(31),NCOPOI), &
+                       (LATTRI(32),NCOLIG),(LATTRI(33),NCOSUR), &
+                       (LATTRI(34),NCOVOL),(LATTRI(35),NCOOBJ), &
+                       (LATTRI(36),NTY3PL),(LATTRI(37),NEP3PL), &
+                       (LATTRI(38),NC13PL),(LATTRI(39),NC23PL), &
+                       (LATTRI(40),NC33PL),(LATTRI(41),MAR3PL), &
+                       (LATTRI(42),NCOUFL),(LATTRI(43),NCOUAD), &
+                       (LATTRI(44),NCOAPL),(LATTRI(45),NTLAPL), &
+                       (LATTRI(46),NCOAFR),(LATTRI(47),NTLAFR), &
+                       (LATTRI(48),NTRAXE),(LATTRI(49),NEPFLE), &
+                       (LATTRI(50),NTRAXZ),(LATTRI(51),IAVNRF), &
+                       (LATTRI(52),NCONRF),(LATTRI(53),NTRNRF), &
+                       (LATTRI(54),NPAFLE)
+
+!     LCRITR : CHOIX DU CRITERE A TRACER
+!              0 : PAS DE CRITERE TRACE NORMAL
+!              1 : QUALITE DES ELEMENTS FINIS
+!              2... : TEMPERATURE, CONTRAINTES, ... )
+!             -2 : PRISE EN COMPTE DES COULEURS AUX SOMMETS avec les
+!                  valeurs ZZZMIN ZZZMAX: VALEUR MINIMALE et MAXIMALE
+!                  de Z utilisee pour le CALCUL de la COULEUR aux SOMMETS
+
+!     LATTRI : LES ATTRIBUTS DU TRACE DU MAILLAGE DE L'OBJET
+!              OBTENUS SOIT PAR DEFAUT SOIT PAR LE TABLEAU ~/TD/d/a___trace 
+!     NBRCOU : >0  NOMBRE DE COULEURS DES PALETTES DE COULEURS
+!              =0  SI ECRAN EN NOIR ET BLANC
+!     NCOFON : COULEUR du FOND de l'ECRAN
+
+!     IAVARE : avec 0 ou non 1  trace des aretes des lignes
+!     NPREDA : pourcentage de reduction des ARETES des lignes OBSOLETE (INUTILISE)
+!     NEPARL : nombre d'epaisseurs des ARETES des lignes
+!     NCOUAL : COULEUR des ARETES des LIGNES
+
+!     IAVFAC : avec ou non trace des faces
+!     NPREDF : pourcentage de reduction des faces OBSOLETE (INUTILISE)
+!     NEPARF : nombre d'epaisseurs des ARETES des FACES 
+!     NCOUFA : COULEUR des FACES  
+!     NCOUAF : COULEUR des ARETES des FACES
+
+!     IAVELO : avec ou sans eloignement
+!     IAVNSO : avec ou non trace du numero des SOMMETS 
+!     NCONSO : COULEUR des NUMEROS des SOMMETS des EF
+
+!     IAVNEF : avec ou non trace du numero des EF
+!     NCONEF : COULEUR des NUMEROS des EF
+
+!     IAVTIT : avec ou non trace du TITRE 
+!     LPPOIN : LA POIGNEE ou NON DES POINTS
+!     LPLIGN : LA POIGNEE ou NON DES LIGNES 
+!     LPSURF : LA POIGNEE ou NON DES SURFACES
+!     LPVOLU : LA POIGNEE ou NON DES VOLUMES 
+!     LPOBJE : LA POIGNEE ou NON DES OBJETS
+
+!     NBSUAR : NOMBRE DE SUBDIVISIONS DES ARETES POLYNOMES DE DEGRE 3
+!     NBSUAF : NOMBRE DE SUBDIVISIONS DES ARETES DES FACES POLYNOMES DE DEGRE 3
+
+!     IAVTGA : avec ou non trace des 2 tangentes des aretes degre 3
+!     NCOTGA : COULEUR des TANGENTES des ARETES  de DEGRE 3
+!     NTRTGA : Numero du TYPE de TRAIT des TANGENTES des ARETES  de DEGRE 3
+!     IAVTGF : avec ou non trace des 8 ou 6 tangentes des aretes des faces degre 3
+!     NCOTGF : COULEUR des TANGENTES des ARETES des FACES de DEGRE 3
+!     NTRTGF : Numero du TYPE de TRAIT des TANGENTES des FACES de DEGRE 3
+
+!     IAVNRF : avec ou non trace de la NORMALE au barycentre des faces
+!     NCONRF : COULEUR de la NORMALE au barycentre des faces
+!     NTRNRF : Numero du TYPE de TRAIT de la NORMALE au barycentre des faces
+
+!     NCOPOI : COULEUR de trace du NOM des POINTS
+!     NCOLIG : COULEUR de trace du NOM des LIGNES
+!     NCOSUR : COULEUR de trace du NOM des SURFACES
+!     NCOVOL : COULEUR de trace du NOM des VOLUMES
+!     NCOOBJ : COULEUR de trace du NOM des OBJETS
+
+!     NTY3PL : TYPE du trace des 3PLANS de FOND des PLSVO
+!              =<0 PAS DE TRACE
+!              =1  TRACE SIMPLE DE LA GRILLE AVEC LA COULEUR NC13PL
+!              =2  TRACE D'UN DAMIER AVEC LES 2 COULEURS NC23PL ET NC33PL
+!     MAR3PL : MARGE EN CARREAUX DU DAMIER au dela de l'hexaedre englobant
+!     NEP3PL : NOMBRE D'EPAISSEURS de trace de la GRILLE des 3 PLANS
+!     NC13PL : COULEUR de trace de la grille des 3 PLANS
+!     NC23PL : COULEUR 1 de trace du damier  des 3 PLANS
+!     NC33PL : COULEUR 2 de trace du damier  des 3 PLANS
+
+!     NCOUFL : COULEUR des FLECHES a TRACER
+!     NEPFLE : NOMBRE D'EPAISSEURS DE TRAIT D'UNE FLECHE
+!     NPAFLE : NOMBRE DE PAS DE TRACE DES FLECHES VITESSE (1 sur NPAFLE)
+!     NCOUAD : COULEUR des ARETES DEFORMEES
+
+!     NCOAPL : COULEUR des ARETES DANS UN PLAN DE SECTION ou
+!              COULEUR des ARETES des SURFACES ISOTHERMES ou ISOVALEURS
+!     NTLAPL : NUMERO DU TYPE DE TRACE DES ARETES DE LA FRONTIERE
+!              des ARETES des SURFACES ISOTHERMES ou ISOVALEURS
+!              0:CONTINU, 1:TIRETE, 2:TIRETE DOUBLE
+
+!     NCOAFR : COULEUR des ARETES DU MAILLAGE DE LA FRONTIERE
+!     NTLAFR : NUMERO DU TYPE DE TRACE DES ARETES DE LA FRONTIERE
+!              0:CONTINU, 1:TIRETE, 2:TIRETE DOUBLE
+
+!     LA GESTION DES AXES A TRACER ----------------------------
+!     NTRAXE : 0: PAS DE TRACE DES AXES
+!              >0: CODE DE TRACE DES AXES
+!     NTRAXZ : 0 PAS DE TRACE SPECIAL DES GRADUATIONS EN Z
+!              >0: CODE DE TRACESPECIAL  DES GRADUATIONS EN Z
+!     ZMIAXZ : REEL MIN DE LA GRADUATION SPECIALE DE L'AXE Z
+!     ZMXAXZ : REEL MAX DE LA GRADUATION SPECIALE DE L'AXE Z
+      REAL              ZMIAXZ, ZMXAXZ
+      COMMON / MECOI3 / ZMIAXZ, ZMXAXZ
+
+!     LES REDUCTIONS DE TRACE DES FACES ARETES
+!     PREDUA : pourcentage de reduction des ARETES des lignes
+!     PREDUF : pourcentage de reduction des faces  
+      REAL              PREDUA, PREDUF
+      COMMON / MECOI4 / PREDUA, PREDUF
+
+!     LA GESTION des COULEURS dans t31fco.f et tritemv012.f
+!     VALEURS UTILISEES SI LCRITR=-2
+!     ZZZMIN : VALEUR MINIMALE DE Z utilisee pour le CALCUL 
+!               de la COULEUR a TRACER
+!     ZZZMAX : VALEUR MAXIMALE DE Z utilisee pour le CALCUL 
+!               de la COULEUR a TRACER
+      REAL              ZZZMIN, ZZZMAX
+      COMMON / MECOI5 / ZZZMIN, ZZZMAX

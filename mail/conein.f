@@ -1,0 +1,939 @@
+      SUBROUTINE CONEIN( MXGENE, MXPINT,
+     %                   PAX1C1, RAY1C1, PAX2C1, RAY2C1,
+     %                   PAX1C2, RAY1C2, PAX2C2, RAY2C2,
+     %                   HAUTC1, RPCON1, HAUTC2, RPCON2,
+     %                   NBRAC,  RACINE,
+     %                   NPSUIV, NTPINT, RPINT,
+     %                   NBIA,   NBIP,   N1COUR, RLONG, IERR )
+C+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+C BUT :    CALCUL DES LIGNES D'INTERSECTION ENTRE 2 TRONCS DE CONES
+C -----
+C
+C ENTREES:
+C --------
+C MXGENE : NOMBRE DE GENERATRICES DU CONE 1 A INTERSECTER AVEC LE CONE 2
+C MXPINT : NOMBRE MAXIMAL DE POINTS D'INTERSECTION DECLARABLES (>2*MXGENE)
+C
+C PAX1C1 : POINT DE BASE DE L'AXE DU TRONC DE CONE 1
+C RAY1C1 : RAYON DU CERCLE AU POINT PAX1C1 (PLAN ORTHOGONAL A L'AXE DU CONE )
+C PAX2C1 : POINT DE L'AXE DU TRONC DE CONE 1
+C RAY2C1 : RAYON DU CERCLE AU POINT PAX2C1 (PLAN ORTHOGONAL A L'AXE DU CONE )
+C
+C PAX1C2 : POINT DE BASE DE L'AXE DU TRONC DE CONE 2
+C RAY1C2 : RAYON DU CERCLE AU POINT PAX1C2 (PLAN ORTHOGONAL A L'AXE DU CONE )
+C PAX2C2 : POINT DE L'AXE DU TRONC DE CONE 2
+C RAY2C2 : RAYON DU CERCLE AU POINT PAX2C2 (PLAN ORTHOGONAL A L'AXE DU CONE )
+C
+C SORTIES:
+C --------
+C HAUTC1 : HAUTEUR DU TRONC DE CONE 1
+C RPCON1 : REPERE PROPRE ORTHONORME DU CONE 1 D'ORIGINE AU POINT PAX1C1
+C          ORIGINE AU POINT PAX1C1
+C HAUTC2 : HAUTEUR DU TRONC DE CONE 2
+C RPCON2 : REPERE PROPRE ORTHONORME DU CONE 2 D'ORIGINE AU POINT PAX1C2
+C          ORIGINE AU POINT PAX1C2
+C NBRAC  : NOMBRE DE RACINES D'INTERSECTION DES GENERATRICES 0 A MXGENE
+C          DU TRONC DE CONE 1 AVEC LE TRONC DE CONE 2
+C RACINE : VALEURS DE CES RACINES
+C NPSUIV : NUMERO DANS NTPINT, RPINT DU POINT D'INTERSECTION SUIVANT
+C NTPINT : NUMERO DE LA RACINE SIMPLE PARMI LES 2 DISTINCTES DES POINTS D'INTERS
+C          3 SI LA RACINE DOUBLE
+C RPINT  : RPINT(1,N) ANGLE DE LA GENERATRICE DU CONE 1 DE CE POINT N
+C          RPINT(2,N) RACINE TEL QUE PM = RACINE PQ SUR LA GENERATRICE DU CONE 1
+C          RPINT(3,N) LONGUEUR DU SEGMENT AVEC LE POINT PRECEDENT
+C NBIA   : NUMERO DANS N1COUR DU PREMIER INTERVALLE DE POINTS D'INTERSECTION
+C NBIP   : NUMERO DANS N1COUR DU DERNIER INTERVALLE DE POINTS D'INTERSECTION
+C N1COUR : DEBUT DES CHAINAGES DES COURBES, PUIS DES INTERVALLES DE GENERATRICES
+C          PUIS DES INTERVALLES DE POINTS D'INTERSECTION
+C          N1COUR(0) POINTE SUR LE PREMIER VIDE
+C RLONG  : LONGUEUR DE LA COURBE POUR CHAQUE INTERVALLE N1COUR(NBIA,NBIP, PAS 2)
+C IERR   :=0 PAS D'ERREUR DETECTEE
+C         -1 L'INTERSECTION EST LE SEGMENT DE DROITE RPINT(1)-RPINT(2)
+C            COORDONNEES DANS LE REPERE GLOBAL INITIAL
+C         -2 L'INTERSECTION EST UNE GENERATRICE PERPENDICULAIRE A l'AXE DU CONE
+C         =1 TABLEAUX PINT SATURES . AUGMENTER MXPINT A LA DECLARATION
+C         >1 AUCUN POINT D'INTERSECTION DETECTE
+C+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+C AUTEUR : PERRONNET-THOMAS UPMC ANALYSE NUMERIQUE PARIS   DECEMBRE 1997
+C2345X7..............................................................012
+      IMPLICIT DOUBLE PRECISION (A-H,O-Z)
+      COMMON / UNITES / LECTEU, IMPRIM, NUNITE(30)
+      DOUBLE PRECISION  PAX1C1(3), PAX2C1(3)
+      DOUBLE PRECISION  PAX1C2(3), PAX2C2(3)
+      DOUBLE PRECISION  RAY1C1, RAY2C1
+      DOUBLE PRECISION  RAY1C2, RAY2C2
+      DOUBLE PRECISION  HAUTC1, HAUTC2
+      DOUBLE PRECISION  RPCON1(3,3), RPCON2(3,3)
+      DOUBLE PRECISION  RPINT(3,1:MXPINT), RLONG(64)
+      INTEGER           NPSUIV(MXPINT), NTPINT(MXPINT)
+      INTEGER           N1COUR(0:64)
+      DOUBLE PRECISION  RACINE(1:2,0:MXGENE)
+      INTEGER           NBRAC(0:MXGENE)
+C
+      DOUBLE PRECISION  P(3), Q(3), RACIN2(2), PT0(3), PT1(3)
+      INTEGER           NN(2)
+      EQUIVALENCE      (NN(1),N1), (NN(2),N2)
+C
+      DEUXPI = ATAN( 1D0 ) * 8D0
+      NBR0   = 0
+C
+C     CALCUL DU REPERE PROPRE DU CONE 1
+      CALL CONAXE( PAX1C1, PAX2C1, RPCON1, HAUTC1 )
+C
+C     CALCUL DU REPERE PROPRE DU CONE 2
+      CALL CONAXE( PAX1C2, PAX2C2, RPCON2, HAUTC2 )
+C
+C     BOUCLE SUR LES GENERATRICES DU CONE 1
+      DANGLE = DEUXPI / MXGENE
+C     LE PREMIER ANGLE AVEC 2 RACINES
+      N01    = -1
+C     LE DERNIER ANGLE AVEC 2 RACINES
+      N02    = -1
+C     LE NOMBRE DE CHANGEMENTS DE SIGNE DU DISCRIMINANT DES RACINES
+      NBCHSR = 0
+C
+      DO 10 N = 0, MXGENE
+C
+C        LES 2 POINTS AUX EXTREMITES DE LA GENERATRICE N DU CONE 1
+         ANGLE = N * DANGLE
+         CALL CONERA( ANGLE,
+     %                PAX1C1, RPCON1, RAY1C1, RAY2C1, HAUTC1,
+     %                PAX1C2, RPCON2, RAY1C2, RAY2C2, HAUTC2,
+     %                NBRAC(N), RACINE(1,N), P, Q  )
+C        NBRAC=0 => RACINE NON INITIALISE
+C        NBRAC=1 => RACINE(1)=L1 RACINE SIMPLE => ANOMALIE
+C        NBRAC=2 => RACINE(1)=L1 RACINE(2)=L2  LES 2 RACINES SIMPLES
+C        NBRAC=3 => RACINE(1)=L1 RACINE DOUBLE
+C        NBRAC=4 => RACINE NON INITIALISE CAR PQ GENERATRICE DES CONES 12
+         IF( NBRAC(N) .EQ. 4 ) THEN
+C
+C           PQ EST UNE DROITE GENERATRICE COMMUNE AUX 2 TRONCS DE CONES
+C           FILTRAGE POUR OBTENIR 0=< Z CONE2 =< HAUTC2
+C           LES 2 POINTS D'INTERSECTION DANS LE REPERE PROPRE AU CONE 2
+            IF( P(3) .NE. Q(3) ) THEN
+C              L'INDICATION DE CE CAS PARTICULIER
+               IERR = -1
+               R  =          - P(3)   / ( Q(3) - P(3) )
+               Z2 = ( HAUTC2 - P(3) ) / ( Q(3) - P(3) )
+               IF( R .GT. Z2 ) THEN
+                  ANGLE = R
+                  R     = Z2
+                  Z2    = ANGLE
+               ENDIF
+C              ICI R EST PLUS PETIT QUE Z2
+               IF( R .LE. Z2 ) THEN
+C                 PAS DE LIGNE D'INTERSECTION
+                  IERR = 1
+                  RETURN
+               ENDIF
+               IF( R  .LT. 0D0 ) R  = 0D0
+               IF( Z2 .GT. 1D0 ) Z2 = 1D0
+C              LE POINT DE LA DROITE PQ DE COTE Z=0 ET Z=HAUTC2
+C              SI CES 2 POINTS SONT INTERNES AU SEGMENT P-Q
+               DO 3 K=1,3
+                  PT0(K) = P(K) + R  * (Q(K) - P(K))
+                  PT1(K) = P(K) + Z2 * (Q(K) - P(K))
+ 3             CONTINUE
+C              RETOUR AUX COORDONNEES GLOBALES
+               CALL AC3D3D( PAX1C2, RECON2, PT0, RPINT(1,1) )
+               CALL AC3D3D( PAX1C2, RECON2, PT1, RPINT(1,2) )
+            ELSE
+C              UNE GENERATRICE EST PARALLELE A L'AXE DU TRONC DE CONE => ERREUR
+               IERR = -2
+            ENDIF
+            RETURN
+         ENDIF
+C
+C        Y A T IL CHANGEMENT DU NOMBRE DE RACINES ?
+         IF( N .GT. 0 ) THEN
+            IF( ( NBR0 .EQ. 0 .AND. NBRAC(N) .GE. 2 ) .OR.
+     %          ( NBR0 .GE. 2 .AND. NBRAC(N) .EQ. 0 ) ) THEN
+C              CHANGEMENT DU NOMBRE DE RACINES: IL EST COMPTABILISE
+               NBCHSR = NBCHSR + 1
+            ENDIF
+         ENDIF
+C        SAUVEGARDE DU NOMBRE DE RACINES PRECEDENT
+         NBR0 = NBRAC(N)
+C
+         IF( NBRAC(N) .GE. 2 ) THEN
+            IF( N01 .LT. 0 ) N01 = N
+C           N01 EST LE PREMIER ANGLE AVEC 2 RACINES
+         ENDIF
+         IF( NBRAC(N) .EQ. 1 ) THEN
+C           SI RACINE SIMPLE => ANOMALIE A TRAITER
+            WRITE(IMPRIM,*) 'ERREUR CONEIN: RACINE SIMPLE'
+            WRITE(IMPRIM,*) 'REVOYEZ VOS DONNEES INTERSECTION CONES'
+            IERR = 11
+            RETURN
+         ENDIF
+ 10   CONTINUE
+C
+C     EXISTE-T-IL DES POINTS D'INTERSECTION?
+      IF( N01 .LT. 0 ) THEN
+C        NON
+         IERR = 2
+         RETURN
+      ENDIF
+C
+C     CHAINAGE DES VIDES PAR LE SUIVANT
+      N1COUR( 0 ) = 1
+      DO 15 N=1,MXPINT
+         NPSUIV( N ) = N+1
+ 15   CONTINUE
+      NPSUIV(MXPINT) = 0
+C
+      IF( NBCHSR .EQ. 0 ) THEN
+C
+C        POUR TOUTE GENERATRICE DU CONE 1 IL Y A EU 2 INTERSECTIONS =>
+C        2 COURBES FERMEES QUI SE REFERMENT CHACUNE SUR ELLE-MEME
+C        (POUR L'INSTANT PAS DE TRONCS DE CONES MAIS DES CONES INFINIS)
+C        ==============================================================
+         NBCOUR = 2
+C        LES 2 PREMIERS POINTS D'INTERSECTION SONT 1 ET 2 DANS PINT
+         N1COUR( 0 ) = 3
+C
+C        LE PREMIER POINT DE LA PREMIERE COURBE FERMEE
+         NUPINT = 1
+         NN(1)  = 1
+         N1COUR( 1 ) = 1
+C        ANGLE DU POINT D'INTERSECTION
+         RPINT( 1, NUPINT ) = 0D0
+C        LA RACINE 1 EST CHOISIE
+         RPINT( 2, NUPINT ) = RACINE( 1, 0 )
+C        LE TYPE DU POINT = ICI LE NUMERO DE SA RACINE
+         IF( NBRAC(0) .EQ. 3 ) THEN
+C           RACINE DOUBLE
+            NTPINT( NUPINT ) = 3
+         ELSE
+C           RACINE 1 DES 2 RACINES DISTINCTES
+            NTPINT( NUPINT ) = 1
+         ENDIF
+C        CHAINAGE AVEC LE SUIVANT
+         NPSUIV( NUPINT ) = 0
+C
+C        LE PREMIER POINT DE LA SECONDE COURBE FERMEE
+         NUPINT = 2
+         NN(2)  = 2
+         N1COUR( 2 ) = 2
+C        ANGLE DU POINT D'INTERSECTION
+         RPINT( 1, NUPINT ) = 0D0
+C        LA RACINE 2 EST CHOISIE
+         RPINT( 2, NUPINT ) = RACINE( 2, 0 )
+C        LE TYPE DU POINT = ICI LE NUMERO DE SA RACINE
+         IF( NBRAC(0) .EQ. 3 ) THEN
+C           RACINE DOUBLE
+            NTPINT( NUPINT ) = 3
+         ELSE
+C           RACINE 2 DES 2 RACINES DISTINCTES
+            NTPINT( NUPINT ) = 2
+         ENDIF
+C        CHAINAGE AVEC LE SUIVANT
+         NPSUIV( NUPINT ) = 0
+C
+C        PARCOURS DES AUTRES POINTS A 2 RACINES (SIMPLES OU DOUBLE)
+         DO 20 N = 1, MXGENE-1
+C
+            DO 17 I=1,2
+C
+C              AJOUT DU POINT A LA COURBE I
+               IF( N1COUR(0) .EQ. 0 ) THEN
+C                 PLUS DE PLACE POUR LES POINTS D'INTERSECTION
+                  IERR = 1
+                  RETURN
+               ENDIF
+C
+C              LE NUMERO DU POINT AJOUTE DANS PINT
+               NUPINT = N1COUR(0)
+C              LE NOUVEAU VIDE PREMIER POINT D'INTERSECTION
+               N1COUR(0) = NPSUIV( NUPINT )
+C              ANGLE DU POINT D'INTERSECTION
+               RPINT( 1, NUPINT ) = N * DANGLE
+C              LA RACINE 1 EST CHOISIE
+               RPINT( 2, NUPINT ) = RACINE( I, N )
+C              LE TYPE DU POINT = ICI LE NUMERO DE SA RACINE
+               IF( NBRAC(N) .EQ. 3 ) THEN
+C                 RACINE DOUBLE
+                  NTPINT( NUPINT ) = 3
+               ELSE
+C                 RACINE I DES 2 RACINES DISTINCTES
+                  NTPINT( NUPINT ) = I
+               ENDIF
+C              LE PRECEDENT EST CHAINE SUR LE NOUVEAU => SUIVANT
+               NPSUIV( NN(I) ) = NUPINT
+               NN(I) = NUPINT
+C              CHAINAGE AVEC LE SUIVANT
+               NPSUIV( NUPINT ) = 0
+ 17         CONTINUE
+C
+ 20      CONTINUE
+C
+C        LIAISON ENTRE LA FIN ET LE DEBUT DES 2 COURBES FERMEES
+C        N1COUR(1) EST LE SUIVANT DE NN(1)
+         NPSUIV( NN(1) ) = N1COUR( 1 )
+C        N1COUR(2) EST LE SUIVANT DE NN(2)
+         NPSUIV( NN(2) ) = N1COUR( 2 )
+C
+C        LE CHAINAGE DE CHACUNE DES 2 COURBES FERMEES EST DEVENU CIRCULAIRE
+C
+      ELSE
+C
+C        1 SEULE COURBE FERMEE D'INTERSECTION ENTRE LES 2 CONES INFINIS OU
+C        2 COURBES FERMEES MAIS IL Y A 2 OU 4 CHANGEMENTS DU NOMBRE DE RACINES
+C        =====================================================================
+         NBCOUR = 0
+         NC1    = 1
+         NC2    = 2
+         NBG    = 0
+         NBGMAX = MXGENE
+C
+C        TEMOIN DE NON UTILISATION
+         N1COUR(3) = 0
+         N1COUR(4) = 0
+C
+C        RECHERCHE DU PREMIER POINT DE LA COURBE AVEC 2 RACINES
+         N01 = NBRAC(MXGENE)
+         NM  = 0
+C
+ 21      DO 22 N = NBG, NBGMAX
+            NM = N
+            IF( NM .GT. MXGENE ) NM = N - MXGENE
+            N02 = NBRAC( NM )
+            IF( N01 .EQ. 0 .AND. N02 .GE. 2 ) GOTO 25
+            N01 = N02
+ 22      CONTINUE
+C
+C        LE PREMIER POINT SERT DE TETE AUX 2/2 COURBES OUVERTES
+C        QUI SE FERMERONT A LA FIN
+C        OU AUX 4/2 COURBES OUVERTES DONT LES 2 PREMIERES SE REFERMERONT
+C        SUR ELLES-MEMES PUIS 2 AUTRES REFERONT LA MEME CHOSE
+ 25      IF( NBCOUR .EQ. 0 ) NBGMAX = N + MXGENE - 1
+C
+C        LE PREMIER POINT DE LA PREMIERE DEMI-COURBE
+C        AJOUT DU POINT A LA COURBE I
+         IF( N1COUR(0) .EQ. 0 ) THEN
+C           PLUS DE PLACE POUR LES POINTS D'INTERSECTION
+            IERR = 1
+            RETURN
+         ENDIF
+C        LE NUMERO DU POINT AJOUTE DANS PINT
+         NUPINT = N1COUR(0)
+C        LE NOUVEAU VIDE PREMIER POINT D'INTERSECTION
+         N1COUR(0) = NPSUIV( NUPINT )
+         N1 = NUPINT
+         N1COUR( NC1 ) = NUPINT
+C        ANGLE DU POINT D'INTERSECTION
+         RPINT( 1, NUPINT ) = NM * DANGLE
+C        LA RACINE 1 EST CHOISIE
+         RPINT( 2, NUPINT ) = RACINE( 1, NM )
+C        LE TYPE DU POINT = ICI LE NUMERO DE SA RACINE
+         IF( NBRAC(NM) .EQ. 3 ) THEN
+C           RACINE DOUBLE
+            NTPINT( NUPINT ) = 3
+         ELSE
+C           RACINE 1 DES 2 RACINES DISTINCTES
+            NTPINT( NUPINT ) = 1
+         ENDIF
+C        CHAINAGE AVEC LE SUIVANT
+         NPSUIV( NUPINT ) = 0
+C
+C        LE PREMIER POINT DE LA SECONDE DEMI-COURBE
+C        AJOUT DU POINT A LA COURBE I
+         IF( N1COUR(0) .EQ. 0 ) THEN
+C           PLUS DE PLACE POUR LES POINTS D'INTERSECTION
+            IERR = 1
+            RETURN
+         ENDIF
+C        LE NUMERO DU POINT AJOUTE DANS PINT
+         NUPINT = N1COUR(0)
+C        LE NOUVEAU VIDE PREMIER POINT D'INTERSECTION
+         N1COUR(0) = NPSUIV( NUPINT )
+         N2 = NUPINT
+         N1COUR( NC2 ) = NUPINT
+C        ANGLE DU POINT D'INTERSECTION
+         RPINT( 1, NUPINT ) = NM * DANGLE
+C        LA RACINE 2 EST CHOISIE
+         RPINT( 2, NUPINT ) = RACINE( 2, NM )
+C        LE TYPE DU POINT = ICI LE NUMERO DE SA RACINE
+         IF( NBRAC(NM) .EQ. 3 ) THEN
+C           RACINE DOUBLE
+            NTPINT( NUPINT ) = 3
+         ELSE
+C           RACINE 2 DES 2 RACINES DISTINCTES
+            NTPINT( NUPINT ) = 2
+         ENDIF
+C        CHAINAGE AVEC LE PRECEDENT (ET NON PAS LE SUIVANT!)
+         NPSUIV( NUPINT ) = 0
+C
+C        PARCOURS DES AUTRES POINTS A 2 RACINES (SIMPLES OU DOUBLE)
+         DO 30 NB=1,MXGENE
+C
+C           LE NUMERO DE LA GENERATRICE
+            N = N + 1
+            IF( N .LE. MXGENE ) THEN
+               NM = N
+            ELSE
+C              NM = N MODULO MXGENE
+               NM = N - MXGENE
+            ENDIF
+C
+            IF( NBRAC(NM) .NE. 0 ) THEN
+C
+C              AJOUT DU POINT A LA PREMIERE DEMI-COURBE
+C              ----------------------------------------
+               IF( N1COUR(0) .EQ. 0 ) THEN
+C                 PLUS DE PLACE POUR LES POINTS D'INTERSECTION
+                  IERR = 1
+                  RETURN
+               ENDIF
+C
+C              LE NUMERO DU POINT AJOUTE DANS PINT
+               NUPINT = N1COUR(0)
+C              LE NOUVEAU VIDE PREMIER POINT D'INTERSECTION
+               N1COUR(0) = NPSUIV( NUPINT )
+C
+C              ANGLE DU POINT D'INTERSECTION
+               RPINT( 1, NUPINT ) = NM * DANGLE
+C              LA RACINE 1 EST CHOISIE
+               RPINT( 2, NUPINT ) = RACINE( 1, NM )
+C              LE TYPE DU POINT = ICI LE NUMERO DE SA RACINE
+               IF( NBRAC(NM) .EQ. 3 ) THEN
+C                 RACINE DOUBLE
+                  NTPINT( NUPINT ) = 3
+               ELSE
+C                 RACINE 1 DES 2 RACINES DISTINCTES
+                  NTPINT( NUPINT ) = 1
+               ENDIF
+C              LE PRECEDENT EST CHAINE SUR LE NOUVEAU => SUIVANT
+               NPSUIV( N1 ) = NUPINT
+               N1 = NUPINT
+C              CHAINAGE AVEC LE SUIVANT
+               NPSUIV( NUPINT ) = 0
+C
+C              AJOUT DU POINT A LA SECONDE DEMI-COURBE
+C              ---------------------------------------
+               IF( N1COUR(0) .EQ. 0 ) THEN
+C                 PLUS DE PLACE POUR LES POINTS D'INTERSECTION
+                  IERR = 1
+                  RETURN
+               ENDIF
+C
+C              LE NUMERO DU POINT AJOUTE DANS PINT
+               NUPINT = N1COUR(0)
+C              LE NOUVEAU VIDE PREMIER POINT D'INTERSECTION
+               N1COUR(0) = NPSUIV( NUPINT )
+C
+C              ANGLE DU POINT D'INTERSECTION
+               RPINT( 1, NUPINT ) = NM * DANGLE
+C              LA RACINE 2 EST CHOISIE
+               RPINT( 2, NUPINT ) = RACINE( 2, NM )
+C              LE TYPE DU POINT = ICI LE NUMERO DE SA RACINE
+               IF( NBRAC(NM) .EQ. 3 ) THEN
+C                 RACINE DOUBLE
+                  NTPINT( NUPINT ) = 3
+               ELSE
+C                 RACINE 2 DES 2 RACINES DISTINCTES
+                  NTPINT( NUPINT ) = 2
+               ENDIF
+C
+C              CHAINAGE AVEC LE PRECEDENT!!!... SENS INVERSE
+C              ---------------------------------------------
+               NPSUIV( NUPINT ) = N2
+               N2 = NUPINT
+C
+            ELSE
+C
+C              LES 2 PREMIERES COURBES OUVERTES SE SONT REFERMEES SUR ELLES-MEME
+C              LIAISON DES 2 DEMI-COURBES POUR OBTENIR LA COURBE FERMEE
+C              N2 EST LE SUIVANT DE N1 ET N1COUR(2) EST LE SUIVANT DE N1COUR(1)
+               IF( RPINT(2,N1) .NE. RPINT(2,N2) ) THEN
+C                 LES 2 RACINES SONT DISTINCTES
+                  NPSUIV( N1 ) = N2
+               ELSE
+C                 LES 2 RACINES SONT IDENTIQUES LE POINT N2 EST SAUT'E
+                  NPSUIV( N1 ) = NPSUIV( N2 )
+C                 LE POINT N2 EST VIDE
+                  NPSUIV( N2 ) = N1COUR(0)
+                  N1COUR(0) = N2
+               ENDIF
+               IF( RPINT(2,N1COUR(NC1)) .NE. RPINT(2,N1COUR(NC2)) ) THEN
+C                 LES 2 RACINES SONT DISTINCTES
+                  NPSUIV( N1COUR(NC2) ) = N1COUR(NC1)
+               ELSE
+C                 LES 2 RACINES SONT IDENTIQUES LE POINT N1COUR(NC1) EST SAUT'E
+                  NPSUIV( N1COUR(NC2) ) = NPSUIV( N1COUR(NC1) )
+C                 LE POINT N1COUR(NC1) EST VIDE
+                  NPSUIV( N1COUR(NC1) ) = N1COUR(0)
+                  N1COUR(0)   = N1COUR(NC1)
+                  N1COUR(NC1) = N1COUR(NC2)
+               ENDIF
+C
+C              UNE COURBE FERMEE DE PLUS
+               NBCOUR = NBCOUR + 1
+C
+C              LE CHAINAGE DE LA COURBE FERMEE EST DEVENU CIRCULAIRE
+               IF( NBCHSR .GE. 2 ) THEN
+C                 LES NOUVELLES COURBES
+                  NC1 = NBCOUR+1
+                  NC2 = NBCOUR+2
+                  N01 = 0
+                  NBG = N
+                  NBCHSR = NBCHSR - 2
+                  IF( NBCHSR .LE. 0 ) GOTO 40
+                  GOTO 21
+               ENDIF
+            ENDIF
+ 30      CONTINUE
+C
+      ENDIF
+C
+C     FORCAGE DES POINTS A RACINE DOUBLE
+C     ==================================
+ 40   DO 50 N=1,NBCOUR
+C
+C        LE DEBUT DU CHAINAGE CIRCULAIRE
+         N1 = N1COUR( N )
+C
+C        LE POINT SUIVANT
+ 42      N2 = NPSUIV( N1 )
+C
+C        SI RACINE DOUBLE PASSAGE AU SUIVANT
+         IF( NTPINT(N1) .EQ. 3 .OR. NTPINT(N2) .EQ. 3 ) GOTO 49
+C
+C        LES 2 POINTS ONT ILS MEME NUMERO DE RACINE?
+         IF( NTPINT(N1) .NE. NTPINT(N2) ) THEN
+C
+C           ZONE A RACINE DOUBLE
+C           RECHERCHE DES 2 ANGLES ENTRE LESQUELS EXISTE
+C           L'ANGLE DE LA RACINE DOUBLE
+            IF( RPINT(1,N1) .LE. RPINT(1,N2) ) THEN
+               ANGLE1 = RPINT(1,N1) - DANGLE
+               ANGLE2 = RPINT(1,N2) + DANGLE
+            ELSE
+               ANGLE1 = RPINT(1,N2) - DANGLE
+               ANGLE2 = RPINT(1,N1) + DANGLE
+            ENDIF
+C           NOMBRE ET VALEURS DES RACINES D'ANGLE1
+            CALL CONERA( ANGLE1,
+     %                   PAX1C1, RPCON1, RAY1C1, RAY2C1, HAUTC1,
+     %                   PAX1C2, RPCON2, RAY1C2, RAY2C2, HAUTC2,
+     %                   NBRAC1, PT1, P, Q  )
+C           NOMBRE ET VALEURS DES RACINES D'ANGLE2
+            CALL CONERA( ANGLE2,
+     %                   PAX1C1, RPCON1, RAY1C1, RAY2C1, HAUTC1,
+     %                   PAX1C2, RPCON2, RAY1C2, RAY2C2, HAUTC2,
+     %                   NBRAC2, RACIN2, P, Q  )
+C
+            IF( NBRAC1 .LT. 2 .AND. NBRAC2 .LT. 2 ) THEN
+C              LES 2 ANGLES N'INTERSECTENT PAS LE CONE 2
+C              LA LIGNE EST MINUSCULE => SAUT
+               WRITE(IMPRIM,*) 'CONEIN: 2 ANGLES SANS INTERSECTION'
+               GOTO 49
+            ENDIF
+C
+CCC            IF( NBRAC1 .EQ. 3 .OR. NBRAC2 .EQ. 3 ) THEN
+CCCC              UN DES 2 ANGLES FOURNIT LA RACINE DOUBLE
+CCCC              CAS IMPOSSIBLE CAR LE PRECEDENT OU LE SUIVANT SERAIT
+CCCC              RACINE DOUBLE
+CCC               GOTO 49
+CCC            ENDIF
+C
+            IF( NBRAC1 .EQ. 2 .AND. NBRAC2 .EQ. 2 ) THEN
+C              ZONE DE POINT QUADRUPLE
+C              LES 2 LIGNES FERMEES DE L'INTERSECTION
+C              SONT TANGENTES OU PRESQUE
+C              DICHOTOMIE POUR FAIRE DECROITRE ABS( RACIN2(2) - RACIN2(1) )
+               D1 = ABS( PT1(2)-PT1(1) )
+               D2 = ABS( RACIN2(2)-RACIN2(1) )
+C
+ 44            ANGLE = ( ANGLE1 + ANGLE2 ) * 0.5D0
+               IF( ABS(ANGLE2-ANGLE1) .LT. 1D-14 ) GOTO 48
+               CALL CONERA( ANGLE,
+     %                      PAX1C1, RPCON1, RAY1C1, RAY2C1, HAUTC1,
+     %                      PAX1C2, RPCON2, RAY1C2, RAY2C2, HAUTC2,
+     %                      NBRAC2, RACIN2, P, Q  )
+C              NBRAC2=0 => RACINE NON INITIALISE
+C              NBRAC2=1 => RACINE(1)=L1 RACINE SIMPLE => NON VU AVANT
+C              NBRAC2=2 => RACINE(1)=L1 RACINE(2)=L2  LES 2 RACINES SIMPLES
+C              NBRAC2=3 => RACINE(1)=L1 RACINE DOUBLE
+C              NBRAC2=4 => CAS ELIMINE AU DESSUS
+               IF( NBRAC2 .EQ. 3 ) GOTO 48
+               IF( NBRAC2 .GE. 2 ) THEN
+C                 MEME CONFIGURATION
+                  D = ABS( RACIN2(2)-RACIN2(1) )
+                  IF( D1 .GE. D2 ) THEN
+                     ANGLE1 = ANGLE
+                     D1     = D
+                  ELSE
+                     ANGLE2 = ANGLE
+                     D2     = D
+                  ENDIF
+                  GOTO 44
+               ELSE
+C                 ANGLE N'A PAS D'INTERSECTION AVEC LE CONE 2
+C                 BASCULE DANS LE CAS SUIVANT
+                  ANGLE2 = ANGLE
+               ENDIF
+            ENDIF
+C
+            IF( NBRAC1 .GE. 2 .AND. NBRAC2 .LT. 2 ) THEN
+C              2 RACINES AVEC ANGLE1 ET ZERO AVEC ANGLE2
+C              ON INVERSE LE ROLE DE 1 ET 2 POUR AVOIR UNE SEULE SITUATION
+               ANGLE  = ANGLE1
+               ANGLE1 = ANGLE2
+               ANGLE2 = ANGLE
+            ENDIF
+C
+C           DICHOTOMIE POUR REDUIRE LA DISTANCE ENTRE LES 2 RACINES SIMPLES
+C           ANGLE1 => 0 INTERSECTION ET ANGLE2 => 2 INTERSECTIONS
+ 47         ANGLE = ( ANGLE1 + ANGLE2 ) * 0.5D0
+            IF( ABS(ANGLE2-ANGLE1) .LT. 1D-14 ) GOTO 48
+            CALL CONERA( ANGLE,
+     %                   PAX1C1, RPCON1, RAY1C1, RAY2C1, HAUTC1,
+     %                   PAX1C2, RPCON2, RAY1C2, RAY2C2, HAUTC2,
+     %                   NBRAC2, RACIN2, P, Q  )
+C           NBRAC2=0 => RACINE NON INITIALISE
+C           NBRAC2=1 => RACINE(1)=L1 RACINE SIMPLE => NON VU AVANT
+C           NBRAC2=2 => RACINE(1)=L1 RACINE(2)=L2  LES 2 RACINES SIMPLES
+C           NBRAC2=3 => RACINE(1)=L1 RACINE DOUBLE
+C           NBRAC2=4 => CAS ELIMINE AU DESSUS
+            IF( NBRAC2 .EQ. 3 ) GOTO 48
+            IF( NBRAC2 .LT. 2 ) THEN
+               ANGLE1 = ANGLE
+               GOTO 47
+            ELSE
+               ANGLE2 = ANGLE
+               GOTO 47
+            ENDIF
+C
+C           LES 2 ANGLES SONT IDENTIQUES
+ 48         IF( ABS( RPINT(1,N1)-ANGLE ) .LT.
+     %          ABS( RPINT(1,N2)-ANGLE ) ) THEN
+C              N1 EST UNE QUASI RACINE DOUBLE
+               NTPINT(N1) = 3
+               RPINT(1,N1) = ANGLE
+            ELSE
+               NTPINT(N2) = 3
+               RPINT(1,N2) = ANGLE
+            ENDIF
+         ENDIF
+C
+ 49      IF( N2 .NE. N1COUR(N) ) THEN
+C           PASSAGE AU SUIVANT
+            N1 = N2
+            GOTO 42
+         ENDIF
+ 50   CONTINUE
+C
+C     FILTRAGE DES POINTS D'INTERSECTION DES 2 CONES INFINIS
+C     PAR   0=<RACINE=<1  ET  0=<Z/HAUT2=<1
+C     ======================================================
+C     LE NOMBRE D'INTERVALLES D'ANGLES APRES FILTRAGE
+      NBIA = NBCOUR
+      DO 100 N=1,NBCOUR
+C
+C        LE DEBUT DU CHAINAGE CIRCULAIRE
+         N1 = N1COUR( N )
+C
+         R = RPINT(2,N1)
+         IF( R .GE. 0D0 .AND. R .LE. 1D0 ) THEN
+C           LE POINT SUIVANT
+            N2 = NPSUIV( N1 )
+            IF( RPINT(2,N2) .GE. 0D0 .AND. RPINT(2,N2) .LE. 1D0 ) THEN
+C              LE PREMIER POINT EST A CHAINER
+               N2 = N1
+               GOTO 62
+            ENDIF
+         ENDIF
+C
+C        LE POINT SUIVANT
+         N2 = NPSUIV( N1 )
+         IF( N2 .EQ. N1COUR(N) ) THEN
+C           COURBE REDUITE A UN POINT
+            IERR = 3
+            RETURN
+         ENDIF
+C
+C        RECHERCHE DU PREMIER POINT TEL QUE 0=<RACINE=<1
+C        -----------------------------------------------
+ 60      R = RPINT(2,N2)
+         IF( R .LT. 0D0 .OR. R .GT. 1D0 ) THEN
+C           PASSAGE AU POINT SUIVANT
+            N1 = N2
+            N2 = NPSUIV( N2 )
+            IF( N2 .NE. N1COUR(N) ) GOTO 60
+C           AUCUN DES POINTS DE LA COURBE VERIFIE 0=<RACINE=<1
+            GOTO 100
+         ENDIF
+C
+C        N2 VERIFIE 0=<RACINE=<1 ET SON PRECEDENT N1 NE LE VERIFIE PAS
+C        RECHERCHE AVEC PRECISION DU POINT TEL QUE RACINE=0 OU RACINE=1
+C        PAR DICHOTOMIE ENTRE N1 ET N2
+C        A1 ANGLE AVEC RACINE NEGATIVE OU SUPERIEURE A 1
+         A1 = RPINT(1,N1)
+C        A2 ANGLE AVEC RACINE POSITIVE ET INFERIEURE A 1
+         A2 = RPINT(1,N2)
+         IF( NTPINT(N2) .EQ. 3 ) THEN
+C           RACINE DOUBLE
+            NURAC = 1
+         ELSE
+C           RACINE SIMPLE
+            NURAC = NTPINT(N2)
+         ENDIF
+         CALL CONEDI( R, A1, A2, NURAC,
+     %                PAX1C1, RPCON1, RAY1C1, RAY2C1, HAUTC1,
+     %                PAX1C2, RPCON2, RAY1C2, RAY2C2, HAUTC2,
+     %                NBRAC2, RACIN2, P, Q, ANGLE )
+C
+C        NOUVEL ANGLE ET RACINE DU POINT
+         RPINT(1,N2) = ANGLE
+         RPINT(2,N2) = RACIN2( NURAC )
+C
+C        DEBUT D'UN NOUVEL INTERVALLE DE GENERATRICES DEFINIES PAR DES ANGLES
+ 62      NBIA = NBIA + 1
+         N1COUR( NBIA ) = N2
+C
+C        RECHERCHE DU DERNIER POINT DE CET INTERVALLE D'ANGLES
+C        -----------------------------------------------------
+ 70      N1 = N2
+         N2 = NPSUIV( N2 )
+         IF( N2 .NE. N1COUR(N) ) THEN
+            R = RPINT(2,N2)
+            IF( R .GE. 0D0 .AND. R .LE. 1D0 ) THEN
+C              POINT DANS L'INTERVALLE: PASSAGE AU POINT SUIVANT
+               GOTO 70
+            ENDIF
+         ELSE
+C           DERNIER POINT TRAIT'E DE CETTE COURBE FERMEE N
+C           FERMETURE DE L'INTERVALLE DE GENERATRICES DEFINIES PAR DES ANGLES
+            NBIA = NBIA + 1
+            N1COUR( NBIA ) = N2
+            GOTO 100
+         ENDIF
+C
+C        CE POINT EST RETROUVE. RECHERCHE DU POINT TEL QUE RACINE=0 OU 1
+C        A1 ANGLE AVEC RACINE NEGATIVE OU SUPERIEURE A 1
+         A1 = RPINT(1,N2)
+C        A2 ANGLE AVEC RACINE POSITIVE ET INFERIEURE A 1
+         A2 = RPINT(1,N1)
+         IF( NTPINT(N1) .EQ. 3 ) THEN
+C           RACINE DOUBLE
+            NURAC = 1
+         ELSE
+C           RACINE SIMPLE
+            NURAC = NTPINT(N1)
+         ENDIF
+         CALL CONEDI( R, A1, A2, NURAC,
+     %                PAX1C1, RPCON1, RAY1C1, RAY2C1, HAUTC1,
+     %                PAX1C2, RPCON2, RAY1C2, RAY2C2, HAUTC2,
+     %                NBRAC2, RACIN2, P, Q, ANGLE )
+C
+C        NOUVEL ANGLE ET RACINE DU POINT
+         RPINT(1,N1) = ANGLE
+         RPINT(2,N1) = RACIN2( NURAC )
+C
+C        FERMETURE DE L'INTERVALLE DE GENERATRICES DEFINIES PAR DES ANGLES
+         NBIA = NBIA + 1
+         N1COUR( NBIA ) = N1
+         GOTO 60
+C
+ 100  CONTINUE
+C
+      IF( NBIA .EQ. NBCOUR ) THEN
+C        PAS DE LIGNE D'INTERSECTION
+         IERR = 4
+         RETURN
+      ENDIF
+C
+C     FILTRAGE DES INTERVALLES DE GENERATRICES PAR 0=< Z CONE2 =< HAUTC2
+C     ==================================================================
+      NBIP = NBIA
+      DO 200 N = NBCOUR+1, NBIA, 2
+C
+C        LE DEBUT DU CHAINAGE DE L'INTERVALLE DE GENERATRICES (OU ANGLES)
+         NBA = 0
+         N1  = -1
+         N2  = N1COUR( N )
+C        LA FIN   DU CHAINAGE DE L'INTERVALLE DE GENERATRICES (OU ANGLES)
+         NF  = N1COUR( N+1 )
+C        ATTENTION: LE CHAINAGE PEUT ETRE CIRCULAIRE (COURBE FERMEE!)
+C
+C        RECHERCHE DU PREMIER POINT TEL QUE 0=<ZCONE2/HAUTC2=<1
+C        SUIVI D'UN AUTRE POINT DU TRONC DE CONE 2
+C        ------------------------------------------------------
+C        CALCUL DE ZCONE2/HAUTC2 DU POINT N2
+ 160     ANGLE = RPINT(1,N2)
+         CALL CONERA( ANGLE,
+     %                PAX1C1, RPCON1, RAY1C1, RAY2C1, HAUTC1,
+     %                PAX1C2, RPCON2, RAY1C2, RAY2C2, HAUTC2,
+     %                NBRAC2, RACIN2, P, Q  )
+         IF( NTPINT(N2) .EQ. 3 ) THEN
+C           RACINE DOUBLE
+            NURAC = 1
+         ELSE
+C           RACINE SIMPLE
+            NURAC = NTPINT(N2)
+         ENDIF
+         Z2 = ( P(3) + RACIN2(NURAC) * (Q(3) - P(3)) ) / HAUTC2
+ 161     IF( Z2 .LT. 0D0 .OR. Z2 .GT. 1D0 ) THEN
+C           PASSAGE AU POINT SUIVANT
+            N1 = N2
+            N2 = NPSUIV( N2 )
+            IF( N2 .NE. NF ) GOTO 160
+C           AUCUN DES POINTS DE LA COURBE VERIFIE 0=<Z2=<1
+            GOTO 200
+         ENDIF
+C
+         IF( NBA .LE. 0 ) THEN
+C           LE POINT SUIVANT DU PREMIER POINT EST IL DANS LE TRONC DE CONE?
+            N3 = NPSUIV( N2 )
+            CALL CONERA( RPINT(1,N3),
+     %                PAX1C1, RPCON1, RAY1C1, RAY2C1, HAUTC1,
+     %                PAX1C2, RPCON2, RAY1C2, RAY2C2, HAUTC2,
+     %                NBRAC2, RACIN2, P, Q  )
+            IF( NTPINT(N3) .EQ. 3 ) THEN
+C              RACINE DOUBLE
+               NURAC = 1
+            ELSE
+C              RACINE SIMPLE
+               NURAC = NTPINT(N3)
+            ENDIF
+            Z2 = (P(3) + RACIN2(NURAC) * (Q(3) - P(3))) / HAUTC2
+            IF( Z2 .LT. 0D0 .OR. Z2 .GT. 1D0 ) THEN
+C              LE SUIVANT N'APPARTIENT PAS AU TRONC DE CONE 2
+C              L'INTERVALLE EST ELIMINE
+               GOTO 161
+            ENDIF
+C           LE PREMIER POINT DE L'INTERVALLE EST A CHAINER
+C           LE POINT D'INTERSECTION DANS LE REPERE PROPRE AU CONE 2
+            IF( N1 .LE. 0 ) GOTO 165
+         ENDIF
+C
+C        N2 VERIFIE 0=<Z2=<1 ET SON PRECEDENT N1 NE LE VERIFIE PAS
+C        RECHERCHE AVEC PRECISION DU POINT TEL QUE Z2=0 OU Z2=1
+C        PAR DICHOTOMIE ENTRE N1 ET N2
+C        A1 ANGLE AVEC RACINE NEGATIVE OU SUPERIEURE A 1 => EXTERNE
+         A1 = RPINT(1,N1)
+C        A2 ANGLE AVEC RACINE POSITIVE OU INFERIEURE A 1 => INTERNE
+         A2 = RPINT(1,N2)
+         IF( NTPINT(N2) .EQ. 3 ) THEN
+C           RACINE DOUBLE
+            NURAC = 1
+         ELSE
+C           RACINE SIMPLE
+            NURAC = NTPINT(N2)
+         ENDIF
+         CALL CONED2( Z2, A1, A2, NURAC,
+     %                PAX1C1, RPCON1, RAY1C1, RAY2C1, HAUTC1,
+     %                PAX1C2, RPCON2, RAY1C2, RAY2C2, HAUTC2,
+     %                NBRAC2, RACIN2, P, Q, ANGLE )
+C
+C        LE POINT D'INTERSECTION DANS LE REPERE PROPRE AU CONE 2
+C        NOUVEL ANGLE ET RACINE DU POINT
+         RPINT(1,N2) = ANGLE
+         RPINT(2,N2) = RACIN2( NURAC )
+C
+C        PAS DE PRECEDENT => LONGUEUR DE L'ARC PRECEDENT NUL
+ 165     RPINT(3,N2) = 0D0
+         DO 168 K=1,3
+            PT0(K) = P(K) + RACIN2(NURAC) * (Q(K) - P(K))
+ 168     CONTINUE
+C
+C        DEBUT D'UN NOUVEL INTERVALLE DE GENERATRICES DEFINIES PAR DES ANGLES
+         NBIP = NBIP + 1
+         N1COUR( NBIP ) = N2
+C        LONGUEUR DE LA COURBE DE CET INTERVALLE
+         RLONG( NBIP ) = 0D0
+C
+C        RECHERCHE DU DERNIER POINT DE CET INTERVALLE D'ANGLES
+C        -----------------------------------------------------
+ 170     IF( N1 .NE. NF .OR. NBA .LE. 1 ) THEN
+            NBA = NBA + 1
+            N1  = N2
+            N2  = NPSUIV( N2 )
+            ANGLE = RPINT(1,N2)
+            CALL CONERA( ANGLE,
+     %                   PAX1C1, RPCON1, RAY1C1, RAY2C1, HAUTC1,
+     %                   PAX1C2, RPCON2, RAY1C2, RAY2C2, HAUTC2,
+     %                   NBRAC2, RACIN2, P, Q  )
+C
+C           LE POINT D'INTERSECTION DANS LE REPERE PROPRE AU CONE 2
+            IF( NTPINT(N2) .EQ. 3 ) THEN
+C              RACINE DOUBLE
+               NURAC = 1
+            ELSE
+C              RACINE SIMPLE
+               NURAC = NTPINT(N2)
+            ENDIF
+            R = 0D0
+            DO 180 K=1,3
+               PT1(K) = P(K) + RACIN2(NURAC) * (Q(K) - P(K))
+               R = R + (PT1(K) - PT0(K)) ** 2
+ 180        CONTINUE
+C           LONGUEUR DE L'ARC
+            RPINT(3,N2) = SQRT( R )
+            RLONG(NBIP) = RLONG(NBIP) + RPINT(3,N2)
+C
+            Z2 = PT1(3) / HAUTC2
+            IF( Z2 .GE. 0D0 .AND. Z2 .LE. 1D0 ) THEN
+C              POINT DANS L'INTERVALLE: PASSAGE AU POINT SUIVANT
+               PT0(1) = PT1(1)
+               PT0(2) = PT1(2)
+               PT0(3) = PT1(3)
+               GOTO 170
+            ENDIF
+         ELSE
+C           DERNIER POINT DE CET INTERVALLE N DE GENERATRICES (OU ANGLES)
+C           FERMETURE DE L'INTERVALLE DE POINTS D'INTERSECTION
+            NBIP = NBIP + 1
+            N1COUR( NBIP ) = N1
+            GOTO 200
+         ENDIF
+C
+C        CE POINT EST RETROUVE. RECHERCHE DU POINT TEL QUE Z CONE2/HAUTC2=0 OU 1
+C        A1 ANGLE AVEC RACINE NEGATIVE OU SUPERIEURE A 1 => EXTERNE
+         A1 = RPINT(1,N2)
+C        A2 ANGLE AVEC RACINE POSITIVE OU INFERIEURE A 1 => INTERNE
+         A2 = RPINT(1,N1)
+         IF( NTPINT(N1) .EQ. 3 ) THEN
+C           RACINE DOUBLE
+            NURAC = 1
+         ELSE
+C           RACINE SIMPLE
+            NURAC = NTPINT(N1)
+         ENDIF
+         CALL CONED2( Z2, A1, A2, NURAC,
+     %                PAX1C1, RPCON1, RAY1C1, RAY2C1, HAUTC1,
+     %                PAX1C2, RPCON2, RAY1C2, RAY2C2, HAUTC2,
+     %                NBRAC2, RACIN2, P, Q, ANGLE )
+C
+C        NOUVEL ANGLE ET RACINE DU POINT
+         RPINT(1,N1) = ANGLE
+         RPINT(2,N1) = RACIN2( NURAC )
+C
+C        LE POINT D'INTERSECTION DANS LE REPERE PROPRE AU CONE 2
+         R = 0D0
+         DO 190 K=1,3
+            PT1(K) = P(K) + RACIN2(NURAC) * (Q(K) - P(K))
+            R = R + (PT1(K) - PT0(K)) ** 2
+ 190     CONTINUE
+C        LONGUEUR DU DERNIER ARC
+         RPINT(3,N1) = SQRT( R )
+         RLONG( NBIP ) = RLONG( NBIP ) + RPINT(3,N1)
+C
+C        FERMETURE DE L'INTERVALLE DE POINTS D'INTERSECTION
+         NBIP = NBIP + 1
+         N1COUR( NBIP ) = N1
+         IF( N1 .NE. NF ) GOTO 160
+C
+ 200  CONTINUE
+C
+      IF( NBIP .EQ. NBIA ) THEN
+C        PAS DE LIGNE D'INTERSECTION
+         IERR = 5
+         RETURN
+      ENDIF
+C
+C     LE PREMIER POINTEUR SUR N1COUR
+      NBIA = NBIA + 1
+      RETURN
+      END

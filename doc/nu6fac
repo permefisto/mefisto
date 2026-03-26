@@ -1,0 +1,5 @@
+Give the NAME or click the 6 STRUCTURED QUADRANGLES
+which form the 6 faces of the HEXAHEDRON.
+If N1, N2, N3 is the CONSTANT number of sub-edges 
+for each of 3 directions, then
+N1 x N2 x N3 sub-hexahedra will be created.

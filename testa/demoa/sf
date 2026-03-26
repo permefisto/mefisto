@@ -1,0 +1,203 @@
+{ ================================================================ }
+{ MEFISTO software : Version August 2006                           }
+{ USER name        : Alain Perronnet                               }
+{ PROJECT name     : dema = demo anglaise                          }
+{ DATE             : 14/9/2006                                     }
+{ ================================================================ }
+@;
+@;
+@;
+
+3; { SURFACES of the object }
+ a; {NOM de la SURFACE ou ABANDON? }
+ i; {in LEXICON ~>TRANSFO }
+ 1; {transfinite quadrangle }
+ AX1AX2; AX2AM2AY2; AY1AY2; AX1AM1AY1; {in LEXICON ~>LINE }
+ 1; { regular mesh }
+
+ a; i; 9; {TE triangulation replace the previous}
+ ledge; 1; 0; la;
+
+ { SURFACE NAME or ABANDON? }
+ ab1; i; 1;
+ { in LEXICON ~>TRANSFO }
+ { transfinite quadrangle }
+ { NOM de LINE }
+ AX1AM1AY1;
+ { in LEXICON ~>LINE }
+ { LINE NAME }
+ ay1by1;
+ { in LEXICON ~>LINE }
+ { LINE NAME }
+ BX1BM1BY1;
+ { in LEXICON ~>LINE }
+ { LINE NAME }
+ AX1BX1;
+ { in LEXICON ~>LINE }
+ 1;
+ { regular mesh }
+
+ { SURFACE NAME or ABANDON? }
+ abx; i; 1;
+ { in LEXICON ~>TRANSFO }
+ { transfinite quadrangle }
+ { LINE NAME }
+ AX1AX2;
+ { in LEXICON ~>LINE }
+ { LINE NAME }
+ AX1BX1;
+ { in LEXICON ~>LINE }
+ { LINE NAME }
+ BX1BX2;
+ { in LEXICON ~>LINE }
+ { LINE NAME }
+ AX2BX2;
+ { in LEXICON ~>LINE }
+ 1;
+ { regular mesh }
+
+ { SURFACE NAME or ABANDON? }
+ aby; i; 1;
+ { in LEXICON ~>TRANSFO }
+ { transfinite quadrangle }
+ { LINE NAME }
+ AY1AY2;
+ { in LEXICON ~>LINE }
+ { LINE NAME }
+ AY2BY2;
+ { in LEXICON ~>LINE }
+ { LINE NAME }
+ by1by2;
+ { in LEXICON ~>LINE }
+ { LINE NAME }
+ ay1by1;
+ { in LEXICON ~>LINE }
+ 1;
+ { regular mesh }
+
+ { SURFACE NAME or ABANDON? }
+ ab2; i; 1;
+ { in LEXICON ~>TRANSFO }
+ { transfinite quadrangle }
+ { LINE NAME }
+ AX2AM2AY2;
+ { in LEXICON ~>LINE }
+ { LINE NAME }
+ AY2BY2;
+ { in LEXICON ~>LINE }
+ { LINE NAME }
+ bx2bm2bY2;
+ { in LEXICON ~>LINE }
+ { LINE NAME }
+ ax2bx2;
+ { in LEXICON ~>LINE }
+ 1;
+ { regular mesh }
+
+ { SURFACE NAME or ABANDON? }
+ b23; i; 1;
+ { in LEXICON ~>TRANSFO }
+ { transfinite quadrangle }
+ { LINE NAME }
+ bx3bm3by3;
+ { in LEXICON ~>LINE }
+ { LINE NAME }
+ by2by3;
+ { in LEXICON ~>LINE }
+ { LINE NAME }
+ bx2bm2by2;
+ { in LEXICON ~>LINE }
+ { LINE NAME }
+ bx2bx3;
+ { in LEXICON ~>LINE }
+ 1;
+ { regular mesh }
+
+ { SURFACE NAME or ABANDON? }
+ bc1;
+ { NOM de TRANSFORMATION }
+ i;
+ { in LEXICON ~>TRANSFO }
+ 1;
+ { transfinite quadrangle }
+ { LINE NAME }
+ BX1BM1BY1;
+ { in LEXICON ~>LINE }
+ { LINE NAME }
+ BY1CY1;
+ { in LEXICON ~>LINE }
+ { LINE NAME }
+ CX1CM1CY1;
+ { in LEXICON ~>LINE }
+ { LINE NAME }
+ BX1CX1;
+ { in LEXICON ~>LINE }
+ 1;
+ { regular mesh }
+ 
+ { SURFACE NAME or ABANDON? }
+ bcx; i;1;
+ { in LEXICON ~>TRANSFO }
+ { transfinite quadrangle }
+ { LINE NAME }
+ bx;
+ { in LEXICON ~>LINE }
+ { LINE NAME }
+ BX3CX3;
+ { in LEXICON ~>LINE }
+ { LINE NAME }
+ CX1CX3;
+ { in LEXICON ~>LINE }
+ { LINE NAME }
+ bx1cx1;
+ { in LEXICON ~>LINE }
+ 1;
+ { regular mesh }
+
+ { SURFACE NAME or ABANDON? }
+ bcy; i; 1;
+ { in LEXICON ~>TRANSFO }
+ { transfinite quadrangle }
+ { LINE NAME }
+ by;
+ { in LEXICON ~>LINE }
+ { LINE NAME }
+ BY3CY3;
+ { in LEXICON ~>LINE }
+ { LINE NAME }
+ CY;
+ { in LEXICON ~>LINE }
+ { LINE NAME }
+ BY1CY1;
+ { in LEXICON ~>LINE }
+ 1;
+ { regular mesh }
+
+ bc3;   i; 1; bx3bm3by3; by3cy3; cx3cy3; bx3cx3; 2;
+ cxypd; i; 9; ledge; 1; 0; cxypd;
+ cepg;  i; 9; ledge; 1; 0; cepg;
+
+{cepd;  i; 1; cpgcm3cy3; cy3; epgem3ey3; cpgepg; 2;
+ cepdcyl3; proj_cyl3; 50; cepd;}
+
+ plancyl3;  i;  9; ledge; 1; 0; cyce3plan;
+ cepdcyl3; c3; 50; plancyl3;
+
+ cpy3;  i;  1; cpdcy3;   cy3cdy3;  cdypcdy3; cpdcdyp;     1;
+ cyl4q; i;  1; cdypcdy3; intersec; deypdey3; cdypdmpdeyp; 2;
+ cyl4t; i; 31; cyl4q; 1;
+ epy;   i;  1; deypdey3; dey3ey3; epdey3; deypepd; 1;
+ edg;   i;  9; ledge; 1; 0; edg;
+
+ cardantq4; i; 51; 17;
+    a;   ab1; abx; aby; ab2;
+    b23; bc1; bcx; bcy; bc3;
+    cxypd;  cepg;  cepdcyl3;  cpy3; cyl4t; epy;  edg;
+
+ cardan4; i; 31; cardantq4; 1;
+@;
+@;
+10; 3; {drawing of Surfaces}
+1; 90; {all surfaces}
+
+close;

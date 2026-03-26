@@ -1,0 +1,101 @@
+{ ====================================================================== }
+{ Software MEFISTO     : Version September 2006                          }
+{ USER's Name          : Alain Perronnet & Chin Tsien WU                 }
+{ Project Name         : layer NACA 64(4)-221 furnished by Chin Tsien WU }
+{ Date                 : 27/09/2006                                      }
+{ ====================================================================== }
+@;
+@;
+
+19;{ min MAX of XYZ of PLSVO }
+-0.5; 1.1; { X MINIMUM X MAXIMUM }
+-0.6; 0.6; { Y MINIMUM Y MAXIMUM }
+ 0.0; 0.0; { Z MINIMUM Z MAXIMUM }
+@;
+
+2;  {LINES}
+NACA; {LINE NAME}
+I;    {MAPPING}
+10;   {INPUT DATA OF XYZSOMMET & NSEF TMS}
+51;   {NBSOM number of vertices}
+0;    {NBTGS  number of tangents}
+3;    {NBCOOR number of vertex coordinates}
+1.00000; 0.00000; 0.0;{tableau XYZSOM(1..NBSOM) X Y Z of each vertex}
+0.95021; 0.00765; 0.0;
+0.90044; 0.01761; 0.0;
+0.85061; 0.02885; 0.0;
+0.80073; 0.04082; 0.0;
+0.75077; 0.05310; 0.0;
+0.70075; 0.06521; 0.0;
+0.65065; 0.07679; 0.0;
+0.60050; 0.08749; 0.0;
+0.55027; 0.09702; 0.0;
+0.50000; 0.10507; 0.0;
+0.44968; 0.11125; 0.0;
+0.39933; 0.11502; 0.0;
+0.34897; 0.11510; 0.0;
+0.29861; 0.11240; 0.0;
+0.24829; 0.10701; 0.0;
+0.19799; 0.09889; 0.0;
+0.14776; 0.08778; 0.0;
+0.09765; 0.07282; 0.0;
+0.07264; 0.06334; 0.0;
+0.04772; 0.05182; 0.0;
+0.02297; 0.03665; 0.0;
+0.01075; 0.02618; 0.0;
+0.00596; 0.02049; 0.0;
+0.00362; 0.01690; 0.0;
+0.00000; 0.00000; 0.0;
+0.00638; -0.01590; 0.0;
+0.00904; -0.01909; 0.0;
+0.01425; -0.02404; 0.0;
+0.02703; -0.03293; 0.0;
+0.05228; -0.04550; 0.0;
+0.07736; -0.05486; 0.0;
+0.10237; -0.06248; 0.0;
+0.15224; -0.07432; 0.0;
+0.20201; -0.08297; 0.0;
+0.25171; -0.08911; 0.0;
+0.30139; -0.09296; 0.0;
+0.35103; -0.09450; 0.0;
+0.40067; -0.09360; 0.0;
+0.45032; -0.08935; 0.0;
+0.50000; -0.08301; 0.0;
+0.54973; -0.07512; 0.0;
+0.59950; -0.06607; 0.0;
+0.64935; -0.05619; 0.0;
+0.69925; -0.04577; 0.0;
+0.74923; -0.03520; 0.0;
+0.79927; -0.02490; 0.0;
+0.84939; -0.01539; 0.0;
+0.89956; -0.00727; 0.0;
+0.94979; -0.00133; 0.0;
+1.00000; 0.00000;  0.0;
+ 2;  {NUTYOB Type of PLSV entier}
+-1;  {NUTFMA closed or not Line or Surface (P V are unknown) entier}
+ 2;  {NBSOEF number of vertices by FE entier}
+ 0;  {NBTGEF number of tangents by FE entier}
+50;  {NBEFOB number of PLSVs FE entier}
+ 0;  {NBTGEF number of tangents by FE entier}
+ 0;  {NBEFAP number of FE with pointer on FE with TG entier}
+ 2;  {NUTYMA type of mesh entier 2 structured segment}
+50;  {NBARSE number of edges of the structured segment}
+@;
+@;
+
+3;  {SURFACES}
+ LAYER;  {SURFACE NAME}
+  I;     {MAPPING}
+ 16;     {MAGNIFYING OF A CLOSED LINE INTO LAYERS}
+ NACA;   {name of the line to be magnify}
+ 10;     {number of first boundary layers}
+ 0.01;   {thickness of ONE first boundary layer}
+ 5;      {number of LAST layers}
+ 0.1;    {thickness of the LAST boundary layer}
+@;
+
+10; {DRAWING}
+  8; LAYER; {SURFACE}
+ 90;
+
+CLOSE;

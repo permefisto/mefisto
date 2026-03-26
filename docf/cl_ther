@@ -1,0 +1,11 @@
+Les conditions aux limites peuvent etre :
+- une condition de FOURIER-ROBIN
+(normal flux:- conduc d temperature/dn = ECHANGE (temperature-temperaturefluide))
+  fournir le coefficient d'ECHANGE(1) et la SOURCE(2) de chaleur egale
+          au produit coefficient d'echange * temperature du fluide exterieur
+
+- une condition de NEUMANN  (conduc d temperature/dn = SOURCE)
+  fournir la SOURCE(2) egale au flux normal de chaleur 
+
+- une condition de DIRICHLET (temperature = CONTACT)
+  fournir le CONTACT(3) egal a la temperature imposee en chaque noeud

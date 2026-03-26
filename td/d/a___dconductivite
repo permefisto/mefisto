@@ -1,0 +1,18 @@
+deftms ~>>>DCONDUCTIVITE 'Gradient de la Conductivite'
+variable muet DATE   'date de creation du tableau'      reel2  ;
+variable muet NUTD   'numero du tableau descripteur'    entier ;
+variable      LTDCON 'Type de gradient de conductivite' entier
+( 1 : 'materiau 3D homogene isotrope'
+, 2 : 'materiau axisymetrique homogene isotrope'
+, 3 : 'materiau 2D homogene isotrope'
+,10 : 'tenseur de conductivite anisotrope'
+,-1 : 'fonction Gradient de la Conductivite'
+, 0 : 'Gradient de la Conductivit a supprimer' ) ;
+cas LTDCON
+1..3 : tableau  DCONDU(1..3) 'Gradient conductivite du materiau'     reel   ;
+10   : variable NVDCON 'Nombre coefficients Gradient Conductivite' entier ;
+       tableau  TEDCON(1:3,1..NVDCON) 
+ 'Gradient DX,DY,DZ de DC11,DC21,DC22,..., du tenseur de conductivite' reel ;  
+ -1 : variable NFDCON 'Nom fonction gradient conductivite' ^~>FONCTION ;
+fincas ;   
+fintms ;

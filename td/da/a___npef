@@ -1,0 +1,58 @@
+deftms ~>>>NPEF 'NODE & POINT NUMBERS of a type of FE after INTERPOLATION'
+variable muet DATE 'date of creation of the TMS' reel2  ;
+variable muet NUTD 'number of the descriptor array TD' entier ;
+variable NUTYEL 'number of the FE type'  entier ;
+variable NBELEM 'number of FE of this type' entier ;
+variable NBELAP 'number of FE with pointer on the FE with TG' entier ; 
+variable NBELTG 'number of FE with tg'      entier ;        
+variable NBNDEL 'number of nodes of a FE'  entier ;      
+variable NBPGEL 'number of points of a FE (0 if points=nodes)'   entier ;
+variable NBTGEL 'number of tangents of a FE with TG' entier  
+ ( 0 : '0 tg by FE' ,            2 : '2 tg by edge' ,
+   6 : '6 tg by triangle' ,      8 : '8 tg by quadrangle' ,
+  12 : '12 tg by tetrahedron' , 18 : '18 tg by pentahedron' , 
+  24 : '24 tg by hexahedron' )  ;
+
+variable NBPSEL 'number of FE vertices on a user''s point'  entier ;
+variable MOPSEL 'number of variables of NLPSEL NEPSEL arrays' entier ;
+variable NBLAEL 'number of FE edges on a user''s line'  entier ;
+variable MOLAEL 'number of variables of NLLAEL NELAEL arrays' entier ;
+variable NBSFEL 'number of FE faces on a user''s surface' entier ;
+variable MOSFEL 'number of variables of NLSFEL NESFEL arrays' entier ;
+variable NBVCEL 'number of FE in a user''s volume'  entier ;
+variable MOVCEL 'number of variables of NLVCEL NEVCEL arrays' entier ; 
+
+tableau NUNDEL(1..NBELEM,1..NBNDEL) 'numbers of nodes of each FE' entier ;
+tableau NUPGEL(1..NBELEM,1..NBPGEL) 'numbers of points of each FE' entier ; 
+
+tableau NUPSEL(1..NBPSEL) 'name of point=vertex of a FE'  ^~>POINT ;
+tableau NLPSEL(1..MOPSEL) 'number of this vertex in the FE'   entier ;
+tableau NEPSEL(1..MOPSEL) 'number of FE support of this point=vertex' entier ;
+
+tableau NULAEL(1..NBLAEL) 'name of the line support of a FE edge' ^~>LIGNE ;
+tableau NLLAEL(1..MOLAEL) 'number of this edge in the FE'         entier ;
+tableau NELAEL(1..MOLAEL) 'number of FE support of this edge' entier ; 
+
+tableau NUSFEL(1..NBSFEL) 'name of the surface support of a FE face' 
+                          ^~>SURFACE ;
+tableau NLSFEL(1..MOSFEL) 'number of this face in the FE'          entier ;
+tableau NESFEL(1..MOSFEL) 'number of FE support of this face'  entier ;  
+
+tableau NUVCEL(1..NBVCEL) 'name of the volume of a FE'  ^~>VOLUME ;
+tableau NLVCEL(1..MOVCEL) 'number of this cube in the FE' entier ;
+tableau NEVCEL(1..MOVCEL) 'number of FE support of this cube' entier ;
+
+tableau LPELTG(1..NBELAP) 'number>0 of the FE with TG else 0' entier ;
+tableau NUTGEL(1..NBELTG,1..NBTGEL) '+-Nb of TG of the FE with TG' entier ;
+fintms ;
+
+
+--------------------------------------------------------------------------------
+For memory : 
+MOVCEL=0 because
+- NLVCEL(k) = 1 systematically and this array is not stored
+- NEVCEL(k) = k k=1,...,MOVCEL systematically and this array is not stored
+Only for homogeneity these arrays are mentionned.
+- NBELAP = NBELEM if it exists at least one FE with TG
+--------------------------------------------------------------------------------
+

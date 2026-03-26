@@ -1,0 +1,95 @@
+      SUBROUTINE AJLGARTI( MNXYZS, MNNSEF, MOXYZS, MONSEF,  IERR )
+C+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+C BUT :    SI FONCTION TAILLE_IDEALE,
+C -----    ALORS AJOUTER DES POINTS SUR CHAQUE ARETE DONT LES SOMMETS
+C          NE VERIFIENT PAS TAILLE_IDEALE(x,y,z ) ou EDGE_LENGTH(x,y,z)
+C          PUIS SOUS TRIANGULER LES TRIANGLES DONT AU MOINS UNE ARETE
+C          POSSEDE DES POINTS AJOUTES
+C ENTREES:
+C --------
+C MNXYZS : ADRESSE DU TMS xyzsommet DE LA SURFACE
+C MNNSEF : ADRESSE DU TMS nsef DE LA SURFACE
+
+C MODIFIES:
+C ---------
+C MOXYZS : NOMBRE DE MOTS DU TMS xyzsommet DE LA SURFACE FINALE
+C MONSEF : NOMBRE DE MOTS DU TMS nsef      DE LA SURFACE FINALE
+C NBSOM  : NOMBRE DE SOMMETS
+C NBTRIA : NOMBRE DE TRIANGLES
+
+C SORTIE :
+C --------
+C IERR   : 0 SI PAS D'ERREUR, >0 SINON
+C+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+C AUTEUR: ALAIN PERRONNET LJLL UPMC PARIS St PIERRE du PERRAY Avril 2017
+C....................................................................012
+      include"./incl/langue.inc"
+      include"./incl/gsmenu.inc"
+      include"./incl/a___xyzsommet.inc"
+      include"./incl/a___nsef.inc"
+      include"./incl/pp.inc"
+      COMMON             MCN(MOTMCN)
+      REAL              RMCN(1)
+      EQUIVALENCE      (RMCN(1),MCN(1))
+
+C     EXISTENCE OU NON DE LA FONCTION TAILLE_IDEALE(x,y,z) ou EDGE_LENGTH(x,y,z)
+C     --------------------------------------------------------------------------
+      MNARET = 0
+      NOFOTI = NOFOTIEL()
+      IF( NOFOTI .LE. 0 ) THEN
+C        PAS DE FONCTION 
+         IERR = 5
+         GOTO 9999
+      ENDIF
+
+C     MXSOM NOMBRE MAXIMAL DE SOMMETS DECLARES DANS xyzsommet
+      MXSOM = ( MOXYZS - WYZSOM ) / 3
+      NBSOM = MCN( MNXYZS+WNBSOM )
+
+      MXTRIA =( MONSEF- WUSOEF ) / 4
+      NBTRIA = MCN( MNNSEF+WBEFOB )
+
+C     GENERATION DU TABLEAU DES ARETES DES TRIANGLES
+C     ----------------------------------------------
+      CALL GEARSU( 4, NBTRIA, MCN(MNNSEF+WUSOEF), 4,
+     %             L1ARET, L2ARET, MNARET, IERR )
+      IF( IERR .NE. 0 ) GOTO 9999
+C     ARETE(1,I)= NO DU 1-ER  SOMMET DE L'ARETE
+C     ARETE(2,I)= NO DU 2-EME SOMMET > 1-ER  SOMMET
+C     ARETE(3,I)= CHAINAGE HACHAGE SUR ARETE SUIVANTE
+C     ARETE(4,I)= NUMERO DU 1-ER TRIANGLE CONTENANT CETTE ARETE
+C                 0 SI PAS DE 1-ER  TRIANGLE
+C     ARETE(5,I)= NUMERO DU 2-EME TRIANGLE CONTENANT CETTE ARETE
+C                 0 SI PAS DE 2-EME TRIANGLE
+C     ARETE(3+MXMOAR,I)= NO DU MXMOAR-EME TRIANGLE CONTENANT CETTE ARETE
+C                        0 SI PAS DE MXMOAR-EME TRIANGLE
+C     puis
+C     ARETE(6,I)= NOMBRE DE POINTS AJOUTES SUR L'ARETE I POUR TAILLE_IDEALE
+C     ARETE(7,I)= NUMERO XYZSOM DU DERNIER POINT AJOUTE SUR I
+
+C     AVEC FONCTION TAILLE_IDEALE(x,y,z) ou EDGE_LENGTH(x,y,z)
+C     AJOUTER DES POINTS SUR CHAQUE ARETE DONT LES SOMMETS
+C     NE VERIFIENT PAS LA TAILLE_IDEALE(x,y,z )
+C     SOUS TRIANGULER LES TRIANGLES DONT AU MOINS UNE ARETE A
+C     DES POINTS AJOUTES
+C     --------------------------------------------------------
+      CALL A1LGARTI( NOFOTI, MXSOM,  NBSOM, RMCN(MNXYZS+WYZSOM),
+     %               L1ARET, L2ARET, MCN(MNARET),
+     %               MXTRIA, NBTRIA, MCN(MNNSEF+WUSOEF),  IERR )
+      IF( IERR .NE. 0 ) GOTO 9999
+
+C     MISE A JOUR DU TMS xyzsommet
+      MCN( MNXYZS + WNBSOM ) = NBSOM
+      CALL ECDATE( MCN(MNXYZS) )
+      MCN( MNXYZS + MOTVAR(6) ) = NONMTD('~>>>XYZSOMMET')
+
+C     MISE A JOUR DU TMS nsef
+      MCN( MNNSEF + WBEFOB ) = NBTRIA
+      CALL ECDATE( MCN(MNNSEF) )
+      MCN( MNNSEF + MOTVAR(6) ) = NONMTD( '~>>>NSEF' )
+
+C     EVENTUELLE DESTRUCTION DU TABLEAU DES ARETES
+ 9999 IF( MNARET .GT. 0 ) CALL TNMCDS( 'ENTIER', L1ARET*L2ARET, MNARET )
+
+      RETURN
+      END

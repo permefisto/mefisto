@@ -1,0 +1,129 @@
+      SUBROUTINE CHOLP2( EPS, NTDL, NCODSA, LPDIAG, A0, NENTRE, IMPRE,
+     %                   A,   NRETOU )
+C ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+C   BUT: FACTORISER UNE MATRICE SYMETRIQUE DEFINIE POSITIVE SOUS LA
+C   ---- FORME  A = L * TL DITE DE CHOLESKY
+C        L EST TRIANGULAIRE INFERIEURE STOCKEE SOUS FORME PROFIL
+C        C-A-D PAR LIGNES DU 1-ER COEFFICIENT NON NUL AU COEFFICIENT
+C        DIAGONAL. L EST STOCKEE SOUS LA MEME FORME
+C        A0 ET A C-A-D L EN SORTIE PEUVENT ETRE CONFONDUS EN ENTREE
+C
+C        VERSION REELLE DOUBLE PRECISION
+C
+C   PARAMETRES D ENTREE:
+C   --------------------
+C   EPS    : PRECISION DES MOTS-MEMOIRE
+C   NTDL   : ORDRE DE LA MATRICE A
+C   NCODSA : 0 SI MATRICE DIAGONALE, NON NUL SI SYMETRIQUE NON DIAGONALE
+C   LPDIAG : POINTEUR SUR LE COEFFICIENT DIAGONAL DE D.L
+C            LPDIAG(1) = 0 , LPDIAG(I+1) = ADRESSE DANS A DU I-EME COEF DIAG
+C                                          DIAGONAL SI A NON DIAGONALE
+C                          , LPDIAG( 2 ) = NTDL SI DIAGONALE
+C   A0     : MATRICE A FACTORISER L * TL STOCKAGE PROFIL
+C   NENTRE : =0 RETOUR AU PROGRAMME APPELANT SI PIVOT<EPS
+C            =1 LES CALCULS SE POURSUIVENT SAUF SI PIVOT<0
+C   IMPRE  : PARAMETRE D IMPRESSION
+C
+C   PARAMETRES DE SORTIE :
+C   ---------------------
+C   A      : MATRICE FACTORISEE L SI NON DIAGONALE
+C            MATRICE EGALE A A0 SI DIAGONALE > 0 ( LPDIAG(2)=NTDL )
+C   NRETOU : 0 SI AUCUN PIVOT<EPS
+C            1 SI AU MOINS UN PIVOT<EPS
+C   ON ENTEND PAR PIVOT (A0(IDIAGONAL)-SA)/A0(IDIAGONAL)
+C+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+C AUTEUR : ALAIN PERRONNET ANALYSE NUMERIQUE UPMC PARIS         MAI 1989
+C23456---------------------------------------------------------------012
+      COMMON / UNITES / LECTEU,IMPRIM,NUNITE(30)
+      DOUBLE PRECISION  SA,A(1),A0(1)
+      INTEGER           LPDIAG(NTDL+1)
+C
+10019 FORMAT(1X,130(1H%)/' RESULTATS A VERIFIER : LA VALEUR DU COEFFICIE
+     &NT DIAGONAL DU ',I8,' EME DEGRE DE LIBERTE EST INFERIEURE'/
+     & ' AU SEUIL DE PRECISION',E13.6/1X,130(1H%))
+10016 FORMAT(' ERREUR : LE COEFFICIENT DIAGONAL DE LA MATRICE L DU ',I8,
+     &' EME D.L =RACINE CARREE DE(',G15.7,') < 0'//)
+C
+C     I INDIQUE LES COLONNES IP
+C     J INDIQUE LES LIGNES   JP
+C
+      NRETOU=0
+      IF( NCODSA .EQ. 0 ) GOTO 1000
+C
+C     MATRICE NON DIAGONALE
+C     ---------------------
+      DO 90 JP=1,NTDL
+         JP1  = JP - 1
+         JA0  = LPDIAG(JP)
+         IAU2 = LPDIAG(JP+1) - JA0 - 1
+         JPMI = JP - IAU2
+C
+C        CALCUL DES COEFFICIENTS NON DIAGONAUX
+         DO 10 IP=JPMI,JP1
+            IA0  = LPDIAG(IP)
+            IAU3 = LPDIAG(IP+1)-IA0-1
+            IPMI = IP-IAU3
+            IF(IPMI.GT.JPMI) THEN
+               IA = IA0
+               JA = JA0+IPMI-JPMI
+               KP = IPMI
+            ELSE
+               IA = IA0+JPMI-IPMI
+               JA = JA0
+               KP = JPMI
+            ENDIF
+C
+            IAU = IP-KP
+            SA  = 0.D0
+            DO 5 KD=1,IAU
+               SA = SA + A(IA+KD) * A(JA+KD)
+    5       CONTINUE
+            IAU4  = IAU+1
+            JA    = JA+IAU4
+            A(JA) = (A0(JA)-SA) / A(IA+IAU4)
+  10     CONTINUE
+C
+C        COEFFICIENT DIAGONAL
+         SA=0.D0
+         DO 11 KD=1,IAU2
+            SA=SA+A(JA0+KD)**2
+   11    CONTINUE
+C
+         JA = JA0 + IAU2 + 1
+         SA = A0(JA) - SA
+         IF( SA .LE. 0.D0 ) THEN
+            WRITE(IMPRIM,10016) JP,SA
+            NRETOU = 1
+            RETURN
+         ENDIF
+C
+         IF( SA-EPS*A0(JA) .LE. 0.D0 ) THEN
+C           ON EST AU DESSOUS DU SEUIL DE PRECISION
+            WRITE(IMPRIM,10019) JP,EPS
+            NRETOU = 1
+            IF( NENTRE .NE. 1 ) RETURN
+         ENDIF
+         A(JA) = SQRT( SA )
+ 90   CONTINUE
+C
+C     AFFICHAGE EVENTUEL DES LIGNES DE LA MATRICE PROFIL
+      IF( IABS(IMPRE) .LT. 6 ) RETURN
+      IF( IABS(IMPRE) .EQ. 6 ) THEN
+          NL = 10
+      ELSE
+          NL = NTDL
+      ENDIF
+      CALL AFPROF( NL , LPDIAG , A )
+      RETURN
+C
+C     MATRICE DIAGONALE
+C     -----------------
+ 1000 DO 1001 IP=1,NTDL
+         IF(A0(IP) .LE. 0.D0) THEN
+            NRETOU=1
+            WRITE(IMPRIM,10016) IP,A0(IP)
+            RETURN
+         ENDIF
+         A(IP) = SQRT( A0(IP) )
+ 1001 CONTINUE
+      END

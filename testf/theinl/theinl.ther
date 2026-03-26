@@ -1,0 +1,76 @@
+{ ================================================================== }
+{ MEFISTO Version Octobre 1999                PROJET: theinl         }
+{ Utilisateur: CHANRION OLIVIER & JEAN-MICHEL ROVARCH Date: 31/01/98 }
+{ ================================================================== }
+ deffonc flux(t,x,y,z,nutype,nuobj,temper);
+ flux=-temper/25.D0;
+ {flux=-4;}
+ finfonc;
+ 
+            1;
+{ NOM de l OBJET a traiter ensuite }
+CARRE;
+            2;
+{ ENTREE des DONNEES du PROBLEME de THERMIQUE }
+{=============================================}
+ 
+{ SURFACE: ABCD_S }
+ 1;  { densite de MASSE }
+   1;{ constante }
+   1;{ densite de MASSE }
+ 7;{ densite de CHALEUR MASSIQUE }
+   1;{ constante }
+   1;{ densite de MASSE }
+ 2;  { densite de CONDUCTIVITE THERMIQUE }
+   3;{ materiau 2D homogene isotrope }
+ 0.1;{ CONDUC  'conductivite du materiau'  reel   ; }
+ @;
+
+ { LIGNE: AD }
+            2;
+ { SOURCE source de chaleur ou flux impose a la frontiere }
+            -1;
+ { constante }
+ flux;
+ { SOURCE(1..NBJESO) 'les valeurs des sources' reel ; }
+ @;
+ { LIGNE: CD }
+            2;
+ { SOURCE source de chaleur ou flux impose a la frontiere }
+            -1;
+ { constante }
+ flux;
+ { SOURCE(1..NBJESO) 'les valeurs des sources' reel ; }
+ @;
+ { LIGNE: BC }
+            2;
+ { SOURCE source de chaleur ou flux impose a la frontiere }
+            -1;
+ { constante }
+ flux;
+ { SOURCE(1..NBJESO) 'les valeurs des sources' reel ; }
+ @;
+ { LIGNE: AB }
+            2;
+ { SOURCE source de chaleur ou flux impose a la frontiere }
+            -1;
+ { constante }
+flux;
+ { SOURCE(1..NBJESO) 'les valeurs des sources' reel ; }
+ @;
+      {======================================}
+4;    { RESOUDRE pb THERMIQUE INSTATIONNAIRE }
+      {======================================}
+   3; { COEFFICIENTS DEPENDANTS du TEMPS et de la TEMPERATURE }
+ 0.0; { TEMPS INITIAL de l'etude thermique }
+   1; { temperature initiale constante }
+ 100; { valeur de la temperature initiale constante }
+ 20;  { TEMPS FINAL du CALCUL }
+ 0.5; { PAS de TEMPS }
+ 10;  { Nombre de vecteurs temperature a stocker }
+  1;  { CHOLESKY avec stockage PROFIL }
+ 2/3; { THETA de la THETA-METHODE }
+@;
+
+8; 2; 2; 1; 90; {TRACE des ZONES de COULEURS AU TEMPS FINAL}
+FERMER;

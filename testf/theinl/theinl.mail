@@ -1,0 +1,104 @@
+ { ================================================================== }
+ { MEFISTO Version Octobre 1999                PROJET: theinl         }
+ { Utilisateur: CHANRION OLIVIER & JEAN-MICHEL ROVARCH Date: 31/01/98 }
+ { ================================================================== }
+1;
+ { POINTS sommets de l objet }
+ 1; { FRAPPE des valeurs }
+ A; I; 1; 0; 0; 0;
+ { DANS LE LEXIQUE ~>TRANSFO }
+ { coordonnees x y z }
+ { COORPO '3 coordonnees cartesiennes du point' xyz ; }
+ B; I; 1; 1; 0; 0;
+ { DANS LE LEXIQUE ~>TRANSFO }
+ { coordonnees x y z }
+ { COORPO '3 coordonnees cartesiennes du point' xyz ; }
+ C; I; 1; 1; 1; 0;
+ { DANS LE LEXIQUE ~>TRANSFO }
+ { coordonnees x y z }
+ { COORPO '3 coordonnees cartesiennes du point' xyz ; }
+ D; I; 1; 0; 1; 0;
+ { DANS LE LEXIQUE ~>TRANSFO }
+ { coordonnees x y z }
+ { COORPO '3 coordonnees cartesiennes du point' xyz ; }
+@;
+
+2;  { LIGNES aretes de l objet }
+ AB; I; 2; 5; 1.0; A; B;
+ { DANS LE LEXIQUE ~>TRANSFO }
+ { segment de droite }
+ { NBARLI 'nombre d''aretes de la ligne' entier ; }
+ { RAIGEO 'raison geometrique espacant les sommets' reel ; }
+ { DANS LE LEXIQUE ~>POINT }
+ { DANS LE LEXIQUE ~>POINT }
+ BC; I; 2; 5; 1.0; B; C;
+ { DANS LE LEXIQUE ~>TRANSFO }
+ { segment de droite }
+ { NBARLI 'nombre d''aretes de la ligne' entier ; }
+ { RAIGEO 'raison geometrique espacant les sommets' reel ; }
+ { DANS LE LEXIQUE ~>POINT }
+ { DANS LE LEXIQUE ~>POINT }
+ CD; I; 2; 5; 1.0; C; D;
+ { DANS LE LEXIQUE ~>TRANSFO }
+ { segment de droite }
+ { NBARLI 'nombre d''aretes de la ligne' entier ; }
+ { RAIGEO 'raison geometrique espacant les sommets' reel ; }
+ { DANS LE LEXIQUE ~>POINT }
+ { DANS LE LEXIQUE ~>POINT }
+ AD; I; 2; 5; 1.0; A; D;
+ { DANS LE LEXIQUE ~>TRANSFO }
+ { segment de droite }
+ { NBARLI 'nombre d''aretes de la ligne' entier ; }
+ { RAIGEO 'raison geometrique espacant les sommets' reel ; }
+ { DANS LE LEXIQUE ~>POINT }
+ { DANS LE LEXIQUE ~>POINT }
+@;
+            2;
+ { LIGNES aretes de l objet }
+ ABCD_L;
+ I;
+ { DANS LE LEXIQUE ~>TRANSFO }
+           51;
+ { union de plusieurs lignes }
+ 4;
+ { NBLIUN 'nombre de lignes de l''union' entier ; }
+ AB;BC;CD;AD;
+ { DANS LE LEXIQUE ~>LIGNE }
+ { DANS LE LEXIQUE ~>LIGNE }
+ { DANS LE LEXIQUE ~>LIGNE }
+ { DANS LE LEXIQUE ~>LIGNE }
+ @;
+            3;
+ { SURFACES faces de l objet }
+ ABCD_S;
+ I;
+ { DANS LE LEXIQUE ~>TRANSFO }
+            9;
+ { triangulation de lignes fermees par TE }
+ 1;
+ { ARETMX 'taille max des aretes des triangles equilateraux' reel ; }
+ 1;
+ { NBLFTR 'nombre de lignes fermees contour de la surface' entier ; }
+ 0;
+ { NBPTIT 'nombre de points internes futurs sommets' entier ; }
+ ABCD_L;
+ { DANS LE LEXIQUE ~>LIGNE }
+ { NUPTIT(1..NBPTIT) 'nom des points internes futurs sommets' }
+ { DISOSV(1..NBPTIT) 'distance souhaitee aux sommets voisins' reel ; }
+ @;
+5; { OBJETS parties de l OBJET }
+   CARRE;  0; { classique }
+   5; { NBDOBJ 'nombre des points lignes surfaces volumes objets }
+   S; ABCD_S;
+   L; AD;   L; CD;   L; BC;   L; AB;
+   { NTYOBJ(1..NBDOBJ) 'nom du type PLSVO et nom du PLSVO' typeobjet}
+@;
+           7;
+ { INTERPOLATION NOEUDS du maillage }
+ CARRE;
+            3;
+ { LAGRANGE de DEGRE 1 }
+ @;
+ @;
+10; 5; 90; {TRACE DES OBJETS}
+FERMER;

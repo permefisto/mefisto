@@ -1,0 +1,58 @@
+{ ==================================================================== }
+{ Logiciel MEFISTO     : Version Novembre 2006                         }
+{ Nom de l'Utilisateur : Alain Perronnet                               }
+{ Nom du Projet        : cuboule                                       }
+{ Date                 : 30/11/2006   10h 05m 27s                      }
+{ ==================================================================== }
+DefVar nbarNoyau;
+
+4; { VOLUMES materiaux de l objet }
+nbarNoyau=3;
+ cube3;    { NOM du VOLUME }
+  i;       { NOM de TRANSFORMATION }
+ 33;       { HEXAEDRISATION d un CUBE ou SPHERE }
+  1;       { CUBE }
+nbarNoyau; { CUBSPN 'nombre d''aretes d''une direction du noyau' entier; }
+  4;       { CUBSPC 'nombre de couches homothetiques' entier; }
+  3;       { CUBSPL 'largeur du noyau du cube ou sphere' reel ; }
+  10;      { CUBSPD 'largeur totale du cube ou sphere' reel ; }
+
+nbarNoyau = 4;
+ cube4;  { NOM du VOLUME }
+  i;       { NOM de TRANSFORMATION }
+ 33;       { HEXAEDRISATION d un CUBE ou SPHERE }
+  1;       { CUBE }
+nbarNoyau; { CUBSPN 'nombre d''aretes d''une direction du noyau' entier; }
+  4;       { CUBSPC 'nombre de couches homothetiques' entier; }
+  3;       { CUBSPL 'largeur du noyau du cube ou sphere' reel ; }
+  10;      { CUBSPD 'largeur totale du cube ou sphere' reel ; }
+
+nbarNoyau=5;
+ boule5;   { NOM du VOLUME }
+  i;       { NOM de TRANSFORMATION }
+ 33;       { HEXAEDRISATION d un CUBE ou SPHERE }
+  2;       { SPHERE }
+nbarNoyau; { CUBSPN 'nombre d''aretes d''une direction du noyau' entier; }
+  4;       { CUBSPC 'nombre de couches homothetiques' entier; }
+  3;       { CUBSPL 'largeur du noyau du cube ou sphere' reel ; }
+  10;      { CUBSPD 'largeur totale du cube ou sphere' reel ; }
+
+nbarNoyau = 6;
+ boule6;   { NOM du VOLUME }
+  i;       { NOM de TRANSFORMATION }
+ 33;       { HEXAEDRISATION d un CUBE ou SPHERE }
+  2;       { SPHERE }
+nbarNoyau; { CUBSPN 'nombre d''aretes d''une direction du noyau' entier; }
+  4;       { CUBSPC 'nombre de couches homothetiques' entier; }
+  3;       { CUBSPL 'largeur du noyau du cube ou sphere' reel ; }
+  10;      { CUBSPD 'largeur totale du cube ou sphere' reel ; }
+@;
+
+10;     { TRACE du MAILLAGE des PLSVO }
+ 9;     { Le VOLUME }
+ boule6;{ NOM du VOLUME }
+ 4;     { NON TRACE des FACES }
+ 90;    { EXECUTION du TRACE }
+ 90;    { EXECUTION du TRACE }
+
+Quitter;

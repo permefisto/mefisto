@@ -1,0 +1,13 @@
+16: MAGNIFYING OF A LINE INTO LAYERS
+The initial line must have all edges in the same sens.
+In the normal direction to edges, a quadrangulation of NBCOLI(>0)
+layers is done around.
+All of layers have a small thickness EPCOLI to represent boundary layers
+Then, NBDECO other layers are quadrangulated with a thickness which varies
+linearly from EPCOLI to EPDECO.
+Attention:
+If the normals cross each others, the quadrangulation may be INCORRECT!...
+and the quadrangulation must be restricted in a vicinity of the line.
+The 2 thickness must have the same sign.
+If the thickness EPCOLI is negative, the layers are made on the other
+side of the initial line.

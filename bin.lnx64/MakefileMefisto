@@ -1,0 +1,13 @@
+all: pp/ppinit pp/ppmail pp/ppther
+
+pp/ppinit: mail/lib util/lib xvue/lib xvue/xvuelc.o
+	gfortran -O -I.  prpr/ppinit.f mail/lib util/lib xvue/lib xvue/xvuelc.o \
+	-L/usr/X11R6/lib -lX11 -o pp/ppinit
+
+pp/ppmail: mail/lib util/lib xvue/lib xvue/xvuelc.o
+	gfortran  -O -I.  prpr/ppmail.f mail/lib util/lib xvue/lib xvue/xvuelc.o \
+	-L/usr/X11R6/lib -lX11 -o pp/ppmail
+
+pp/ppther: ther/lib reso/lib mail/lib util/lib xvue/lib xvue/xvuelc.o
+	gfortran  -O -I.  prpr/ppmail.f mail/lib util/lib xvue/lib xvue/xvuelc.o \
+	-L/usr/X11R6/lib -lX11 -o pp/ppther

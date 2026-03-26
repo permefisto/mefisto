@@ -1,0 +1,6 @@
+variable TRACONDE 'Drawins of the WAVE' entier  
+ (  0 : 'AMPLIFICATION of DISPLACEMENTS'
+  , 1 : 'NUMBER of TIME to draw'
+ ,  2 : 'DISPLACEMENT of the WAVE'
+ ,  3 : 'SPEED of the WAVE'
+ ,  4 : 'NORMAL FLUX' ) ;

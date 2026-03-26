@@ -1,0 +1,5 @@
+Le NOM d'un POINT de la LIGNE.
+2 POINTS CONSECUTIFS creent une arete de la LIGNE.
+
+La demande ne cessera qu'avec l'entree
+d'un nom de POINT EXISTANT

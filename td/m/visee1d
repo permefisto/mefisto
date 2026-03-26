@@ -1,0 +1,17 @@
+variable VISEE1D 'Definir une VUE en 1D'  entier
+(22: 'AGRANDIR 2 clics SOURIS Min MAX'
+,23: 'REDUIRE par 2 clics SOURIS'
+,24: 'TRANSLATER par 2 clics SOURIS'
+,25: 'FENETRE 2D [Xmin MAX] [Ymin MAX]'
+,26: 'RE-DEFINITION des XYZ EXTREMES'
+,27: 'SCENE TOTALE des XYZ EXTREMES'
+,34: 'LOUPE ou GROSSISSEMENT du trace'
+,36: 'CHANGER la PALETTE des COULEURS'
+,38: 'RETOUR aux COULEURS par DEFAUT'
+,39: 'COULEUR de trace du FOND'
+,49: 'AXES du REPERE de l''objet'
+,50: 'EFFACER le trace actuel' 
+,60: 'ENCADRER une figure deja tracee'
+,75: 'Activer TRANSLATION ZOOM'
+,76: 'Arreter TRANSLATION ZOOM'
+,90: 'SUITE du TRACE' ) ;

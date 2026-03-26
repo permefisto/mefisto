@@ -1,0 +1,224 @@
+      SUBROUTINE SGICOURB1( NBSGI,   LCHSGI,  MXSGI,  NSTSGI, L1CHSGI,
+     %                      NBSU,    NUSU,
+     %                      NBCB,    L1COURB, NUSUCB )
+C+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+C BUT :    CONSTRUIRE LES NBSU/2 COURBES DE SGI EN CHAINANT CONTINUMENT
+C -----    LES SGI. UNE COURBE DEBUTE PAR UN SU ET FINIT PAR UN SU DES SGI
+C          ATTENTION: LA FIN DE CHAINAGE DANS LCHSGI DE CHAQUE COURBE
+c                     DONNE LE SGI SUIVANT AVEC UN CHAINAGE NEGATIF!...
+C
+C ENTREES:
+C --------
+C NBSGI  : NOMBRE DE SGI CHAINES DANS LCHSGI
+C MXSGI  : NOMBRE MAXIMAL DE SGI DECLARABLES DANS NSTSGI
+C
+C MODIFIES:
+C----------
+C LCHSGI : LCHSGI(1,.) NUMERO DU SGI DANS NSTSGI
+C          LCHSGI(2,.) CHAINAGE SUR LE SGI SUIVANT DANS LCHSGI
+C NSTSGI : NSTSGI(1,.) NUMERO DANS XYZPTA DU PREMIER POINT DU SGI
+C          NSTSGI(2,.) NUMERO DANS XYZPTA DU SECOND  POINT DU SGI
+C          NSTSGI(3,.) NUMERO DU TRIANGLE DANS LA TRIANGULATION NUSTS1
+C          NSTSGI(4,.) NUMERO DU TRIANGLE DANS LA TRIANGULATION NUSTS2
+C L1CHSGI: POINTEUR DANS LCHSGI SUR 1-ER SGI DU CHAINAGE DU TRIANGLE ACTUEL
+C
+C NBSU   : NOMBRE DE SOMMETS UNIQUES DES SGI
+C NUSU   : NUMERO DES NBSU SOMMETS SIMPLES DES SGI
+C          ILS SONT RANGES DANS LE SENS DIRECT DES 3 ARETES DU TRIANGLE
+C          COURBE k DE NUSU(2k-1) A NUSU(2k)
+C
+C SORTIES:
+C --------
+C NBCB   : NOMBRE FINAL DE COURBES DE SGI
+C L1COURB: L1COURB(k) NUMERO DANS LCHSGI DU PREMIER SGI DE LA COURBE k
+C          DE SOMMET INITIAL NUSU(2k-1) et FINAL NUSU(2k)
+C NUSUCB : NUSUCB(1:2,k) NO DU PREMIER ET DERNIER SOMMET UNIQUE
+C          DANS XYZPTA DE LA COURBE k
+C+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+C AUTEUR : PERRONNET Alain LJLL UPMC & St Pierre du Perray Novembre 2011
+C2345X7..............................................................012
+      INTEGER  LCHSGI(2,NBSGI),   NSTSGI(4,MXSGI),
+     %         NUSU(NBSU), L1COURB(0:NBCB), NUSUCB(2,0:NBCB)
+C
+C     NOMBRE TOTAL DE COURBES DE SGI A CONSTRUIRE
+      NBCB = NBSU / 2
+C
+C     RECHERCHE DU SGI DE SOMMET NUSU(1) NUMERO 1-ER SOMMET SIMPLE DES SGI
+C     --------------------------------------------------------------------
+C     PREMIER SOMMET DE LA 1ERE COURBE
+      NSG0 = NUSU(1)
+      LCH  = L1CHSGI
+C
+C     BOUCLE SUR LES NBCB COURBES A CONSTRUIRE
+C     DANS LE SENS DIRECT DU RANGEMENT DES NBSU SOMMETS NUSU DES SGI
+      DO 100 NUCB=1,NBCB
+C
+C        ICI NSG0=NUSU(2NUCB-1) EST LE PREMIER SOMMET DE LA COURBE NUCB
+C        --------------------------------------------------------------
+         NSG0 = NUSU( 2 * NUCB - 1 )
+C
+C        RECHERCHE DU SGI DE SOMMET NSG0 POUR LE METTRE EN PREMIER DE LA COURBE
+C        ----------------------------------------------------------------------
+         LCH0 = 0
+         L1COURB(NUCB) = LCH
+C
+C        NUMERO DANS LCHSGI DU SGI
+ 10      NSGI = LCHSGI( 1, LCH )
+C        NSG1 NUMERO DU SOMMET 1 DU SGI DANS XYZPTA
+         NSG1 = NSTSGI( 1, NSGI )
+C        NSG2 NUMERO DU SOMMET 2 DU SGI DANS XYZPTA
+         NSG2 = NSTSGI( 2, NSGI )
+C
+         IF( NSG1 .NE. NSG0 .AND. NSG2 .NE. NSG0 ) THEN
+C           NSG1 et NSG2 DIFFERENTS DE NSG0
+            LCH0 = LCH
+            LCH  = LCHSGI( 2, LCH )
+            IF( LCH .GT. 0 ) GOTO 10
+C           IMPOSSIBLE D'ARRIVER APRES LE IF CAR NUSU(2k-1) EXISTE DANS LES SGI
+         ENDIF
+C
+C        NSG0 1-ER OU SECOND SOMMET DU SGI LCH?
+         IF( NSG2 .EQ. NSG0 ) THEN
+C           NSG2=NSG0  => PERMUTATION NSG1 ET NSG2 SOMMETS DU SGI
+            NSTSGI( 1, NSGI ) = NSG2
+            NSTSGI( 2, NSGI ) = NSG1
+            N    = NSG1
+            NSG1 = NSG2
+            NSG2 = N
+         ENDIF
+C
+C        ICI NSG0 EST LE PREMIER SOMMET DU SGI NSGI
+C        ------------------------------------------
+         IF( LCH0 .NE. 0 ) THEN
+C
+C           RECHERCHE DU DERNIER SGI PARMI LES SGI RESTANTS
+C           POUR LE CHAINER AVEC L'ANCIEN PREMIER DES SGI
+            LCH1   = LCH
+ 15         LCHDER = LCH1
+            LCH1   = LCHSGI( 2, LCH1 )
+            IF( LCH1 .GT. 0 ) GOTO 15
+C
+C           RACCORDER LA SUITE A PARTIR DU DERNIER ACTUEL
+C           LE DERNIER A POUR SUIVANT LE PREMIER ACTUEL
+            LCHSGI( 2, LCHDER ) = L1COURB(NUCB)
+C
+C           LE PRECEDENT DU PREMIER SGI DEVIENT LE DERNIER SGI
+            LCHSGI( 2, LCH0 ) = 0
+C
+C           LE POINTEUR SUR LE 1-ER SGI DE LA COURBE NUCB
+            L1COURB(NUCB) = LCH
+C
+         ENDIF
+C
+C        ICI, LE SGI DE SOMMET NUSU(2NUCB-1)=NSG0 EST EN TETE
+C        DES SGI RESTANTS
+C        CHAINAGE DES SGI EN CONTINU A PARTIR DU SOMMET 2 DU SGI
+C        DE SOMMET 1 NSG0
+C        =======================================================
+C        RECHERCHE DE NSG2 LE SECOND SOMMET DE LA COURBE PARMI LES AUTRES SGI
+ 20      LCH00 = LCH
+         LCHS  = LCHSGI( 2, LCH )
+         NSG00 = NSG2
+C
+C        PARCOURS DES SGI RESTANTS POUR TROUVER NSG00
+C        LE SGI SUIVANT
+         LCH0 = LCH
+         LCH  = LCHSGI( 2, LCH )
+C
+ 30      IF( LCH .GT. 0 ) THEN
+C
+C           NUMERO DANS LCHSGI DU SGI
+            NSGI = LCHSGI( 1, LCH )
+C           NSG1 NUMERO DU SOMMET 1 DU SGI DANS XYZPTA
+            NSG1 = NSTSGI( 1, NSGI )
+C           NSG2 NUMERO DU SOMMET 2 DU SGI DANS XYZPTA
+            NSG2 = NSTSGI( 2, NSGI )
+C
+            IF( NSG1 .NE. NSG00 .AND. NSG2 .NE. NSG00 ) THEN
+C              NSG1 et NSG2 DIFFERENTS DE NSG00
+               LCH0 = LCH
+               LCH  = LCHSGI( 2, LCH )
+               GOTO 30
+            ENDIF
+C
+            IF( NSG2 .EQ. NSG00 ) THEN
+C              NSG2=NSG0
+C              PERMUTATION NSG1 ET NSG2 SOMMETS DU SGI
+               NSTSGI( 1, NSGI ) = NSG2
+               NSTSGI( 2, NSGI ) = NSG1
+               N    = NSG1
+               NSG1 = NSG2
+               NSG2 = N
+            ENDIF
+C
+C           NSG00 EST RETROUVE ET EST SOMMET 1 DU SGI POINTE PAR LCH
+C           NSG1=NSG00 DE LCH  CHAINAGE A LA SUITE DE LCH00
+            IF( LCHSGI(2,LCH00) .EQ. LCH ) GOTO 20
+C
+C           SGI SUIVANT DU SGI FINISSANT PAR NSG00
+            LC1 = LCHSGI( 2, LCH00 )
+C           SGI PRECEDENT LE SGI ACTUEL DE SOMMET NSG00
+            LC2 = LCHSGI( 2, LCH )
+C
+C           NSG00 FINIT LCH00 ET DEBUTE LCH
+            LCHSGI( 2, LCH00 ) = LCH
+C           SUIVANT SGI DU SGI DE PREMIER SOMMET NSG00
+            LCHSGI( 2, LCH   ) = LC1
+C           SUIVANT DU SGI DE SOMMET NSG00 = SUIVANT DE CE SGI
+            LCHSGI( 2, LCH0 ) = LC2
+C
+            IF( LC1 .GT. 0 ) THEN
+C              ENCORE UN SGI A TRAITER
+               GOTO 20
+            ENDIF
+C
+         ENDIF
+C
+C        NSG00 N'A PAS ETE RETROUVE
+C        NSG00 EST DONC SOMMET UNIQUE FIN DE COURBE
+C        RECHERCHE DU NUSU DE CE SOMMET UNIQUE NSG00
+C        -------------------------------------------
+C        PERMUTATION NUSU(2NUCB) ET NSG2
+         DO K=2*NUCB, 2*NBCB
+            IF( NUSU(K) .EQ. NSG00 )  GOTO 35
+         ENDDO
+C
+C        PERMUTATION CIRCULAIRE POUR LOGER NSG00 EN POSITION NUSU(2NUCB)
+ 35      DO KK= K-1, 2*NUCB, -1
+            NUSU(KK+1) = NUSU(KK)
+         ENDDO
+         NUSU(2*NUCB) = NSG00
+C
+C        CHAINAGE FINAL DE LA COURBE NUCB
+C        --------------------------------
+C        CHAINAGE NEGATIF POUR MONTRER LA DISCONTINUITE DES SUITES DE SGI
+C        POINTEUR SUR LE SGI SUIVANT CETTE COURBE
+ccc         IF( NUCB .EQ. NBCB ) LCH0 = 0
+         LCH = LCHS
+         LCHSGI( 2, LCH00 ) = -LCHS
+C
+ 100  CONTINUE
+C
+C     DEBUT DE CHAINAGE DES SGI DU TRIANGLE
+      L1CHSGI = L1COURB(1)
+C
+      DO M=1,NBCB
+C        INITIALISATION DES 2 SOMMETS UNIQUES DE LA COURBE M
+         NUSUCB(1,M) = NUSU(2*M-1)
+         NUSUCB(2,M) = NUSU(2*M  )
+      ENDDO
+C
+cccC     AFFICHAGE DES COURBES DE SGI
+cccC     ----------------------------
+ccc      print *,'Sortie SGICOURB1:',
+ccc     %       ('L1COURB(',M,')=',L1COURB(M),M=1,NBCB)
+ccc      DO M=1,NBCB
+ccc         print *,' NUSUCB(1,',M,')=',NUSUCB(1,M),
+ccc     %           ' NUSUCB(2,',M,')=',NUSUCB(2,M)
+ccc      ENDDO
+cccC
+cccC     AFFICHAGE DU CHAINAGE FINAL DES SGI
+ccc      CALL SGIIMPR( L1CHSGI, LCHSGI, NSTSGI )
+C
+      RETURN
+      END

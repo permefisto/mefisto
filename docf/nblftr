@@ -1,0 +1,20 @@
+Le nombre NBLFTR de LIGNES FERMEES du CONTOUR du domaine a mailler
+est superieur ou egal a 1.
+La premiere ligne est toujours celle qui contient geometriquement
+toutes les autres   
+
+Exemple:                 L1            (dite ENVELOPPE)
+          ------------------------------------------------------
+         |                                                      |
+         |                                 /\                   | 
+         |    ---------                   /  \ L3               | 
+         |   |         |                 /    \                 |   
+         |   |         |L2               \    /                 |
+         |   |         |                  \  /                  | 
+         |    ---------                    \/                   | 
+         |                                                      |  
+          ------------------------------------------------------  
+
+Ici, 3 LIGNES L1; L2; L3; a donner dans cet ordre puisque L1
+"contient" les lignes L2 et L3. La triangulation s'effectuera
+"entre" L1 et L2 L3. L2 et L3 apparaissent comme des "TROUS".

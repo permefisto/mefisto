@@ -1,0 +1,9 @@
+crp '/bin/sh -DSHENV=~/.shrc' -on //cive -me
+cd 
+cd ..  
+cd ..
+ wbak peronet -dev m2 -f 1 -fid save_20_5_94 -l
+
+
+B$  rbak peronet/mefisto/RESO -as peronet/mefisto1/RESO -dev m2 -f 1 -l
+    Attention il s'agit d'adresse relative par rapport ou on est

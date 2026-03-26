@@ -1,0 +1,177 @@
+      SUBROUTINE TITSMXERR( KNOMOB, MOREE2, TEMPS0, NBVERR, NBITER,
+     %                      MNERRT )
+C+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+C BUT :   CONSTRUCTION DU NOUVEAU TMS  'VECTEUR"TESTM_ERREUR' DE L'OBJET
+C -----   A PARTIR DE L'EVENTUEL ANCIEN TMS
+C         AVEC AJOUT DU CONTENU DU TMC D'ADRESSE MCN MNERRT
+C
+C ENTREES:
+C --------
+C KNOMOB : NOM DE L'OBJET A TRAITER
+C MOREE2 : NOMBRE DE MOTS D'UNE VARIABLE REELLE DOUBLE PRECISION
+C TEMPS0 : TEMPS DU PREMIER CALCUL DES TEST, MAX, ERREURS
+C NBVERR : NOMBRE D'INFORMATIONS STOCKEES PAR ITERATION HORS LE TEMPS
+C NBITER : NOMBRE DE NOUVELLES ITERATIONS A AJOUTER AU TMS
+C MNERRT : ADRESSE MCN DU TMC DES (Temps,Testm, MaxUm,{ ERReel,ERRImag})
+C
+C SORTIE :
+C --------
+C         CONSTRUCTION DU NOUVEAU TMS  'VECTEUR"TESTM_ERREUR' DE L'OBJET
+C+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+C AUTEUR : ALAIN PERRONNET LJLL UPMC & Saint Pierre du Perray  Mars 2014
+C23456---------------------------------------------------------------012
+      include"./incl/langue.inc"
+      include"./incl/ntmnlt.inc"
+      include"./incl/a___vecteur.inc"
+      include"./incl/ctemps.inc"
+      include"./incl/pp.inc"
+      COMMON            MCN(MOTMCN)
+      REAL              RMCN(1)
+      DOUBLE PRECISION  DMCN(1)
+      EQUIVALENCE      (MCN(1), RMCN(1), DMCN(1))
+      COMMON / UNITES / LECTEU, IMPRIM, INTERA, NUNITE(29)
+
+      CHARACTER*(*)     KNOMOB
+
+      NBITER0 = 0
+      NBVERR0 = 0
+      MNVERT0 = 0
+      MNTIME0 = 0
+      MNTIM0  = 0
+      MNVT0   = 0
+      MNMO0   = 0
+      MNVR0   = 0
+      MNVI0   = 0
+
+C     CONSTRUCTION DE VECTEUR"TESTM_ERREUR A PARTIR DU TMC MNERRT
+C     ===========================================================
+      CALL LXLXOU( NTOBJE, KNOMOB, NTLXOB, MNLXOB )
+      CALL LXTSOU( NTLXOB, 'VECTEUR"TESTM_ERREUR', NTVERT, MNVERT )
+      IF( NTVERT .GT. 0 ) THEN
+C        IL EXISTE UN TMS D'UN CALCUL PRECEDENT
+         IF( MCN(MNVERT+WBVECT) .NE. NBVERR ) GOTO 9000
+C        ICI, LE NOMBRE D'INFO POUR CHAQUE ITERATION EST LE MEME
+C        LE CALCUL FAIT ETAIT IL DANS UN INTERVALLE DE TEMPS PRECEDANT?
+         MNTIM0 = MNVERT + WECTEU
+     %          + MCN(MNVERT+WBVECT) * MCN(MNVERT+WBCOVE) * MOREE2
+         print *,'RMCN(MNTIM0)=',RMCN(MNTIM0),'  TEMPS0=',TEMPS0
+         IF( RMCN(MNTIM0) .LT. TEMPS0 ) THEN
+C           OUI: AJOUT DE CE TMS A CELUI DE L'INTERVALLE DE TEMPS DE CALCUL
+C           COPIE DE L'ANCIEN TMS DANS UN TABLEAU TMC
+            NBITER0 = MCN(MNVERT+WBCOVE)
+            NBVERR0 = MCN(MNVERT+WBVECT)
+C           COPIE DES TEMPS
+            CALL TNMCDC( 'REEL', NBITER0, MNTIME0 )
+            CALL TRTATA( MCN(MNTIM0), MCN(MNTIME0), NBITER0 )
+C           COPIE DES TEST, MAXU, ...
+            CALL TNMCDC( 'REEL2', NBITER0*NBVERR0, MNVERT0 )
+            CALL TRTATA( MCN(MNVERT+WECTEU), MCN(MNVERT0), 
+     %                   MOREE2*NBITER0*NBVERR0 )
+            MNTIM0 = MNTIME0 - 1
+            MNVT0  = ( MNVERT0 - 1 ) / MOREE2
+            MNMO0  = MNVT0 + NBITER0
+            MNVR0  = MNMO0 + NBITER0
+            MNVI0  = MNVR0 + NBITER0
+         ENDIF
+C
+C        DESTRUCTION DE L'ANCIEN TMS
+ 9000    CALL LXTSDS( NTLXOB, 'VECTEUR"TESTM_ERREUR' )
+      ENDIF
+C
+C     CONSTRUCTION DU NOUVEAU TMS
+      NBMOTS = WECTEU + (NBVERR*MOREE2+1) * (NBITER0+NBITER)
+      CALL LXTNDC( NTLXOB, 'VECTEUR"TESTM_ERREUR', 'MOTS', NBMOTS )
+      CALL LXTSOU( NTLXOB, 'VECTEUR"TESTM_ERREUR', NTVERT, MNVERT )
+      IF( NTVERT .LE. 0 ) GOTO 9999
+
+      MCN( MNVERT + WBCOVE ) = NBITER0+NBITER
+      MCN( MNVERT + WBVECT ) = NBVERR
+      MCN( MNVERT + WBCPIN ) = NBITER0+NBITER
+C
+C     TRANSFERT DES TEMPS, Testm ET 2 ERREURS DANS LE TMS
+      MNTIM = MNVERT+WECTEU+NBVERR*(NBITER0+NBITER)*MOREE2-1
+      MNVT  = ( MNVERT + WECTEU - 1 ) / MOREE2
+      MNMO  = MNVT + NBITER0+NBITER
+      MNVR  = MNMO + NBITER0+NBITER
+      MNVI  = MNVR + NBITER0+NBITER
+
+      DO K = 1, NBITER0
+C
+C        LE TEMPS K
+         RMCN(MNTIM+K) = RMCN(MNTIM0+K)
+C
+C        LE TEST D'ARRET DES ITERATIONS et du TEMPS
+         DMCN(MNVT+K) = DMCN(MNVT0+K)
+C
+C        LE Max|U(Noeud)| au cours des ITERATIONS et du TEMPS
+         DMCN(MNMO+K) = DMCN(MNMO0+K)
+C
+         IF( NBVERR .GT. 2 ) THEN
+C           L'ERREUR K SUR LA PARTIE REELLE
+            DMCN(MNVR+K) = DMCN(MNVR0+K)
+C
+C           L'ERREUR K SUR LA PARTIE IMAGINAIRE
+            DMCN(MNVI+K) = DMCN(MNVI0+K)
+         ENDIF
+C
+      ENDDO
+C
+C     LES NOUVEAUX TEMPS,TEST,MaxU,...
+      MNE = MNERRT
+      DO K = NBITER0+1, NBITER0+NBITER
+C
+C        LE TEMPS K
+         RMCN(MNTIM+K) = RMCN(MNE)
+C
+C        LE TEST D'ARRET DES ITERATIONS et du TEMPS
+         DMCN(MNVT+K) = DBLE( RMCN(MNE+1) )
+C
+C        LE Max|U(Noeud)| au cours des ITERATIONS et du TEMPS
+         DMCN(MNMO+K) = DBLE( RMCN(MNE+2) )
+C
+         IF( NBVERR .GT. 2 ) THEN
+C           L'ERREUR K SUR LA PARTIE REELLE
+            DMCN(MNVR+K) = DBLE( RMCN(MNE+3) )
+C
+C           L'ERREUR K SUR LA PARTIE IMAGINAIRE
+            DMCN(MNVI+K) = DBLE( RMCN(MNE+4) )
+         ENDIF
+C
+         MNE = MNE + 1+NBVERR
+C
+      ENDDO
+C
+C     LA DATE
+      CALL ECDATE( MCN(MNVERT) )
+C     LE NUMERO DU TABLEAU DESCRIPTEUR
+      MCN( MNVERT + MOREE2 ) = NONMTD( '~>>>VECTEUR' )
+C
+      IF( NBVERR .GT. 2 ) THEN
+         IF( LANGAG .EQ. 0 ) THEN
+         WRITE(IMPRIM,19995) NBITER0+NBITER
+19995    FORMAT('NLSE: Stockage du VECTEUR"TESTM_ERREUR',
+     %  ' des',I9,
+     %' (Testm, Max|U|, Erreur Part Reel, Erreur Part Imag, Temps)')
+         ELSE
+         WRITE(IMPRIM,29995) NBITER0+NBITER
+29995    FORMAT('NLSE: Storage of VECTEUR"TESTM_ERREUR',
+     % ' of',I9,
+     %' (Testm, Max|U|, Real Part Error, Imaginary Part Error, Time)')
+         ENDIF
+      ELSE
+         IF( LANGAG .EQ. 0 ) THEN
+         WRITE(IMPRIM,19999) NBITER0+NBITER
+19999    FORMAT('NLSE: Stockage du VECTEUR"TESTM_ERREUR',
+     %  ' des',I9,' (Testm, Max|U|, Temps)')
+         ELSE
+         WRITE(IMPRIM,29999) NBITER0+NBITER
+29999    FORMAT('NLSE: Storage of VECTEUR"TESTM_ERREUR',
+     %   ' of',I9,' (Testm, Max|U|, Time)')
+         ENDIF
+      ENDIF
+
+      IF( MNTIME0 .GT. 0 ) CALL TNMCDS('REEL', NBITER0, MNTIME0 )
+      IF( MNVERT0 .GT. 0 ) CALL TNMCDS('REEL2',NBITER0*NBVERR0,MNVERT0 )
+
+ 9999 RETURN
+      END

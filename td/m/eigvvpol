@@ -1,0 +1,5 @@
+variable EIGVVPOL 'Options du Polynome de Valeurs Propres' entier
+ ( 1 : 'Valeur OBJECTIF (Partie Reelle et Imaginaire)'
+ , 2 : 'Nombre de Valeurs Propres a calculer'
+ , 3 : 'Localisation de ces Valeurs Propres'
+ , 9 : 'Calcul des Valeurs Propres' )  ;

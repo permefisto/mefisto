@@ -1,0 +1,58 @@
+#!/bin/bash
+#
+#  compilation et archivage d une liste de sp fortran A. Perronnet Septembre 1998
+#  ===============================================================
+#  lecture et mise sous le directory
+cd $MEFISTO
+echo "Sous LINUX, Compilation F77 d'une liste de sp de $MEFISTO"
+echo Nom de la librairie?
+read dir
+echo NomS des sp Fortran?
+read sp
+for i in `ls $dir/$sp`
+do
+   nomsp=$dir/$i
+   nomsp=`basename $nomsp .f` 
+   nomspf=$dir/$nomsp.f
+   nomspo=$dir/$nomsp.o
+   nomlib=$dir/lib
+   poubel=$dir/poubelle
+
+   rm $nomspo  2>$poubel
+#
+#  compilation de nomspf
+   echo Compilation g77 de $MEFISTO/$nomspf
+   g77 -O -I. -c $nomspf -o $nomspo
+
+### sur LINUX: g77 -g -v -I. -c $nomspf -o $nomspo
+### sur HP   : f77 +ppu -g -c $nomspf -o $nomspo
+### sur HP   : f77 +O3 +ppu       -c $nomspf -o $nomspo
+### sur SGI  : f77 -O3 -Nn16382   -c $nomspf -o $nomspo
+### sur IBM  : f77 -O -qmaxmem=-1 -c $nomspf -o $nomspo
+
+#       
+   if test -f $nomspo
+   then 
+#            
+#     si le fichier /lib n'existe pas il est cree
+      if test -f $nomlib
+      then  
+#        mise en librairie du module objet du sp
+         ar r $nomlib $nomspo
+      else
+#        creation de lib et mise en librairie du module objet du sp
+         ar rc $nomlib $nomspo
+         chmod 750 $nomlib
+      fi  
+#
+#     destruction du module objet du sp 
+      rm $nomspo 2>$poubel
+#
+   else
+      rm  $nomspo 2>$poubel
+      echo CORRIGER $nomspf et RECOMPILER  
+      echo ==========================================================
+   fi
+done  
+#
+   rm $poubel

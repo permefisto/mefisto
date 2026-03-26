@@ -1,0 +1,28 @@
+      CHARACTER*1 FUNCTION LETMAJ( CAR )
+C+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+C BUT : TRANSFORMER L'EVENTUELLE LETTRE MINUSCULE CAR EN SA MAJUSCULE
+C ----- EN PASSANT PAR LE CODAGE DE LA TABLE ASCII
+C
+C       CETTE FUNCTION FAIT APPEL AUX FONCTIONS CHAR ET ICHAR DE FORTRAN
+C
+C ENTREE :
+C --------
+C CAR    : LE CARACTERE A TRAITER
+C+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+C AUTEUR : PERRONNET ALAIN  ANALYSE NUMERIQUE UPMC PARIS    FEVRIER 1990
+C23456---------------------------------------------------------------012
+      CHARACTER*(*) CAR
+      CHARACTER*1   CHAR
+C
+C     LA PLACE DU CARACTERE DANS LA TABLE ASCII
+      N = ICHAR( CAR(1:1) )
+C
+C     CE CARACTERE EST IL UNE LETTRE MINUSCULE ?
+      IF( N .GE. 97 .AND. N .LE. 122 ) THEN
+C        OUI: LA MAJUSCULE CORRESPONDANTE
+         LETMAJ = CHAR( N - 32 )
+      ELSE
+C        NON: PAS DE MODIFICATION
+         LETMAJ = CAR(1:1)
+      ENDIF
+      END

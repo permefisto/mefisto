@@ -1,0 +1,73 @@
+#!/bin/bash
+#
+# compilation et edition de liens de ppinit.f 
+# Alain Perronnet   Version LINUX 64bits    Septembre 2009
+
+cd $MEFISTO
+#Creation du repertoire pp s'il n'existe pas
+if !(test -d pp)
+then
+  mkdir pp
+fi
+
+if test -f $MEFISTO/td/m/anglais
+then
+  LANGAGE=1
+  LANGUE=ANGLAISE
+  echo
+  echo ===========================================================
+  echo MEFISTO-LINUX 64bits: Compilation + Link Editor of ppinit.f
+  echo ===========================================================
+else
+  LANGAGE=0
+  LANGUE=FRANCAISE
+  echo
+  echo ================================================================
+  echo MEFISTO-LINUX 64bits: Compilation + Edition de liens de ppinit.f
+  echo ================================================================
+fi
+
+#  
+# compilation de xvuelc.c
+if !(test -f xvue/xvuelc.o)
+then
+  bin/ccgxvue
+fi
+
+nompp=pp/ppinit
+if test -f $nompp
+then
+  rm $nompp
+fi
+
+### g77 -g -I.  prpr/ppinit.f mail/lib util/lib xvue/lib xvue/xvuelc.o \
+###     -lXt -lX11 -lXext -o $nompp
+
+echo "gfortran -m64 -fPIC -g -I. $MEFISTO/prpr/ppinit.f -o $nompp"
+gfortran -m64 -fPIC -g -I. prpr/ppinit.f mail/lib util/lib xvue/lib xvue/xvuelc.o \
+    -lgfortran -L/usr/lib64 -lX11 -w -fbounds-check -mcmodel=medium  -o $nompp
+
+if test -f ppinit.o
+then
+  rm ppinit.o
+fi
+
+if test -f $nompp
+then 
+  chmod 755 $nompp
+  ls -l $MEFISTO/pp
+  echo
+  if [ $LANGAGE = 0 ]
+  then
+    echo "$MEFISTO/$nompp est CORRECT pour executer INITIER"
+  else
+    echo "$MEFISTO/$nompp is CORRECT to execute INITIER"
+  fi
+else
+  if [ $LANGAGE = 0 ]
+  then
+    echo "$MEFISTO/$nompp est INCORRECT. INITIER est NON EXECUTABLE"
+  else
+    echo "$MEFISTO/$nompp is INCORRECT. INITIER is NOT EXECUTABLE"
+  fi
+fi

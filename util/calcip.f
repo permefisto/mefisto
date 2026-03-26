@@ -1,0 +1,26 @@
+      SUBROUTINE CALCIP( NDIM, NBPOLY,  IP )
+C+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+C BUT :    CALCULER LA PERMUTATION IP QUI FAIT PASSER DE LA NUMEROTATION
+C -----    DES DEGRES DE LIBERTE RANGES PAR COMPOSANTES DES DEPLACEMENTS
+C          A LA NUMEROTATION DES DEGRES DE LIBERTE RANGES PAR NOEUDS
+C
+C ENTREES:
+C --------
+C NDIM   : DIMENSION DE L'ESPACE DE TRAVAIL (2 ou 3, 2 SI PB AXISYMETRIQUE)
+C NBPOLY : NOMBRE DE POLYNOMES DE BASE DE L'EF COURANT
+C
+C SORTIE :
+C --------
+C IP     : IP(J) = POSITION DU J-EME D.L. COMPOSANTE PAR COMPOSANTE
+C                  DANS LA NUMEROTATION PAR COORDONNEES
+C ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+C PROGRAMMEUR : PERRONNET ALAIN  ANALYSE NUMERIQUE PARIS    OCTOBRE 1990
+C ......................................................................
+      INTEGER   IP(NBPOLY,NDIM)
+C
+      DO 20 J=1,NDIM
+         DO 10 I=1,NBPOLY
+            IP(I,J) = J + NDIM * ( I - 1 )
+ 10      CONTINUE
+ 20   CONTINUE
+      END

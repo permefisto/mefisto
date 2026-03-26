@@ -1,0 +1,83 @@
+{ ===================================================================== }
+{ Software MEFISTO     : 2011 August 11 Version                         }
+{ USER's  Name         : Alain Perronnet                                }
+{ Project Name         : nlsesq the Unsteady NLSE on a square [-1,1]**2 }
+{                        Mesh Data                                      }
+{ Date                 : 2011/08/11                                     }
+{ ===================================================================== }
+DefVar a, b, eps;
+ a=1;
+ b=1;
+ eps=0.0001;
+
+DefVar nbea, nbeb;
+ nbea=32; nbeb=32; {Numbers of edges on lines}
+
+1;  { POINTS vertices of the object }
+ 1; { TYPING of VALUES }
+
+ A; { NAME of the POINT or ESCAPE? }
+ i; { NAME of TRANSFORMATION }
+ 1; { X Y Z COORDINATES }
+ -a; -b; 0; { COORPO 'X Y Z of a point' xyz ; }
+
+ { NAME of the POINT or ESCAPE? }
+ B; i; 1; a;-b; 0;
+ C; i; 1; a; b; 0;
+ D; i; 1;-a; b; 0;
+ { NAME of the POINT or ESCAPE? }
+ @;
+
+2;  { LINES edges of the object }
+    { NAME of the LINE or ESCAPE? }
+ AB;
+  i;   { NAME of TRANSFORMATION }
+  2;   { STRAIGHT LINE }
+ nbea; { NBARLI 'number of edges of the line' entier ; }
+ 1.0;  { RAIGEO 'geometrical ratio between the edges' reel ; }
+  a;   { NAME of POINT }
+  b;   { NAME of POINT }
+
+ BC; i; 2; nbeb; 1.0; b; c;
+ CD; i; 2; nbea; 1.0; c; d;
+ DA; i; 2; nbeb; 1.0; d; a;
+ BOUNDARY; i; 51; 4; AB; BC; CD; DA;
+@;
+
+3;   { SURFACES faces of the object }
+ SQUARE; { NAME of the SURFACE or ESCAPE? }
+ i;  { NAME of TRANSFORMATION }
+ 1;  { TRANSFINITE QUADRANGLE }
+ AB; { NAME of LINE }
+ BC; { NAME of LINE }
+ CD; { NAME of LINE }
+ DA; { NAME of LINE }
+ 1;  { regular mesh }
+
+{
+ SQUARE; i; 31; { TRIANGULATION OF A QUADRANGULATION }
+ SQUAREQ; { quadrangulation surface name }
+ 1;       { create an edge S1 S3 }
+}
+@;
+
+5;  { OBJECTS parts of the object }
+ SQUARE; { NAME of the OBJECT or ESCAPE? }
+ 0; { 2D or 3D classic }
+ 2; { NBDOBJ number of Points Lines Surfaces Volumes Objects of the object }
+ S; SQUARE;   {POINT or LINE or SURFACE or VOLUME or OBJECT}
+ L; BOUNDARY;
+@;
+
+7; { INTERPOLATION nodes of the mesh }
+ SQUARE; { NAME of the OBJECT to be INTERPOLATED? }
+ 4; { LAGRANGE of DEGREE 2 }
+@;
+
+10; { DRAWING of PLSVO meshes }
+ 5; { OBJECT }
+ 3; { ONE OBJECT }
+ SQUARE; { NAME of the OBJECT? }
+ 75; 90; 90; { Continue the DRAWING }
+
+CLOSE;

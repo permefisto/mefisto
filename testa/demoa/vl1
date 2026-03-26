@@ -1,0 +1,23 @@
+{ ================================================================ }
+{ MEFISTO software : Version August 2006                           }
+{ USER name        : Alain Perronnet                               }
+{ PROJECT name     : dema = demo anglaise                          }
+{ DATE             : 14/9/2006                                     }
+{ ================================================================ }
+@;
+@;
+@;
+
+4;  { volumes: object materials }
+ cardan4_v8; i;  8; 1;   cardan4;  {one material: steel}
+ cardan4_v9; i;  9; {tetrahedrization 1/4 piece}
+                 50000;  ledge;  4.0;  0;  1;  cardan4_v8; 
+ cardan4;    i; 30; {improvement of a tetrahedrization}
+                     cardan4_v9;  0.4; 3.0; 10;
+@;
+
+@;
+10; 4; {drawing of Volumes}
+1; 90; {all volumes}
+
+close;

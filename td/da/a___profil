@@ -1,0 +1,12 @@
+deftms ~>>>PROFIL 'Assemblage of FE matrices into a global matrix.
+Coefficients between the first non zero and diagonal of each line are stored
+LPDIAG(i) i diagonal coefficient pointer on the vector PROFIL and LPDIAG(0)=0'
+variable muet DATE 'date of creation of the TMS' reel2  ;
+variable muet NUTD 'number of the descriptor array TD' entier ; 
+variable NBLIPR    'number of rows of the matrix PROFIL' entier ;
+variable LPPROF
+'pointer on PROFIL of each diagonal coefficient & LPDIAG(0)=0' entier ;
+tableau LPDIAG(0..NBLIPR)
+'pointer on PROFIL of the number of each diagonal coefficient' entier ;
+tableau PROFIL(1..LPDIAG(NBLIPR)) 'coefficients of the matrix PROFIL' reel2 ;
+fintms ;

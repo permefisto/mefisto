@@ -1,0 +1,55 @@
+{ ================================================ }
+{ MEFISTO Version Juin 1999        PROJET: xnynzn  }
+{ Utilisateur: Perronnet Alain     Date:   15/6/99 }
+{ ================================================ }
+DefVar n,n2; n=10; n2=n/2;
+
+6; { TRANSFORMATIONS mathematiques }
+ t;
+ 6; { F:R3->R3 definie par 3 fonctions (Fi) }
+ deffonc fx(x,y,z);
+ fx=x/n2-1;
+ FINFONC;
+ FX; { DANS LE LEXIQUE ~>FONCTION }
+
+ deffonc fy(x,y,z);
+ fy=y/n2-1;
+ finfonc;
+ fy; { DANS LE LEXIQUE ~>FONCTION }
+
+ deffonc fz(x,y,z);
+ fz=z/n2-1;
+ finfonc;
+ fz; { DANS LE LEXIQUE ~>FONCTION }
+@;
+
+1; 1; C; I; 1; 0; 0; 0;  { LE POINT C}
+@; 
+@;
+
+4;
+ { VOLUMES materiaux de l objet }
+ cube;
+ t; { DANS LE LEXIQUE ~>TRANSFO }
+ 11;{ hexaedre rectangle regulier d aretes 1 }
+ n; n; n;
+ { NBINHX 'nombre d''aretes en x' entier ; }
+ { NBINHY 'nombre d''aretes en y' entier ; }
+ { NBINHZ 'nombre d''aretes en z' entier ; }
+ { NOM DU VOLUME ou ABANDON?        }
+@;
+
+5; { OBJETS parties de l OBJET }
+ cube;
+ 0;{ classique 2D ou 3D }
+ 2;{ NBDOBJ 'nombre des Points Lignes Surfaces Volumes Objets de l''objet' }
+   { POINT ou LIGNE ou SURFACE ou VOLUME ou OBJET? }
+ v; cube; p; c;
+@;
+
+7; 
+  cube; 4;
+@;
+
+10; 5; 90;
+FERMER;

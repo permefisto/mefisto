@@ -1,0 +1,5 @@
+NBARPL est le nombre d'aretes a creer dans le sens
+du point vers la ligne.
+
+Pour NBARLI le nombre d'aretes de la ligne, il y a creation
+de NBARLI triangles et NBARLI*(NBARPL-1) quadrangles.

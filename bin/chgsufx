@@ -1,0 +1,27 @@
+#!/bin/bash
+#  copier tous les fichiers avec un suffixe sous le meme nom avec un autre suffixe
+#  ===============================================================================
+#         A. Perronnet  Janvier 1995
+#        
+#       lecture et mise sous le directory
+ echo Nom du repertoire AVANT?
+ read dirav 
+ echo Nom du suffixe AVANT?
+ read sufav
+ echo Nom du repertoire APRES?
+ read dirap  
+ echo Nom du suffixe APRES?
+ read sufap
+
+ cd $dirav
+#
+# boucle sur les fichiers .$sufav
+ for i in `ls $dirav | grep .$sufav`
+ do 
+   nomsp=`basename $i .$sufav`
+   nomspav=$nomsp.$sufav
+   nomspap=$dirap/$nomsp.$sufap
+   cp  $nomspav $nomspap
+ done
+ ls $dirap
+

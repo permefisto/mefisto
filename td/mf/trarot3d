@@ -1,0 +1,12 @@
+variable TRAROT3D 'trace 3D du ROTATIONNEL(VITESSE) ou TOURBILLON' entier
+( 0 : 'No de la COMPOSANTE du ROTATIONNEL (X Y Z ou MODULE)'
+, 1 : 'ISO-MODULE de |Rot VITESSE|'
+, 2 : 'ISO-MODULE |Rot VITESSE| en ZONES de COULEURS '
+, 3 : 'ZONES |Rot VITESSE| par SECTIONS X ou Y ou Z=CTE'
+, 4 : 'PROFILS |Rot VITESSE| dans PLANS X ou Y ou Z=CTE'
+, 5 : '|Rot VITESSE| sur une DROITE definie par 2 POINTS 3D'
+, 6 : '|Rot VITESSE| sur UNE SURFACE 3D de l''OBJET 3D'
+, 11: 'TRACE de la COMPOSANTE X de Rot VITESSE'
+, 12: 'TRACE de la COMPOSANTE Y de Rot VITESSE'
+, 13: 'TRACE de la COMPOSANTE Z de Rot VITESSE'
+, 14: 'TRACE de la NORME |Rot VITESSE|' ) ;

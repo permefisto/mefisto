@@ -1,0 +1,130 @@
+{ ========================================================================= }
+{ MEFISTO Software     : October 3, 2013 Version                            }
+{ USER's  Name         : Alain Perronnet                                    }
+{ Project Name         : Flow around a cylinder in a box  Version 2d        }
+{ Date                 : October 3, 2013                                    }
+{ ========================================================================= }
+
+{ The Fluid Characteristics ============================================ }
+DefVar  PI;      Pi=atan(1)*4;
+DefVar  g;       g=0;              { m/s2 Gravity force in -Z-direction }
+DefVar  Rho;     Rho=1;            { kg/m3  Air Mass Density }
+DefVar  Re;      Re=300;           { Reynolds' number }
+DefVar  MuAir;   MuAir=1/Re;       { kg/(m.s)orPa.s Air Dynamic Viscosity }
+DefVar  NuAir;   NuAir=MuAir/Rho;  { m2/s Air Kinematic Viscosity  }
+DefVar  V0;      V0=1;             { m/second  x-Component Velocity }
+
+2;  { FLUID INPUT DATA }
+
+{ The Fluid Characteristics of Surface Air ==========================}
+ 1;     { Rho MASS Density }
+ 1;     { Mass Constant }
+ Rho;   { DMASSE Value of the constant mass density }
+
+ 2;     { Mu FLUID DYNAMIC VISCOSITY }
+ 1;     { Constant Viscosity }
+ MuAir; { kg/(m.s) or Pa.s Air Dynamic Viscosity at 15C }
+ 
+ 8;     { PRESSURE Coefficient }
+ 1;     { Constant Pressure Coefficient }
+ 1.0;   { Pressure Coefficient Value of fluid }
+
+ 4;     { INITIAL VELOCITIES ==========================================}
+ 1;     { Initial Velocity Constant }
+ 2;     { NBCOVI Number of Initial Velocity Components at a node }
+ 1; 2;  { NUCOVI(1..NBCOVI) Number of Initial Velocity Components }
+ V0; 0; { Fixed Velocity CONSTANT }
+
+ 5;     { INITIAL PRESSURE ============================================}
+  1;    { INITIAL PRESSURE CONSTANT }
+  0;    { Initial Pressure Constant }
+@;
+
+{ The Boundary Conditions ======================}
+ { LINE Inlet }
+ 2; { Fixation of the VELOCITY }
+ 1; { Fixed Velocity CONSTANT }
+ 2; { NBCOBV number of components of the fixed Velocity }
+ 1;  2; { NUCOBV(1..NBCOBV) nb of each component of the fixed velocity}
+ V0; 0; { Fixed Velocity CONSTANT }
+ @;
+
+ { LINE Outlet }
+ 2; { Fixation of the VELOCITY }
+ 2; { CONVECTED VELOCITY at time tn <----------------------- NEW }
+ 2; { NBCOBV number of components of the fixed Velocity }
+ 1; 2; { NUCOBV(1..NBCOBV) nb of each component of the fixed velocity}
+ @;
+
+ { LINE Top }
+ 2; { Fixation of the VELOCITY }
+ 1; { Fixed Velocity CONSTANT }
+ 2; { NBCOBV number of components of the fixed Velocity }
+ 1;  2; { NUCOBV(1..NBCOBV) nb of each component of the fixed velocity}
+ V0; 0; { Fixed Velocity CONSTANT }
+ @;
+
+ { LINE Bottom }
+ 2; { Fixation of the VELOCITY }
+ 1; { Fixed Velocity CONSTANT }
+ 2; { NBCOBV number of components of the fixed Velocity }
+ 1;  2; { NUCOBV(1..NBCOBV) nb of each component of the fixed velocity}
+ V0; 0; { Fixed Velocity CONSTANT }
+ @;
+
+ { LINE Roll }
+ 2; { Fixation of the VELOCITY }
+ 1; { Fixed Velocity CONSTANT }
+ 2; { NBCOBV number of components of the fixed Velocity }
+ 1; 2; { NUCOBV(1..NBCOBV) nb of each component of the fixed velocity}
+ 0; 0; { Fixed Velocity CONSTANT }
+ @;
+
+{ POINT i }
+ 2; { Fixation of the VELOCITY }
+ 1; { Fixed Velocity CONSTANT }
+ 2; { NBCOBV number of components of the fixed Velocity }
+ 1;  2; { NUCOBV(1..NBCOBV) nb of each component of the fixed velocity}
+ V0; 0; { Fixed Velocity CONSTANT }
+@;
+
+{ POINT k }
+ 2; { Fixation of the VELOCITY }
+ 1; { Fixed Velocity CONSTANT }
+ 2; { NBCOBV number of components of the fixed Velocity }
+ 1;  2; { NUCOBV(1..NBCOBV) nb of each component of the fixed velocity}
+ V0; 0; { Fixed Velocity CONSTANT }
+@;
+
+{ POINT f }
+ 2; { Fixation of the VELOCITY }
+ 1; { Fixed Velocity CONSTANT }
+ 2; { NBCOBV number of components of the fixed Velocity }
+ 1;  2; { NUCOBV(1..NBCOBV) nb of each component of the fixed velocity}
+ V0; 0; { Fixed Velocity CONSTANT }
+@;
+
+{ POINT g }
+ 2; { Fixation of the VELOCITY }
+ 1; { Fixed Velocity CONSTANT }
+ 2; { NBCOBV number of components of the fixed Velocity }
+ 1;  2; { NUCOBV(1..NBCOBV) nb of each component of the fixed velocity}
+ V0; 0; { Fixed Velocity CONSTANT }
+@;
+@;
+
+
+20;    { PRECISION to STOP the CONJUGATE GRADIENT ITERATIONS }
+ 1e-6; { EPSILON   to STOP the CONJUGATE GRADIENT ITERATIONS }
+@;
+
+8; {=== FRACTIONAL UNSTEADY NAVIER-STOKES SOLVER =================}
+   2;   { CONDENSED MATRIX CONJUGATE GRADIENT + FACTORIZATION LEVEL }
+     1; { FACTORIZATION LEVEL VALUE (0 or 1 or 2) }
+   0.0;  { INITIAL TIME }
+ 120.0;  { FINAL   TIME }
+   0.1;  { STEP of TIME }
+   120;  { NUMBER of ADDED SOLUTION VECTORS }
+@;
+
+CLOSE;

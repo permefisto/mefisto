@@ -1,0 +1,18 @@
+A la ligne initiale est associe un repere orthonorme E0
+defini par le premier sommet P01 P02 P03 des lignes L1 L2 L3
+.P01 est l'origine
+.P01-P02 definit le vecteur canonique E1
+ E2 = E1 PRODUIT VECTORIEL P01-P03 normalise
+ E3 = E1 PRODUIT VECTORIEL E2 
+Le nombre constant d'aretes des 3 lignes L1 L2 L3 definit
+le nombre des deplacements.
+
+A tout deplacement I, sont associes les sommets I+1 des
+3 lignes L1 L2 L3 qui definissent de la meme maniere un repere EI
+
+La TRANSFORMATION de la ligne initiale est alors celle 
+definie par le deplacement du repere E0 en le repere EI. 
+Les sommets des aretes des lignes transformees sont relies 2 a 2. 
+
+Exemple: S14.1; I; 14; LIGNE_INITIALE; 1; L1; L2; L3;
+        {les 3 lignes de sommets definissant les reperes}

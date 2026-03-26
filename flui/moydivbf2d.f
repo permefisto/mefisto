@@ -1,0 +1,92 @@
+      SUBROUTINE MOYDIVBF2D( NBSOM, XYZSOM, NBELEM,NUSOTR, NBNOVI,VITXY,
+     %                       SURFACE, INTDIVV )
+! ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+! BUT:     CALCULER LA SURFACE DU MAILLAGE ET
+! ----     L'INTEGRALE DE DIVERGENCE VITESSE SUR LE MAILLAGE
+!          Integrale Div P1B dX VITXYe
+
+! ENTREES:
+! --------
+! NBSOM  : NOMBRE DE SOMMETS DE LA TRIANGULATION
+! NBNOVI : NOMBRE DE NOEUDS VITESSE SOMMETS et BARYCENTRE DES TRIANGLES
+!          NBSOM + NBELEM
+! XYZSOM : XYZSOM(3,NBSOM)  3 COORDONNEES DES SOMMETS DU MAILLAGE
+! NBELEM : NOMBRE DE TRIANGLES DU MAILLAGE
+! NUSOTR : NUSOTR(NBELEM,3) NO DES 3 SOMMETS DES NBELEM TRIANGLES
+! NBNOVI : NOMBRE DE NOEUDS VITESSE SOMMETS et BARYCENTRE DES TRIANGLES
+!          NBSOM + NBELEM
+! VITXY  : VITESSE EN X, Y EN LES NBNOVI NOEUDS (INTERPOLATION P1+BULLE)
+
+! SORTIES:
+! --------
+! SURFACE: SURFACE DU MAILLAGE 2D DES TRIANGLES
+! INTDIVV: INTEGRALE DE LA DIVERGENCE DE VITXY SUR LE MAILLAGE
+!+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+! AUTEUR : ALAIN PERRONNET LJLL UPMC & St Pierre du Perray Decembre 2012
+!23456---------------------------------------------------------------012
+      IMPLICIT NONE
+      INTEGER           NBSOM, NBNOVI, NBELEM, NUSOTR(NBELEM,3)
+      REAL              XYZSOM(3,NBSOM)
+      DOUBLE PRECISION  VITXY(NBNOVI,2), SURFACE, INTDIVV
+      DOUBLE PRECISION  DFM1(2,2), DET, X, Y, X21, Y21, X31, Y31
+      INTEGER           NUELEM, I, J, K, NUNO1T(4)
+
+!     DOUBLE PRECISION  DP1B2D(2,4)
+!     DP1B2D(k,j) = integrale DP1Bj/dxk dx dy sur le TRIANGLE UNITE
+      include"./incl/dp1b2d.inc"
+
+      SURFACE = 0D0
+      INTDIVV = 0D0
+
+!     BOUCLE SUR LES TRIANGLES P1B
+      DO NUELEM = 1, NBELEM
+
+!        NUMERO DES 3 SOMMETS DU TRIANGLE NUELEM
+         DO I=1,3
+            NUNO1T(I) = NUSOTR(NUELEM,I)
+         ENDDO
+!        NUMERO DU BARYCENTRE
+         NUNO1T(4) = NBSOM + NUELEM
+
+!        CONSTRUCTION DE LA MATRICE DF-1
+         X = XYZSOM(1,NUNO1T(1))
+         Y = XYZSOM(2,NUNO1T(1))
+         X21 = (XYZSOM(1,NUNO1T(2)) - X)
+         Y21 = (XYZSOM(2,NUNO1T(2)) - Y)
+         X31 = (XYZSOM(1,NUNO1T(3)) - X)
+         Y31 = (XYZSOM(2,NUNO1T(3)) - Y)
+
+!        CALCUL DU DETERMINANT DE LA JACOBIENNE DFe
+         DET = ABS( X21 * Y31 - X31 * Y21 )
+
+!        SURFACE DU TRIANGLE * 2
+         SURFACE = SURFACE + DET
+!
+!        LE TRIANGLE EST SUPPOSE DE SURFACE NON NUL
+!        LES 4 COEFFICIENTS DE LA MATRICE INVERSE DFM1 SANS / DET
+!        CAR COMPENSE PAR LA MULTIPLICATION PAR DET DE L'INTEGRATION
+         DFM1(1,1) =  Y31
+         DFM1(2,1) = -X31
+         DFM1(1,2) = -Y21
+         DFM1(2,2) =  X21
+
+         Y = 0D0
+         DO K=1,2
+            DO I=1,4
+               X = VITXY( NUNO1T(I), K )
+               DO J=1,2
+                  Y = Y + DFM1(K,J) * DP1B2D(J,I) * X
+               ENDDO
+            ENDDO
+         ENDDO
+         INTDIVV = INTDIVV + Y
+
+      ENDDO     ! FIN DE LA BOUCLE DES TRIANGLES DU MAILLAGE
+
+      SURFACE = SURFACE / 2D0
+
+      print *,'moydivbf2d.f: SURFACE=',SURFACE,' INTEGRALE div Vxy=',
+     %         INTDIVV,' INTEGRALE div Vxy/Surface=',INTDIVV/SURFACE
+
+      RETURN
+      END SUBROUTINE MOYDIVBF2D

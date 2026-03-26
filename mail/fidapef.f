@@ -1,0 +1,245 @@
+      SUBROUTINE FIDAPEF
+C+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+C BUT : DONNEES ET FICHIER DE SORTIE fidapef DES ELEMENTS FINIS
+C ----- D'UN OBJET POUR LE LOGICIEL FIDAP
+C+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+C AUTEURS: PERRONNET RICOU ANALYSE NUMERIQUE UPMC PARIS         MAI 1998
+C23456---------------------------------------------------------------012
+      PARAMETER     (MXTYEL=7)
+      PARAMETER     (MOPAGE=512)
+      include"./incl/gsmenu.inc"
+      include"./incl/ntmnlt.inc"
+      include"./incl/donthe.inc"
+      include"./incl/donele.inc"
+      include"./incl/a_objet__topologie.inc"
+      include"./incl/a_objet__definition.inc"
+      include"./incl/a___arete.inc"
+      include"./incl/a___xyzsommet.inc"
+      include"./incl/a___xyznoeud.inc"
+      include"./incl/a___xyzpoint.inc"
+      include"./incl/a___npef.inc"
+      include"./incl/msvaau.inc"
+      include"./incl/ponoel.inc"
+C
+      COMMON / UNITES / LECTEU, IMPRIM, INTERA, NUNITE(29)
+      include"./incl/pp.inc"
+      COMMON            MCN(MOTMCN)
+      REAL              RMCN(1)
+      DOUBLE PRECISION  EPHCN(1)
+      EQUIVALENCE      (MCN(1), RMCN(1), EPHCN(1))
+C
+      INTEGER           MNDOEL(4), MXDOEL(4)
+      CHARACTER*4       NOMELE(2)
+      CHARACTER*24      KNOMOB
+      LOGICAL           EXIST
+C
+      DOUBLE PRECISION  DPARAF(3),EPB,EPH
+C
+C     NOM_DE_L'OBJET  LE CARACTERE @ POUR FINIR
+ 100  CALL INVITE( 45 )
+      NCVALS = 0
+      CALL LIRCAR( NCVALS , KNOMOB )
+      IF( NCVALS .EQ. -1 ) RETURN
+      ILEXIS = 1
+C
+C     RECHERCHE DU NOM DE L'OBJET DANS LE LEXIQUE DES OBJETS
+      IF( NTOBJE .LE. 0 ) RETURN
+      CALL LXLXOU( NTOBJE, KNOMOB, NTLXOB, MNLXOB )
+C
+      IF( NTLXOB .LE. 0 ) THEN
+         NBLGRC(NRERR) = 1
+         KERR(1) = 'SP FIDAPEF: OBJET INCONNU ' // KNOMOB
+         CALL LEREUR
+         CALL LXIM( NTOBJE )
+         GOTO 100
+      ENDIF
+C
+C     VERIFICATION QUE LES FONCTIONS EXISTENT (ET AFFECTATION DE LEUR NUMERO)
+      CALL LXNMNO(NTFONC,'EPB',NOFOEPB,MNLX)
+      IF (NOFOEPB.LE.0) THEN
+         KERR(1) = 'SP FIDAPEF: FONCTION EPB INCONNUE'
+         CALL LEREUR
+      ENDIF
+      CALL LXNMNO(NTFONC,'EPH',NOFOEPH,MNLX)
+      IF (NOFOEPH.LE.0) THEN
+         KERR(1) = 'SP FIDAPEF: FONCTION EPH INCONNUE'
+         CALL LEREUR
+      ENDIF
+C
+C     RECHERCHE D'UNE UNITE LIBRE
+      CALL TRUNIT( NF )
+C     SAUVEGARDE SUR FICHIER NF
+      INQUIRE(FILE='fidapef', EXIST=EXIST)
+      IF( .NOT.EXIST ) THEN
+         OPEN( UNIT=NF, FILE='fidapef', STATUS='NEW',
+     %         FORM='FORMATTED', ACCESS='SEQUENTIAL',
+     %         ERR=9999)
+      ELSE
+         OPEN( UNIT=NF, FILE='fidapef', STATUS='OLD',
+     %         FORM='FORMATTED', ACCESS='SEQUENTIAL',
+     %         ERR=9999)
+      ENDIF
+C
+C     QUELQUES INITIALISATIONS
+      ITEMP  = 0
+      IERR   = 0
+C     LE NOMBRE DE MOTS D'UNE VARIABLE REEL2
+      MOREE2 = MOTVAR(6)
+C
+C     PROTECTION DES ADRESSES POUR EVITER DES PROBLEMES LORS
+C     DE LA DESTRUCTION DES TABLEAUX
+      MNNODL = 0
+      DO 5 I=1,4
+         MNDOEL(I) = 0
+         MXDOEL(I) = 0
+ 5    CONTINUE
+C
+C     RECHERCHE DU TABLEAU DEFINITION DE L'OBJET
+      CALL LXTSOU( NTLXOB , 'DEFINITION' , NTDFOB , MNDFOB )
+C
+C     S'IL N'EXISTE PAS RETOUR A LA DEMANDE DU NOM DE L'OBJET
+      IF( NTDFOB .LE. 0 ) THEN
+         NBLGRC(NRERR) = 1
+         KERR(1) = 'ERREUR: DEFINITION INCONNUE OBJET ' // KNOMOB
+         CALL LEREUR
+         GOTO 100
+      ENDIF
+C
+C     L'OBJET EST-IL STRUCTURE EN SOUS-DOMAINES ?
+      NDOUNO = MCN(MNDFOB+WDOUNO)
+C
+      IF ( NDOUNO .EQ. 1 ) THEN
+C
+C        RESOLUTION PAR LA METHOOE DES SOUS-DOMAINES
+C        ===========================================
+         NBLGRC(NRERR) = 1
+         KERR(1) = 'ERREUR : METHODE DES SOUS-DOMAINES NON SUPPORTEE'
+         CALL LEREUR
+         GOTO 100
+C
+      ELSE IF ( NDOUNO .EQ. 2 ) THEN
+C
+C        RESOLUTION PAR LA METHOOE DES JOINTS
+C        ====================================
+         NBLGRC(NRERR) = 1
+         KERR(1) = 'ERREUR : METHODE DES JOINTS NON SUPPORTEE'
+         CALL LEREUR
+         GOTO 100
+C
+      ENDIF
+C
+C     SINON : RESOLUTION CLASSIQUE
+C     ============================
+C     ADRESSAGE DES ADRESSES DES TABLEAUX NPEF"... DE CET OBJET
+      MNELEM = 0
+      CALL TNMCDC( 'ENTIER' , 2*MXTYEL , MNELEM )
+      MNTELE = MNELEM + MXTYEL
+C
+C     RECHERCHE DES TABLEAUX SOMMETS NOEUDS POINTS ASSOCIES A L'OBJET
+C     ===============================================================
+      CALL NDPGEL( NTLXOB , NTTOPO , MNTOPO ,
+     %             NTXYZP , MNXYZP , NTXYZN , MNXYZN ,
+     %             NBTYEL , MCN(MNTELE) , MCN(MNELEM) , IERR )
+      IF( IERR .NE. 0 ) RETURN
+C
+      NDPGST = MCN( MNTOPO + WDPGST )
+      NBOBIN = MCN( MNTOPO + WBOBIN )
+      NBOBCL = MCN( MNTOPO + WBOBCL )
+C
+C     INITIALISATIONS DE VARIABLES ET AFFICHAGES
+C     ==========================================
+C     LE NOMBRE DE POINTS DU MAILLAGE DE L'OBJET
+      NBPOI = MCN( MNXYZP + WNBPOI )
+C     NDIM LA DIMENSION 2 OU 3 DE L'ESPACE DES COORDONNEES
+      CALL DIMCOO( NBPOI , MCN(MNXYZP+WYZPOI) , NDIM )
+C
+      WRITE(IMPRIM,10210) NDIM,NBPOI
+10210 FORMAT(' DIMENSION 2 OU 3 DE L''ESPACE',T32,'=',I6/
+     %' NOMBRE DE POINTS'                    ,T32,'=',I6)
+C
+C     ECRITURE DU NOMBRE DE POINTS
+      WRITE(NF,'(I8)') NBPOI
+C
+C     ECRITURE DE XYZ DES SOMMETS
+10060 FORMAT( I8, 5E15.7 )
+C     ADRESSE DE LA 1-ERE COORDONNEE DU 1-ER SOMMET DU TMS 'XYZPOINT'
+      MNS = MNXYZP + WYZPOI
+      DO 60 I=1,NBPOI
+C
+C        AJOUT DES VALEURS DES FONCTIONS UTILISATEUR
+C        EPAISSEUR BASSE EPB(X,Y,Z) ET HAUTE EPH(X,Y,Z)
+         DPARAF(1)=RMCN(MNS)
+         DPARAF(2)=RMCN(MNS+1)
+         DPARAF(3)=RMCN(MNS+2)
+       CALL FONVAL(NOFOEPB,3,DPARAF,NCODEV,EPB)
+       IF (NCODEV.EQ.0) THEN
+         KERR(1) = 'PB LORS DE L''EXECUTION DE LA FONCTION EPB'
+         CALL LEREUR
+       ENDIF
+C
+       CALL FONVAL(NOFOEPH,3,DPARAF,NCODEV,EPH)
+       IF (NCODEV.EQ.0) THEN
+         KERR(1) = 'PB LORS DE L''EXECUTION DE LA FONCTION EPH'
+         CALL LEREUR
+       ENDIF
+         WRITE(NF,10060) I,(RMCN(MNS+K),K=0,2),EPB,EPH
+         MNS = MNS + 3
+ 60   CONTINUE
+C
+C     LA BOUCLE SUR LES TYPES D'ELEMENTS FINIS
+C     ----------------------------------------
+C     ECRITURE DE NBTYEL
+      WRITE(IMPRIM,*) NBTYEL, ' TYPES D''EF'
+      WRITE(NF,'(I8)') NBTYEL
+      NBEF = 0
+      DO 2000 NOTYEL = 1 , NBTYEL
+C
+C        L'ADRESSE DU TABLEAU NPEF"TYPE_EF
+         MNELE = MCN( MNELEM - 1 + NOTYEL )
+C        LE NUMERO DU TYPE DE L'ELEMENT FINI
+         NUTYEL = MCN( MNELE + WUTYEL )
+C
+C        LE NOMBRE D'ELEMENTS FINIS DE CE TYPE
+         NBELEM = MCN( MNELE + WBELEM )
+C
+C        L'ADRESSE MCN DES NOEUDS ET POINTS GEOMETRIQUES DES ELEMENTS
+         MNNDEL = MNELE + WUNDEL
+         MNPGEL = MNNDEL
+         IF( NDPGST .GE. 2 ) THEN
+            MNPGEL = MNPGEL + NBELEM * MCN(MNELE+WBNDEL)
+         ENDIF
+C
+C        LES CARACTERISTIQUES DE L'ELEMENT FINI
+         CALL ELNUNM( NUTYEL , NOMELE )
+         CALL ELTYCA( NUTYEL )
+C
+C        LE NOMBRE DE NOEUDS DE CE TYPE D'EF EST NBNOE INITIALISE PAR ELTYCA
+C
+C        LA BOUCLE SUR LES ELEMENTS DE CE TYPE NUTYEL
+C        ============================================
+C        ECRITURE DE NBNOE ET NBELEM
+         WRITE(IMPRIM,*) ' NOMBRE DE NOEUDS PAR EF=',NBNOE
+         WRITE(IMPRIM,*) ' NOMBRE D''EF=',NBELEM
+         WRITE(NF,'(2I8)') NBNOE, NBELEM
+C
+         DO 1900 NUELEM = 1, NBELEM
+C
+C           LES NOEUDS DE L'EF
+            CALL EFNOEU( MNELE , NUELEM , NBNDEL , MCN(MNNODL) )
+C
+C           ECRITURE DES NUMEROS DES SOMMETS DE L'EF
+            NBEF = NBEF + 1
+            WRITE(NF, '(10I8)') NBEF,(MCN(MNNODL-1+K),K=1,NBNDEL)
+C
+ 1900    CONTINUE
+ 2000 CONTINUE
+C
+      CLOSE( NF )
+      RETURN
+C
+C     PB A L'OUVERTURE DU FICHIER
+ 9999 NBLGRC(NRERR) = 2
+      KERR(1) = 'PB A L''OUVERTURE DU FICHIER fidapef'
+      CALL LEREUR
+      GOTO 100
+      END

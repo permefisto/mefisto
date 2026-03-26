@@ -1,0 +1,5 @@
+ARETBO est la longueur souhaitee des aretes
+de la triangulation de la surface de la molecule
+Cette longueur ne doit pas etre inferieure
+au plus petit rayon des boules qui forment
+la molecule.

@@ -1,0 +1,559 @@
+      SUBROUTINE ELASTR( NTLXOB, MNTOPO, NOAXIS, NDIM,   MOREE2,
+     &                   NPIMAX, NDSM,   NDSMCI, NTDLDE,
+     &                   NBTYEL, MNNPEF, NDPGST, MNTPOB,
+     &                   MNTAUX, MNXYZP, NUMIOB, NUMAOB, MNDOEL,
+     &                   MNELAS, MOTAEL, MNTAEL, MNX,
+     &                   MNVEDE, NOTHEL, MNVETE,
+     &                   COMIMI, COMXMX  )
+C ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+C BUT :    CALCUL LES CONTRAINTES AUX POINTS D'INTEGRATION NUMERIQUE
+C -----    DES ELEMENTS FINIS LAGRANGE ISOPARAMETRIQUES 2D 3D AXISYMETRIQUES
+C          CONSTRUCTION DES TMS CONTRAINTE"NMTYEL DE L'OBJET
+C
+C ENTREES:
+C --------
+C NTLXOB : NUMERO DU TMS DU LEXIQUE DE L'OBJET
+C MNTOPO : ADRESSE MCN DU TABLEAU TOPOLOGIE DE L'OBJET
+C NOAXIS : 1 SI PROBLEME AXI-SYMETRIQUE (=> NDIM=2 R=x et Z=y et 0=z)
+C          0 SINON
+C NDIM   : ESPACE 2 OU 3 DE L'OBJET (2 EN AXISYMETRIQUE)
+C MOREE2 : 2 SI UN DOUBLE PRECISION OCCUPE 2 MOTS, 1 SINON
+C NPIMAX : NOMBRE MAXIMAL DE POINTS D'INTEGRATION NUMERIQUE D'UN EF
+C NDSM   : NOMBRE DE CAS DE CHARGE OU VECTEUR"DEPLACT
+C          CE NOMBRE PEUT ETRE >1 PAR EXEMPLE EN INSTATIONNAIRE
+C NDSMCI : NOMBRE DE JEUX DE CONTRAINTES INITIALES
+C          CE NOMBRE VAUT 0 OU 1
+C NTDLDE : NOMBRE TOTAL DE DL DES DEPLACEMENTS
+C NBTYEL : NOMBRE DE TYPES D'EF DE L'OBJET
+C MNNPEF : ADRESSE MCN DES TABLEAUX NPEF"TYPE EF
+C NDPGST : CODE DE STOCKAGE DES SOMMETS POINTS NOEUDS
+C MNTPOB : ADRESSE MCN DES TABLEAUX POLYNOMES DE BASE DES TYPES D'EF
+C MNTAUX : ADRESSE MCN DES TABLEAUX AUXILIAIRES
+C MNXYZP : ADRESSE MCN DE TMS XYZSOMMET DE L'OBJET
+C NUMIOB : NUMERO MINIMAL DES OBJETS
+C NUMAOB : NUMERO MAXIMAL DES OBJETS
+C MNDOEL : ADRESSE MCN DES DONNEES DE L'OBJET
+C MNELAS : ADRESSE MCN DU TABLEAU TENSEUR D'ELASTICITE
+C MOTAEL : NOMBRE DE REEL2 DE LA DECLARATION DU TABLEAU TAEL
+C          LA MATRICE ELEMENTAIRE ET LES NDSM SECONDS MEMBRES
+C          MOTAEL = NBDLMX * (NBDLMX+1) / 2 + NBDLMX * NDSM
+C MNTAEL : ADRESSE MCN DES TABLEAUX ELEMENTAIRES POUR LES CONTRAINTES
+C MNX    : ADRESSE MCN DES COORDONNEES DES POINTS DE L'EF COURANT
+C MNVEDE : ADRESSE MCN DU TMS VECTEUR"DEPLACT     DES DEPLACEMENTS
+C
+C NOTHEL : 1  POUR LA RESOLUTION DE L'ELASTICITE SEULE
+C          2  POUR LA RESOLUTION DE LA THERMO-ELASTICITE
+C MNVETE : ADRESSE MCN DU TMS VECTEUR"TEMPERATURE DES TEMPERATURES
+C          0 SI PAS DE THERMO-ELASTICITE
+C NTDLTE : NOMBRE DE DEGRES DE LIBERTE EN THERMIQUE, 0 SI PAS DE THERMIQUE
+C
+C SORTIE :
+C --------
+C COMIMI : CONTRAINTE PRINCIPALE MINIMALE (EN COMPRESSION SI <0 )
+C COMXMX : CONTRAINTE PRINCIPALE MAXIMALE (EN TRACTION    SI >0 )
+C+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+C AUTEUR: ALAIN PERRONNET      ANALYSE NUMERIQUE UPMC PARIS MARS    1998
+C23456---------------------------------------------------------------012
+      include"./incl/langue.inc"
+      include"./incl/ntmnlt.inc"
+      include"./incl/ponoel.inc"
+      include"./incl/gsmenu.inc"
+      include"./incl/a_objet__topologie.inc"
+      include"./incl/a___npef.inc"
+      include"./incl/a___vecteur.inc"
+      include"./incl/a___xyzsommet.inc"
+      include"./incl/a___xyznoeud.inc"
+      include"./incl/a___xyzpoint.inc"
+      include"./incl/a___contrainte.inc"
+      include"./incl/ctemps.inc"
+      include"./incl/donela.inc"
+C
+      include"./incl/pp.inc"
+      COMMON            MCN(MOTMCN)
+      REAL              RMCN(1)
+      DOUBLE PRECISION  DMCN(1)
+      EQUIVALENCE      (MCN(1),RMCN(1),DMCN(1))
+      COMMON / UNITES / LECTEU, IMPRIM, NUNITE(30)
+C
+      INTEGER           NOOBSF(6), NOOBLA(12), NOOBPS(8)
+      INTEGER           NUMIOB(4), NUMAOB(4),  MNDOEL(4)
+      CHARACTER*4       CHARX, NOMELE(2)
+      CHARACTER*24      KNOM
+      DOUBLE PRECISION  D2PI,   DELTA,  ALPHA0, ALPHA1,
+     %                  CONTMI, CONTMX, CONMIN, CONMAX,
+     %                  COMIMI, COMXMX, DINFO
+      INTEGER           MNXYZ(3)
+C
+      NUPMIN = 0
+      NUPMAX = 0
+      NUEMIN = 0
+      NUEMAX = 0
+      MNPOL  = 0
+      MNPOID = 0
+      MNDPOL = 0
+C
+C     CALCUL DES CONTRAINTES EN CHAQUE POINT D INTEGRATION DE
+C     CHAQUE ELEMENT DE CHAQUE TYPE D'ELEMENTS DE L'OBJET
+C     =======================================================
+      IF( LANGAG .EQ. 0 ) THEN
+         WRITE(IMPRIM,10000)
+      ELSE
+         WRITE(IMPRIM,20000)
+      ENDIF
+10000 FORMAT(/
+     %' Les CONTRAINTES aux POINTS d''INTEGRATION des ELEMENTS FINIS :'
+     %,/1X,80(1H=))
+20000 FORMAT(/
+     %' The MAIN STRESSES at INTEGRATION POINTS of FINITE ELEMENTS :'
+     %,/1X,80(1H=))
+C
+C     EXISTENCE OU NON DE LA FONCTION 'REGION'
+      CALL LXNMNO( NTFONC, 'REGION', NOFORE, I )
+C     NOFORE>0 SI CETTE FONCTION EXISTE
+C
+      MNTPAU = 0
+      D2PI   = ATAN(1D0) * 8D0
+C
+C     LE TABLEAU DES CONTRAINTES ELEMENTAIRES EST IL STOCKABLE DANS TAEL?
+      IF( NDIM .EQ. 2 ) THEN
+           IF( NOAXIS .EQ. 1 ) THEN
+C               NOMBRE DE COMPOSANTES DU TENSEUR DES CONTRAINTES
+C               EN AXISYMETRIQUE
+                NCOMP = 4
+            ELSE
+C               NOMBRE DE COMPOSANTES DU TENSEUR DES CONTRAINTES EN 2D
+                NCOMP = 3
+           ENDIF
+      ELSE
+C        NOMBRE DE COMPOSANTES DU TENSEUR DES CONTRAINTES EN 3D
+         NCOMP = 6
+      ENDIF
+C
+      I = NCOMP * NDSM * ( NPIMAX + 1 )
+      IF( I .GT. MOTAEL ) THEN
+C        LE TABLEAU TAEL EST TROP PETIT
+C        IL EST DETRUIT ET REDECLARE
+         CALL TNMCDS( 'REEL2', MOTAEL, MNTAEL )
+         MOTAEL = I
+         CALL TNMCDC( 'REEL2', MOTAEL, MNTAEL )
+      ENDIF
+C     LES CONTRAINTES INITIALES DOIVENT ETRE RECUPEREES
+      MNCOIN = MNTAEL + MOREE2 * NCOMP * NDSM * NPIMAX
+      MNTEMP = 0
+C
+      IF( NOTHEL .EQ. 2 .AND. MNVETE .GT. 0 ) THEN
+C
+C        THERMO-ELASTICITE => CONTRAINTES THERMIQUES DUES A LA DILATATION
+C        =================
+C        NOMBRE DE VECTEURS"TEMPERATURE STOCKES
+         NBTEMP = MCN( MNVETE + WBVECT )
+C        LE NOMBRE DE DL TEMPERATURE
+         NTDLTE = MCN( MNVETE + WBCOVE )
+C
+         IF( NDSM .LE. 1 ) THEN
+            MNTEMP = MNVETE + WECTEU
+         ELSE
+C           LE TABLEAU DES TEMPERATURES A CHAQUE TEMPS DES DEPLACEMENTS STOCKES
+            CALL TNMCDC( 'REEL2', NTDLTE*NDSM, MNTPAU )
+            MNTEMP = MNTPAU
+            MNTP   = MNTPAU
+C
+C           LE TEMPS INITIAL THERMIQUE
+            MNTPST = MNVETE + WECTEU + NTDLTE * NBTEMP * MOREE2
+            TEMPT0 = RMCN( MNTPST )
+C           LE TEMPS FINAL THERMIQUE
+            TEMPT2 = RMCN( MNTPST -1 + NBTEMP )
+            MNTEM0 = MNVETE + WECTEU
+C           LE TEMPS SUIVANT
+            MNTPST = MNTPST + 1
+            TEMPT1 = RMCN( MNTPST )
+            MNTEM1 = MNTEM0 + NTDLTE * MOREE2
+C
+C           L'ADRESSE QUI PRECEDE LE PREMIER TEMPS DES CARTES DE DEPLACEMENTS
+            MNTPSE = MNVEDE + WECTEU + NTDLDE * NDSM * MOREE2 - 1
+            DO 10 I=1,NDSM
+C
+C              LE TEMPS DU VECTEUR"DEPLACT I
+               MNTPSE = MNTPSE + 1
+               TEMPS  = RMCN( MNTPSE )
+C
+               IF(TEMPS .GE. 0.9999*TEMPT1 .AND. TEMPS .LT. TEMPT2) THEN
+C                 PASSAGE AU TEMPS THERMIQUE SUIVANT QUI EXISTE
+                  TEMPT0 = TEMPT1
+                  MNTEM0 = MNTEM1
+                  MNTPST = MNTPST + 1
+                  TEMPT1 = RMCN(MNTPST)
+                  MNTEM1 = MNTEM1 + NTDLTE * MOREE2
+               ENDIF
+C
+C              CALCUL DES NTDLTE TEMPERATURES AUX NOEUDS A L'INSTANT TEMPS
+C              INTERPOLATION LINEAIRE ENTRE TEMP0 ET TEMP1 A L'INSTANT TEMPS
+               ALPHA0 = ( TEMPT1 - TEMPS  ) / ( TEMPT1 - TEMPT0 )
+               ALPHA1 = ( TEMPS  - TEMPT0 ) / ( TEMPT1 - TEMPT0 )
+               CALL CL2VED( NTDLTE, ALPHA0, MCN(MNTEM0),
+     &                              ALPHA1, MCN(MNTEM1), MCN(MNTP) )
+               MNTP = MNTP + NTDLTE * MOREE2
+ 10         CONTINUE
+         ENDIF
+      ELSE
+C        PAS DE TEMPERATURE
+         NTDLTE = 0
+         MNTP   = 0
+      ENDIF
+C
+C     ADRESSE DU TABLEAU DES DEPLACEMENTS
+      MNU0   = MNVEDE + WECTEU
+C
+C     PROTECTION DE MCN(MNTEMP) POUR MNTEMP=0
+      M0TEMP = MNTEMP
+      if( M0TEMP .LE. 0 ) M0TEMP = 1
+C
+C     LA BOUCLE SUR LES TYPES D'ELEMENTS FINIS
+C     ========================================
+      COMIMI =  DINFO('GRAND')
+      COMXMX = -COMIMI
+C
+      DO 200 NOTYEL = 1, NBTYEL
+C
+         CONMIN =  DINFO('GRAND')
+         CONMAX = -CONMIN
+C
+C        L'ADRESSE DU TABLEAU NPEF"
+         MNELE = MCN( MNNPEF - 1 + NOTYEL )
+C        LE NUMERO DU TYPE DE L'ELEMENT FINI
+         NUTYEL = MCN( MNELE + WUTYEL )
+C
+C        LE NOMBRE D'ELEMENTS FINIS DE CE TYPE
+         NBELEM = MCN( MNELE + WBELEM )
+C
+C        L'ADRESSE MCN DES NOEUDS ET POINTS GEOMETRIQUES DES ELEMENTS FINIS
+         MNNDEL = MNELE + WUNDEL
+         MNPGEL = MNNDEL
+         IF( NDPGST .GE. 2 ) THEN
+            MNPGEL = MNPGEL + MCN(MNELE+WBELEM) * MCN(MNELE+WBNDEL)
+         ENDIF
+C
+C        LES CARACTERISTIQUES DE L'ELEMENT FINI
+         CALL ELNUNM( NUTYEL, NOMELE )
+         CALL ELTYCA( NUTYEL )
+C
+         IF( LANGAG .EQ. 0 ) THEN
+            WRITE(IMPRIM,10050) NOMELE
+         ELSE
+            WRITE(IMPRIM,20050) NOMELE
+         ENDIF
+10050    FORMAT(/' TYPE des ELEMENTS FINIS : ',A4,1X,A4)
+20050    FORMAT(/' TYPE of FINITE ELEMENTS : ',A4,1X,A4)
+C
+C        LES ADRESSAGES POUR RECUPERER LES INFORMATIONS
+C        EN FONCTION DU TYPE DE L'ELEMENT FINI
+C        ----------------------------------------------
+         GOTO( 51, 51, 51, 51, 50, 50, 50, 50, 50, 50,
+     &         50, 50, 53, 50, 51, 51, 50, 51, 53, 51,
+     &         51, 51, 51, 51, 50, 50, 50, 50, 53, 50 ), NUTYEL
+C
+C        ERREUR
+C        ------
+ 50      NBLGRC(NRERR) = 2
+         IF( LANGAG .EQ. 0 ) THEN
+            KERR(1) ='ERREUR: EF '// NOMELE(1) // ' ' // NOMELE(2)
+            KERR(2) ='CALCUL DES CONTRAINTES NON PROGRAMME'
+         ELSE
+            KERR(1) ='ERROR: FE '// NOMELE(1) // ' ' // NOMELE(2)
+            KERR(2) ='COMPUTATION of STRESSES NOT PROGRAMMED'
+         ENDIF
+         CALL LEREUR
+         RETURN
+C
+C        ELEMENTS AXISYMETRIQUES OU 2D OU 3D ISOPARAMETRIQUES
+C        ****************************************************
+C        LA SURFACE
+C        RECHERCHE DU TABLEAU DE POBA ET PARTAGE EN P ET DP
+ 51      L      = MNTPOB + (NOTYEL-1) * MXPOBA + 1
+         MN     = MCN( L )
+C        DIMENSION DE L ESPACE
+C        NDIM   = MCN( MN )
+C        NOMBRE DE POLYNOMES D INTERPOLATION
+         NBPOLY = MCN( MN + 1 )
+C        NOMBRE DE POINTS D INTEGRATION NUMERIQUE
+         NPI    = MCN( MN + 2 )
+C        ADRESSE DES POIDS DES POINTS DE LA FORMULE D INTEGRATION
+         MNPOID = MN + 8
+C        ADRESSE DES VALEURS DES POLYNOMES AUX POINTS D INTEGRATION
+         MNPOL  = MNPOID + MCN( MN + 3 ) * MOREE2 * NPI
+C        ADRESSE DES VALEURS DES DERIVEES DES POLYNOMES AUX POINTS D I
+         MNDPOL = MNPOL  + MCN(MN + 4) * MOREE2 * NBPOLY * NPI
+         GOTO 80
+C
+C        TRIANGLE  LAGRANGE DE DEGRE 1: TRIA 3P1D
+C        TETRAEDRE LAGRANGE DE DEGRE 1: TETR 3P1D
+C        ****************************************
+C        NOMBRE DE POLYNOMES D INTERPOLATION
+ 53      NBPOLY = NDIM + 1
+C        NOMBRE DE POINTS D INTEGRATION NUMERIQUE = BARYCENTRE
+         NPI    = 1
+C
+C        LES TABLEAUX AUXILIAIRES
+C        ------------------------
+ 80      MNF1   = MNTAUX
+         MNF2   = MNF1   + MOREE2 * NPI
+         MNPDEL = MNF1   + MOREE2 * NPI * NDIM
+         MNDP   = MNPDEL + MOREE2 * NPI
+         MNDFM1 = MNDP   + MOREE2 * NDIM * NBPOLY * NPI
+C        LES 2 TABLEAUX DFM1 ET STRELT SE SUCCEDENT A LA MEME PLACE
+         MNSTEL = MNDFM1
+C        AU TOTAL = MNSTEL + MOREE2 * NCOMP * NDIM * NBPOLY
+CCCC        AFFICHAGE A RETIRER APRES VERIFICATION
+CCC         WRITE(IMPRIM,*) MNSTEL-MNTAUX+MOREE2*
+CCC     %    MAX(NCOMP*NDIM*NBPOLY,NDIM*NDIM*NBPOLY),
+CCC     %                  ' MOTS AUXILIAIRES POUR EF ',NOMELE
+C
+C        LA DECLARATION DU TABLEAU 'CONTRAINTE"NMTYEL'
+C        ---------------------------------------------
+         KNOM = 'CONTRAINTE"' // CHARX( MCN(MNTOPO+WMTYEL+NOTYEL-1) )
+         CALL LXTSOU( NTLXOB, KNOM, NTCONT, MNCONT )
+         IF( NTCONT .GT. 0 ) THEN
+C           LE TABLEAU EST DETRUIT POUR ETRE REDECLARE
+            CALL LXTSDS( NTLXOB, KNOM )
+         ENDIF
+C        DECLARATION OUVERTURE DU TABLEAU 'CONTRAINTE"NMTYEL'
+         I      = NBELEM * NPI * NDIM
+         LDCOPR = WOPIEF + I
+         IF( MOD(LDCOPR,2) .EQ. 1 ) LDCOPR = LDCOPR + 1
+         L = LDCOPR + I * (MOREE2+NDIM) * NDSM
+         CALL LXTNDC( NTLXOB, KNOM, 'MOTS', L )
+         CALL LXTSOU( NTLXOB, KNOM, NTCONT, MNCONT )
+C        LES ADRESSES DES TABLEAUX COORDONNEES CONTRAINTES PRINCIPALES ET
+C        DIRECTIONS PRINCIPALES
+         MNCOPI = MNCONT + WOPIEF
+         MNCOPR = MNCONT + LDCOPR
+         MNDIPR = MNCOPR + MOREE2 * I * NDSM
+C
+C        LA BOUCLE SUR LES ELEMENTS FINIS DE CE TYPE D'EF NUTYEL
+C        =======================================================
+         DO 195 NUELEM = 1, NBELEM
+C
+C           LES NOEUDS DE L'ELEMENT FINI
+C           ----------------------------
+CCC            CALL EFNOEU( MNELE, NUELEM, NBNDEL, MCN(MNNOEF) )
+C
+C           LES POINTS GEOMETRIQUES DE L'ELEMENT FINI
+C           -----------------------------------------
+CCC            CALL EFPOGE( MNELE, NUELEM, NBPGEF, MCN(MNPOEF) )
+C
+C           LE NUMERO DE VOLUME  DE L'EF
+C           LE NUMERO DE SURFACE DES FACES   DE L'EF
+C           LE NUMERO DE LIGNE   DES ARETES  DE L'EF
+C           LE NUMERO DE POINT   DES SOMMETS DE L'EF
+C           ----------------------------------------
+            CALL EFPLSV( MNELE , NUELEM,
+     %                   NOVCEL, NOSFEL, NOLAEL, NOPSEL,
+     %                   NOOBVC, NOOBSF, NOOBLA, NOOBPS )
+C
+C           LES COORDONNEES DES POINTS DE L'ELEMENT FINI
+C           --------------------------------------------
+            DO 82 I=1,NBPOE
+C              LE NUMERO DU I-EME POINT DE L'ELEMENT NUELEM
+               N    = MCN( MNPGEL-1 + NUELEM + NBELEM*(I-1) )
+               MNCE = MNXYZP + WYZPOI + (N-1) * 3
+               L    = MNX - 1 + I
+               RMCN( L         ) = RMCN(MNCE)
+               RMCN( L + NBPOE ) = RMCN(MNCE+1)
+               IF( NDIM .EQ. 3 ) RMCN(L+NBPOE+NBPOE) = RMCN(MNCE+2)
+ 82         CONTINUE
+C
+C
+C           CALCUL DES TABLEAUX AUXILIAIRES ET DES CONTRAINTES
+C           --------------------------------------------------
+C           ELEMENTAIRES SELON LE TYPE D'ELASTICITE
+C           ---------------------------------------
+            GOTO( 101,101,101,101, 50, 50,50, 50, 50, 50,
+     &             50, 50,113, 50,102,102,50,102,119,120,
+     &            120,120,120,120, 50, 50, 50,50,113    ), NUTYEL
+C
+C           LAGRANGE CONFORME AXISYMETRIQUE ISOPARAMETRIQUE
+C           LES TABLEAUX AUXILIAIRES
+ 101        CALL E1LAXI( D2PI,NBPOLY,NPI,MCN(MNPOID),
+     %                   MCN(MNPOL),MCN(MNDPOL),RMCN(MNX),
+     %                   MCN(MNF1),MCN(MNF2),
+     %                   MCN(MNPDEL),MCN(MNDP),
+     %                   MCN(MNDFM1) )
+C           CALCUL DES CONTRAINTES ELEMENTAIRES EN AXISYMETRIE
+            CALL ECLAXI( NUELEM,NBELEM,NBPOLY,MCN(MNNDEL),
+     %                   NPI,NDSM,NDSMCI,
+     %                   MCN(MNPOL),MCN(MNDP),MCN(MNF1),MCN(MNF2),
+     %                   NOOBSF(1),NUMIOB(3),NUMAOB(3),MCN(MNDOEL(3)),
+     %                   MNTEMP,NTDLTE,MCN(M0TEMP),
+     %                   NTDLDE,MCN(MNU0),
+     %                   MCN(MNELAS),MCN(MNSTEL),MCN(MNCOIN),
+     %                   MCN(MNCOPI),MCN(MNTAEL) )
+            GOTO 190
+C
+C           LAGRANGE CONFORME 2D ISOPARAMETRIQUE
+C           LES TABLEAUX AUXILIAIRES EN 2D
+ 102        CALL E12LAG( NBPOLY,NPI,MCN(MNPOID),
+     %                   MCN(MNPOL),MCN(MNDPOL),RMCN(MNX),
+     %                   MCN(MNF1),MCN(MNF2),
+     %                   MCN(MNPDEL),MCN(MNDP), MCN(MNDFM1) )
+C           CALCUL DES CONTRAINTES ELEMENTAIRES EN ELASTICITE 2D
+            CALL EC2LAG( NUELEM,NBELEM,NBPOLY,MCN(MNNDEL),
+     %                   NPI,NDSM,NDSMCI,
+     %                   MCN(MNPOL),MCN(MNDP),MCN(MNF1),MCN(MNF2),
+     %                   NOOBSF(1),NUMIOB(3),NUMAOB(3),MCN(MNDOEL(3)),
+     %                   MNTEMP,NTDLTE,MCN(M0TEMP),
+     %                   NTDLDE,MCN(MNU0),
+     %                   MCN(MNELAS),MCN(MNSTEL),MCN(MNCOIN),
+     %                   MCN(MNCOPI),MCN(MNTAEL) )
+            GOTO 190
+C
+C           CALCUL DES CONTRAINTES ELEMENTAIRES EN ELASTICITE TRIA 2P1D
+ 113        CALL EC2P1D( RMCN(MNX),NDSM,NDSMCI,
+     %                   NUELEM,NBELEM,MCN(MNNDEL),
+     %                   NOOBSF(1),NUMIOB(3),NUMAOB(3),MCN(MNDOEL(3)),
+     %                   MNTEMP,NTDLTE,MCN(M0TEMP),
+     %                   NTDLDE,MCN(MNU0),
+     %                   MCN(MNELAS),MCN(MNCOIN),
+     %                   MCN(MNCOPI),MCN(MNTAEL) )
+            GOTO 190
+C
+C           LES TABLEAUX AUXILIAIRES EN 3D POUR LE TETRAEDRE 3P1D
+ 119        CALL E13P1D( RMCN(MNX), MCN(MNF1),
+     %                   DELTA, MCN(MNDFM1), MCN(MNDP) )
+C           CALCUL DES CONTRAINTES ELEMENTAIRES EN ELASTICITE
+            CALL EC3P1D( NUELEM,NBELEM,MCN(MNNDEL),NDSM,NDSMCI,
+     %                   DELTA,MCN(MNDP),MCN(MNF1),
+     %                   NOOBVC,NUMIOB(4),NUMAOB(4),MCN(MNDOEL(4)),
+     %                   MNTEMP,NTDLTE,MCN(M0TEMP),
+     %                   NTDLDE,MCN(MNU0),
+     %                   MCN(MNELAS),MCN(MNSTEL),MCN(MNCOIN),
+     %                   MCN(MNCOPI),MCN(MNTAEL) )
+            GOTO 190
+C
+C           LES TABLEAUX AUXILIAIRES ELASTICITE 3D LAGRANGE ISOPARAMETRIQUE
+ 120        CALL E13LAG ( NBPOLY, NPI, MCN(MNPOID),
+     %                   MCN(MNPOL),  MCN(MNDPOL),
+     %                   RMCN(MNX),  MCN(MNF1),
+     %                   MCN(MNPDEL), MCN(MNDP), MCN(MNDFM1) )
+C           CALCUL DES CONTRAINTES ELEMENTAIRES EN ELASTICITE 3D
+            CALL EC3LAG ( NUELEM,NBELEM,NBPOLY,MCN(MNNDEL),
+     %                   NPI,NDSM,NDSMCI,
+     %                   MCN(MNPOL),MCN(MNDP),MCN(MNF1),
+     %                   NOOBVC,NUMIOB(4),NUMAOB(4),MCN(MNDOEL(4)),
+     %                   MNTEMP,NTDLTE,MCN(M0TEMP),
+     %                   NTDLDE,MCN(MNU0),
+     %                   MCN(MNELAS),MCN(MNSTEL),MCN(MNCOIN),
+     %                   MCN(MNCOPI),MCN(MNTAEL) )
+C
+C           CALCUL DES CONTRAINTES ET DIRECTIONS PRINCIPALES
+C           ================================================
+ 190        CALL CONPRI( NUELEM, NBELEM, NDIM, NCOMP, NPI, NDSM, NOFORE,
+     %                   MCN(MNCOPI), MCN(MNTAEL),
+     %                   CONTMI, NOPMIN, NOCMIN,
+     %                   CONTMX, NOPMAX, NOCMAX,
+     %                   MCN(MNCOPR), MCN(MNDIPR) )
+C
+            IF( CONTMI .LT. CONMIN ) THEN
+                CONMIN = CONTMI
+                NUPMIN = NOPMIN
+                NUCMIN = NOCMIN
+                NUEMIN = NUELEM
+            ENDIF
+C
+            IF( CONTMX .GT. CONMAX ) THEN
+                CONMAX = CONTMX
+                NUPMAX = NOPMAX
+                NUCMAX = NOCMAX
+                NUEMAX = NUELEM
+            ENDIF
+C
+ 195     CONTINUE
+C
+C        COORDONNEES DU POINT DE CONTRAINTE MINIMALE
+         WRITE(IMPRIM,*)
+         MNXYZ(1) = MNCOPI + NUEMIN - 1 + NBELEM * ( NUPMIN - 1 )
+         MNXYZ(2) = MNXYZ(1) + NBELEM*NPI
+         MNXYZ(3) = MNXYZ(2) + NBELEM*NPI
+         IF( LANGAG .EQ. 0 ) THEN
+            IF( NOAXIS .EQ. 0 ) THEN
+               WRITE(IMPRIM,10195) (RMCN(MNXYZ(I)),I=1,NDIM)
+            ELSE
+               WRITE(IMPRIM,10196) (RMCN(MNXYZ(I)),I=1,2)
+            ENDIF
+            WRITE(IMPRIM,10197) CONMIN,NOMELE,NUCMIN
+         ELSE
+            IF( NOAXIS .EQ. 0 ) THEN
+               WRITE(IMPRIM,20195) (RMCN(MNXYZ(I)),I=1,NDIM)
+            ELSE
+               WRITE(IMPRIM,20196) (RMCN(MNXYZ(I)),I=1,2)
+            ENDIF
+            WRITE(IMPRIM,20197) CONMIN,NOMELE,NUCMIN
+         ENDIF
+C
+C        COORDONNEES DU POINT DE CONTRAINTE MAXIMALE
+         MNXYZ(1) = MNCOPI + NUEMAX - 1 + NBELEM * ( NUPMAX - 1 )
+         MNXYZ(2) = MNXYZ(1) + NBELEM*NPI
+         MNXYZ(3) = MNXYZ(2) + NBELEM*NPI
+         IF( LANGAG .EQ. 0 ) THEN
+            IF( NOAXIS .EQ. 0 ) THEN
+               WRITE(IMPRIM,10195) (RMCN(MNXYZ(I)),I=1,NDIM)
+            ELSE
+               WRITE(IMPRIM,10196) (RMCN(MNXYZ(I)),I=1,2)
+            ENDIF
+            WRITE(IMPRIM,10198) CONMAX,NOMELE,NUCMAX
+         ELSE
+            IF( NOAXIS .EQ. 0 ) THEN
+               WRITE(IMPRIM,20195) (RMCN(MNXYZ(I)),I=1,NDIM)
+            ELSE
+               WRITE(IMPRIM,20196) (RMCN(MNXYZ(I)),I=1,2)
+            ENDIF
+            WRITE(IMPRIM,20198) CONMAX,NOMELE,NUCMAX
+         ENDIF
+C
+10195    FORMAT(' Au POINT: X=',G13.5,' Y=',G13.5,' Z=',G13.5)
+10196    FORMAT(' Au POINT: R=',G13.5,' Z=',G13.5)
+10197    FORMAT(' la CONTRAINTE PRINCIPALE minimale = ',G15.7,
+     %  ' sur les EF de TYPE ',A4,1X,A4,' pour le CAS',I6)
+10198    FORMAT(' la CONTRAINTE PRINCIPALE MAXIMALE = ',G15.7,
+     %  ' sur les EF de TYPE ',A4,1X,A4,' pour le CAS',I6)
+C
+20195    FORMAT(' At POINT: X=',G13.5,' Y=',G13.5,' Z=',G13.5)
+20196    FORMAT(' At POINT: R=',G13.5,' Z=',G13.5)
+20197    FORMAT(' the MAIN STRESS minimum = ',G15.7,
+     %  ' on the FE of TYPE ',A4,1X,A4,' for the CASE',I6)
+20198    FORMAT(' the MAIN STRESS MAXIMUM = ',G15.7,
+     %  ' on the FE of TYPE ',A4,1X,A4,' for the CASE',I6)
+C
+         COMIMI = MIN( COMIMI, CONMIN )
+         COMXMX = MAX( COMXMX, CONMAX )
+C
+C        MISE A JOUR DU TMS 'CONTRAINTE"NMTYEL'
+C        ======================================
+         MCN( MNCONT + WUTYEF ) = NUTYEL
+         MCN( MNCONT + WBELFI ) = NBELEM
+         MCN( MNCONT + WDIMES ) = NDIM
+         MCN( MNCONT + WBJECA ) = NDSM
+         MCN( MNCONT + WBPIEF ) = NPI
+         MCN( MNCONT + WDCOPR ) = LDCOPR
+C        LA DATE
+         CALL ECDATE( MCN(MNCONT) )
+C        LE NUMERO DU TABLEAU DESCRIPTEUR
+         MCN( MNCONT + MOREE2 ) = NONMTD( '~>>>CONTRAINTE' )
+C
+ 200  CONTINUE
+C
+      WRITE(IMPRIM,*)
+      IF( LANGAG .EQ. 0 ) THEN
+         WRITE(IMPRIM,10201) 'minimale', COMIMI
+         WRITE(IMPRIM,10201) 'MAXIMALE', COMXMX
+      ELSE
+         WRITE(IMPRIM,20201) 'minimum', COMIMI
+         WRITE(IMPRIM,20201) 'MAXIMUM', COMXMX
+      ENDIF
+10201 FORMAT(' SUR L''OBJET TOTAL LA CONTRAINTE PRINCIPALE ',A,' = '
+     %,G15.7)
+20201 FORMAT(' On the total OBJECT the MAIN STRESS ',A,' = '
+     %,G15.7)
+C
+      IF( MNTPAU .GT. 0 ) CALL TNMCDS( 'REEL2', NTDLTE*NDSM, MNTPAU )
+      RETURN
+      END

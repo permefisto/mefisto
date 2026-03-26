@@ -1,0 +1,92 @@
+      SUBROUTINE TRBFFR( MOFACE, MXFACE, LFACES, XYZSOM,
+     %                   L1FAFR, NBFISO, NBFAFR, NOFAFR, DIFAFR )
+C ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+C BUT :    CALCULER LE BARYCENTRE DE CHAQUE FACE FRONTALIERE
+C -----    CALCULER LA COTE AXONOMETRIQUE DE CES BARYCENTRES
+C          A PARTIR DE LA POSITION NBFISO+1 DES TABLEAUX
+C
+C ENTREES:
+C --------
+C MOFACE : NOMBRE DE MOTS PAR FACE DU TABLEAU NFACE DES FACES
+C MXFACE : NOMBRE DE FACES DU TABLEAU NFACE
+C LFACES : TABLEAU NUMERO DES FACES, LIEN, NO DES CUBES
+C          LFACES(1,I)= NO DU 1-ER  SOMMET DE LA FACE
+C          LFACES(2,I)= NO DU 2-EME SOMMET > 1-ER  SOMMET
+C          LFACES(3,I)= NO DU 3-EME SOMMET DE LA FACE
+C          LFACES(4,I)= NO DU 4-EME SOMMET DE LA FACE
+C                      0 SI TRIANGLE
+C          LFACES(5,I)= + ou - CHAINAGE HACHAGE SUR FACE SUIVANTE
+C                      >0 FACE INTERNE
+C                      <0 FACE FRONTALIERE
+C          SI SOMMET 2 < DERNIER SOMMET  => FACE   DIRECTE
+C                      <                 => FACE INDIRECTE
+C          UNE FACE DIRECTE EST VUE DE L EXTERIEUR AU CUBE
+C          SOUS LA FORME DIRECTE
+C          LFACES(6,I)= NUMERO DU 1-ER  CUBE CONTENANT CETTE FACE
+C                      >0 SI FACE   DIRECTE DANS CE CUBE
+C                      <0 SI FACE INDIRECTE DANS CE CUBE
+C          SI LA FACE APPARTIENT A 2 CUBES ALORS
+C          LFACES(7,I)= NUMERO DU 2-EME CUBE CONTENANT CETTE FACE
+C                      >0 SI FACE   DIRECTE DANS CE CUBE
+C                      <0 SI FACE INDIRECTE DANS CE CUBE
+C          SINON
+C          LFACES(7,I)= NUMERO DE LA FACE FRONTALIERE SUIVANTE
+C                      0 SI C'EST LA DERNIERE
+C L1FAFR : NUMERO DE LA PREMIERE FACE FRONTALIERE
+C NBFISO : NOMBRE DE FACES ISOVALEURS
+C NBFAFR : NOMBRE DE FACES FRONTALIERES
+C
+C SORTIES:
+C --------
+C ATTENTION : LES VALEURS CALCULEES ICI DEBUTENT EN POSITION NBFISO+1
+C NOFAFR : NUMERO DE LA FACE FRONTALIERE DANS LFACES
+C DIFAFR : COTE AXONOMETRIQUE DU BARYCENTRE DES FACES
+C ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+C AUTEUR : PERRONNET ALAIN ANALYSE NUMERIQUE UPMC PARIS     OCTOBRE 1994
+C ...................................................................012
+      include"./incl/trvari.inc"
+      INTEGER           LFACES(1:MOFACE,1:MXFACE)
+      REAL              XYZSOM(1:3,1:*)
+      INTEGER           NOFAFR(1:NBFAFR)
+      REAL              DIFAFR(1:NBFAFR),
+     %                  XYZ(3)
+C
+C     BOUCLE SUR LES FACES FRONTALIERES
+      I = NBFISO
+      N = L1FAFR
+ 1    IF( N .NE. 0 ) THEN
+C        LA FACE N DE LFACES EST TRAITEE
+         I = I + 1
+         NOFAFR(I) = NBFISO + N
+C
+C        LES COORDONNEES DU BARYCENTRE DE LA FACE
+         XYZ(1) = 0.0
+         XYZ(2) = 0.0
+         XYZ(3) = 0.0
+         IF( LFACES(4,N) .EQ. 0 ) THEN
+            NBS = 3
+         ELSE
+            NBS = 4
+         ENDIF
+         DO 20 J=1,NBS
+C           LE NUMERO DU SOMMET
+            NS = LFACES( J , N )
+            DO 10 K=1,3
+               XYZ(K) = XYZ(K) + XYZSOM(K,NS)
+ 10         CONTINUE
+ 20      CONTINUE
+         XYZ(1) = XYZ(1) / NBS
+         XYZ(2) = XYZ(2) / NBS
+         XYZ(3) = XYZ(3) / NBS
+C
+C        COTE Z AXONOMETRIQUE DANS LA DIRECTION DE VISEE
+         CALL XYZAXO( XYZ, XYZ )
+         DIFAFR(I) = XYZ(3)
+C
+C        PASSAGE A LA FACE FRONTALIERE SUIVANTE
+         N = LFACES(7,N)
+         GOTO 1
+      ENDIF
+C
+      RETURN
+      END

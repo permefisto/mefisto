@@ -1,0 +1,91 @@
+      SUBROUTINE NLDATA0( NBPOLY )
+C+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+C BUT :  POUR UN PROBLEME NON LINEAIRE, RECUPERER
+C -----  LES DL DE LA TEMPERATURE AUX NOEUDS DE L'EF ou bien
+C        LES DL DE LA PARTIE REELLE DE L'ONDE AUX NOEUDS DE L'EF
+C                     AU TEMPS ACTUEL
+C
+C        SI TESTNL>=6: RECUPERER AUSSI
+C        LES DL DE LA PARTIE IMAGINAIRE AUX NOEUDS DE L'EF AU TEMPS ACTUEL
+C        LES DL DE LA PARTIE REELLE     AUX NOEUDS DE L'EF AU TEMPS INITIAL
+C        LES DL DE LA PARTIE IMAGINAIRE AUX NOEUDS DE L'EF AU TEMPS INITIAL
+C
+C ATTENTION: PRATIQUEMENT TOUT PASSE PAR LES VALEURS CONTENUES DANS
+C            ./incl/cthet.inc et ./incl/cnonlin.inc avec les declarations
+C            MNTHET(NBNOEMA,2), MNTHETn(NBNOEMA,2), MNTHET0(NBNOEMA,2)
+C
+C ENTREE :
+C --------
+C NBPOLY : NOMBRE DE POLYNOMES DE BASE DE L'INTERPOLATION SUR L'EF
+C
+C SORTIE :
+C --------
+C NBPOLY : INCHANGE SAUF SI MNTHET N'EST PAS INITIALISE CORRECTEMENT
+C          => ARRET IMMEDIAT AVEC TENTATIVE DE SAUVEGARDE
+C ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+C AUTEUR : ALAIN PERRONNET LJLL UPMC & Saint Pierre du Perray  Aout 2011
+C23456---------------------------------------------------------------012
+      include"./incl/cthet.inc"
+      include"./incl/cnonlin.inc"
+      include"./incl/pp.inc"
+      COMMON            MCN(MOTMCN)
+      REAL              RMCN(1)
+      DOUBLE PRECISION  DMCN(1)
+      EQUIVALENCE      (MCN(1), RMCN(1), DMCN(1))
+C
+C     RECUPERATION DE LA TEMPERATURE AUX NBPOLY DL DE L ELEMENT FINI
+      IF( MNTHET .LE. 0 ) THEN
+C        ADRESSE INCORRECTE DU VECTEUR SOLUTION
+         PRINT *,'NLDATA0: ADRESSE INCORRECTE DU VECTEUR MNTHET=',
+     %            MNTHET
+         CALL ARRET( 100 )
+      ENDIF
+
+      MOREE2 = MOTVAR(6)
+      MNR    = (MNTHET-1)/MOREE2
+      MNRE   = (MNTHDL-1)/MOREE2
+      DO I=1,NBPOLY
+C        NO GLOBAL DU NOEUD I DE L'EF
+         N = MCN( MNNODL-1+I )
+         DMCN( MNRE+I ) = DMCN( MNR+N )
+      ENDDO
+C
+      IF( TESTNL .GE. 6 ) THEN
+C
+C        ONDE COMPLEXE NLSE
+C        RECUPERATION DE LA PARTIE IMAGINAIRE A tn+1 DE L'ONDE NLSE
+         MNI  = MNR  + NBNOEMA
+         MNIE = MNRE + NBPOLY
+C
+C        RECUPERATION DE LA PARTIE REELLE     A tn DE L'ONDE NLSE
+C        AUX NBPOLY DL DE L ELEMENT FINI ACTUEL
+         MNnR  = (MNTHETn-1)/MOREE2
+         MNnRE = (MNTHDLn-1)/MOREE2
+C
+C        RECUPERATION DE LA PARTIE IMAGINAIRE A tn DE L'ONDE NLSE
+         MNnI  = MNnR  + NBNOEMA
+         MNnIE = MNnRE + NBPOLY
+C
+C        RECUPERATION DE LA PARTIE REELLE     A t0 DE L'ONDE NLSE
+C        AUX NBPOLY DL DE L ELEMENT FINI ACTUEL
+         MN0R  = (MNTHET0-1)/MOREE2
+         MN0RE = (MNTHDL0-1)/MOREE2
+C
+C        RECUPERATION DE LA PARTIE IMAGINAIRE A t0 DE L'ONDE NLSE
+         MN0I  = MN0R  + NBNOEMA
+         MN0IE = MN0RE + NBPOLY
+C
+         DO I=1,NBPOLY
+C           NO GLOBAL DU NOEUD I DE L'EF
+            N = MCN( MNNODL-1+I )
+            DMCN( MNIE +I ) = DMCN( MNI +N )
+            DMCN( MNnRE+I ) = DMCN( MNnR+N )
+            DMCN( MNnIE+I ) = DMCN( MNnI+N )
+            DMCN( MN0RE+I ) = DMCN( MN0R+N )
+            DMCN( MN0IE+I ) = DMCN( MN0I+N )
+         ENDDO
+C
+      ENDIF
+C
+      RETURN
+      END

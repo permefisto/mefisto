@@ -1,0 +1,27 @@
+The physical chararacteristics are definied here
+
+1 : Rot MASS Density of the fluid in this volume in 3d or surface in 2d
+2 : nu  FLUID VISCOSITY density of the fluid
+3 : FOmega INTERNAL FORCES density
+4 : INITIAL VELOCITIES in this volume in 3d or surface in 2d
+5 : INITIAL PRESSURES in this volume in 3d or surface in 2d
+
+All of them may be defined by constants or functions.
+
+Attention to the unity of each fluid characteristic.
+Cf http://hypertextbook.com/physics/matter/viscosity/
+
+For the unsteady problem, the INITIAL velocities or/and pressures may be defined from
+- the last computed velocities_pressures;
+- the constant values or functions on the objet (the fluid)
+- the constant values or functions on the VSLP (the volumes, surfaces, lines or points
+  of the fluid)
+with a priority to the Points, then after, the lines, then after the surfaces,
+then after the volumes and finally, the object.
+
+Type @; or escape to quit the actual Volume or Surface and to pass to the next.
+
+Attention:
+A physical characteristic given is stored.
+If this value must not used, it is necessary to delete it!
+If not this value will be used in the next computation.

@@ -1,0 +1,41 @@
+   { ========================================================= } 
+@; { TEST NAFEMS T4  GENERATION DU MAILLAGE avant THERMIQUE 2D }
+   { ========================================================= }
+ 
+1;  1; { LES POINTS }
+  A; I; 1; 0;   0; 0;   { Donnees de X Y Z (Z meme en 2D!) }
+  B; I; 1; 0.6; 0; 0;
+  C; I; 1; 0.6; 1; 0;
+  D; I; 1; 0;   1; 0;
+@;
+
+2;     { LES LIGNES }
+  AB; I; 2; 3; 1; A; B; {Segment de droite du point A a B 3 aretes}
+  BC; I; 2; 5; 1; B; C;
+  CD; I; 2; 3; 1; C; D;
+  DA; I; 2; 5; 1; D; A;
+@;
+
+3;     { LA SURFACE }
+ABCD; I; 1;          {Quadrangle algebrique}
+     AB; BC; CD; DA; {Le nom des 4 lignes du contour}
+      1;             {Maillage regulier}
+@;
+
+5;     { L'OBJET }
+OB; 0;   {Resolution classique avec renumerotation des noeuds}
+  9;     {1 surface, 4 lignes et 4 points => 9 couples (Type,Nom)}
+  SURFACE; ABCD;
+  LIGNE; AB;   LIGNE; BC;   LIGNE; CD;  LIGNE; DA;
+  POINT; A;    POINT; B;    POINT; C;   POINT; D;
+@;
+
+7;      { L'INTERPOLATION }
+ OB; 4; {Polynome de LAGRANGE de degre 2}
+@;
+
+10; { Le TRACE du MAILLAGE des PLSVO }
+   5; {  Tous les OBJETS }
+  90; { EXECUTION du TRACE }
+@;
+FERMER;

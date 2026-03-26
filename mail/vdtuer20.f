@@ -1,0 +1,498 @@
+      SUBROUTINE VDTUER20( NBSEXT, NBVOPA, MXTETR, N1TETS, NOTETR,
+     %                     MXFACO, LEFACO, MXPIFA, MNPIFA,
+     %                     MNF1VO, MNCTVO, N1TEVI, NBTETR, IERR )
+C+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+C BUT :    DESTRUCTION DES TETRAEDRES EXTERIEURS AU DOMAINE
+C -----    CHAINAGE DES TETRAEDRES DE CHACUN DES VOLUMES
+C
+C ENTREES:
+C --------
+C NBSEXT : =0 SI PAS DE DESTRUCTION DES SOMMETS 1 A NBSEXT DE L'ICOSAEDRE
+C          >0 SINON
+C NBVOPA : NOMBRE DE VOLUMES DE LA PARTITION
+C MXTETR : NOMBRE MAXIMUM DE TETRAEDRES DECLARABLES DANS NOTETR
+C N1TETS : NO D'UN TETRAEDRE POUR CHAQUE SOMMET
+C NOTETR : LISTE DES TETRAEDRES OCCUPES POINTEE PAR N1TETS
+C                               VIDES   POINTEE PAR N1TEVI
+C
+C          SOMMET1   < SOMMET2    SOMMET3     SOMMET4
+C          ORDRE CLASSIQUE 1 2 3 DIRECT EN BAS ET 4 EN HAUT
+C          LE SOMMET 1 EST LE PLUS PETIT
+C          LE VOLUME EST POSITIF => UN ORDRE
+C
+C          TETRAEDRE1  TETREDRE2  TETRAEDRE3  TETREDRE4  VOISINS PAR LA
+C          FACE1       FACE2D      FACE3       FACE4
+C MXFACO : NOMBRE MAXIMAL DE FACES DECLARABLES DANS LEFACO
+C LEFACO : FACE DU CONTOUR OU INTERFACES ENTRE VOLUMES
+C          IL CONTIENT DANS CET ORDRE
+C          NUMERO (DANS PTXYZD) DU SOMMET 1, SOMMET 2, SOMMET 3
+C          2 VOLUMES D'APPARTENANCE ET 3 FACES VOISINES PAR LES 3 ARETES
+C          HACHAGE SOMME MODULO MXFACO DU NO DE FACE DANS LEFACO
+C          NUMERO (DANS NUVOPA 0 SINON) DU VOLUME1 , VOLUME2 DE LA FACE
+C          NUMERO (DANS LEFACO) DE LA FACE ADJACENTE PAR L'ARETE 1 2 3
+C          ATTENTION: UNE ARETE PEUT APPARTENIR A PLUS DE 2 FACES
+C          => CHAINAGE CIRCULAIRE DE CES FACES DANS LEFACO
+C
+C SORTIES :
+C ---------
+C N1TEVI : NO DU PREMIER TETRAEDRE VIDE AVEC CHAINAGE SUIVANT DANS NOTETR(5,N1TE
+C MNF1VO : F1VO(1,I) = NUMERO DU 1-ER TETRAEDRE DE CHAQUE VOLUME DANS NOTETR
+C          F1VO(2,I) = NUMERO LOCAL DE LA FACE DANS LE TETRAEDRE
+C          F1VO(3,I) = NUMERO DU VOLUME DU TETRAEDRE
+C          F1VO TABLEAU ENTIER( 1:3, 1:NBVOPA )
+C MNCTVO : MNCTVO(I) = NUMERO DANS NOTETR DU TETRAEDRE SUIVANT 0 SI DERNIER
+C          EN SORTIE = NUMERO DU VOLUME DU TETRAEDRE I
+C NBTETR : NOMBRE DE TETRAEDRES ACTUELS
+C IERR   : =0 SI PAS D'ERREUR
+C          >0 SINON
+C+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+C AUTEUR : ALAIN PERRONNET ANALYSE NUMERIQUE UPMC PARIS    NOVEMBRE 2005
+C MODIFS : ALAIN PERRONNET LJLL UPMC et St Pierre du Perray     Mai 2008
+C2345X7..............................................................012
+      COMMON / UNITES / LECTEU,IMPRIM,INTERA,NUNITE(29)
+      INTEGER           LEFACO(11,0:MXFACO),N1TETS(*),NOTETR(8,*)
+      INTEGER           MNPIFA(MXPIFA), MNF1VO(*), MNCTVO(MXTETR)
+C
+      WRITE(IMPRIM,*)
+ccc      WRITE(IMPRIM,10000)
+ccc10000 FORMAT(/'ENTREE VDTUER20: SUPPRESSION DES TETRAEDRES EXTERIEURS')
+      NBTETR = 0
+C
+C     F1VO(1,I) = NUMERO D'UNE FACE APPARTENANT AU SEUL VOLUME I
+      CALL AZEROI( 3*NBVOPA, MNF1VO )
+      CALL AZEROI( MXTETR,   MNCTVO )
+C
+      IF( NBSEXT .GT. 0 ) THEN
+C
+C        DES TETRAEDRES EXTERIEURS ONT DEJA ETE DETRUITS
+C        IL N'EST PAS POSSIBLE DE PARTIR DES SOMMETS DE L'HEXAEDRE ENGLOBANT
+C        RECHERCHE D'UNE FACE LEFACO APPARTENANT A UN SEUL TETRAEDRE
+C        ===================================================================
+         DO 15 NF = 1, MXFACO
+            IF( LEFACO(1,NF) .LE. 0 ) GOTO 15
+            NT1 = LEFACO(11,NF)
+            IF( NT1 .GT. 0 ) THEN
+               IF( NOTETR(1,NT1) .LE. 0 ) GOTO 15
+C              NT1 PARTAGE T IL CETTE FACE AVEC UN AUTRE TETRAEDRE?
+               DO 10 NS=1,4
+C                 RECHERCHE DU SOMMET DU TETRAEDRE NON SUR CETTE FACE
+                  NS1 = NOTETR(NS,NT1)
+                  IF( NS1 .NE. LEFACO(1,NF) .AND.
+     %                NS1 .NE. LEFACO(2,NF) .AND.
+     %                NS1 .NE. LEFACO(3,NF) ) THEN
+C                     NF1 NO DE CETTE FACE NF DANS LE TETRAEDRE NT1
+                     IF( NS .LT. 4 ) THEN
+                        NF1 = NS + 1
+                     ELSE
+                        NF1 = 1
+                     ENDIF
+C                    LE TETRAEDRE OPPOSE PAR CETTE FACE NF1 DANS NT1
+                     NT2 = NOTETR(4+NF1,NT1)
+                     IF( NT2 .EQ. 0 ) THEN
+C                       EXISTE T IL DES TETRAEDRES OPPOSES A NT1?
+                        DO 8 I=1,4
+                           IF( NOTETR(4+I,NT1) .GT. 0 ) GOTO 9
+ 8                      CONTINUE
+                        GOTO 15
+C
+C                       LE TETRAEDRE INTERNE NT1 EST STOCKE POUR DEMARRER
+ 9                      MNF1VO(1) = NT1
+C                       LE NUMERO LOCAL DE LA FACE DANS LE TETRAEDRE
+                        MNF1VO(2) = NF1
+C                       SUIVIE DU NUMERO DE SON VOLUME
+                        NOVOLU = LEFACO(4,NF)
+                        IF( NOVOLU .LE. 0 ) NOVOLU = LEFACO(5,NF)
+                        MNF1VO(3) = NOVOLU
+                        NBVOPT = 1
+                        GOTO 100
+                     ENDIF
+                  ENDIF
+ 10            CONTINUE
+            ENDIF
+ 15      CONTINUE
+         WRITE(IMPRIM,*) 'ERREUR VDTUER20:0 FACE APPARTIENT A 1 VOLUME'
+         IERR = 1
+         RETURN
+C
+      ELSE
+C
+C        PAS DE TETRAEDRES EXTERIEURS DETRUITS
+C        RECHERCHE A PARTIR DES SOMMETS DE L'ICOSAEDRE ENGLOBANT JUSQU'A
+C        TROUVER UNE FACE FRONTIERE AVEC UN TETRAEDRE OPPOSE INTERNE
+C        ===============================================================
+         NF = 1
+C
+C        NUMERO DANS NOTETR DU TETRAEDRE OCCUPE DE SOMMET NF
+ 20      NT1 = N1TETS( NF )
+         IF( NT1 .LE. 0 ) THEN
+C           PASSAGE AU SOMMET SUIVANT DU POLYEDRE ENGLOBANT ELARGI
+            NF = NF + 1
+            GOTO 20
+         ENDIF
+C
+C        LES FACES DU TETRAEDRE EXTERIEUR NT1 SONT EMPILEES
+C        LE NUMERO NT1 EST RETIRE DES FACES DE NT1
+         NBPIFA = 0
+         DO 30 NF1=1,4
+C
+C           LA FACE NF1 DU TETRAEDRE NT1 APPARTIENT ELLE A LEFACO
+C           C-A-D A LA FRONTIERE D'UN VOLUME?
+            CALL NULEFT( NF1, NT1, NOTETR, MXFACO, LEFACO, NOFACO )
+            IF( NOFACO .GT. 0 ) THEN
+C              LA FACE APPARTIENT A LA FRONTIERE DONC EST DANS UN VOLUME
+C              LE TETRAEDRE OPPOSE (DONC INTERNE) A NT1 PAR CETTE FACE
+               NT2 = NOTETR( 4+NF1 , NT1 )
+               IF( NT2 .GT. 0 ) THEN
+                  IF( NOTETR(1,NT2) .GT. 0 ) GOTO 90
+               ENDIF
+            ENDIF
+C
+C           LA FACE N'APPARTIENT PAS A UN VOLUME. ELLE EST EMPILEE
+            MNPIFA( NBPIFA + 1 ) = NT1
+            MNPIFA( NBPIFA + 2 ) = NF1
+            NBPIFA = NBPIFA + 2
+C
+ 30      CONTINUE
+C
+C        TANT QUE LA PILE EST NON VIDE
+C           DEPILER LA FACE
+C           NT2 L'AUTRE TETRAEDRE DE LA FACE
+C           SI UNE FACE EST FRONTIERE ALLER EN 90
+C           SINON EMPILER SES FACES NON TRAITEES
+C
+ 40      IF( NBPIFA .GT. 0 ) THEN
+            NBPIFA = NBPIFA - 2
+C
+C           LE TETRAEDRE EXTERNE A EXAMINER
+            MN  = NBPIFA + 1
+            NT1 = MNPIFA( MN )
+C           LE NUMERO LOCAL DE LA FACE DANS LE TETRAEDRE
+            NF1 = MNPIFA( MN + 1 )
+C
+C           LE TETRAEDRE OPPOSE A NT1 PAR CETTE FACE
+            NT2 = NOTETR( 4+NF1, NT1 )
+C           LA FACE EST MARQUEE TRAITEE
+            NOTETR( 4+NF1, NT1 ) = -ABS( NT2 )
+            IF( NT2 .LE. 0 ) GOTO 40
+C
+C           BOUCLE SUR LES 4 FACES DU TETRAEDRE NT2
+            DO 50 NF2=1,4
+C
+C              LA FACE NF2 APPARTIENT ELLE A UN VOLUME ?
+               CALL NULEFT( NF2, NT2, NOTETR, MXFACO, LEFACO, NOFACO )
+               IF( NOFACO .GT. 0 ) THEN
+C                 LA FACE APPARTIENT A LA FRONTIERE ET UN VOLUME
+                  NT1 = NT2
+                  NF1 = NF2
+                  GOTO 90
+               ENDIF
+C
+C              LA FACE NF2 N'APPARTIENT PAS A UN VOLUME
+               IF( NOTETR(4+NF2,NT2) .LE. 0 ) THEN
+C                 LA FACE EST DEJA TRAITEE DANS LE TETRAEDRE OPPOSE
+                  GOTO 50
+               ENDIF
+C
+C              LA FACE NF2 N'APPARTIENT PAS A UN VOLUME
+C              LE TETRAEDRE OPPOSE N'EST PAS TRAITE => EMPILE
+               IF( NBPIFA .GE. MXPIFA ) THEN
+                  WRITE(IMPRIM,*)'VDTUER20: SATURATION MNPIFA'
+                  WRITE(IMPRIM,*)'MXPIFA=',MXPIFA,' A AUGMENTER'
+                  IERR = 2
+                  RETURN
+               ENDIF
+C
+C              LE TETRAEDRE ET NUMERO LOCAL DE FACE
+               MNPIFA( NBPIFA + 1 ) = NT2
+               MNPIFA( NBPIFA + 2 ) = NF2
+               NBPIFA = NBPIFA + 2
+ 50         CONTINUE
+            GOTO 40
+C
+C        FIN TANT QUE
+         ENDIF
+         WRITE(IMPRIM,*) 'ERREUR VDTUER20: 0 FACE APPARTIENT A 1 VOLUME'
+         IERR = 1
+         RETURN
+      ENDIF
+C
+C     RECHERCHE DU TETRAEDRE INTERNE OPPOSE A LA FACE NF1 DU TETRAEDRE EXTERNE N
+C     --------------------------------------------------------------------------
+ 90   NT2 = ABS( NOTETR( 4+NF1, NT1 ) )
+C     LA FACE EST MARQUEE TRAITEE
+      NOTETR(4+NF1,NT1) = -ABS( NT2 )
+C     RECHERCHE DU NUMERO NF2 DE LA FACE DANS NT2
+      NS1 = LEFACO(1,NOFACO)
+      NS2 = LEFACO(2,NOFACO)
+      NS3 = LEFACO(3,NOFACO)
+      DO 95 NF2=1,4
+         NS4 = NOTETR(NF2,NT2)
+         IF(NS4 .NE. NS1 .AND. NS4 .NE. NS2 .AND. NS4 .NE. NS3) GOTO 97
+ 95   CONTINUE
+C     NUMERO DE LA FACE DANS LE TETRAEDRE NT2
+ 97   IF( NF2 .LT. 4 ) THEN
+         NF2 = NF2 + 1
+      ELSE
+         NF2 = 1
+      ENDIF
+C
+C     LE TETRAEDRE NT2 INTERNE EST STOCKE POUR DEMARRER
+      MNF1VO(1) = NT2
+C     LE NUMERO LOCAL DE LA FACE DANS LE TETRAEDRE NT2
+      MNF1VO(2) = NF2
+C     SUIVIE DU NUMERO DE SON VOLUME
+      NOVOLU = LEFACO(4,NOFACO)
+      IF( NOVOLU .LE. 0 ) NOVOLU = LEFACO(5,NOFACO)
+      MNF1VO(3) = NOVOLU
+      NBVOPT = 1
+C
+C     LE TETRAEDRE NT1 EST INTERNE . SA FACE NF1 EST EN CONTACT
+C     AVEC UN MATERIAU. CE TETRAEDRE SERT DE DEPART AU PARCOURS
+C     DES TETRAEDRES  DES VOLUMES
+C     ---------------------------------------------------------
+C     LE NOMBRE TOTAL DE TETRAEDRES INTERNES AUX NBVOPA VOLUMES
+ 100  NBTETR = 0
+C
+C     BOUCLE SUR LES VOLUMES DE LA PARTITION DANS UN ORDRE QUELCONQUE
+C     ===============================================================
+      DO 400 NOVOL = 1, NBVOPA
+C
+C        LE NOMBRE DE TETRAEDRES DU VOLUME NOVOL
+         NBTETV = 0
+C
+C        RECHERCHE D'UN VOLUME NON TRAITE
+         MN = 1
+         DO 110 I=1,NBVOPA
+            IF( MNF1VO( MN ) .GT. 0 ) GOTO 120
+            MN = MN + 3
+ 110     CONTINUE
+         WRITE(IMPRIM,*) 'ERREUR VDTUER20: VOLUME ',NOVOL,' SANS FACE'
+         CALL CLICSO
+         IERR = 1
+         RETURN
+C
+C        NT1 PREMIER TETRAEDRE DU VOLUME I ET FRONTIERE PAR SA FACE NF1
+ 120     NT1    = MNF1VO( MN     )
+C        LE NUMERO LOCAL DE LA FACE DANS LE TETRAEDRE
+         NF1    = MNF1VO( MN + 1 )
+C        SON NUMERO DE VOLUME
+         NOVOLU = MNF1VO( MN + 2 )
+C
+C        LE CHAINAGE SUR LE 1-ER TETRAEDRE EST EFFECTUE DANS F1VO
+C        LE SIGNE - POUR MONTRER LE TRAITEMENT DE CE VOLUME
+         MNF1VO( MN ) = -NT1
+C
+C        LA PILE DES FACES DU VOLUME EST INITIALISEE
+         NBPIFA = 2
+         MNPIFA(1) = NT1
+         MNPIFA(2) = NF1
+C
+C        LE TETRAEDRE PRECEDENT NT1 N'EXISTE PAS
+         NT0 = 0
+C
+C        TANT QUE LA PILE DES TETRAEDRES INTERNES + FACES EST NON VIDE
+C        =============================================================
+C           DEPILER LA FACE
+C           CHERCHER LE TETRAEDRE NT1 INTERNE AU DELA
+C           CHAINER LE TETRAEDRE NT1
+C           EMPILER SES FACES NON FRONTALIERES DU VOLUME
+C                    ET SUPPRIMER NT1 POUR CETTE FACE
+C           OU AJOUTER LA FACE A F1VO POUR LE VOLUME OPPOSE
+C
+ 200     IF( NBPIFA .GT. 0 ) THEN
+            NBPIFA = NBPIFA - 2
+C           LE TETRAEDRE ET SA FACE EST DEPILE
+            NT1 = MNPIFA( NBPIFA + 1 )
+            IF( NT1 .LE. 0 ) GOTO 200
+            IF( NOTETR(1,NT1) .LE. 0 ) GOTO 200
+            DO 202 NF1 = 1,4
+C              LE TETRAEDRE EST IL TRAITE ?
+               IF( NOTETR(4+NF1,NT1) .GT. 0 ) GOTO 205
+ 202        CONTINUE
+            GOTO 200
+C
+C           NON: LA FACE NF1 ET LE TETRAEDRE NT1 SONT MARQUES
+ 205        NF1 = MNPIFA( NBPIFA + 2 )
+            NOTETR(4+NF1,NT1) = -ABS( NOTETR(4+NF1,NT1) )
+
+C           LE NOMBRE DE TETRAEDRES DU VOLUME EST MIS A JOUR
+            NBTETV = NBTETV + 1
+            DO 260 NF1=1,4
+
+C              LE TETRAEDRE OPPOSE A LA FACE NF1 DE NT1
+               NT2 = NOTETR(4+NF1,NT1)
+               IF( NT2 .GT. 0 ) THEN
+C                 FACE NON TRAITEE. LA FACE EST MARQUEE
+                  NOTETR(4+NF1,NT1) = -ABS( NT2 )
+
+C                 LA FACE NF1 EST ELLE FRONTALIERE?
+                  CALL NULEFT( NF1, NT1, NOTETR, MXFACO, LEFACO, NOFACO)
+                  IF( NOFACO .EQ. 0 ) THEN
+C
+C                    LA FACE N'EST PAS FRONTALIERE. ELLE EST EMPILEE
+C                    -----------------------------
+                     IF( NBPIFA .GE. MXPIFA ) THEN
+C                       LA PILE TROP COURTE EST AUGMENTEE
+                        WRITE(IMPRIM,*)'VDTUER20: SATURATION MNPIFA'
+                        WRITE(IMPRIM,*)'MXPIFA=',MXPIFA,' A AUGMENTER'
+                        IERR = 2
+                        RETURN
+                     ENDIF
+C                    RECHERCHE DE LA FACE DANS NT2
+                     DO 210 NF2=1,4
+                        IF( ABS(NOTETR(4+NF2,NT2)) .EQ. NT1 ) GOTO 220
+ 210                 CONTINUE
+ 220                 IF( NOTETR(4+NF2,NT2) .GT. 0 ) THEN
+C                       FACE NON TRAITEE => EMPILEE
+                        MNPIFA( NBPIFA + 1 ) = NT2
+                        MNPIFA( NBPIFA + 2 ) = NF2
+                        NBPIFA = NBPIFA + 2
+                     ENDIF
+C
+                  ELSE
+C
+C                    LA FACE EST FRONTALIERE ACTIVE
+C                    ------------------------------
+C                    MISE A JOUR DU NO DE TETRAEDRE DANS LEFACO
+                     LEFACO(11,NOFACO) = NT1
+C
+C                    EXISTE-T-IL UN AUTRE VOLUME DIFFERENT DE NOVOLU
+                     NV1 = LEFACO(4,NOFACO)
+                     NV2 = LEFACO(5,NOFACO)
+                     IF( NV1 .NE. NOVOLU .AND. NV2 .NE. NOVOLU ) THEN
+C                       ERREUR NOVOLU N'EST PAS UN VOLUME DE CETTE FACE
+                        WRITE(IMPRIM,10230) NOVOLU,NV1,NV2,NF2,NT2
+10230 FORMAT(' ERREUR VDTUER20: VOLUME',I5,' NON EGAL A',2I5,
+     %' FACE ',I1,' DU TETRAEDRE',I8)
+                        IERR = IERR + 1
+                     ENDIF
+C
+C                    LE VOLUME NOVOL2 AU DELA DE CELUI TRAITE
+                     NOVOL2 = NV1
+                     IF( NOVOL2 .EQ. NOVOLU ) NOVOL2 = NV2
+                     IF( NOVOL2 .EQ. 0 ) GOTO 260
+C
+C                    CE VOLUME NOVOL2 A T IL DEJA ETE RECENSE ?
+                     MN1 = 3
+                     DO 240 J=1,NBVOPT
+                        IF( MNF1VO(MN1) .EQ. NOVOL2 ) GOTO 260
+                        MN1 = MN1 + 3
+ 240                 CONTINUE
+C
+C                    LE VOLUME EST AJOUTE
+                     MNF1VO( MN1     ) = NOVOL2
+                     MNF1VO( MN1 - 1 ) = NF2
+                     MNF1VO( MN1 - 2 ) = NT2
+                     NBVOPT = NBVOPT + 1
+                  ENDIF
+               ENDIF
+ 260        CONTINUE
+C
+C           LE TETRAEDRE NT1 EST CHAINE A CEUX DU VOLUME NOVOLU
+C           COMME ETANT LE SUIVANT DE NT0 TETRAEDRE PRECEDENT DE NT1
+            IF( NT0 .GT. 0 ) THEN
+               MNCTVO( NT0 ) = NT1
+            ENDIF
+            NT0 = NT1
+C
+            GOTO 200
+C        FIN TANT QUE SUR LES FACES DE LA PILE
+         ENDIF
+C
+C        FIN DU CHAINAGE DES TETRAEDRES DU VOLUME NOVOLU
+         MNCTVO( NT0 ) = 0
+C
+C        LE NOMBRE TOTAL DE TETRAEDRES DES VOLUMES
+         NBTETR = NBTETR + NBTETV
+         WRITE(IMPRIM,10400) NOVOLU,NBTETV
+10400 FORMAT(' VDTUER20: VOLUME',I5,' AVEC ', I10, ' TETRAEDRES')
+ 400  CONTINUE
+      WRITE(IMPRIM,*) 'VDTUER20: NOMBRE TOTAL DE TETRAEDRES=',NBTETR
+C
+C     LE CHAINAGE SUR LES TETRAEDRES REPREND UN SIGNE POSITIF
+      MN = 1
+      DO 410 NOVOL=1,NBVOPA
+         IF( MNF1VO( MN ) .LT. 0 ) THEN
+            MNF1VO(MN) = -MNF1VO(MN)
+         ELSE
+            WRITE(IMPRIM,*) 'ERREUR VDTUER20:VOLUME',NOVOL,' NON CHAINE'
+            CALL CLICSO
+         ENDIF
+         MN = MN + 3
+ 410  CONTINUE
+C
+C     MARQUAGE PAR LE 1-ER SOMMET<0 DES TETRAEDRES INTERNES
+      MN = -2
+      DO 450 NOVOL=1,NBVOPA
+C        LE 1-ER TETRAEDRE DU VOLUME
+         MN  = MN + 3
+         NT0 = MNF1VO(MN)
+C
+ 420     IF( NT0 .GT. 0 ) THEN
+C           TEMOIN DE TETRAEDRE INTERNE NO SOMMET 1 <0
+            NOTETR(1,NT0) = -ABS( NOTETR(1,NT0) )
+C           LE TETRAEDRE SUIVANT
+            NT0 = MNCTVO( NT0 )
+            GOTO 420
+         ENDIF
+C
+ 450  CONTINUE
+C
+C     DESTRUCTION DES TETRAEDRES DE NOTETR EXTERNES AUX VOLUMES
+      NBTETR = 0
+      N1TEVI = 0
+      DO 480 NT0=1,MXTETR
+         IF( NOTETR(1,NT0) .GE. 0 ) THEN
+C           TETRAEDRE VIDE OU EXTERNE => VIDE
+            DO 470 I=1,8
+               NOTETR(I,NT0) = 0
+ 470        CONTINUE
+C           LE CHAINAGE DES TETRAEDRES VIDES
+            NOTETR(5,NT0) = N1TEVI
+            N1TEVI = NT0
+         ELSE
+C           TETRAEDRE INTERNE
+            NBTETR = NBTETR + 1
+            NOTETR(1,NT0) = ABS( NOTETR(1,NT0) )
+            N1TETS( NOTETR(1,NT0) ) = NT0
+            N1TETS( NOTETR(2,NT0) ) = NT0
+            N1TETS( NOTETR(3,NT0) ) = NT0
+            N1TETS( NOTETR(4,NT0) ) = NT0
+         ENDIF
+ 480  CONTINUE
+C
+C     DANS NOTETR, LE NUMERO DES TETRAEDRES OPPOSES NEGATIF REDEVIENT POSITIF
+      MN = -2
+      DO 530 NOVOL=1,NBVOPA
+C
+C        LE 1-ER TETRAEDRE DU VOLUME
+         MN  = MN + 3
+         NT0 = MNF1VO(MN)
+         NOVOLU = MNF1VO(MN+2)
+C
+C        LES TETRAEDRES DE CE VOLUME
+ 510     IF( NT0 .GT. 0 ) THEN
+C
+C           LE TETRAEDRE SUIVANT
+            NTS = MNCTVO( NT0 )
+C
+C           LE NO DE VOLUME REMPLACE LE CHAINAGE
+            MNCTVO( NT0 ) = NOVOLU
+C
+            DO 520 I=5,8
+C              LE NUMERO DU TETRAEDRE OPPOSE
+               NT1 = ABS( NOTETR(I,NT0) )
+               IF( NT1 .GT. 0 ) THEN
+                  IF( NOTETR(1,NT1) .EQ. 0 ) NT1 = 0
+               ENDIF
+               NOTETR(I,NT0) = NT1
+ 520        CONTINUE
+C
+            NT0 = NTS
+            GOTO 510
+         ENDIF
+C
+ 530  CONTINUE
+C
+      RETURN
+      END

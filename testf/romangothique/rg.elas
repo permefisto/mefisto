@@ -1,0 +1,45 @@
+{ ============================================================ }
+{ MEFISTO Version Fevrier 1999     PROJET: ROMANGOTHIQUE       }
+{ Utilisateur: Alain Perronnet     Date:  5/ 2/99              }
+{ ============================================================ }
+2;{ ENTREE DONNEES PROBLEME ELASTICITE }
+ { SURFACE: S }
+
+  2;{ module YOUNG et coefficient POISSON }
+  3;{ contraintes planes }
+0.4e11;{ YOUNG  module de YOUNG }
+0.31;  { POISON 'coefficient de POISSON }
+
+  4;{ densite FORCES INTERNES }
+  1;{ constante }
+  1;{ NBCOFO nombre des composantes de la force }
+  2;{ Numero de la composante }
+-3000*9.81;{ valeur de la composante de la force }
+
+@;
+{ LIGNE: L1 }
+ 2; { FIXATION valeur du deplacement impose }
+   1; { constante }
+   2; { NBCOFI nombre de composantes du deplacement fixe }
+1; 2; { NUCOFI numero des 2 composantes }
+0; 0; { valeur des 2 FIXATIONS }
+@;
+
+3;{ RESOUDRE ELASTICITE STATIONNAIRE }
+  1;{ Coefficients INDEPENDANTS des DEPLACEMENTS }
+  1;{ ELASTICITE seule }
+  1;{ CHOLESKY avec stockage PROFIL }
+@;
+
+8;{ DESSIN des Deformees Contraintes }
+  1;{ CONTRAINTES }
+ 90;{ EXECUTION du trace }
+ 90;{ EXECUTER le TRACE }
+ @;
+ @;
+  2;{ DEPLACEMENTS }
+  2;{ DEMANDE D'AMPLIFICATION DEPLACEMENT }
+ 10000; { AMPLIFICATION DES DEPLACEMENTS }
+ 90;{ EXECUTION du trace }
+ 90;{ EXECUTER le TRACE }
+FERMER;

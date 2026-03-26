@@ -1,0 +1,101 @@
+{ ==================================================================== }
+{ Logiciel MEFISTO     : Version Septembre 2007                        }
+{ Nom de l'Utilisateur : Alain Perronnet                               }
+{ Nom du Projet        : pipe                                          }
+{ Date                 : 11/9/2007   18h 18m                           }
+{ ==================================================================== }
+ defvar r, long, na, nbtranche, arete;
+ arete=0.125;
+ r=arete;              {rayon en m}
+ na=atan(1)*8*1.5*r/arete;
+ nbtranche=16;
+ long=nbtranche*arete; {longueur en m}
+
+1; { POINTS sommets de l objet }
+ 1;{ FRAPPE des valeurs }
+ origb; i; 1;  0;  0;  0;
+ origh; i; 1;  0;  0;  long;
+ x;     i; 1;  r;  0;  0;
+ y;     i; 1;  0;  r;  0;
+@;
+
+2; { LIGNES aretes de l objet }
+   { NOM de la LIGNE ou ABANDON? }
+
+ c; i; 8; { CERCLE COMPLET DE R3 }
+ na;   { NBARLI 'nombre d''aretes de la ligne' entier ; }
+ 2;    { cercle defini par le centre, un point du cercle, un point du plan }
+ origb;{ NOM de POINT }
+ x;
+ y;
+ @;
+
+3; { SURFACES faces de l objet }
+ section; i;
+ 9; { TRIANGULATION DE LIGNES FERMEES PAR TE }
+ arete; {taille max des aretes des triangles equilateraux}
+ 1; { NBLFTR nombre de lignes fermees contour de la surface}
+ 1; { NBPTIT nombre de points internes futurs sommets}
+ c;  origb; arete/2; {distance souhaitee aux sommets voisins}
+@;
+
+4; { VOLUMES materiaux de l objet }
+ pipe; i; 14; { TRANCHES D UNE SURFACE GENERATRICE }
+ section; { NOM de SURFACE }
+ 2;    { surfaces translatees d une cote z>0 constante (empilement) }
+ nbtranche;{ nombre de tranches du volume final}
+ long; { cote maximale Z a decouper en tranches}
+
+ pipetetr; i; 31; { TETRAEDRISATION d une HEXA-PENTAEDRISATION }
+ pipe;{ NOM du VOLUME }
+@;
+
+ 3; { SURFACES faces de l objet }
+ cyl; i;  37;  { SURFACE EXTRAITE D UN VOLUME }
+ pipetetr; { NOM du VOLUME }
+ { NOM de FONCTION }
+ deffonc cyl(x,y,z);
+ cyl=(x*x+y*y)>(r-0.001)**2;
+ finfonc;
+ cyl;  { dans le LEXIQUE ~>FONCTION }
+ 1;    { faces frontalieres }
+
+ sectionb; i;  37;  { SURFACE EXTRAITE D UN VOLUME }
+ pipetetr;  { NOM de VOLUME }
+ { NOM de FONCTION }
+ deffonc bas(x,y,z);
+ bas=z<0.001;
+ finfonc;
+ bas;  { dans le LEXIQUE ~>FONCTION }
+ 1;    { faces frontalieres }
+
+ sectionh; i;  37;  { SURFACE EXTRAITE D UN VOLUME }
+ pipetetr;  { NOM de VOLUME }
+ { NOM de FONCTION }
+ deffonc haut(x,y,z);
+ haut=z>(long-0.01);
+ finfonc;
+ haut;  { dans le LEXIQUE ~>FONCTION }
+ 1;     { faces frontalieres }
+@;
+
+5;  { OBJETS parties de l OBJET }
+ pipe2d; { NOM de l'OBJET }
+ 0; { classique 2D ou 3D }
+ 5; { NBDOBJ nombre des Points Lignes Surfaces Volumes Objets de l'objet }
+ v; pipetetr;
+ s; cyl;
+ s; sectionb;
+ s; sectionh;
+ p; origh;
+@;
+
+7; { INTERPOLATION NOEUDS du maillage }
+ pipe2d; { NOM de l'OBJET a INTERPOLER? }
+ 3;      { LAGRANGE de DEGRE 1 => TETRAEDRE BREZZI-FORTIN pour un FLUIDE }
+@;
+@;
+
+10; 5; 1; {Trace de tous les objets }
+90;
+FERMER;

@@ -1,0 +1,14 @@
+Un fichier est constitue d'un certain nombre de pages, chaque page 
+ayant un certain nombre de mots memoire.
+Un FAIBLE nombre de mots permet le stockage de PETITS tableaux MS.
+Un GRAND NOMBRE de pages permet le stockage de tres NOMBREUX TMS. 
+Par defaut, le nombre de pages est 'egal `a 64.
+Par defaut, le nombre de mots par pages est egal a 256. 
+EXEMPLE :
+1;      {volonte de donner le nombre de pages}
+256;    {pages}
+2;      {volonte de donner le nombre de mots par page}
+4096;   {mots par page}
+3;      {AJOUT EFFECTIF du fichier a la MS}
+@;      {Retour au MENU RACINE}
+

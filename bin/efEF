@@ -1,0 +1,106 @@
+#!/bin/bash
+#  Alain Perronnet          Octobre 1997
+# 
+echo =======================================================
+echo TRANSFERT de $mefisto dans $MEFISTO
+echo =======================================================
+#
+#Protection de la librairie bin de MEFISTO=/usr/local/mefisto
+#set -x
+
+cd $MEFISTO
+if test -d ~/bin.MEFISTO
+then
+  rm -Rf ~/bin.MEFISTO
+fi
+cp -R $MEFISTO/bin  ~/bin.MEFISTO
+cp incl/homdir.inc  ~/homdir.inc
+cp incl/pp.inc      ~/pp.inc
+
+#Destruction des repertoires de $MEFISTO
+rm -R $MEFISTO/*
+
+cd $mefisto
+
+cp     LISEZMOI $MEFISTO
+
+mkdir  $MEFISTO/bin.lnx
+cp -R  bin.lnx/*  $MEFISTO/bin.lnx
+
+mkdir  $MEFISTO/bin.sun
+cp -R  bin.sun/*  $MEFISTO/bin.sun
+
+mkdir  $MEFISTO/bin.ibm
+cp -R  bin.ibm/*  $MEFISTO/bin.ibm
+
+mkdir  $MEFISTO/elas
+cp -R  elas/*.f $MEFISTO/elas
+
+mkdir  $MEFISTO/mail
+cp -R  mail/*.f $MEFISTO/mail
+
+mkdir  $MEFISTO/reso
+cp -R  reso/*.f $MEFISTO/reso
+
+mkdir  $MEFISTO/util
+cp -R  util/*.f    $MEFISTO/util
+cp     util/*.*.*  $MEFISTO/util
+
+mkdir  $MEFISTO/prpr
+cp -R  prpr/*.f $MEFISTO/prpr
+
+mkdir  $MEFISTO/ther
+cp -R  ther/*.f $MEFISTO/ther
+
+mkdir  $MEFISTO/xvue
+cp -R  xvue/*.f    $MEFISTO/xvue
+cp     xvue/*.c    $MEFISTO/xvue
+cp     xvue/*.*.*  $MEFISTO/xvue
+
+mkdir  $MEFISTO/doc
+cp -R  doc      $MEFISTO
+
+mkdir  $MEFISTO/incl
+cp -R  incl     $MEFISTO
+
+mkdir  $MEFISTO/td
+cp -R  td       $MEFISTO
+
+mkdir  $MEFISTO/test
+cp -R  test     $MEFISTO
+
+#Regeneration de la librairie bin
+cp -R ~/bin.MEFISTO $MEFISTO/bin
+ls -l $MEFISTO
+
+cp  ~/homdir.inc  $MEFISTO/incl/homdir.inc
+cat $MEFISTO/incl/homdir.inc
+rm  ~/homdir.inc
+echo
+echo "Retoucher HOMDIR dans $MEFISTO/incl/homdir.inc (HOMDIR=/usr/local/mefisto)"
+echo "Puis, taper un caractere"
+read bidon
+
+cp  ~/pp.inc  $MEFISTO/incl/pp.inc
+cat $MEFISTO/incl/pp.inc
+rm  ~/pp.inc
+echo
+echo "Retoucher MOTMCN dans $MEFISTO/incl/pp.inc"
+echo "Puis, taper un caractere"
+read bidon
+
+echo
+echo Choisir la version compilable AVEC ou SANS MOTIF :
+echo Taper AVEC pour obtenir la version AVEC MOTIF
+echo Taper tout autre caractere pour obtenir SANS MOTIF
+read bidon
+if `expr $bidon = AVEC`
+then
+  $MEFISTO/bin/avecMOTIF
+else
+  $MEFISTO/bin/sansMOTIF
+fi
+
+echo
+echo La COMPILATION ARCHIVAGE generale de $MEFISTO est lancee
+$MEFISTO/bin/cbl_tout

@@ -1,0 +1,54 @@
+      SUBROUTINE VITEXACT( NOFOVI, NDIM,  NBNOVI, NBVECT, TIMES, XYZN,
+     %                     VITEXA )
+C+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+C BUT : CALCULER LE TABLEAU DE LA VITESSE EXACTE(NOEUDS,TEMPS,COMPOSANTE)
+C ----- EN TOUS LES NBNOVI NOEUDS DU MAILLAGE
+C
+C ENTREES:
+C --------
+C NOFOVI : NUMERO DE LA FONCTION UTILISATEUR VITESSE_EXACTE(t,x,y,z,nc)
+C NDIM   : DIMENSION DE L'ESPACE DE L'OBJET (2 OU 3)
+C NBNOVI : NOMBRE DE NOEUDS SUPPORT DE LA VITESSE
+C NBVECT : NOMBRE TOTAL DE VECTEURS VITESSE PRESSION
+C TIMES  : NBVECT TEMPS DU CALCUL DE LA VITESSE
+C XYZN   : 3 COORDONNEES DES NBNOVI NOEUDS DU MAILLAGE
+C
+C SORTIE :
+C --------
+C VITEXA : VITESSE_EXACTE(NOEUD,NBTEMPS,NBCOMPOSANTE)
+C+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+C AUTEUR : ALAIN PERRONNET TEXAS A & M UNIVERSITY at QATAR  FEVRIER 2012
+C234567...............................................................12
+      DOUBLE PRECISION  VITEXA(NBNOVI,NBVECT,NDIM)
+      DOUBLE PRECISION  DPARAF(5)
+      REAL              TIMES(NBVECT), XYZN(3,NBNOVI), TEMPS
+C
+      DO K=1,NBVECT
+C
+C        LE TEMPS K
+         TEMPS = TIMES(K)
+         DPARAF(1) = TEMPS
+C
+         DO N=1,NBNOVI
+C
+C           VITESSE_EXACTE(t,x,y,z,nocomp) ou
+C           EXACT_VELOCITY(t,x,y,z,nocomp) AU NOEUD ET AU TEMPS K
+            DPARAF(2) = XYZN(1,N)
+            DPARAF(3) = XYZN(2,N)
+            DPARAF(4) = XYZN(3,N)
+C
+            DO M=1,NDIM
+C
+C              NUMERO DE LA COMPOSANTE TRAITEE DE LA VITESSE
+               DPARAF(5) = M
+C
+C              COMPOSANTE N DE LA VITESSE EXACTE AU NOEUD I AU TEMPS K
+               CALL FONVAL( NOFOVI, 5, DPARAF, NCODEV, VITEXA(N,K,M) )
+            ENDDO
+C
+         ENDDO
+C
+      ENDDO
+C
+      RETURN
+      END

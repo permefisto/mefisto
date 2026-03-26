@@ -1,0 +1,12 @@
+deftms ~>>>PREFLUIN 'Pression Initiale du Fluide'
+variable muet DATE 'Date de creation du tableau'   reel2  ;
+variable muet NUTD 'Numero du tableau descripteur' entier ; 
+variable LTPRE0 'Type de la Pression Initiale' entier 
+(  1 : 'PRESSION INITIALE constante' 
+, -1 : 'Fonction PRESSION INITIALE' 
+,  0 : 'PRESSION INITIALE a supprimer' ) ;
+cas LTPRE0
+ 1 : variable VAPRE0 'Pression Initiale CONSTANTE a FIXER' reel ; 
+-1 : variable NFPRE0 'NOM de la fonction Pression Initiale' ^~>FONCTION ;
+fincas ;   
+fintms ;

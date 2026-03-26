@@ -1,0 +1,4 @@
+variable TYPTRAIT 'Types of Line' entier
+( 0 : 'Line Solid'
+, 1 : 'Line On Off Dash'
+, 2 : 'Line Double Dash' ) ;

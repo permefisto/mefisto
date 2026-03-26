@@ -1,0 +1,131 @@
+The MAPPINGS on the 3 coordoninates of vertices of a mesh
+may be defined aby:
+
+1: identity R3 -> R3 named I;
+-----------------------------
+Do not change X or Y or Z
+
+2: Mapping R3 -> R3 defined by 3 functions  
+------------------------------------------
+If (x,y,z) are the vertex coordinates then
+(ABSCISSE(x,y,z), ORDINATE(x,y,z), COTE(x,y,z))
+is the final vertex where ABSCISSE, ORDINATE and COTE
+are 3 user's functions with the 3 parameters (x,y,z).
+x, y, z may be used or not to write the function text.
+
+Example:
+MAPPING_2; 2;         {definition of 3 functions}
+deffunc ABSCISSE( x , y , z ) ; 
+   si    (1<=x) et (x<100)
+   alors  ABSCISSE = log(x) ;
+   sinon  ABSCISSE = abs( x*y-z ) ;
+   finsi;  
+endfunc;  
+deffunc YY( x, y, z); YY=y+3; endfunc;
+deffunc ZZ( x, y, z); ZZ=z;   endfunc;  
+ABSCISSE; YY; ZZ; {les noms des functions dans la transformation}
+
+3: isometry of R3 -> R3  
+-----------------------
+there are 7 types of isometries (in a large sens) : 
+
+0: translation defined by a R3 vector
+Input the 3 real componentes of translation vector
+Example: TR_3_0; 3; 0; 1; 2; 3;
+Translation de vecteur(1,2,3)
+
+1: translation+rotation+dilatation defined by 2 points and 7 reals 
+Example: TR_3_1; 3; 1;
+P1_AXIS_ROTATION; P2_AXIS_ROTATION; {axe de rotation defini par 2 POINTS}
+ 90.0;      {rotation degrees around this axis};
+ 1; 2; 3;   {3 componentes of translation vector}
+ 2; 1; 0.5; {3 coefficients of dilatation in directions x y z}
+
+2: translation+rotation+dilatation defined y 4 images of 4 points 
+The 4 first points define a reference system before mapping
+the first  point P1 is the origin of the reference system
+the second point P2 define the axis E1 = P1 P2  such that NORM(E1)=1
+the third  point P3 define the line P1 P3 and the plane E1 E2  
+ E3 = P1P2 x P1P3  such that NORM(E3)=1
+ E2 = E3   x E1    such that NORM(E2)=1
+
+The 4 last points define a reference system after mapping
+the first  point Q1 is the origin of the reference system
+the second point Q2 define the axis F1 = Q1 Q2  such that NORM(F1)=1
+the third  point Q3 define the line Q1 Q3 and the plane F1 F2  
+ F3 = Q1Q2 x Q1Q3  such that NORM(F3)=1
+ F2 = F3   x F1    such that NORM(F2)=1
+
+The DILATATIONS are the RATII of DISTANCES
+ || Qi - Q1 || / || Pi - P1 ||   for i=2,3,4
+Thus, it is possible to compute the matrix and the vector of
+the mapping.
+The 4-th and 8-th POINTS are ONLY USED to define the DILATATION
+in the 3th direction.
+ATTENTION: If the 8 points don not form orthogonal reference systems
+           then  Q1 =  T( P1 )
+           but   Qi <> T( Pi )  i=2,3,4
+Example:
+MAPPING_3_2; 3; 2;  R1_ORIGIN; R1_X; R1_Y; R1_Z; {ref system before}
+                    R2_ORIGIN; R2_X; R2_Y; R2_Z; {ref system after }
+
+3: translation+rotation defined by 3 images of 3 points
+IDEM previously but WITHOUT DILATATIONS
+Example:
+MAPPING_3_3; 3; 3;  R1_ORIGIN; R1_X; R1_Y; {ref system before}
+                    R2_ORIGIN; R2_X; R2_Y; {ref system after }
+ 
+4: plane symetry defined by 3 points 
+The input of 3 POINTS not on a same line is sufficient.
+Example:
+MAPPING_3_4; 3; 4; P1_PLANE; P2_PLANE; P3_PLANE;
+
+5: line symetry defined by 2 points 
+The input of 2 different POINTS is sufficient.
+Example:
+MAPPING_3_5; 3; 5; P1_LINE_SYMETRY;  P2_LINE_SYMETRY;
+
+6: point symetry
+The input of 1 POINT is sufficient.
+Example:
+MAPPING_3_6; 3; 6; POINT_SYMETRY;
+
+4: projection on an implicit surface of R3 
+------------------------------------------  
+The x,y,z coordinates the PROJECTED VERTEX must verify 
+F( x , y , z ) = 0 , implicit definition of the SURFACE.
+The FUNCTION NAME may be choose as you want (24 characters max)
+Example:
+deffunc sphere(x,y,z); sphere=x*x+y**2+z*z-25; endfunc;
+Define a sphere centred at origin and of radius 5.
+
+The PROJECTION POINT is the INTERSECTION of a LINE and the SURFACE
+The computation of x,y,z such that F( x , y , z ) = 0 is done
+by dichotomy of 2 POINTS P1 and P2 on the line such that
+F(P1) * F(P2)<=0
+A SENS of PROJECTION is given and if no convergence, it is inversed.
+
+9 types of projections : 
+ 1: parallel projection to +oX X  ascending  
+-1: parallel projection to -oX X decreasing    
+ 2: parallel projection to +oY Y  ascending  
+-2: parallel projection to -oY Y decreasing
+ 3: parallel projection to +oZ Z  ascending  
+-3: parallel projection to -oZ Z decreasing  
+ 4: projection from the centre anf the point to be projected
+ 5: orthogonal projection to the plane defined by 3 points
+ 6: orthogonal projection to the line  defined by 2 points
+ATTENTION: The point or vertice to be projected must NOT be on the line!
+
+Examples:
+PROJ1;  4;  1;  {projection +oX}
+PROJM1; 4; -1;  {projection -oX}    
+PROJ2;  4;  2;  {projection +oY}
+PROJM2; 4; -2;  {projection -oY}    
+PROJ3;  4;  3;  {projection +oY}
+PROJM3; 4; -3;  {projection -oY}    
+PROJ4;  4;  4;  POINT_CENTRE_PROJECTION;
+PROJ5;  4;  5;  P1_PLANE_PROJECTION; P2_PLANE_PROJECTION;
+ P3_PLANE_PROJECTION;      
+PROJ6;  4;  6;  P1_LINE_ORTHOGONAL; P2_LINE_ORTHOGONAL;
+

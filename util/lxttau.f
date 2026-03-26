@@ -1,0 +1,49 @@
+      SUBROUTINE LXTTAU( NTLX , KNOM , MXTT )
+C+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+C BUT : AUGMENTER LE NOMBRE DE TABLEAUX D'UN TABLEAU DE TABLEAUX
+C -----
+C ENTREES :
+C ---------
+C NTLX   : NUMERO DU TAMS LEXIQUE CONTENANT LE NOM KNOM
+C KNOM   : NOM DANS LE LEXIQUE DU TABLEAU DE TABLEAUX
+C MXTT   : NOMBRE DE TABLEAUX DU TABLEAU DE TABLEAUX
+C          SI MXTT =< ANCIENNE VALEUR RETOUR SINON AUGMENTATION
+C+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+C PROGRAMMEUR : ALAIN PERRONNET ANALYSE NUMERIQUE PARIS  OCTOBRE 1985
+C.......................................................................
+      include"./incl/gsmenu.inc"
+      include"./incl/pp.inc"
+      COMMON            MCN(MOTMCN)
+      COMMON / UNITES / LECTEU,IMPRIM,NUNITE(30)
+      CHARACTER*(*)     KNOM
+C
+C     OUVERTURE DU TABLEAU DE TABLEAUX
+      CALL LXTTOU( NTLX , KNOM , NTTATA , MNTATA )
+      IF( NTTATA .LE. 0 ) THEN
+C        LE TABLEAU DE TABLEAUX N'EXISTE PAS
+         NBLGRC(NRERR) = 2
+         KERR(1) = KNOM
+         KERR(2) ='NOM INCONNU DANS LE LEXIQUE'
+         CALL LEREUR
+         CALL LXIM( NTLX )
+         CALL ARRET( 100 )
+      ENDIF
+C
+C     LE MAXIMUM DE TABLEAUX DU TATA
+      MXTATA = MCN( MNTATA + 1 )
+      IF( MXTT .LE. MXTATA ) RETURN
+C
+C     DECLARATION DU TABLEAU DE TAILLE SUPERIEURE
+      CALL TAMSAU( NTTATA , MXTT + 4 )
+C
+C     REOUVERTURE DU TATA
+      CALL TAMSOU( NTTATA , MNTATA )
+C
+C     MISE A JOUR DU NUMERO DES TABLEAUX NON DECLARES
+      DO 10 I = 4+MXTATA , 3+MXTT
+        MCN(MNTATA+I) = 0
+ 10   CONTINUE
+C
+C     MISE A JOUR DANS LE TATA
+      MCN( MNTATA + 3 ) = MXTT
+      END

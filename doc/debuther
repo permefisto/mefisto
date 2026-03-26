@@ -1,0 +1,159 @@
+SOLVER of an HEAT PROBLEM or -div( A grad ) OPERATOR:
+
+0: Number of INPUT DATA GAME of the operator -div A grad u + CT u
+   The value 1 by default is generally correct.
+   Only, the solutions of eigenvalues of a matrix polynomial and a
+   not linear problem, necessitate a number of data greater 1.
+   These 2 cases are programming ...
+
+1: OBJECT NAME to treat:
+   First, the NAME of the object must be given.
+   This object has to be meshed and interpolated.
+   If it exists only one object, Mefisto find it automatically and
+   this name may be not given
+
+2: HEAT INPUT DATA: 
+   The data input for the heat problem are:
+  -The MASS density, the SPECIFIC MASS HEAT, the CONDUCTIVITY,
+   the DILATATION, the INTERIOR HEAT SOURCES, eventually the FLUID SPEED,
+   the COEFFICIENT before the TEMPERATURE, have to be given
+   at level of every component of the object: volume in 3d or surface in 2d
+
+  -The IMPOSED TEMPERATURE (Dirichlet condition) named here CONTACT or
+   the normal FLUX named here SOURCE (NEUMANN condition) or
+   the heat transfer coefficient named here ECHANGE and
+   the product of ECHANGE x FLUID TEMPERATURE named here SOURCE
+   have to be given on every component of the boundary.
+
+   Remark: @ permits the abandon of the data input of a component
+           of the object.
+
+   EXAMPLE :
+                         L3
+       P4 *----------------------------------* P3
+          |                                  |
+          |                                  |    
+          |                                  |
+          |                                  |
+          |                                  |
+       L4 |              S                   | L2    
+          |                                  |
+          |                                  |
+          |                                  |
+          |                                  |    
+          |                                  |
+          |                                  |
+       P1 *----------------------------------* P2
+                         L1
+
+   HEAT CHARACTERISTICS for the STEADY problem:
+
+   on S  : CONDUCTIVITY and internal heat SOURCE
+   * means one of the 4 characters 1 or 2 or 3 or 4
+   on L* : CONTACT (imposed temperature) or
+           exterior SOURCE (normal heat flux, Neumann condition)
+           ECHANGE and SOURCE ( ECHANGE*exterior fluid temperature)
+   on P* : CONTACT if the point P* is also on one L* which
+           supports exterior SOURCEs
+
+   if L4 and L2 are subjected to exterior SOURCE and CONTACT for L3
+   it is necessary to define P3 and P4 in terms of CONTACT
+   in order to imposed a DIRICHLET condition (temperature)
+   at these points.
+
+   if L4 is with contact : temperature=0   degree
+      L2 is with contact : temperature=100 degrees
+      L3 is with a Fourier-Robin condition,
+   then it is necessary to define
+      P3 with CONTACT : temperature=100 degrees
+      P4 with CONTACT : temperature=0   degree     
+   to imposed the Dirichlet condition at these points.
+
+   REMEMBER that at least a CONTACT at 1 point or a Fourier-Robin 
+   condition IS NECESSARY to obtain a PROBLEM INVERSIBLE MATRIX!
+
+   If the object OB is defined by : 
+   surface S  line L2  line L3  line L4  point P3  point P4 
+   then, by default, the exterior source (Neumann condition) on L1
+   is imposed null.
+
+3: STEADY HEAT TRANSFER solver
+   The data are given. The solver can be executed.
+   Choose between a direct method by Cholesky factorization
+   or an iterative method by a preconditioned conjugate gradient.
+
+4: UNSTEADY HEAT TRANSFER solver
+   The data are given. The solver can be executed.
+   The TIME INTEGRATION is done with an alpha scheme which is
+   unconditionnaly stable if  1/2 <= alpha <= 1.
+   Choose between a direct method by Cholesky factorization
+   or an iterative method by a preconditioned conjugate gradient.
+
+5: 2D WAVE solver:  rot d2 u/dt2 -div A grad u = f
+   The TIME INTEGRATION is done with a NEWMARK scheme or a decentred 
+   scheme which are unconditionnaly stable.
+
+6: EIGENVALUE & VECTORS solver
+   The smaller eigenvalues for the elasticity operator
+   may be computed by 2 methods: SUB-SPACE or INVERSE ITERATIONS.
+
+8: DRAWING of TEMPERATURES and FLUX
+   After the computation of temperatures and fluxes,
+   their drawing may be done under different forms:
+   isovalues, color zones, section planes, gradient or flux arrows, ...
+
+9: DRAWING of a WAVE
+   After the computation, the vertical displacement of the wave
+   may be drawn at different values of time.
+
+10: DRAWING of PLSVO meshes
+    To memorize the different meshes and recover the components
+    of an object.
+
+11: DRAWING of ISO-SURFACES f(x,y,z)=Ctes
+    From a mesh of a surface and the user definition of LU function
+    f(x,y,z), a drawing of isovlue surfaces f(x,y,z)=Ctes may be done.
+   (A list of pseudo-temperatures at nodes is defined and the drawing
+    of isovalues is done)
+
+13: ENERGY of SOLUTIONS
+    After the computation, the kinetic energy ( T [K] Tt )
+    and the potential energy ( T [M] Tt ) of the temperature T
+    are computed.
+
+20: PRECISION to INVERSE A x = b
+    to give the value of convergence iteration test for 
+    Cholesky factorization or conjugate gradient.
+
+The other options are used to manage the project:
+
+39: BACKGROUND COLOR of the WINDOW
+To change the color of the Mefisto window
+
+71: TOOLS on TMS
+With this option, it is possible to
+- DISPLAY a TMS (Tableau Memoire Secondaire = Array on Disk)
+- INPUT the values of a TMS
+- DISPLAY the VALUE of a TMS variable
+- IMPOSE  the VALUE of a TMS variable
+- CHANGE  a NAME in a directory
+
+72: TOOLS on FILES of the MS
+To add a new file to the MS if it is saturated...
+
+73: TOOLS on I/O units
+The option 3 (default value) permits the interaction User-Mefisto
+
+74: DELETE TMS of PLSVO
+It is possible to DESTROY a  TMS ou un PLSVO or the function 
+TAILLE_IDEALE(x,y,z) ... But no recovering is possible!
+Don not use this option.
+
+99: SAVE DATA and QUIT
+This option is OBLIGATORY to recover the computed TMS of this
+execution during a future execution of MAILLER, THERMICER, ...
+ELSE, ALL DATA ARE LOST!...
+
+In this wrong case, see the files FRAPPE.* of the project
+which permits to compute again all executions...
+But, it is not recommended!...

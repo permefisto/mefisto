@@ -1,0 +1,32 @@
+Ce reel ARETMX designe la longueur de l'arete d'une grille
+reguliere qui recouvre l'objet complet.
+Des triangles reguliers, de cote une arete de cette taille,
+seront ensuite generes.      
+
+Si l'Utilisateur N'a PAS donne la fonction
+DefFonc Taille_Ideale(x,y,z); ...
+Alors
+  les triangles trop volumineux seront reduits par
+  introduction de leur barycentre.   
+Sinon
+  La longueur des triangles verifiera Taille_Ideale(x,y,z)
+
+ C'est la methode pour indiquer autour du point (x,y,z)
+ la longueur des aretes des triangles!
+
+Exemple de donnee de cette fonction:
+DefVar lxf,lh2,lh3;
+lh2=0.3;
+lh3=0.7;
+lxf=max(lh2,lh3);
+
+DefFonc Taille_Ideale(x,y,z);
+  Taille_Ideale=0.45;
+  Si x<lxf et y>-(lh3+lh2)*1.2
+    Alors Taille_Ideale=0.15;
+  Sinon
+    Si x<lxf et y>-(lh3+lh2)*1.8
+    Alors Taille_Ideale=0.28;
+    Finsi;
+  FinSi;
+FinFonc;

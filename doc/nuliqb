@@ -1,0 +1,7 @@
+The B-Spline LINES must all have
+- the SAME number of control or interpolation points
+described in the SAME ORDER to evitate crossed quadrangles
+- the SAME bounds of nodes
+
+The input stops only with the input
+of existing LINES.

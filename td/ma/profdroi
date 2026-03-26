@@ -1,0 +1,10 @@
+variable PROFLINE 'PROFILES along LINES' entier
+( 1  : '2 XYZ to define the LINE'
+, 5  : 'COLOR of Boundary EDGES'
+, 6  : 'DRAWING TYPE of Boundary EDGES'
+, 7  : 'COLOR of EDGES on PROFILES'
+, 8  : 'DRAWING TYPE of EDGES on PROFILES'
+, 9  : 'DIRECTION of PROFIL'
+, 15 : 'AMPLIFICATION coefficient'
+, 80 : 'INITIATE AGAIN the data of LINES'
+, 90 : 'EXECUTION of the DRAWING' ) ;

@@ -1,0 +1,8 @@
+deftms ~>>>LESTEMPS 'ARRAY of TIMES'
+variable muet DATE 'date of creation of the TMS'       reel2  ;
+variable muet NUTD 'number of the descriptor array TD' entier ;
+variable NBTEMP 'TIMES NUMBER'                         entier ;
+tableau  TEMPS(1..NBTEMP) 'TIMES Values'               reel2 ;
+tableau  NMTEMP(1..12,1..NBTEMP)
+                '4*12 characters associated to times' entier ;
+fintms ;

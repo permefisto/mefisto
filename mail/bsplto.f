@@ -1,0 +1,246 @@
+      SUBROUTINE BSPLTO( KDEGRE, LR, R, NBINBS, S, NBPCBL, XYZPC,
+     %                   NOFOTI,
+     %                   MXSOLI, NBSOLI, MNPAST, IERR )
+C++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+C BUT :    CALCULER LES 3 COORDONNEES DES NBSOLI SOMMETS DE LA LIGNE
+C -----    D'UNE B-SPLINE POLYNOMIALE UNIFORME OUVERTE
+C          TELS QUE LES LONGUEURS DES ARETES VERIFIENT LA FONCTION
+C          TAILLE_IDEALE(X,Y,Z)
+C
+C ENTREES:
+C --------
+C KDEGRE : DEGRE DES POLYNOMES DE LA B-SPLINE
+C LR     : NOMBRE DE PARAMETRES DIFFERENTS DE T
+C NBINBS : NOMBRE D'INTERVALLES DE CALCUL DE LA B-SPLINE
+C R      : LES ABSCISSES PARAMETRE AYANT POUR IMAGE LES POINTS CONTROLE
+C S      : LES COEFFICIENTS DES POLYNOMES SUR CHAQUE INTERVALLE
+C NBPCBL : NOMBRE DE POINTS DE CONTROLE
+C XYZPC  : LES 3 COORDONNEES DES NBPCBL POINTS DE CONTROLE
+C NOFOTI : NUMERO DE LA FONCTION TAILLE_IDEALE DANS LE LEXIQUE FONCTION
+C
+C SORTIES:
+C --------
+C MXSOLI : NOMBRE MAXIMAL DE SOMMETS DECLARABLES DE LA LIGNE
+C NBSOLI : NOMBRE DE SOMMETS DE LA LIGNE
+C MNPAST : ADRESSE MCN DU DEBUT DES PARAMETRES DES SOMMETS DE LA LIGNE
+C IERR   : 0 SI PAS D'ERREUR, >0 SINON
+C+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+CAUTEUR : A.PERRONNET  ANALYSE NUMERIQUE UPMC PARIS            AOUT 1997
+C2345X7..............................................................012
+      PARAMETER         (NBST2S=10)
+      include"./incl/gsmenu.inc"
+      COMMON / UNITES / LECTEU, IMPRIM, INTERA, NUNITE(29)
+      include"./incl/pp.inc"
+      COMMON            MCN(MOTMCN)
+      REAL              RMCN(1)
+      EQUIVALENCE      (MCN(1),RMCN(1))
+      REAL              R(0:LR),
+     %                  S(0:KDEGRE,0:NBINBS-1,1:3),
+     %                  XYZPC(1:3,1:NBPCBL)
+      DOUBLE PRECISION  XYZD0(3), XYZD1(3), XYZD2(3), DTAILL, HL
+C
+C     DECLARATION DU TABLEAU DES PARAMETRES DES SOMMETS DE LA LIGNE
+      MXSOLI = 1024
+      CALL TNMCDC( 'REEL', MXSOLI, MNPAST )
+C
+C     LES 3 COORDONNEES DU PREMIER SOMMET DE LA LIGNE OUVERTE
+C     C'EST LE PREMIER POINT DE CONTROLE  DE LA LIGNE OUVERTE
+      RMCN(MNPAST) = R(0)
+C
+      XYZD1(1) = XYZPC(1,1)
+      XYZD1(2) = XYZPC(2,1)
+      XYZD1(3) = XYZPC(3,1)
+C
+      R1     = R(0)
+      NBSOLI = 1
+C
+C     BOUCLE SUR LES SOMMETS A CREER SUR LA COURBE B-SPLINE
+C     =====================================================
+ 10   XYZD0(1) = XYZD1(1)
+      XYZD0(2) = XYZD1(2)
+      XYZD0(3) = XYZD1(3)
+C
+C     RECHERCHE DU PREMIER POINT DE LA COURBE A DISTANCE TAILLE_IDEALE
+C     ----------------------------------------------------------------
+C     APPROXIMATION DE LA LONGUEUR PAR CELLE DES CORDES
+      HL  = 0D0
+      PAS = (R(LR)-R1) / NBST2S
+      DO 18 K=1,NBST2S-1
+C
+C        LE PARAMETRE K ENTRE R1 ET R(LR) MAXIMAL
+         R2 = R1 + K * PAS
+C
+         I = 0
+ 12      IF( R2 .GE. R(I+1) ) THEN
+C           PASSAGE A L'INTERVALLE SUIVANT DE R
+            I = I + 1
+            GOTO 12
+         ENDIF
+C
+C        R2 EST DANS L'INTERVALLE R(I) R(I+1)
+         RR = R2 - R(I)
+C        LES 3 COORDONNES DU SOMMET DE LA B-SPLINE
+         DO 16 J=1,3
+            A = S(KDEGRE,I,J)
+            DO 14 M=KDEGRE-1,0,-1
+               A = A * RR + S(M,I,J)
+ 14         CONTINUE
+            XYZD2(J) = A
+ 16      CONTINUE
+C
+C        LA TAILLE_IDEALE AUTOUR DU POINT XYZD2
+         CALL FONVAL( NOFOTI, 3, XYZD2,  NCODEV, DTAILL )
+         IF( NCODEV .EQ. 0 ) GOTO 9900
+C        UNE PRECAUTION
+         DTAILL = ABS( DTAILL )
+C
+C        LA LONGUEUR TOTALE DES CORDES
+         HL = HL + SQRT( (XYZD2(1)-XYZD0(1))**2
+     %                 + (XYZD2(2)-XYZD0(2))**2
+     %                 + (XYZD2(3)-XYZD0(3))**2 )
+C
+         IF( HL .GE. DTAILL ) THEN
+C           LE POINT EST A UNE DISTANCE SUPERIEURE A LA DISTANCE SOUHAITEE
+C           UN POINT DOIT ETRE CREE
+            GOTO 20
+         ENDIF
+C
+C        PASSAGE AU CALCUL DU SOMMET SUIVANT
+         XYZD0(1) = XYZD2(1)
+         XYZD0(2) = XYZD2(2)
+         XYZD0(3) = XYZD2(3)
+ 18   CONTINUE
+C
+C     AUCUN POINT INTERMEDIAIRE N'EST A CREER
+      GOTO 60
+C
+C     CREATION D'UN POINT INTERMEDIAIRE => UN SOMMET DE PLUS SUR LA B-SPLINE
+C     ----------------------------------------------------------------------
+ 20   IF( NBSOLI .GE. MXSOLI ) THEN
+C        SATURATION DU TABLEAU PAST => IL EST AUGMENTE
+         CALL TNMCAU( 'REEL', MXSOLI, MXSOLI+128,
+     %                 NBSOLI, MNPAST )
+         MXSOLI = MXSOLI + 128
+      ENDIF
+      NBSOLI = NBSOLI + 1
+C
+C     LA VALEUR INITIALE DU PARAMETRE DU NOUVEAU POINT
+      RMIN   = R1
+      RMAX   = R2
+      R1     = ( RMIN + RMAX ) / 2
+      NBITER = 0
+C
+C     LES ITERATIONS POUR OBTENIR UN ARC DE TAILLE_IDEALE
+ 22   NBITER = NBITER + 1
+      IF( NBITER .GT. 256 ) THEN
+         NBLGRC(NRERR) = 3
+         KERR(1) = 'BSPLTO: ARC DE TAILLE NON IDEALE'
+         KERR(2) = 'APRES 256 ITERATIONS'
+         KERR(3) = 'VALEUR ACTUELLE IMPOSEE'
+         CALL LEREUR
+         GOTO 50
+      ENDIF
+C
+C     LES 3 COORDONNEES DU SOMMET DE PARAMETRE R1
+      I = 0
+ 24   IF( R1 .GE. R(I+1) ) THEN
+C        PASSAGE A L'INTERVALLE SUIVANT DE R
+         I = I + 1
+         GOTO 24
+      ENDIF
+C     R1 EST DANS L'INTERVALLE R(I) R(I+1)
+      RR = R1 - R(I)
+      DO 30 J=1,3
+         A = S(KDEGRE,I,J)
+         DO 28 M=KDEGRE-1,0,-1
+            A = A * RR + S(M,I,J)
+ 28      CONTINUE
+         XYZD2(J) = A
+ 30   CONTINUE
+C
+C     TAILLE_IDEALE AU POINT CALCULE
+      CALL FONVAL( NOFOTI, 3, XYZD2,  NCODEV, DTAILL )
+      IF( NCODEV .EQ. 0 ) GOTO 9900
+      DTAILL = ABS( DTAILL )
+C
+C     LONGUEUR APPROXIMATIVE DE L'ARC (LONGUEUR DE LA CORDE)
+      HL = SQRT( (XYZD2(1)-XYZD1(1))**2
+     %         + (XYZD2(2)-XYZD1(2))**2
+     %         + (XYZD2(3)-XYZD1(3))**2 )
+C
+      IF( ABS(HL-DTAILL) .GT. 0.01D0*DTAILL ) THEN
+C        CONVERGENCE NON ASSUREE => UNE ITERATION DE PLUS
+         R0 = R1
+         IF( HL .GT. DTAILL ) THEN
+C           ARC TROP GRAND
+            RMAX = R1
+            R1   = ( RMIN + R1 ) / 2
+         ELSE
+C           ARC TROP PETIT
+            RMIN = R1
+            R1   = ( RMAX + R1 ) / 2
+         ENDIF
+C        SI CONVERGENCE VERS R2 ALORS ARRET DES ITERATIONS
+         IF( ABS(R1-R0) .GT. (R1+R0)*0.0005 ) GOTO 22
+      ENDIF
+C
+C     CONVERGENCE ASSUREE => SOMMET DEFINITIVEMENT ACCEPTE
+C     ====================================================
+C     VALEUR DU PARAMETRE EN R POUR CE SOMMET
+ 50   RMCN(MNPAST-1+NBSOLI) = R1
+C
+C     PASSAGE AU CALCUL DU SOMMET SUIVANT
+      XYZD1(1) = XYZD2(1)
+      XYZD1(2) = XYZD2(2)
+      XYZD1(3) = XYZD2(3)
+      GOTO 10
+C
+C
+C     LE PARAMETRE DU DERNIER SOMMET DE L'ARC DE B-SPLINE
+C     ===================================================
+C     VALEUR DU PARAMETRE EN R POUR CE DERNIER SOMMET
+ 60   MNS    = MNPAST + NBSOLI
+      NBSOLI = NBSOLI + 1
+      RMCN(MNS) = R(LR)
+C
+C     HOMOGENEISATION DE L'AVANT DERNIER SOMMET DE L'ARC
+      IF( NBSOLI .GT. 2 ) THEN
+         RMCN(MNS-1) = ( RMCN(MNS-2) + RMCN(MNS) ) / 2
+      ENDIF
+C
+C     PROTECTION CONTRE UNE TAILLE D'ARETE TROP GRANDE QUI DENATURE
+C     COMPLETEMENT LA LIGNE B-SPLINE
+C     PAR EXEMPLE B-SPLINE A 4 POINTS D'INTERPOLATION ET 1 ARETE FINALE!
+C     ==================================================================
+      IF( NBSOLI .LT. NBPCBL ) THEN
+C        NBPCBL PARAMETRES SONT CHOISIS
+         NBSOLI = NBPCBL
+         M      = NBPCBL - 1
+         PAS    = ( R(LR) - R(0) ) / M
+         DO 70 I=0,M
+            RMCN(MNPAST+I) = R(0) + I*PAS
+ 70      CONTINUE
+         RMCN(MNPAST+M) = R(LR)
+      ENDIF
+C
+      IERR = 0
+      GOTO 9999
+C
+C     ERREUR DANS LE CALCUL DE TAILLE_IDEALE(x,y,z)
+C     =============================================
+C     NCODEV  : 0 DTAILL N'EST PAS INITIALISEE EN SORTIE
+C               1 DTAILL   EST     INITIALISEE EN SORTIE
+ 9900 NBLGRC(NRERR) = 2
+      KERR(1) = 'FONCTION TAILLE_IDEALE INCALCULABLE AU POINT'
+      KERR(2) = ' '
+      WRITE(KERR(2)(1:15), '(E15.7)') XYZD1(1)
+      WRITE(KERR(2)(18:32),'(E15.7)') XYZD1(2)
+      WRITE(KERR(2)(35:49),'(E15.7)') XYZD1(3)
+      CALL LEREUR
+      IERR = 1
+
+ 9999 print *,'SP bsplto.f: LR=',LR,' NBINBS=',NBINBS,' NBPCBL=',NBPCBL,
+     %                    ' NBSOLI=',NBSOLI
+
+      RETURN
+      END

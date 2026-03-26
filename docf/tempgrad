@@ -1,0 +1,45 @@
+Ce menu definit l'option de trace ou affichage
+-soit, de la temperature sous forme d'isothermes 
+    ou de zones de couleurs
+-soit, du vecteur gradient de la temperature
+-soit, du vecteur flux normal de la temperature
+
+1: NUMERO du CAS a tracer
+Si PB stationnaire, le numero du CAS vaut toujours 1.
+Si PB instationnaire, la temperature est stockee
+tous les n pas de temps. Le CAS a indiquer est 3
+si la temperature au pas de temps 2n doit etre tracee.
+Les temperatures au temps 0 forment le cas 1.
+
+2: Trace des TEMPERATURES des EF sous differentes formes
+ 1 : ISOTHERMES
+ 2 : ZONES COULEURS ISOTHERMES
+ 3 : ZONES par SECTIONS X ou Y ou Z=CTE
+ 4 : PROFILS dans PLANS X ou Y ou Z=CTE
+ 5 : LE LONG d''une DROITE def 2 POINTS
+ 7 : En 2D SURFACE(X,Y,TEMPERATURE(X,Y))
+ 8 : En 2D ERREUR si TEMPERATURE_EXACTE()
+ 9 : AFFICHAGE des TEMPERATURES
+
+3: Trace des GRADIENTS de TEMPERATURE selon des FLECHES
+   aux points d'integration des EF
+
+4: Trace des FLUX NORMAUX de CHALEUR en des POINTS
+   des interfaces entre EF selon des FLECHES
+
+5: Trace des ESTIMATEURS d'ERREUR en 2D seulement 
+   selon des couleurs et des fleches
+
+7 : Affichage des TEMPERATURES aux NOEUDS pour un cas donne
+
+8 : Affichage des GRADIENTS de TEMPERATURE pour un cas donne
+    aux points d'integration numérique des EF
+
+9 : Affichage des FLUX NORMAUX de CHALEURpour un cas donne
+    aux points des interfaces des EF
+    et pour chaque frontiere (Points en 1d, Lines en 2d, Surface en 3d)
+    de l'objet
+
+10: Affichage des FLUX aux PLS de l'OBJET
+    pour chaque frontiere (Points en 1d, Lines en 2d, Surface en 3d)
+    de l'objet

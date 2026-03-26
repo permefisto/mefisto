@@ -1,0 +1,5 @@
+variable TRACLIGN 'Trace des Lignes' entier
+( 1: 'TOUTES les LIGNES et TOUS les POINTS'
+, 2: 'TOUTES les LIGNES'
+, 3: 'UNE LIGNE'
+, 6: 'UNE LIGNE NON FERMEE Ses SOMMETS SIMPLES' );

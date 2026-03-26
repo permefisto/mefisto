@@ -1,0 +1,99 @@
+{ ======================================================================== }
+{ MEFISTO Software     : February 3, 2022 Version                          }
+{ USER's  Name         : Alain Perronnet                                   }
+{ Project Name         : nsgt_2d Navier-Stokes TAYLOR-GREEN vortex solution}
+{ Date                 : February 3, 2022                                  }
+{ ======================================================================== }
+ DefVar pi; pi=atan(1)*4;
+ DefVar nbedge; nbedge=100/2;
+
+ 1;{ POINTS vertices of the object }
+ 1;{ TYPING of VALUES }
+ { NAME of the POINT or ESCAPE? }
+
+ a; i; 1; 0; 0; 0;
+ { in LEXICON ~>TRANSFO }
+ { X Y Z COORDINATES }
+ { COORPO 'X Y Z of a point' xyz ; }
+ { NAME of the POINT or ESCAPE? }
+ b; i; 1; pi;  0; 0;
+ c; i; 1; pi; pi; 0;
+ d; i; 1; 0;  pi; 0;
+ @;
+
+ 2;
+ { LINES edges of the object }
+ { NAME of the LINE or ESCAPE? }
+ ab; i;2; nbedge; 1; a; b;
+ { in LEXICON ~>TRANSFO }
+ { STRAIGHT LINE }
+ { NBARLI 'number of edges of the line' entier ; }
+ { RAIGEO 'geometrical ratio between the edges' reel ; }
+ { in LEXICON ~>POINT }
+ { in LEXICON ~>POINT }
+ { NAME of the LINE or ESCAPE? }
+ bc; i; 2; nbedge; 1; b; c;
+ cd; i; 2; nbedge; 1; c; d;
+ da; i; 2; nbedge; 1; d; a;
+ abcd; i; 51; 4;
+ { UNION OF SEVERAL LINES }
+ { NBLIUN 'number of lines of the union' entier ; }
+ { NAME of LINE }
+ AB;
+ { in LEXICON ~>LIGNE }
+ { NAME of LINE }
+ BC;
+ { in LEXICON ~>LIGNE }
+ { NAME of LINE }
+ CD;
+ { in LEXICON ~>LIGNE }
+ { NAME of LINE }
+ DA;
+ { in LEXICON ~>LIGNE }
+ { NAME of the LINE or ESCAPE? }
+ @;
+ @;
+
+
+3; { SURFACES faces of the object }
+   { NAME of the SURFACE or ESCAPE? }
+ ABCD; i; { in LEXICON ~>TRANSFO }
+ 1; { TRANSFINITE QUADRANGLE }
+ AB;{ in LEXICON ~>LIGNE }
+ BC;{ in LEXICON ~>LIGNE }
+ CD;{ in LEXICON ~>LIGNE }
+ DA;{ in LEXICON ~>LIGNE }
+ 1; { regular mesh }
+
+ ABCDT; i;{ in LEXICON ~>TRANSFO }
+ 31;{ TRIANGULATION OF A QUADRANGULATION }
+ abcd;{ in LEXICON ~>SURFACE }
+ 1;   { create an edge S1 S3 }
+ @;
+
+
+5;  { OBJECTS parts of the object }
+    { NAME of the OBJECT or ESCAPE? }
+ ABCD;
+ 0; { 1D or 2D or 3D classic }
+ 2; { NBDOBJ 'number of Points Lines Surfaces Volumes Objects }
+ { POINT or LINE or SURFACE or VOLUME or OBJECT? }
+ s; ABCDT; { POINT or LINE or SURFACE or VOLUME or OBJECT? }
+ l; abcd;  { NTYOBJ(1..NBDOBJ) 'name of type PLSVO & name' typeobjet;}
+ @;
+
+ 7;    { INTERPOLATION nodes of the mesh }
+ ABCD; { NAME of the OBJECT to be INTERPOLATED? }
+ { 4;    LAGRANGE of DEGREE 2 => TAYLOR-HOOD TRIANGLES }
+  3;   { LAGRANGE of DEGREE 1 => BREZZI-FORTIN TRIANGLES }
+ @;
+
+ 10; { DRAWING of PLSVO meshes }
+ 5;  { OBJECT or OBJECTS }
+ 1;  { ALL OBJECTS 1 by 1 }
+ 90; { Continue the DRAWING }
+@;
+@;
+@;
+@;
+CLOSE;

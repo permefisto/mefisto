@@ -1,0 +1,4 @@
+Le nombre de tranches M est egal au nombre de deplacements
+de la ligne a effectuer pour creer la quadrangulation de
+la surface a partir des N aretes de la ligne. 
+Ainsi, M*N quadrangles seront generes.

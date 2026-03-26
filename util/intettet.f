@@ -1,0 +1,91 @@
+      SUBROUTINE INTETTET( S1TE, S2TE, S3TE, S4TE,
+     %                     P1TE, P2TE, P3TE, P4TE,
+     %                     LINTER )
+C+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+C BUT :    L'INTERSECTION DE 2 TETRAEDRES EST ELLE VIDE?
+C -----    I.E. LES 4 FACES DU 1-ER TETRAEDRE INTERSECTENT ELLES
+C               LE SECOND TETRAEDRE?
+
+C REMARQUE: UN TRIANGLE N'INTERSECTE PAS UN TETRAEDRE SI
+C             AUCUNE ARETE DU TRIANGLE INTERSECTE LES FACES DU TETRAEDRE
+C           + AUCUNE ARETE DU TETRAEDRE INTERSECTE LE TRIANGLE?
+C           + AUCUN DES 3 SOMMETS DU TRIANGLE EST INTERNE AU TETRAEDRE?
+C          VERSION XYZ SOMMETS EN DOUBLE PRECISION
+
+C ENTREES:
+C --------
+C S1TE, S2TE, S3TE, S4TE : 3 COORDONNEES DES 4 SOMMETS DU TETRAEDRE 1
+C P1TE, P2TE, P3TE, P4TE : 3 COORDONNEES DES 4 SOMMETS DU TETRAEDRE 2
+
+C SORTIE :
+C --------
+C LINTER : 0 PAS D'INTERSECTION
+C            POUR LES 4 FACES TRIANGULAIRES DU TETRAEDRE 1
+C          1 SI UNE ARETE DU TRIANGLE INTERSECTE UNE FACE DU TETRAEDRE 2
+C          2 SI LE TRIANGLE EST INTERSECTE PAR  UNE ARETE DU TETRAEDRE 2
+C          3 SI UN DES SOMMETS DU TRIANGLE EST STRICTEMENT INTERNE
+C            AU TETRAEDRE 2
+C+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+C AUTEUR : ALAIN PERRONNET Saint PIERRE du PERRAY           Janvier 2018
+C23456...............................................................012
+      DOUBLE PRECISION  S1TE(3), S2TE(3), S3TE(3), S4TE(3),
+     %                  P1TE(3), P2TE(3), P3TE(3), P4TE(3),
+     %                  STR(3,3), STE(3,4)
+
+C     NO DES 3 SOMMETS DES 4 FACES D'UN TETRAEDRE
+      INTEGER           NOSOFATE( 3, 4 )
+      DATA              NOSOFATE / 1,3,2,  2,3,4,  3,1,4,  4,1,2 /
+C     => LA NORMALE A LA FACE EST ORIENTEE VERS L'EXTERIEUR DU TETRAEDRE
+
+C     LES 3 COORDONNEES DES 4 SOMMETS DU TETRAEDRE 2
+      DO L=1,3
+         STE(L,1) = P1TE(L)
+         STE(L,2) = P2TE(L)
+         STE(L,3) = P3TE(L)
+         STE(L,4) = P4TE(L)
+      ENDDO
+
+C     PARCOURS DES 4 FACES DU TETRAEDRE 1
+      DO NF=1,4
+
+C        LES 3 COORDONNEES DES 3 SOMMETS DU TRIANGLE FACE NF DU TETRAEDRE 1
+         DO 50 K=1,3
+
+C           NO LOCAL DU SOMMET K DE LA FACE NF DU TETRAEDRE
+            NS = NOSOFATE( K, NF )
+
+            GOTO( 10, 20, 30, 40 ), NS
+
+C           XYZ DU SOMMET K DU TRIANGLE
+ 10         DO L=1,3
+               STR(L,K) = S1TE(L)
+            ENDDO
+            GOTO 50
+
+C           XYZ DU SOMMET K DU TRIANGLE
+ 20         DO L=1,3
+               STR(L,K) = S2TE(L)
+            ENDDO
+            GOTO 50
+
+C           XYZ DU SOMMET K DU TRIANGLE
+ 30         DO L=1,3
+               STR(L,K) = S3TE(L)
+            ENDDO
+            GOTO 50
+
+C           XYZ DU SOMMET K DU TRIANGLE
+ 40         DO L=1,3
+               STR(L,K) = S4TE(L)
+            ENDDO
+
+ 50      ENDDO
+
+C        INTERSECTION FACE NF DU TETRAEDRE 1 AVEC LE TETRAEDRE 2?
+         CALL INTRTE( STR, STE, LINTER )
+         IF( LINTER .GT. 0 ) RETURN
+
+      ENDDO
+
+      RETURN
+      END

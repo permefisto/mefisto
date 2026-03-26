@@ -1,0 +1,21 @@
+deftms ~>>>YOUNG 'Module YOUNG et POISSON d''un SV'
+variable muet DATE 'date de creation du tableau'    reel2  ;
+variable muet NUTD 'numero du tableau descripteur'  entier ;
+variable    LTYOUN 'le type du module de YOUNG,...' entier
+( 1 : 'Materiau 3D homogene isotrope'
+, 2 : 'Materiau axisymetrique homogene isotrope'
+, 3 : 'Contraintes Planes'
+, 4 : 'Deformations Planes'
+,10 : 'Tenseur d''elasticite anisotrope'
+,-1 : 'Fonctions YOUNG & POISSON'
+, 0 : 'YOUNG & POISSON a supprimer' ) ;
+cas LTYOUN
+1..4 : variable YOUNG  'Module de YOUNG' reel ;
+       variable POISON 'Coefficient de POISSON' reel ;
+10 : variable NVELAS 'Nombre de coefficients du tenseur d''elasticite' entier ;
+     tableau  TEELAS(1..NVELAS)
+    'Coefficients E11,E21,E22,E31,E32,E33,...du tenseur d''elasticite' reel ;
+-1 : variable  NFYOUN 'Nom fonction utilisateur YOUNG'   ^~>FONCTION ;
+     variable  NFPOIS 'Nom fonction utilisateur POISSON' ^~>FONCTION ;
+fincas ;
+fintms ;

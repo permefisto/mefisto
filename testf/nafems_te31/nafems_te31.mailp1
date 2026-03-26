@@ -1,0 +1,42 @@
+{TEST 31 NAFEMS CANTILEVER SQUARE MEMBRANE}
+
+{fichier TEST CALCUL DES MODES PROPRES EN ELASTICITE}
+{Le maillage en triangles de degre 1       TRIA 2P1D}
+
+{Le 10 septembre 1998                 Alain PERRONNET}
+
+DefVar nbax,nbay;
+nbax=8;
+nbay=8;
+
+1; 1;     { LES POINTS }
+   S1; I; 1; 0;  0; 0;
+   S2; I; 1;10;  0; 0;
+   S3; I; 1;10; 10; 0;
+   S4; I; 1; 0; 10; 0;     
+@;
+2;        { LES LIGNES }
+   S1S2; I; 2; nbax; 1; S1; S2;
+   S2S3; I; 2; nbay; 1; S2; S3;
+   S3S4; I; 2; nbax; 1; S3; S4;
+   S4S1; I; 2; nbay; 1; S4; S1;  
+@;
+3;         { LES SURFACES }
+   CARREQ; I; 1; S1S2; S2S3; S3S4; S4S1; 1;  {Les quadrangles}
+   CARRE;  I; 31; CARREQ; 1;                 {Les triangles}
+@;  
+
+5; { OBJETS parties de l OBJET }
+   CARRE; { NOM DE L'OBJET }
+       0; { classique 2D ou 3D }
+       2; { nombre de Points Lignes Surfaces Volumes de l'objet }
+       SURFACE; CARRE;
+       LIGNE;   S4S1;
+@;
+
+7; { INTERPOLATION definition noeuds du maillage }
+   CARRE; 3;  {LAGRANGE de DEGRE 1}
+@;
+
+10; 5; 90; { TRACE de l'OBJET }
+FERMER;

@@ -1,0 +1,44 @@
+A POINT MAY BE CONSTRUCTED BY THE FOLLOWING OPTIONS:
+
+1 : THE 3 COORDINATES X Y Z
+    Example: POINT1; I; 1; 0.0001; 1E-2; 0; 
+
+2 : THE CYLINDRICAL COORDINATES R TETA Z  WITH
+    R    the RADIUS,
+    TETA the LONGITUDE (angle (OX,OR)),
+    Z    the COTE; 
+    Example: POINT2; I; 2; 1; 90; 1;
+              
+3 : THE SPHERICAL COORDINATES R TETA PHI WITH
+    R    the RADIUS,
+    TETA the LONGITUDE (angle(OX,projection sur plan OXY de OR ),
+    PHI  the LATITUDE  (angle(planXOY,OR) ; 
+    Example: POINT3; I; 3; 1; 90.0; 45.0;
+
+35: EXTRACTION OF VERTICES OF A LINE
+    Give the number of the first and last vertex
+    to extract of the line
+    Example: POINT35; I; 35; LINE; 2; 25;
+
+36: EXTRACTION OF VERTICES OF A PLSVO of which
+    the 3 coordinates x,y,z give return true to the call of
+    a logical User's function
+    Example: POINT36; I; 36; LINE; CONTOUR; 
+             deffunc PLANXY(x,y,z); PLANXY = (z=0); endfunc;
+             PLANXY;
+    extract the vertices on the XY plane of the line CONTOUR
+
+50: MAPPING OF A POINT by a predefined mapping
+    Example: POINT50; LINE_SYMETRY; 50; P1;
+             The point POINT50 is the image of point P1
+             by the mapping LINE_SYMETRY
+
+51: THE POINT IS AN UNION OF SEVERAL POINTS WITH A SAME NAME
+    Example: POINT51; I; 51; 5; P1; P2; P3; P4; P5;
+
+81: RENAME THE NAME OF A POINT
+    Example: NEW_NAME_POINT; I; 81; OLD_NAME_POINT
+             Attention to the order NEW OLD of the point!
+
+82: DELETE THE POINT of which the name has been input
+    Example: P1; I; 82;   {delete the point P1}

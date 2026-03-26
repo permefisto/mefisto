@@ -1,0 +1,39 @@
+{TEST DU CALCUL DES VALEURS ET VECTEURS PROPRES EN THERMIQUE}
+{Nombreuses valeurs propres doubles : vp=(n**2 + m**2) Pi**2}
+
+{Le 18 septembre 1998                 Alain PERRONNET}
+
+1; CARRE;
+
+2;
+
+ {surface CARRES}
+  1; {densite de masse}
+  1; 1.0;
+
+  7; {chaleur massique}
+  1; 1.0;
+
+  2; {conductivite thermique}
+  3; 1.0;
+ @;
+
+ {ligne CARREL}
+ 3;  {contact}
+  1; {constant}
+  0; {valeur fixee}
+ @;
+@;
+
+6; {calcul des valeurs et vecteurs propres de l'operateur thermique}
+  1; {METHODE DES SOUS-ESPACES}
+  0; {borne inferieure des valeurs propres a calculer}
+300; {borne superieure des valeurs propres a calculer}
+@;
+
+
+7; {Drawing of eigenvalues and eigenvectors}
+ 1; 0;        {Tous les vecteurs propres}
+ 2; 7; 1; 90; {TRACE des 10 isothermes entre mim et max}
+
+FERMER;

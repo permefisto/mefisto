@@ -1,0 +1,72 @@
+{ ==================================================================== }
+{ MEFISTO Software     : Version October 2008                          }
+{ Name of User         : Alain Perronnet                               }
+{ Name of Project      : cavity2d                                      }
+{ Date                 : 27/11/2008                                    }
+{ Hour                 : 9h 15m                                        }
+{ ==================================================================== }
+
+ DefVar xmin, xmax, ymin, ymax, size;
+ xmin=0; xmax=1; ymin=0; ymax=1;
+ size=(xmax-xmin)/20;    {/34 for bf and /20 for th ~ 3700 DOF }
+ DefVar nax; nax= (xmax-xmin)/size;
+ DefVar nay; nay= (ymax-ymin)/size;  {To be EVEN}
+
+ 1;{ POINTS sommets of the object }
+ 1;{ FRAPPE des valeurs }
+ { NAME of POINT }
+ A; i; 1; xmin; ymin; 0;
+ { IN THE LEXICON ~>TRANSFO }
+ { coordinates x y z }
+ { COORPO '3 cartesien coordinates of point' xyz ; }
+ { NAME du POINT or ESCAPE? }
+ B; i; 1; xmax; ymin; 0;
+ C; i; 1; xmax; ymax; 0;
+ D; i; 1; xmin; ymax; 0;
+ @;
+
+ 2; {LINES}
+ AB; i; 2; nax; 1; A; B;
+ BC; i; 2; nay; 1; B; C;
+ CD; i; 2; nax; 1; C; D;
+ DA; i; 2; nay; 1; D; A;
+ @;
+
+ 3;
+ { SURFACES faces of the object }
+ ABCDQ; i;{ IN THE LEXICON ~>TRANSFO }
+ 1; {transfinite  quadrangle}
+ AB; BC; CD; DA;
+ 1; {regular mesh}
+
+ ABCD; i;  { name of TRANSFORMATION }
+ 31;       { triangulation of a quadrangulation }
+ ABCDQ;    { name of initial SURFACE }
+ 1;        { creation of an EDGE S1 S3 }
+ @;
+
+ 5;{ OBJECTS parts of the OBJECT }
+ cavity; { name of the OBJECT }
+ 0;      { classic 2D or 3D }
+ 9;   { NBDOBJ number of Points Lines Surfaces Volumes Objects of the object}
+      { POINT or LINE or SURFACE or VOLUME or OBJECT? }
+ s; ABCD; 
+ l; AB;  l; BC;  l; CD;  l; DA;
+ p;  A;  p;  B;  p;  C;  p;  D;
+ { NTYOBJ(1..NBDOBJ) 'name of type PLSVO and name of PLSVO' typeobject }
+ { name of OBJECT or ESCAPE? }
+ @;
+
+ 7;   { INTERPOLATION NODES of the MESH }
+ cavity;{ name of the OBJECT to INTERPOLATE }
+{ 3;       LAGRANGE de DEGRE 1 => Fluid BREZZI-FORTIN triangles}
+  4;     { LAGRANGE de DEGRE 2 => Fluid TAYLOR-HOOD triangles}
+ @;
+ @;
+
+10;  { DRAWINGS of the cavity}
+ 5;  { OBJECT }
+ 1;  { ALL OBJECTS 1 by 1 }
+ 90; { Continue the DRAWING }
+
+CLOSE;

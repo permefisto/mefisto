@@ -1,0 +1,85 @@
+{ ==================================================================== }
+{ Logiciel MEFISTO     : Version Septembre 2007                        }
+{ Nom de l'Utilisateur : Alain Perronnet                               }
+{ Nom du Projet        : pipe                                          }
+{ Date                 : 10/9/2007    9h 35m                           }
+{ ==================================================================== }
+DefVar rho; rho=1000;  {Rappel: densite volumique de l'eau=1000 kg/m3}
+
+ 2; { ENTREE DONNEES DU FLUIDE }
+
+ { VOLUME: PIPETETR }
+ 1;    { rho la DENSITE de MASSE }
+ 1;    { MASSE constante }
+ rho;  { Masse constante: eau 1000 kg / m3}
+
+ 2;    { nu la VISCOSITE du FLUIDE }
+ 1;    { Viscosite constante }
+ 1.0;  { VISCOS  Viscosite du Fluide }
+ @;
+
+ { SURFACE: CYL }
+ 2;       { BLocage de la VITESSE imposee }
+ 1;       { vitesse fixee constante }
+ 3;       { NBCOBV 'nombre composantes vitesse fixee' entier ; }
+ 1; 2; 3; { NUCOBV(1..NBCOBV) 'no composantes de la vitesse fixee' entier ; }
+ 0; 0; 0; { BLVITE(1..NBCOBV) }
+ @;
+
+ { SURFACE: SECTIONB }
+ 2;       { BLocage de la VITESSE imposee }
+ -1;      { fonction vitesse fixee }
+ 3;       { NBCOBV 'nombre composantes vitesse fixee' entier ; }
+ 1; 2; 3; { NUCOBV(1..NBCOBV) 'no composantes de la vitesse fixee' }
+ deffonc vitesse(t, x, y, z, ntyobj, nuobjt, nocomp);
+   si nocomp=3 alors
+      vitesse=(t+1.0)*(1-(x*x+y*y)/(r*r));
+   sinon
+      vitesse=0.0;
+   finsi;
+ finfonc;
+ vitesse; { NOM de FONCTION }
+ @;
+
+ { SURFACE: SECTIONH }
+ 2;       { BLocage de la VITESSE imposee }
+ -1;      { fonction vitesse fixee }
+ 3;       { NBCOBV 'nombre composantes vitesse fixee' }
+ 1; 2; 3; { NUCOBV(1..NBCOBV) 'no composantes de la vitesse fixee' }
+ vitesse; { NOM de FONCTION }
+ @;
+
+ { POINT: ORIGH }
+ { 3;     BLocage de la PRESSION imposee }
+ { 1;     PRESSION constante }
+ { 0.0;   BLPRESSION pression imposee }
+ @;
+@;
+
+5;  { RESOUDRE FLUIDE STATIONNAIRE =======================================}
+ 1; { CROUT L D tL }
+@;
+
+
+6;  { RESOUDRE FLUIDE INSTATIONNAIRE =====================================}
+ 1;    { CROUT L D tL }
+ 0;    { TEMPS INITIAL }
+ 1.0;  { TEMPS FINAL }
+ 0.1;  { PAS de TEMPS }
+ 10;   { NOMBRE DE VECTEURS SOLUTION A AJOUTER }
+@;
+@;
+FERMER;
+
+
+
+
+ 4;    { FOmega INTERNAL FORCES }
+ 1;    { constant force }
+ 1;    { NBCOFO 'number of components of the force' entier ; }
+ 3;    { NUCOFO(1..NBCOFO) 'number of each component of the force' entier ; }
+ 0;    { -9.81*rho;  Pesanteur terrestre }
+ @;
+
+ 4;    { FOmega INTERNAL FORCES }
+ 0;    { Force a supprimer }

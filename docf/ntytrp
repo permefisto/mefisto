@@ -1,0 +1,19 @@
+Une TRANSFORMATION permet de modifier les 3 coordonnees de chacun des
+SOMMETS du PLSV ( Point ou Ligne ou Surface ou Volume ) en cours de
+traitement.
+
+Une TRANSFORMATION est identifiee par son NOM (au plus 24 caracteres)
+
+La  TRANSFORMATION la plus courante est l'IDENTITE notee I. 
+
+Toute autre TRANSFORMATION doit etre definie avant d'invoquer son nom
+Une TRANSFORMATION se definit au meme niveau que les POINTS, LIGNES,
+SURFACES, VOLUMES, OBJETS, ...
+
+Generalement, le maillage s'effectue, par exemple dans un plan,
+puis la TRANSFORMATION
+- transporte les points sur une surface gauche
+- projette les sommets sur une ligne ou une surface 
+- donne le maillage symetrique par rapport a un point, une ligne ou
+  une surface
+- modifie les coordonnees des sommets comme vous le desirerez!

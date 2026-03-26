@@ -1,0 +1,10 @@
+variable VALISOTH 'Valeurs des ISO' entier
+( 1 : 'Nombre d''ISO'
+, 2 : 'ISO REGULIERES entre MIN et MAX'
+, 3 : 'ISO de MIN et MAX a DEFINIR'
+, 4 : 'DEFINIR les VALEURS des ISO'
+, 5 : 'COULEUR des ARETES du MAILLAGE'
+, 6 : 'TYPE TRAIT des ARETES MAILLAGE'
+, 7 : 'COULEUR des ARETES sur les ISO'
+, 8 : 'TYPE TRAIT des ARETES sur ISO'
+,19 : '% de REDUCTION des FACES' ) ;

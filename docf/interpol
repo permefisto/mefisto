@@ -1,0 +1,18 @@
+Les POLYNOMES d'INTERPOLATION actuellement disponibles
+sont de LAGRANGE de degre 1 ou 2 en AXISYMETRIE ou NON.
+
+Les NOEUDS sont des points SUPPORTS des degres de liberte
+de l'element courant.  
+
+Les POINTS sont des points de l'element courant dont les 
+coordonnees servent a definir la transformation
+   F : element reference -> element courant  
+
+L'element est dit ISOPARAMETRIQUE si la meme interpolation
+sert a la fois pour l'inconnue (Temperature, Composante du
+Deplacement, ... ) et les composantes de F.
+Les ELEMENTS FINIS programmes ici sont ISOPARAMETRIQUES.
+
+Les polynomes de degre 1 font intervenir les sommets des EF.
+Les polynomes de degre 1 font intervenir les sommets et
+les milieux des aretes des EF.

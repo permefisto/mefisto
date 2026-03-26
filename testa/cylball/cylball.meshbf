@@ -1,0 +1,499 @@
+{ ==================================================================== }
+{ MEFISTO Software     : Version July 29-th 2009                       }
+{ USER's Name          : Perronnet Alain                               }
+{ Project Name         : cylball                                       }
+{ Date                 : 29/07/2009   15h 55m                          }
+{ ==================================================================== }
+ @;
+ @;
+ DefVar pi; pi=atan(1)*4;
+ DefVar rc, l1, l2;              {b=ball, c=cylinder}
+        rc=0.05; l1=0.2; l2=0.6;
+ DefVar lac; lac=(l1+l2)/70;
+
+ defvar rb; rb=0.02;
+ DefVar nbarb, lab; nbarb=8; lab=pi*rb/(2*nbarb);
+
+ DefFunc FX(w,u,v);
+   fx=rc*cos(v/rc);
+ EndFunc;
+ DefFunc fy(w,u,v);
+   fy=u;
+ EndFunc;
+ DefFunc fz(w,u,v);
+   fz=rc*sin(v/rc);
+ EndFunc;
+
+ 6;
+ { MAPPINGS R3-->R3 }
+ { NAME of the TRANSFORMATION or ESCAPE? }
+ cyl;
+ 6;
+ { F:R3->R3 define by 3 functions (Fi) }
+ { NAME of FUNCTION }
+ fx; fy; fz;
+ { in LEXICON ~>FONCTION }
+ { in LEXICON ~>FONCTION }
+ { in LEXICON ~>FONCTION }
+ { NAME of the TRANSFORMATION or ESCAPE? }
+ @;
+
+ 1;
+ { POINTS vertices of the object }
+ 1;
+ { TYPING of VALUES }
+ { NAME of the POINT or ESCAPE? }
+ a; i; 1; 0; 0; -pi*rc/2;
+ { in LEXICON ~>TRANSFO }
+ { X Y Z COORDINATES }
+ { COORPO 'X Y Z of a point' xyz ; }
+ { NAME of the POINT or ESCAPE? }
+ b; i; 1; 0; l1+l2; -pi*rc/2;
+ { in LEXICON ~>TRANSFO }
+ { X Y Z COORDINATES }
+ { COORPO 'X Y Z of a point' xyz ; }
+ { NAME of the POINT or ESCAPE? }
+ c; i; 1; 0; l1+l2; pi*rc/2;
+ { in LEXICON ~>TRANSFO }
+ { X Y Z COORDINATES }
+ { COORPO 'X Y Z of a point' xyz ; }
+ { NAME of the POINT or ESCAPE? }
+ d; i; 1; 0; 0; pi*rc/2;
+ { in LEXICON ~>TRANSFO }
+ { X Y Z COORDINATES }
+ { COORPO 'X Y Z of a point' xyz ; }
+ { NAME of the POINT or ESCAPE? }
+ cb; i; 1; 0; l1; 0;
+ { in LEXICON ~>TRANSFO }
+ { X Y Z COORDINATES }
+ { COORPO 'X Y Z of a point' xyz ; }
+ { NAME of the POINT or ESCAPE? }
+ @;
+
+ 2;
+ { LINES edges of the object }
+ { NAME of the LINE or ESCAPE? }
+ ab; i; 2;
+ { in LEXICON ~>TRANSFO }
+ { STRAIGHT LINE }
+ (l1+l2)/lac;
+ { NBARLI 'number of edges of the line' entier ; }
+ 1;
+ { RAIGEO 'geometrical ratio between the edges' reel ; }
+ { NAME of POINT }
+ A;
+ { in LEXICON ~>POINT }
+ { NAME of POINT }
+ B;
+ { in LEXICON ~>POINT }
+ { NAME of the LINE or ESCAPE? }
+
+ bc; i; 2; pi*rc/lac;
+ { in LEXICON ~>TRANSFO }
+ { STRAIGHT LINE }
+ { NBARLI 'number of edges of the line' entier ; }
+ 1;
+ { RAIGEO 'geometrical ratio between the edges' reel ; }
+ { NAME of POINT }
+ B;
+ { in LEXICON ~>POINT }
+ { NAME of POINT }
+ C;
+ { in LEXICON ~>POINT }
+ { NAME of the LINE or ESCAPE? }
+
+ cd; i; 2; (l1+l2)/lac;
+ { in LEXICON ~>TRANSFO }
+ { STRAIGHT LINE }
+ { NBARLI 'number of edges of the line' entier ; }
+ 1;
+ { RAIGEO 'geometrical ratio between the edges' reel ; }
+ { NAME of POINT }
+ C;
+ { in LEXICON ~>POINT }
+ { NAME of POINT }
+ D;
+ { in LEXICON ~>POINT }
+ { NAME of the LINE or ESCAPE? }
+
+ da; i; 2;
+ { in LEXICON ~>TRANSFO }
+ { STRAIGHT LINE }
+ pi*rc/lac;
+ { NBARLI 'number of edges of the line' entier ; }
+ 1;
+ { RAIGEO 'geometrical ratio between the edges' reel ; }
+ { NAME of POINT }
+ D;
+ { in LEXICON ~>POINT }
+ { NAME of POINT }
+ A;
+ { in LEXICON ~>POINT }
+ { NAME of the LINE or ESCAPE? }
+
+ abcd; i; 51; 4; ab; bc; cd; da;
+ @;
+
+
+ DefFunc edge_length(x,y,z);
+   DefVar dist; dist=sqrt( x*x + (y-l1)**2 + z**2 );
+   edge_length=lac;
+   if abs(y-l1) < 3.5*rb then
+     edge_length=lac*0.6;
+   endif;
+ EndFunc;
+
+
+ 3;
+ { SURFACES faces of the object }
+ { NAME of the SURFACE or ESCAPE? }
+ abcdt; i;
+ { in LEXICON ~>TRANSFO }
+ 19;
+ { TRIANGULATION2 BETWEEN CLOSED LINES }
+ lac;
+ { ARETMX 'max length of edges of regular triangles' reel ; }
+ 1;
+ { NBLFTR 'number of closed lines contour of the surface' entier ; }
+ 0;
+ { NBPTIT 'number of internal points future vertices' entier ; }
+ { NAME of LINE }
+ abcd;
+ { in LEXICON ~>LIGNE }
+ { NUPTIT(1..NBPTIT) 'name of internal points future vertices' }
+ { DISOSV(1..NBPTIT) 'wished distance to the near vertices' reel ; }
+ { NAME of the SURFACE or ESCAPE? }
+
+ cyl1; cyl;
+ { in LEXICON ~>TRANSFO }
+ 50;
+ { MAPPING OF A SURFACE }
+ { NAME of SURFACE }
+ abcdt;
+ { in LEXICON ~>SURFACE }
+ { NAME of the SURFACE or ESCAPE? }
+ @;
+
+ 6;
+ { MAPPINGS R3-->R3 }
+ { NAME of the TRANSFORMATION or ESCAPE? }
+ symyz;
+ 3;
+ { isometry R3 -> R3 }
+ 4;
+ { plane symmetry defined by 3 points }
+ { NAME of POINT }
+ a; b; d;
+ { in LEXICON ~>POINT }
+ { in LEXICON ~>POINT }
+ { in LEXICON ~>POINT }
+ { NAME of the TRANSFORMATION or ESCAPE? }
+ @;
+
+ 3;
+ { SURFACES faces of the object }
+ { NAME of the SURFACE or ESCAPE? }
+ cyl2; symyz;
+ { in LEXICON ~>TRANSFO }
+ 50;
+ { MAPPING OF A SURFACE }
+ { NAME of SURFACE }
+ cyl1;
+ { in LEXICON ~>SURFACE }
+
+ { NAME of the SURFACE or ESCAPE? }
+ cyl12; i;
+ { in LEXICON ~>TRANSFO }
+ 51;
+ { C0-CONTINUITY UNION OF SURFACES }
+ 2;
+ { NBSUUN 'number of surfaces of the union' entier ; }
+ { NAME of SURFACE }
+ cyl1; cyl2;
+ { in LEXICON ~>SURFACE }
+ { in LEXICON ~>SURFACE }
+ { NAME of the SURFACE or ESCAPE? }
+ @;
+
+ 2;
+ { LINES edges of the object }
+ { NAME of the LINE or ESCAPE? }
+ c0;
+ { NAME of TRANSFORMATION }
+ i;
+ { in LEXICON ~>TRANSFO }
+ 37;
+ { INTERNAL OR BOUNDARY EDGES OF A SURFACE }
+ { NAME of SURFACE }
+ cyl12;
+ { in LEXICON ~>SURFACE }
+ { NAME of FUNCTION }
+ DefFunc y0(x,y,z); y0=y<1e-5; EndFunc;
+ y0;
+ { in LEXICON ~>FONCTION }
+ 1;
+ { boundary edges }
+ { NAME of the LINE or ESCAPE? }
+
+ cl1l2;
+ { NAME of TRANSFORMATION }
+ i;
+ { in LEXICON ~>TRANSFO }
+ 37;
+ { INTERNAL OR BOUNDARY EDGES OF A SURFACE }
+ { NAME of SURFACE }
+ cyl12;
+ { in LEXICON ~>SURFACE }
+ { NAME of FUNCTION }
+ DefFunc yl1l2(x,y,z); yl1l2=y>l1+l2-1e-5; EndFunc;
+ yl1l2;
+ { in LEXICON ~>FONCTION }
+ 1;
+ { boundary edges }
+ { NAME of the LINE or ESCAPE? }
+ @;
+
+
+ 3;
+ { SURFACES faces of the object }
+ { NAME of the SURFACE or ESCAPE? }
+ c0; i;
+ { in LEXICON ~>TRANSFO }
+ 9;
+ { TRIANGULATION1 BETWEEN CLOSED LINES }
+ lac;
+ { ARETMX 'max length of edges of regular triangles' reel ; }
+ 1;
+ { NBLFTR 'number of closed lines contour of the surface' entier ; }
+ 0;
+ { NBPTIT 'number of internal points future vertices' entier ; }
+ { NAME of LINE }
+ C0;
+ { in LEXICON ~>LIGNE }
+ { NUPTIT(1..NBPTIT) 'name of internal points future vertices' }
+ { DISOSV(1..NBPTIT) 'wished distance to the near vertices' reel ; }
+ { NAME of the SURFACE or ESCAPE? }
+
+ cl1l2; i; 9;
+ { in LEXICON ~>TRANSFO }
+ { TRIANGULATION1 BETWEEN CLOSED LINES }
+ lac;
+ { ARETMX 'max length of edges of regular triangles' reel ; }
+ 1;
+ { NBLFTR 'number of closed lines contour of the surface' entier ; }
+ 0;
+ { NBPTIT 'number of internal points future vertices' entier ; }
+ { NAME of LINE }
+ CL1L2;
+ { in LEXICON ~>LIGNE }
+ { NUPTIT(1..NBPTIT) 'name of internal points future vertices' }
+ { DISOSV(1..NBPTIT) 'wished distance to the near vertices' reel ; }
+ { NAME of the SURFACE or ESCAPE? }
+
+ cylindre;
+ { NAME of TRANSFORMATION }
+ i;
+ { in LEXICON ~>TRANSFO }
+ 51;
+ { C0-CONTINUITY UNION OF SURFACES }
+ 3;
+ { NBSUUN 'number of surfaces of the union' entier ; }
+ { NAME of SURFACE }
+ cyl12; c0; cl1l2;
+ { in LEXICON ~>SURFACE }
+ { in LEXICON ~>SURFACE }
+ { in LEXICON ~>SURFACE }
+ { NAME of the SURFACE or ESCAPE? }
+
+ ball; i;
+ { in LEXICON ~>TRANSFO }
+ 18;
+ { 1/1 OF THE SURFACE OF A SPHERE }
+ 20*nbarb**2;
+ { NBTRSP 'number of triangles (20*n**2)' entier ; }
+ rb;
+ { RAYOSP 'radius of the sphere' reel ; }
+ { NAME of POINT }
+ cb;
+ { in LEXICON ~>POINT }
+ { NAME of the SURFACE or ESCAPE? }
+ @;
+ @;
+
+
+ DefFunc edge_length(x,y,z);
+   DefVar dist; dist=sqrt( x*x + (y-l1)**2 + z**2 );
+   edge_length=lac;
+   if abs(y-l1) < 3.5*rb then
+     edge_length=lac*0.5;
+   endif;
+   if dist < 2*rb then
+     edge_length=abs( (dist-rb)*lac/2 + (2*rb-dist)*lab )/rb;
+   endif;
+ EndFunc;
+
+
+ 4;
+ { VOLUMES materials of the object }
+ { NAME of the VOLUME or ESCAPE? }
+ cylball8;
+ { NAME of TRANSFORMATION }
+ i;
+ { in LEXICON ~>TRANSFO }
+ 8;
+ { 1 CLOSED VOLUME FOR THE OPTION 9 }
+ 2;
+ { NBSF1V 'NUMBER of closed surfaces of the volume' entier ; }
+ { NAME of SURFACE }
+ cylindre; ball;
+ { in LEXICON ~>SURFACE }
+ { in LEXICON ~>SURFACE }
+ { NAME of the VOLUME or ESCAPE? }
+
+ cylball19;
+ { NAME of TRANSFORMATION }
+ i;
+ { in LEXICON ~>TRANSFO }
+ 19;
+ { TETRAHEDRIZATION2 OF VOLUMES OF TYPE 8 }
+ 400000;
+ { MXSOVO 'max NUMBER of vertices of the tetrahedrization' entier ; }
+ lac;
+ { ARETGR 'max length of edges of the regular grid' reel ; }
+ 2;
+ { ANEN2P 'max (degrees) angle of coplanearity' reel; }
+ 0;
+ { NBPTIV 'NUMBER of internal points future vertices' entier ; }
+ 1;
+ { NBVOPA 'NUMBER of volumes of type 8 of the partition' entier ; }
+ { NAME of VOLUME }
+ cylball8;
+ { in LEXICON ~>VOLUME }
+ { NUPTIV(1..NBPTIV) }
+ { DISSOV(1..NBPTIV) 'wished distance up to near vertices' reel ; }
+@;
+
+
+ 4;
+ { VOLUMES materials of the object }
+ { NAME of the VOLUME or ESCAPE? }
+ cylball;
+ { NAME of TRANSFORMATION }
+ i;
+ { in LEXICON ~>TRANSFO }
+ 30;
+ { QUALITY IMPROVEMENT OF A TETRAHEDRIZATION }
+ { NAME of VOLUME }
+ cylball19;
+ { in LEXICON ~>VOLUME }
+ 0.4;
+ { QUTEMN 'MAX QUALITY to be improved' reel; }
+ 2;
+ { ANTE2P 'MAX DEGREES of COPLANEARITY' reel; }
+ 15;
+ { NBITAT 'NUMBER of IMPROVMENT ITERATIONS' entier ; }
+ { NAME of the VOLUME or ESCAPE? }
+ @;
+
+
+ 3;
+ { SURFACES faces of the object }
+ { NAME of the SURFACE or ESCAPE? }
+ cy0s; i;
+ { in LEXICON ~>TRANSFO }
+ 37;
+ { EXTRACT SURFACE FROM FACES OF A VOLUME }
+ { NAME of VOLUME }
+ cylball;
+ { in LEXICON ~>VOLUME }
+ { NAME of FUNCTION }
+ y0;
+ { in LEXICON ~>FONCTION }
+ 1;
+ { boundary faces }
+ { NAME of the SURFACE or ESCAPE? }
+
+ cyl1l2s; i;
+ { in LEXICON ~>TRANSFO }
+ 37;
+ { EXTRACT SURFACE FROM FACES OF A VOLUME }
+ { NAME of VOLUME }
+ CYLBALL;
+ { in LEXICON ~>VOLUME }
+ { NAME of FUNCTION }
+ yl1l2;
+ { in LEXICON ~>FONCTION }
+ 1;
+ { boundary faces }
+ { NAME of the SURFACE or ESCAPE? }
+
+ cyls;
+ { NAME of TRANSFORMATION }
+ i;
+ { in LEXICON ~>TRANSFO }
+ 37;
+ { EXTRACT SURFACE FROM FACES OF A VOLUME }
+ { NAME of VOLUME }
+ cylball;
+ { in LEXICON ~>VOLUME }
+ { NAME of FUNCTION }
+ DefFunc Cyls(x,y,z);DefVar ray; ray=x*x+z*z;
+ Cyls=ray>rc*rc*0.9999;
+ EndFunc;
+ Cyls;
+ { in LEXICON ~>FONCTION }
+ 1;
+ { boundary faces }
+ { NAME of the SURFACE or ESCAPE? }
+ @;
+
+ 3;
+ { SURFACES faces of the object }
+ { NAME of the SURFACE or ESCAPE? }
+ balls;
+ { NAME of TRANSFORMATION }
+ i;
+ { in LEXICON ~>TRANSFO }
+ 37;
+ { EXTRACT SURFACE FROM FACES OF A VOLUME }
+ { NAME of VOLUME }
+ cylball;
+ { in LEXICON ~>VOLUME }
+ { NAME of FUNCTION }
+ DefFunc ball(x,y,z);
+ DefVar ray; ray=x*x + (y-l1)**2 + z*z;
+ Ball=ray<1.0001*rb*rb;
+ EndFunc;
+ ball;
+ { in LEXICON ~>FONCTION }
+ 1;
+ { boundary faces }
+ { NAME of the SURFACE or ESCAPE? }
+ @;
+
+ 5;
+ { OBJECTS parts of the object }
+ { NAME of the OBJECT or ESCAPE? }
+ cylball;
+ 0; { 2D or 3D classic }
+ 5; { NBDOBJ 'number of Points Lines Surfaces Volumes Objects of the object' }
+ { POINT or LINE or SURFACE or VOLUME or OBJECT? }
+ v;  cylball; { POINT or LINE or SURFACE or VOLUME or OBJECT? }
+ s;  cy0s;
+ s;  cyl1l2s;
+ s;  cyls;
+ s;  balls;
+ { NTYOBJ(1..NBDOBJ) 'name of type PLSVO & PLSVO''s name' typeobjet ; }
+ { NAME of the OBJECT or ESCAPE? }
+ @;
+
+ 7;
+ { INTERPOLATION nodes of the mesh }
+ { NAME of the OBJECT to be INTERPOLATED? }
+ cylball;
+ 3;
+ { LAGRANGE of DEGREE 1 }
+ { NAME of the OBJECT to be INTERPOLATED? }
+ @;
+
+CLOSE;

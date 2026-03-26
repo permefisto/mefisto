@@ -1,0 +1,18 @@
+deftms ~>>>VITFLUIN 'Vitesse Initiale du Fluide'
+variable muet DATE 'Date de creation du tableau'   reel2  ;
+variable muet NUTD 'Numero du tableau descripteur' entier ; 
+variable LTVIF0 'Type de la Vitesse Initiale' entier 
+(  1 : 'Vitesse INITIALE constante' 
+, -1 : 'Fonction Vitesse INITIALE' 
+,  0 : 'Vitesse INITIALE a supprimer' ) ;
+cas LTVIF0
+ 1 : variable NBCOVI 'Nombre composantes Vitesse Initiale en un noeud' entier ;
+     tableau  NUCOVI(1..NBCOVI) 
+       'Numero des composantes Vitesse Initiale a fixer' entier ;
+     tableau  VACOVI(1..NBCOVI) 'Vitesse Initiale constante a fixer' reel ; 
+-1 : variable NBCOV0 'Nombre composantes Vitesse Initiale en un noeud' entier ;
+     tableau  NUCOV0(1..NBCOV0) 
+       'Numero des composantes Vitesse Initiale a fixer' entier ;
+     variable NFVIF0 'Nom fonction Vitesse Initiale' ^~>FONCTION ;
+fincas ;   
+fintms ;

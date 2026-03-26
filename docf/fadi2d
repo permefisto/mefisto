@@ -1,0 +1,48 @@
+. Les quatre valeurs fadi2d se rapporte aux quatre lignes (dans le meme
+ordre) definissant le contour de la surface a generer par la methode de
+Winslow. 
+. Ces valeurs definissent une distance  qui  definira  la  hauteur  des
+mailles touchant cette ligne. Apres avoir calcule un  premier  maillage
+dit de Winslow "pur" (sans fonctions de controle), elles sont  utilisees
+dans la deuxieme phase de generation dite d'amelioration, qui permet de
+controler l'orthogonalite et la hauteur des mailles.
+. Ce coefficient est une fraction  ]0,1]  definissant  la  hauteur  des
+mailles touchant la ligne considere par rapport a la largeur  de  cette
+maille, qui est calculee sur le bord (donne) c'est  a  dire  sur  cette
+meme ligne.
+. Par exemple une valeur=1.  donnera des mailles "carrees".
+.             une valeur=0.1 donnera des mailles 10  fois  plus  larges
+.                            que haute (pour des couches limites).          
+.
+.                                d a calculer = fadi2d * (d1+d2)/2
+.                                             d ?                     
+.                                             |                        
+.                                    --*------*-----*-- 
+.                                         d1     d2
+. Par convention :
+.             une valeur=0.  correspond a aucune prescription  de  dis-
+.                            tance. Le mailleur ameliorera  les  angles
+.                            au bord sans jouer sur les distances.       
+.             une valeur=-1  conserve les distances  issues  du  calcul
+.                            sans correction au bord. Les angles seront
+.                            ameliores en conservant ces distances ini-
+.                            tiales.
+.             une valeur=-2  la distance prescripte est une  interpola-
+.                            tion des 2 distances (d1 et d2)  calculees
+.                            sur les bords "encadrant" cette maille.
+.
+.                               * calculee en fonction de d1 et d2
+.                            d1 |         <--- d ? --->            *
+.                               |               |                  | d2
+.                               *---*----*------*-----*----*---*---*
+.
+. N.B. Dans tous les cas, l'amelioration des angles est effectuee.
+
+Exemple: S2; I; 2; L1; L2; L3; L4;  5; 0.1; 1; 2; 0;
+         Definit une quadrangulation de contour les aretes
+         des lignes L1 L2 L3 L4 avec des quadrangles 
+         10 fois moins haut que large pres de L1
+         carres au voisinage de L2
+          2 fois plus haut que large pres de L3 
+         et sans amelioration des tailles pres de L4
+         (mais avec amelioration des angles vers 90 degres)

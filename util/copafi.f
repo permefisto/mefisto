@@ -1,0 +1,101 @@
+      SUBROUTINE COPAFI( KNOMFI , NFIC )
+C+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+C BUT :  CONDENSER LES PARAMETER D'UN FICHIER NF
+C -----
+C
+C ENTREES :
+C ---------
+C KNOMFI : NOM DU FICHIER DES PARAMETER A CONDENSER
+C NFIC   : NUMERO DU FICHIER SUPPORT DES CARTES PARAMETER
+C+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+C AUTEUR : ALAIN PERRONNET ANALYSE NUMERIQUE UPMC PARIS  OCTOBRE 1988
+C23456---------------------------------------------------------------012
+      include"./incl/gsmenu.inc"
+      COMMON / UNITES / LECTEU,IMPRIM,NUNITE(30)
+      CHARACTER*(*)     KNOMFI
+      CHARACTER*80      LIGNE
+      PARAMETER         (MXPARAM=64)
+      CHARACTER*72      KPARAM(MXPARAM)
+C
+      OPEN( FILE=KNOMFI , UNIT=NFIC , IOSTAT=I )
+      IF( I .NE. 0 ) THEN
+         NBLGRC(NRERR) = 1
+         KERR(1) ='PB POUR OUVRIR LE FICHIER '//KNOMFI
+         CALL LEREUR
+         GOTO 9000
+      ENDIF
+C
+C     POSITIONNEMENT AU DEBUT
+      REWIND( UNIT=NFIC , IOSTAT=I1 )
+      IF( I1 .NE. 0 ) THEN
+         NBLGRC(NRERR) = 1
+         KERR(1) = 'COPAFI:FICHIER NON REMBOBINABLE'
+         CALL LEREUR
+         GOTO 9000
+      ENDIF
+C
+C     LECTURE DE LA 1-ERE LIGNE
+      READ( NFIC , '(A)' ) LIGNE
+C
+C     INITIALISATION DU TABLEAU KPARAM
+      KPARAM(1) = '      PARAMETER('
+      NBLIGN = 1
+      LCLIGN = 16
+C
+C     LECTURE DES VALEURS DES CONSTANTES PARAMETREES
+ 10   READ( NFIC , '(A)' , IOSTAT=I1 ) LIGNE
+      IF( I1 .NE. 0 ) GOTO 100
+      IF( LIGNE(8:8) .EQ. ')' ) GOTO 100
+C
+C     SUPPRESSION DE TOUS LES BLANCS DE LA LIGNE
+      I1 = 10
+      I2 = INDEX( LIGNE(10:32) , ' ' ) + 8
+      I3 = I2 + 3
+ 20   IF( LIGNE(I3:I3) .EQ. ' ' ) THEN
+         I3 = I3 + 1
+         GOTO 20
+      ENDIF
+      I4 = INDEX( LIGNE(I3:32) , ' ' ) + I3 - 2
+C
+C     LE TABLEAU KPARAM EST COMPLETE
+      LONG = I2-I1 + I4-I3 + 4
+      IF( LCLIGN + LONG .GT. 72 ) THEN
+C        PASSAGE A LA LIGNE SUIVANTE
+         NBLIGN = NBLIGN + 1
+         IF( NBLIGN .GT. MXPARAM ) THEN
+            NBLGRC(NRERR) = 1
+            KERR(1) = 'COPAFI: TABLEAU KPARAM SATURE'
+            CALL LEREUR
+            RETURN
+         ENDIF
+         KPARAM(NBLIGN) = '     %'
+         LCLIGN = 6
+      ENDIF
+      KPARAM(NBLIGN)(LCLIGN+1:LCLIGN+LONG) =
+     %       LIGNE(I1:I2) // '=' // LIGNE(I3:I4) // ','
+      LCLIGN = LCLIGN + LONG
+      GOTO 10
+C
+C     FIN DE LA LECTURE DU FICHIER
+C     LA DERNIERE VIRGULE EST ECRASEE PAR ')'
+ 100  KPARAM(NBLIGN)(LCLIGN:LCLIGN) = ')'
+C
+C     MISE SUR FICHIER DU TABLEAU KPARAM
+      REWIND( UNIT=NFIC , IOSTAT=I1 )
+      IF( I1 .NE. 0 ) THEN
+         NBLGRC(NRERR) = 1
+         KERR(1) = 'COPAFI:FICHIER NON REMBOBINABLE'
+         CALL LEREUR
+         GOTO 9000
+      ENDIF
+      DO 200 I2=1,NBLIGN
+         WRITE( UNIT=NFIC , FMT='(A)' ) KPARAM(I2)
+         WRITE(IMPRIM,10200) KPARAM(I2)
+ 200  CONTINUE
+10200 FORMAT(1X,A72)
+C
+C     FERMETURE DU FICHIER SUPPORT DES PARAMETER DU TD
+ 9000 CLOSE( UNIT=NFIC )
+C
+      RETURN
+      END

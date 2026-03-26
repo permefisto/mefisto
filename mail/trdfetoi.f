@@ -1,0 +1,59 @@
+      SUBROUTINE TRDFETOI( NS1,NS2,NS3, N1FEOC, NFETOI, NOFE )
+C+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+C BUT :  RECHERCHER LE TRIANGLE DE SOMMETS NS1 NS2 NS3 PARMI LES
+C -----  FACES TRIANGULAIRES CHAINEES DE L'ETOILE NFETOI
+
+C ENTREES:
+C --------
+C NS1 NS2 NS3: LE NUMERO DES 3 SOMMETS DU TRIANGLE
+C N1FEOC : NUMERO NFETOI DE LA PREMIERE FACE DE L'ETOILE DANS NFETOI
+C NFETOI : LES FACES TRIANGULAIRES DE L'ETOILE VERSION 2
+C          1: NUMERO DU TETRAEDRE DANS NOTETR OPPOSE A CETTE FACE
+C          2: NUMERO PTXYZD DU SOMMET 1 DE LA FACE
+C          3: NUMERO PTXYZD DU SOMMET 2 DE LA FACE
+C          4: NUMERO PTXYZD DU SOMMET 3 DE LA FACE
+C             S1S2xS1S3 EST LA NORMALE DIRIGEE VERS L'INTERIEUR
+C             DE L'ETOILE
+C          5: CHAINAGE SUIVANT DES FACES OCCUPEES ET VIDES
+
+C SORTIE :
+C --------
+C NOFE   : >0 NUMERO DANS NFETOI DU TRIANGLE NS1 NS2 NS3
+C          =0 TRIANGLE NON DANS NFETOI
+C+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+C AUTEUR : ALAIN PERRONNET LJLL UPMC & St PIERRE du PERRAY  OCTOBRE 2017
+C2345X7..............................................................012
+      INTEGER  NFETOI(5,*)
+
+      NOFE = N1FEOC
+ 10   IF( NOFE .GT. 0 ) THEN
+
+         IF( NS1 .EQ. NFETOI(2,NOFE) .OR.
+     %       NS1 .EQ. NFETOI(3,NOFE) .OR.
+     %       NS1 .EQ. NFETOI(4,NOFE) ) THEN
+
+            IF( NS2 .EQ. NFETOI(2,NOFE) .OR.
+     %          NS2 .EQ. NFETOI(3,NOFE) .OR.
+     %          NS2 .EQ. NFETOI(4,NOFE) ) THEN
+
+               IF( NS3 .EQ. NFETOI(2,NOFE) .OR.
+     %             NS3 .EQ. NFETOI(3,NOFE) .OR.
+     %             NS3 .EQ. NFETOI(4,NOFE) ) THEN
+
+C                 LE TRIANGLE NS1 NS2 NS3 EST LA FACE NOFE DE NFETOI
+                  RETURN
+
+               ENDIF
+            ENDIF
+         ENDIF
+
+         NOFE = NFETOI(5,NOFE)
+         GOTO 10
+
+      ENDIF
+
+C     LE TRIANGLE NS1 NS2 NS3 N'EST PAS UNE FACE DE NFETOI
+      NOFE = 0
+
+      RETURN
+      END

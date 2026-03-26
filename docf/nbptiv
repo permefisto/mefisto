@@ -1,0 +1,11 @@
+Il est possible de donner une liste de POINTS INTERNES
+futurs sommets de la tetraedrisation avec une distance
+souhaitee aux sommets voisins afin d'affiner ou elargir
+la tetraedrisation autour de ces points.            
+
+Exemple:  P1; P2;  {les POINTS}   1; 2.5; {Les distances}
+Demande une tetraedrisation dont
+les aretes issues de P1 sont de tailles inferieures a 1
+les aretes issues de P2 sont de tailles inferieures a 2.5
+
+P1 et P2 ne peuvent etre sur une des surfaces de la frontiere.

@@ -1,0 +1,6 @@
+Une RAISON egale a 1 induit des tailles constantes d'aretes.
+
+Si la raison est comprise entre 0 et 1 strictement, les
+sommets se concentrent sur la fin de la hauteur.
+Si la raison est strictement superieure a 1, les sommets se
+concentrent sur le debut de la hauteur.

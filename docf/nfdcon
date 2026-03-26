@@ -1,0 +1,28 @@
+La fonction utilisateur donnant la valeur du GRADIENT de la CONDUCTIVITE
+dans la direction numero NDIR (1 a 3) des axes
+a l'instant TEMPS, au point X,Y,Z, 
+pour l'objet de numero de type NO_TYPE_OBJET
+(1:POINT, 2:LIGNE, 3:SURFACE, 4:VOLUME, 5:OBJET )
+et de numero dans ce lexique   NO_OBJET
+a la temperature TEMPER conue ou non (cas non lineaire)
+doit comprendre dans cet ordre les 8 parametres 
+
+DERIVEE_CONDUCTIVITE( TEMPS, X, Y, Z, NO_TYPE_OBJET, NO_OBJET, NDIR, TEMPER ) 
+
+et etre programmee selon la grammaire du langage LU
+(cf documentation et exemples du menu de depart )
+
+Ces parametres sont tous initialises en entree.
+Ils peuvent ou non servir a calculer la derivee de la CONDUCTIVITE
+dans la direction NDIR
+ 
+EXEMPLE:
+deffonc dconductivite( t, x, y, z, no_type_objet, materiau, ndir, temper ) ;
+si    ndir=1
+alors dconductivite=2;
+sinon si ndir=2
+      alors dconductivite=4;
+      sinon dconductivite=0;
+      finsi;  
+finsi;
+finfonc; 

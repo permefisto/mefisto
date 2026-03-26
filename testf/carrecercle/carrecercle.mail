@@ -1,0 +1,110 @@
+{CARRE AVEC UN CERCLE CENTRE 
+TEST des TANGENTES AU NIVEAU
+INTERPOLATION LAGRANGE DEGRE 2}
+
+DefVar nba; nba=5;
+@;
+1;
+{ POINTS sommets de l objet }
+           1;
+{ FRAPPE des valeurs }
+a; I; 1; 0; 0; 0;
+{ DANS LE LEXIQUE ~>TRANSFO }
+{ coordonnees x y z }
+{ COORPO '3 coordonnees cartesiennes du point' xyz ; }
+b; i; 1; 1; 0; 0;
+c; i; 1; 1; 1; 0;
+d; I; 1; 0; 1; 0;
+centre; i; 1; 0.5; 0.5; 0;
+ce1; i; 1; 0.7; 0.5; 0;
+ce2; i; 1; 0.5; 0.7; 0;
+@;
+@;
+
+2;
+{ LIGNES aretes de l objet }
+ab; i; 2; { segment de droite }
+    nba; { NBARLI 'nombre d''aretes de la ligne' entier ; }
+    1; { RAIGEO 'raison geometrique espacant les sommets' reel ; }
+    a; { DANS LE LEXIQUE ~>POINT }
+    b; { DANS LE LEXIQUE ~>POINT }
+bc; i; 2; nba; 1; b; c;
+cd; I; 2; nba; 1; c; d;
+da; I; 2; nba; 1; d; a;
+contour; i; 51; { union de plusieurs lignes }
+    4; { NBLIUN 'nombre de lignes de l''union' entier ; }
+   ab; bc; cd; da; { DANS LE LEXIQUE ~>LIGNE }
+cercle; i;{ DANS LE LEXIQUE ~>TRANSFO }
+ 8;{ cercle complet }
+ 20;{ NBARLI 'nombre d''aretes de la ligne' entier ; }
+ 2;{ cercle defini par le centre, un point du cercle, un point du plan }
+ CENTRE;{ DANS LE LEXIQUE ~>POINT }
+ CE1;   { DANS LE LEXIQUE ~>POINT }
+ CE2;   { DANS LE LEXIQUE ~>POINT }
+@;
+
+3;
+ { SURFACES faces de l objet }
+ { NOM de la SURFACE ou ABANDON? }
+ surf; i;
+ { DANS LE LEXIQUE ~>TRANSFO }
+ 9;
+ { triangulation de lignes fermees par TE }
+ 0.1;
+ { ARETMX 'taille max des aretes des triangles equilateraux' reel ; }
+ 2;
+ { NBLFTR 'nombre de lignes fermees contour de la surface' entier ; }
+ 0;
+ { NBPTIT 'nombre de points internes futurs sommets' entier ; }
+ { NOM de LIGNE }
+ contour;
+ { DANS LE LEXIQUE ~>LIGNE }
+ { NOM de LIGNE }
+ cercle;
+ { DANS LE LEXIQUE ~>LIGNE }
+ { NUPTIT(1..NBPTIT) 'nom des points internes futurs sommets' }
+ { DISOSV(1..NBPTIT) 'distance souhaitee aux sommets voisins' reel ; }
+ { NOM de la SURFACE ou ABANDON? }
+ @;
+
+ 5;
+ { OBJETS parties de l OBJET }
+ { NOM de l'OBJET ou ABANDON? }
+ obj;
+ 0;
+ { classique 2D ou 3D }
+ 3;
+ { NBDOBJ 'nombre des Points Lignes Surfaces Volumes Objets de l''objet' }
+ { POINT ou LIGNE ou SURFACE ou VOLUME ou OBJET? }
+ s; surf;
+ { POINT ou LIGNE ou SURFACE ou VOLUME ou OBJET? }
+ l; contour;
+ { POINT ou LIGNE ou SURFACE ou VOLUME ou OBJET? }
+ l; cercle;
+ { NTYOBJ(1..NBDOBJ) 'nom du type PLSVO et nom du PLSVO' typeobjet ; }
+ @;
+
+ 7;
+ { INTERPOLATION NOEUDS du maillage }
+ { NOM de l'OBJET a INTERPOLER? }
+ obj;
+ 4;{ LAGRANGE de DEGRE 2 }
+ @;
+
+ 91;
+ { Fichier xyznpef d un OBJET }
+ { NOM de l'OBJET? }
+ obj;
+ 1;{ AVEC les TANGENTES }
+
+ 10;
+ { TRACE du MAILLAGE des PLSVO }
+ 5;
+ { Tous les OBJETS }
+ 90;
+ { EXECUTION du TRACE }
+ @;
+ @;
+ @;
+FERMER;
+

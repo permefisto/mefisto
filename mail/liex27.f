@@ -1,0 +1,411 @@
+      SUBROUTINE LIEX27( NTLXLI , LADEFI , RADEFI ,
+     %                   NTARLI , MNARLI , NTSOLI , MNSOLI , IERR )
+C+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+C BUT :    GENERER LES ARETES DE LA LIGNE INTERSECTION DE 2 CYLINDRES
+C -----    LE CYLINDRE C1 DE RAYON R1>R2 EST D'AXE Y
+C          LE CYLINDRE C2 DE RAYON R2    EST D'AXE Z
+C          LA DISTANCE DE L'AXE 2 A LA BASE DE C1 EST D
+C
+C ENTREES:
+C --------
+C LADEFI : TABLEAU ENTIER DE DEFINITION DE LA LIGNE
+C          CF ~TD/D/A_LIGNE__DEFINITION
+C RADEFI : TABLEAU REEL   DE DEFINITION DE LA LIGNE
+C          CES 2 TABLEAUX LADEFI ET RADEFI ONT MEME ADRESSE A L'APPEL
+C NTLXLI : NUMERO DU TABLEAU TS DU LEXIQUE DE LA LIGNE
+C
+C SORTIES:
+C --------
+C NTARLI : NUMERO      DU TMS 'NSEF' DES NUMEROS DES ARETES DE LA LIGNE
+C MNARLI : ADRESSE MCN DU TMS 'NSEF' DES NUMEROS DES ARETES DE LA LIGNE
+C          CF ~TD/D/A___NSEF
+C NTSOLI : NUMERO      DU TMS 'XYZSOMMET' DE LA LIGNE
+C MNSOLI : ADRESSE MCN DU TMS 'XYZSOMMET' DE LA LIGNE
+C IERR   : 0 SI PAS D'ERREUR
+C          1 SI NOMBRE DE SOMMETS INCORRECT <2
+C          2 POINT INITIAL OU FINAL NON INITIALISE
+C          3 POINT INITIAL ET FINAL CONFONDUS
+C+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+C AUTEUR : ALAIN PERRONNET  ANALYSE NUMERIQUE PARIS UPMC  SEPTEMBRE 1996
+C....................................................................012
+      IMPLICIT INTEGER (W)
+      COMMON / UNITES / LECTEU , IMPRIM , INTERA , NUNITE(29)
+      include"./incl/a_ligne__definition.inc"
+      include"./incl/a___xyzsommet.inc"
+      include"./incl/a___nsef.inc"
+      include"./incl/ntmnlt.inc"
+      include"./incl/gsmenu.inc"
+      include"./incl/pp.inc"
+      COMMON            MCN(MOTMCN)
+      REAL              RMCN(1)
+      EQUIVALENCE      (MCN(1),RMCN(1))
+      REAL              XYZ(3,4),DX1(3)
+C
+      INTEGER           LADEFI(0:*)
+      REAL              RADEFI(0:*)
+      DOUBLE PRECISION  PI, AL0CAZ, AL1CAZ, TETA, T, Z
+C
+      MNALON = 0
+      MXSOLI = 0
+C
+C     LE NOMBRE D'ARETES ET DE SOMMETS DE LA LIGNE
+      NBARLI = LADEFI(WBARLI)
+C
+C     LE NUMERO D'AXE DU GRAND CYLINDRE X (1) OU Y (2)
+      NOAXCY = LADEFI( WOAXCY )
+C
+C     LE RAYON DE CHAQUE CYLINDRE
+      RAYCAY = RADEFI( WAYCAY )
+      RAYCAZ = RADEFI( WAYCAZ )
+C
+C     LONGITUDE INITIALE ANGLE OX,POINT1 DANS LE PLAN XY
+      PI     = ATAN( 1D0 ) * 4D0
+      AL0CAZ = RADEFI( WL0CAZ ) * PI / 180D0
+C
+C     LONGITUDE FINALE ANGLE OX,POINT1 DANS LE PLAN XY
+      AL1CAZ = RADEFI( WL1CAZ ) * PI / 180D0
+      TETA   = AL1CAZ - AL0CAZ
+      IF( ABS(TETA) .GE. PI*2 .OR. TETA .EQ. 0 ) THEN
+C        LIGNE FERMEE
+         NUTFMA = 1
+         AL1CAZ = AL0CAZ + PI*2D0
+         NBSOLI = NBARLI
+      ELSE
+C        LIGNE OUVERTE
+         NUTFMA = 0
+         NBSOLI = NBARLI + 1
+      ENDIF
+      IF( AL0CAZ .GT. AL1CAZ ) THEN
+         TETA   = AL0CAZ
+         AL0CAZ = AL1CAZ
+         AL1CAZ = TETA
+      ENDIF
+C
+C     COTE POSITIVE OU NEGATIVE DE L'INTERSECTION
+      COTCAZ = RADEFI( WOTCAZ )
+C
+C     DONNEES CORRECTES ?
+      IF( RAYCAY .LE. 0 ) THEN
+         NBLGRC(NRERR) = 1
+         KERR(1) = 'RAYON <0 DU CYLINDRE AXE Y'
+         CALL LEREUR
+         IERR = 4
+         GOTO 9999
+      ELSE IF( RAYCAZ .LE. 0 ) THEN
+         NBLGRC(NRERR) = 1
+         KERR(1) = 'RAYON <0 DU CYLINDRE AXE Z'
+         CALL LEREUR
+         IERR = 4
+         GOTO 9999
+      ELSE IF( RAYCAZ .GT. RAYCAY ) THEN
+         NBLGRC(NRERR) = 1
+         KERR(1) = 'RAYON DU CYLINDRE AXE Z > RAYON CYLINDRE AXE Y'
+         CALL LEREUR
+         IERR = 4
+         GOTO 9999
+      ENDIF
+C
+C     XYZ DU POINT D'INTERSECTION DES AXES DES 2 CYLINDRES
+CCC      CXCEAX = RADEFI( WXCEAX )
+CCC      CYCEAX = RADEFI( WYCEAX )
+CCC      CZCEAX = RADEFI( WZCEAX )
+C     EXTENSION FINALEMENT NON PRISE EN COMPTE
+      CXCEAX = 0
+      CYCEAX = 0
+      CZCEAX = 0
+C
+C     EXISTENCE OU NON DE LA FONCTION 'TAILLE_IDEALE(XYZ)' DES ARETES
+C     ===============================================================
+C     ICI LA CARTE EST SUPPOSEE ISOTROPE
+      NOFOTI = NOFOTIEL()
+C     NOFOTI>0 SI CETTE FONCTION EXISTE
+      IF( NOFOTI .GT. 0 ) THEN
+C        LA FONCTION 'TAILLE_IDEALE(X,Y,Z)' EXISTE
+         CALL IN2CYL( NOAXCY, CXCEAX, CYCEAX, CZCEAX,
+     %                RAYCAY, RAYCAZ, AL0CAZ, AL1CAZ, COTCAZ,
+     %                NOFOTI,
+     %                MXSOLI, NBSOLI, MNALON, IERR )
+C        RMCN(MNALON:MNALON+NBSOLI-1)=LONGITUDE DES NBSOLI SOMMETS DE L'ARC
+         IF( IERR .NE. 0 ) GOTO 9998
+         IF( NUTFMA .GT. 0 ) THEN
+C           LIGNE FERMEE
+            NBSOLI = NBSOLI - 1
+            NBARLI = NBSOLI
+         ELSE
+C           LIGNE OUVERTE
+            NBARLI = NBSOLI - 1
+         ENDIF
+      ENDIF
+C
+      IF( NBSOLI .LT. 1 ) THEN
+         NBLGRC(NRERR) = 1
+         KERR(1) = 'NOMBRE INCORRECT D''ARETES'
+         CALL LEREUR
+         IERR = 2
+         GOTO 9998
+      ENDIF
+C
+C     CONSTRUCTION DU TABLEAU 'XYZSOMMET'
+C     -----------------------------------
+      IF( NOFOTI .GT. 0 ) THEN
+C        LES 2 TANGENTES PAR ARETE SONT STOCKEES
+         NBTGS = 2 * NBARLI
+      ELSE
+C        PARAMETRAGE CONSTANT: 1 TANGENTE EN CHAQUE SOMMET ET +-NO
+         NBTGS = NBARLI + 1
+      ENDIF
+      CALL LXTNDC( NTLXLI , 'XYZSOMMET' , 'ENTIER' ,
+     %             WYZSOM + 3*(NBSOLI+NBTGS) )
+      CALL LXTSOU( NTLXLI , 'XYZSOMMET' ,  NTSOLI  , MNSOLI )
+C
+C     LE NOMBRE DE SOMMETS
+      MCN( MNSOLI + WNBSOM ) = NBSOLI
+C
+C     LE NOMBRE DE TANGENTES STOCKEES
+      MCN( MNSOLI + WNBTGS ) = NBTGS
+C
+C     ADRESSE DU DEBUT DES COORDONNEES DU 1-ER SOMMET DE LA LIGNE
+      MNS  = MNSOLI + WYZSOM
+      MNT  = MNS    + 3 * NBSOLI
+      TETA = AL0CAZ
+      T    = (AL1CAZ - AL0CAZ) / NBARLI
+C
+      IF( NOAXCY .EQ. 2 ) THEN
+C
+C        GRAND CYLINDRE D'AXE Y
+C        ......................
+         DO 15 I=1,NBARLI
+C
+C           LA LONGITUDE DU POINT INITIAL DE L'ARETE I
+            IF( NOFOTI .LE. 0 ) THEN
+C              LA FONCTION 'TAILLE_IDEALE(X,Y,Z)' N'EXISTE PAS
+               TETA = AL0CAZ + (I-1) * T
+            ELSE
+C              LA FONCTION 'TAILLE_IDEALE(X,Y,Z)' EXISTE
+               TETA = RMCN(MNALON-1+I)
+               T    = RMCN(MNALON+I) - TETA
+            ENDIF
+C
+C           CALCUL DES 2 SOMMETS EXTREMITES ET DES 2 POINTS TIERS DE L'ARETE
+            DO 10 J=1,4
+C              TEST POUR SUPPRIMER LES ARRONDIS DES SOMMATIONS SUR TETA
+               IF( I .EQ. NBARLI .AND. J .EQ. 4 ) TETA = AL1CAZ
+               Z        = RAYCAZ * COS( TETA )
+               XYZ(1,J) = REAL( Z )
+               XYZ(2,J) = REAL( RAYCAZ * SIN( TETA ) )
+               Z        = RAYCAY * SIN( ACOS( Z / RAYCAY ) )
+               IF( COTCAZ .LT. 0 ) Z = -Z
+               XYZ(3,J) = REAL( Z )
+C              PREPARATION DU POINT SUIVANT
+               TETA = TETA + T / 3.0
+ 10         CONTINUE
+C
+C           TRANSFORMATION DU P3 LAGRANGE EN P3 HERMITE
+            DO 12 J=1,3
+C              LE PREMIER SOMMET DE L'ARETE
+               RMCN( MNS - 1 + J ) = XYZ(J,1)
+C
+C              CALCUL DE LA TANGENTE AUX 2 SOMMETS DE L'ARETE P3 HERMITE
+               CALL P3LAHE( XYZ(J,1), XYZ(J,2), XYZ(J,3), XYZ(J,4),
+     %                      DX0, DX1(J) )
+C              LA TANGENTE AU PREMIER SOMMET DE L'ARETE
+               RMCN( MNT ) = DX0
+C              LA TANGENTE AU SECOND  SOMMET DE L'ARETE
+               IF( NOFOTI .GT. 0 ) THEN
+                  RMCN( MNT + 3 ) = DX1(J)
+               ENDIF
+               MNT = MNT + 1
+ 12         CONTINUE
+C
+            MNS  = MNS + 3
+            IF( NOFOTI .GT. 0 ) MNT  = MNT + 3
+ 15      CONTINUE
+C
+      ELSE
+C
+C        GRAND CYLINDRE D'AXE X
+C        ......................
+         DO 25 I=1,NBARLI
+C
+C           LA LONGITUDE DU POINT INITIAL DE L'ARETE I
+            IF( NOFOTI .LE. 0 ) THEN
+C              LA FONCTION 'TAILLE_IDEALE(X,Y,Z)' N'EXISTE PAS
+               TETA = AL0CAZ + (I-1) * T
+            ELSE
+C              LA FONCTION 'TAILLE_IDEALE(X,Y,Z)' EXISTE
+               TETA = RMCN(MNALON-1+I)
+               T    = RMCN(MNALON+I) - TETA
+            ENDIF
+C
+C           CALCUL DES 2 SOMMETS EXTREMITES ET DES 2 POINTS TIERS DE L'ARETE
+            DO 20 J=1,4
+C              TEST POUR SUPPRIMER LES ARRONDIS DES SOMMATIONS SUR TETA
+               IF( I .EQ. NBARLI .AND. J .EQ. 4 ) TETA = AL1CAZ
+               XYZ(1,J) = REAL( RAYCAZ * COS( TETA ) )
+               Z        = RAYCAZ * SIN( TETA )
+               XYZ(2,J) = REAL( Z )
+               Z        = RAYCAY * SIN( ACOS( Z / RAYCAY ) )
+               IF( COTCAZ .LT. 0 ) Z = -Z
+               XYZ(3,J) = REAL( Z )
+C              PREPARATION DU POINT SUIVANT
+               TETA = TETA + T / 3.0
+ 20         CONTINUE
+C
+C           TRANSFORMATION DU P3 LAGRANGE EN P3 HERMITE
+            DO 22 J=1,3
+C              LE PREMIER SOMMET DE L'ARETE
+               RMCN( MNS - 1 + J ) = XYZ(J,1)
+C
+C              CALCUL DE LA TANGENTE AUX 2 SOMMETS DE L'ARETE P3 HERMITE
+               CALL P3LAHE( XYZ(J,1), XYZ(J,2), XYZ(J,3), XYZ(J,4),
+     %                      DX0, DX1(J) )
+C              LA TANGENTE AU PREMIER SOMMET DE L'ARETE
+               RMCN( MNT ) = DX0
+C              LA TANGENTE AU SECOND  SOMMET DE L'ARETE
+               IF( NOFOTI .GT. 0 ) THEN
+                  RMCN( MNT + 3 ) = DX1(J)
+               ENDIF
+               MNT = MNT + 1
+ 22         CONTINUE
+C
+            MNS  = MNS + 3
+            IF( NOFOTI .GT. 0 ) MNT  = MNT + 3
+ 25      CONTINUE
+C
+      ENDIF
+C
+C     LE DERNIER SOMMET DE LA LIGNE SI ELLE EST OUVERTE
+      IF( NUTFMA .EQ. 0 ) THEN
+         DO 30 J=1,3
+            RMCN( MNS -1 + J ) = XYZ(J,4)
+ 30      CONTINUE
+      ENDIF
+C
+C     LA DERNIERE TANGENTE DE LA DERNIERE ARETE SI PAS TAILLE_IDEALE
+      IF( NOFOTI .LE. 0 ) THEN
+         DO 40 J=1,3
+            RMCN( MNT ) = DX1(J)
+            MNT = MNT + 1
+ 40      CONTINUE
+      ENDIF
+C
+C     TRANSLATION DU CENTRE DES AXES A L'ORIGINE
+      MNS = MNSOLI + WYZSOM
+      DO 45 J=1,NBSOLI
+         RMCN(MNS  ) = CXCEAX + RMCN(MNS  )
+         RMCN(MNS+1) = CYCEAX + RMCN(MNS+1)
+         RMCN(MNS+2) = CZCEAX + RMCN(MNS+2)
+       print *,'x=',RMCN(MNS),' y=',RMCN(MNS+1),' z=',RMCN(MNS+2)
+         MNS = MNS + 3
+ 45   CONTINUE
+C
+C     AJOUT DE LA DATE
+      CALL ECDATE( MCN(MNSOLI) )
+C
+C     AJOUT DU NUMERO DU TABLEAU DESCRIPTEUR
+      MCN( MNSOLI + WBCOOR ) = 3
+      MCN( MNSOLI + MOTVAR(6) ) = NONMTD( '~>>>XYZSOMMET' )
+C
+C     CONSTRUCTION DU TABLEAU 'NSEF' LIGNE STRUCTURE
+C     ----------------------------------------------
+C     NOMBRE DE MOTS DU TABLEAU NSEF
+      IF( NUTFMA .EQ. 0 ) THEN
+C        LIGNE OUVERTE => SEGMENT STRUCTURE
+         I = 1 + WBARSE
+      ELSE
+C        LIGNE FERMEE => SEGMENT NON STRUCTURE
+         I = WUSOEF + 2*NBARLI
+      ENDIF
+C     PLUS LES POINTEURS SUR LES TANGENTES
+      I = I + 4 * NBARLI
+      CALL LXTNDC( NTLXLI , 'NSEF' , 'ENTIER' , I )
+      CALL LXTSOU( NTLXLI , 'NSEF' ,  NTARLI  , MNARLI )
+C
+C     LE TYPE DE L'OBJET : ICI LIGNE
+      MCN( MNARLI + WUTYOB ) = 2
+C     LE TYPE DE FERMETURE DU MAILLAGE
+      MCN( MNARLI + WUTFMA ) = NUTFMA
+C     LE NOMBRE DE SOMMETS PAR EF=ARETE
+      MCN( MNARLI + WBSOEF ) = 2
+C     LE NOMBRE DE TANGENTES PAR EF
+      MCN( MNARLI + WBTGEF ) = 2
+C     LE NOMBRE D'ARETES DE LA LIGNE
+      MCN( MNARLI + WBEFOB ) = NBARLI
+C     NOMBRE D'EF AVEC TG
+      MCN( MNARLI + WBEFTG ) = NBARLI
+C     NOMBRE DES EF AVEC POINTEUR SUR EF A TG
+      MCN( MNARLI + WBEFAP ) = NBARLI
+C
+      IF( NUTFMA .EQ. 0 ) THEN
+C
+C        LE TYPE DU MAILLAGE : LIGNE OUVERTE => SEGMENT STRUCTURE
+         MCN( MNARLI + WUTYMA ) = 2
+C        LE NOMBRE D'ARETES DU SEGMENT STRUCTURE
+         MN = MNARLI + WBARSE
+         MCN( MN ) = NBARLI
+C
+      ELSE
+C
+C        LE TYPE DU MAILLAGE : LIGNE FERMEE => SEGMENT NON STRUCTURE
+         MCN( MNARLI + WUTYMA ) = 0
+C        LE NUMERO DES 2 SOMMETS DES ARETES
+         MN = MNARLI + WUSOEF
+         DO 50 I=1,NBARLI
+            MCN(MN  ) = I
+            MCN(MN+1) = I + 1
+            MN = MN + 2
+ 50      CONTINUE
+C        LE DERNIER SOMMET EST LE PREMIER
+         MN = MN - 1
+         MCN(MN) = 1
+      ENDIF
+C
+C     LE NUMERO DE L'EF A TG
+      DO 60 I=1,NBARLI
+         MCN(MN+I) = I
+ 60   CONTINUE
+      MN = MN + NBARLI
+C
+C     LE NUMERO GEOMETRIQUE DE L'EF A TG
+      DO 70 I=1,NBARLI
+C        SOMMET SUR 2 CYLINDRES => C1 degre 3
+         MCN(MN+I) = 0
+ 70   CONTINUE
+      MN = MN + NBARLI
+C
+C     LE NUMERO DES TANGENTES DES EF A TG
+      IF( NOFOTI .LE. 0 ) THEN
+C        PARAMETRAGE REGULIER 1 TG AUX SOMMETS INTERMEDIAIRES
+         DO 80 I=1,NBARLI
+C           LA TANGENTE 1 DE L'ARETE I
+            MN = MN + 1
+            MCN(MN) = I
+C           LA TANGENTE 2 DE L'ARETE I
+            MN = MN + 1
+            MCN(MN) = -(I+1)
+ 80      CONTINUE
+C        LA DERNIERE TANGENTE CALCULEE EST DANS LE BON SENS
+         MCN(MN) = -MCN(MN)
+      ELSE
+C        PARAMETRAGE IRREGULIER 2 TG PAR ARETE
+         DO 85 I=1,2*NBARLI
+            MCN(MN+I) = I
+ 85      CONTINUE
+      ENDIF
+C
+C     AJOUT DE LA DATE
+      CALL ECDATE( MCN(MNARLI) )
+C
+C     AJOUT DU NUMERO DU TABLEAU DESCRIPTEUR
+      MCN( MNARLI + MOTVAR(6) ) = NONMTD( '~>>>NSEF' )
+      IERR = 0
+C
+C     DESTRUCTION DU TABLEAU DES LONGITUDES DES SOMMETS DE LA LIGNE
+ 9998 IF( MNALON .GT. 0 ) THEN
+         CALL TNMCDS( 'REEL', MXSOLI, MNALON )
+      ENDIF
+C
+C     ERREUR
+C     ======
+ 9999 RETURN
+      END

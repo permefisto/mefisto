@@ -1,0 +1,4 @@
+variable METHRESO 'Choice of solver A x = b' entier
+(1 : 'CHOLESKY or CROUT with SKYLINE MATRIX',
+ 2 : 'CONJUGATE GRADIENT with CONDENSED MATRIX',
+ 3 : 'on MULTI-PROCESSORS' ) ;

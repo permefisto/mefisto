@@ -1,0 +1,19 @@
+#!/bin/bash
+#  Alain PERRONNET   Octobre 1997
+
+if test $1
+then
+   FICPS=$1
+else
+   echo "Nom du fichier .ps a IMPRIMER?"
+   read FICPS
+fi
+if test $2
+then
+   NBPARPAGE=$2
+else
+   echo "Nombre de PAGES par PAGE (2 ou 4 ou 8)?"
+   read NBPARPAGE
+fi
+
+/net/elan/usr/local/bin/mpage -P -{$NBPARPAGE} {$FICPS} | lpr

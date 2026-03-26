@@ -1,0 +1,51 @@
+      SUBROUTINE MX1VEC( NTDL, NDSM,  NCAS, VECTEUR,
+     %                   VMIN, NCMIN, VMAX, NCMAX )
+C+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+C BUT :     CALCULER LE MIN ET MAX DU VECTEUR NCAS PARMI LES NDSM VECTEURS
+C -----     DE NTDL COMPOSANTES REELLES DOUBLE PRECISION
+C
+C ENTREES :
+C ---------
+C NDSM    : NOMBRE TOTAL DE VECTEURS
+C NTDL    : NOMBRE TOTAL DE COMPOSANTES D'UN VECTEUR
+C NCAS    : NUMERO DU VECTEUR A TRAITER
+C VECTEUR : TABLEAU (NTDL,NDSM) DES VECTEURS
+C
+C SORTIES :
+C ---------
+C VMIN    : VALEUR MINIMALE REELLE DOUBLE PRECISION DU VECTEUR NCAS
+C NCMIN   : NUMERO DE LA COMPOSANTE DE VALEUR MINIMALE
+C VMAX    : VALEUR MAXIMALE REELLE DOUBLE PRECISION DU VECTEUR NCAS
+C NCMAX   : NUMERO DE LA COMPOSANTE DE VALEUR MAXIMALE
+C+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+C AUTEUR : ALAIN PERRONNET LJLL UPMC PARIS                  OCTOBRE 2005
+C23456---------------------------------------------------------------012
+      DOUBLE PRECISION  VECTEUR(NTDL,NDSM), VMIN, VMAX, V, ABS
+C
+      NCMIN = 1
+      NCMAX = 1
+      VMIN  = VECTEUR( 1, NCAS )
+      VMAX  = VMIN
+C
+      DO 20 N=2,NTDL
+         V = VECTEUR( N, NCAS )
+         IF( V .LT. VMIN ) THEN
+            VMIN  = V
+            NCMIN = N
+         ELSE IF( V .GT. VMAX ) THEN
+            VMAX  = V
+            NCMAX = N
+         ENDIF
+ 20   CONTINUE
+C
+C     PROTECTION CONTRE LE CAS CONSTANT => LES DIVISIONS PAR (VMAX-VMIN)
+      IF( VMAX - VMIN .LE. 1D-7*ABS(VMAX) ) THEN
+         IF( VMAX .GT. 0D0 ) THEN
+            VMAX = VMAX * 1.0000001D0
+         ELSE IF( VMAX .EQ. 0 ) THEN
+            VMAX = 1D-7
+         ELSE
+            VMAX = VMAX * 0.9999999D0
+         ENDIF
+      ENDIF
+      END

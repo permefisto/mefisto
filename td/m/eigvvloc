@@ -1,0 +1,4 @@
+variable EIGVVLOC 'Localisation Valeurs Propres autour Objectif' entier
+ ( 1 : '|Valeurs Propres| a GAUCHE de |TARGET|'
+ , 2 : '|Valeurs Propres| CENTREES de |TARGET|'
+ , 3 : '|Valeurs Propres| a DROITE de |TARGET|' ) ;

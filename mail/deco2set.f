@@ -1,0 +1,234 @@
+      SUBROUTINE DECO2SET( PTXYZD, NBTRCF, NOTRCF, LEFACO, NO0FAR,
+     %                     NBTECF, NOTECF, NOTETR,
+     %                     MXFETO, N1FEOC, N1FEVI, NFETOI,
+     %                     NOTRC1, NATRC1, SUMIMX )
+C+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+C BUT :    EXISTE T IL UNE ARETE SIMPLE DES TRIANGLES NOTRCF NON ARETE
+C -----    D'AU MOINS 2 FACES SIMPLES DES NBTECF TETRAEDRES DE L'ETOILE?
+
+C ENTREES:
+C --------
+C PTXYZD : TABLEAU DES COORDONNEES DES POINTS
+C          PAR POINT : X  Y  Z DISTANCE_SOUHAITEE
+C NBTRCF : NOMBRE DE FACES DE NOTRCF
+C NOTRCF : >0 NUMERO DANS LEFACO DES TRIANGLES PERDUS  DU CF
+C          <0 NUMERO DANS NO0FAR DES TRIANGLES AJOUTES AU CF
+
+C LEFACO : FACE DU CONTOUR OU INTERFACES ENTRE VOLUMES
+C          IL CONTIENT DANS CET ORDRE
+C          1:   =0 POUR UNE FACE VIDE
+C          123: NO (DANS PTXYZD) DU SOMMET 1, SOMMET 2, SOMMET 3
+C          45:  NO (DANS NUVOPA 0 SINON) DU VOLUME1 , VOLUME2 DE LA FACE
+C          678: NO (DANS LEFACO) DE LA FACE ADJACENTE PAR L'ARETE 1 2 3
+C          9: ATTENTION: UNE ARETE PEUT APPARTENIR A PLUS DE 2 FACES
+C             => CHAINAGE CIRCULAIRE DE CES FACES DANS LEFACO
+C             LEFACO(9,*) -> FACE SUIVANTE (*=0:VIDE, *<>0:NON VIDE)
+C          10: HACHAGE AVEC LA SOMME DES 3 SOMMETS MODULO MXFACO
+C              LF = MOD( NOSOFA(1)+NOSOFA(2)+NOSOFA(3) , MXFACO ) + 1
+C              NF = LEFACO( 10, LF ) LE NUMERO DE LA 1-ERE FACE DANS LEFACO
+C              SI LA FACE NE CONVIENT PAS. PASSAGE A LA SUIVANTE
+C              NF = LEFACO( 9, NF )  ...
+C          11: >0  NO NOTETR D'UN TETRAEDRE AYANT CETTE FACE,
+C              =0  SINON
+cccC          12: = NO FACEOC DE 1 A NBFACES D'OC
+C NO0FAR : NUMERO DES 3 SOMMETS DES FACES AJOUTEES AU CF
+
+C NBTECF : NOMBRE DE TETRAEDRES DE L'ETOILE
+C NOTECF : NUMERO NOTETR DES TETRAEDRES DE L'ETOILE
+C NOTETR : LISTE DES TETRAEDRES
+C          SOMMET1,    SOMMET2,    SOMMET3,    SOMMET4,
+C          TETRAEDRE1, TETRAEDRE2, TETRAEDRE3, TETRAEDRE4
+C          DE L'AUTRE COTE DE LA FACE
+C MXFETO : NOMBRE MAXIMAL DE FACES DECLARABLES DANS LE CHAINAGE NFETOI
+
+C SORTIES:
+C --------
+C N1FEOC : POINTEUR SUR LA PREMIERE FACE DE L'ETOILE
+C          CHAINAGE SUIVANT DANS NFETOI(5,*)
+C N1FEVI : POINTEUR SUR LA PREMIERE FACE VIDE DE L'ETOILE
+C          CHAINAGE SUIVANT DANS NFETOI(5,*)
+C          =-1 SI SATURATION DU TABLEAU NFETOI
+C NFETOI : AU DEBUT  VERSION1 DES FACES SIMPLES DE L'ETOILE
+C          1: NUMERO DU TETRAEDRE DANS NOTETR AYANT CETTE FACE
+C          2: NUMERO LOCAL AU TETRAEDRE DE LA FACE DE L'ETOILE
+C             UN SIGNE NEGATIF INDIQUE UN TRAITEMENT EFFECTUE
+C          3: NON UTILISE ICI
+C          4: NUMERO DE CETTE FACE DANS LEFACO, 0 SI PAS DANS LEFACO
+C          5: CHAINAGE SUIVANT DES FACES OCCUPEES ET VIDES
+C          ENSUITE VERSION2
+C          1: NUMERO DU TETRAEDRE DANS NOTETR OPPOSE A CETTE FACE
+C          2: NUMERO PTXYZD DU SOMMET 1 DE LA FACE
+C          3: NUMERO PTXYZD DU SOMMET 2 DE LA FACE
+C          4: NUMERO PTXYZD DU SOMMET 3 DE LA FACE
+C             S1S2xS1S3 EST DIRIGE VERS L'INTERIEUR DE L'ETOILE
+C          5: CHAINAGE SUIVANT DES FACES OCCUPEES ET VIDES
+
+C NOTRC1 : >0 SI L'ARETE NATRC1 DE NOTRCF(NOTRC1) EST UNE ARETE SIMPLE
+C             DU CF ET N'EST PAS UNE ARETE DES FACES SIMPLES DES
+C             NBTECF TETRAEDRES DE L'ETOILE
+C          =0 SI TOUTES LES ARETES SIMPLES DU CF SONT DES ARETES D'AU
+C             MOINS 2 FACES SIMPLES DES NBTECF TETRAEDRES DE L'ETOILE
+C          =-1 SI UNE DES FACES DE L'ETOILE EST DE SURFACE NULLE
+C NATRC1 : >0 NUMERO D'ARETE (1 A 3) DE LA FACE NOTRCF(NOTRC1)
+C SUMIMX : RAPPORT DE LA SURFACE DE LA FACE MINIMALE
+C                 SUR LA SURFACE DE LA FACE MAXIMALE DE NFETOI
+C+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+C AUTEUR : ALAIN PERRONNET St PIERRE du PERRAY & VEULETTES  Fevrier 2018
+C2345X7..............................................................012
+      DOUBLE PRECISION  PTXYZD(4,*), SMIN, SMAX, SUMIMX
+      INTEGER           NOTRCF(NBTRCF), LEFACO(11,0:*), NO0FAR(3,*),
+     %                  NOTECF(NBTECF), NOTETR(8,*), NFETOI(5,MXFETO)
+
+C     UNE SEULE FOIS UN NUMERO DE TETRAEDRE DANS NOTECF
+      CALL UNITABL( NOTECF, NBTECF )
+
+C     CONSTRUCTION NFETOI DES TRIANGLES FACES SIMPLES DES TETRAEDRES
+C     DE L'ETOILE. LES FACES VUES 2 FOIS SONT ELIMINEES
+      CALL CRFETOI1( NBTECF, NOTECF, NOTETR,
+     %               MXFETO, N1FEOC, N1FEVI, NFETOI )
+
+C     PASSAGE DU TABLEAU NFETOI DE L'ETOILE
+C     de la Version1 en la Version2
+      CALL V12NFETOI( N1FEOC, NFETOI, NOTETR, NBFETO )
+
+C     RETROUVER LA FACE SIMPLE DE NFETOI DE SURFACE MINIMALE ET MAXIMALE
+      CALL FASIMIMX( PTXYZD, N1FEOC, NFETOI,
+     %               NBFETO, NFMIN,  SMIN,  NFMAX, SMAX )
+      SUMIMX = SMIN / SMAX
+
+      IF( SMIN .LE. 0D0 ) THEN
+C        UNE FACE DE L'ETOILE EST DE SURFACE NULLE
+         NOTRC1 = -1
+         NATRC1 = -1
+         GOTO 9999
+      ENDIF
+
+C     PARCOURS DES ARETES SIMPLES DES NBTRCF FACES
+      DO N1 = 1, NBTRCF
+
+C        LA FACE N1
+         NTR1 = NOTRCF( N1 )
+         NTN1 = -NTR1
+
+         DO 50 NA1 = 1, 3
+
+C           L'ARETE NA1 DE LA FACE NTR1
+            IF( NA1 .EQ. 3 ) THEN
+               NA2 = 1
+            ELSE
+               NA2 = NA1 + 1
+            ENDIF
+
+            IF( NTR1 .GT. 0 ) THEN
+               NSA1 = LEFACO( NA1, NTR1 )
+               NSA2 = LEFACO( NA2, NTR1 )
+            ELSE
+               NSA1 = NO0FAR( NA1, NTN1 )
+               NSA2 = NO0FAR( NA2, NTN1 )
+            ENDIF
+
+C           L'ARETE NA1 DE SOMMETS NSA1 NS2 EST ELLE SIMPLE PARMI
+C           LES ARETES DES NBTRCF FACES?
+            DO N2 = 1, NBTRCF
+
+C              LA FACE N2
+               IF( N2 .NE. N1 ) THEN
+
+                  NTR2 = NOTRCF( N2 )
+                  NTN2 = -NTR2
+
+                  DO NA3 = 1, 3
+
+C                    L'ARETE NA3 DE LA FACE NTR2
+                     IF( NA3 .EQ. 3 ) THEN
+                        NA4 = 1
+                     ELSE
+                        NA4 = NA3 + 1
+                     ENDIF
+
+                     IF( NTR2 .GT. 0 ) THEN
+                        NSA3 = LEFACO( NA3, NTR2 )
+                        NSA4 = LEFACO( NA4, NTR2 )
+                     ELSE
+                        NSA3 = NO0FAR( NA3, NTN2 )
+                        NSA4 = NO0FAR( NA4, NTN2 )
+                     ENDIF
+
+                     IF( ( NSA1.EQ.NSA4 .AND. NSA2.EQ.NSA3 ) .OR.
+     %                   ( NSA1.EQ.NSA3 .AND. NSA2.EQ.NSA4 ) ) THEN
+
+C                       L'ARETE NOTRCF NSA1-NSA2 N'EST PAS SIMPLE
+C                       -----------------------------------------
+                        GOTO 50
+
+                     ENDIF
+
+                  ENDDO
+               ENDIF
+
+            ENDDO
+
+C           L'ARETE NOTRCF NSA1-NSA2 DU CF EST SIMPLE
+C           -----------------------------------------
+C           NOMBRE DE FACES SIMPLES DE NFETOI CONTENANT CETTE ARETE SIMPLE
+            NBFSAR = 0
+            NF1 = N1FEOC
+ 20         IF( NF1 .GT. 0 ) THEN
+
+C              LES 3 SOMMETS DE LA FACE SIMPLE NF1 SONT NFETOI(2:4,NF1)
+               DO M=1,3
+C                 NST1 NST2 LES 2 SOMMETS DE L'ARETE M
+C                 DE LA FACE SIMPLE NF1 DE L'ETOILE
+                  NST1 = ABS( NFETOI(1+M,NF1) )
+                  IF( M .EQ. 3 ) THEN
+                     MM = 1
+                  ELSE
+                     MM = M+1
+                  ENDIF
+                  NST2 = ABS( NFETOI(1+MM,NF1) )
+
+                  IF( ( NSA1.EQ.NST1 .AND. NSA2.EQ.NST2 ) .OR.
+     %                ( NSA1.EQ.NST2 .AND. NSA2.EQ.NST1 ) )THEN
+C                    L'ARETE NSA1-NSA2 EST L'ARETE M DE LA FACE SIMPLE NF1
+                     NBFSAR = NBFSAR + 1
+                     GOTO 30
+                  ENDIF
+
+               ENDDO
+
+ 30            NF1 = NFETOI(5,NF1)
+               GOTO 20
+
+            ENDIF
+
+C           L'ARETE SIMPLE NOTRCF NSA1-NSA2 DE LA FACE NTR1 APPARTIENT A
+            IF( NBFSAR .LT. 2 ) THEN
+
+C              AUCUN ou UN TETRAEDRE
+C             ( CE QUI NE PERMET PAS LE DECOUPAGE EN 2 DEMI SOUS-ETOILES)
+             PRINT*,'deco2set: l''ARETE SIMPLE du CF NOTRCF:',NSA1,NSA2,
+     %              ' APPARTIENT a',NBFSAR,
+     %          ' FACE SIMPLE NFETOI de l''ETOILE des TETRAEDRES NOTECF'
+               NOTRC1 = N1
+               NATRC1 = NA1
+               GOTO 9999
+
+ccc            ELSE
+cccC              AU MOINS 2 TETRAEDRES
+cccC             ( CE QUI PERMET LE DECOUPAGE EN 2 DEMI SOUS-ETOILES)
+ccc               PRINT*,'deco2set: L''ARETE SIMPLE de NOTRCF:',NSA1,NSA2,
+ccc     %            ' APPARTIENT A',NBFSAR,' FACES SIMPLES des TETRAEDRES'
+
+            ENDIF
+
+ 50      ENDDO
+
+      ENDDO
+
+C     TOUTES LES ARETES NOTRCF SIMPLES SONT DES ARETES DES TETRAEDRES
+      NOTRC1 = 0
+      NATRC1 = 0
+
+
+ 9999 RETURN
+      END

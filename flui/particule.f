@@ -1,0 +1,1363 @@
+      SUBROUTINE PARTICULE( KNOMOB, NTLXOB, NDIM, MNNPEF, MNXYZP,
+     %                      NBSOMT, NBNOVI, NUNOSO, TIMES, NCAS0, NCAS1,
+     %                      vitx, vity, vitz, pres, VITMAX, VITMOY,
+     %                      NBSFTR, MNNOSFTR, MNXYSFTR, MNEFSFTR, IERR )
+C+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+C BUT :    CALCUL DU PARCOURS DES NBPART PARTICULES DANS UN FLUIDE 3D
+C -----    MAILLE EN TETRAEDRES DURANT L'INTERVALLE DE TEMPS OU LA
+C          VITESSE A ETE CALCULEE ET DONC CONNUE SUR TOUS LES TETRAEDRES
+C         (La VITESSE est INTERPOLEE sur les EF TAYLOR-HOOD ou BREZZI-FORTIN)
+C          PRISE EN COMPTE du COEFFICIENT de TRAINEE CORRIGE Cx = CD / Cc
+
+C ENTREES:
+C --------
+C KNOMOB : NOM DE L'OBJET
+C NTLXOB : NUMERO TMS DU LEXIQUE DE L'OBJET KNOMOB
+C NDIM   : DIMENSION DE L'ESPACE DE L'OBJET 2 ou 3
+C MNNPEF : ADRESSE MCN DES TABLEAUX ELEMENTS DE CETTE TOPOLOGIE
+C MNXYZP : ADRESSE MCN DU TABLEAU POINTS GEOMETRIQUES DE L'OBJET
+C NBSOMT : NOMBRE DE SOMMETS (SUPPORT DU DL DE LA PRESSION)
+C NBNOVI : NOMBRE DE NOEUDS SUPPORT DE LA VITESSE
+C NUNOSO : NUMERO DE SOMMET DE CHAQUE NOEUD, 0 SI NON SOMMET CAS TAYLOR-HOOD
+
+C TIMES  : (NCAS0:NCAS1) TEMPS DU CALCUL DES NBVPFILE VECTEURS V+P
+C NCAS0  : NUMERO DU PREMIER VECTEUR VITESSE+PRESSION A TRAITER
+C NCAS1  : NUMERO DU DERNIER VECTEUR VITESSE+PRESSION A TRAITER
+C          STOCKE SUR FICHIERS DANS LE REPERTOIRE DU PROJET
+C vitx   : TABLEAU(ncas0:ncas1) de pointeurs sur le tableau vitesse en X(NBNOVI)
+C vity   : TABLEAU(ncas0:ncas1) de pointeurs sur le tableau vitesse en Y(NBNOVI)
+C vitz   : TABLEAU(ncas0:ncas1) de pointeurs sur le tableau vitesse en Z(NBNOVI)
+C vitm   : TABLEAU(ncas0:ncas1) de pointeurs sur le tableau vitesse en MODULE(NBSOMT)
+C pres   : TABLEAU(ncas0:ncas1) de pointeurs sur le tableau pression(NBSOMT)
+C VITMAX : VITESSE MAXIMALE DU FLUIDE EN UN NOEUD POUR LES TEMPS NCAS0:NCAS1
+C VITMOY : VITESSE MOYENNE  DU FLUIDE EN UN NOEUD POUR LES TEMPS NCAS0:NCAS1
+
+C NBSFTR : NOMBRE DE SURFACES TRIANGULEES A TRACER
+C NUSFTR : NUMERO DES NBSFTR SURFACES A TRACER
+C MNXYZSF: ADRESSE MCN DU TMS XYZSOMMET DES NBSFTR SURFACES A TRACER
+C MNSEFSF: ADRESSE MCN DU TMS NSEF      DES NBSFTR SURFACES A TRACER
+
+C SORTIE :
+C --------
+C IERR   : >0 NUMERO DE LA PARTICULE DE TABLEAU NON ALLOUABLE
+C          =0 PAS D'ERREUR DETECTEE
+C+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+C AUTEUR : ALAIN PERRONNET Saint PIERRE du PERRAY           FEVRIER 2021
+C23456---------------------------------------------------------------012
+C     g=9.81;            { m/s2  Gravity Acceleration in Z-direction }
+C     RhoAir=1.2;        { kg/m3 Wet Air Mass Density at sea level  }
+C     RhoPar=1000;       { kg/m3 Water Mass Density }
+C     MuAir=18.5E-6;     { kg/(m.s) or Pa.s Air Dynamic Viscosity=18.5 10-6}
+C     NuAir=MuAir/RhoAir;{ m2/s  Air Kinematic Viscosity=15.6 10-6 a 20 C}
+      DOUBLE PRECISION  Cx, CD, Cc, CL, G, RhoPar, RhoAir, MuAir
+      PARAMETER       ( CD=0.5D0, G=9.81D0, RhoPar=1000D0,
+     %                  RhoAir=1.2D0, MuAir=18.5D-6 )
+
+C     MXPASDT: NOMBRE MAXIMAL DE PAS DE TEMPS D'INTEGRATION
+C              DU PARCOURS D'UNE PARTICULE
+      PARAMETER       ( MXPASDT=65536 )
+
+C     MXPARINA: NOMBRE MAXIMAL DE PARTICULES DONT LE CALCUL
+C               DU PARCOURS EST INACHEVE
+      PARAMETER       ( MXPARINA=256 )
+
+      include"./incl/langue.inc"
+      include"./incl/gsmenu.inc"
+      include"./incl/a_objet__definition.inc"
+      include"./incl/a_objet__topologie.inc"
+      include"./incl/a___npef.inc"
+      include"./incl/a___nsef.inc"
+      include"./incl/a___vecteur.inc"
+      include"./incl/a___xyzpoint.inc"
+      include"./incl/a___xyznoeud.inc"
+      include"./incl/a___face.inc"
+      include"./incl/ponoel.inc"
+      include"./incl/donele.inc"
+      include"./incl/trvari.inc"
+      include"./incl/mecoit.inc"
+      include"./incl/ctemps.inc"
+      include"./incl/xyzext.inc"
+      include"./incl/nctyef.inc"
+      include"./incl/pp.inc"
+      COMMON            MCN(MOTMCN)
+      REAL             RMCN(MOTMCN)
+      EQUIVALENCE     (RMCN(1),MCN(1))
+
+      CHARACTER*(*)     KNOMOB
+
+      INTEGER           NUNOSO(NBNOVI), NONOTE(10), NUPARINA(MXPARINA),
+     %                  COVID
+
+      REAL              TIMES(NCAS0:NCAS1),
+     %                  VITMXPAR, VMX1PAR,
+     %                  XYZP0(3), XYZP1(3), XYZSTE(4,3), DIST01
+
+      DOUBLE PRECISION  VITMAX, VITMOY, V0, V1, VPART0(3), VPART1(3),
+     %                  VPNORT0, VPNORT1, S,
+     %                  RAYPART, PRESTTE(4), GRPREST0(3),
+     %                  CB1, CB2, CB3, CB4, Pi,
+     %                  FBASE(10), VITNOTE(10), VFXYZT0(3), VFXYZT1(3),
+     %                  VPmVair, VFNORT0, VFNORT1, DELTAT0, DELTAT,
+     %                  PARCOUR, PARCOURMX, PROSCD,
+     %                  XYZBAT(3), DFM1(3,3), DP1(3,4), DELTAF,
+     %                  DPRjDXi(3,10), DPjDXi(3,10), DkVTi(3,3),
+     %                  SurfCx, ReynD, ReynS, Beta
+
+      DOUBLE PRECISION  ROTVit(3), ROTVitN, FLIFT(3)
+
+      type typ_dptab
+         DOUBLE PRECISION, dimension(:), pointer :: dptab
+      end type typ_dptab
+      type( typ_dptab ),dimension(NCAS0:NCAS1) :: vitx, vity, vitz, pres
+
+      REAL      XYZVPARTK( 1:6, 1:MXPASDT )
+      type typ_r4tab2i
+         REAL, dimension(:,:), pointer :: r4tab2i
+      end type typ_r4tab2i
+      type( typ_r4tab2i ), dimension(:), allocatable :: xyzvpart
+
+C     Les COEFFICIENTS des 5 POLYNOMES TEP1Bulle BREZZI-FORTIN
+C     SUR LE TETRAEDRE UNITE de REFERENCE
+      DOUBLE PRECISION TEP1Bulle(5,5,5, 5), DTEP1Bulle(5,5,5, 5, 3)
+C     LES 5 POLYNOMES DE BASE DE BREZZI-FORTIN SUR LE TETRAEDRE UNITE
+      DATA TEP1Bulle/
+     %        1D0,   -1D0,  3*0D0,   -1D0, 19*0D0,
+     %       -1D0,  5*0D0,  -64D0,   64D0,  3*0D0,  64D0,  13*0D0,
+     %      6*0D0,   64D0, 68*0D0,
+
+     %        0D0,    1D0, 23*0D0,
+     %      6*0D0,  -64D0,   64D0,  3*0D0,   64D0,  13*0D0,
+     %      6*0D0,   64D0, 68*0D0,
+
+     %      5*0D0,    1D0,  19*0D0,
+     %      6*0D0,  -64D0,    64D0, 3*0D0,   64D0,  13*0D0,
+     %      6*0D0,   64D0,  68*0D0,
+
+     %     25*0D0,
+     %        1D0,  5*0D0,  -64D0,   64D0,  3*0D0,  64D0,  13*0D0,
+     %      6*0D0,   64D0, 68*0D0,
+
+     %     31*0D0,  256D0,  -256D0, 3*0D0, -256D0, 13*0D0,
+     %      6*0D0, -256D0,  68*0D0 /
+
+C     POLYNOME TEP2 LAGRANGE P2 SUR LE TETRAEDRE UNITE
+      DOUBLE PRECISION TEP2(3,3,3,10), DTEP2(3,3,3,10,3)
+      DATA    TEP2 /
+     %        1D0, -3D0, 2D0,  -3D0, 4D0, 0D0,  2D0, 0D0, 0D0,
+     %       -3D0,  4D0, 0D0,   4D0, 0D0, 0D0,  0D0, 0D0, 0D0, 
+     %        2D0,  0D0, 0D0,   0D0, 0D0, 0D0,  0D0, 0D0, 0D0,
+
+     %        0D0, -1D0, 2D0,   0D0, 0D0, 0D0,  0D0, 0D0, 0D0,
+     %        0D0,  0D0, 0D0,   0D0, 0D0, 0D0,  0D0, 0D0, 0D0,
+     %        0D0,  0D0, 0D0,   0D0, 0D0, 0D0,  0D0, 0D0, 0D0,
+
+     %        0D0,  0D0, 0D0,  -1D0, 0D0, 0D0,  2D0, 0D0, 0D0,
+     %        0D0,  0D0, 0D0,   0D0, 0D0, 0D0,  0D0, 0D0, 0D0,
+     %        0D0,  0D0, 0D0,   0D0, 0D0, 0D0,  0D0, 0D0, 0D0,
+
+     %        0D0,  0D0, 0D0,   0D0, 0D0, 0D0,  0D0, 0D0, 0D0,
+     %       -1D0,  0D0, 0D0,   0D0, 0D0, 0D0,  0D0, 0D0, 0D0,
+     %        2D0,  0D0, 0D0,   0D0, 0D0, 0D0,  0D0, 0D0, 0D0,
+
+     %        0D0,  4D0,-4D0,   0D0,-4D0, 0D0,  0D0, 0D0, 0D0,
+     %        0D0, -4D0, 0D0,   0D0, 0D0, 0D0,  0D0, 0D0, 0D0,
+     %        0D0,  0D0, 0D0,   0D0, 0D0, 0D0,  0D0, 0D0, 0D0,
+
+     %        0D0,  0D0, 0D0,   0D0, 4D0, 0D0,  0D0, 0D0, 0D0,
+     %        0D0,  0D0, 0D0,   0D0, 0D0, 0D0,  0D0, 0D0, 0D0,
+     %        0D0,  0D0, 0D0,   0D0, 0D0, 0D0,  0D0, 0D0, 0D0,
+
+     %        0D0,  0D0, 0D0,   4D0,-4D0, 0D0, -4D0, 0D0, 0D0,
+     %        0D0,  0D0, 0D0,  -4D0, 0D0, 0D0,  0D0, 0D0, 0D0,
+     %        0D0,  0D0, 0D0,   0D0, 0D0, 0D0,  0D0, 0D0, 0D0,
+
+     %        0D0,  0D0, 0D0,   0D0, 0D0, 0D0,  0D0, 0D0, 0D0,
+     %        4D0, -4D0, 0D0,  -4D0, 0D0, 0D0,  0D0, 0D0, 0D0,
+     %       -4D0,  0D0, 0D0,   0D0, 0D0, 0D0,  0D0, 0D0, 0D0,
+
+     %        0D0,  0D0, 0D0,   0D0, 0D0, 0D0,  0D0, 0D0, 0D0,
+     %        0D0,  4D0, 0D0,   0D0, 0D0, 0D0,  0D0, 0D0, 0D0,
+     %        0D0,  0D0, 0D0,   0D0, 0D0, 0D0,  0D0, 0D0, 0D0,
+
+     %        0D0,  0D0, 0D0,   0D0, 0D0, 0D0,  0D0, 0D0, 0D0,
+     %        0D0,  0D0, 0D0,   4D0, 0D0, 0D0,  0D0, 0D0, 0D0,
+     %        0D0,  0D0, 0D0,   0D0, 0D0, 0D0,  0D0, 0D0, 0D0 /
+
+      IERR = 0
+      Pi = ATAN(1D0) * 4D0
+
+      PRINT*,'Entree dans particule.f'
+
+      MNPART  = 0
+      NBPART  = 0
+      MNBPPAR = 0
+      NBSPARINA=0
+      MNDEITEM= 0
+      MNDISTEM= 0
+      MNNOITEM= 0
+      IALxyzvpart = 1
+
+C     LECTURE DES OPTIONS CHOISIES PAR L'UTILISATEUR
+C     ==============================================
+ 5    CALL LIMTCL( 'particle', NMTCL )
+      IF( NMTCL .LE. 0  ) GOTO 9990
+      GOTO( 1000, 2000, 3000, 4000, 5000 ), NMTCL
+
+
+C     LECTURE DES LONGITUDES LATITUDES VITESSES DES NBPART PARTICULES
+C     ===============================================================
+ 1000 TCAS0 = TIMES(NCAS0)
+      TCAS1 = TIMES(NCAS1)
+      CALL LIRLOLAP( NDIM,   MNXYZP, MNNPEF, TCAS0,  TCAS1,
+     %               NBPART, MNPART, NCVALS )
+C     MNPART: ADRESSE MCN DU TABLEAU DES XYZ + XYZVIT + RAYON + TEMPS0
+C             des NBPART PARTICULES
+      GOTO 5
+
+
+C     LECTURE DES 3 COORDONNEES + 3 VITESSE0 DES NBPART PARTICULES
+C     ============================================================
+ 2000 TCAS0 = TIMES(NCAS0)
+      TCAS1 = TIMES(NCAS1)
+      CALL LIRPARTI( NDIM,   MNXYZP, MNNPEF, TCAS0, TCAS1,
+     %               NBPART, MNPART, NCVALS )
+C     MNPART: ADRESSE MCN DU TABLEAU DES XYZ + XYZVIT + RAYON + TEMPS0
+C             des NBPART PARTICULES
+      GOTO 5
+
+C     CALCUL du PARCOURS des PARTICULES donnees
+C     =========================================
+ 3000 COVID = 0
+      GOTO 4001
+
+C     CALCUL du PARCOURS DES PARTICULES DURANT LES TEMPS[NCAS0:NCAS1]
+C     ===============================================================
+ 4000 COVID = 1
+ 4001 IF( NBPART .LE. 0     ) GOTO 5
+      IF( NCAS0  .EQ. NCAS1 ) GOTO 5
+
+      PARCOURMX = 0
+      MXPARCOUR = 0
+
+      IF( NDIM .LE. 2 ) THEN
+C        CAS 2D: CALCUL des PARCOURS des PARTICULES
+C        CALCUL DU PARCOURS ET TRACE DURANT L'INTERVALLE TEMPS[NCAS0:NCAS1]
+C        ------------------------------------------------------------------
+         CALL TTTSUPA2D( KNOMOB, NTLXOB, MNNPEF, MNXYZP,
+     %                   NBNOVI, NCAS0,  NCAS1,  NBPART, MNPART,
+     %                   vitx,   vity,   VITMAX, TIMES(NCAS0) )
+         GOTO 5
+      ENDIF
+
+C     CAS 3D: CALCUL des PARCOURS des PARTICULES
+C     ALLOCATION DU TABLEAU des TABLEAUX des XYZ VXYZ EN LES PAS
+C     D'INTEGRATION DU PARCOURS DE CHACUNE DES NBPART PARTICULES
+C     ----------------------------------------------------------
+      IF( IALxyzvpart .EQ. 0 ) DEALLOCATE( xyzvpart )
+      PRINT*,'ALLOCATION REQUEST of xyzvpart(1:',NBPART,')'
+      ALLOCATE( xyzvpart( 1:NBPART ), STAT=IALxyzvpart )
+      IF( IALxyzvpart .NE. 0 ) THEN
+      PRINT*,'ALLOCATION ERROR   of xyzvpart(1:',NBPART,')'
+         IERR = IALxyzvpart
+         GOTO 9990
+      ENDIF
+      PRINT*,'ALLOCATION CORRECT of xyzvpart(1:',NBPART,')'
+C     POUR EVITER LES DESAGREMENTS LORS D'UNE DEALLOCATION INTEMPESTIVE
+      DO K=1,NBPART
+         NULLIFY( xyzvpart( K )%r4tab2i )
+      ENDDO
+
+      IF( MNBPPAR .GT. 0 ) THEN
+C        DESTRUCTION DU TABLEAU DU NOMBRE DE PAS DE TEMPS des PARTICULES
+         CALL TNMCDS( 'ENTIER', NBPART, MNBPPAR )
+      ENDIF
+      CALL TNMCDC( 'ENTIER', NBPART, MNBPPAR )
+      MNBPPAR1 = MNBPPAR - 1
+
+
+C     CALCUL DES XYZ+VITESSE DES POINTS DU PARCOURS DES PARTICULES
+C     AVEC COEFFICIENT Cx de RESISTANCE au DEPLACEMENT dans l'AIR
+C          COEFFICIENT CL de PORTANCE
+C          PSEANTEUR et FORCE d'ARCHIMEDE
+C          GRADIENT de PRESSION
+C     =============================================================
+
+C     QUELQUES DONNEES DU MAILLAGE
+C     ----------------------------
+C     L'ADRESSE MCN DU DEBUT DU TABLEAU NPEF DE CE TYPE D'EF
+      MNELE = MCN( MNNPEF )
+
+C     LE NUMERO DU TYPE DES ELEMENTS FINIS
+      NUTYEL = MCN( MNELE + WUTYEL )
+
+      IF( NUTYEL .NE. 19 .AND. NUTYEL .NE. 20 ) THEN
+         IF( LANGAG .EQ. 0 ) THEN
+            PRINT*,'particule: LE MAILLAGE CONTIENT des EF QUI NE SONT n
+     %i des TETRAEDRES de BREZZI-FORTIN ni de TAYLOR-HOOD'
+         ELSE
+            PRINT*,'particule: the MESH CONTAINS FINITE ELEMENTS WHICH A
+     %RE NOT BREZZI-FORTIN or TAYLOR-HOOD TETRAHEDRA'
+         ENDIF
+         GOTO 9990
+      ENDIF
+
+C     LE NOMBRE DE TELS ELEMENTS FINIS
+      NBELEM = MCN( MNELE + WBELEM )
+
+C     LES CARACTERISTIQUES DE L'ELEMENT FINI TETRAEDRE
+      CALL ELTYCA( NUTYEL )
+
+C     NO D'INTERPOLATION DES COMPOSANTES DE LA VITESSE
+C     NOMBRE DE NOEUDS VITESSE DE L'EF
+      IF( NUTYEL .EQ. 19 ) THEN
+
+C        TETRAEDRE BREZZI-FORTIN
+         NOINTE = 3003
+         NBNOE  = 5
+C        CALCUL DE LA MATRICE [DP] DES 5 POLYNOMES P1+BULLE BREZZI-FORTIN
+C        SUR LE TETRAEDRE DE REFERENCE
+         DO J = 1, 5
+            DO I = 1, 3
+C              DERIVATION DP = dPNj/dxi
+               CALL PN3DDE( I, 5, TEP1Bulle(1,1,1, J),
+     %                           DTEP1Bulle(1,1,1, J, I) )
+            ENDDO
+         ENDDO
+
+      ELSE IF( NUTYEL .EQ. 20 ) THEN
+
+C        TETRAEDRE TAYLOR-HOOD
+         NOINTE = 3002
+         NBNOE  = 10
+C        CALCUL DE LA MATRICE [DP] DES 10 POLYNOMES P2 TAYLOR-HOOD
+C        SUR LE TETRAEDRE DE REFERENCE
+         DO J = 1, 10
+            DO I = 1, 3
+C              DERIVATION DP = dPNj/dxi
+               CALL PN3DDE( I, 3, TEP2(1,1,1, J),
+     %                           DTEP2(1,1,1, J, I) )
+            ENDDO
+         ENDDO
+
+      ELSE
+
+C        EF NON TRAITE ICI
+         IF( LANGAG .EQ. 0 ) THEN
+          PRINT*,'particule: TYPE ELEMENT FINI',NUTYEL,' INCONNU'
+         ELSE
+          PRINT*,'particule: FINITE ELEMENT TYPE',NUTYEL,' UNSABLE HERE'
+         ENDIF
+         GOTO 9990
+
+      ENDIF
+
+C     RECUPERATION DU TMS DES FACES DE L'OBJET 3D
+C     -------------------------------------------
+      CALL LXTSOU( NTLXOB, 'FACE', NTFACE, MNFACE )
+
+      IF( NTFACE .LE. 0 ) THEN
+C        LE TABLEAU N'EXISTE PAS => IL EST CREE
+C        CALCUL PAR HACHAGE DES FACES DE L'OBJET A PARTIR DE TOPO+NPEF"...
+C        NECESSAIRE POUR CONNAITRE LES EF ADJACENTS PAR FACE
+         CALL HACHOB( KNOMOB, 4, NTFACE, MNFACE, IERR )
+         IF( IERR .NE. 0 ) GOTO 9990
+      ENDIF
+
+      IF( NTFACE .LE. 0 ) THEN
+         NBLGRC(NRERR) = 1
+         IF( LANGAG .EQ. 0 ) THEN
+            KERR(1) = 'OBJET SANS TABLEAU DE SES FACES'
+         ELSE
+            KERR(1) = 'OBJECT WITHOUT the ARRAY of its FACES'
+         ENDIF
+         CALL LEREUR
+         GOTO 9990
+      ENDIF
+
+C     LE NOMBRE D'ENTIERS PAR FACE
+      MOFACE = MCN( MNFACE + WOFACE )
+C     LA MAJORATION DU NOMBRE DE FACES
+      MXFACE = MCN( MNFACE + WXFACE )
+C     LE NUMERO DE LA PREMIERE FACE FRONTALIERE
+      L1FAFR = MCN( MNFACE + W1FAFR )
+C     LE NOMBRE DE FACES FRONTALIERES
+      NBFAFR = MCN( MNFACE + WBFAFR )
+C     LE NUMERO DE LA PREMIERE FACE INTERFACE
+C     L1FA2M = MCN( MNFACE + W1FA2M )
+C     LE NOMBRE DE FACES INTERFACES
+C     NBFA2M = MCN( MNFACE + WBFA2M )
+C     ADRESSE MCN DU 1-ER MOT DU TABLEAU LFACES
+      MNLFAC = MNFACE + WFACES
+C     LFACES : TABLEAU DES FACES DU MAILLAGE
+C     LFACES(1,I)= NO DU 1-ER  SOMMET DE LA FACE
+C     LFACES(2,I)= NO DU 2-EME SOMMET > 1-ER  SOMMET
+C     LFACES(3,I)= NO DU 3-EME SOMMET DE LA FACE
+C     LFACES(4,I)= NO DU 4-EME SOMMET DE LA FACE OU 0 SI TRIANGLE
+C                  0 SI TRIANGLE
+C     LFACES(5,I)= CHAINAGE HACHAGE SUR FACE SUIVANTE
+C     SI SOMMET 2 < DERNIER SOMMET  => FACE   DIRECTE DANS L'EF
+C                 <                 => FACE INDIRECTE
+C     UNE FACE DIRECTE EST VUE DE L EXTERIEUR AU EF
+C     SOUS LA FORME DIRECTE
+C     LFACES(6,I)= NUMERO DU 1-ER  EF CONTENANT CETTE FACE
+C                  >0 SI FACE   DIRECTE DANS CE EF
+C                  <0 SI FACE INDIRECTE DANS CE EF
+C     SI LA FACE APPARTIENT A 2 EFS ALORS
+C     LFACES(7,I)= NUMERO DU 2-EME EF CONTENANT CETTE FACE
+C                  >0 SI FACE   DIRECTE DANS CE EF
+C                  <0 SI FACE INDIRECTE DANS CE EF
+C     SINON
+C     LFACES(7,I)= NUMERO DE LA FACE FRONTALIERE ou INTERFACE SUIVANTE
+C                  0 SI C'EST LA DERNIERE
+C     L1FAFR = NUMERO DE LA PREMIERE FACE FRONTALIERE DANS LFACES
+C     L1FA2M = NUMERO DE LA PREMIERE FACE INTERFACE   DANS LFACES
+C
+C     LFACES(8,I)= NUMERO DE LA FACE A TANGENTE DANS LE TABLEAU NUTGFA
+C
+C    ( LFACES(9,I)= NUMERO DU TYPE DU DERNIER EF DE CETTE FACE
+C                   CETTE INFORMATION EXISTE SEULEMENT POUR UN OBJET
+C                   PAS POUR UNE SURFACE OU UN VOLUME! )
+
+C     ATTENTION: MODIFICATION TEMPORAIRE DU TABLEAU LFACES
+C                NECESSAIRE POUR IDENTIFIER RAPIDEMENT UNE FACE FRONTALIERE
+C     LES FACES FRONTALIERES RECUPERENT ZERO COMME SECOND EF
+C     AU LIEU DU CHAINAGE DES FACES FRONTALIERES
+C     (LA MODIFICATION INVERSE SERA FAITE EN FIN DE CE SP
+      CALL MAZFAF( MOFACE, MXFACE, MCN(MNLFAC), L1FAFR )
+
+
+C     =========================================================================
+C     INTEGRATION EXPLICITE EN TEMPS DE PAS DELTAT0 DE CHACUNE DES PARTICULES K
+C     =========================================================================
+
+C     PAS DE TEMPS POUR INTEGRER LA VITESSE ET PARCOURIR L'INTERVALLE DE TEMPS
+C     ------------------------------------------------------------------------
+      DELTAT0 = ( TIMES(NCAS1) - TIMES(NCAS0) ) / (NCAS1-NCAS0) * 0.005
+C     200 PAS DE TEMPS DELTAT0 DANS LE PAS DE TEMPS MOYEN ENTRE 2 FICHIERS VP
+
+      PRINT*
+      IF( LANGAG .EQ. 0 ) THEN
+         PRINT*,'particule: A partir du temps',TIMES(NCAS0),
+     %         ' calcul de la POSITION et VITESSE avec un PAS de TEMPS',
+     %           DELTAT0,' le long du PARCOURS des',NBPART,' PARTICULES'
+      ELSE
+         PRINT*,'particule: From the time',TIMES(NCAS0),
+     %          'computation of LOCATION and VELOCITY with a TIME STEP',
+     %           DELTAT0,' of',NBPART,' PARTICLE RUNS'
+      ENDIF
+
+      VITMXPAR = 0
+      NUPAVIMX = 0
+      RAYPARMI = 1E28
+      RAYPARMX =-1.0
+      VINIPAMI = 1E28
+      VINIPAMX = -1.0
+      NBPARINA = 0
+      PARCOURMX = 0
+      MXPARCOUR = 0
+      TPARCOURMX=0
+      MXTPARCOUR=0
+
+      DO 200 K = 1, NBPART
+
+C        INITIALISATIONS DU PARCOURS DE LA BOULE-PARTICULE K
+C        ---------------------------------------------------
+         NBCORDT = 0
+         DELTAT  = DELTAT0
+ 
+ 10      NBXYZV  = 0
+         PARCOUR = 0D0
+
+C        LES 3 COORDONNEES INITIALES XYZP0 DE LA PARTICULE K
+         MNPK = MNPART + 8*K -9
+         XYZP0(1) = RMCN( MNPK + 1 )
+         XYZP0(2) = RMCN( MNPK + 2 )
+         XYZP0(3) = RMCN( MNPK + 3 )
+
+C        RECHERCHE EXHAUSTIVE DU TETRAEDRE NEF0 CONTENANT LE POINT XYZP0
+C        ET CALCUL DES CB1,CB2,CB3: COORDONNEES BARYCENTRIQUES DE XYZP0
+C        DANS LE TETRAEDRE NEF0 POUR DETERMINER LA VITESSE DUE AU FLUIDE
+         CALL RETETRXYZ0( XYZP0, MNNPEF, MNXYZP,
+     %                    NEF0, CB1, CB2, CB3, CB4, IERR )
+         IF( IERR .GT. 0 ) THEN
+C           PARTICULE HORS DU MAILLAGE. PAS DE CALCUL DE XYZPARTK
+            MCN( MNBPPAR1 + K ) = 0
+            GOTO 200
+         ENDIF
+
+C        LE RAYON DE LA BOULE-PARTICULE K
+         R = RMCN( MNPK + 7 )
+         IF( R .LT. RAYPARMI ) RAYPARMI = R
+         IF( R .GT. RAYPARMX ) RAYPARMX = R
+         RAYPART = R
+
+C        LA SURFACE du Cx: SURFACE DU CERCLE SECTION de la BOULE de RAYON RAYPART
+         SurfCx = Pi * RAYPART**2
+
+C        LE TEMPS DU DEPART DU PARCOURS DE LA PARTICULE K
+         TDEPART = RMCN( MNPK + 8 )
+
+         IF( TDEPART.LT.TIMES(NCAS0) .OR. TDEPART.GE.TIMES(NCAS1) ) THEN
+C           RECUL DU TEMPS DU DEPART AU TEMPS INITIAL
+            TDEPART = TIMES( NCAS0)
+         ENDIF
+
+C        RECHERCHE DE L'INTERVALLE DE TEMPS CONTENANT TDEPART
+         DO NCAS = NCAS0, NCAS1-1
+            IF(TDEPART.GE.TIMES(NCAS).AND.TDEPART.LT.TIMES(NCAS+1)) THEN
+               GOTO 15
+            ENDIF
+         ENDDO
+
+C        TDEPART N'EST PAS DANS L'INTERVALLE : LA PARTICULE K EST ABANDONNEE
+         GOTO 200
+
+C        LE TEMPS INITIAL TDEPART EST ENTRE TIMES(NCAS) et TIMES(NCAS+1)
+ 15      TEMPSF0 = TIMES( NCAS   )
+         TEMPSF1 = TIMES( NCAS+1 )
+         TEMPS0  = TDEPART
+         IF( TEMPS0 .GT. TEMPSF1 ) THEN
+C           PASSAGE AU FICHIER SUIVANT DE LA VITESSE AU TEMPS0
+            NCAS    = NCAS + 1
+            TEMPSF0 = TEMPSF1
+            TEMPSF1 = TIMES( NCAS+1 )
+         ENDIF
+
+C        CALCUL DE LA VITESSE DU FLUIDE VFXYZt0 AU POINT XYZP0 AU TEMPS0 PAR
+C        INTERPOLATION ENTRE LES 2 TEMPS DE STOCKAGE DE LA VITESSE
+C        --------------------------------------------------------------------
+C        INTERPOLATION LINEAIRE ENTRE LES TIMES NCAS ET NCAS+1
+         COEF0 = ( TEMPSF1 - TEMPS0  ) / ( TEMPSF1 - TEMPSF0 )
+         COEF1 = ( TEMPS0  - TEMPSF0 ) / ( TEMPSF1 - TEMPSF0 )
+
+C        LA VALEUR DES NBNOE FONCTIONS DE BASE EN XYZP0=(CB2,CB3,CB4)
+         CALL INTERP( NOINTE, CB2, CB3, CB4, NBNOE, FBASE )
+
+C        LA VALEUR DES 3 COMPOSANTES DE LA VITESSE VITNOTE DU FLUIDE
+C        EN CE POINT XYZP0 AU TEMPS TEMPS0
+         DO N=1,3
+
+C           CALCUL DE LA COMPOSANTE N DE LA VITESSE AU TEMPS
+            MNN = MNELE + WUNDEL -1 + NEF0
+            DO L=1,NBNOE
+
+C              LE NUMERO DU NOEUD L DU TETRAEDRE NEF0
+               NOE = MCN(MNN)
+               MNN = MNN + NBELEM
+
+C              CAS DU TETRAEDRE BREZZI-FORTIN
+               IF( NUTYEL .EQ. 19 .AND. L .EQ. 5 ) NOE=NBSOMT+NEF0
+
+C              INTERPOLATION LINEAIRE ENTRE LES TEMPS STOCKES TEMPSF0 et TEMPSF1
+               GOTO( 21, 22, 23 ), N
+
+ 21            V0 = vitx( NCAS   )%dptab( NOE )
+               V1 = vitx( NCAS+1 )%dptab( NOE )
+               GOTO 24
+
+ 22            V0 = vity( NCAS   )%dptab( NOE )
+               V1 = vity( NCAS+1 )%dptab( NOE )
+               GOTO 24
+
+ 23            V0 = vitz( NCAS   )%dptab( NOE )
+               V1 = vitz( NCAS+1 )%dptab( NOE )
+
+ 24            VITNOTE(L) = COEF0 * V0 + COEF1 * V1
+
+            ENDDO
+C
+C           VITESSE DU FLUIDE INTERPOLEE EN CB2,CB3,CB4 AU TEMPS0
+            VFXYZT0( N ) = PROSCD( FBASE, VITNOTE, NBNOE )
+
+         ENDDO
+
+C        NORME DE LA VITESSE VFXYZT0 DU FLUIDE AU POINT XYZP0 AU TEMPS
+         VFNORT0=SQRT( VFXYZT0(1)**2 + VFXYZT0(2)**2 + VFXYZT0(3)**2 )
+         VIFNOR0=REAL( VFNORT0 )
+
+C        MODULE DE LA VITESSE INITIALE DE LA PARTICULE
+C        (HORS la VITESSE du FLUIDE)
+         VIPNOR0 = SQRT( RMCN( MNPK + 4 ) **2
+     %                 + RMCN( MNPK + 5 ) **2
+     %                 + RMCN( MNPK + 6 ) **2 )
+         IF( VIPNOR0 .LT. VINIPAMI ) VINIPAMI = VIPNOR0
+         IF( VIPNOR0 .GT. VINIPAMX ) VINIPAMX = VIPNOR0
+
+C        LES 3 COMPOSANTES DE LA VITESSE INITIALE VPART0 DE LA PARTICULE K
+C        AU NOEUD = VITESSE INITIALE DE LA PARTICULE + VITESSE DU FLUIDE
+C        -----------------------------------------------------------------
+         DO N=1,3
+            VPART0( N ) = VFXYZT0( N ) + RMCN( MNPK +3+N )
+         ENDDO
+         VPNORT0 = SQRT( VPART0(1)**2 + VPART0(2)**2 + VPART0(3)**2 )
+         VMX1PAR = REAL( VPNORT0 )
+
+
+C==============================================================================
+C Particule de COVID 19 dans une gouttelette d'eau
+C =============================================================================
+C Version : Avec prise en compte du Cx, de la trainee, de la portance,
+C           du gradient de pression
+C Au point xyz et au temps t l'acceleration de la particule Gamma(t,xyz)
+C est definie par la somme des forces s'exercant sur elle:
+
+C F(t,xyz)=  RhoPar VolP Gamma(t,xyz) = RhoPar VolP  d V(t,xyz) / dt
+C         = -RhoPar VolP G DirectionZ + RhoAir VolP G DirectionZ
+C           -RhoAir VolP Cx/2 Sx |V(t,xyz)-Vair(t,xyz)| (V(t,xyz)-Vair(t,xyz))
+C           +RhoAir VolP CL (V(t,xyz)-Vair(t,xyz)) X (Gradient X Vair(t,xyz))
+C           +       VolP Gradient PresA(t,xyz)
+ 
+C VolP=4/3Pir**3 est le volume de la BOULE-PARTICULE
+C r            est le RAYON  de la BOULE-PARTICULE
+C V(t,xyz)     est la vitesse  de la particule au temps t et au point xyz
+C Vair(t,xyz)  est la vitesse  de l'air        au temps t et au point xyz
+C PresA(t,xyz) est la pression de l'air        au temps t et au point xyz
+C RhoPar       est la masse volumique 1000 kg/m3 de l'eau de la gouttelette
+C RhoAir       est la masse volumique  1.2 kg/m3 de l'air
+C G            est l'acceleration 9.81 m/s/s de la pesanteur terrestre
+C Cx=CD/Cc     est le coefficient de TRAINEE (DRAG) CD (=0.5) dans l'AIR d'une BOULE
+C              dans la PLAGE du COEFFICIENT REYNOLDS(Re=54054) SOUS-CRITIQUE
+C              CORRIGE par le COEFFICIENT de CUNNINGHAM Cc(r,Lambda)
+C              Cc= 1 +2 Lambda/ 2r * ( A1 + A2 exp( -A3 * 2r /Lambda )
+C                  ou Lambda (= 68D-9 metre)
+C                  le CHEMIN MOYEN DE LIBERTE des PARTICULES
+C                  or MEAN FREE PATH entre les PARTICULES
+C                  ( voir la formule plus loin )
+C Sx           est la SURFACE de REFERENCE du Cx
+C                     ( pour la BOULE-PARTICULE Sx=Pi r**2 )
+
+C CL           est le COEFFICIENT de PORTANCE (LIFT)
+C                  de la Force orthogonale a la VITESSE RELATIVE
+
+C La discretisation explicite en temps avec V(t,xyz) donne 
+C Gamma(t,xyz) = ( V(t,xyz)-V(t0,xyz) ) / (t-t0)
+C d'ou
+C V(t,xyz) = V(t0,xyz) + (t-t0) / (RhoPar VolP) *
+C          { -RhoPar VolP G DirectionZ + RhoAir VolP G DirectionZ
+C            -RhoAir VolP Cx/2 Sx |V(t0,xyz)-Vair(t0,xyz)| (V(t0,xyz)-Vair(t0,xyz))
+C            +RhoAir VolP CL (V(t0,xyz)-Vair(t0,xyz)) X ( Gradient X Vair(t0,xyz) )
+C            +       VolP Gradient PresA(t0,xyz) }
+
+C La derivee du ParcoursD(t,xyz)= dD/dt= Vitesse Particule(t,xyz) de t0 a t
+C est APPROCHEE par ( XYZ(t) - XYZ(t0) ) / (t-t0) = Vitesse Particule V(t,xyz)
+C d'ou
+C XYZ(t) = XYZ(t0) + (t-t0) V(t,xyz)
+
+C PLUSIEURS METHODES DE CALCUL DU Cx: (Coefficient de TRAINEE (DRAG))
+C  1)    Cx=0.5 pour une BOULE
+
+C  2)    CALCUL du COEFFICIENT de TRAINEE CORRIGE: Cx = CD / Cc  ou
+C        CD = DRAG FORCE COEFFICIENT ou COEFFICIENT de TRAINEE
+C        Cc = CUNNINGHAM CORRECTION FACTOR ou
+C             COEFFICIENT de CORRECTION de CUNNINGHAM (Cf wikipedia)
+C        Cc = 1 + 2 Lambda/ 2r * ( A1 + A2 exp( -A3 * 2r / Lambda ) )
+C        Lambda = 68D-9 m  MEAN FREE PATH
+C                          CHEMIN MOYEN DE LIBERTE des PARTICULES
+         Cc = 1D0 + 68D-9 / RAYPART
+     %      * ( 1.257D0 + 0.4D0 * EXP( -2.2D0 / 68D-9 * RAYPART ) )
+         Cx = CD / Cc
+
+C================================================================================
+
+C        LA BOUCLE SUR LES PAS DE TEMPS POUR LA PARTICULE K
+C        ==================================================
+         DO 100 NUPAST = 1, MXPASDT
+
+C           STOCKAGE DU POINT XYZP0 DE LA PARTICULE K ET DU PARCOURS
+            NBXYZV = NBXYZV + 1
+            DO N = 1, 3
+               XYZVPARTK(   N, NBXYZV ) = XYZP0( N )
+               XYZVPARTK( 3+N, NBXYZV ) = REAL( VPART0( N ) )
+            ENDDO
+
+C           LE TEMPS SUIVANT DU CALCUL DE LA POSITION DE LA PARTICULE
+            TEMPS1 = REAL( TEMPS0 + DELTAT )
+
+C           ICI L'EF NEF0 CONTIENT LE POINT XYZP0 A L'INSTANT TEMPS0
+
+C           CALCUL de la VITESSE DU FLUIDE VFXYZT0 AU POINT XYZP0 AU TEMPS0
+C           ---------------------------------------------------------------
+            IF( TEMPS0 .GT. TEMPSF1 ) THEN
+C              PASSAGE AU FICHIER SUIVANT DE LA VITESSE AU TEMPS0
+               IF( NCAS .GE. NCAS1 ) GOTO 110
+               NCAS    = NCAS + 1
+               TEMPSF0 = TEMPSF1
+               TEMPSF1 = TIMES( NCAS+1 )
+            ENDIF
+
+C           INTERPOLATION LINEAIRE ENTRE LES TIMES NCAS ET NCAS+1
+            COEF0 = ( TEMPSF1 - TEMPS0  ) / ( TEMPSF1 - TEMPSF0 )
+            COEF1 = ( TEMPS0  - TEMPSF0 ) / ( TEMPSF1 - TEMPSF0 )
+
+C           LA VALEUR DES NBNOE FONCTIONS DE BASE EN XYZP0=(CB2,CB3,CB4)
+            CALL INTERP( NOINTE, CB2, CB3, CB4, NBNOE, FBASE )
+
+C           LA VALEUR DES 3 COMPOSANTES DE LA VITESSE VITNOTE DU FLUIDE
+C           EN CE POINT XYZP0 AU TEMPS TEMPS0
+            DO J=1,3
+
+C              CALCUL DE LA COMPOSANTE J DE LA VITESSE AU TEMPS
+               MNN = MNELE + WUNDEL -1 + NEF0
+               DO L=1,NBNOE
+C                 LE NUMERO DU NOEUD L DU TETRAEDRE NEF0
+                  NOE = MCN(MNN)
+                  NONOTE( L ) = NOE
+                  MNN = MNN + NBELEM
+C
+C                 CAS DU TETRAEDRE BREZZI-FORTIN
+                  IF( NUTYEL .EQ. 19 .AND. L .EQ. 5 ) NOE=NBSOMT+NEF0
+C
+C                 INTERPOLATION LINEAIRE ENTRE LES TEMPS STOCKES TEMPSF0 et TEMPSF1
+
+C                 INTERPOLATION LINEAIRE ENTRE LES TEMPS STOCKES TEMPSF0 et TEMPSF1
+                  GOTO( 31, 32, 33 ), J
+
+ 31               V0 = vitx( NCAS   )%dptab( NOE )
+                  V1 = vitx( NCAS+1 )%dptab( NOE )
+                  GOTO 34
+
+ 32               V0 = vity( NCAS   )%dptab( NOE )
+                  V1 = vity( NCAS+1 )%dptab( NOE )
+                  GOTO 34
+
+ 33               V0 = vitz( NCAS   )%dptab( NOE )
+                  V1 = vitz( NCAS+1 )%dptab( NOE )
+
+ 34               VITNOTE(L) = COEF0 * V0 + COEF1 * V1
+               ENDDO
+C
+C              VITESSE INTERPOLEE EN XYZP0=F(CB2,CB3,CB4) AU TEMPS0
+               VFXYZT0(J) = PROSCD( FBASE, VITNOTE, NBNOE )
+
+            ENDDO
+
+C           NORME DE LA VITESSE VFXYZT0 DU FLUIDE AU POINT XYZP0 AU TEMPS
+            VFNORT0=SQRT( VFXYZT0(1)**2 + VFXYZT0(2)**2 + VFXYZT0(3)**2)
+
+C           XYZPT0 est DANS le TETRAEDRE NEF0
+C           CALCUL XYZBAT  3 COORDONNEES XYZBAT DU BARYCENTRE
+C           DELTAF  : DETERMINANT DE LA MATRICE DF JACOBIENNE
+C           DFM1    : LA MATRICE DF INVERSE  3 x 3
+C           DP1     : GRADIENT (CONSTANT) DES POLYNOMES DE BASE P1 SUR LE
+C                     TETRAEDRE A MULTIPLIER PAR LES 4 VALEURS AUX 4 SOMMETS
+C                     POUR OBTENIR LE GRADIENT SUR LE TETRAEDRE P1
+C           ----------------------------------------------------------------
+C           RECHERCHE DE L'ADRESSE RMCN DES XYZ DES SOMMETS DU TETRAEDRE NEF0
+            MNP = MNXYZP + WYZPOI -4
+            DO L=1,4
+               MNST = MNP + 3 * NONOTE( L )
+               DO J=1,3
+                  XYZSTE(L,J) = RMCN( MNST + J )
+               ENDDO
+            ENDDO
+            CALL E13P1D( XYZSTE, XYZBAT, DELTAF, DFM1, DP1 )
+
+
+            IF( COVID .EQ. 0 ) GOTO 40
+
+C           CALCUL du GRADIENT de la PRESSION AU POINT XYZP0 AU TEMPS0
+C           ----------------------------------------------------------
+            DO L=1,4
+C              NUMERO du SOMMET L DU TETRAEDRE NEF0
+               NOST = NONOTE(L)
+               IF( NUTYEL .EQ. 20 ) NOST = NUNOSO( NOST )
+C              PRESSION INTERPOLEE AU TEMPS0 AU SOMMET L DU TETRAEDRE NEF0
+               V0 = pres( NCAS   )%dptab( NOST )
+               V1 = pres( NCAS+1 )%dptab( NOST )
+               PRESTTE(L) = COEF0 * V0 + COEF1 * V1
+            ENDDO
+
+            DO J=1,3
+               GRPREST0( J ) = 0D0
+               DO L=1,4
+                  GRPREST0( J ) = GRPREST0( J ) + DP1(J,L) * PRESTTE(L)
+               ENDDO
+            ENDDO
+
+C           CALCUL du ROTATIONNEL (CURL) OMEGA DE LA VITESSE EN XYZP0 AU TEMPS0
+C           -------------------------------------------------------------------
+            IF( NUTYEL .EQ. 19 ) THEN
+
+C              TETRAEDRE BREZZI-FORTIN
+C              CALCUL DE LA VALEUR DES DERIVEES DES FONCTIONS DE BASEP4+Bulle EN XYZ0
+
+C              CALCUL DE LA MATRICE [DiPj(XYZP0)] DES DERIVEES i des 5 POLYNOMESj
+C              P1+BULLE BREZZI-FORTIN en xyzrp0=(CB2,CB3,CB4)
+C              SUR LE TETRAEDRE DE REFERENCE
+               DO I = 1, 3
+                  DO J = 1, 5
+C                    DERIVATION DP = dPNj/dxi
+                     CALL PN3DVA( 5, DTEP1Bulle(1,1,1, J, I),
+     %                            CB2, CB3, CB4, DPRjDXi(I,J) )
+                  ENDDO
+               ENDDO
+
+            ELSE
+
+C              TETRAEDRE TAYLOR-HOOD
+C              CALCUL DE LA VALEUR DES DERIVEES DES FONCTIONS DE BASE P2 EN XYZ0
+
+C              CALCUL DE LA MATRICE [DiPj(XYZP0)] DES DERIVEES i des 10 POLYNOMESj
+C              P1+BULLE BREZZI-FORTIN en xyzrp0=(CB2,CB3,CB4)
+C              SUR LE TETRAEDRE DE REFERENCE
+               DO I = 1, 3
+                  DO J = 1, 10
+C                    DERIVATION DP = dPNj/dxi
+                     CALL PN3DVA( 10, DTEP2(1,1,1, J, I),
+     %                            CB2, CB3, CB4, DPRjDXi(I,J) )
+                  ENDDO
+               ENDDO
+
+            ENDIF
+
+C           [DPj(XYZP0)] = [DF]-1 [DiPj(XYZP0)]  SUR LE TETRAEDRE NEF0
+            DO J=1,NBNOE
+               DO I=1,3
+                  S = 0D0
+                  DO M=1,3
+                     S = S + DFM1(I,M) *  DPRjDXi(M,J)
+                  ENDDO
+                  DPjDXi(I,J) = S
+               ENDDO
+            ENDDO
+
+C           DiViFT0(XYZP0) = VECTEUR DES 3 DERIVEES i DES COMPOSANTES m
+C           DE LA VITESSE DU FLUIDE
+            DO I=1,3
+               DO J=1,3
+                  S = 0D0
+                  DO L=1,NBNOE
+                     S = S + DPjDXi(J,L) * VITNOTE(L)
+                  ENDDO
+                  DkVTi(I,J) = S
+               ENDDO
+            ENDDO
+
+C           OMEGA = ROTVit = Gradient X VF(t,xyz)
+            ROTVit(1) = DkVTi(2,3) - DkVTi(3,2)
+            ROTVit(2) = DkVTi(3,1) - DkVTi(1,3)
+            ROTVit(3) = DkVTi(1,2) - DkVTi(2,1)
+            ROTVitN = SQRT( ROTVit(1)**2 + ROTVit(2)**2 + ROTVit(3)**2 )
+
+C           FLIFT = (V(t,xyz)-Vair(t,xyz)) X ( Gradient X Vair(t,xyz) )
+            FLIFT(1) = ( VPART0(2) - VFXYZT0(2) ) * ROTVit(3)
+     %               - ( VPART0(3) - VFXYZT0(3) ) * ROTVit(2)
+
+            FLIFT(2) = ( VPART0(3) - VFXYZT0(3) ) * ROTVit(1)
+     %               - ( VPART0(1) - VFXYZT0(1) ) * ROTVit(3)
+
+            FLIFT(3) = ( VPART0(1) - VFXYZT0(1) ) * ROTVit(2)
+     %               - ( VPART0(2) - VFXYZT0(2) ) * ROTVit(1)
+
+C           CALCUL de la VITESSE DU FLUIDE VFXYZT1 AU POINT XYZP0 AU TEMPS1
+C           ---------------------------------------------------------------
+ 40         IF( TEMPS1 .GT. TEMPSF1 ) THEN
+C              PASSAGE AU FICHIER SUIVANT DE LA VITESSE AU TEMPS1
+               IF( NCAS+1 .GE. NCAS1 ) GOTO 110
+               NCAS    = NCAS + 1
+               TEMPSF0 = TEMPSF1
+               TEMPSF1 = TIMES( NCAS+1 )
+            ENDIF
+
+C           INTERPOLATION LINEAIRE ENTRE LES TIMES NCAS ET NCAS+1
+            COEF0 = ( TEMPSF1 - TEMPS1  ) / ( TEMPSF1 - TEMPSF0 )
+            COEF1 = ( TEMPS1  - TEMPSF0 ) / ( TEMPSF1 - TEMPSF0 )
+
+C           LA VALEUR DES NBNOE FONCTIONS DE BASE EN XYZP0=(CB2,CB3,CB4)
+            CALL INTERP( NOINTE, CB2, CB3, CB4, NBNOE, FBASE )
+
+C           LA VALEUR DES 3 COMPOSANTES DE LA VITESSE VITNOTE DU FLUIDE
+C           EN CE POINT XYZP0 AU TEMPS TEMPS1
+            DO J=1,3
+
+C              CALCUL DE LA COMPOSANTE J DE LA VITESSE AU TEMPS
+               MNN = MNELE + WUNDEL -1 + NEF0
+               DO L=1,NBNOE
+C                 LE NUMERO DU NOEUD L DU TETRAEDRE NEF0
+                  NOE = MCN(MNN)
+                  MNN = MNN + NBELEM
+
+C                 CAS DU TETRAEDRE BREZZI-FORTIN
+                  IF( NUTYEL .EQ. 19 .AND. L .EQ. 5 ) NOE=NBSOMT+NEF0
+
+C                 INTERPOLATION LINEAIRE ENTRE LES TEMPS STOCKES TEMPSF0 et TEMPSF1
+                  GOTO( 41, 42, 43 ), J
+
+ 41               V0 = vitx( NCAS   )%dptab( NOE )
+                  V1 = vitx( NCAS+1 )%dptab( NOE )
+                  GOTO 44
+
+ 42               V0 = vity( NCAS   )%dptab( NOE )
+                  V1 = vity( NCAS+1 )%dptab( NOE )
+                  GOTO 44
+
+ 43               V0 = vitz( NCAS   )%dptab( NOE )
+                  V1 = vitz( NCAS+1 )%dptab( NOE )
+
+ 44               VITNOTE(L) = COEF0 * V0 + COEF1 * V1
+               ENDDO
+C
+C              VITESSE INTERPOLEE EN CB2,CB3,CB4 AU TEMPS1
+               VFXYZT1(J) = PROSCD( FBASE, VITNOTE, NBNOE )
+
+            ENDDO
+
+C           NORME DE LA VITESSE VFXYZT1 DU FLUIDE AU POINT XYZP0 AU TEMPS1
+            VFNORT1=SQRT( VFXYZT1(1)**2 + VFXYZT1(2)**2 + VFXYZT1(3)**2)
+
+            IF( COVID .EQ. 0 ) THEN
+C              VITESSE VPART1 DE LA PARTICULE = VITESSE DU FLUIDE
+               DO J=1,3
+                  VPART1(J) = VFXYZT1(J)
+               ENDDO
+               GOTO 60
+            ENDIF
+
+C=======================================================================
+C V(t,xyz) = V(t0,xyz) + (t-t0) / RhoPar *
+C  { -RhoPar G DirectionZ + RhoAir VolP G DirectionZ
+C    -RhoAir Cx/2 Sx |V(t0,xyz)-Vair(t0,xyz)| (V(t0,xyz)-Vair(t0,xyz))
+C    +RhoAir CL (V(t0,xyz)-Vair(t0,xyz)) X ( Gradient X Vair(t0,xyz) )
+C    +       Gradient PresA(t0,xyz) }
+C=======================================================================
+
+C           d'ou les COMPOSANTES X Y Z de la VITESSE de la PARTICULE au TEMPS1
+C           ------------------------------------------------------------------
+C           MODULE Vitesse RELATIVE PARTICULE-AIR |V(t0,xyz)-Vair(t0,xyz)|
+            VPmVair = SQRT( ( VPART0(1) - VFXYZT0(1) ) ** 2
+     %                    + ( VPART0(2) - VFXYZT0(2) ) ** 2
+     %                    + ( VPART0(3) - VFXYZT0(3) ) ** 2 )
+
+            ReynD = RhoAir * VPmVair * 2 * RAYPART / MuAir 
+            ReynS = RhoAir * 4 * RAYPART**2 * ROTVitN / MuAir 
+            Beta  = 0.5D0 * ReynS / ReynD
+
+            IF( ReynD .LE. 40 ) THEN
+               CL = (1.D0-0.3314D0 * SQRT(Beta)) * EXP(-0.1D0*ReynD)
+     %            + 0.3314D0 * SQRT( Beta )
+            ELSE
+               CL = 0.0524D0 * Beta * ReynD
+            ENDIF
+            CL = 4.1126D0 * CL / SQRT( ReynS )
+
+            VPART1(1) = VPART0(1) + DELTAT / RhoPar
+     %                * ( - RhoAir * Cx/2 * SurfCx * VPmVair
+     %                             * ( VPART0(1) - VFXYZT0(1) )
+     %                    + RhoAir * CL * FLIFT(1)
+     %                    + GRPREST0(1) )
+
+            VPART1(2) = VPART0(2) + DELTAT / RhoPar
+     %                * ( - RhoAir * Cx/2 * SurfCx * VPmVair
+     %                             * ( VPART0(2) - VFXYZT0(2) )
+     %                    + RhoAir * CL * FLIFT(2)
+     %                    + GRPREST0(2) )
+
+            VPART1(3) = VPART0(3) + DELTAT / RhoPar
+     %                * ( - RhoAir * Cx/2 * SurfCx * VPmVair
+     %                             * ( VPART0(3) - VFXYZT0(3) )
+     %                    + RhoAir * CL * FLIFT(3)
+     %                    + GRPREST0(3)
+     %                    + ( RhoAir - RhoPar ) * G  )
+
+C           NORME DE LA VITESSE DE LA PARTICULE AU TEMPS1
+ 60         VPNORT1 = SQRT( VPART1(1)**2 + VPART1(2)**2 + VPART1(3)**2 )
+
+C           LE SCHEMA D'INTEGRATION EXPLICITE A T IL UN DT TROP GRAND?
+C           LA PARTICULE A T ELLE UNE TROP GRANDE VITESSE ou
+C           SUBIT ELLE une ACCELERATION ou DECCELERATION TROP VIOLENTE?
+C           ===========================================================
+            IF( VPNORT1 .GT. 3 * VITMAX .OR.
+     %          ABS( VPNORT1-VPNORT0 ) .GT. 2 * VITMOY ) THEN
+
+C              OUI: REDEMARRAGE DU CALCUL POUR LA PARTICULE K
+C                   avec REDUCTION DU PAS DE TEMPS
+               NBCORDT = NBCORDT + 1
+               IF( NBCORDT .LE. 3 ) THEN
+                  IF( LANGAG .EQ. 0 ) THEN
+                     PRINT*,'PARTICULE',K,': NbDT=',NBXYZV,
+     %                      ' Vitesse=', VPNORT0,' a ', VPNORT1,
+     %                      ' TROP GRANDE->CORRECTION',NBCORDT,
+     %                      ' Pas Temps dt=',DELTAT,' DEVIENT',DELTAT/2,
+     %                      ' !!!'
+                  ELSE
+                     PRINT*,'PARTICLE',K,': NbDT=',NBXYZV,
+     %                      ' Velocity=', VPNORT0,' to', VPNORT1,
+     %                      ' TOO LARGE->CORRECTION',NBCORDT,
+     %                      ' Time Step dt=',DELTAT,' BECOMES',DELTAT/2,
+     %                      ' !!!'
+                  ENDIF
+   
+                  DELTAT = DELTAT / 2
+                  GOTO 10
+               ENDIF
+            ENDIF
+
+            IF( VPNORT1 .GT. VMX1PAR ) THEN
+               VMX1PAR = REAL( VPNORT1 )
+            ENDIF
+
+C           LE POINT XYZP1 ISSU DE XYZP0 AVEC LA VITESSE VPART1 AU TEMPS1
+C           -------------------------------------------------------------
+            DO N = 1, 3
+               XYZP1( N )= REAL( XYZP0( N ) + DELTAT * VPART1( N ) )
+            ENDDO
+
+C           RECHERCHE DE L'EF CONTENANT LE POINT XYZP1
+            CALL RETETRXYZ1( XYZP1,  MNNPEF, MNXYZP,
+     %                       MOFACE, MXFACE, MNLFAC,
+     %                       NEF0, CB1, CB2, CB3, CB4, IERR )
+            IF( IERR .EQ. 0 ) THEN
+
+               IF( NEF0 .GT. 0 ) THEN
+
+C                 LE POINT XYP1 EST DANS LE TETRAEDRE NEF0 OU SUR UNE FACE
+C                 --------------------------------------------------------
+                  DIST01 = SQRT( (XYZP1(1)-XYZP0(1))**2
+     %                         + (XYZP1(2)-XYZP0(2))**2
+     %                         + (XYZP1(3)-XYZP0(3))**2 )
+                  PARCOUR = PARCOUR + DIST01
+
+C                 PASSAGE AU TEMPS0 + DELTAT = TEMPS1
+                  TEMPS0 = TEMPS1
+                  DO J=1,3
+                     XYZP0(J)  = XYZP1(J)
+                     VPART0(J) = VPART1(J)
+                  ENDDO
+                  GOTO 99
+
+               ELSE
+
+C                 PAS DE TETRAEDRE ADJACENT => LA PARTICULE SORT DU MAILLAGE
+C                 ----------------------------------------------------------
+                  GOTO 110
+
+               ENDIF
+
+            ELSE
+
+C              PROBLEME POUR TROUVER NEF0 CONTENANT XYP1
+C              PASSAGE A LA PARTICULE SUIVANTE
+               IF( LANGAG .EQ. 0 ) THEN
+                  print *,'Particule',K,
+     %            ' Pas d''EF contenant la PARTICULE en XYZ=',XYZP1
+               ELSE
+                  print *,'Particle',K,
+     %            ' NO TETRAHEDRON CONTAINS the PARTICLE at XYZ=',XYZP1
+               ENDIF
+               GOTO 110
+
+            ENDIF
+
+ 99         IF( NBXYZV .GE. MXPASDT-1 ) THEN
+               IF( NBCORDT .EQ. 0 ) THEN
+C                 POUR EVITER LE DEBORDEMENT DE TABLEAU XYZVPARTK
+C                 LE PAS DE TEMPS EST MULTIPLIE PAR 2
+C                 AVEC REDEMARRAGE DU CALCUL POUR LA PARTICULE K
+                  DELTAT = DELTAT * 2
+                  GOTO 10
+               ELSE
+C                 UNE REDUCTION DU PAS DELTAT A DEJA ETE FAITE
+C                 ARRET DES ITERATIONS AVEC PARCOURS INACHEVE
+                  NCAS = NCAS1 + 1
+                  GOTO 110
+               ENDIF
+            ENDIF
+
+            VPNORT0 = VPNORT1
+C           FIN DE LA BOUCLE SUR LES PAS DE TEMPS D'INTEGRATION DE dXYZ/dt=VP
+ 100     ENDDO
+
+
+C        BILAN DU PARCOURS DE LA PARTICULE K
+C        ===================================
+
+C        LA PARTICULE K AU DEPART DU PARCOURS
+C        ------------------------------------
+ 110     IF( LANGAG .EQ. 0 ) THEN
+            PRINT 10110,K,TDEPART,(RMCN( MNPK + N ),N=1,7),
+     %                    VIPNOR0,VIFNOR0
+10110 FORMAT('PARTICULE',I5,': DEPART  au temps',G14.6,
+     %'  Xde=', G14.6,' Yde=', G14.6,' Zde=', G14.6,
+     %' VXde=', G14.6,' VYde=',G14.6,' VZde=',G14.6,
+     %' Rayon=',G14.6,' ViPa=',G14.6,' ViFl=',G14.6)
+         ELSE
+            PRINT 20110,K,TDEPART,(RMCN( MNPK + N ),N=1,7),
+     %                    VIPNOR0,VIFNOR0
+20110 FORMAT('PARTICLE',I5,': START   at time',G14.6,
+     %'  Xst=',  G14.6, ' Yst=',G14.6,' Zst=', G14.6,
+     %' VXst=',  G14.6,' VYst=',G14.6,' VZst=',G14.6,
+     %' Radius=',G14.6,' VePa=',G14.6,' VeFl=',G14.6)
+         ENDIF
+
+C        Le POINT d'IMPACT et Fin du PARCOURS de la PARTICULE K
+C        ------------------------------------------------------
+         NBXYZV = NBXYZV + 1
+         MCN( MNBPPAR1 + K ) = NBXYZV
+         DO N = 1, 3
+            XYZVPARTK(   N, NBXYZV ) = XYZP1( N )
+            XYZVPARTK( 3+N, NBXYZV ) = REAL( VPART1( N ) )
+         ENDDO
+         VPNORT1 = SQRT( VPART1(1)**2 + VPART1(2)**2 + VPART1(3)**2 )
+
+C        ATTENTION: XYZP1  PEUT ETRE A L'EXTERIEUR DU MAILLAGE
+C                   VPART1 EST EN FAIT LA VITESSE en XYZP0
+C                          DE LA PARTICULE AU TEMPS1
+         IF( LANGAG .EQ. 0 ) THEN
+            PRINT 10111, K,TEMPS1,XYZP1,VPART1,NUPAST,DELTAT,
+     %                   K,NBXYZV,PARCOUR,VMX1PAR,VPNORT1,VFNORT1
+10111 FORMAT('PARTICULE',I5,': ARRIVEE au temps',G14.6,
+     %'  Xar=',G14.6, ' Yar=',G14.6, ' Zar=',G14.6,
+     %' VXar=',G14.6,' VYar=',G14.6,' VZar=',G14.6,I8,
+     %' Pas de Temps dt=',G14.6/
+     %       'PARTICULE',I5,':',I8,
+     %' TRAITS du PARCOURS de LONGUEUR',G14.6,
+     %' avec la VITESSE MAXIMALE',G14.6,
+     %' la VITESSE d''IMPACT',G14.6,
+     %' la VITESSE du FLUIDE=',G14.6,
+     %' en ce DERNIER POINT' )
+         ELSE
+            PRINT 20111,K,TEMPS1,XYZP1,VPART1,NUPAST,DELTAT,
+     %                  K,NBXYZV,PARCOUR,VMX1PAR,VPNORT1,VFNORT1
+20111 FORMAT('PARTICLE',I5,': ARRIVAL at time',G14.6,
+     %'  Xar=',G14.6, ' Yar=',G14.6, ' Zar=',G14.6,
+     %' VXar=',G14.6,' VYar=',G14.6,' VZar=',G14.6,I8,
+     %' Time Steps dt=',G14.6/
+     %       'PARTICLE',I5,':',I8,
+     %' DRAWN SEGMENTS of TRAVEL LENGTH ',G14.6,
+     %' with a MAXIMUM VELOCITY',G14.6,
+     %' an IMPACT VELOCITY',G14.6,
+     %' a FLUID VELOCITY',G14.6 ,' at this LAST POINT')
+         ENDIF
+
+         IF( NCAS .GE. NCAS1 ) THEN
+C           PARCOURS INACHEVE FAUTE DE TEMPS ou > MAXIMUM PAS DT
+C           LE PARCOURS de la PARTICULE K DEMANDE DES FICHIERS
+C           AU TEMPS SUPERIEUR AU DERNIER RELU TEMPS1
+C           LE PARCOURS EST INTERROMPU SANS AVOIR ATTEINT L'IMPACT
+C           ------------------------------------------------------
+            NBPARINA = NBPARINA + 1
+            IF( NBPARINA .LE. MXPARINA ) THEN
+C              SAUVEGARDE DU NO DE PARTICULE DE PARCOURS INACHEVE
+               NUPARINA( NBPARINA ) = K
+            ENDIF
+
+C           MARQUAGE DE PARCOURS INACHEVE
+            MCN( MNBPPAR1 + K ) = -MCN( MNBPPAR1 + K )
+            IF( LANGAG .EQ. 0 ) THEN
+               PRINT 10190,K,TEMPS1,MXPASDT,TIMES(NCAS0),TIMES(NCAS1)
+10190 FORMAT('PARTICULE',I5,': au temps',G14.6,
+     %' PARCOURS INACHEVE. AUGMENTER MXPASDT=',I6,
+     %' ou ELARGIR l''INTERVALLE de TEMPS (',G14.6,G15.6,
+     %') des VITESSES+PRESSIONS CALCULEES pour OBTENIR la FIN <+++++++'/
+     %200('-'))
+            ELSE
+               PRINT 20190,K,TEMPS1,MXPASDT,TIMES(NCAS0),TIMES(NCAS1)
+20190 FORMAT('PARTICLE',I5,': at TIME',G14.6,
+     %' UNFINISHED RUN. INCREASE MXPASDT=',I6,
+     %' or the TIME INTERVAL(', G14.6,G15.6,
+     %') of COMPUTED VELOCITY-PRESSURE to OBTAIN the END <++++++++++++'/
+     %200('-'))
+            ENDIF
+         ENDIF
+
+C        RECHERCHE DE LA VITESSE MAXIMALE PRISE PAR L'UNE DES PARTICULES
+C        ---------------------------------------------------------------
+         IF( VMX1PAR .GT. VITMXPAR ) THEN
+            VITMXPAR = VMX1PAR
+            NUPAVIMX = K
+         ENDIF
+
+C        LONGUEUR MAX DES PARCOURS
+         IF( PARCOUR .GT. PARCOURMX ) THEN
+            PARCOURMX = PARCOUR
+            MXPARCOUR = K
+         ENDIF
+
+C        DUREE MAX DES PARCOURS
+         TPAR = TEMPS1 - TDEPART
+         IF( TPAR .GT. TPARCOURMX ) THEN
+            TPARCOURMX=TPAR
+            MXTPARCOUR=K
+         ENDIF
+
+C        ALLOCATION DU TABLEAU des XYZ VXYZ EN LES NBXYZV PAS
+C        D'INTEGRATION DU PARCOURS DE LA PARTICULE K
+C        ----------------------------------------------------
+         IF( LANGAG .EQ. 0 ) THEN
+            PRINT*,'DEMANDE  ALLOCATION xyzvpart(',K,')%r4tab2i(1:6,1:',
+     %           NBXYZV,')'
+         ELSE
+          PRINT*,'ALLOCATION REQUEST of xyzvpart(',K,')%r4tab2i(1:6,1:',
+     %           NBXYZV,')'
+         ENDIF
+         allocate( xyzvpart(K)%r4tab2i(1:6,1:NBXYZV), STAT=IALxyzvpart )
+         IF( IALxyzvpart .NE. 0 ) THEN
+            IERR = K
+            GOTO 9990
+         ENDIF
+         IF( LANGAG .EQ. 0 ) THEN
+            PRINT*,'CORRECTE ALLOCATION xyzvpart(',K,')%r4tab2i(1:6,1:',
+     %           NBXYZV,')'
+         ELSE
+          PRINT*,'ALLOCATION CORRECT of xyzvpart(',K,')%r4tab2i(1:6,1:',
+     %           NBXYZV,')'
+         ENDIF
+         PRINT*
+ 
+C        COPIE DE XYZVPARTK DANS xyzvpart(K)
+C        -----------------------------------
+         DO J = 1, NBXYZV
+            DO I = 1, 6
+               xyzvpart(K)%r4tab2i(I,J) = XYZVPARTK( I, J )
+            ENDDO
+         ENDDO
+
+
+C        FIN DU PARCOURS DE LA PARTICULE K
+ 200  ENDDO
+
+
+C     FIN du CALCUL du PARCOURS des NBPART PARTICULES
+C     -----------------------------------------------
+      IF( LANGAG .EQ. 0 ) THEN
+         PRINT*,'Fin du PARCOURS des', NBPART,' PARTICULES avec'
+         PRINT*,'une VITESSE MAXIMALE',VITMXPAR,
+     %          ' pour la PARTICULE',NUPAVIMX
+         PRINT*,'un PARCOURS MAXI',PARCOURMX,
+     %          ' pour la PARTICULE',MXPARCOUR
+         PRINT*,'une DUREE MAX de PARCOURS',TPARCOURMX,
+     %          ' pour la PARTICULE',MXTPARCOUR
+      ELSE
+         PRINT*,'End of',NBPART,' PARTICLE RUNS with'
+         PRINT*,'a VELOCITY MAXIMUM',VITMXPAR,
+     %          ' for the PARTICLE', NUPAVIMX
+         PRINT*,'a RUN MAX',PARCOURMX,' for the PARTICLE',MXPARCOUR
+         PRINT*,'a TIME MAX',TPARCOURMX,' for the PARTICLE',MXTPARCOUR
+       ENDIF
+
+      IF( NBPARINA .GT. 0 ) THEN
+         NBLGRC(NRERR) = 3
+         IF( LANGAG .EQ. 0 ) THEN
+            KERR(1) = '       PARCOURS INACHEVES'
+            KERR(2) = ' AUGMENTER LE NOMBRE de PAS de TEMPS MXPASDT ou'
+            KERR(3) = ' AUGMENTER L''INTERVALLE de TEMPS'
+         ELSE
+            KERR(1) = '       UNFINISHED RUNS'
+            KERR(2) = ' AUGMENT the TIME STEPS MAX NUMBER MXPASDT or'
+            KERR(3) = ' AUGMENT the TIME INTERVAL'
+         ENDIF
+         WRITE( KERR(1)(1:6), '(I6)' ) NBPARINA
+         CALL LERESU
+      ENDIF
+
+C     NOMBRE DE PARTICULES DE PARCOURS INACHEVE
+C     LEUR NUMERO EST RANGE DANS NUPARINA(1:NBSPARINA)
+      NBSPARINA = MIN( NBPARINA, MXPARINA )
+
+C     MODIFICATION INVERSE DU TMS a_objet__face FAITE dans CALL PARCPART()
+C     CHAINAGE DES FACES FRONTALIERES C-A-D APPARTENANT A UN SEUL EF
+C     A PARTIR DU ZERO EN POSITION 7 DE LFACES
+      CALL MACFAF( MOFACE, MXFACE, MCN(MNLFAC),  L1FAFR, NBFAFR )
+C     MISE A JOUR DU NUMERO DE LA PREMIERE FACE FRONTALIERE (DANS UN SEUL EF)
+      MCN( MNFACE + W1FAFR ) = L1FAFR
+
+      NBPADT = 0
+      DO K=1,NBPART
+         NBPADT = NBPADT + ABS( MCN( MNBPPAR1 + K ) )
+      ENDDO
+
+      PRINT*
+      IF( LANGAG .EQ. 0 ) THEN
+         PRINT*,'Fin des PARCOURS des PARTICULES avec une VITESSE MAXIMA
+     %LE',VITMXPAR,' pour la PARTICULE',NUPAVIMX
+         PRINT*,'Nombre TOTAL de PAS de TEMPS d''INTEGRATION=',NBPADT
+      ELSE
+         PRINT*,'End of PARTICLES RUNS with a',VITMXPAR,
+     %          ' VELOCITY MAXIMUM for the PARTICLE', NUPAVIMX
+         PRINT*,'INTEGRATION TIME STEP total Number=',NBPADT
+
+      ENDIF
+
+      GOTO 5
+
+
+C     TRACE DES PARCOURS DEJA CALCULES DES PARTICULES
+C     ===============================================
+ 5000 IF( NDIM .LE. 2 ) GOTO 3000
+      IF( NBPART .LE. 0 .OR. IALxyzvpart .NE. 0 ) THEN
+         PRINT*,'particule:',NBPART,' PARTICULES DEFINIES. A REDONNER'
+         GOTO 5
+      ENDIF
+
+      IF( MXPASDT .GT. 0 ) THEN
+
+C        DECLARATION DE TABLEAUX AUXILIAIRES NECESSAIRES AU TRACE
+C        NBTSEG = NOMBRE TOTAL DES SEGMENTS DES PARCOURS
+         NBTSEG = 0
+         DO K=1,NBPART
+C           NOMBRE DE SOMMETS DU PARCOURS DE LA PARTICULE K
+            NBS = ABS( MCN(MNBPPAR-1+K) )
+            IF( NBS .GT. 1 ) THEN
+C              AJOUT DU NOMBRE DE SEGMENTS DU PARCOURS DE LA PARTICULE K
+               NBTSEG = NBTSEG + NBS - 1
+            ENDIF
+         ENDDO
+
+         PRINT*,'particule:',NBTSEG,' SEGMENTS des PARCOURS des',
+     %           NBPART,' PARTICULES'
+
+C        NOMBRE TOTAL DE TRIANGLES DES SURFACES A TRACER
+         NBTTRSF = 0
+         DO K=1,NBSFTR
+            NBTR =  MCN( MCN(MNEFSFTR-1+K) + WBEFOB )
+            NBTTRSF = NBTTRSF + NBTR
+         ENDDO
+         PRINT*,'particule:',NBTTRSF,' TRIANGLES des',NBSFTR,
+     %          ' SURFACES a TRACER'
+
+         NBITEMS = NBTSEG + NBTTRSF
+         PRINT*,'particule:',NBITEMS,' ITEMS a TRACER'
+
+C        RESERVATION DES TABLEAUX POUR TRACER LES ITEMS
+         CALL TNMCDC( 'REEL'  , NBITEMS, MNDISTEM )
+         CALL TNMCDC( 'ENTIER', NBITEMS, MNNOITEM )
+
+         NBPARSF = NBPART + NBSFTR
+         CALL TNMCDC( 'ENTIER', 1+NBPARSF, MNDEITEM )
+
+         NBSPARINA = MIN( NBPARINA, MXPARINA )
+         CALL PARPARTR(KNOMOB, MNNPEF, TIMES(NCAS0), NCAS0, NCAS1,
+     %                 NBSFTR,MCN(MNNOSFTR),MCN(MNXYSFTR),MCN(MNEFSFTR),
+     %                 NBPART, RMCN(MNPART), RAYPARMI,RAYPARMX,
+     %                 MCN(MNBPPAR), xyzvpart, VITMXPAR,
+     %                 NBSPARINA, NUPARTINA,
+     %                 NBITEMS, MCN(MNNOITEM), RMCN(MNDISTEM),
+     %                 MCN(MNDEITEM) )
+
+         CALL TNMCDS( 'ENTIER', 1+NBPARSF, MNDEITEM )
+         CALL TNMCDS( 'REEL'  , NBITEMS,   MNDISTEM )
+         CALL TNMCDS( 'ENTIER', NBITEMS,   MNNOITEM )
+
+      ENDIF
+
+      GOTO 5
+
+
+C     DEALLOCATION DES TABLEAUX
+C     -------------------------
+ 9990 IF( IALxyzvpart .NE. 0 ) GOTO 9995
+      DO K = NBPART, 1, -1
+         deallocate( xyzvpart(k)%r4tab2i )
+      ENDDO
+      if( allocated(xyzvpart) ) deallocate( xyzvpart )
+
+ 9995 IF( MNBPPAR .GT. 0 ) CALL TNMCDS( 'ENTIER', NBPART, MNBPPAR )
+      IF( MNPART  .GT. 0 ) CALL TNMCDS( 'REEL', 8*NBPART, MNPART )
+
+      IF( MNBPPAR .GT. 0 ) THEN
+C        DESTRUCTION DU TABLEAU DU NOMBRE DE PAS DE TEMPS des PARTICULES
+         CALL TNMCDS( 'ENTIER', NBPART, MNBPPAR )
+      ENDIF
+
+      RETURN
+      END

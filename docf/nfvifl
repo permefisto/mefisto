@@ -1,0 +1,29 @@
+Pour un probleme THERMIQUE, la fonction utilisateur donnant la
+valeur de la VITESSE du FLUIDE, a prendre le produit scalaire
+avec le gradient de la temperature,
+dans la direction de numero NODIR des 3 axes
+a l'instant TEMPS, au point X,Y,Z, 
+pour l'objet de numero de type NO_TYPE_OBJET
+(1:POINT, 2:LIGNE, 3:SURFACE, 4:VOLUME, 5:OBJET )
+et de numero dans ce lexique   NO_OBJET
+a la temperature TEMPER conue ou non (cas non lineaire)
+doit comprendre dans cet ordre les 8 parametres 
+
+VITESSEFLUIDE( TEMPS, X, Y, Z, NO_TYPE_OBJET, NO_OBJET, NODIR, TEMPER ) 
+
+et etre programmee selon la grammaire du langage LU
+(cf documentation et exemples du menu de depart )
+
+Ces parametres sont tous initialises en entree.
+Ils peuvent ou non servir a calculer la VITESSE du FLUIDE
+ 
+EXEMPLE:
+deffonc VitFl( t, x, y, z, no_type_objet, materiau, nodir, temper ) ;
+si    nodir=1
+alors VitFl=0;
+sinon si nodir=2
+      alors VitFl=-1.4;
+      sinon VitFl=2.5;
+      finsi;  
+finsi;
+finfonc; 

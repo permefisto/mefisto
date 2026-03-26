@@ -1,0 +1,12 @@
+deftms ~>>>ECHANGE  'Coefficient d''Echange a la paroi'
+variable muet DATE  'date de creation du tableau'   reel2  ;
+variable muet NUTD  'numero du tableau descripteur' entier ; 
+variable     LTECHA 'Type de l''Echange'            entier 
+( 1 : 'Echange constant'
+,-1 : 'Fonction Echange'
+, 0 : 'Echange a supprimer' ) ;
+cas LTECHA
+ 1 : variable  ECHANG 'Coefficient d''Echange' reel ; 
+-1 : variable  NFECHA 'Nom fonction Echange' ^~>FONCTION ;
+fincas ;   
+fintms ;

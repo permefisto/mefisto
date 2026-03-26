@@ -1,0 +1,279 @@
+      SUBROUTINE CR0ETOIL( KTITRE, PTXYZD,
+     %                     MXFACO, LEFACO, NO0FAR, NBTRCF, NOTRCF, 
+     %                     NBSTIS, NOSTIS, NBSTCF, NOSTCF, 
+     %                     NBCF,   MXARCF, N1ARCF, NOARCF,
+     %                     NOTETR, N1TETS,
+     %                     MXPTIN, NBPTIN, PTINTERS,
+     %                     MXTECF, NBTECF, NOTECF, NOTECFST, IERR )
+C+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+C BUT :    CONSTRUCTION 0 DE L'ETOILE NOTECF DES NBTRCF FACES PERDUES
+C -----    DE LA FRONTIERE PAR
+C          AJOUT DES TETRAEDRES DES SOMMETS-POINTS ISOLES DU CF
+C          AJOUT DES TETRAEDRES AYANT UN SOMMET DU CF ET QUI ONT
+C          UNE ARETE QUI INTERSECTE AU MOINS UNE DES FACES DU CF
+C          ET DES TETRAEDRES AYANT CETTE ARETE INTERSECTANTE
+C          STOCKAGE DES XYZ DE CES POINTS D'INTERSECTION
+
+C ENTREES:
+C --------
+C KTITRE : TITRE D'UN TRACE
+C PTXYZD : TABLEAU DES COORDONNEES DES POINTS
+C          PAR POINT : X  Y  Z DISTANCE_SOUHAITEE
+
+C MXFACO : NOMBRE MAXIMAL DECLARABLE DE FACES DU CONTOUR
+C LEFACO : FACE DU CONTOUR OU INTERFACES ENTRE VOLUMES
+C          IL CONTIENT DANS CET ORDRE
+C          1:   =0 POUR UNE FACE VIDE
+C          123: NO (DANS PTXYZD) DU SOMMET 1, SOMMET 2, SOMMET 3
+C          45:  NO (DANS NUVOPA 0 SINON) DU VOLUME1 , VOLUME2 DE LA FACE
+C          678: NO (DANS LEFACO) DE LA FACE ADJACENTE PAR L'ARETE 1 2 3
+C          9: ATTENTION: UNE ARETE PEUT APPARTENIR A PLUS DE 2 FACES
+C             => CHAINAGE CIRCULAIRE DE CES FACES DANS LEFACO
+C             LEFACO(9,*) -> FACE SUIVANTE (*=0:VIDE, *<>0:NON VIDE)
+C          10: HACHAGE AVEC LA SOMME DES 3 SOMMETS MODULO MXFACO
+C              LF = MOD( NOSOFA(1)+NOSOFA(2)+NOSOFA(3) , MXFACO ) + 1
+C              NF = LEFACO( 10, LF ) LE NUMERO DE LA 1-ERE FACE DANS LEFACO
+C              SI LA FACE NE CONVIENT PAS. PASSAGE A LA SUIVANTE
+C              NF = LEFACO( 9, NF )  ...
+C          11: >0  NO NOTETR D'UN TETRAEDRE AYANT CETTE FACE,
+C              =0  SINON
+cccC          12: = NO FACEOC DE 1 A NBFACES D'OC
+C NO0FAR : NUMERO DES 3 SOMMETS DES FACES AJOUTEES AU CF
+
+C NBTRCF : NOMBRE DE FACES DE NOTRCF
+C NOTRCF : >0 NUMERO DANS LEFACO DES TRIANGLES PERDUS  DU CF
+C          <0 NUMERO DANS NO0FAR DES TRIANGLES AJOUTES AU CF
+C NBSTIS : NOMBRE DE SOMMETS ISOLES DU CF
+C NOSTIS : NUMERO PTXYZD DES NBSTIS SOMMETS ISOLES
+C NBSTCF : NOMBRE DE SOMMETS DES ARETES PERIPHERIQUES DU CF
+C NOSTCF : NUMERO PTXYZD DES NBSTCF SOMMETS DES ARETES PERIPHERIQUES
+
+C NBCF   : NOMBRE DE LIGNES FERMEES PERIPHERIQUES DES FACES PERDUES
+C MXARCF : MAXIMUM D'ARETES DECLARABLES DANS N1ARCF et NOARCF
+C N1ARCF : POINTE SUR LE DEBUT DES ARETES DE CHAQUE LIGNE FERMEE DU CF
+C          0 POUR LES PLACES VIDES
+C NOARCF : 1:NUMERO DU SOMMET DE L'ARETE DE LA LIGNE DU CONTOUR FERME
+C          2:NUMERO DANS NOARCF DE L'ARETE SUIVANTE DU CF
+C          3:NUMERO DANS LEFACO DU TRIANGLE ADJACENT OPPOSE A L'ARETE
+
+C NOTETR : LISTE DES TETRAEDRES
+C          SOMMET1,    SOMMET2,    SOMMET3,    SOMMET4,
+C          TETRAEDRE1, TETRAEDRE2, TETRAEDRE3, TETRAEDRE4
+C          DE L'AUTRE COTE DE LA FACE
+C N1TETS : N1TETS(NS) NUMERO D'UN TETRAEDRE AYANT POUR SOMMET NS
+
+C MXPTIN : NOMBRE MAXIMAL DE POINTS D'INTERSECTION ARETE TRIANGLE
+C NBPTIN : NOMBRE DE POINTS D'INTERSECTION
+C PTINTERS : XYZ DES NBPTIN POINTS D'INTERSECTION
+
+C SORTIES:
+C --------
+C NBTECF : NOMBRE DE TETRAEDRES DE L'ETOILE AVANT et APRES EXECUTION
+C NOTECF : NUMERO NOTETR DES NBTECF TETRAEDRES DE L'ETOILE
+C IERR   : =0  SI PAS D'ERREUR DETECTEE
+C+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+C AUTEUR : ALAIN PERRONNET  Saint PIERRE du PERRAY          Janvier 2018
+C2345X7..............................................................012
+      CHARACTER*(*)     KTITRE
+
+      DOUBLE PRECISION  PTXYZD(4,*), PTINTERS(3,MXPTIN),
+     %                  XYZ(3), D, CBTR(3)
+
+      INTEGER           NOTETR(8,*), N1TETS(*),
+     %                  LEFACO(11,0:MXFACO), NO0FAR(3,*),
+     %                  NOTRCF(NBTRCF), NOSTCF(NBSTCF), NOSTIS(NBSTIS),
+     %                  N1ARCF(0:*), NOARCF(1:3,1:*),
+     %                  NOTECF(MXTECF), NOTECFST(MXTECF),
+     %                  NFETOIL(5)
+
+      INTEGER           NOSOTR(3), NOSOARTE(2,6), NOSOFATE(3,4)
+      DATA              NOSOARTE / 1,2,  2,3,  3,1,  1,4,  2,4,  3,4 /
+      DATA              NOSOFATE / 1,3,2,  2,3,4,  3,1,4,  4,1,2 /
+C     => LA NORMALE A LA FACE EST ORIENTEE VERS L'EXTERIEUR DU TETRAEDRE
+
+      IERR   = 0
+      NBPTIN = 0
+
+C     ---------------------------------------------------------
+C     1) AJOUTER LES TETRAEDRES DES SOMMETS-POINTS ISOLES DU CF
+C     ---------------------------------------------------------
+      IF( NBSTIS .GT. 0 ) THEN
+         DO N = 1, NBSTIS
+
+C           LE SOMMET INTERNE AUX NBTRCF TRIANGLES DU CF
+            NS = NOSTIS( N )
+
+C           AJOUT A LA SUITE DE NOTECF(NBTECF) DES NBTNS TETRAEDRES DE SOMMET NS
+            CALL TETR1S( NS,    N1TETS,        NOTETR,
+     %                   NBTNS, MXTECF-NBTECF, NOTECF(NBTECF+1), IERR )
+C           NBTNS >0 NOMBRE DE TETRAEDRES DE SOMMET NS
+C           NBTNS = 0 SI SATURATION DU TABLEAU NOTECF
+C                 =-1 SI UN SOMMET NS N'EST PAS UN SOMMET DE N1TETS(NS)
+
+            IF( IERR .NE. 0 ) THEN
+               GOTO 9999
+            ENDIF
+
+C           NOMBRE DE TETRAEDRES DE SOMMET UN SOMMET ISOLE
+            NBTECF = NBTECF + NBTNS
+
+         ENDDO
+
+C        UNICITE DES NO DE TETRAEDRES DU TABLEAU NOTECF
+         CALL UNITABL( NOTECF, NBTECF )
+
+C        TRACE DES TETRAEDRES, TRIANGLES, ARETES DU CF
+         KTITRE ='cr0etoil: 1)       TETRAEDRES des        SOMMETS ISOLE
+     %S DU CF'
+         WRITE(KTITRE(14:18),'(I5)') NBTECF
+         WRITE(KTITRE(34:38),'(I5)') NBSTIS
+         CALL SANSDBL( KTITRE, L )
+         PRINT*, KTITRE(1:L)
+         CALL TRCFFAPE( KTITRE, PTXYZD, MXFACO, LEFACO, NO0FAR, NOTETR,
+     %                  NBTECF, NOTECF, NBTRCF, NOTRCF,
+     %                  MXARCF, NBCF,   N1ARCF, NOARCF,
+     %                  NBSTIS, NOSTIS,
+     %                  NBPTIN, PTINTERS )
+      ENDIF
+
+C     -------------------------------------------------------------------
+C     AJOUTER LES TETRAEDRES AYANT UN SOMMET DU CF ET QUI ONT UNE ARETE
+C     QUI INTERSECTE AU MOINS UNE DES FACES DU CF ET DES TETRAEDRES AYANT
+C     CETTE ARETE INTERSECTANTE avec STOCKAGE DES XYZ DE CES POINTS
+C     D'INTERSECTION
+C     -------------------------------------------------------------------
+      DO 16 II = 1, NBSTCF
+
+C        NUMERO PTXYZD DU SOMMET II DU CF
+         NS = NOSTCF( II )
+
+C        LISTE DES TETRAEDRES DE SOMMET NS AU TABLEAU NOTECFST
+         CALL TETR1S( NS,       N1TETS, NOTETR,
+     %                NBTECFST, MXTECF, NOTECFST, IERR )
+C        NOTECFST  EST UN TABLEAU AUXILIAIRE POUR CALCULER NOTECF
+C        NBTECFST: EN SORTIE NOMBRE DE TETRAEDRES DE SOMMET NS RANGES DANS NOTECFST
+
+ccc         IF( IERR .NE. 0 ) THEN
+ccc            PRINT*,'PB cr0etoil:',NBTECFST,' TETRAEDRES de SOMMET',NS,
+ccc     %             ' SOMMET du CF'
+ccc            NBTECF = 0
+ccc            IERR = 2
+ccc            GOTO 9999
+ccc         ENDIF
+
+         DO NN = 1, NBTECFST
+
+C           LE TETRAEDRE DE SOMMET NS
+            NTE = NOTECFST( NN )
+
+            DO 14 NA=1,6
+
+C              LES 2 SOMMETS DE L'ARETE NA DU TETRAEDRE NTE
+               NS1 = NOTETR( NOSOARTE(1,NA), NTE )
+               IF( NS1 .EQ. NS ) GOTO 14
+
+               NS2 = NOTETR( NOSOARTE(2,NA), NTE )
+               IF( NS2 .EQ. NS ) GOTO 14
+
+C              L'ARETE NS1 NS2 INTERSECTE T ELLE UNE FACE DU CF?
+               DO J=1,NBTRCF
+
+C                 LA FACE LEFACO PERDUE ou AJOUTEE NO0FAR
+                  NTR = NOTRCF( J )
+
+                  IF( NTR .GT. 0 ) THEN
+                     NOSOTR(1) = LEFACO(1,NTR)
+                     NOSOTR(2) = LEFACO(2,NTR)
+                     NOSOTR(3) = LEFACO(3,NTR)
+                  ELSE
+                     NOSOTR(1) = NO0FAR(1,-NTR)
+                     NOSOTR(2) = NO0FAR(2,-NTR)
+                     NOSOTR(3) = NO0FAR(3,-NTR)
+                  ENDIF
+
+C                 CETTE FACE NTR EST ELLE INTERSECTEE PAR L'ARETE NS1-NS2?
+                  CALL INARTR( PTXYZD(1,NS1), PTXYZD(1,NS2),
+     %                         PTXYZD( 1, NOSOTR(1) ),
+     %                         PTXYZD( 1, NOSOTR(2) ),
+     %                         PTXYZD( 1, NOSOTR(3) ),
+     %                         LINTER, XYZ, CBTR )
+C                 LINTER : -2 SI S1=S2
+C                 -1 SI S1-S2 PARALLELE AU PLAN DU TRIANGLE
+C                  0 SI S1-S2 N'INTERSECTE PAS LE TRIANGLE ENTRE CES 3 SOMMETS
+C                  1 SI S1-S2   INTERSECTE     LE TRIANGLE ENTRE CES 3 SOMMETS
+C                  XYZ : 3 COORDONNEES DU POINT D'INTERSECTION SI LINTER=1
+C                  CBTR: 3 COORDONNEES BARYCENTRIQUES DE PT DANS LE TRIANGLE P1P2P3
+                  IF(  LINTER .EQ. 1
+     %                .AND. CBTR(1) .LT. 0.999999D0
+     %                .AND. CBTR(2) .LT. 0.999999D0
+     %                .AND. CBTR(3) .LT. 0.999999D0 ) THEN
+
+C                    OUI: UN POINT D'INTERSECTION DE PLUS
+C                         EXISTE T IL DEJA DANS PTINTERS?
+                     DO 12 K=1,NBPTIN
+
+                        DO L=1,3
+                           D = XYZ(L)
+                           IF( D .NE. 0D0  .AND.
+     %                        ABS(D-PTINTERS(L,K)) .GT. 1D-6 * ABS(D) )
+     %                        GOTO 12
+                        ENDDO
+C                       LE POINT D'INTERSECTION EXISTE DEJA
+                        GOTO 14
+
+ 12                  ENDDO
+
+C                    LE POINT D'INTERSECTION EST AJOUTE
+C                    C'EST AUSSI UNE ARETE D'INTERSECTION DE PLUS
+                     IF( NBPTIN .GE. MXPTIN ) THEN
+                        PRINT *,'cr0etoil: ABANDON CAR TROP DE POINTS IN
+     %TERSECTION ARETE-FACE NBPTIN=',NBPTIN
+                        NBTECF = 0
+                        IERR = 4
+                        GOTO 9999
+                     ENDIF
+                     NBPTIN = NBPTIN + 1
+                     PTINTERS(1,NBPTIN) = XYZ(1)
+                     PTINTERS(2,NBPTIN) = XYZ(2)
+                     PTINTERS(3,NBPTIN) = XYZ(3)
+
+C                    AJOUT A NOTECF DES TETRAEDRES D'ARETE NS1 NS2
+                     CALL TETR1A( NS1,  NS2,   N1TETS, NOTETR,
+     %                           NBTEA, MXTECF-NBTECF, NOTECF(NBTECF+1),
+     %                           IERR )
+                     NBTECF = NBTECF + NBTEA
+
+C                    UNICITE DES NO DE TETRAEDRES DU TABLEAU NOTECF
+                     CALL UNITABL( NOTECF, NBTECF )
+
+                     GOTO 14
+                  ENDIF
+               ENDDO
+
+ 14         ENDDO
+         ENDDO
+ 16   ENDDO
+
+      PRINT*,'cr0etoil:',NBPTIN,' INTERSECTIONS ARETE-FACE NBTRCF=',
+     %        NBTRCF,' NBTECF=',NBTECF
+
+C     TRACE DES TETRAEDRES, TRIANGLES, ARETES DU CF et POINTS D'INTERSECTION
+      IF( NBTECF .GT. 0 ) THEN
+         KTITRE='cr0etoil:       TETRAEDRES avec CEUX des ARETES INTERSE
+     %CTANTES aux              POINTS INTERSECTION'
+         WRITE(KTITRE(11:15),'(I5)') NBTECF
+         WRITE(KTITRE(68:72),'(I5)') NBPTIN
+         CALL SANSDBL( KTITRE, L )
+         PRINT*, KTITRE(1:L)
+         CALL TRCFFAPE( KTITRE(1:L), PTXYZD, MXFACO, LEFACO, NO0FAR,
+     %                  NOTETR, NBTECF, NOTECF, NBTRCF, NOTRCF,
+     %                  MXARCF, NBCF,   N1ARCF, NOARCF,
+     %                  NBSTIS, NOSTIS, NBPTIN, PTINTERS )
+
+         CALL TRFETO4( KTITRE(1:L), PTXYZD, 0, NFETOIL,
+     %                 NBTRCF, NOTRCF, LEFACO, NO0FAR,
+     %                 NBTECF, NOTECF, NOTETR )
+      ENDIF
+
+ 9999 RETURN
+      END

@@ -1,0 +1,114 @@
+      SUBROUTINE TRATEAR( PTXYZD, NBARET, NOSTAR, NBPT, PT,
+     %                    NBTET,  NOTET,  NOTETR )
+C+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+C BUT :    TRACE LES ARETES DES TETRAEDRES DU TABLEAU NOTET
+C -----    INTERSECTES PAR L'ARETE NS1-NS2
+C ENTREES:
+C --------
+C PTXYZD : PAR POINT : X  Y  Z  DISTANCE_SOUHAITEE
+C NBARET : NOMBRE D'ARETES A TRACER
+C NOSTAR : NO PTXYZD DES 2 SOMMETS EXTREMITES DE L'ARETE
+C NBPT   : NOMBRE DE POINTS D'INTERSECTION ARETE-FACE
+C PT     : 3 COORDONNEES DES NBPT POINTS D'INTERSECTION 
+C NBTET  : NOMBRE DE TETRAEDRES DE LA LISTE DES TETRAEDRES A TRACER
+C NOTET  : NUMERO DANS NOTETR DES TETRAEDRES A TRACER
+C NOTETR : LISTE DES TETRAEDRES
+C          SOMMET1,    SOMMET2,    SOMMET3,    SOMMET4,
+C          TETRAEDRE1, TETRAEDRE2, TETRAEDRE3, TETRAEDRE4
+C          DE L'AUTRE COTE DE LA FACE
+C          1: 123      2: 234      3: 341      4: 412
+C+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+C AUTEUR : ALAIN PERRONNET LJLL UPMC  ST PIERRE DU PERRAY SEPTEMBRE 2014
+C2345X7..............................................................012
+      include"./incl/trvari.inc"
+      include"./incl/mecoit.inc"
+C
+      COMMON / TRTETR / STOPTE, TRACTE
+      LOGICAL           STOPTE, TRACTE
+C     STOPTE = FAUX ==> PAS D'ARRET APRES LE TRACE DE CHAQUE TETRAEDRE
+C              VRAI ==> DEMANDE D'UN CARACTERE POUR REDEMARRER
+C     TRACTE = FAUX ==> PAS DE TRACE DES TETRAEDRES
+C              VRAI ==> TRACE DES TETRAEDRES DE L'ETOILE
+C
+      DOUBLE PRECISION  PTXYZD(4,*), PT(3,NBPT)
+      INTEGER           NOSTAR(2,NBARET),NOTETR(8,*), NOTET(NBTET)
+      REAL              XYZ(3), XYZ2(3)
+
+      IF( .NOT. TRACTE ) RETURN
+C
+C     TRACE EN MODE 3 BOUTONS POUR DEPLACEMENT ROTATIONS ZOOM
+      PREDU0  = PREDUF
+      PREDUF  = 10.0
+      LORBITE = 1
+      IF( LORBITE .EQ. 0 ) GOTO 20
+C
+C     INITIALISATION DE L'ORBITE
+C     ==========================
+      CALL ORBITE0( NOTYEV )
+      GOTO 20
+C
+C     TRACE SELON L'ORBITE OU ZOOM OU TRANSLATION ACTIFS
+C     ==================================================
+ 10   CALL ORBITE1( NOTYEV )
+      IF( NOTYEV .EQ. 0 ) GOTO 9000
+C
+C     TRACE DES AXES 3D
+ 20   CALL TRAXE3
+C
+C     TRACE DES TETRAEDRES DE LA LISTE
+      DO N=1,NBTET 
+         NT = NOTET(N)
+         IF( NT .GT. 0 ) THEN
+
+C           LE TRACE DES 6 ARETES DU TETRAEDRE NOTETR(*,NT)
+            CALL TRTETRA( NCBLEU, NOTETR(1,NT), PTXYZD )
+C
+C           LE TRACE DU NUMERO DES SOMMETS DES TETRAEDRES DE NUTETR
+            DO I = 1, 4
+               NS = NOTETR(I,NT)
+               XYZ(1) = REAL( PTXYZD(1,NS) )
+               XYZ(2) = REAL( PTXYZD(2,NS) )
+               XYZ(3) = REAL( PTXYZD(3,NS) )
+               CALL ENTIER3D( NCNOIR, XYZ, NS )
+            ENDDO
+
+         ENDIF
+      ENDDO
+
+      DO N=1,NBARET
+C        LE SOMMET NS1
+         NS1 = NOSTAR(1,N)
+         XYZ(1) = REAL( PTXYZD(1,NS1) )
+         XYZ(2) = REAL( PTXYZD(2,NS1) )
+         XYZ(3) = REAL( PTXYZD(3,NS1) )
+         CALL ENTIER3D( NCVERT, XYZ, NS1 )
+
+C        LE SOMMET NS2
+         NS2 = NOSTAR(2,N)
+         XYZ2(1) = REAL( PTXYZD(1,NS2) )
+         XYZ2(2) = REAL( PTXYZD(2,NS2) )
+         XYZ2(3) = REAL( PTXYZD(3,NS2) )
+         CALL ENTIER3D( NCVERT, XYZ2, NS2 )
+
+C        L'ARETE NS1-NS2
+         CALL TRAIT3D(  NCROUG, XYZ, XYZ2 )
+      ENDDO
+
+C     TRACE DES POINTS D'INTERSECTION
+      DO N = 1, NBPT
+         XYZ(1) = REAL( PT(1,N) )
+         XYZ(2) = REAL( PT(2,N) )
+         XYZ(3) = REAL( PT(3,N) )
+         CALL SYMBOLE3D( NCGRIS, XYZ, '*' )
+      ENDDO
+
+C     TITRE ET TRACE EFFECTIF
+      CALL TRFINS( 'TETRAEDRES INTERSECTES PAR UNE ARETE' )
+C
+C     REPRISE DE L'ORBITE
+C     ===================
+      IF( LORBITE .NE. 0 ) GOTO 10
+C
+ 9000 PREDUF = PREDU0
+      RETURN
+      END

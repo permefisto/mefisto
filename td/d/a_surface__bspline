@@ -1,0 +1,14 @@
+deftms ~>SURFACE>>BSPLINE
+ 'les coefficients des polynomes d''un quadrangle BSPLINE'
+variable muet DATE   'date de creation du tableau'   reel2 ;
+variable muet NUTD   'numero du tableau descripteur' entier ;  
+variable DEGXQB 'degre des polynomes en X de la surface BSPLINE' entier ;   
+variable DEGYQB 'degre des polynomes en Y de la surface BSPLINE' entier ;
+variable NBCOQB 'nombre de composantes de la BSPLINE 3 ou 4' entier ;
+variable NBIXQB 'nombre d''intervalles en X' entier ;
+variable NBIYQB 'nombre d''intervalles en Y' entier ;
+tableau  PARXQB(0..NBIXQB) 'valeurs du parametre X de la BSPLINE' reel;
+tableau  PARYQB(0..NBIYQB) 'valeurs du parametre Y de la BSPLINE' reel;
+tableau  SPLIQB(0..DEGXQB,0..DEGYQB,1..NBIXQB,1..NBIYQB,1..NBCOQB)
+         'coefficients des polynomes' reel ;
+fintms ;

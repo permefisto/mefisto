@@ -1,0 +1,86 @@
+       SUBROUTINE ECHDIAPT( NX, NY, NDIM, MNXYZS, MNNSEF, IERR )
+C+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+C BUT :    ECHANGER UNE DIAGONALE COMMUNE A 2 TRIANGLES
+C -----    LA DIAGONALE EST DESIGNEE A LA SOURIS
+C
+C ENTREES:
+C --------
+C NX NY  : COORDONNEES PIXEL DU POINT DU CLIC SOURIS
+C NDIM   : DIMENSION (2 ou 3) DE L'ESPACE DE LA SURFACE
+C MNXYZS : ADRESSE DU TABLEAU XYZSOMMET DE LA SURFACE
+C MNNSEF : ADRESSE DU TABLEAU NSEF      DE LA SURFACE
+C
+C SORTIES:
+C --------
+C IERR   : 0 SI PAS D'ERREUR
+C          1 SI ECHANGE REFUSE POUR QUADRANGLE NON CONVEXE OU DEGENERE
+C          2 SI POINT EN DEHORS DE LA TRIANGULATION
+C          3 SI POINT DANS UN QUADRANGLE ou EF ADJACENT QUADRANGLE
+C+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+C AUTEUR : Alain PERRONNET Labo J-L. LIONS  UPMC  PARIS   SEPTEMBRE 2007
+C2345X7..............................................................012
+      include"./incl/langue.inc"
+      include"./incl/gsmenu.inc"
+      include"./incl/a___xyzsommet.inc"
+      include"./incl/a___nsef.inc"
+      include"./incl/pp.inc"
+      COMMON         MCN(MOTMCN)
+      REAL          RMCN(1)
+      EQUIVALENCE  (RMCN(1),MCN(1))
+C
+      IERR = 0
+C
+C     ON CHERCHE UN EF CONTENANT LE POINT SAISI
+C     =========================================
+      CALL CHARET( NX, NY, NDIM, MNXYZS, MNNSEF,
+     %             NOTRIA1, NOTRIA2, NOSDI1, NOSDI2 )
+      IF( NOTRIA1 .LE. 0 .OR. NOTRIA2 .LE. 0 .OR.
+     %    NOSDI1  .LE. 0 .OR. NOSDI2  .LE. 0 ) THEN
+C        ARETE FRONTIERE
+         NBLGRC(NRERR)=1
+         IF( LANGAG .EQ. 0 ) THEN
+            KERR(1)='POINT HORS MAILLAGE ou FRONTALIER'
+         ELSE
+            KERR(1)='POINT OUTSIDE THE MESH or ON BOUNDARY'
+         ENDIF
+         CALL LEREUR
+         IERR=2
+         RETURN
+      ENDIF
+C
+C     ADRESSE MCN DU TABLEAU NUSOEF NO DES 4 SOMMETS DES NBTQ EF ACTUELS
+      MNSOEL = MNNSEF + WUSOEF
+      IF( MCN(MNSOEL+4*NOTRIA1-1) .GT. 0 .OR.
+     %    MCN(MNSOEL+4*NOTRIA2-1) .GT. 0 ) THEN
+         NBLGRC(NRERR)=1
+         IF( LANGAG .EQ. 0 ) THEN
+            KERR(1)='ARETE D''UN QUADRANGLE NON TRAITE'
+         ELSE
+            KERR(1)='EDGE of a QUADRANGLE NOT TREATED'
+         ENDIF
+         CALL LEREUR
+         IERR=3
+         RETURN
+      ENDIF
+C
+C     ICI L'ARETE NOSDI1 NOSDI2 EST UNE ARETE DES TRIANGLES NOTRIA1 et NOTRIA2
+C     RECHERCHE DU NO DE SOMMET DU TRIANGLE 1 NON SUR L'ARETE COMMUNE
+      MN1 = MNSOEL + 4*NOTRIA1 - 5
+      DO 10 I=1,3
+         NOSTR1 = MCN(MN1+I)
+         IF( NOSTR1 .NE. NOSDI1 .AND. NOSTR1 .NE. NOSDI2 ) GOTO 20
+ 10   CONTINUE
+C
+C     RECHERCHE DU NO DE SOMMET DU TRIANGLE 1 NON SUR L'ARETE COMMUNE
+ 20   MN2 = MNSOEL + 4*NOTRIA2 - 5
+      DO 30 I=1,3
+         NOSTR2 = MCN(MN2+I)
+         IF( NOSTR2 .NE. NOSDI1 .AND. NOSTR2 .NE. NOSDI2 ) GOTO 40
+ 30   CONTINUE
+C
+C     LE QUADRANGLE FORME DES 2 TRIANGLES EST IL ECHANGEABLE?
+ 40   CALL ECHDIA( NDIM,    NOSDI1,  NOSDI2, NOSTR1, NOSTR2,
+     %             NOTRIA1, NOTRIA2, MNXYZS, MNNSEF, IERR )
+C
+      RETURN
+      END

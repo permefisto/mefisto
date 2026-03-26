@@ -1,0 +1,125 @@
+Mefisto-FLUIDER resoud le probleme de Stokes ou Navier-Stokes pour
+un fluide incompressible, stationnaire ou instationnaire, à
+l'aide des elements finis (triangle en 2D, tetraedre en 3D)
+de Brezzi-Fortin ou de Taylor-Hood.
+
+Soit a calculer
+. la vitesse ui(t,X) i=1,...,d avec d=2 ou 3
+. la pression p(t,X)
+solution du probleme de Navier-stokes instationnaire:
+
+Masse ( dui/dt + Som uj dui/dxj ) - Viscos Laplacien ui + CoefPres dp/dxi = FOi i=1,d
+div u = Som dui/dxi = 0  dans le fluide
+
+avec les conditions aux limites du fluide
+ui = uDi sur la frontiere GammaD
+Viscos Som dui/duj nj = FGi sur la frontiere GammaN
+p = pD  sur la frontiere GammaDP
+
+et les conditions initiales
+ui=u0i i=1,d  dans le fluide et ses limites
+pi=p0         dans le fluide et ses limites
+
+Cf la documentation Mefisto-Fluider (fichier fluider.ps),
+Cf les fichiers des tests pipe2d pipe3d de $MEFISTO/testf
+et les fichiers des tests cavity2d, cylball, marche, ns2d, ns3d,
+pipe3d, recyl, step, tube2d, tube3d de $MEFISTO/testa
+executables par la frappe de readf NomFichier;
+
+Si le probleme est instationnaire, l'intégration en temps emploie
+un schéma à un pas de temps constant, théoriquement inconditionnellement stable.
+En réalité, il faut choisir le pas de temps dt pour que durant dt une particule
+traverse au plus une couche d'elements finis.
+
+Pour resoudre le probleme, il est necessaire
+- par execution au prealable de la commande MAILLER,
+  d'avoir construit le maillage (triangles en 2d ou tetraedres en 3d) du fluide,
+  c'est à dire l'objet Mefisto et de l'avoir interpolé avec 
+  . soit, un choix P1-Lagrange pour utiliser des éléments finis de Brezzi-Fortin;
+  . soit, un choix P2-Lagrange pour utiliser des éléments finis de Taylor-Hood.
+- entrer les donnees physiques masse, viscosite, coefficient de la pression,
+  force et conditions aux limites et conditions initiales;
+- choisir quel probleme à resoudre Stokes ou Navier-Stokes, stationnaire ou non;
+- visualiser les resultats vitesses, pressions, fonction courant, ...
+
+Cf https://www.ljll.math.upmc.fr/perronnet/NSROLL/NSROLL.html
+
+Le menu debuFLUI permet d'enchainer les etapes vues ci-dessus
+ 1  : NOM de l'OBJET a traiter  (inutile si UN SEUL objet est maille)
+ 2  : ENTREE des DONNEES du FLUIDE (masse, viscosite, force, conditions aux limites)
+ 3  : RESOUDRE l'ecoulement de STOKES d'un FLUIDE STATIONNAIRE
+ 4  : RESOUDRE l'ecoulement de STOKES d'un FLUIDE INSTATIONNAIRE
+ 5  : RESOUDRE NAVIER-STOKES INSTATIONNAIRE par un SCHEMA IMPLICITE en temps
+ 6  : RESOUDRE NAVIER-STOKES INSTATIONNAIRE par  PAS FRACTIONNAIRES en temps
+ 10 : DESSIN des VITESSES PRESSIONS ... apres calcul
+ 19 : TRACE du MAILLAGE des PLSVO
+ 20 : PRECISION pour INVERSER A x = b
+ 38 : LARGEUR HAUTEUR PIXELS de la FENETRE de VISUALISATION
+ 39 : COULEUR du FOND de la FENETRE
+ 71 : SUIVI TMS AFFICHAGE MODIFICATION
+ 72 : SUIVI FICHIERS de la MS
+ 73 : GESTION unites lecture affichage
+ 74 : TUER des TMS PLSVO
+ 97 : Nom de la version de Mefisto
+ 99 : SAUVEGARDE des DONNEES et FIN du TRAITEMENT <= TRES IMPORTANT pour CONTINUER
+
+2; offre une entree des donnees, volume par volume en 3d ou surface par surface en 2d
+(densite de masse, viscosite, coefficient de la pression, vitesse initiale,
+pression initiale)
+puis les conditions aux limites pour les surfaces, lignes, points.
+
+Ces donnees peuvent etre entrees, soit par constantes, soit par fonctions.
+Par fonction, il est possible de faire dependre ces donnees de la position
+du point x,y,z, du temps, du materiau, ...
+
+La vitesse et pression initiale peut etre donnee,
+ou retrouvee parmi les vitesses-pressions deja calculees a differents temps.
+
+-Soit, 3; RESOUDRE l'ecoulement de STOKES d'un FLUIDE STATIONNAIRE
+Un systeme lineaire est a resoudre.
+Le nombre de lignes de la matrice est le nombre de composantes de la vitesses
+aux noeuds, plus la pression aux sommets.
+Choisir la methode iterative de gradient conjugue conduit a utiliser
+moins de memoire centrale que la methode directe de factorisation,
+mais peut ne pas converger dans certains cas de viscosite faible.
+
+-Soit, 4; RESOUDRE l'ecoulement de STOKES d'un FLUIDE INSTATIONNAIRE
+La resolution d'un ecoulement de STOKES demande une large matrice de taille
+le nombre de composantes de la vitesses aux noeuds, plus la pression aux sommets.
+Choisir une methode iterative de gradient conjugue conduit a utiliser
+moins de memoire centrale que la methode directe de factorisation,
+mais peut ne pas converger dans certains cas de viscosite faible.
+
+-Soit, 5; RESOUDRE NAVIER-STOKES INSTATIONNAIRE par un SCHEMA IMPLICITE en temps
+-Soit, 6; RESOUDRE NAVIER-STOKES INSTATIONNAIRE par PAS FRACTIONNAIRES  en temps
+Ces 2 options resolvent le meme probleme par des schemas en temps differents.
+La methode des pas fractionnaires necessite moins de place en memoire centrale,
+(notamment avec emploi du gradient conjugue) et est plus efficace en temps calcul.
+Si le fluide instationnaire sort a travers une frontiere, y imposer une vitesse
+convectee au temps tn (option 2; des conditions aux limites).
+
+Sur les exemples de la documentation, la methode avec
+EF Taylor-Hood, pas fractionnaires, gradient conjugue est la plus efficace.
+
+
+8; Apres le calcul des vitesses et pressions, il est agreable de les visualiser
+pour mieux comprendre l'ecoulement, notamment, le mouvement du fluide.
+(Choisir nul le nombre de cas a visualiser ce qui donne une ebauche
+de petit film).
+Il est aussi possible de calculer l'erreur commise lorsque la vitesse
+et la pression sont connues.
+Il faut alors fournir les 2 fonctions utilisateur:
+DefFonc VITESSE_EXACTE(t,x,y,z,nocomp) ou EXACT_VELOCITY(t,x,y,z,nocomp);
+ Si nocomp=1 alors
+   VITESSE_EXACTE = (1+t*t) * (1-x*x) * (1-y*y); {par exemple}
+ Sinon
+   VITESSE_EXACTE = 0;
+ FinSi
+FinFonc;
+
+DefFonc  PRESSION_EXACTE(t,x,y,z) ou EXACT_PRESSURE(t,x,y,z);
+  PRESSION_EXACTE = (1+t) * cos(x) * cos(y); {par exemple}
+FinFonc;
+
+99; SAUVEGARDE des DONNEES et FIN du TRAITEMENT
+    ABSOLUMENT NECESSAIRE pour exploiter ensuite les resultats acquis.

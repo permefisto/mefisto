@@ -1,0 +1,119 @@
+Mefisto-FLUIDER solve the 2d or 3d STOKES problem for an
+incompressible fluid, steady or unsteady, by Brezzi-Fortin or 
+Taylor-Hood finite elements(triangle in 2D, tetraedre in 3D).
+
+To compute
+. the velocity ui(t,X) i=1,...,d with d=2 or 3
+. the pressure p(t,X)
+solution of the unsteady Navier-stokes problem:
+
+Mass ( dui/dt + Sum uj dui/dxj ) - Viscos Laplacian ui + CoefPres dp/dxi = FOi i=1,d
+div u = Som dui/dxi = 0  in the fluid
+
+with the boundary conditions of the fluid
+ui = uDi on the boundary GammaD
+Viscos Som dui/duj nj = FGi on the boundary GammaN
+p = pD  on the boundary GammaDP
+
+and the initial conditions
+ui=u0i i=1,d  in the fluid and its boundary
+pi=p0         in the fluid and its boundary
+
+Cf  the documentation Mefisto-Fluider (file fluider.ps),
+Cf  the test files pipe2d pipe3d of $MEFISTO/testf
+and the test files cavity2d, cylball, marche, ns2d, ns3d,
+pipe3d, recyl, step, tube2d, tube3d of $MEFISTO/testa
+executable by the typing of readf FileName;
+
+If the problem is dependent of time, the integration is done with 
+a one constant step scheme in time, theorically unconditionnaly  stable.
+In fact, it is necessary to choose a time step dt such that during dt
+a fluid particule does not go through more one layer of finite elements.
+
+To solve the problem, it is necessary
+- to have construct the mesh (triangles or tetrahedra) of the fluid,
+  an object for Mefisto and interpolated it 
+  either the choice of a P1-Lagrange interpolation for Brezzi-Fortin finite elements.
+  or     the choice of a P2-Lagrange interpolation for Taylor-Hood finite elements.
+- to give the physical characteristics of the fluid mass, viscosity, pressure
+  coefficient, force and boundary conditions and initial conditions;
+- to choose what problem to solve and the scheme, Stokes or Navier-Stokes,
+  steady or unsteady, direct method or fractional steps;
+- to visualize the velocities and pressures, ...
+
+Cf https://www.ljll.math.upmc.fr/perronnet/NSROLL/NSROLL.html
+
+The menu debuFLUI permits to chain the different steps:
+ 1; OBJECT NAME to treat (Necessary only if more of one object exists)
+ 2; FLUID  INPUT DATA (mass, viscosity, force density, boundary and initial conditions)
+ 3; STEADY   STOKES SOLVER
+ 4; UNSTEADY STOKES SOLVER
+ 5; IMPLICIT        UNSTEADY NAVIER-STOKES SOLVER
+ 6; FRACTIONAL step UNSTEADY NAVIER-STOKES SOLVER
+10; DRAWING of VELOCITIES PRESSURES
+19; DRAWING of PLSVO meshes
+20; PRECISION to SOLVE A x = b
+38; WINDOW PIXELS WIDTH & HEIGHT
+39; BACKGROUND COLOR
+71; TOOLS on TMS
+72; TOOLS on FILES of the MS
+73; TOOLS on I/O units
+74; DELETE TMS of PLSVO
+97; MEFISTO VERSION NAME
+99; SAVE DATA and QUIT     <= VERY IMPORTANT to continue
+
+2; offers the entry of data, volume by volume in 3d, or surface by surface in 2d,
+for the physical characteristics and after, the boundary conditions input data,
+for Surfaces, Lines, Points, and initial conditions for VSLP;
+These data may be constant or defined by a function written by the User.
+Thus, it is possible to give the dependency of the mass, viscosity, forces, ...
+on x,y,z or time or material, ...
+
+The initial velocity and pressure may be given by constants or functions,
+or recover from velocities-pressures previously computed at different times.
+
+Choose 3; to solve a STEADY STOKES incompressible FLOW
+A linear system of order d times the number of velocity nodes plus 
+the pressure vertex number must be solved.
+The conjugate gradient leads to less main memories than the Crout factorization,
+but, may be not converge with small viscosities...
+
+Choose 4; to solve an UNSTEADY STOKES incompressible FLOW
+Many linear systems of order d times the velocity nodes number, plus 
+the pressure vertex number must be solved.
+The conjugate gradient leads to less main memories than the Crout factorization,
+but, may be not converge with small viscosities...
+
+Choose 5; to solve an UNSTEADY NAVIER-STOKES incompressible FLOW
+          by an IMPLICIT time step method;
+Choose 6; to solve an UNSTEADY NAVIER-STOKES incompressible FLOW
+          by a FRACTIONAL time step method;
+          On an exiting flow boundary, impose the convected velocity (option 2;)
+These 2 options solve the same problem by different schemes.
+The Fractional step method necessitates less main memories than 
+the Implicit method.
+The using of conjugate gradient in place of a factorization of the matrix,
+also, necessitates less main memories.
+
+On the examples of the documentation fluider.ps, the best efficient method
+is with Taylor-Hood finite elements, fractional step, conjugate gradient.
+
+It is possible to compute the errors if the velocity and pressure expression
+are known. For that, before to solve the problem, it is necessary to give
+the 2 user's functions:
+DefFunc EXACT_VELOCITY(t,x,y,z,nocomp);
+  If nocomp=1 Then
+    EXACT_VELOCITY = (1+t*t) * (1-x*x) * (1-y*y);      {for example}
+  Else
+    EXACT_VELOCITY = 0;
+  EndIf
+EndFunc;
+DefFunc EXACT_PRESSURE(t,x,y,z);
+  EXACT_PRESSURE(t,x,y,z) = (1+t) * cos(Pis2*x) * cos(Pis2*y); {for example}
+EndFunc;
+
+
+8; After the computing of velocities and pressures, it is pleasant to draw them
+to understand the solution.
+
+99; Saves all the results and permits to use again them.

@@ -1,0 +1,17 @@
+deftms ~>>>UNION  
+'identification des sommets de l''union de plusieurs objets 
+a partir de NBOBUN objets de sommets numerotes localement de 1 a NS(i) 
+le tableau NDSCOU pointe sur le dernier sommet de chaque objet
+  ( NDSCOU(0)=0 , NDSCOU(i)=somme( NS(j) ) j=1,i )
+le tableau NOSOUN donne le numero de sommet de chaque objet dans la numerotation
+ des sommets de l''objet union apres identification des sommets communs'
+variable muet DATE      'date de creation du tableau'   reel2  ;
+variable muet NUTD      'numero du tableau descripteur' entier ;
+variable NBOBUN         'nombre d''objets de l''union'  entier ;
+tableau  NDSCOU(0..NBOBUN) 'pointeur sur le dernier sommet de chaque objet'
+         entier ;
+tableau  NUSOUN(1..NDSCOU(NBOBUN)) 'numero du sommet dans l''union' entier ;
+tableau  NDTCOU(0..NBOBUN) 'pointeur sur la derniere tg de chaque objet'
+         entier ;
+tableau  NUTGUN(1..NDTCOU(NBOBUN)) 'numero de la tg dans l''union' entier ;
+fintms ;

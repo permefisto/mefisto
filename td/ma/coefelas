@@ -1,0 +1,9 @@
+variable COEFELAS 'ELASTICITY INPUT' entier
+( 1 : 'Rot Volumic MASS Density'
+, 2 : 'YOUNG Modulus & POISSON coefficient'
+, 3 : 'DILATATION &  Reference TEMPERATURE'
+, 4 : 'FOmega INTERIOR FORCES'
+, 6 : 'C DISPLACEMENT COEFFICIENT'
+, 7 : 'Sigma0 INITIAL STRESS TENSOR'
+, 8 : 'U0 INITIAL DISPLACEMENT'
+, 9 : 'V0 INITIAL SPEED of DISPLACEMENT' ) ;

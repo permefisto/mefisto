@@ -1,0 +1,5 @@
+La ligne precedente est translatee d'un VECTEUR non nul CONSTANT  
+
+Exemple: S14.4; I; 14; LIGNE_INITIALE; 4; 5; {tranches}
+1; 2; 3; {les 3 composantes du vecteur constant de translation}
+{les translations s'ajoutent}

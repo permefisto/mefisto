@@ -1,0 +1,51 @@
+      SUBROUTINE LAPLACA( COEF,   NDIM,   NBSOM,  XYZSOM,
+     %                    NBNOEF, NBEF,   NONOEF, NBNOE, NONOSO,
+     %                    NBCOPG, LPLIGN, LPCOLO, PG )
+C+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+C BUT :    CALCULER LA MATRICE MORSE AVEC EF P1 DE L'OPERATEUR LAPLACIEN
+C -----    MULTIPLIE PAR UN COEFFICIENT
+C          COEF Integrale tGrad P1 Grad P1 dX
+C
+C ENTREES:
+C --------
+C COEF   : COEFFICIENT MULTIPLICATEUR DU LAPLACIEN
+C NDIM   : 2 ou 3 DIMENSION DE L'ESPACE DES COORDONNEES
+C NBSOM  : NOMBRE DE SOMMETS SUPPORT DE LA VITESSE
+C XYZSOM : 3 COORDONNEES DES NBSOM SOMMETS DES EF
+C NBNOEF : NOMBRE DE NOEUDS D'UN EF
+C NBEF   : NOMBRE DES EF
+C NONOEF : NUMERO DES NBNOEF NOEUDS DES NBEF EF
+C NBCOPG : NOMBRE DE COEFFICIENTS DE LA MATRICE GLOBALE PG
+C LPLIGN : POINTEUR SUR LES COEFFICIENTS DIAGONAUX      DE PG
+C LPCOLO : NUMERO DES COLONNES DES COEFFICIENTS STOCKES DE PG
+C
+C MODIFIES:
+C ---------
+C PG     : VALEUR DES COEFFICIENTS DE LA MATRICE GLOBALE ASSEMBLEE
+C+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+C AUTEUR : ALAIN PERRONNET LJLL UPMC & St PIERRE DU PERRAY  Janvier 2011
+C23456---------------------------------------------------------------012
+      REAL              XYZSOM(3,NBSOM)
+      INTEGER           NONOEF(NBEF,NBNOEF),
+     %                  NONOSO(1:NBNOE),
+     %                  LPLIGN(0:NBSOM),
+     %                  LPCOLO(1:NBCOPG)
+      DOUBLE PRECISION  PG(1:NBCOPG), COEF
+C
+C     ASSEMBLAGE MORSE COEF ( GRAD p, GRAD q ) INTERPOLATION P1 POUR UNE
+C     RESOLUTION PAR GRADIENT CONJUGUE SIMPLE SANS PRECONDITIONNEMENT
+C     ------------------------------------------------------------------
+      IF( NDIM .EQ. 2 ) THEN
+C        TRIANGLE 2D P1
+         CALL P12DAGGC( COEF,   NBSOM,  XYZSOM,
+     %                  NBNOEF, NBEF,   NONOEF, NONOSO,
+     %                  NBCOPG, LPLIGN, LPCOLO, PG )
+      ELSE
+C        TETRAEDRE P1
+         CALL P13DAGGC( COEF,   NBSOM,  XYZSOM,
+     %                  NBNOEF, NBEF,   NONOEF, NONOSO,
+     %                  NBCOPG, LPLIGN, LPCOLO, PG )
+      ENDIF
+C
+      RETURN
+      END

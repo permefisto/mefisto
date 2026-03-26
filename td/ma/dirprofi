@@ -1,0 +1,7 @@
+variable DIRPROFI 'Direction of PROFIL' entier
+( 1 : 'ACCORDING to X'
+, 2 : 'ACCORDING to Y'
+, 3 : 'ACCORDING to Z'
+, 4 : 'ORTHOGONAL to the LINE and X'
+, 5 : 'ORTHOGONAL to the LINE and Y'
+, 6 : 'ORTHOGONAL to the LINE and Z' );

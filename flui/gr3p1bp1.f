@@ -1,0 +1,54 @@
+      SUBROUTINE GR3P1BP1( NTDL, NUELEM, NONOEF, AG, BG )
+C ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+C BUT :    ELIMINATION DE GAUSS SUR LE SECOND MEMBRE
+C -----    POUR LES DL DU BARYCENTRE DES TETRAEDRES BREZZI-FORTIN
+C
+C ENTREES:
+C --------
+C NTDL   : NOMBRE DE DEGRES DE LIBERTE SANS LES BARYCENTRES DES EF
+C NUELEM : NUMERO DU TETRAEDRE BREZZI-FORTIN A TRAITER
+C NONOEF : NO DES NOEUDS DU TETRAEDRE C'EST A DIRE DES 4 SOMMETS
+C AG     : 3 LIGNES DE AE DES DEGRES DE LIBERTE 5 10 15 DU BARYCENTRE
+C
+C MODIFIE:
+C --------
+C BG     : VECTEUR SECOND MEMBRE AVANT ET APRES GAUSS
+C+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+C AUTEUR: ALAIN PERRONNET LJLL UPMC Saint Pierre du Perray  Janvier 2009
+C23456---------------------------------------------------------------012
+      DOUBLE PRECISION  AG(19,3), BG(*), PIVOT
+      INTEGER           NONOEF(4)
+      INTEGER           NOGLDL(19)
+C
+C     NO GLOBAL DES DL ELEMENTAIRES
+      CALL NODLEFBF( 3, NTDL, NUELEM, NONOEF, NOGLDL )
+C
+C     TRIANGULATION DE GAUSS SUR LA LIGNE 5 DU VECTEUR
+      PIVOT = BG( NOGLDL(5) ) / AG(5,1)
+      DO 10 I=1,19
+         IF( I .NE. 5 ) THEN
+            N = NOGLDL( I )
+            BG(N) = BG(N) - AG(I,1) * PIVOT
+         ENDIF
+ 10   CONTINUE
+C
+C     TRIANGULATION DE GAUSS SUR LA LIGNE 10 DU VECTEUR
+      PIVOT = BG( NOGLDL(10) ) / AG(10,2)
+      DO 20 I=1,19
+         IF( I .NE. 5 .AND. I .NE. 10 ) THEN
+            N = NOGLDL( I )
+            BG(N) = BG(N) - AG(I,2) * PIVOT
+         ENDIF
+ 20   CONTINUE
+C
+C     TRIANGULATION DE GAUSS SUR LA LIGNE 15 DU VECTEUR
+      PIVOT = BG( NOGLDL(15) ) / AG(15,3)
+      DO 30 I=1,19
+         IF( I .NE. 5 .AND. I .NE. 10 .AND. I .NE. 15 ) THEN
+            N = NOGLDL( I )
+            BG(N) = BG(N) - AG(I,3) * PIVOT
+         ENDIF
+ 30   CONTINUE
+C
+      RETURN
+      END

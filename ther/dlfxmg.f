@@ -1,0 +1,33 @@
+      SUBROUTINE DLFXMG( NBRDLX, NUDLFX, TGV, NTDL, LPDIAG, MG )
+C ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+C BUT :    PRISE EN COMPTE SUR LA MATRICE GLOBALE DES DL FIXES
+C -----
+C ENTREES:
+C --------
+C NBRDLX : NOMBRE DE DL FIXES
+C NUDLFX : TABLEAU DES NUMEROS DES DL FIXES
+C TGV    : VALEUR IMPOSEE AUX COEFFICIENTS DIAGONAUX DES DL FIXES
+C NTDL   : NOMBRE DE LIGNES ET COLONNES DE LA MATRICE MG
+C LPDIAG : POINTEUR SUR LES COEFFICIENTS DIAGONAUX DE LA MATRICE MG
+C
+C MODIFIE:
+C --------
+C MG     : MATRICE GLOBALE EN ENTREE ET SORTIE
+C+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+C AUTEUR : ALAIN PERRONNET TEXAS A & M University at QATAR     MARS 2011
+C23456---------------------------------------------------------------012
+      INTEGER           NUDLFX(NBRDLX), LPDIAG(0:NTDL)
+      DOUBLE PRECISION  TGV, MG(*)
+C
+      DO K=1,NBRDLX
+C
+C        NUMERO DU DL FIXE DE 1 A NTDL
+         NDL = NUDLFX( K )
+C
+C        VALEUR IMPOSEE A TGV DU COEFFICIENT DIAGONAL NDL DE MG
+         MG( LPDIAG(NDL) ) = TGV
+C
+      ENDDO
+C
+      RETURN
+      END

@@ -1,0 +1,90 @@
+{ ==================================================================== }
+{ MEFISTO Software     : November 19-th 2011 Version                   }
+{ USER's Name          : ap                                            }
+{ Project Name         : boite                                         }
+{ Date                 : 19/11/11   12h 55m 36s                        }
+{ ==================================================================== }
+@;
+ 0;  { EDGE LENGTH by DEFAULT }
+  1; { LENGTH by DEFAULT of MESH EDGES? }
+
+1; { POINTS vertices of the object }
+ 1;
+ { TYPING of VALUES }
+ { NAME of the POINT or ESCAPE? }
+ orig; i; 1;1; 2; 3;
+ { in LEXICON ~>TRANSFO }
+ { X Y Z COORDINATES }
+ { COORPO 'X Y Z of a point' xyz ; }
+ { NAME of the POINT or ESCAPE? }
+@;
+
+3;{ SURFACES faces of the object }
+ { NAME of the SURFACE or ESCAPE? }
+ bx1; i;
+ { in LEXICON ~>TRANSFO }
+ 21;
+ { CLOSED SURFACE of a BOX }
+ 10;
+ { LONXBX 'X LENGTH of the BOX' reel ; }
+ 8;
+ { LARYBX 'Y WIDTH of the BOX' reel ; }
+ 6;
+ { HAUZBX 'Z HEIGHT of the BOX' reel ; }
+ { NAME of POINT }
+ orig;
+ { in LEXICON ~>POINT }
+ { NAME of the SURFACE or ESCAPE? }
+ @;
+
+10;{ DRAWING of PLSVO meshes }
+ 3;
+ { SURFACE or SURFACES }
+ 1;
+ { ALL SURFACES with 0 Tangent }
+ 75;
+ { Activate TRANSLATION ORBIT ZOOM }
+ 90;
+ { Continue the DRAWING }
+ @;
+ @;
+ @;
+ @;
+ @;
+ @;
+ @;
+
+ deffunc Edge_Length(x,y,z);
+    Edge_Length=sqrt(x*x+y*y+z*z)/10;
+ endfunc;
+ 
+3;{ SURFACES faces of the object }
+ { NAME of the SURFACE or ESCAPE? }
+ bx2; i; 21;
+ { in LEXICON ~>TRANSFO }
+ { CLOSED SURFACE of a BOX }
+ 10; 8; 6;
+ { LONXBX 'X LENGTH of the BOX' reel ; }
+ { LARYBX 'Y WIDTH of the BOX' reel ; }
+ { HAUZBX 'Z HEIGHT of the BOX' reel ; }
+ { NAME of POINT }
+ orig;
+ { in LEXICON ~>POINT }
+ { NAME of the SURFACE or ESCAPE? }
+ @;
+ @;
+ @;
+
+10;{ DRAWING of PLSVO meshes }
+ 3;
+ { SURFACE or SURFACES }
+ 3;
+ { ONE SURFACE }
+ { NAME of the SURFACE? }
+ bx2;
+ 75;
+ { Activate TRANSLATION ORBIT ZOOM }
+ 90;
+ { Continue the DRAWING }
+
+CLOSE;

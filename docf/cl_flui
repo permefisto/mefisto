@@ -1,0 +1,27 @@
+Les conditions aux limites et initiales sur les surfaces (en 3d seulement),
+les lignes et aux points sont definies ici
+
+1 : FORCE Force externe sur la frontiere
+2 : BLocage de la VITESSE imposee
+3 : BLocage de la PRESSION imposee
+
+4 : Vitesses initiales
+5 : Pressions initiales
+
+Attention au choix des unites MKSA, ...
+
+Pour le probleme instationnaire, les vitesses et pressions initiales
+peuvent etre definies a partir de
+- le dernier vecteur vitesses-pressions calculees a l'instant initial
+- les constantes ou fonctions vitesses-pressions initiales sur l'objet (le fluide)
+- les constantes ou fonctions vitesses-pressions initiales sur les VSLP
+avec priorite des points, puis des lignes, puis des surfaces, puis des volumes,
+puis de l'objet. Ainsi une vitesse initiale en un point d'un volume sera prioritaire
+sur la vitesse initiale du volume.
+
+Taper @; ou la touche echappement pour passer au volume ou a la surface suivante
+
+Attention:
+Une caracteristique physique saisie est stockee. Pour ne plus l'employer ensuite,
+il est necessaire de la detruire sinon elle est reutilisee lors du
+calcul suivant!

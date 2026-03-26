@@ -1,0 +1,23 @@
+1: 'CAPACITE CONDUCTIVITE ECHANGE NE dependent PAS du TEMPS'
+est a choisir si
+- la CAPACITE calorifique, la CONDUCTIVITE thermique
+et les coefficients d'ECHANGE sont TOUS independants
+du TEMPS et de la TEMPERATURE.
+- les SOURCES et CONTACTS peuvent dependre du TEMPS seulement
+
+2: 'en PLUS SOURCE CONTACT dependent du TEMPS et TEMPERATURE'
+est a choisir si
+- la CAPACITE calorifique, la CONDUCTIVITE thermique
+et les coefficients d'ECHANGE sont TOUS independants
+du TEMPS et de la TEMPERATURE.
+- les SOURCES et CONTACTS peuvent dependre du TEMPS et de la TEMPERATURE.
+
+3: 'UN des COEFFICIENTS depend du TEMPS et TEMPERATURE'
+est a choisir des que l'un de ces coefficients
+depend soit du TEMPS, soit de la TEMPERATURE, soit des DEUX.
+
+La seconde option demande des iterations de point fixe
+sur le second membre et les matrices sont constantes.
+
+La troisieme option demande des iterations de point fixe avec
+recalcul des matrices ce qui conduit a un cout elev'e.

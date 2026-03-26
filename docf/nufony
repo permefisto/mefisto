@@ -1,0 +1,18 @@
+La fonction utilisateur (de nom quelconque a choisir)
+donne une valeur reelle a l'ORDONNEE finale du POINT
+de coordonnees initiales x,y,z. 
+
+Elle doit comprendre dans cet ordre les 3 parametres  X Y Z
+et etre programmee selon la grammaire du langage LU
+(cf documentation et exemples du menu de depart ) 
+
+A l'execution, les parametres X Y Z sont initialises.
+Ils peuvent ou non servir a calculer la valeur du critere.
+            
+EXEMPLE:
+deffonc ORDONNEE( x , y , z ) ; 
+   si    (1<=x) et (x<100)
+   alors  ORDONNEE = exp(x) ;
+   sinon  ORDONNEE = x**2 +y -z ;
+   finsi;  
+finfonc; 

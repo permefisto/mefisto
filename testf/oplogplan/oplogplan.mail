@@ -1,0 +1,118 @@
+{ ========================================================== }
+{ MEFISTO Version Fevrier 1999     PROJET: triangul45        }
+{ Utilisateur: Alain Perronnet     Date  :  2/2/99           }
+{ ========================================================== }
+{ TEST DES OPERATEURS LOGIQUES SUR LES TRIANGULATIONS PLANES }
+{ INTERSECTION, ADDITION et SOUSTRACTION                     }
+{ ========================================================== }
+defvar d1, d2, d3, r1, r2, r3, x0, x1, y0, y1;
+ r1=5; r2=2; r3=4;
+ d1=0; d2=1; d3=6;
+ x0=-7; x1=7;
+ y0=-1; y1=1;
+
+1;{ POINTS sommets de l objet }
+   1; { FRAPPE des valeurs }
+   c1; i; 1;  0; 0; 0;
+   c2; i; 1; d2; 0; 0;
+   c3; i; 1; d3; 0; 0;
+
+   h1; i; 1;  0; r1; 0;
+   h2; i; 1; d2; r2; 0;
+   h3; i; 1; d3; r3; 0;
+
+   a1; i; 1; x0; y0; 0;
+   a2; i; 1; x1; y0; 0;
+   a3; i; 1; x1; y1; 0;
+   a4; i; 1; x0; y1; 0;
+@;
+
+2; { LIGNES aretes de l objet }
+ c1; i; 8; { cercle complet }
+    20;    { NBARLI 'nombre d''aretes de la ligne' entier ; }
+     2;    { cercle defini par le centre, un point du cercle, un point du plan}
+    C1;    { NOM DE POINT }
+    H1;    { NOM DE POINT }
+    C3;    { NOM DE POINT }
+
+ c2; i; 8; { cercle complet }
+    15;    { NBARLI 'nombre d''aretes de la ligne' entier ; }
+     2;    { cercle defini par le centre, un point du cercle, un point du plan}
+    C2;    { NOM DE POINT }
+    H2;    { NOM DE POINT }
+    C3;    { NOM DE POINT }
+
+ c3; i; 8; { cercle complet }
+    30;    { NBARLI 'nombre d''aretes de la ligne' entier ; }
+     2;    { cercle defini par le centre, un point du cercle, un point du plan}
+    C3;    { NOM DE POINT }
+    H3;    { NOM DE POINT }
+    C1;    { NOM DE POINT }
+
+ a1a2; i; 2; 10; 1; a1; a2;
+ a3a4; i; 2; 10; 1; a3; a4;
+ a2a3; i; 2;  4; 1; a2; a3;
+ a4a1; i; 2;  4; 1; a4; a1;
+ rect; i; 51; 4; a1a2; a2a3; a3a4; a4a1;
+
+@;
+
+3; { SURFACES faces de l objet }
+ q1; i; 11; { rectangle structure plan }
+        d3; { NBINQX nombre d'aretes en x }
+        r1; { NBINQY nombre d'aretes en y }
+
+rect; i; 9;{ triangulation de lignes fermees par TE }
+     1e28; { ARETMX taille max des aretes des triangles equilateraux }
+        1; { NBLFTR nombre de lignes fermees contour de la surface }
+        0; { NBPTIT nombre de points internes futurs sommets }
+     rect; { NOM DE LIGNE }
+
+ c2; i; 9; { triangulation de lignes fermees par TE }
+     1e28; { ARETMX taille max des aretes des triangles equilateraux }
+        1; { NBLFTR nombre de lignes fermees contour de la surface }
+        0; { NBPTIT nombre de points internes futurs sommets }
+       C2; { NOM DE LIGNE }
+
+ q1_moins_c2;  i; 45;  { operateurs logiques sur des triangulations 2d }
+      q1; { NOM DE SURFACE }
+      c2; { NOM DE SURFACE }
+       3; { soustraction }
+
+ s1; i; 9; { triangulation de lignes fermees par TE }
+     1e28; { ARETMX taille max des aretes des triangles equilateraux }
+        2; { NBLFTR nombre de lignes fermees contour de la surface }
+        0; { NBPTIT nombre de points internes futurs sommets }
+       C1; { NOM DE LIGNE }
+       C2; { NOM DE LIGNE }
+
+ s2; i; 9; { triangulation de lignes fermees par TE }
+     1e28; { ARETMX taille max des aretes des triangles equilateraux }
+        1; { NBLFTR nombre de lignes fermees contour de la surface }
+        0; { NBPTIT nombre de points internes futurs sommets }
+       C3; { NOM DE LIGNE }
+
+ s1_intersection_s2;  i; 45; { operateurs logiques sur des maillages 2d }
+      S1; { NOM DE SURFACE }
+      S2; { NOM DE SURFACE }
+       1; { intersection }
+
+ s1_plus_s2;  i; 45;  { operateurs logiques sur des maillages 2d }
+      S1; { NOM DE SURFACE }
+      S2; { NOM DE SURFACE }
+       2; { addition }
+
+ s1_moins_s2;  i; 45;  { operateurs logiques sur des maillages 2d }
+      S1; { NOM DE SURFACE }
+      S2; { NOM DE SURFACE }
+       3; { soustraction }
+
+ rect_intersection_s1;  i; 45; { operateurs logiques sur des maillages 2d }
+    rect; { NOM DE SURFACE }
+      s1; { NOM DE SURFACE }
+       1; { intersection }
+@;
+10; {TRACE DES SURFACES}
+  3; 90;
+
+FERMER;

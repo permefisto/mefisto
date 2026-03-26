@@ -1,0 +1,80 @@
+      SUBROUTINE AJTE1AR( NS1, NS2, NBSOTE, NSTETR, NO1TSO, NOTESO,
+     %                    MXTETRA, NBTETRA, NUTETRA, IERR )
+C+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+C BUT : AJOUTER AU TABLEAU NUTETRA LES TETRAEDRES NSTETR D'ARETE NS1-NS2
+C -----
+
+C ENTREES:
+C --------
+C NS1 NS2: NUMERO DES SOMMETS 1 et 2 DE L'ARETE
+C NSTETR : NUMERO DES 4 SOMMETS DE CHAQUE TETRAEDRE
+C NO1TSO : NUMERO DU 1-ER TETRAEDRE DANS NOTESO DE CHAQUE SOMMET
+C NOTESO : NOTESO(1,*) NUMERO DANS NSTETR DU TETRAEDRE
+C          NOTESO(2,*) NUMERO DANS NOTESO DU TETRAEDRE SUIVANT
+C                      0 SI C'EST LE DERNIER
+C MXTETRA: MAXIMUM DE NUMEROS A RANGER DANS NUTETRA
+C NBTETRA: NOMBRE DE TETRAEDRES RANGES DANS NUTETRA
+C NUTETRA: NUMERO NSTETR DES NBTETRA TETRAEDRES
+
+C MODIFIE:
+C --------
+C NBTETRA: NOMBRE DE TETRAEDRES RANGES DANS NUTETRA AVANT et APRES
+
+C SORTIE :
+C --------
+C IERR   : = 0 SI PAS D'ERREUR
+C          > 0 EN CAS DE SATURATION D'UN TABLEAU
+C+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+C AUTEUR : ALAIN PERRONNET LJLL UPMC et St Pierre du Perray    Mars 2016
+C23456...............................................................012
+      INTEGER   NSTETR(NBSOTE,*), NO1TSO(*), NOTESO(2,*),
+     %          NUTETRA(NBTETRA)
+
+C     POSITION DANS NOTESO DU 1-ER TETRAEDRE DE SOMMET NS1
+      N1 = NO1TSO( NS1 )
+
+C     ETOILE DES TETRAEDRES DE SOMMET NS1 A L'AIDE DE NOTESO
+C     TANT QU'IL EXISTE UN TETRAEDRE DE SOMMET NS1 FAIRE
+ 10   IF( N1 .GT. 0 ) THEN
+
+C        LE NUMERO DU TETRAEDRE DANS NSTETR
+         NT1 = NOTESO(1,N1)
+
+C        NT1 EST IL UN TETRAEDRE D'ARETE NS1-NS2?
+         DO K=1,4
+
+            IF( NSTETR(K,NT1) .EQ. NS2 ) THEN
+
+C              OUI: NT1 EST UN TETRAEDRE D'ARETE NS1-NS2
+C                   NT1 EST IL DEJA UN TETRAEDRE DU TABLEAU NUTETRA?
+               DO M=1,NBTETRA
+                  IF( NT1 .EQ. NUTETRA(M) ) THEN
+C                    OUI: PASSAGE AU TETRAEDRE SUIVANT
+                     GOTO 50
+                  ENDIF
+               ENDDO
+
+C              NON: IL EST AJOUTE
+               IF( NBTETRA .GE. MXTETRA ) THEN
+C                 TABLEAU SATURE
+                  PRINT *,'ajte1ar: AUGMENTER MXTETRA. TABLEAU SATURE'
+                  IERR = 1
+                  RETURN
+               ENDIF
+
+               NBTETRA = NBTETRA + 1
+               NUTETRA( NBTETRA ) = NT1
+               GOTO 50
+
+            ENDIF
+
+         ENDDO
+
+C        LE TETRAEDRE SUIVANT
+ 50      N1 = NOTESO(2,N1)
+         GOTO 10
+
+      ENDIF
+
+      RETURN
+      END

@@ -1,0 +1,1 @@
+xterm -geometry 250x50+0+50 -j -cr green -ls -sb -sl 600000 -name xterm -bg orange -fg black -fn 7x14bold -fb 7x14bold -title "xterm ORANGE" &

@@ -1,0 +1,4 @@
+variable SOLSURF3 'TRace Solution sur Surfaces 3D' entier
+( 5  : 'COULEUR    des ARETES FRONTIERE'
+, 6  : 'TYPE TRAIT des ARETES FRONTIERE'
+, 90 : 'EXECUTER le TRACE' ) ;

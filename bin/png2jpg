@@ -1,0 +1,15 @@
+#!/bin/bash
+#
+#  Conversion de fichiers.png en fichiers.jpg
+#  A. Perronnet  juillet 2011
+#
+# boucle sur les fichiers .png
+for i in `ls | grep .png$`
+do
+  nomsp=`basename $i .png`
+  nomspng=$nomsp.png
+  nomsjpg=$nomsp.jpg
+  echo "Convert $nomspng en $nomsjpg"
+  convert $nomspng $nomsjpg
+done
+

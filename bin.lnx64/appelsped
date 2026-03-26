@@ -1,0 +1,41 @@
+#!/bin/bash
+#  Shell script appelsp  Version HP avec ed  Alain Perronnet juin 1998
+#
+echo Recherche des SP appeles et n\'appartenant pas a un repertoire
+echo Nom du repertoire?
+read repe
+if test ! -d $repe
+then
+  echo Repertoire $repe inconnu
+  exit
+fi
+echo Recherche dans le repertoire $repe
+cd $repe
+rm fsubr fcall
+grep -i SUBROUTINE *.f >fsubr
+
+grep -i CALL *.f >fcall
+
+ed fcall <<@
+1,\$s/.*CALL //
+1,\$s/.*call //
+1,\$s/(.*//
+1,\$s/ //g              #il ne reste plus que le nom du sp appel
+w fcall
+q
+@
+rm f0 f1 2>>poubelle
+
+for j in `cat fcall`
+do
+  grep -i $j fsubr >ficaux
+  set `wc ficaux`; nb=`expr $1 == 0`  #nb=1 si sp pas appele
+  nb=f$nb
+  >$nb                   # creation du fichier vide f1 si sp pas dans repe
+  if test -f f1
+  then
+    echo $j appele et non dans le repertoire $repe
+  fi
+  rm f0 f1 ficaux 2>>poubelle
+done
+rm poubelle

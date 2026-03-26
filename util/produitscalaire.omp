@@ -1,0 +1,48 @@
+!$    USE OMP_LIB
+!
+!////////////////////////////////////////////////////////////////////////////////////
+!///////////////////       Debut de la region parallele       ///////////////////////
+!////////////////////////////////////////////////////////////////////////////////////
+!
+!     N est le nombre de composantes des vecteurs
+!
+!     integer nbth,kth,nkth,n1,n2 <---  a declarer
+!     real    sommeth(maxth)          <---  a declarer  maxth = nombre maxi de threads sur la machine
+!     real    somme                   <---  a declarer  maxth = nombre maxi de threads sur la machine
+!
+      n1=1
+      n2=N
+      kth=1
+!
+!$OMP PARALLEL DEFAULT(NONE) &
+!$OMP SHARED(N,V1,V2,sommeth,nbth,nkth) &
+!$OMP PRIVATE(kth,kc,n1,n2)
+!$    nbth=OMP_GET_NUM_THREADS()      !  le nombre de threads actifs
+!$    kth=OMP_GET_THREAD_NUM()    !  le numero du thread executant ces lignes (0 a nbth-1)
+!$    nkth=N/nbth                     !  le nombre de composantes associees a un thread
+!$    n1=nkth*kth+1
+!$    n2=nkth*(kth+1)
+!$    if (kth.eq.nbth-1) n2=N
+!
+!     kth : numero du thread
+!
+      sommeth(kth) = 0.d0
+      do kc=n1,n2
+         sommeth(kth) = sommeth(kth) +  V1(kc) * V2(kc) 
+      enddo
+!$OMP END PARALLEL
+!
+      somme=0.d0
+!$OMP PARALLEL DEFAULT(NONE) &
+!$OMP SHARED(sommeth,nbth) &
+!$OMP PRIVATE(k) REDUCTION(+:somme)
+!$    nbth=OMP_GET_NUM_THREADS()      !  le nombre de threads actifs
+!$OMP DO 
+         do k=1,nbth
+            somme = somme +  sommeth(k) 
+         enddo
+!$OMP END DO
+!$OMP END PARALLEL
+!////////////////////////////////////////////////////////////////////////////////////
+!///////////////////        Fin  de la region parallele       ///////////////////////
+!////////////////////////////////////////////////////////////////////////////////////

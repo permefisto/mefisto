@@ -1,0 +1,84 @@
+4 : quadrangle B-SPLINE a partir de LIGNES B-SPLINES 
+La surface B-spline uniforme polynomiale est definie a partir de
+-son nombre d'aretes en X et Y
+(En fait X et Y designent ici les 2 parametres d'image la B-spline
+ ou peuvent etre interpretees comme les 2 coordonnees curvilignes)
+-la raison geometrique de taille des aretes en X et Y
+-le degre des polynomes en X et Y 
+-le nombre de lignes B-spline en X (>degre en Y>=1) 
+ ATTENTION: Elles doivent toutes avoir
+-le meme nombre de points de controle ou interpolation  
+ lesquels doivent etre decrits dans le meme sens
+ (en X croissant puis X decroissant est INTERDIT)
+-les memes bornes pour les noeuds 
+ Les POINTS d'INTERPOLATION de la surface sont calcules sur chaque
+ LIGNE en X selon la subdivision reguliere du segment parametre defini
+ par les bornes des noeuds ( identique pour chaque ligne )
+ Exemple: S4; I; 4; 
+          6 {SOMMETS EN X};  9 {SOMMETS EN Y};
+          1 ; 1; {RAISON EN X et Y}; 2 {DEGRE  EN X}; 3{DEGRE EN Y };
+          4 ; {nombre de lignes_en_X puis les lignes B-splines}
+          LBSPLINE1X; LBSPLINE2X; LBSPLINE3X; LBSPLINE4X;
+
+
+5 : triangle BEZIER a partir de points de CONTROLE
+Une TRIANGULATION structuree et reguliere est generee a partir de 
+(N+1)*(N+2)/2 points de controle.
+Seuls les 3 sommets sont sur la surface et les tangentes au aretes
+en les sommets sont respectees. Les donnees sont
+-le nombre de subdivision en aretes d'un cote du triangle
+-le degre N des polynomes de la base de BERNSTEIN
+-le nombre total de points de controle (N+1)*(N+2)/2 
+-les points de controle donnes dans un ordre IMPOSE a partir du choix
+ quelconque du premier parmi les 3 sommets du triangle
+                   1                    6
+                  /  \                 / \    
+                 2    3               3    5     .
+                /      \        ou   /      \     .
+               4    5   6          1 ---2--- 4     .     ...
+              / --->              
+Exemple: S5; I; 5; 10; 2; 6; S1; M12; M31; S2; M23; S3;
+Definit 100 triangles a partir de la base de degre 2 de BERNSTEIN 
+et des sommets S1 S2 S3 et milieux M12 M23 M31 d'un "triangle"
+de points de controle. 
+
+
+7 : quadrangle et projection sur cercle ou cylindre 
+Le QUADRANGLE, eventuellement deforme,est defini a partir 
+de 4 lignes definissant son contour selon une INTERPOLATION
+TRANSFINIE de degre 1  (Methode de COOK, GORDON, HALL) 
+cf 1: et toutes ses restrictions et ordre d'entree des donnees 
+DE PLUS, il est ici possible de forcer certains sommets a etre
+PROJETES sur un CERCLE ou un CYLINDRE. Les DONNEES sont
+- le nombre de projections
+- le type de projection (0 sur un cylindre, 1 sur un cercle)
+- les quadrangles susceptibles d'etre modifies definis par
+  une fenetre topologique imin-imax et jmin-jmax de travail
+ (tout quadrangle exterieur a cette fenetre n'est pas modifie)
+  avec la convention 0; 0; pour la totalite (1 a MAX)
+- le nom des 2 points definissant l'axe du cylindre ou du cercle
+- le rayon du cylindre ou du cercle au premier point de l'axe
+Exemple:
+S7; I; 7; COTE1; COTE2; COTE3; COTE4; 
+2; {nombre projections}
+0; 1;  {les types de projection}
+3;6;   1;5;   {Imin IMAX et Jmin JMAX}
+0;0;   8;12;  {1 a NMAX en I et Jmin JMAX} 
+P1_AXE_CYL; P2_AXE_CYL;  P1_AXE_CER; P2_AXE_CER;
+1;                       2.5;
+Definit une quadrangulation de contour les aretes
+des lignes COTE1 COTE2 COTE3 COTE4  avec 
+-une projection sur le CYLINDRE d'axe defini par
+ les 2 points P1_AXE_CYL; P2_AXE_CYL; et
+ de rayon 1. en P1_AXE_CYL et de telle sorte que 
+ les points les plus proches soient projetes sur le cylindre
+ et les autres sommets de la fenetre 3-6 1-5 deplaces au mieux 
+-une projection sur le CERCLE d'axe normal defini par
+ les 2 points P1_AXE_CER; P2_AXE_CER; et de centre P1_AXE_CER
+ de rayon 2.5 et de telle sorte que les points les plus
+ proches soient projetes sur le cercle et 
+ les autres sommets de la fenetre 1-IMAX 8-12 deplaces au mieux
+         
+
+41: destructuration d'une surface structuree 
+Exemple: S41_NON_STRUCTUREE; I; 41; SURFACE_STRUCTUREE;

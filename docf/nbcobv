@@ -1,0 +1,3 @@
+NBCOBV est le nombre de composantes de la vitesse a imposer.
+Sa valeur peut etre 1 ou 2 ou 3 en 3d, 1 ou 2 en 2d.
+Le numero et la valeur de chaque composante seront donnes ensuite.

@@ -1,0 +1,18 @@
+The available POLYNOMIAL of INTERPOLATION are of
+LAGRANGE and with a degree 1 or 2 in 2D, 3D and axisymmetric.
+
+The NODES are the points which support the DEGREES of FREEDOM
+of the FINITE ELEMENTS.
+
+The POINTS  are the points which support the coordinates
+to define the mapping
+   F : REFERENCE FINITE ELEMENT -> CURRENT FINITE ELEMENT
+
+The FINITE ELEMENT is said ISOPARAMETRIC if the same INTERPOLATION
+is used for the unknown solution (Temperature, Component of
+Displacement, ... ) and the components of F.
+
+Here, all the programmed FINITE ELEMENTS are ISOPARAMETRIC.
+
+The polynomials of degree 1 use VERTICES=NODES=POINTS.
+The polynomials of degree 2 use VERTICES & MIDDLES of EDGES=NODES=POINTS.

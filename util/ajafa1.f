@@ -1,0 +1,176 @@
+      SUBROUTINE AJAFA1( MOARET, MXARET, L1ARFR, L1ARIN,
+     %                   LARETE, NLARFR, NLARIN,
+     %                   NUTYEL, NBELEM, MNNPEF,
+     %                   NBLAEL, NULAEL, NLLAEL, NELAEL,
+     %                   NBLAE1, NULAE1, NLLAE1, NELAE1,
+     %                   IERR )
+C ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+C BUT :   REMPLIR LES TABLEAUX DES NUMEROS DE LIGNES DES ARETES
+C -----   DANS LES NOUVEAUX TABLEAUX LAE1 A PARTIR DES ANCIENS LAEL
+C         ET AJOUTER LE NUMERO DES LIGNES NLARFR ET NLARIN
+C
+C ENTREES:
+C --------
+C MOARET : NOMBRE DE MOTS PAR ARETE DU MAILLAGE DANS LARETE
+C MXARET : NOMBRE MAXIMAL D'ARETES DECLARABLES DANS LARETE
+C NBARFR : NOMBRE D'ARETES FRONTALIERES SANS CL
+C NBARIN : NOMBRE D'ARETES INTERFACES SANS CL
+C L1ARFR : NUMERO DANS LARETE DE LA 1-ERE ARETE FRONTIERE
+C L1ARIN : NUMERO DANS LARETE DE LA 1-ERE ARETE INTERFACE
+C LARETE : TABLEAU DE HACHAGE DES ARETES DU MAILLAGE DE L'OBJET
+C          LARETE(1,I)= NO DU 1-ER  SOMMET DE L'ARETE
+C          LARETE(2,I)= NO DU 2-EME SOMMET > 1-ER  SOMMET
+C          LARETE(3,I)= CHAINAGE HACHAGE SUR ARETE SUIVANTE
+C          LARETE(4,I)= NUMERO DU 1-ER  TOUQ CONTENANT CETTE ARETE
+C                       >0 SI ARETE   DIRECTE DANS CE TOUQ
+C                       <0 SI ARETE INDIRECTE DANS CE TOUQ
+C          SI L'ARETE APPARTIENT A 2 TOUQ ALORS
+C          LARETE(5,I)= NUMERO DU 2-EME TOUQ CONTENANT CETTE ARETE
+C                       + NO TYPE EF * 100 000 000
+C                       >0 SI ARETE   DIRECTE DANS CE TOUQ
+C                       <0 SI ARETE INDIRECTE DANS CE TOUQ
+C                       =0 SI ARETE APPARTENANT A UN SEUL TOUQ
+C          LARETE(6,I)= NUMERO DANS LARETE DE L'ARETE SUIVANTE
+C                       + NO TYPE EF * 100 000 000
+C                       SOIT DANS LE CHAINAGE D'UNE LIGNE J ENTRE NUMILF ET NUMX
+C                       SOIT DANS LE CHAINAGE DES ARETES FRONTALIERES
+C                       0 SI C'EST LA DERNIERE
+C
+C          L1ARFR = NUMERO DE LA PREMIERE ARETE CHAINEE FRONTALIERE DANS LARETE
+C          L1ARIN = NUMERO DE LA PREMIERE ARETE CHAINEE INTERFACE   DANS LARETE
+C          L1LGFR(J)  = NUMERO DE LA PREMIERE ARETE CHAINEE DE LA LIGNE J
+C                       POUR J COMPRIS ENTRE NUMILF ET NUMXLF
+C NLARFR : NUMERO DE LA LIGNE DES ARETES FRONTALIERES SANS_CL
+C NLARIN : NUMERO DE LA LIGNE DES ARETES INTERFACES   SANS_CL
+C NUTYEL : NUMERO DU TYPE DES EF DU TABLEAU NPEF"
+C NBELEM : NOMBRE D'EF DE CE TYPE DANS CE TABLEAU NPEF"
+C MNNPEF : ADRESSE MCN DU TABLEAU NPEF"TYPE_EF
+C NBLAEL : NOMBRE D'ARETES SUR UNE LIGNE DE L'OBJET
+C NULAEL : NOM DE LA LIGNE D'UNE ARETE D'UN EF
+C NLLAEL : NUMERO DE CETTE ARETE DANS L'EF
+C NELAEL : NUMERO DE L'EF SUPPORT DE CETTE ARETE
+C
+C SORTIES:
+C --------
+C NBLAE1 : NOMBRE D'ARETES SUR UNE LIGNE DE L'OBJET APRES AJOUT DES
+C          LIGNES "FRONTIERE_SANS_CL" ET "INTERFACE_SANS_CL"
+C NULAE1 : NOM DE LA LIGNE D'UNE ARETE D'UN EF
+C NLLAE1 : NUMERO DE CETTE ARETE DANS L'EF
+C NELAE1 : NUMERO DE L'EF SUPPORT DE CETTE ARETE
+C IERR   : 0 SI AUCUNE ERREUR RENCONTREE, NON NUL SINON
+C ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+C AUTEUR : PERRONNET ALAIN ANALYSE NUMERIQUE UPMC PARIS     FEVRIER 1995
+C ...................................................................012
+      include"./incl/ponoel.inc"
+      COMMON / UNITES / LECTEU, IMPRIM, INTERA, NUNITE(29)
+      INTEGER           LARETE(MOARET,MXARET)
+      INTEGER           NULAEL(NBLAEL), NLLAEL(NBLAEL), NELAEL(NBLAEL)
+      INTEGER           NULAE1(NBLAE1), NLLAE1(NBLAE1), NELAE1(NBLAE1)
+C
+      INTEGER           NOSOEL(9), NOSA(2)
+      INTEGER           NOOBVC, NOOBSF(6), NOOBLA(12), NOOBPS(8)
+C
+C     LE CODE GEOMETRIQUE DES EF
+      CALL ELNUCG( NUTYEL, NCOGEL )
+C
+C     =====================================
+C     BOUCLE SUR LES EF COURANTS DE CE TYPE
+C     =====================================
+      LIBREF = MXARET
+      NBLAE  = 0
+      NBLAE1 = 0
+      DO 1000 NUELEM=1,NBELEM
+C
+C        LES NOEUDS DE L'ELEMENT FINI NUELEM
+C        -----------------------------------
+         CALL EFNOEU( MNNPEF, NUELEM, NBNDEL, NOSOEL )
+C
+C        LE NUMERO DE SURFACE DE L'EF
+C        LE NUMERO DE SURFACE DES FACES   DE L'EF
+C        LE NUMERO DE LIGNE   DES ARETES  DE L'EF
+C        LE NUMERO DE POINT   DES SOMMETS DE L'EF
+C        ----------------------------------------
+         CALL EFPLSV( MNNPEF, NUELEM,
+     %                NOVCEL, NOSFEL, NOLAEL, NOPSEL ,
+     %                NOOBVC, NOOBSF, NOOBLA, NOOBPS )
+C
+C        BOUCLE SUR LES ARETES
+         DO 50 I=1,NCOGEL
+            IF( NOOBLA(I) .GT. 0 ) THEN
+C
+C               MISE A JOUR DES NOUVEAUX TABLEAUX
+                NBLAE  = NBLAE  + 1
+                NBLAE1 = NBLAE1 + 1
+                NULAE1(NBLAE1) = NULAEL(NBLAE)
+                NLLAE1(NBLAE1) = NLLAEL(NBLAE)
+                NELAE1(NBLAE1) = NELAEL(NBLAE)
+C
+            ELSE
+C
+C              ARETE POSSIBLE   LE NUMERO DES 2 SOMMETS
+               IF( I .LT. NCOGEL ) THEN
+                  I1 = I + 1
+               ELSE
+                  I1 = 1
+               ENDIF
+               IF( NOSOEL(I) .LT. NOSOEL(I1) ) THEN
+                  NOSA(1) = NOSOEL(I )
+                  NOSA(2) = NOSOEL(I1)
+               ELSE
+                  NOSA(1) = NOSOEL(I1)
+                  NOSA(2) = NOSOEL(I )
+               ENDIF
+C
+C              RECHERCHE DE CETTE ARETE DANS LE TABLEAU LARETE
+               CALL HACHAG( 2, NOSA, MOARET, MXARET, LARETE, 3,
+     &                      LIBREF, NOARE )
+               IF( NOARE .LE. 0 ) THEN
+C                 ARETE NON RETROUVEE
+                  WRITE(IMPRIM,*) 'AJAFA1: ANOMALIE SUR ARETE',NOSA
+                  IERR = 1
+                  RETURN
+               ENDIF
+C
+C              CETTE ARETE APPARTIENT-ELLE A LA LIGNE "INTERFACE_SANS_CL"
+               L = L1ARIN
+ 10            IF( L .GT. 0 ) THEN
+                  IF( L .NE. NOARE ) THEN
+C                    PASSAGE A LA SUIVANTE
+                     L = LARETE(6,L)
+                     GOTO 10
+                  ENDIF
+C
+C                 ARETE SUR CETTE LIGNE . ELLE EST AJOUTEE AUX TABLEAUX LAE1
+                  NBLAE1 = NBLAE1 + 1
+C                 LE NUMERO DE LA LIGNE DE CETTE ARETE
+                  NULAE1(NBLAE1) = NLARIN
+C                 LE NUMERO LOCAL DE L'ARETE
+                  NLLAE1(NBLAE1) = I
+C                 LE NUMERO DE L'EF DANS NPEF
+                  NELAE1(NBLAE1) = NUELEM
+                  GOTO 50
+               ENDIF
+C
+C              CETTE ARETE APPARTIENT-ELLE A LA LIGNE "FRONTIERE_SANS_CL"
+               L = L1ARFR
+ 20            IF( L .GT. 0 ) THEN
+                  IF( L .NE. NOARE ) THEN
+C                    PASSAGE A LA SUIVANTE
+                     L = LARETE(6,L)
+                     GOTO 20
+                  ENDIF
+C
+C                 ARETE SUR CETTE LIGNE . ELLE EST AJOUTEE AUX TABLEAUX LAE1
+                  NBLAE1 = NBLAE1 + 1
+C                 LE NUMERO DE LA LIGNE DE CETTE ARETE
+                  NULAE1(NBLAE1) = NLARFR
+C                 LE NUMERO LOCAL DE L'ARETE
+                  NLLAE1(NBLAE1) = I
+C                 LE NUMERO DE L'EF DANS NPEF
+                  NELAE1(NBLAE1) = NUELEM
+                  GOTO 50
+               ENDIF
+            ENDIF
+ 50      CONTINUE
+ 1000 CONTINUE
+      END

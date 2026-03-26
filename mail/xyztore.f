@@ -1,0 +1,39 @@
+      SUBROUTINE XYZTORE( R, S, XYZ )
+C+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+C BUT : A PARTIR DES PARAMETRES R,S CALCULER XYZ DU POINT SUR LE TORE
+C ----- ATTENTION des PARAMETRES SONT CACHES DANS LE COMMON /S09S01/!
+C
+C ENTREES:
+C --------
+C R,S : LES 2 COORDONNEES DU POINT DU RECTANGLE PLAN DES PARAMETRES DU TORE
+C       [RAGCTO * 2 PI] x [RAPCTO * 2 PI]
+C
+C SORTIES:
+C --------
+C XYZ    : LES 3 COORDONNEES DU POINT SUR LE TORE
+C+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+C AUTEUR : ALAIN PERRONNET LJLL UPMC & St PIERRE du PERRAY Novembre 2011
+C2345X7..............................................................012
+C ATTENTION: LE COMMON SUIVANT DOIT ETRE INITIALISE dans le SP toreti.f
+      DOUBLE PRECISION  DMATRI, DMATM1
+      COMMON /S09S01/   DMATRI(3,4), DMATM1(3,4), RAPCTO, RAGCTO
+      REAL              XYZ0(3), XYZ(3)
+      INTRINSIC         SIN, COS
+C
+C     LES ANGLES PARAMETRES DU TORE
+      ALFA = R / RAGCTO
+      BETA = S / RAPCTO
+C
+C     GRAND RAYON DU POINT
+      RAY  = RAGCTO + RAPCTO * COS( BETA )
+C
+C     XYZ DANS LE REPERE PROPRE DU TORE
+      XYZ0(1) = RAY * COS( ALFA )
+      XYZ0(2) = RAY * SIN( ALFA )
+      XYZ0(3) = RAPCTO * SIN( BETA )
+C
+C     XYZ DANS LE REPERE FINAL DU TORE
+      CALL ISOMVA( DMATRI, XYZ0, XYZ )
+C
+      RETURN
+      END

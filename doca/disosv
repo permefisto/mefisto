@@ -1,0 +1,14 @@
+INTERIOR POINTS may be given to adjust the length of 
+triangle edges around theses points as vertices.
+The WISHED LENGTH of triangles around the POINT is
+an upper BOUND.
+   
+Example:
+1;  {1 closed line}
+2;  {2 interior points}
+L1; {the name of the closed line}
+PTI1; PTI2; {the interior points}
+0.01; 0.5;  {the lengths around each interior points}
+
+The triangle edges from PT1 will have a length<0.01
+The triangle edges from PT2 will have a length<0.5

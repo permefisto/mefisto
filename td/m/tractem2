@@ -1,0 +1,5 @@
+variable TRACTEM2 'trace des TEMPERATURES 2d' entier
+ (  1 :  'ISOTHERMES'
+ ,  2 :  'ZONES COULEURS ISOTHERMES'
+ ,  7 :  'SURFACE(X,Y,TEMPERATURE(X,Y))'
+ ,  8 :  'ERREUR si TEMPERATURE_EXACTE()' ) ;

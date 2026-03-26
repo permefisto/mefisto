@@ -1,0 +1,4 @@
+variable TYP_SV 'Types of SV'   entier 
+ ( 3  : 'SURFACE'
+ , 4  : 'VOLUME'
+ , 5  : 'CLOSE the FILE' );

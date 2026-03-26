@@ -1,0 +1,85 @@
+{ ====================================================== }
+{ MEFISTO Version Octobre 1999     PROJET: chateau d'eau }
+{ Utilisateur: Perronnet Alain     Date:   14/10/99      }
+{ ====================================================== }
+1; CHATEAU; {NOM DE L'OBJET}
+
+2;{ ENTREE DONNEES PROBLEME ELASTICITE }
+
+ { SURFACE: TERRE }
+ 2;         { module YOUNG et coefficient POISSON }
+ 2;         { materiau axisymetrique homogene isotrope}
+ 20e6;      { YOUNG  module de YOUNG }
+ 0.2;       { POISON coefficient de POISSON }
+
+ 4;         { densite FORCES INTERNES }
+ 1;         { LTFORC le type des forces => constante }
+ 1;         { nombre des composantes de la force }
+ 2;         { numero de la composante Z }
+ -1800*9.81;{ POIDS PROPRE SELON -Z }
+ @;
+
+ { SURFACE: BETON }
+ 2;         { module YOUNG et coefficient POISSON }
+ 2;         { materiau axisymetrique homogene isotrope}
+ 33000e6;   { YOUNG  module de YOUNG }
+ 0.3;       { POISON coefficient de POISSON }
+
+ 4;         { densite FORCES INTERNES }
+ 1;         { LTFORC le type des forces => constante }
+ 1;         { nombre des composantes de la force }
+ 2;         { numero de la composante }
+ -2500*9.81;{ POIDS PROPRE SELON -Z }
+ @;
+
+ { LIGNE: D2E2 }
+
+DefVar nrd2e2,nzd2e2,lehaut;
+lehaut=lh4+lh5+lh6;
+nrd2e2=       lh6/sqrt((le1-ld1)**2+lh6**2);
+nzd2e2=-(le1-ld1)/sqrt((le1-ld1)**2+lh6**2);
+
+DefFonc forcehydro(t,r,z,w,ntyobj,nuobj,nocomp,xn,yn,zn);
+si nocomp=1
+alors
+  forcehydro= nrd2e2*1000*9.81*(lehaut-z);
+sinon
+  forcehydro= nzd2e2*1000*9.81*(lehaut-z);
+finsi;
+FinFonc;
+
+ 1;          { FORCE force imposee a la frontiere }
+-1;          { fonction }
+ 2;          { nombre des composantes de la force }
+ 1; 2;       { no des 2 composantes }
+ forcehydro; { le reservoir est suppose plein }
+@;
+
+ { LIGNE: D1D2 }
+ 1;          { FORCE force imposee a la frontiere }
+ 1;          { constante }
+ 1;          { nombre des composantes de la force }
+ 2;          { no composante en Z }
+ -1000*9.81*lh6; { force hydrostatique de l'eau }
+                 { le reservoir est suppose plein }
+ @;
+
+ { LIGNE: DEPLNUL }
+ 2;    { FIXATION valeur du deplacement impose }
+ 1;    { constante }
+ 2;    { nombre de composantes du deplacement fixe }
+ 1; 2; { no des 2 composantes }
+ 0; 0; { FIXATION Deplacement nul }
+ @;
+@;
+
+{ Pour localiser l'affichage du deplacement et des contraintes }
+DefFonc REGION(t,r,z,w);
+   REGION = r>la1-0.2 et r<lr+0.2 et z<-lh3+0.2 et z>-lh2-lh3-0.2;
+FinFonc;
+
+3;  { ELASTICITE STATIONNAIRE }
+ 1; { Coefficients INDEPENDANTS des DEPLACEMENTS }
+ 1; { ELASTICITE SEULE }
+ 1; { CHOLESKY avec stockage PROFIL }
+FERMER;

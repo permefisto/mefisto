@@ -1,0 +1,15 @@
+deftms ~>>>ARETEFR 'Chaining of edges of the boundary faces'
+variable muet DATE 'date of creation of the TMS'   reel2  ;
+variable muet NUTD 'number of the descriptor array TD' entier ; 
+variable MOARFR 'number of integers for each edge'  entier ;
+variable MXARFR 'max number of boundary edges' entier ;
+variable NBARFR 'number of edges on the boundary' entier;
+variable L1ARFR 'number into LAREFR of the first edge' entier;
+variable NBTSAF 'total number of vertices of the edges or 0' entier ;
+tableau  LAREFR(1..MOARFR,1..MXARFR) 
+        'number of the 2 vertices, next edge' entier ;  
+tableau  COSTAF(1..NBTSAF) 'x y z of vertices of the edges' xyz ;
+fintms ;
+            
+
+For memory : NBTSAF=0 means NO array COSTAF

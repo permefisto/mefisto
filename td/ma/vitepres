@@ -1,0 +1,14 @@
+variable VITEPRES 'FLUID DRAWINGS on VELOCITY PRESSURE' entier
+ ( 1 : 'The PRESSURE drawings'
+,  2 : 'The VELOCITY is drawn with ARROWS'
+,  3 : 'One VELOCITY COMPONENT X Y Z or the VELOCITY MAGNITUDE'
+,  5 : 'COMPUTE and DRAW the RUN of PARTICLES in the FLUID'
+,  9 : 'The STREAM FUNCTION (in 2D only)'
+, 10 : 'The VORTICITY=Rotational Velocity (in 3D only)'
+, 12 : 'The INTEGRAL of PRESSURE on the OBJECT SURFACES'
+, 13 : 'The VELOCITY NORMAL FLUX on 3D-SURFACES'
+, 90 : 'The PRINTING VELOCITY PRESSURE ERRORS at Nodes'
+, 91 : 'The |VELOCITY| ERRORS if Velocity_Exact(t,x,y,z,nc)'
+, 92 : 'The PRESSURE ERRORS if Pressure_Exact(t,x,y,z)'
+, 93 : '|VELOCITY|Mean |VELOCITY|Max PRESSUREMax-Min=f(Time)'
+, 94 : 'The NORMS ||VELOCITY||L2 and ||PRESSURE||L2=f(Time)' ) ;

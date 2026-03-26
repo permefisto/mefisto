@@ -1,0 +1,76 @@
+{ ==================================================================== }
+{ Logiciel MEFISTO     : Version Decembre 1999                         }
+{ Nom de l'Utilisateur : perronne                                      }
+{ Nom du Projet        : demo                                          }
+{ Date                 : 3/06/00                                       }
+{ Heure                : 12h 18m 22s                                   }
+{ ==================================================================== }
+1; CARDAN; { NOM de l'OBJET a TRAITER }
+ 
+2;{ ENTREE DES DONNEES DU PROBLEME D ELASTICITE }
+
+ { VOLUME: CARDAN STRUCTURAL STEEL ASTM-A36 its ELASTICITY CHARACTERISTICS }
+   1;      { DENSITE DE MASSE }
+   1;      { CONSTANTE }
+   7800;   { DMASSE  DENSITE DE MASSE  }
+
+   2;      { MODULE DE YOUNG ET COEFFICIENT DE POISSON }
+   1;      { MATERIAU 3D HOMOGENE ISOTROPE }
+  200E9;   { Pascal ou 200 GigaPascal (1GPa=1E9 N/m2) son MODULE de YOUNG}
+           { Les CONTRAINTES ne doivent pas dépasser sa 
+             LIMITE de RESISTANCE ELASTIQUE Re mesuree avec les 
+ critere Tresca-Guest sT = max( |s1-s2|, |s2-s3|, |s3-s1|) <Re
+ critere von Mises    sV = sqrt((s1-s2)**2+(s1-s2)**2+(s1-s2)**2)/sqrt(2) <Re
+             ici Re=250*(1E6 N/m2, MPa)  (au dela il y a PLASTICITE) et
+  Fe=400*(1E6 N/m2 or MPa) est son ULTIME RESISTANCE 
+     a la TRACTION ou FORCE ou il casse 
+  YOUNG = (ForceMax/AireSection)/(Elongation/Longueur) pour eprouvette en traction }
+   0.25;   { COEFFICIENT DE POISSON }
+
+   3;      { DILATATION & TEMPERATURE REFERENCE }
+   1;      { DILATATION & TEMPERATURE REFERENCE CONSTANTES }
+   12E-6;  { DILATA COEFFICIENT DILATATION THERMIQUE }
+   20;     { TEMPIN TEMPERATURE DE REFERENCE }
+ @;
+
+ { SURFACE: CYL4 }
+   1;    { FORCE IMPOSEE A LA FRONTIERE }
+   1;    { CONSTANTE }
+   1;    { NOMBRE DE COMPOSANTES DE FORCES A DEFINIR }
+   1;    { NUMERO DE LA COMPOSANTE }
+   1.0E8;{ VALEUR DE LA FORCE }
+ @;
+
+ { SURFACE: CYL4_SYM }
+   1;    { FORCE IMPOSEE A LA FRONTIERE }
+   1;    { CONSTANTE }
+   1;    { NOMBRE DE COMPOSANTES DE FORCES A DEFINIR }
+   1;    { NUMERO DE LA COMPOSANTE }
+   -1.0E8; { VALEUR DE LA FORCE }
+ @;
+
+ { SURFACE: BASE }
+   2;      { FIXATION VALEUR DES DEPLACEMENTS IMPOSES }
+   1;      { CONSTANTE }
+   3;      { NOMBRE DE COMPOSANTES DU DEPLACEMENT FIXE}
+   1; 2; 3;{ NUMERO DES 3 COMPOSANTES }
+   0; 0; 0;{ VALEUR DES FIXATIONS }
+ @;
+
+@;
+
+3;  { RESOUDRE PB ELASTICITE STATIONNAIRE }
+  1;{ COEFFICIENTS INDEPENDANTS DES DEPLACEMENTS PB LINEAIRE}
+  1;{ PAS DE THERMO ELASTICITE}
+  2;{ GRADIENT CONJUGUE PRECONDITIONNE }
+  1;{ NIVEAU DU PRECONDITIONNEMENT DU GRADIENT CONJUGUE }
+@;
+QUITTER;
+
+3;  { RESOUDRE PB ELASTICITE STATIONNAIRE }
+  1;{ COEFFICIENTS INDEPENDANTS DES DEPLACEMENTS PB LINEAIRE}
+  2;{ THERMO ELASTICITE}
+  2;{ GRADIENT CONJUGUE PRECONDITIONNE }
+  1;{ NIVEAU DU PRECONDITIONNEMENT DU GRADIENT CONJUGUE }
+@;
+FERMER;

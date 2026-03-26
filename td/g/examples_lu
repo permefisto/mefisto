@@ -1,0 +1,329 @@
+SOME EXEMPLES OF THE LU (Language for the User) USING :
+=======================================================
+(low or up case letters are not significant)
+
+ 3 ; 7e5 ;  -(3+4)/7;   { 3 arithmetical expressions }
+
+defvar Pi; Pi=atan(1)*4; {the Pi constant }
+
+defvar R,circumference;
+R=1e3 ; circumference= 2 * pi * R ; 
+                                      
+deffunc g( no , x );
+if no=1 then g=no ;
+        else g=x ;
+endif; 
+endfunc; 
+g(1,2);
+g(2,3);
+
+deffunc k(n);        { one bad example with goto! }
+deflab lab1,lab2;
+goto lab2;
+lab1: k=n*n;
+return;
+lab2: goto lab1;
+endfunc;   
+
+deffunc f(n);        { Example of for }
+   defvar i; 
+   f=1;
+   for i=1 to n ;
+      f=f*i;
+   endfor;
+endfunc;
+f(5); 
+
+deffunc fa(n);       { Example of while }
+   defvar i;
+   fa=1; i=0; 
+   while i<n ;
+      i=i+1 ;
+      fa=fa*i ;
+   endwhile;
+endfunc; 
+fa(5);  
+
+deffunc fac(n);       { Example of repeat ... until }
+   defvar i;
+   fac=1; 
+   i=0;
+   repeat
+      i=i+1; 
+      fac=fac*i;
+   until i=n;
+endfunc;
+fac(5); 
+
+deffunc puiss2( n );     { Example to display values }
+defvar i;
+for i=1 to n;
+   display 2**i;
+endfor;
+endfunc;
+puiss2(16); 
+   
+deffunc h(n); h=n+n; endfunc; h(5);
+{ a function may be call an other function }      
+deffunc k(n); k=h(h(n)) ; endfunc; k(5);
+
+deffunc maxi(x,y,z);       { Function max with 3 parameters }
+maxi=max(x,max(y,z));
+endfunc;
+
+deffunc maxim(x,y,z,t,u);  { Function max with 5 parameters }
+maxim=maxi(x,y,maxi(z,t,u));
+endfunc;
+maxim(1,2,3,4,5);
+
+deffunc maximum(x,y,z,t,u,v); { Variante with 6 parameters }
+maximum=max(maxi(x,y,maxi(z,t,u)),v);
+display maximum;
+endfunc;
+maximum(1,2,3,6,5,4); 
+
+display ~>ligne>axe>xyzsommet(nbsom);
+
+DefVar varut; varut=12;
+display ~>surface>s>xyzsommet(xyzsom(varut)(3))
+
+{End of examples of language LU using }
+
+
+SPECIAL FUNCTIONS USED BY MEFISTO
+=================================
+(low or up-case letters are not significant)
+The name of the function is significant
+The name of every parameter is not significant but its number
+in the list is significant.
+These parameters can be used or not, but have to be present
+in the definition of the function.
+All these parameters will be initialized during the call of the function.
+
+
+DefFunc TAILLE_IDEALE( x, y, z );  or equivalently
+DefFunc EDGE_LENGTH( x, y, z );
+EDGE_LENGTH = the wished length of edges around the point (x,y,z) of
+Finite Elements during the construction of meshes for particular options
+as automatic triangulations or tetrahedrizations.
+Valuable during the execution of MAILLER
+
+
+DefFunc REGION( time, x, y, z );
+REGION=1 if you want the values of the solution is displayed
+for these values of time and the point (x,y,z)
+REGION=0 the solution is not displayed
+
+The solution may be the temperature (THERMICER),
+the displacement, the stress (ELASTICER).
+
+
+For THERMICER -----------------------------------------------------
+
+DefFunc CONDUCTIVITY( TIME, X, Y, Z, NO_TYPE_SVO, NO_SVO, TEMPER ); 
+CONDUCTIVITY = The ISOTROPIC HEAT CONDUCTIVITY at time ant point X,Y,Z, 
+for the SURFACE if 2d OBJECT => NO_TYPE_SVO=3,
+or VOLUME if 3d OBJECT => NO_TYPE_SVO=4,
+or OBJECT => NO_TYPE_SVO=5,
+of type number NO_TYPE_SVO (3:SURFACE, 4:VOLUME, 5:OBJECT)
+the lexicon number NO_SVO
+for a temperature TEMPER
+ 
+EXAMPLE:
+deffunc conductivity( t, x, y, z, no_type_objet, material, temper ) ;
+if   material=nuobjt( 'volume' , 'steel' )
+then conductivity= 20;
+else if   material=nuobjt( 'volume' , 'copper' )
+     then conductivity=52;
+     else conductivity=0 ;
+     endif;  
+endif;
+endfunc; 
+
+Remark:
+- If the material is ANISOTROPIC, the values of the symmetric tensor
+of conductivity must be given. A 8-th parameter appears in 
+DefFunc CONDUCTIVITY( TIME, X, Y, Z, NO_TYPE_SVO, NO_SVO, TEMPER, nuc );
+where nuc is the number of the tensor coefficient to initialize.
+
+- The LU function nuobjt( p1, p2 ) gives the
+number of the PLSVO of type p1 with the name p2.
+
+
+DefFunc SOURCE( T, X, Y, Z, NO_TYPE_OBJET, NO_OBJET, TEMPER );
+SOURCE = HEAT SOURCE at time and point X,Y,Z
+at time T, at point X,Y,Z, 
+for the PLSVO of type number NO_TYPE_OBJECT
+(1:POINT, 2:LINE, 3:SURFACE, 4:VOLUME, 5:OBJECT )
+the lexicon number NO_OBJECT
+for a temperature TEMPER, known or unknown (not linear case)
+ 
+EXAMPLE:
+deffunc source( t, x, y, z, no_type_objet, material, temper );
+if  material=nuobjt( 'ligne' , 'neumann' )
+then 
+  source=1e3; 
+else
+  if  material=nuobjt( 'ligne' , 'fourier' )
+  then 
+    source=20;
+  else
+    source=0
+  endif;   
+endif;
+endfunc; 
+
+
+DefFunc HTCOEFFICIENT( T, X, Y, Z, NO_TYPE_OBJET, NO_OBJET, TEMPER  ) ;
+HTCOEFFICIENT = the HEAT TRANSFER COEFFICIENT
+on a part of the object boundary (Fourier-Robin boundary condition)
+at time T, at point X,Y,Z, 
+for the PLS of type number NO_TYPE_OBJECT
+(1:POINT, 2:LINE, 3:SURFACE )
+the lexicon number NO_OBJECT
+for a temperature TEMPER, known or unknown (not linear case)
+
+EXAMPLE:
+deffunc HTCoef( t, x, y, z, no_type_objet, material, temper ) ;
+if   material=nuobjt( 'surface' , 'air' )
+then HTCoef= 750;
+else if   material=nuobjt( 'surface' , 'water' )
+     then HTCoef=900;
+     else HTCoef=0 ;
+     endif;  
+endif;
+endfunc; 
+
+
+
+DEfFunc FIXTEMPERATURE( T, X, Y, Z, NO_TYPE_OBJECT, NO_OBJECT, TEMPER );
+FIXTEMPERATURE = Value of the imposed temperature (Dirichlet condition)
+at time TEMPS, at point X,Y,Z, 
+for the PLSVO of type number NO_TYPE_OBJECT
+(1:POINT, 2:LINE, 3:SURFACE, 4:VOLUME, 5:OBJECT )
+the lexicon number NO_OBJECT
+for a temperature TEMPER, known or unknown
+
+EXAMPLE:
+deffunc TEMPERATURE( t, x, y, z, no_type_objet, materiau, temper );
+if   materiau=nuobjt( 'surface' , 'dirichlet0' )
+then TEMPERATURE=0; 
+else
+  if   materiau=nuobjt( 'surface' , 'contact100' )
+  then TEMPERATURE= 100;
+  endif;   
+endif;
+endfunc; 
+
+
+DefFunc TEMPERATURE_EXACTE(t,x,y,z); or equivalently
+DefFunc EXACT_TEMPERATURE(t,x,y,z);
+
+TEMPERATURE_EXACTE = Value of the temperature, supposed known,
+at time t, at point x,y,z.
+This function permits to display the exact solution, the computed solution,
+the error at nodes, ... from a known solution described by an arithmetical
+expression.
+This function is useful to appreciate the accuracy of the method to find
+this solution.
+
+
+For THERMICER, you can see the other functions described in files $MEFISTO/doc/nf*
+
+nfcapa  nfcoan  nfcoet  nfcond  nfdcon  nfdila  nfdmas
+nfecha nffixa nfsour  nftem0 nftemi
+
+
+For ELASTICER -----------------------------------------------------
+See in $MEFISTO/doc/ the files:
+nfcoin nfcont nfdep0 nfdila nfdmas nffixa nfforc nfpois nftemi
+nfvit0 nfyoun
+
+As a first example, the following text is in $MEFISTO/doc/nfyoun
+
+The order of 6 parameters of the USER's function YOUNG MODULUS
+at time TIME, at point X,Y,Z, 
+for the PLSVO of type number NO_TYPE_OBJECT
+(1:POINT, 2:LINE, 3:SURFACE, 4:VOLUME, 5:OBJECT )
+the lexicon number NO_OBJECT
+must be
+
+YOUNG( TIME, X, Y, Z, NO_TYPE_OBJECT, NO_OBJECT ) 
+
+and be programmed with respect to LU grammar
+(cf documentation and examples of the debut menu)
+
+All these parameters will be initialized during its call.
+These parameters can be used or not, but have to be present
+in the definition of the YOUNG MODULUS
+ 
+EXAMPLE:
+deffunc Young( t, x, y, z, no_type_objet, material ) ;
+if   material=nuobjt( 'volume' , 'steel' )
+then Young= 1e11;
+else if   material=nuobjt( 'volume' , 'copper' )
+     then Young=5e10;
+     else Young=0 ;
+     endif;  
+endif;
+endfunc; 
+
+Remark: the LU function nuobjt( p1, p2 ) gives the
+number of the PLSVO of type p1 with the name p2.
+
+As a second example, the following text is in $MEFISTO/doc/nfforce
+The order of 10 parameters of the USER's function FORCE
+(INTERIOR in the material, (pesantor,hydro static pressure,...)
+ or EXTERIOR on the boundary)
+at time TEMPS, at point X,Y,Z, 
+for the PLSVO of type number NO_TYPE_OBJECT
+(1:POINT, 2:LINE, 3:SURFACE, 4:VOLUME, 5:OBJECT )
+the lexicon number NO_OBJECT
+the number NO_COMP of the FORCE
+the 3 components XN,YN,ZN of the BOUNDARY NORMAL VECTOR of NORM=1
+to facilitate the user input of normal forces on 3D surface or 
+2D line boundaries, directed to the exterior,
+must be
+
+FORCE( TEMPS, X,Y,Z, NO_TYPE_OBJET, NO_OBJET, NO_COMP, XN,YN,ZN ) 
+
+and be programmed with respect to LU grammar
+(cf documentation and examples of the debut menu)
+
+All these parameters will be initialized during its call.
+These parameters can be used or not, but have to be present
+in the definition of the FORCES.
+
+ATTENTION: The NORMAL VECTOR is ONLY DEFINED
+for the SURFACES of a 3D OBJECT, or the LINES of a 2D OBJECT.
+In any other case, POINTS in 2D or 3D, LINES of a 3D OBJECT,
+SURFACES of a 2D OBJECT, LINES of an 3D OBJECT, the SURFACES
+of a 2D-OBJECT, VOLUMES of a 3D OBJECT, the 3 components
+XN, YN, ZN will be initialized to ZERO.
+ 
+EXAMPLE: 
+deffunc force( t, x,y,z, no_type_objet, material, no_comp, xn,yn,zn );
+if  material=nuobjt( 'volume' , 'steel' )
+then 
+  if no_comp=1
+  then  force=1e6; 
+  else  force=5e4; 
+  endif ;
+else
+  if  material=nuobjt( 'volume' , 'copper' )
+  then 
+    if no_comp=1
+    then force= 2e3 ;
+    else force=-1e4 ;
+    endif;  
+  endif;   
+endif;
+endfunc;
+
+Remark: the LU function nuobjt( p1, p2 ) gives the
+number of the PLSVO of type p1 with the name p2.
+
+
+For FLUIDER -----------------------------------------------------
+See in $MEFISTO/doc/ the files:
+nfdmas nfvif0 nfvifl nfvisc nfvit0

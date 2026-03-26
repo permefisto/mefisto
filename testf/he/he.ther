@@ -1,0 +1,50 @@
+{ ==================================================================== }
+{ Logiciel MEFISTO     : Version Aout 2006                             }
+{ Nom de l'Utilisateur : Alain Perronnet  Texas A & M University       }
+{ Nom du Projet        : he   Atome d'HELIUM  en 6D                    }
+{                        Ze=2 protons en (0,0,0, 0,0,0)  et            }
+{                        1 electron en (x,y,z) & 1 electron en (u,v,w) }
+{ Date                 : 19/9/2006 et 13/11/2006                       }
+{ ==================================================================== }
+{ ATTENTION: La condition aux limites sur le Bord du 6-cubes est fixee }
+{ ********** en DUR IMPLICITEMENT dans $MEFISTO/ther/thdlfx.f          }
+{ Condition IMPLICITE de NEUMANN   HOMOGENE  => ligne 68 a DECOMMENTER }
+{           => Ctes sont solutions!...      <=> PB NON INVERSIBLE      }
+{ Condition IMPLICITE de DIRICHLET HOMOGENE  => ligne 68 avec CCC      }
+{ ==================================================================== }
+DefVar Ze; Ze=2;
+
+
+2; { ENTREE des DONNEES du PROBLEME }
+
+ { VOLUME: helium }
+ 1;   { Rot Densite de MASSE }
+ 1;   { Masse constante }
+ 1;   { DMASSE 'Densite de MASSE' reel ; }
+
+ 2;   { [A] Tenseur CONDUCTIVITE THERMIQUE }
+ 1;   { Materiau 6D homogene isotrope }
+ 0.5; { CONDUC 'Conductivite du materiau' reel ; }
+
+ 6;   { CT Coefficient devant TEMPERATURE }
+ -1;  { fonction Coefficient de la Temperature }
+
+ deffonc Coulomb(temps, x,y,z, u,v,w, no_type_objet, materiau, temper);
+   defvar de1pxyz, de2puvw, de12;
+   de1pxyz=sqrt(x*x+y*y+z*z);
+   de2puvw=sqrt(u*u+v*v+w*w);
+   de12=sqrt((x-u)**2+(y-v)**2+(z-w)**2);
+   Coulomb= 1/de12 - Ze/de1pxyz - Ze/de2puvw;
+ finfonc;
+
+ Coulomb; { DANS LE LEXIQUE ~>FONCTION }
+@;
+@;
+
+6;      { CALCUL des VALEURS VECTEURS PROPRES }
+   1;   { SOUS ESPACES }
+ -3.0;  { BORNE INFERIEURE des VALEURS PROPRES a CALCULER? }
+ -1.0;  { BORNE SUPERIEURE des VALEURS PROPRES a CALCULER? }
+@;
+
+fermer;

@@ -1,0 +1,33 @@
+      SUBROUTINE TNMCDS( KTYPE , NBVARI , MNTABL )
+C+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+C BUT : DETRUIRE UN TABLEAU MC DE NBVARI VARIABLES DE NUMERO DE TYPE
+C ----- KTYPE
+C
+C ENTREES :
+C ---------
+C KTYPE  : NOM DU TYPE DES VARIABLES DU TABLEAU
+C          LOGIQUE  ENTIER/2  ENTIER  REEL REEL2 REEL4
+C          COMPLEXE  COMPLEXE2
+C NBVARI : NOMBRE DE VARIABLES DU TABLEAU MC A DETRUIRE
+C
+C ENTREE ET SORTIE  :
+C -------------------
+C MNTABL : EN ENTREE ADRESSE MC DU 1-ER MOT DU TABLEAU MC
+C                    VALEUR RETOURNEE PAR LE SP TNMCDC
+C          EN SORTIE =0
+C+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+C PROGRAMMEUR : PERRONNET ALAIN ANALYSE NUMERIQUE PARIS  DECEMBRE 1983
+C.......................................................................
+      include"./incl/motmcg.inc"
+      CHARACTER*(*)     KTYPE
+      COMMON / MSSFTA / NOFISF,NBPASF,MOPASF,MGBUSF,NSFLIB,
+     %                  M1FIMS,M2FIMS,MGFIMS,NSFIMS,LPFIMS,
+     %                  M1TAMS,M2TAMS,MGBUTA,NBBUTA,NPTAMS,NATAMS,
+     %                  NBCTMS,LLTAMS,LFTAMS,MGNPSF,NSFNPS,NPSNPS,
+     %                  MGZLMG,MGZLMK,MGZLMN,MOTSMG,MOTSMK,MOTSMN,NTADAM
+C
+C     LA DECLARATION PROPREMENT DITE DU TABLEAU
+      CALL TAMCDS( KTYPE , NBVARI , MCG(MGZLMN) , MNTABL )
+C
+      RETURN
+      END

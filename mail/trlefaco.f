@@ -1,0 +1,203 @@
+      SUBROUTINE TRLEFACO( KNMVOL, MXFACO, LEFACO, PTXYZD )
+C+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+C BUT :   TRACE BLEU  DES FACES TRIANGULAIRES         DU TABLEAU LEFACO
+C -----   TRACE ROUGE DES FACES TRIANGULAIRES PERDUES DU TABLEAU LEFACO
+
+C ENTREES:
+C --------
+C KNMVOL : NOM DU VOLUME A TETRAEDRISER
+C MXFACO : NOMBRE MAXIMAL DECLARABLE DE FACES DU CONTOUR
+C LEFACO : FACE DU CONTOUR OU INTERFACES ENTRE VOLUMES
+C          IL CONTIENT DANS CET ORDRE
+C          1:   =0 POUR UNE FACE VIDE
+C          123: NO (DANS PTXYZD) DU SOMMET 1, SOMMET 2, SOMMET 3
+C          45:  NO (DANS NUVOPA 0 SINON) DU VOLUME1 , VOLUME2 DE LA FACE
+C          678: NO (DANS LEFACO) DE LA FACE ADJACENTE PAR L'ARETE 1 2 3
+
+C          9: ATTENTION: UNE ARETE PEUT APPARTENIR A PLUS DE 2 FACES
+C             => CHAINAGE CIRCULAIRE DE CES FACES DANS LEFACO
+C             LEFACO(9,*) -> FACE SUIVANTE (*=0:VIDE, *<>0:NON VIDE)
+
+C          10: HACHAGE AVEC LA SOMME DES 3 SOMMETS MODULO MXFACO
+C              LF = MOD( NOSOFA(1)+NOSOFA(2)+NOSOFA(3) , MXFACO ) + 1
+C              NF = LEFACO( 10, LF ) LE NUMERO DE LA 1-ERE FACE DANS LEFACO
+C              SI LA FACE NE CONVIENT PAS. PASSAGE A LA SUIVANTE
+C              NF = LEFACO( 9, NF )  ...
+
+C          11: >0  NO NOTETR D'UN TETRAEDRE AYANT CETTE FACE,
+C              =0  SINON
+C PTXYZD : PAR POINT : X  Y  Z  DISTANCE_SOUHAITEE
+C+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+C AUTEUR : ALAIN PERRONNET LJLL UPMC ET ST PIERRE DU PERRAY    Mars 2016
+C2345X7..............................................................012
+      PARAMETER         (MXITEM=64000)
+      include"./incl/trvari.inc"
+      include"./incl/mecoit.inc"
+      include"./incl/xyzext.inc"
+
+      COMMON / TRTETR / STOPTE, TRACTE
+      LOGICAL           STOPTE, TRACTE
+C     STOPTE = FAUX ==> PAS D'ARRET APRES LE TRACE DE CHAQUE TETRAEDRE
+C              VRAI ==> DEMANDE D'UN CARACTERE POUR REDEMARRER
+C     TRACTE = FAUX ==> PAS DE TRACE DES TETRAEDRES
+C              VRAI ==> TRACE DES TETRAEDRES DE L'ETOILE
+
+      DOUBLE PRECISION  PTXYZD(4,*)
+      INTEGER           LEFACO(1:11,0:MXFACO)
+      CHARACTER*132     KTITRE
+      CHARACTER*24      KNMVOL
+      REAL              R, XYZ(3),
+     %                  XYZBAR(3,MXITEM), DISTOE(MXITEM)
+      INTEGER           NOSTTR(MXITEM),   ITEMTR(MXITEM)
+
+      IF( .NOT. TRACTE ) RETURN
+
+C     CADRE COOEXT RESTREINT AUX FACES A TRACER
+      DO L=1,3
+C        LE MINIMUM
+         COOEXT(L,1) =  1E25
+C        LE MAXIMUM
+         COOEXT(L,2) = -1E25
+      ENDDO
+
+      NBITEM   = 0
+      NBFACOTE = 0
+
+      DO NF=1,MXFACO
+
+         IF( LEFACO(1,NF) .GT. 0 ) THEN
+
+C           UNE FACE OCCUPEE DE LEFACO
+            NBITEM = NBITEM + 1
+            IF( NBITEM .GT. MXITEM ) THEN
+               PRINT *,'trlefaco: MXITEM=',MXITEM,' INSUFFISANT. A AUGME
+     %NTER'
+               GOTO 5
+            ENDIF
+
+            IF( LEFACO(11,NF) .GT. 0 ) THEN
+C              FACE LEFACO APPARTENANT A AU MOINS UN TETRAEDRE
+               NBFACOTE = NBFACOTE + 1
+            ENDIF
+
+C           NUMERO LEFACO DE LA FACE
+            NOSTTR(NBITEM) = NF
+
+C           CALCUL DU BARYCENTRE DE LA FACE NF
+            DO L=1,3
+               XYZBAR(L,NBITEM) = 0
+            ENDDO
+
+            DO K=1,3
+C              NUMERO DU SOMMET K DE LA FACE NF DE LEFACO
+               NS = LEFACO(K,NF)
+               DO L=1,3
+                  R = REAL( PTXYZD(L,NS) )
+C                 LE MINIMUM
+                  COOEXT(L,1) = MIN( COOEXT(L,1), R )
+C                 LE MAXIMUM
+                  COOEXT(L,2) = MAX( COOEXT(L,2), R )
+C                 LE BARYCENTRE DE LA FACE
+                  XYZBAR(L,NBITEM) = XYZBAR(L,NBITEM) + R
+               ENDDO
+            ENDDO
+            DO L=1,3
+               XYZBAR(L,NBITEM) = XYZBAR(L,NBITEM) / 3
+            ENDDO
+
+         ENDIF
+
+      ENDDO
+
+ 5    PRINT *,'trlefaco:',NBITEM,  ' FACES OCCUPEES DANS LEFACO'
+      PRINT *,'trlefaco:',NBFACOTE,' FACES AVEC TETRAEDRES'
+      PRINT *,'trlefaco:',NBITEM-NBFACOTE,' FACES PERDUES'
+
+C     PARAMETRES DE VISEE
+      AXOLAR = 0
+      DO L=1,3
+         AXOPTV(L) = ( COOEXT(L,1) + COOEXT(L,2) ) * 0.5
+         AXOEIL(L) = COOEXT(L,2)
+         AXOLAR = MAX( AXOLAR, COOEXT(L,2) - COOEXT(L,1) )
+      ENDDO
+      AXOLAR = AXOLAR * 0.5
+      AXOHAU = AXOLAR * 0.75
+C     PAS DE PLAN ARRIERE ET AVANT
+      AXOARR = 0
+      AXOAVA = 0
+      CALL AXONOMETRIE( AXOPTV, AXOEIL, AXOLAR, AXOHAU, AXOARR, AXOAVA )
+
+C     TRACE EN MODE 3 BOUTONS POUR DEPLACEMENT ROTATIONS ZOOM
+      PREDU0  = PREDUF
+      PREDUF  = 0
+      LORBITE = 1
+
+      IF( LORBITE .EQ. 0 ) GOTO 20
+
+C     INITIALISATION DE L'ORBITE
+C     ==========================
+      CALL ORBITE0( NOTYEV )
+      GOTO 20
+
+C     TRACE SELON L'ORBITE OU ZOOM OU TRANSLATION ACTIFS
+C     ==================================================
+ 10   CALL ORBITE1( NOTYEV )
+      IF( NOTYEV .EQ. 0 ) GOTO 9000
+
+C     TRACE DES AXES 3D
+ 20   CALL TRAXE3
+
+C     CALCUL DE LA DISTANCE A L'OEIL DU BARYCENTRE DES NBITEM FACES
+      DO K = 1, NBITEM
+C        AXONOMETRIE DU BARYCENTRE
+         CALL XYZAXO( XYZBAR(1,K), XYZ )
+C        DISTANCE A L'OEIL
+         DISTOE( K ) = -XYZ(3)
+C        IDENTITE INITIALE POUR LE NUMERO DE FACE DANS NOSTTR
+         ITEMTR( K ) = K
+      ENDDO
+
+C     LE TRI CROISSANT SELON LA DISTANCE (COTE Z ) A L'OEIL
+      CALL TRITRP( NBITEM, DISTOE, ITEMTR )
+
+C     REDUCTION % DE TRACE DES FACES
+      PREDUF = 10.
+
+C     LE TRACE DES FACES OCCUPEES DE LEFACO
+      DO K = NBITEM, 1, -1
+
+C        NUMERO DE L'ITEM LE PLUS ELOIGNE NON TRACE
+         N  = ITEMTR( K )
+         NF = NOSTTR( N )
+
+         IF( LEFACO(1,NF) .GT. 0 ) THEN
+
+            IF( LEFACO(11,NF) .LE. 0 ) THEN
+C              FACE PERDUE
+               CALL TRFATR( NCROUG, NCORAN, LEFACO(1,NF), PTXYZD )
+            ELSE
+C              FACE LEFACO APPARTENANT A AU MOINS UN TETRAEDRE
+               CALL TRFATR( NCBLEU, NCCYAN, LEFACO(1,NF), PTXYZD )
+            ENDIF
+
+         ENDIF
+
+      ENDDO
+
+C     TITRE ET TRACE EFFECTIF
+      KTITRE=KNMVOL //   '           FACES du TABLEAU LEFACO:           
+     % FACES BLEUES AVEC TETRAEDRE,            FACES ROUGES PERDUES'
+      WRITE(KTITRE(26:34),'(I9)') NBITEM
+      WRITE(KTITRE(62:70),'(I9)') NBFACOTE
+      WRITE(KTITRE(102:110),'(I9)') NBITEM-NBFACOTE
+      CALL SANSDBL( KTITRE, NF )
+      CALL TRFINS( KTITRE(1:NF) )
+
+
+C     REPRISE DE L'ORBITE
+C     ===================
+      IF( LORBITE .NE. 0 ) GOTO 10
+C
+ 9000 PREDUF = PREDU0
+      RETURN
+      END

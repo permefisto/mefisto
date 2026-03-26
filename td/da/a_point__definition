@@ -1,0 +1,31 @@
+deftms ~>POINT>>DEFINITION  'Definition of a POINT' 
+variable muet DATE 'date of creation of the TMS'    reel2  ;
+variable muet NUTD 'number of the descriptor array' entier ; 
+variable NTYTRP 'transformation (I for IDENTITY)' ^~>TRANSFO ;
+variable NUTYPO 'point type number' entier 
+ ( 1  : 'X Y Z COORDINATES'
+ , 2  : 'RADIUS THETA COTE' 
+ , 3  : 'RADIUS LONGITUDE LATITUDE' 
+ , 35 : 'EXTRACTION OF VERTICES OF A LINE' 
+ , 36 : 'EXTRACTION OF VERTICES OF A PLSV'
+ , 50 : 'TRANSFORMATION OF A POINT'
+ , 81 : 'RENAME A POINT'
+ , 82 : 'DELETE THIS POINT' ) ;
+cas NUTYPO
+  1 : variable COORPO 'X Y Z of a point' xyz ; 
+  2 : variable RAYOCY 'radius of cylindrical coordinates' reel ;
+      variable TETAC  'longitude in degrees' reel ;
+      variable COTEC  'cote of cylindrical coordinates' reel ;
+  3 : variable RAYONS 'radius of spherical coordinates'   reel ;
+      variable TETAS  'longitude in degrees' reel ;
+      variable PHIS   'latitude  in degrees' reel ;  
+ 35 : variable NULGSX 'name of the line for extraction' ^~>LIGNE ; 
+      variable NU1STX 'number of the first vertex to be extracted' entier;
+      variable NUDSTX 'number of the  last vertex to be extracted' entier;
+ 36 : variable NUPLSV 'PLSV''s type & name to extract vertices' typeobjet ;
+      variable NUFOCP 'name of the criterion function' ^~>FONCTION ; 
+ 50 : variable NUPOIN 'point''s name to be transformed' ^~>POINT ; 
+ 81 : variable NPAVAN 'old name of the point to be renamed' ^~>POINT ;
+fincas ;
+fintms ;
+

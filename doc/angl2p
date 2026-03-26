@@ -1,0 +1,10 @@
+For the swapping of diagonals of 2 triangles with
+a common edge to increase the quality, it is necessary
+that the triangles are in a same plane, or in planes
+with normal vectors with a small angle.
+
+ANGL2P is this angle, in degrees, under of it the 2
+triangles are supposed co-planar.
+
+A reasonabily value is under 10 degrees.
+If more, the geometry can be strongly modified!

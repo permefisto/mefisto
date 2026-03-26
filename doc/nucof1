@@ -1,0 +1,3 @@
+NUCOF1 is the array of each number of the NBCOF1
+force components to be valued.
+The values are chosen among 1 2 in 2D or 1 2 3 in 3d.

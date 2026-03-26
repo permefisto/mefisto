@@ -1,0 +1,62 @@
+--------------------------------------------------------------
+NEWS of MEFISTO software     English Version      October 2013
+--------------------------------------------------------------
+BATCH + OpenMP
+Mefisto may be executed by BATCH, without visualization.
+For example, to mesh, type the command
+echo ProjectName; MESHER MeshDataFileName  >ListingOrNot
+ou
+cd ProjectName | $MEFISTO/pp/ppmail MeshDataFileName
+Attention: 99; {Save and Exit}
+must be the last option in the file MeshDataFileName
+because it is not possible to come back in interative mode.
+
+FLUIDER:
+- Solution of the steady or unsteady STOKES problem,
+  unsteady NAVIER-STOKES problem for an incompressible
+  2D or 3D fluid by Taylor-Hood or Brezzi-Fortin finite
+  elements with a skyline storage and CROUT factorization.
+- Solution using OpenMP  (execution with threads
+  Cf the demand of OMP_NUMBER_THREADS=? of the command
+  $MEFISTO/bin/FLUIDER) of the UNSTEADY NAVIER-STOKES
+  problem by fractional steps by skyline Cholesky
+  factorization or condensed conjugate gradient
+  => a lower size of used memory
+  with the new boundary condition of the convected velocity of
+  a fluid exiting of the domain (option 2 fixed velocity)
+- Drawing of particles moving in a flow
+- Drawing of the 2d stream function
+- Drawing of the velocity norm inside the flow
+- Drawing of the pressure on some surfaces of the fluid
+- Drawing of the solutions at all steps of time
+- Drawing of the Rotational Velocity at all steps of time
+- A User's updated Manual of Mefisto-FLUIDER is loadable
+
+NLSER:
+- Complex solution of the NON-LINEAR SCHRODINGER Equation
+  i dU(t)/dt -Alfa Laplacian U(t) + N(t,|U|) U(t) = F(t,X)
+  Cf the documentation of the initial menu debunlse.
+
+$MEFISTO/bin.lnx64:
+- The libraries contain subroutines fortran.f95 with OpenMP
+  directives and executable on multi-processors as
+  Intel Core i7 (8 threads maximum)
+- The command ended by 77 offers a sequential gfortran
+  compilation WITHOUT calls to OpenMP library
+  example: $MEFISTO/bin/cbflui77 gives $MEFISTO/pp/ppflui
+  a sequential load module for the command FLUIDER
+- The command NOT ended by 77 offers a MULTI-THREADS gfortran
+  compilation with calls to OpenMP library
+  example: $MEFISTO/bin/cbflui gives $MEFISTO/pp/ppflui
+  a multi-threads load module for the command FLUIDER
+
+testa: test files
+- Flow from 0 to 120 seconds of a 2d or 3d fluid of Reynolds
+  number 300 around a roll in a box by Brezzi-Fortin (bf) or
+  Taylor-Hood (th) finite elements by conjugate gradient:
+  rol2dbfcg, rol3dbfcg,  rol2dthcg,  rol3dthcg 
+--------------------------------------------------------------
+If you have a problem contact Alain PERRONNET
+E-mail  : alain@perronnet.com
+Internet: https://www.ljll.math.upmc.fr/perronnet
+--------------------------------------------------------------

@@ -1,0 +1,6 @@
+Give the NAME or click the POINT between the 2 extremities
+of the arc of circle.
+This POINT define the plane of the circle and the arc
+between the 2 available arcs of circle.
+
+The input stops only with the input of an existing POINT.

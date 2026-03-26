@@ -1,0 +1,6 @@
+rm b77                      sur APOLLO SEULEMENT !...
+rm b77.f.bin
+ftn b77.f
+bind b77.f.bin -b b77
+
+EXECUTER cry et cry_tous_f  SEULEMENT sur APOLLO !....

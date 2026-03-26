@@ -1,0 +1,12 @@
+deftms ~>>>COEFNLSE  'Coefficient ahead NonLinear Term'
+variable muet DATE   'date of creation of the TMS'   reel2  ;
+variable muet NUTD   'number of the descriptor array TD' entier ; 
+variable      LTNLSE 'Type of Coefficient of NLSE' entier 
+(  1 : 'constant coefficient of NLSE'
+, -1 : 'function coefficient of NLSE'
+,  0 : 'delete the coefficient of NLSE' ) ;
+cas LTNLSE
+ 1 : variable CONLSE 'NLSE coefficient Value' reel ; 
+-1 : variable NFNLSE 'Function NAME of NLSE coefficient' ^~>FONCTION ;
+fincas ;   
+fintms ;

@@ -1,0 +1,131 @@
+{ ==================================================================== }
+{ Software MEFISTO     : March 2007 Version                            }
+{ USER's Name          : Alain Perronnet                               }
+{ Project Name         : option                                        }
+{ Date                 : 4/04/2007   11h 21m 43s                       }
+{ ==================================================================== }
+DefVar T; T=0.25; {year}
+DefVar deltaT; deltaT=0.001;  {time step}
+DefVar sigma1, sigma2;  sigma1=0.2;  sigma2=0.1; {volatility}
+DefVar q; q=-0.25;   {couple}
+DefVar r; r=0.02;    {bank rate}
+DefVar K; K=100.0;   {strike}
+
+ 1;
+ { OBJECT NAME to treat }
+ { NAME of the OBJECT? }
+ { NAME of OBJECT }
+ ABCD;
+
+2;{ HEAT TRANSFER INPUT DATA }
+ { SURFACE: ABCD }
+ 1;  { Rot MASS Density }
+ 1;  { constant mass }
+ 1.0;{ DMASSE 'value of the density of MASS' reel ; }
+
+ 7;   {C  MASSIC HEAT}
+ 1;   {constant massic heat}
+ 1.0; {value of the massic heat}
+
+ 2;  { [A] THERMAL CONDUCTIVITY }
+ -2; { Function ANISOTROPIC Conductivity C11 C12 C22... }
+  3; { Number of coefficients of ANISOTROPIC conductivity tensor C11 C12 C22 }
+     { NAME of function conductivity }
+DefFunc Aij( t,x,y,z,notyp,no,temper,nuc );
+if nuc=1 then
+ Aij=(x*sigma1)**2 * 0.5;
+else
+  if nuc=2 then
+     Aij=x*y*q*sigma1*sigma2*0.5;
+  else
+     Aij=(y*sigma2)**2 * 0.5;
+  endif;
+endif;
+EndFunc;
+
+Aij; { in LEXICON ~>FONCTION }
+
+ 5; { Vf Fluid Speed for TRANSPORT }
+ -1;{ function speed of fluid }
+    { NAME of FUNCTION }
+ DefFunc Speed(t,x,y,z,notyp, no, temper, nodir);
+ if nodir=1 then
+   Speed=(r-sigma1*sigma1-q*sigma1*sigma2*0.5)*x;
+ else
+   Speed=(r-sigma2*sigma2-q*sigma1*sigma2*0.5)*y;
+ endif;
+ EndFunc;
+ Speed;   { in LEXICON ~>FONCTION }
+
+ 6; { CT Coefficient in front TEMPERATURE }
+ 1; { constant coefficient of temperature }
+ r; { COEFTE 'coefficient of temperature' reel ; }
+
+ 8; { INITIAL TEMPERATURE }
+-1; { function initial temperature }
+    { NAME of FUNCTION }
+ DefFunc Temp0(t,x,y,z,notypeobj, noobjet);
+ DefVar aux;
+ aux = K-x-y;
+ Temp0=0;
+ if aux>0 then
+    Temp0=aux;
+ EndIf;
+ EndFunc;
+ Temp0;   { in LEXICON ~>FONCTION }
+ @;
+
+
+ { LIGNE: BC }
+ 3; { CONTACT imposed temperature }
+ 1; { constant imposed temperature }
+ 0; { CONTAC 'imposed temperature value' reel ; }
+ @;
+
+ { LIGNE: CD }
+ 3; { CONTACT imposed temperature }
+ 1; { constant imposed temperature }
+ 0; { CONTAC 'imposed temperature value' reel ; }
+ @;
+ 
+{ POINT: B }
+ 3; { CONTACT imposed temperature }
+ 1; { constant imposed temperature }
+ 0; { CONTAC 'imposed temperature value' reel ; }
+ @;
+
+ { POINT: C }
+ 3; { CONTACT imposed temperature }
+ 1; { constant imposed temperature }
+ 0; { CONTAC 'imposed temperature value' reel ; }
+ @;
+
+ { POINT: D }
+ 3; { CONTACT imposed temperature }
+ 1; { constant imposed temperature }
+ 0; { CONTAC 'imposed temperature value' reel ; }
+ @;
+
+4; { UNSTEADY HEAT TRANSFER solver }
+ 1;    { Density Specific heat Conductivity INDEPENDENT of TIME & TEMP }
+ 0;    { INITIAL TIME }
+-1;    { function INITIAL TEMPERATURE }
+Temp0; { name of the function INITIAL TEMPERATURE }
+ 0.25; { FINAL TIME (year) }
+ 0.001;{ STEP of TIME }
+ 25;   { NUMBER of ADDED TEMPERATURE VECTORS }
+       {1; SKYLINE CHOLESKY or GC which is following }
+ 2;    { PRECONDITIONNED CONJUGATE GRADIENT }
+ 2;    { INCOMPLETE FACTORISATION LEVEL }
+ 1.0;  { 1/2 <= THETA METHOD <=1 +STABLE }
+@;
+
+8; { DRAWING of TEMPERATURES and FLUX }
+ 1;  { CASE NUMBER of SOLUTION }
+ 26; { NUMBER of the CASE for time 0.25 }
+ 2;  { TEMPERATURE }
+ 1;  { ISOTHERMAL LINES or SURFACES }
+ 2;  { REGULAR ISO between MIN MAX }
+ 90; { Continue the DRAWING }
+
+FERMER;

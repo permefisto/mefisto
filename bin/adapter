@@ -1,0 +1,45 @@
+#!/bin/bash
+#  execution du solveur de thermique avec adaptation
+#  Alain Perronnet   Fevrier 2008   Version LINUX
+#   
+if test -f $MEFISTO/td/m/anglais
+then
+   LANGAGE=1
+   echo
+   echo '==============================================================='
+   echo ' MEFISTO-ADAPTER: ADAPTED HEAT TRANFER of an OBJECT on LINUX PC'
+   echo '==============================================================='
+   echo 'Project (low case) name' \?
+else
+   LANGAGE=0
+   echo
+   echo '==============================================================='
+   echo '  MEFISTO-ADAPTER: THERMIQUE ADAPTEE d un OBJET sur PC LINUX'
+   echo '==============================================================='
+   echo 'nom (en minuscules) du projet' \?
+fi
+read nomproj
+
+direxec=$MEFISTOX/$nomproj
+echo
+if [ $LANGAGE = 0 ]
+then
+    echo "Execution MEFISTO-ADAPTER dans le repertoire $direxec"
+else
+    echo "Execution MEFISTO-ADAPTER in directory $direxec"
+fi
+
+if test -d $direxec
+then
+   cd  $direxec 
+   $MEFISTO/pp/ppadap
+else  
+    if [ $LANGAGE = 0 ]
+    then
+       echo Commande INITIER non prealablement executee
+       echo "avec ce nom de projet $nomproj"
+    else
+       echo Command INITIER NOT EXECUTED before
+       echo "with this project name $nomproj"
+    fi
+fi

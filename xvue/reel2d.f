@@ -1,0 +1,54 @@
+      SUBROUTINE REEL2D( NC, X, Y, REEL, FRMT )
+C+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+C BUT :  TRACE LES CARACTERES DE REEL AVEC LA COULEUR NC
+C -----  A PARTIR DU POINT (X,Y) EN COORDONNEES OBJET 2D
+C        LA TRANSFORMATION EN PIXELS EST ASSUREE DANS CE SP
+C        LES AUTRES CARACTERISTIQUES DU TRACE SONT CELLES ACTUELLES
+C
+C        VERSION xvue
+C
+C ENTREE :
+C --------
+C NC     : NUMERO DE LA COULEUR DES CARACTERES DE REEL
+C X      : ABSCISSE OBJET DES CARACTERES DE REEL
+C Y      : ORDONNEE OBJET DES CARACTERES DE REEL
+C REEL   : VALEUR REELLE A TRACER
+C FRMT   : FORMAT FORTRAN '(E15.6)' ou '(G10.2)' ou '(F5.1)' ...
+C          POUR TRACER LES CARACTERES NON BLANCS DE LA VALEUR DU REEL
+C+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+C AUTEUR : PERRONNET ALAIN ANALYSE NUMERIQUE UPMC  PARIS  SEPTEMBRE 1994
+C2345X7..............................................................012
+      include"./incl/trvari.inc"
+      include"./incl/minint.inc"
+      REAL           REEL
+      CHARACTER*(*)  FRMT
+      CHARACTER*23   KTXT
+      CHARACTER*24   KREEL
+C
+C     SI COULEUR NEGATIVE ALORS AUCUN TRACE
+      IF( NC .LT. 0 ) RETURN
+C
+C     TRANSFORMATION EN PIXELS DANS LA FENETRE XV
+      NX = NUPXEX( X )
+      NY = NUPXEY( Y )
+      IF( NX .EQ. MININT .OR. NY .EQ. MININT ) RETURN
+C
+C     TRANSLATION POUR CENTRER LE .
+      NX = NX - NPLACA/2
+      NY = NY + 2
+C
+C     TRACE EFFECTIF
+      CALL XVCOULEUR( NC )
+C
+C     LE NOMBRE DE CARACTERES DE REEL
+      KTXT = '    '
+      WRITE( KTXT, FRMT ) REEL
+      DO 10 I=1,23
+         IF( KTXT(I:I) .NE. ' ' ) GOTO 20
+ 10   CONTINUE
+C
+ 20   KREEL = '.' // KTXT(I:23)
+      I     = 25 - I
+C     LE TRACE XV DE LA CHAINE DES L CARACTERES
+      CALL XVTEXTE( KREEL(1:I), I, NX, NY )
+      END

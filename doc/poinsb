@@ -1,0 +1,16 @@
+the B-SPLINE quadrangle is defined by INTERPOLATION POINTS.
+Give the NAME or click each INTERPOLATION POINT in the order
+
+For j=1 until  number of points in the Y direction
+    For i=1 until  number of points in the X direction
+        Give the POINT(i,j) NAME
+
+Example: 5; 2;  P11;P21;P31;P41;P51;  P12;P22;P32;P42;P52;
+ 
+           for a location of points
+            P12  P22  P32  P42  P52
+
+            P11  P21  P31  P41  P51
+
+In fact, the view angle is chosen as you want
+but after, the order is defined above.

@@ -1,0 +1,20 @@
+Give the NAME of the SECOND of the 3 POINTS in the ORDER
+an extremity, the corner and the last extremity.
+
+Example: P1; P2; P3;
+The line start at P1 until the constructed tangent point q1
+with segment P1-q1 and q2-P3 and ends at P3
+P1-q1 and q2-P3 are tangent to the circle of given radius.
+
+                                  q1
+                P1--------------- .      *P2      
+                                      . 
+                                        . 
+                                          
+                                         .q2
+                                         |
+                                         |  
+                                         |
+                                         P3
+
+The input stops only with the input of existing POINTS.

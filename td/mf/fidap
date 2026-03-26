@@ -1,0 +1,4 @@
+variable FIDAP 'Donnees du logiciel FIDAP' entier
+( 1 : 'Fichier FIDAP XYZ des SOMMETS EF',
+  2 : 'Fichier FIDAP CONDITION FRONTIERE',
+  3 : 'Fichier FIDAP CONDITION INITIALE' ) ;

@@ -1,0 +1,7 @@
+Le NOM des 6 QUADRANGLES STRUCTURES qui forment
+les 6 faces de l'HEXAEDRE.
+Les QUADRANGLES doivent exister pour que leur 
+nom soit accepte.
+Si N1, N2, N3 sont les nombre CONSTANTS, dans 3 directions,
+des sous-aretes alors
+N1 x N2 x N3 sous-hexaedres seront crees.

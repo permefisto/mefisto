@@ -1,0 +1,16 @@
+Chacun des quadrangles S4------S3
+                       |       |
+                       S1------S2
+du maillage de la surface est decoupe en 2 triangles selon
+l'option 
+1: S1-S2-S3  et  S1-S3-S4
+2: S1-S2-S4  et  S2-S3-S4
+3: le plus grand des angles du quadrangle qui est decoupe 
+4: le maximum du minimum des qualites des 2 triangles 
+   pour les 2 choix possibles de decoupage du quadrangle 
+
+4 semble etre le meilleur choix en terme de maximisation
+de la qualite du maillage.   
+
+Exemple: S31_TRIANGULATION; I; 31; QUADRANGULATION; 4;
+

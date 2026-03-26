@@ -1,0 +1,14 @@
+deftms ~>>>VITESSEANGULAIRE 'Vecteur Vitesse Angulaire du Domaine'
+variable muet DATE 'Date de creation du tableau'   reel2  ;
+variable muet NUTD 'Numero du tableau descripteur' entier ; 
+variable LTVIAN 'Type de la Vitesse Angulaire' entier 
+(  1 : 'VECTEUR VITESSE ANGULAIRE constante' 
+, -1 : 'Fonction VECTEUR VITESSE ANGULAIRE' 
+,  0 : 'VITESSE ANGULAIRE a supprimer' ) ;
+cas LTVIAN
+ 1 : variable NBVIAN 'Nombre composantes Vitesse Angulaire' entier ;
+     tableau  VAVIAN(1..NBVIAN) 'Vecteur CONSTANT VITESSE ANGULAIRE' reel ;
+-1 : variable NBVIA0 'Nombre composantes Vitesse Angulaire' entier ;
+     variable NFVIAN 'Nom fonction du Vecteur VITESSE ANGULAIRE' ^~>FONCTION ;
+fincas ;   
+fintms ;

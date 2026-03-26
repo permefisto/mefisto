@@ -1,0 +1,102 @@
+      SUBROUTINE XYZBSP( X, Y,
+     %                   DEGREX, LRX, RX,
+     %                   DEGREY, LRY, RY, SPLINE,
+     %                   NBTGS , XYZSOM, XYZTST )
+C+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+C BUT :    CALCULER LES 3 COORDONNEES DU SOMMET (X,Y) DU RECTANGLE PLAN
+C -----    ET LE GRADIENT EN CE SOMMET
+C          D'UNE SURFACE B-SPLINE D'INTERPOLATION POLYNOMIALE
+C
+C ENTREES:
+C --------
+C X,Y    : 2 COORDONNEES DU POINT DU RECTANGLE PLAN
+C DEGREX : DEGRE DES POLYNOMES DE LA B-SPLINE
+C LRX    : NOMBRE DE POINTS-1 DE CONTROLE (R) DE LA LIGNE
+C RX     : LES EXTREMITES DES INTERVALLES DU PARAMETRE EN X
+C DEGREY : DEGRE DES POLYNOMES DE LA B-SPLINE
+C LRY    : NOMBRE DE POINTS-1 DE CONTROLE (R) DE LA LIGNE
+C RY     : LES EXTREMITES DES INTERVALLES DU PARAMETRE EN Y
+C SPLINE : LES COEFFICIENTS DES POLYNOMES SUR CHAQUE INTERVALLE
+C NBTGS  : >0 LE GRADIENT DOIT ETRE CALCULE, 0 SINON
+C
+C SORTIES:
+C --------
+C XYZSOM : 3 COORDONNEES DU SOMMET
+C XYZTST : 3 COORDONNEES DES 2 COMPOSANTES DU GRADIENT AU SOMMET
+C+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+C AUTEUR : ALAIN PERRONNET ANALYSE NUMERIQUE UPMC PARIS     FEVRIER 1997
+C2345X7..............................................................012
+      INTEGER  DEGREX, DEGREY
+      REAL     RX(0:LRX), RY(0:LRY),
+     %         SPLINE(0:DEGREX,0:DEGREY,0:LRX-1,0:LRY-1,1:3),
+     %         XYZSOM(1:3)
+      REAL     XYZTST(1:3,1:2)
+C
+C     RECHERCHE DU IX DE [RX(IX),RX(IX-1)[ CONTENANT X
+      IX   = 0
+ 10   IF( X .GE. RX(IX+1) ) THEN
+C        PASSAGE A L'INTERVALLE SUIVANT DE RX
+         IX = IX + 1
+         IF( IX .LT. LRX ) GOTO 10
+C        LE DERNIER SOMMET EST CALCULE PAR PROLONGEMENT
+         IX = LRX - 1
+      ENDIF
+      RRX = X - RX(IX)
+C
+C     RECHERCHE DU IY DE [RY(IY),RY(IY-1)[ CONTENANT Y
+      IY   = 0
+ 30   IF( Y .GE. RY(IY+1) ) THEN
+C        PASSAGE A L'INTERVALLE SUIVANT DE RY
+         IY = IY + 1
+         IF( IY .LT. LRY ) GOTO 30
+C        LE DERNIER SOMMET EST CALCULE PAR PROLONGEMENT
+         IY = LRY - 1
+      ENDIF
+      RRY = Y - RY(IY)
+C
+C     LES 3 COORDONNEES DU SOMMET (X,Y) DU RECTANGLE
+      DO 80 J=1,3
+         AA = 0
+         DO 70 M=DEGREY,0,-1
+            A = SPLINE(DEGREX,M,IX,IY,J)
+            DO 60 L=DEGREX-1,0,-1
+C              DOUBLE METHODE DE HORNER
+               A = A * RRX + SPLINE(L,M,IX,IY,J)
+ 60         CONTINUE
+            AA = AA * RRY + A
+ 70      CONTINUE
+         XYZSOM(J) = AA
+ 80   CONTINUE
+C
+      IF( NBTGS .GT. 0 ) THEN
+C
+C        LE GRADIENT AU SOMMET DOIT ETRE CALCULE
+C        CALCUL DE LA DERIVEE/PARAMETRE1 EN CE SOMMET
+         DO 130 J=1,3
+            AA = 0
+            DO 120 M=DEGREY,0,-1
+               A = DEGREX * SPLINE(DEGREX,M,IX,IY,J)
+               DO 110 L=DEGREX-1,1,-1
+C                 DOUBLE METHODE DE HORNER
+                  A = A * RRX + L * SPLINE(L,M,IX,IY,J)
+ 110           CONTINUE
+               AA = AA * RRY + A
+ 120        CONTINUE
+            XYZTST(J,1) = AA
+ 130     CONTINUE
+C
+C        CALCUL DE LA DERIVEE/PARAMETRE2 EN CE SOMMET
+         DO 160 J=1,3
+            AA = 0
+            DO 150 L=DEGREX,0,-1
+               A = DEGREY * SPLINE(L,DEGREY,IX,IY,J)
+               DO 140 M=DEGREY-1,1,-1
+C                 DOUBLE METHODE DE HORNER
+                  A = A * RRY + M * SPLINE(L,M,IX,IY,J)
+ 140           CONTINUE
+               AA = AA * RRX + A
+ 150        CONTINUE
+            XYZTST(J,2) = AA
+ 160     CONTINUE
+      ENDIF
+      END

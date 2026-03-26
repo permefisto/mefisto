@@ -1,0 +1,104 @@
+      SUBROUTINE BGDIVTH2( NBSOM,  XYZNOE, NBNOEF, NBEF, NONOEF, NONOSO,
+     %                     COEFBG, NBNOVI, VITEXY, BG )
+C ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+C BUT:     CONSTRUIRE ET ASSEMBLER LE SECOND MEMBRE GLOBAL DU PROBLEME
+C ----     -dt CoGrPr LAPLACIEN P = COEFBG * Div VITEXY(tn+1)
+C          TRIANGLE TAYLOR-HOOD
+C
+C ENTREES:
+C --------
+C NBSOM  : NOMBRE DE SOMMETS DU MAILLAGE
+C XYZNOE : 3 COORDONNEES DES NBNOVI NOEUDS DU MAILLAGE
+C NBNOEF : NOMBRE DE NOEUDS D'UN EF
+C NBEF   : NOMBRE D'EF DU MAILLAGE
+C NONOEF : NUMERO DES NBNOEF NOEUDS DES NBEF EF
+C NONOSO : NONOSO(I) = NUMERO DU SOMMET 1 A NBSOM DU NOEUD GLOBAL I
+C COEFBG : COEFFICIENT DU SECOND MEMBRE
+C VITEXY : 2 COMPOSANTES X Y DE LA VITESSE EN LES NBNOVI NOEUDS VITESSE
+C          DE LA TRIANGULATION
+C
+C SORTIE :
+C ---------
+C BG     : VALEUR DES COEFFICIENTS DU VECTEUR GLOBAL SECOND MEMBRE
+C+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+C AUTEUR : ALAIN PERRONNET LJLL UPMC & St PIERRE du PERRAY    Avril 2011
+C23456---------------------------------------------------------------012
+      IMPLICIT NONE
+      INTEGER           NBSOM, NBNOEF, NBEF, NBNOVI
+      REAL              XYZNOE(3,NBNOVI)
+      INTEGER           NONOEF(NBEF,NBNOEF), NONOSO(NBNOVI)
+      DOUBLE PRECISION  COEFBG, VITEXY(NBNOVI,2), BG(NBSOM)
+C
+      DOUBLE PRECISION  DELTA, X21, X31, Y21, Y31, DFM1(2,2)
+      DOUBLE PRECISION  S, D
+C
+      INTEGER           I, J, K, L, NS1, NS2, NS3, NEF, NS
+      INTEGER           NOSOTR(3)
+      EQUIVALENCE      (NOSOTR(1),NS1),(NOSOTR(2),NS2),(NOSOTR(3),NS3)
+C
+C     INTEGRALES P1 DP2 SUR LE TRIANGLE de REFERENCE
+C     P1DP2(i,k,j) = integrale P1i DPj/dxk dx dy sur TRIANGLE UNITE
+C     DOUBLE PRECISION  P1DP2(3,2,6)
+      include"./incl/p1dp22d.inc"
+C
+C     MISE A ZERO DU VECTEUR GLOBAL
+      DO I = 1, NBSOM
+         BG( I ) = 0D0
+      ENDDO
+C
+      DO 100 NEF = 1, NBEF
+C
+C        NUMERO DES 3 SOMMETS DU TRIANGLE NEF
+         NS1 = NONOEF(NEF,1)
+         NS2 = NONOEF(NEF,2)
+         NS3 = NONOEF(NEF,3)
+C
+C        CALCUL DE LA MATRICE JACOBIENNE ET DE SON INVERSE
+         X21 = XYZNOE(1,NS2) - XYZNOE(1,NS1)
+         X31 = XYZNOE(1,NS3) - XYZNOE(1,NS1)
+C
+         Y21 = XYZNOE(2,NS2) - XYZNOE(2,NS1)
+         Y31 = XYZNOE(2,NS3) - XYZNOE(2,NS1)
+C
+cccC     CALCUL DU DETERMINANT DE LA JACOBIENNE DFe
+ccc      DELTA = ABS( X21*Y31 - X31*Y21 )
+C
+C        L'INTEGRALE tPression DIV Vitesse dx
+C
+C        LE TRIANGLE EST SUPPOSE DE SURFACE NON NULLE
+C        LES 4 COEFFICIENTS DE LA MATRICE INVERSE DFM1 SANS / DELTA
+C        CAR COMPENSE PAR LA MULTIPLICATION PAR DELTA DE L'INTEGRATION
+         DFM1(1,1) =  Y31
+         DFM1(2,1) = -X31
+C
+         DFM1(1,2) = -Y21
+         DFM1(2,2) =  X21
+C
+C        DET integrale tLambda ( DF-1 ligne1  DP ue1
+C                               +DF-1 ligne2  DP ue2 ) dX
+         DO I=1,3
+C
+C           I-eme COEFFICIENT DU VECTEUR ELEMENTAIRE BE
+            S = 0D0
+            DO J=1,6
+C              NO GLOBAL DU NOEUD J DU TRIANGLE NEF
+               NS = NONOEF(NEF,J)
+               DO K=1,2
+C                 P1DP2(i,k,j) = integrale Lambdai dPj/dxk dx dy
+                  D = P1DP2(I,K,J)
+                  DO L=1,2
+                     S = S + DFM1(L,K) * D * VITEXY(NS,L)
+                  ENDDO
+               ENDDO
+            ENDDO
+C
+C           ASSEMBLAGE DE BE(I) DANS BG( NONOSO( NOSOTR(I) ) )
+            NS = NONOSO( NOSOTR(I) )
+            BG(NS) = BG(NS) + S * COEFBG
+C
+         ENDDO
+C
+ 100  CONTINUE
+C
+      RETURN
+      END

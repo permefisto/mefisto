@@ -1,0 +1,82 @@
+{ ======================================================================== }
+{ Software MEFISTO  : 2013/12/21, Version                                  }
+{ USER's  Name      : Alain Perronnet                                      }
+{ Project Name      : Gros-Pitaevski equation on a square [-15,15]**2      }
+{ SEMI IMPLICIT i time Method on                                           }
+{ du(t,X)/dt - LAPLACIEN/2 u(t,X) + ( V + Beta |u(t,X)|**2 ) u(t,X)        }
+{            + i Omega (x du(t,X)/dy - y du(t,X)/dx) = 0                   }
+{ Date              : 2013/12/21                                           }
+{ ======================================================================== }
+DefVar Pi;    Pi    = atan(1) * 4;
+DefVar Rho;   Rho   = 1.0;
+DefVar Alfa;  Alfa  = 0.5;   {Laplacian Coefficient}
+DefVar Beta;  Beta  = 100;   {Non linear term coefficient}
+DefVar Omega; Omega = 1.0;   {Angular velocity /Z}
+DefVar Gamax; Gamax = 1.0;
+DefVar Gamay; Gamay = 1.0;
+DefVar dt;    dt    = 0.05;  {step of time}
+DefVar MuTFB; MuTFB = sqrt( Abs( (Beta * Gamax * Gamay) / Pi) );
+DefVar Vx;
+
+DefFunc NLSECoef(t,x,y,z,ntyobj,nuobj,WaveR,WaveI);
+    Vx = ( Gamax * x * x + Gamay * y * y ) * 0.5;
+  NLSECoef = Vx + Beta * ( WaveR**2 + WaveI**2 );
+EndFunc;
+
+{ The initial conditions of the Wave }
+DefFunc InitWave(t,x,y,z,ntyob,nuobjt,partnb);
+  If partnb=1 then          {Real Part}
+    Vx = ( Gamax * x * x + Gamay * y * y ) * 0.5;
+   If MuTFB > Vx then
+      InitWave = sqrt( Abs( ( MuTFB - Vx ) / Beta ) ); 
+   Else
+      InitWave = 0;
+    EndIf;
+  Else                      {Imaginary Part}
+    InitWave = 0; 
+  EndIf;
+EndFunc;
+
+{DATA for the Non Linear Schrodinger Equations}
+
+2; { HEAT INPUT DATA }
+  {Surface SQUARE}
+  1;    { Mass density }
+  1;    { Mass density is a Constant }
+  Rho;  { Mass density Value }
+
+  2;    { Alfa Coefficient of Laplacians }
+  3;    { 2D material Homogenous isotropic constant conductivity }
+  Alfa; { Constant Coefficient of Laplacian }
+
+  6;    { NLSE Coefficient of U: Vx + Beta * ( WaveR**2 + WaveI**2 ) }
+  -1;        { Function }
+   NLSECoef; { Function Name }
+
+  9;     { Domain Angular Velocity Vector }
+  1;     { ANGULAR VELOCITY VECTOR is CONSTANT }
+  1;     { NBVIAN  Number of ANGULAR VELOCITY COMPONENTS }
+  Omega; { tableau VAVIAN(1..NBVIAN) Angular Velocity CONSTANT Vector }
+ @;
+
+ {Line BOUNDARY}  {For homogeneous Neumman delete the next lines}
+  3;    {Fixation Homogeneous Dirichlet on 2 parts}
+  1;    {Constant}
+  2;    {2 components}
+  1; 2; {Each number of Components}
+  0; 0; {Value of components}
+@;
+
+6; {SEMI-IMPLICIT nxn: Gross-Pitaevski  imaginary time method t->it }
+   {du(t,X)/dt -Laplacian u/2 +Vu +Beta u**3 +i Omega(xdu/dy-ydu/dx)=0 }
+  0;       { Initial TIME }
+ -1;       { Real & Imaginary Part of INITIAL Wave FUNCTION of SQUARE }
+ InitWave; { NAME of the Initial Wave FUNCTION on the object }
+  500;     { Final TIME }
+  dt;      { Step of TIME }
+  250;     { Number of Wave Vectors to Store }
+ 2; 1;     { Simple Conjugate Gradient }
+           { or 1; Skyline Crout Factorization A=L D tL }
+@;
+
+CLOSE;

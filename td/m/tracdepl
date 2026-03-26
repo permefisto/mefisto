@@ -1,0 +1,9 @@
+variable TRACDEPL  'Trace de la DEFORMEE' entier
+(  1 : 'CAS NUMERO'
+,  2 : 'AMPLIFICATION DEPLACEMENTS'
+,  5 : 'COULEUR des ARETES du MAILLAGE'
+,  6 : 'TYPE TRAIT des ARETES MAILLAGE'
+,  7 : 'COULEUR des ARETES DEFORMEES'
+,  9 : 'AFFICHAGE DES DEPLACEMENTS' 
+, 50 : 'EFFACER le trace actuel'
+, 90 : 'EXECUTION du trace' ) ;

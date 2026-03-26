@@ -1,0 +1,409 @@
+      SUBROUTINE ETOILE19( NOSOM1,   NOSOM2, QTEAME, ARETGR,
+     %                     MXSOMM,   PTXYZD, NPSOFR, NDERPt,
+     %                     HEXAPAVE, NBIPAV, ECHPAV, N1SPAVE, NOPTSUIV,
+     %                     MXTETR,   N1TEVI, NOTETR, NUDTETR,
+     %                     N1TETS,
+     %                     INFACO,   MXFACO, LEFACO, IVOLTE, NVOLTE,
+     %                     MXETOI,   NFETOI, NOTEET, LISPOI,
+     %                     NBSTNT,   IERR )
+C+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+C BUT :     TETRAEDRISATION ETOILE DES SOMMETS NOSOM1 A NOSOM2
+C -----     DU TABLEAU PTXYZD
+
+C ENTREES :
+C ---------
+C NOSOM1  : NUMERO DU PREMIER SOMMET  A AJOUTER A LA TETRAEDRISATION
+C QTEAME  : QUALITE DES TETRAEDRES AU DESSOUS DE LAQUELLE UNE
+C           AMELIORATION DE LA QUALITE DES TETRAEDRES EST DEMANDEE
+C ARETGR  : LONGUEUR DE L'ARETE SOHAITEE POUR L'ENSEMBLE DES TETRAEDRES
+C MXSOMM  : NOMBRE MAXIMAL DE SOMMETS PERMIS POUR LA TETRAEDRISATION
+C PTXYZD  : X Y Z DISTANCE SOUHAITEE DES POINTS
+C HEXAPAVE: MIN ET MAX DES COORDONNEES DU PAVAGE
+C NBIPAV  : NOMBRE D'ARETES DANS LA DIRECTION I
+C ECHPAV  : ECHELLE DANS LA DIRECTION I
+C N1SPAVE : NO DU 1-ER SOMMET DANS PTXYZD DU PAVE
+C NOPTSUIV: NO DU POINT SUIVANT DANS LE CHAINAGE DES POINTS DES PAVES
+C MXTETR  : NOMBRE MAXIMAL DE TETRAEDRES DECLARABLES DANS NOTETR
+C LISPOI  : LISPOI(I)=I OU 0 EN ENTREE POUR PERMETTRE LA PERMUTATION
+C           DES POINTS LORSQUE DES TETRAEDRES DEGENERES SONT RENCONTRES
+C           PERMET DE TETRAEDRISER LES POINTS DANS UN ORDRE NON INITIAL
+
+C ENTREES ET SORTIES :
+C --------------------
+C NOSOM2 : NUMERO DU DERNIER SOMMET A AJOUTER A LA TETRAEDRISATION
+C          LE TRAITEMENT DES TETRAEDRES DEGENERES PEUT AJOUTER DES POINTS
+C NPSOFR : NUMERO DE POSITION PAR RAPPORT A LA FRONTIERE DE CHAQUE POINT
+C          LE SIGNE DEVIENT NEGATIF SI LE SOMMET EST DEPLACE
+C          =  0 SI POINT AJOUTE NON SUR LA SURFACE DE L'OBJET
+C          =  1 SI LE POINT EST AJOUTE SUR UNE ARETE DE LA SURFACE
+C          =  2 SI LE POINT EST AJOUTE COMME BARYCENTRE SUR LA SURFACE
+C          =  1 000 000  + NUMERO DU  POINT INTERNE UTILISATEUR
+C          = (1 000 000) * (NO SURFACE + 1) + NUMERO DU SOMMET DANS
+C                    LA NUMEROTATION DES SOMMETS DE LA SURFACE
+C          = -1 SI LE POINT EST SOMMET RECONNU TROP PROCHE
+C          = -4 SI LE POINT EST SOMMET NON TROP PROCHE
+C          = -3 SI LE POINT EST SOMMET REFUSE DANS LA TETRAEDRISATION
+C          = -NPSOFR(I) SI POINT I DEPLACE SUR LA SURFACE
+C             DANS LEUR SURFACE FERMEE INITIALE OU NO DE POINT INTERNE
+C NDERPt : NUMERO PTXYZD DU POINT SUSCEPTIBLE D'ETRE PROCHE D'UN TETRADRE
+C          CONTENANT LE POINT NOSOM1
+C N1TEVI : NUMERO DU 1 PREMIER TETRAEDRE VIDE DANS LE TABLEAU NOTETR
+C          LE CHAINAGE DES TETRAEDRES VIDES SE FAIT SUR NOTETR(5,.)
+C NOTETR : LISTE DES TETRAEDRES
+C          SOMMET1,    SOMMET2,    SOMMET3,    SOMMET4,
+C          TETRAEDRE1, TETRAEDRE2, TETRAEDRE3, TETRAEDRE4
+C          DE L'AUTRE COTE DE LA FACE
+C          1: 123      2: 234      3: 341      4: 412
+C NUDTETR: PLUS GRAND NUMERO DANS NOTETR DE TETRAEDRE OCCUPE
+C N1TETS : N1TETS(I) NUMERO D'UN TETRAEDRE AYANT POUR SOMMET I
+
+C INFACO : = 0 PAS DE TABLEAU LEFACO NI DE CONSERVATION DES
+C              FACES FRONTIERE  (NO DE VOLUME CONNU PAR NVOLTE)
+C          = 1 EXISTENCE DU TABLEAU LEFACO ET CONSERVATION DES
+C              FACES DE LA FRONTIERE
+C MXFACO : NOMBRE MAXIMAL DECLARABLE DE FACES DU CONTOUR
+C LEFACO : FACE DU CONTOUR OU INTERFACES ENTRE VOLUMES
+C          IL CONTIENT DANS CET ORDRE
+C          NUMERO (DANS PTXYZD) DU SOMMET 1, SOMMET 2, SOMMET 3
+C          NUMERO (DANS NUVOPA 0 SINON) DU VOLUME1 , VOLUME2 DE LA FACE
+C          NUMERO (DANS LEFACO) DE LA FACE ADJACENTE PAR L'ARETE 1 2 3
+C          ATTENTION: UNE ARETE PEUT APPARTENIR A PLUS DE 2 FACES
+C          => CHAINAGE CIRCULAIRE DE CES FACES DANS LEFACO
+C          LEFACO(9,*)  -> FACE SUIVANTE (*=0:VIDE, *<>0:NON VIDE)
+C          HACHAGE AVEC LA SOMME DES 3 SOMMETS MODULO MXFACO
+C          LF = MOD( NOSOFA(1)+NOSOFA(2)+NOSOFA(3) , MXFACO ) + 1
+C          NF = LEFACO( 10, LF ) LE NUMERO DE LA 1-ERE FACE DANS LEFACO
+C          SI LA FACE NE CONVIENT PAS. PASSAGE A LA SUIVANTE
+C          NF  = LEFACO( 9, NF )  ...
+
+C IVOLTE : 0 PAS       DE TABLEAU NVOLTE A L'APPEL
+C          1 EXISTENCE DU TABLEAU NVOLTE A L'APPEL
+C NVOLTE : >0 NUMERO DU VOLUME DE 1 A NBVOPA DE CHAQUE TETRAEDRE
+C          -1 SI TETRAEDRE INACTIF ou SUPPRIME
+
+C TABLEAUX AUXILIAIRES :
+C ----------------------
+C MXETOI : NOMBRE MAXIMAL DE FACES OU TETRAEDRES DECLARABLES DANS UNE ETOILE
+C NFETOI : ENTIER (1:5,1:MXETOI)
+C NOTEET : ENTIER (1:MXETOI)
+
+C SORTIES:
+C --------
+C NBSTNT : NOMBRE DE SOMMETS NON TETRAEDRISES
+C IERR   : 0 SI PAS D'ERREUR
+C          1 SATURATION DES SOMMETS    du TABLEAU PTXYZD
+C          3 SATURATION DES TETRAEDRES du TABLEAU NOTETR
+C          4 TETRAEDRE DEGENERE
+C          5 PERMUTATION INFINIE DE 2 POINTS A TETRAEDRISER
+C          8 AUCUNE SPHERE CIRCONSCRITE AUX TETRAEDRES ACTUELS
+C            NE CONTIENT LE POINT COURANT
+C         10 AUCUN POINT DEPLACE DANS L'ETOILE NE CONVIENT
+C         11 ETOILE DU POINT N IMPOSSIBLE A FORMER
+C         12 PAS DE TETRAEDRE POUR DEMARER
+C+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+C AUTEUR: ALAIN PERRONNET LJLL UPMC PARIS ST PIERRE DU PERRAY Avril 2008
+C MODIFS: ALAIN PERRONNET LJLL UPMC PARIS St PIERRE du PERRAY Avril 2016
+C MODIFS: ALAIN PERRONNET LJLL UPMC PARIS St PIERRE du PERRAYJanvier2017
+C23456...............................................................012
+      PARAMETER        ( MXSTPE=1024 )
+      include"./incl/langue.inc"
+      include"./incl/gsmenu.inc"
+      include"./incl/trvari.inc"
+      COMMON / UNITES / LECTEU,IMPRIM,INTERA,NUNITE(29)
+
+      COMMON / TRTETR / STOPTE, TRACTE
+      LOGICAL           STOPTE, TRACTE, TRACTE0
+C     STOPTE = FAUX ==> PAS D'ARRET APRES LE TRACE DE CHAQUE TETRAEDRE
+C              VRAI ==> DEMANDE D'UN CARACTERE POUR REDEMARRER
+C     TRACTE = FAUX ==> PAS DE TRACE DES TETRAEDRES
+C              VRAI ==> TRACE DES TETRAEDRES DE L'ETOILE
+
+      INTEGER           NOTETR(8,MXTETR),
+     %                  N1TETS(MXSOMM),
+     %                  LEFACO(1:11,0:MXFACO),
+     %                  NFETOI(5,MXETOI),
+     %                  NOTEET(MXETOI),
+     %                  LISPOI(0:MXSOMM),
+     %                  NPSOFR(MXSOMM),
+     %                  NOSTPE(MXSTPE),
+     %                  NVOLTE(MXTETR)
+      INTEGER           NBIPAV(3), N1SPAVE(0:*), NOPTSUIV(1:*)
+      DOUBLE PRECISION  HEXAPAVE(3,2), ECHPAV(3)
+      DOUBLE PRECISION  PTXYZD(1:4,1:MXSOMM), VOLET1
+ccc      DOUBLE PRECISION  COBARY( 4 )
+      INTEGER           NS(4)
+      EQUIVALENCE      (NS(1),NS1),(NS(2),NS2),
+     %                 (NS(3),NS3),(NS(4),NS4)
+
+      IERR   = 0
+C     NOMBRE DE SOMMETS NON TETRAEDRISES
+      NBSTNT = 0
+
+      IF( NOSOM1 .GT. NOSOM2 ) THEN
+         PRINT*,'etoile19: ERREUR TETRAEDRISATION du SOMMET',NOSOM1,
+     %          ' au SOMMET',NOSOM2
+         RETURN
+      ENDIF
+
+      TRACTE0 = TRACTE
+      NN0     = 0
+      NN1     = 0
+      NPERMU  = NOSOM2
+      NOSOM20 = NOSOM2
+
+C     REINITIALISATION A VIDE DES FACES DE L'ETOILE
+      N1FEVI = 1
+      N1FEOC = 0
+      DO I=1,MXETOI
+C        NUMERO DU TETRAEDRE DE L'AUTRE COTE DE LA FACE
+         NFETOI(1,I) = 0
+C        NUMERO LOCAL AU TETRAEDRE DE LA FACE
+         NFETOI(2,I) = 0
+         NFETOI(3,I) = 0
+         NFETOI(4,I) = 0
+C        NUMERO DANS NFETOI DE LA FACE SUIVANTE
+         NFETOI(5,I) = I+1
+      ENDDO
+      NFETOI(5,MXETOI) = 0
+
+C     NDERPt EST LE NUMERO PTXYZD DU POINT SUSCEPTIBLE D'ETRE PROCHE
+C     D'UN TETRADRE CONTENANT LE POINT NOSOM1
+      N0 = NOSOM1 - 1
+
+ 20   IF( N1TETS(NDERPt) .GT. 0 ) THEN
+         IF( NOTETR( 1, N1TETS(NDERPt) ) .GT. 0 ) THEN
+            GOTO 100
+         ENDIF
+      ENDIF
+
+C     ESSAI D'UN NOUVEAU SOMMET
+      NDERPt = NDERPt - 1
+      IF( NDERPt .LE. 0 ) THEN
+C        PAS DE TETRAEDRE DE DEPART
+         NBLGRC(NRERR) = 1
+         WRITE(KERR(MXLGER)(1:8),'(I8)') NDERPt
+         IF( LANGAG .EQ. 0 ) THEN
+            KERR(1) = 'ANOMALIE0 etoile19: PAS DE TETRAEDRE DE DEPART'
+         ELSE
+            KERR(1) = 'ANOMALY0 etoile19: NO TETRAHEDRON to START'
+         ENDIF
+         CALL LEREUR
+         IERR   = 12
+         NBSTNT = NOSOM2 - NOSOM1 + 1
+         GOTO 9999
+      ENDIF
+      GOTO 20
+
+
+C     TETREDRISATION DES SOMMETS NOSOM1 A NOSOM2
+C     ==========================================
+ 100  N0 = N0 + 1
+
+      IF( N0 .LE. NOSOM2 ) THEN
+C
+C        AFFICHAGE DU NO DE POINT A TETRAEDRISER OU NON
+         IF( MOD(N0,10000) .EQ. 0 ) THEN
+            NBLGRC(NRERR) = 1
+            WRITE(KERR(MXLGER)(1:8),'(I8)') N0
+            IF( LANGAG .EQ. 0 ) THEN
+               KERR(1) ='TETRAEDRISATION du POINT' // KERR(MXLGER)(1:8)
+            ELSE
+               KERR(1) ='TETRAHEDRIZATION of POINT' // KERR(MXLGER)(1:8)
+            ENDIF
+            WRITE(IMPRIM,*) KERR(1)
+CCC            CALL LERESU
+         ENDIF
+
+C        NPt LE VERITABLE NUMERO DANS PTXYZD DU POINT A TRAITER
+ 110     NPt = LISPOI( N0 )
+
+         IF( N0 .GT. NOSOM20 ) THEN
+            WRITE(IMPRIM,*) 'etoile19: REPRISE du Pt LISPOI(', N0,
+     %     ')=',NPt,' : X=',PTXYZD(1,NPt),' Y=',PTXYZD(2,NPt),
+     %     ' Z=',PTXYZD(3,NPt),' N1TETS=',N1TETS(NPt),
+     %     ' NPSOFR=',NPSOFR(NPt)
+ccc            TRACTE  = .TRUE.
+         ENDIF
+
+         IF( NPt .LT. NOSOM1 .AND. N1TETS(NPt) .GT. 0 ) THEN
+C           SOMMET DEJA TETRAEDRISE
+            WRITE(IMPRIM,*) 'etoile19: Sommet NPt=',NPt,
+     %      ' DEJA TETRAEDRISE. N1TETS=',N1TETS(NPt)
+            GOTO 100
+         ENDIF
+
+C        NOMBRE DE SOMMETS PERDUS PAR TETRAEDRISATION RESTANT A TRAITER
+         NBSTPE = 0
+
+C        LE 1-ER TETRAEDRE A CONSULTER EST LE DERNIER CONSTRUIT
+ 120     NOTET1 = N1TETS( NDERPt )
+         IF( NOTET1 .GT. 0 ) THEN
+            IF( NOTETR(1,NOTET1) .GT. 0 ) THEN
+C              LE TETRAEDRE NOTET1 EST CORRECT
+               GOTO 150
+            ENDIF
+         ENDIF
+
+C        LE TETRAEDRE NOTET1 EST INCORRECT ou VIDE
+C        ESSAI D'UN NOUVEAU SOMMET POUR TROUVER UN TETRAEDRE DE DEPART
+C        CORRECT ET ASSEZ PROCHE DU POINT NPt A TETRAEDRISER
+         NDERPt = NDERPt - 1
+         IF( NDERPt .LE. 0 ) THEN
+C           PAS DE TETRAEDRE CORRECT DE DEPART
+            NBLGRC(NRERR) = 1
+            WRITE(KERR(MXLGER)(1:8),'(I8)') N0
+            IF( LANGAG .EQ. 0 ) THEN
+              KERR(1) = 'ANOMALIE1 etoile19: PAS DE TETRAEDRE DE DEPART'
+            ELSE
+              KERR(1) = 'ANOMALY1 etoile19: NO TETRAHEDRON to START'
+            ENDIF
+            CALL LEREUR
+            WRITE(IMPRIM,*) 'etoile19: Point NPt=',NPt,
+     %                      ' XYZD=',(PTXYZD(K,NPt),K=1,4)
+            IERR   = 12
+            NBSTNT = N0 - NOSOM1 + 1
+            GOTO 9999
+         ENDIF
+         GOTO 120
+
+C        ******************************************************************
+C        FORMATION DE L'ETOILE DES TETRAEDRES DU POINT NPt
+C        ******************************************************************
+ 150     NOTET0 = NOTET1
+         CALL ETOIPT19( NPt,    QTEAME, ARETGR, NOTET0,  NOTET1,
+     %                  MXSOMM, PTXYZD, NPSOFR,
+     %                  HEXAPAVE,NBIPAV,ECHPAV, N1SPAVE, NOPTSUIV,
+     %                  MXTETR, N1TEVI, NOTETR, NUDTETR, N1TETS,
+     %                  INFACO, MXFACO, LEFACO, IVOLTE,  NVOLTE,
+     %                  MXETOI, N1FEOC, N1FEVI, NFETOI,
+     %                  NBTEET, NOTEET, VOLET1, QUAMIN, QUAMOY,
+     %                  MXSTPE, NBSTPE, NOSTPE, IERR )
+
+C        TRAITEMENT DES EVENTUELS PROBLEMES:
+C        -----------------------------------
+C        NBSTPE EST LE NOMBRE DE SOMMETS FRONTIERE PERDUS LORS DE LA
+C        TETRAEDRISATION DU POINT NPt
+         IF( NBSTPE .GT. 0 ) THEN
+
+C           LES SOMMETS PERDUS DANS LA TETRAEDRISATION DE L'ETOILE
+C           DU POINT NPt SERONT TETRAEDRISES A LA FIN
+            DO K = 1, NBSTPE
+               NST = NOSTPE( K )
+               IF( NPSOFR( NST ) .GT. 0 ) THEN
+C                 POINT NON SUPPRIMABLE
+                  NOSOM2 = NOSOM2 + 1
+                  LISPOI( NOSOM2 ) = NST
+               ENDIF
+            ENDDO
+
+         ENDIF
+
+         IF( NBTEET .EQ. -1 ) THEN
+
+C           POINT NPt SUPPRIME DES POINTS A TETRAEDRISER
+            NBSTNT = NBSTNT + 1
+            GOTO 100
+
+         ELSE IF( NBTEET .EQ. -100 ) THEN
+
+C           POINT NPt IDENTIFIE A UN SOMMET DE LA TETRAEDRISATION
+            NDERPt = NPt
+            GOTO 100
+
+         ELSE IF( NBTEET .EQ. -101 ) THEN
+
+C           POINT NPt PAS SUPPRIMABLE
+            IF( NPSOFR(NPt) .GT. 0 ) THEN
+               WRITE(IMPRIM,10150) NPt, (PTXYZD(kk,NPt),kk=1,4), NBTEET
+            ENDIF
+
+10150       FORMAT(' etoile19 : NPt=',I8,' XYZD=',
+     %               4G15.7, ' est NON TETRAEDRISE.  NBTEET=',I7)
+
+C           PERMUTATION DU POINT LISPOI(N0)=NPt AVEC UN POINT ELOIGNE
+ 160        NPERMU = NPERMU - 1
+            IF( NPERMU .GT. N0 ) THEN
+               IF( LISPOI(NPERMU) .LE. 0 .OR.
+     %             LISPOI(NPERMU) .EQ. NPt ) THEN
+C                 POINT DE PERMUTATION INUTILISABLE
+                  GOTO 160
+               ENDIF
+
+C              LE POINT N0 EST PERMUTE AVEC NPERMU POUR ETRE TRAITE PLUS TARD
+C              SAUVEGARDE DU NO DES 2 POINTS POUR EVITER UNE BOUCLE INFINIE
+               IF( LISPOI(NPERMU) .EQ. NN0 .AND. LISPOI(N0).EQ.NN1 )THEN
+
+C                 BOUCLE INFINIE ENTRE CES 2 POINTS
+                  WRITE(IMPRIM,*)
+                  WRITE(IMPRIM,10159) NN0, NN1
+                  IERR = 5
+                  NBLGRC(NRERR) = 1
+                  WRITE(KERR(2)(1:8),'(I8)') NN0
+                  WRITE(KERR(3)(1:8),'(I8)') NN1
+                  IF( LANGAG .EQ. 0 ) THEN
+                   KERR(1)='etoile19: PERMUTATION INFINIE DES 2 POINTS '
+     %                      // KERR(2)(1:8) // '-' //KERR(3)(1:8)
+                  ELSE
+                   KERR(1)='etoile19: INFINITE PERMUTATION of 2 POINTS '
+     %                      // KERR(2)(1:8) // '-' //KERR(3)(1:8)
+                  ENDIF
+                  CALL LEREUR
+                  NBSTNT = NOSOM2 - MIN(NN0,NN1)
+                  GOTO 9999
+
+               ENDIF
+
+10159          FORMAT(' etoile19: PERMUTATION INFINIE des 2 POINTS',2I8)
+
+               WRITE(IMPRIM,10160) LISPOI(N0), LISPOI(NPERMU)
+10160          FORMAT(' etoile19: PERMUTATION LISPOI des POINTS',I8,
+     %                ' et',I8)
+
+               NN0 = LISPOI(N0)
+               NN1 = LISPOI(NPERMU)
+               LISPOI(N0)     = LISPOI(NPERMU)
+               LISPOI(NPERMU) = NPt
+               IERR = 0
+               GOTO 110
+            ENDIF
+
+         ENDIF
+
+C        POINT NPt TETRAEDRISE. IL DEVIENT LE DERNIER POINT TRAITE
+C        ---------------------------------------------------------
+         IF( IERR .EQ. 0 ) THEN
+            NDERPt = NPt
+         ENDIF
+
+C        TRAITEMENT DU POINT SUIVANT A TETRAEDRISER
+C        ------------------------------------------
+         TRACTE = TRACTE0
+         GOTO 100
+
+      ENDIF
+C=======================================================================
+C     FIN DU JEU DE POINTS NOSOM1 A NOSOM2
+C=======================================================================
+ccc 9999 IF( LANGAG .EQ. 0 ) THEN
+ccc         WRITE(IMPRIM,*) 'etoile19 Fin: TETRAEDRISATION des POINTS',
+ccc     %                    NOSOM1,' a', NOSOM2,' et',NBSTNT,
+ccc     %                   ' POINTS NON TETRAEDRISES'
+ccc      ELSE
+ccc         WRITE(IMPRIM,*) 'etoile19 END: TETRAEDRIZATION of POINTS',
+ccc     %                    NOSOM1,' to', NOSOM2,' and',NBSTNT,
+ccc     %                   ' NOT TETRAHEDRIZED POINTS'
+ccc      ENDIF
+
+C     VERIFICATION les POINTS NPt sont ils VRAIMENT TETRAEDRISES?
+ 9999 DO NPt = NOSOM1, NOSOM2
+         NN0 = N1TETS(NPt)
+         NN1 = NPSOFR(NPt)
+         IF( NN0 .LE. 0 .AND. NN1 .GT. 0 ) THEN
+            WRITE(IMPRIM,*) 'etoile19: Probleme POINT',NPt,
+     %                      ' N1TETS(',NPt,')=',NN0,
+     %                      ' NPSOFR(',NPt,')=',NN1
+         ENDIF
+      ENDDO
+
+      RETURN
+      END

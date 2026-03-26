@@ -1,0 +1,12 @@
+variable TRACCONT 'Drawings of STRESS' entier
+(  1 : 'CASE NUMBER of STRESS'
+,  2 : 'CM of the MAX ARROW'
+,  3 : 'STRESS SCALE of 1 CM' 
+,  4 : 'PREVIOUS SCALE'
+,  5 : 'COLOR of MESH''s EDGES'
+,  6 : 'DRAWING TYPE of EDGES'
+,  7 : 'COLOR of ARROWS'
+,  8 : 'THICKNESS of ARROWS'
+,  9 : 'Printing of STRESS'
+, 15 : 'Drawing of STRESSES in ALL FE'
+, 16 : 'Drawing of STRESSES in PLANE SECTION' ) ;

@@ -1,0 +1,5 @@
+Le nombre d'aretes doit etre superieur a 0 et au nombre
+de points de controle ou interpolation dans la direction
+d'un cote du triangle de BEZIER.
+
+Ce nombre est egal sur les 3 cotes du triangle de BEZIER

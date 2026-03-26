@@ -1,0 +1,40 @@
+#!/bin/bash
+cbl <<%
+util
+nomjob
+%
+cbl <<%
+util
+ouvrms
+%
+cbl <<%
+util
+suitms
+%
+cbl <<%
+util
+tamcdc
+%
+cbl <<%
+util
+tamcds
+%
+cbl <<%
+util
+tamsou
+%
+cbl <<%
+util
+tuer
+%
+cbl <<%
+flui
+tfluide
+%
+cbinit
+cbmail
+cbelas
+cbther
+cbflui
+cbnlse
+cbpoba

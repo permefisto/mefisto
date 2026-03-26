@@ -1,0 +1,18 @@
+La fonction utilisateur (de nom quelconque a choisir)
+donne une valeur reelle a l'ORDONNEE finale du POINT
+de coordonnees initiales x,y,z. 
+
+Elle doit comprendre dans cet ordre les 4 parametres  no_tranche x y z
+et etre programmee selon la grammaire du langage LU
+(cf documentation et exemples du menu de depart ) 
+
+A l'execution, les parametres no_tranche x y z sont initialises.
+Ils peuvent ou non servir a calculer la valeur de l'ORDONNEE.
+            
+EXEMPLE:
+deffonc ORDONNEE( no_tranche , x , y , z ) ; 
+   si    (no_tranche>2) et (no_tranche<=5)
+   alors  ORDONNEE = x + y + 1;
+   sinon  ORDONNEE = x + z + 2;
+   finsi;  
+finfonc; 

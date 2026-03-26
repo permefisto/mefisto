@@ -1,0 +1,236 @@
+{ ======================================================================= }
+{ MEFISTO Software      : December 2, 2021 version                        }
+{ USER's  Name          : Alain Perronnet                                 }
+{ Project Name          : Air around 3 DENNIS in a box: the OBJECT Mesh   }
+{                         3 Dennis TRIANGULATION before MOUTHs EXTRACTION }
+{ Date                  : December 2, 2021 11h 08m                        }
+{ ======================================================================= }
+DefVar Pi,              DegRad; 
+       Pi=atan(1.) * 4; DegRad = Pi / 180; {Conversion degrees -> Radians}
+
+DefVar Hight, WishEdge;
+       Hight = 2.8;      { meter }
+       WishEdge = 0.05;  { meter }
+
+DefVar xmin; xmin= -2.5;
+DefVar ymin; ymin= -2.25;
+DefVar zmin; zmin=  0.0;
+
+DefVar xmax; xmax= 3.5;
+DefVar ymax; ymax= 2.25;
+DefVar zmax; zmax= Hight;
+
+DefVar xmin_DENNIS; xmin_DENNIS= -0.225969;
+DefVar ymin_DENNIS; ymin_DENNIS= -0.351256;
+DefVar zmin_DENNIS; zmin_DENNIS=  0.0;
+
+DefVar xmax_DENNIS; xmax_DENNIS= 0.224773;
+DefVar ymax_DENNIS; ymax_DENNIS= 0.289920;
+DefVar zmax_DENNIS; zmax_DENNIS= 1.860307;
+
+DefVar D1MOUTH_X,      D1MOUTH_Y,       D1MOUTH_Z;
+       D1MOUTH_X=0.18; D1MOUTH_Y=-0.03; D1MOUTH_Z=1.615; { XYZ D1 Mouth coordinates }
+
+DefVar distance; distance=1.0;  { meter mouth DENNIS i to mouth DENNIS j }
+
+DefVar D2MOUTH_X; D2MOUTH_X=D1MOUTH_X + distance * cos(-20*DegRad);
+DefVar D2MOUTH_Y; D2MOUTH_Y=D1MOUTH_Y + distance * sin(-20*DegRad);
+DefVar D2MOUTH_Z; D2MOUTH_Z=D1MOUTH_Z;
+
+DefVar D3MOUTH_X; D3MOUTH_X=D1MOUTH_X + distance * cos(40*DegRad);
+DefVar D3MOUTH_Y; D3MOUTH_Y=D1MOUTH_Y + distance * sin(40*DegRad);
+DefVar D3MOUTH_Z; D3MOUTH_Z=D1MOUTH_Z;
+
+{ Radius of Circle DENNIS 1 2 3 }
+DefVar RC123;   RC123 = distance / 2 / cos(30*DegRad);
+
+20;    { PRECISION to IDENTIFY 2 POINTS }
+ 1; 1e-4; { EPSXYZ LOIN DE ZERO }
+ 2; 1e-5; { EPZERO PRET DE ZERO }
+@;
+
+0;     { WISHED EDGE LENGTH>0 by DEFAULT }
+       { LENGTH by DEFAULT of MESH EDGES? }
+ WishEdge;
+@;
+
+4; { RESTORATION of VOLUME TETRAHEDRIZATION already done }
+ d123_r_te; { NAME of the VOLUME }
+ I;            { MAPPING NAME in LEXICON ~>TRANSFO }
+ 10;           { INPUT DATA of XYZSOMMET & NSEF TMS }
+ readf xyznsef.v.d123_r_te;  { lower characters }
+@;
+
+3; { SURFACES EXTRACTION from VOLUME TETRAHEDRA ----------}
+ SInlet; i;    { in LEXICON ~>TRANSFO }
+ 37;           { EXTRACT SURFACE FROM FACES OF A VOLUME }
+ d123_r_te; { in LEXICON ~>VOLUME }
+               { NAME of FUNCTION }
+ DefFunc SInlet(x,y,z);
+   SInlet=x<xmin+0.0001;
+ EndFunc;
+ SInlet;       { in LEXICON ~>FONCTION }
+ 1;            { BOUNDARY FACES }
+
+ SOutlet; i;   { in LEXICON ~>TRANSFO }
+ 37;           { EXTRACT SURFACE FROM FACES OF A VOLUME }
+ d123_r_te; { in LEXICON ~>VOLUME }
+               { NAME of FUNCTION }
+ DefFunc SOutlet(x,y,z);
+   SOutlet=x>xmax-0.0001;
+ EndFunc;
+ SOutlet;      { in LEXICON ~>FONCTION }
+ 1;            { BOUNDARY FACES }
+
+ STop; i;      { in LEXICON ~>TRANSFO }
+ 37;           { EXTRACT SURFACE FROM FACES OF A VOLUME }
+ d123_r_te; { in LEXICON ~>VOLUME }
+               { NAME of FUNCTION }
+ DefFunc STop(x,y,z);
+   STop=z>zmax-0.0001;
+ EndFunc;
+ STop;         { in LEXICON ~>FONCTION }
+ 1;            { BOUNDARY FACES }
+
+ Sbottom; i;   { in LEXICON ~>TRANSFO }
+ 37;           { EXTRACT SURFACE FROM FACES OF A VOLUME }
+ d123_r_te; { in LEXICON ~>VOLUME }
+               { NAME of FUNCTION }
+ DefFunc Sbottom(x,y,z);
+   Sbottom=z<zmin+0.0001;
+ EndFunc;
+ Sbottom;       { in LEXICON ~>FONCTION }
+ 1;             { BOUNDARY FACES }
+
+ Sleft; i;      { in LEXICON ~>TRANSFO }
+ 37;            { EXTRACT SURFACE FROM FACES OF A VOLUME }
+ d123_r_te;     { in LEXICON ~>VOLUME }
+                { NAME of FUNCTION }
+ DefFunc Sleft(x,y,z);
+   Sleft=y<ymin+0.0001;
+ EndFunc;
+ Sleft;         { in LEXICON ~>FONCTION }
+ 1;             { BOUNDARY FACES }
+
+ Sright; i;     { in LEXICON ~>TRANSFO }
+ 37;            { EXTRACT SURFACE FROM FACES OF A VOLUME }
+ d123_r_te; { in LEXICON ~>VOLUME }
+                { NAME of FUNCTION }
+ DefFunc Sright(x,y,z);
+   Sright=y>ymax-0.0001;
+ EndFunc;
+ Sright;        { in LEXICON ~>FONCTION }
+ 1;             { BOUNDARY FACES }
+
+
+ DENNIS1_XY; i; { DENNIS1 + some TRIANGLES of XY-plane }
+ 37;            { EXTRACT SURFACE FROM FACES OF A VOLUME }
+ d123_r_te;     { in LEXICON ~>VOLUME }
+                { NAME of FUNCTION }
+ DefFunc DENNIS1_XY(x,y,z);
+   DENNIS1_XY=x>xmin_DENNIS-0.0001 and  x<xmax_DENNIS+0.0001 and
+              y>ymin_DENNIS-0.0001 and  y<ymax_DENNIS+0.0001 and
+              z>zmin_DENNIS-0.0001 and  z<zmax_DENNIS+0.0001;
+ EndFunc;
+ DENNIS1_XY;    { in LEXICON ~>FONCTION }
+ 1;             { BOUNDARY FACES }
+
+Xyplane1; i;    { Triangles of XY-Plane without thus of DENNIS1_XY }
+ 36;            { EXTRACT SURFACE FROM A CRITERION(x,y,z) }
+                { NAME of SURFACE }
+ DENNIS1_XY;    { in LEXICON ~>SURFACE }
+                { NAME of FUNCTION }
+ Sbottom;       { in LEXICON ~>FONCTION }
+ 
+SDENNIS1; i;    { All DENNIS1 triangles without thus of XY-plane }
+ 40;            { EXTRACT SURFACE = SURFACE1 - SURFACE2 }
+                { NAME of SURFACE1 }
+ DENNIS1_XY;    { in LEXICON ~>SURFACE }
+                { NAME of SURFACE2 }
+ Xyplane1;      { in LEXICON ~>SURFACE }
+
+
+ DENNIS2_XY; i; { DENNIS2 + some TRIANGLES of XY-plane }
+ 37;            { EXTRACT SURFACE FROM FACES OF A VOLUME }
+ d123_r_te;     { in LEXICON ~>VOLUME }
+                { NAME of FUNCTION }
+ DefFunc DENNIS2_XY(x,y,z);
+   DENNIS2_XY= sqrt((x-D2MOUTH_X)**2 + (y-D2MOUTH_Y)**2) < (RC123+0.0001)
+               and  z>zmin_DENNIS-0.0001  and  z<zmax_DENNIS+0.0001;
+ EndFunc;
+ DENNIS2_XY;    { in LEXICON ~>FONCTION }
+ 1;             { BOUNDARY FACES }
+
+Xyplane2; i;    { Triangles of XY-Plane without thus of DENNIS2_XY }
+ 36;            { EXTRACT SURFACE FROM A CRITERION(x,y,z) }
+                { NAME of SURFACE }
+ DENNIS2_XY;    { in LEXICON ~>SURFACE }
+                { NAME of FUNCTION }
+ Sbottom;       { in LEXICON ~>FONCTION }
+ 
+SDENNIS2; i;    { All DENNIS2 triangles without thus of XY-plane }
+ 40;            { EXTRACT SURFACE = SURFACE1 - SURFACE2 }
+                { NAME of SURFACE1 }
+ DENNIS2_XY;    { in LEXICON ~>SURFACE }
+                { NAME of SURFACE2 }
+ Xyplane2;      { in LEXICON ~>SURFACE }
+
+
+ DENNIS3_XY; i; { DENNIS3 + some TRIANGLES of XY-plane }
+ 37;            { EXTRACT SURFACE FROM FACES OF A VOLUME }
+ d123_r_te;     { in LEXICON ~>VOLUME }
+                { NAME of FUNCTION }
+ DefFunc DENNIS3_XY(x,y,z);
+   DENNIS3_XY= sqrt((x-D3MOUTH_X)**2 + (y-D3MOUTH_Y)**2) < (RC123+0.0001)
+               and  z>zmin_DENNIS-0.0001  and  z<zmax_DENNIS+0.0001;
+ EndFunc;
+ DENNIS3_XY;    { in LEXICON ~>FONCTION }
+ 1;             { BOUNDARY FACES }
+
+Xyplane3; i;    { Triangles of XY-Plane without thus of DENNIS3_XY }
+ 36;            { EXTRACT SURFACE FROM A CRITERION(x,y,z) }
+                { NAME of SURFACE }
+ DENNIS3_XY;    { in LEXICON ~>SURFACE }
+                { NAME of FUNCTION }
+ Sbottom;       { in LEXICON ~>FONCTION }
+ 
+SDENNIS3; i;    { All DENNIS3 triangles without thus of XY-plane }
+ 40;            { EXTRACT SURFACE = SURFACE1 - SURFACE2 }
+                { NAME of SURFACE1 }
+ DENNIS3_XY;    { in LEXICON ~>SURFACE }
+                { NAME of SURFACE2 }
+ Xyplane3;      { in LEXICON ~>SURFACE }
+
+@;
+@;
+
+90; { EXPORT to SOFTWARES a PLSVO MESH }
+ 1;             { a File Mefisto xyznsef.s.sdennis1 of a PLSV }
+ 3;             { SURFACE }
+ SDENNIS1;      { NAME of the SURFACE }
+ 0;             { WITHOUT TANGENTS }
+ @;
+@;
+
+90; { EXPORT to SOFTWARES a PLSVO MESH }
+ 1;             { a File Mefisto xyznsef.s.sdennis2 of a PLSV }
+ 3;             { SURFACE }
+ SDENNIS2;      { NAME of the SURFACE }
+ 0;             { WITHOUT TANGENTS }
+ @;
+@;
+
+90; { EXPORT to SOFTWARES a PLSVO MESH }
+ 1;             { a File Mefisto xyznsef.s.sdennis3 of a PLSV }
+ 3;             { SURFACE }
+ SDENNIS3;      { NAME of the SURFACE }
+ 0;             { WITHOUT TANGENTS }
+ @;
+@;
+
+CLOSE;
+
+{ At this level the mouth 1 2 3 must be SUPPRESSED of sdennis 1 2 3
+  with the option 29 of SURFACE* with a mouse and menus 
+  and extraction SDENNIS - SDENNIS_MOUTH_SUPPRESSED TO OBTAIN
+  sdenis 1 2 3 and mouth 1 2 3 }

@@ -1,0 +1,309 @@
+{ ============================================================================== }
+{ MEFISTO Software     : May 5, 2023 version                                     }
+{ USER's  Name         : Alain Perronnet                                         }
+{ Project Name         : pan3d temperature Centre=200 degrees TemperatureInit=20 }
+{ Date                 : 2023/05/06  11h 21m                                     }
+{ ============================================================================== }
+
+DefVar  PrISA;       PrISA=101325; { Pa International Standard Atmosphere Pressure at sea level}
+DefVar  G_Pesantor;  G_Pesantor=0; { or 9.8;  m/s/s EARTH PESANTOR ACCELERATION }
+{                 If G_Pesantor= 0    ONLY the DYNAMIC        PRESSURE is computed }
+{                              = 9.8  the DYNAMIC+HYDROSTATIC PRESSURE is computed }
+
+DefVar  CoGrPr;  CoGrPr=1.; {PRESSURE GRADIENT Coefficient CoGrPr in NAVIER-STOKES Equations}
+
+DefVar  RhoAir;         RhoAir=1.2922;        { kg/m3 Wet Air Massic Density at sea level}
+DefVar  HeatMassCpAir;  HeatMassCpAir=1004;   { Air Heat Massic Capacity J/K/kg }
+DefVar  HeatConducAir;  HeatConducAir=0.0262; { Air Heat Conductivity W/m/K }
+DefVar  CobousAir;      CobousAir=172E-6;     { Air Thermal Expansion 1/K
+                                               (L - L0)/L0 = CobousAir (Temp - Temp0)
+                                                OR BOUSSINESQ Coefficient of formula
+                                               (Rho0-Rho)/Rho = CobousAir (Temp-Temp0) }
+DefVar  MuAir;   MuAir=18.5E-6;      { kg/(m.s) or Pa.s Air Dynamic Viscosity=18.5 10-6}
+DefVar  NuAir;   NuAir=MuAir/RhoAir; { m2/s Air Kinematic Viscosity=15.6 10-6 a 20 C}
+
+
+DefVar  RhoWater;         RhoWater=1000;        { kg/m3 Water Massic Density }
+DefVar  HeatMassCpWater;  HeatMassCpWater=4185; { Water Heat Massic Capacity J/K/kg at >100C }
+DefVar  HeatConducWater;  HeatConducWater=0.6;  { Water Heat Conductivity W/m/K }
+DefVar  CobousWater;      CobousWater=206E-6;   { Water Thermal Expansion 1/K at 20C
+                                                 (L - L0)/L0 = CobousWater (Temp - Temp0)
+                                                  OR BOUSSINESQ Coefficient of formula
+                                                 (Rho0-Rho)/Rho = CobousWater (Temp-Temp0) }
+DefVar  MuWater;   MuWater=1.01E-3;   { kg/(m.s) or Pa.s Water Dynamic Viscosity at 20 C }
+DefVar  NuWater;   NuWater=MuWater/RhoWater; { m2/s Water Kinematic Viscosity=15.6 10-6 at 20 C}
+
+DefVar  G_Contour; G_Contour= 50; { HEAT TRANSFER Coefficient -> Exterior AIR Contour of pan }
+DefVar  G_Top;     G_Top    =150; { HEAT TRANSFER Coefficient -> Exterior AIR and top of pan }
+
+
+DefVar  RhoClassic;         RhoClassic=1;        { kg/m3 Classic Massic Density }
+DefVar  HeatMassCpClassic;  HeatMassCpClassic=1; { Classic Heat Massic Capacity J/K/kg }
+DefVar  HeatConducClassic;  HeatConducClassic=1; { Classic Heat Conductivity W/m/K }
+DefVar  CobousClassic;      CobousClassic=1;     { Classic Thermal Expansion 1/K }
+DefVar  MuClassic;          MuClassic=1;    { kg/(m.s) or Pa.s Classic Dynamic Viscosity}
+DefVar  NuClassic;  NuClassic=MuClassic/RhoClassic; { m2/s Classic Kinematic Viscosity }
+
+DefVar  TemperatureInit; TemperatureInit=20; { Celsius Degree Initial Temperature }
+DefVar  TempExtAir; TempExtAir=20; { Exterior AIR Celsius Degree Temperature }
+DefVar  TempMaxCentre;   TempMaxCentre=200;  { Celsius Degree Temperature MAX at Centre point}
+
+
+{ Initial Temperature }
+DefFunc InitTemperature(t,x,y,z,ntyplsv,nuplsv);
+ InitTemperature = TemperatureInit;
+EndFunc;
+
+{ Initial Pressure (Hydrostatic) is Z-linear from 0 at z=Height to RhoWater*G_Pesantor at z=0 }
+{ Pressure  1 Pa = 10-5 bar  Force/Surface  }
+DefFunc InitPressure(t,x,y,z,ntyplsv,nuplsv);
+  InitPressure = RhoWater * G_Pesantor * (zmax-z);
+EndFunc;
+
+{ Temperature on Circle line only depends of TIME }
+DefFunc TemperatureCircle(t,x,y,z,ntyplsv,nuplsv,temper0);
+  if t<=10 then
+    TemperatureCircle = TemperatureInit + 18 * t;
+  else
+    TemperatureCircle = TempMaxCentre=200;
+  endif
+EndFunc;
+
+{ Temperature on Centre point only depends of TIME }
+DefFunc TemperatureCentre(t,x,y,z,ntyplsv,nuplsv,temper0);
+  if t<=10 then
+    TemperatureCentre = TemperatureInit + 23 * t;
+  else
+    TemperatureCentre = TempMaxCentre;
+  endif
+EndFunc;
+
+{ Temperature on surface Bottom depends of TIME }
+{  Parabolic Temperature
+DefFunc TemperatureBottom(t,x,y,z,ntyplsv,nuplsv,temper0);
+ DefVar TempCen, TempCir, TempMid, Ra;
+ TempCen = TemperatureCentre(t,x,y,z,ntyplsv,nuplsv,temper0);
+ TempCir = TemperatureCircle(t,x,y,z,ntyplsv,nuplsv,temper0);
+ TempMid = ( Tempcen + Temptop ) / 1.9;
+ Ra = sqrt( x*x + y*y );
+ TemperatureBottom = TempCen  * (0.1-Ra) * (0.1-Ra) / 0.01
+                   + TempMid  *   Ra     * (0.1-Ra) / 0.0025
+                   + TempCir  *   Ra     *    Ra    / 0.01 ;
+EndFunc;
+}
+
+{ Linear Temperature
+DefFunc TemperatureBottom(t,x,y,z,ntyplsv,nuplsv,temper0);
+ DefVar TempCen, TempCir, Ra;
+ TempCen = TemperatureCentre(t,x,y,z,ntyplsv,nuplsv,temper0);
+ TempCir = TemperatureCircle(t,x,y,z,ntyplsv,nuplsv,temper0);
+ Ra = sqrt( x*x + y*y );
+ TemperatureBottom = ( TempCen * (0.1-Ra) + TempCir * Ra ) / 0.1 ;
+EndFunc;
+}
+
+{ Constant Temperature on surface bottom but depends of TIME }
+DefFunc TemperatureBottom(t,x,y,z,ntyplsv,nuplsv,temper0);
+  TemperatureBottom =TemperatureCentre(t,x,y,z,ntyplsv,nuplsv,temper0);
+EndFunc;
+
+2; { DATA INPUT of the FLUID ========================================= }
+
+ { VOLUME: Cylinder_Tetra -------------------------}
+ 1;         { Rho  Massic Density }
+ 1;         { Mass Constant }
+ RhoWater;  { DMASSE Value of the constant mass density of WATER }
+ 
+ 2;         { Mhu Dynamic FLUID VISCOSITY }
+ 1;         { CONSTANT Dynamic Viscosity }
+ MuWater;   { FLUID DYNAMIC VISCOSITY value }
+
+ 8;         { CoGrPr PRESSURE GRADIENT Coefficient in Navier-Stokes Equations }
+ 1;         { Constant Pressure Coefficient }
+ CoGrPr;    { Pressure Gradient Coefficient Value }
+
+ 3;         { FOmega INTERIOR FORCE = Rho -G_Pesantor Y-axis  NEWTON= kg m / s2}
+ 1;         { constant force }
+ 3;         { NBCOF0 number of force components }
+ 1;  2; 3;  { NUCOF0(1..NBCOF0) number of each force component }
+ 0;  0; -RhoWater * G_Pesantor; { FORCE(1..NBCOF0) Value of X Y Z-force component reel }
+{With G_Pesantor=0 ONLY DYNAMIC PRESSURE (without HYDROSTATIC PRESSURE) will be computed}
+
+10;          { CoBOUS BOUSSINESQ THERMAL EXPANSION Coefficient }
+ 1;          { Constant BOUSSINESQ Coefficient }
+CobousWater; { Value    BOUSSINESQ Coefficient of formula
+                 Rho0-Rho = Rho CobousWater (Temp-Temp0)  <=>
+                 L   - L0 = L0  CobousWater (Temp-Temp0)  (where L=Length) }
+
+ 4 ;      { INITIAL VELOCITY ..........}
+ 1;       { velocity fixed by a constant }
+ 3;       { NBCOBV number of components of the fixed velocity }
+ 1; 2; 3; { NUCOBV(1..NBCOBV) nb of each component of the fixed velocity}
+ 0; 0; 0; { Value of INITIAL VELOCITY }
+
+ 5;       { INITIAL PRESSURE ......... }
+-1;       { INITIAL PRESSURE Function }
+ InitPressure; { Initial Pressure Function NAME  }
+ @;
+
+ { SURFACE Bottom -------------------------------------------}
+ 2;       { Fixation of the VELOCITY }
+ 1;       { constant fixed velocity }
+ 3;       { NBCOBV number of components of the fixed velocity }
+ 1; 2; 3; { NUCOBV(1..NBCOBV) nb of each component of the fixed velocity}
+ 0; 0; 0; { BLVITE(1..NBCOBV) Value of the fixation }
+ @;
+
+ { SURFACE Contour ------------------------------------------}
+ 2;       { Fixation of the VELOCITY }
+ 1;       { constant fixed velocity }
+ 3;       { NBCOBV number of components of the fixed velocity }
+ 1; 2; 3; { NUCOBV(1..NBCOBV) nb of each component of the fixed velocity}
+ 0; 0; 0; { BLVITE(1..NBCOBV) Value of the fixation }
+ @;
+
+ { SURFACE Top -----------------------------------------------}
+ 2;       { Fixation of the VELOCITY }
+ 1;       { constant fixed velocity }
+ 3;       { NBCOBV number of components of the fixed velocity }
+ 1; 2; 3; { NUCOBV(1..NBCOBV) nb of each component of the fixed velocity}
+ 0; 0; 0; { BLVITE(1..NBCOBV) Value of the fixation }
+ @;
+
+ { LINE Circle -----------------------------------------------}
+ @;
+
+ { POINT Z ---------------------------------------------------}
+ 3;    { Fixation of the PRESSURE }
+ 1;    { constant PRESSURE }
+ 0;    { BLPRES Value of the PRESSURE }
+ @;
+@;
+
+
+3; { GIVE the INPUT HEAT DATA of FLUID =================================== }
+
+{ VOLUME Cylinder_Tetra ------------------------------------}
+{ already done }
+ 1;           { Rho MASS Density }
+ 1;           { Constant MASS density }
+ RhoWater;    { DMASSE 'Value of the density of MASS' reel ; }
+
+ 7;           { Cp MASSIC HEAT CAPACITY Density }
+ 1;           { constant massic heat }
+ HeatMassCpWater;  { CHAMAS 'value of the massic heat' reel ; }
+
+ 2;                { [A] HEAT CONDUCTIVITY }
+ 3;                { 2D HOMOGENEOUS ISOTROPIC material }
+ HeatConducWater;  { CONDUC 'constant material conductivity' reel ; }
+
+{ already done }
+10;            { CoBOUS BOUSSINESQ THERMAL EXPANSION Coefficient }
+ 1;            { Constant BOUSSINESQ Coefficient }
+ CobousWater;  { Value    BOUSSINESQ Coefficient of formula
+                 Rho0-Rho = Rho CobousWater (Temp-Temp0)  <=>
+                 L   - L0 = L0  CobousWater (Temp-Temp0)  (where L=Length) }
+
+ 8;               { INITIAL TEMPERATURE ............. }
+-1;               { INITIAL TEMPERATURE FUNCTION }
+ InitTemperature; { Name of the INITIAL TEMPERATURE FUNCTION }
+@;
+
+ { SURFACE Bottom --------------------------------------------- }
+ 3;                 { CONTACT Fixation of TEMPERATURE }
+ -1;                { fixed temperature FUNCTION }
+ TemperatureBottom; { TEMPERATURE FUNCTION NAME }
+@;
+
+ { SURFACE Contour Fourier-Robin condition ---------------------}
+ 1;         { HEAT TRANSFER COEFFICIENT RIGHT of PAN<->AIR }
+ 1;         { Constant }
+ G_Contour; { HEAT TRANSFER COEFFICIENT Value  W/M2/K }
+
+ 2;         { FGamma SOURCE  Boundary IMPOSED FLUX }
+ 1;         { Constant }
+ G_Contour * TempExtAir; { Fourier-Robin condition second term }
+@;
+
+ { SURFACE Top  Fourier-Robin condition ------------------------}
+ 1;         { HEAT TRANSFER COEFFICIENT top WATER<->AIR }
+ 1;         { Constant }
+ G_Top;     { HEAT TRANSFER COEFFICIENT Value  W/M2/K }
+
+ 2;         { FGamma SOURCE  Boundary IMPOSED FLUX }
+ 1;         { Constant }
+ G_Top * TempExtAir; { Fourier-Robin condition second term }
+@;
+
+ { LINE Circle -------------------------------------------------}
+ 3;                 { CONTACT Fixation of TEMPERATURE }
+ -1;                { fixed temperature FUNCTION }
+ TemperatureCircle; { TEMPERATURE FUNCTION NAME }
+@;
+
+ { POINT: Z ---------------------------------------------------- }
+@;
+@;
+
+
+20;    { PRECISION DATA  to STOP the CONJUGATE GRADIENT ITERATIONS }
+ 1e-9; { EPSILON   VALUE to STOP the CONJUGATE GRADIENT ITERATIONS }
+@;
+
+9;  { UNSTEADY BOUSSINESQ HEAT NAVIER-STOKES SOLVER ==================== }
+    1; { CROUT FACTORIZATION L D tL }
+       { or 2; 1;  CONJUGATE GRADIENT CONDENSED MATRIX }
+
+DefVar InitTime,        FinalTime;
+       InitTime=0.0;    FinalTime=30;
+DefVar StepTime,        StoreStepTime;
+       StepTime=0.01;
+       StoreStepTime=10*StepTime; { computed vectors are stored on files}
+
+   InitTime;  { INITIAL TIME }
+   FinalTime; { FINAL   TIME }
+   StepTime;  { CONSTANT STEP of TIME (seconds) }
+  (FinalTime-InitTime)/StoreStepTime;  { NUMBER of STORED SOLUTION VECTORS }
+@;
+@;
+@;
+
+10; { DRAWING of VELOCITIES PRESSURES ===========================}
+
+ 2;  { NUMBER of SURFACES to DRAW }
+ top; bottom;  { NAME of the SURFACE to DRAW }
+
+ 2;   { INITIAL and FINAL TIME of SOLUTIONS VECTORS to DRAW }
+ InitTime;   { INITIAL TIME }
+ FinalTime;  { FINAL   TIME }
+
+2; { The VELOCITY is drawn with ARROWS }
+ 90; { DRAWING of VELOCITY ARROWS }
+ 2;  { Drawing of all VELOCITY ARROWS }
+ 90; { Continue the DRAWING }
+ @;
+ @;
+ @;
+
+ 5;{ The TEMPERATURE drawings }
+ 1; { ISO-SOLUTION SURFACES }
+ 1; { Number of ISO-VALUES? }
+ 4; { NUMBER of ISOTHERMS? }
+ 2; { REGULAR ISO between MIN MAX }
+ 90;{ Continue the DRAWING }
+ @;
+ @;
+ @;
+
+1;{ The PRESSURE drawings }
+ 1; { ISO-PRESSURE SURFACES }
+ 1; { Number of ISO-VALUES }
+ 4; { NUMBER of ISOTHERMS? }
+ 2; { REGULAR ISO between MIN MAX }
+ 90;{ Continue the DRAWING }
+ @;
+ @;
+ @;
+ @;
+
+CLOSE;

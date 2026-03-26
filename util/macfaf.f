@@ -1,0 +1,57 @@
+      SUBROUTINE MACFAF( MOFACE, MXFACE, LFACES,  L1FAFR, NBFAFR )
+C+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+C BUT :    RECONSTRUCTION DU CHAINAGE DES FACES FRONTALIERES C-A-D
+C -----    DES FACES APPARTENANT A UN SEUL ELEMENT FINI
+C          Subroutine inverse de mazfaf.f
+C
+C ENTREES:
+C --------
+C MOFACE : NOMBRE DE MOTS PAR FACE     DANS LFACES
+C MXFACE : NOMBRE DE FACES DECLARABLES DANS LFACES
+C
+C MODIFIE:
+C --------
+C LFACES : TABLEAU DES FACES DU MAILLAGE
+C          LFACES(1,I)= NO DU 1-ER  SOMMET DE LA FACE
+C          LFACES(2,I)= NO DU 2-EME SOMMET > 1-ER  SOMMET
+C          LFACES(3,I)= NO DU 3-EME SOMMET DE LA FACE
+C          LFACES(4,I)= NO DU 4-EME SOMMET DE LA FACE
+C                       0 SI TRIANGLE
+C          LFACES(5,I)= CHAINAGE HACHAGE SUR FACE SUIVANTE
+C                       1 CUBE EST UN TETRA ou PENTA ou HEXAEDRE
+C          LFACES(6,I)= NUMERO DU 1-ER  CUBE CONTENANT CETTE FACE
+C                       0 SI PAS DE 1-ER  CUBE
+C          LFACES(7,I)= NUMERO DU 2-EME CUBE CONTENANT CETTE FACE
+C                       ou CHAINAGE SUR LA FACE FRONTALIERE SUIVANTE
+C          Cette valeur est remise a zero dans ce sous programme
+C          (et sera regeneree dans un call macfaf.f)
+C          LFACES(8,I)= NUMERO DE LA FACE A TANGENTE DANS LE TABLEAU NUTGFA
+C
+C SORTIES:
+C --------
+C L1FAFR : NO DANS LE TABLEAU LFACES DE LA PREMIERE FACE FRONTIERE
+C NBFAFR : NOMBRE DE FACES FRONTALIERES
+C+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+C AUTEUR : ALAIN PERRONNET LJLL UPMC & St PIERRE du PERRAY     Mars 2010
+C23456---------------------------------------------------------------012
+      INTEGER  LFACES(MOFACE,MXFACE)
+C
+      L1FAFR = 0
+      NBFAFR = 0
+      DO 10 N=1,MXFACE
+C
+C        ELIMINATION DES FACES NON UTILISEES DANS MNFACE
+         IF( LFACES(1,N) .EQ. 0 ) GOTO 10
+C
+C        ELIMINATION DES FACES APPARTENANT A 2 CUBES
+         IF( LFACES(7,N) .NE. 0 ) GOTO 10
+C
+C        LA FACE EST FRONTALIERE. ELLE EST CHAINEE AVEC LA PRECEDENTE
+         LFACES(7,N) = L1FAFR
+         L1FAFR      = N
+         NBFAFR      = NBFAFR + 1
+C
+ 10   CONTINUE
+C
+      RETURN
+      END

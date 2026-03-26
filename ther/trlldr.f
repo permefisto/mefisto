@@ -1,0 +1,577 @@
+      SUBROUTINE TRLLDR( NOPROJ, NDIM,   KNOMOB, MODECO,
+     %                   NBTYEL, MNELEM, MNPOGE, NDPGST,
+     %                   NCAS0,  NCAS1,  NTDL,   NTYP,   TEMPER, dptemp,
+     %                   TMIN,   NOEMIN, NCAMIN, TMAX,   NOEMAX, NCAMAX,
+     %                   TIMES )
+C+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+C BUT :  TRACER DE LA TEMPERATURE LE LONG D'UNE DROITE DEFINIE PAR 2 XYZ
+C -----  DANS UN OBJET 3D
+C
+C ENTREES:
+C --------
+C NOPROJ  : TYPE DE PROJECTION 0 CI-DESSOUS FIXE LA COORDONNEE A ZERO
+C          -1 PAS DE PROJECTION TRAITEMENT en XYZ NORMAL
+C           1 : 'X Y Z 0 0 0'
+C           2 : 'X Y 0 U 0 0'
+C           3 : 'X 0 0 U V 0'
+C           4 : '0 0 0 U V W'
+C NDIM   : DIMENSION DE L'ESPACE DE L'OBJET =3 SINON RETOUR
+C KNOMOB : NOM DE L'OBJET
+C MODECO : MODE DE TRACE DES VECTEURS DU TMS D'ADRESSE MNDEPL
+C          =1 CE SONT DEPLACEMENTS
+C          =2 CE SONT DES MODES PROPRES
+C          =3 CE SONT DES PRESSIONS P1 A PARTIR D'UNE INTERPOLATION
+C             SOIT en 2D P2 SOIT P1+BULLE P3 OU en 3D P1 OU en 3D P2
+C          =4 CE SONT DES ERREURS AUX NOEUDS D'UN MAILLAGE
+C NBTYEL : LE NOMBRE DE TYPES D'ELEMENTS DANS CETTE TOPOLOGIE
+C MNTOPO : ADRESSE MCN DU TABLEAU TOPOLOGIE
+C MNELEM : ADRESSE MCN DES TABLEAUX ELEMENTS DE CETTE TOPOLOGIE
+C MNPOGE : ADRESSE MCN DU TABLEAU POINTS GEOMETRIQUES DE L'OBJET
+C MNNOEU : ADRESSE MCN DU TABLEAU NOEUDS D'INTERPOLATION DU MAILLAGE
+C NDPGST : CODE TRAITEMENT DES SOMMETS POINTS NOEUDS DU MAILLAGE
+C          0 : NOEUDS=POINTS=SOMMETS
+C          1 : NOEUDS=POINTS#SOMMETS
+C          2 : NOEUDS#POINTS=SOMMETS
+C          3 : NOEUDS#POINTS#SOMMETS
+C NCAS0  : NUMERO DU PREMIER CAS A TRACER PARMI LES NCAS0:NCAS1 CAS
+C NCAS1  : NUMERO DU DERNIER CAS A TRACER PARMI LES NCAS0:NCAS1 CAS
+C NCAS0:NCAS1 : NCAS1-NCAS0+1 NOMBRE DE CAS OU VECTEURS TEMPERATURE
+C NTDL   : NOMBRE TOTAL DE DEGRES DE LIBERTE
+C NTYP   : =0 EMPLOI de TEMPER
+C         =1  EMPLOI de dptemp
+C TEMPER : TABLEAU DES NTDL * NCAS0:NCAS1 TEMPERATURES
+C dptemp : TABLEAU DES NCAS0:NCAS1 TABLEAU(NTDL) TEMPERATURES
+C TMIN   : TEMPERATURE MINIMALE DES NCAS0:NCAS1 CAS
+C NOEMIN : NUMERO DU NOEUD OU LA TEMPERATURE EST MINIMALE
+C NCAMIN : NO DU CAS DE 1 A NCAS0:NCAS1 OU LA TEMPERATURE EST MINIMALE
+C TMAX   : TEMPERATURE MAXIMALE DES NCAS0:NCAS1 CAS
+C NOEMAX : NUMERO DU NOEUD OU LA TEMPERATURE EST MAXIMALE
+C NCAMAX : NO DU CAS DE 1 A NCAS0:NCAS1 OU LA TEMPERATURE EST MAXIMALE
+C TIMES  : TEMPS DU CALCUL DES NCAS0:NCAS1 VECTEURS
+C+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+C AUTEUR :ALAIN PERRONNET ANALYSE NUMERIQUE LJLL UPMC PARIS OCTOBRE 2003
+C MODIFS :ALAIN PERRONNET TEXAS A & M UNIVERSITY            JUILLET 2005
+C MODIFS :ALAIN PERRONNET LJLL UPMC & ST PIERRE DU PERRAY   OCTOBRE 2010
+C MODIFS :ALAIN PERRONNET LJLL UPMC & ST PIERRE DU PERRAY   FEVRIER 2013
+C MODIFS :ALAIN PERRONNET Saint Pierre du Perray               MARS 2021
+C MODIFS :ALAIN PERRONNET Saint PIERRE du PERRAY               MARS 2023
+C23456---------------------------------------------------------------012
+      PARAMETER   ( LIGCON=0, LIGTIR=1 )
+      include"./incl/langue.inc"
+      include"./incl/gsmenu.inc"
+      include"./incl/a_objet__topologie.inc"
+      include"./incl/a___npef.inc"
+      include"./incl/a___vecteur.inc"
+      include"./incl/a___xyzpoint.inc"
+      include"./incl/a___xyznoeud.inc"
+      include"./incl/a___face.inc"
+      include"./incl/a___aretefr.inc"
+      include"./incl/ponoel.inc"
+      include"./incl/donele.inc"
+      include"./incl/trvari.inc"
+      include"./incl/mecoit.inc"
+      include"./incl/ctemps.inc"
+      include"./incl/traaxe.inc"
+C
+      COMMON / UNITES / LECTEU,IMPRIM,INTERA,NUNITE(29)
+      include"./incl/pp.inc"
+      COMMON            MCN(MOTMCN)
+      REAL              RMCN(1)
+      EQUIVALENCE      (MCN(1),RMCN(1))
+      CHARACTER*(*)     KNOMOB
+      CHARACTER*24      NOMFGIF
+      DOUBLE PRECISION  TEMPER(NTDL,NCAS0:NCAS1),
+     %                  TMINCAS, TMAXCAS, V
+      type typ_dptab
+         DOUBLE PRECISION, dimension(:), pointer :: dptab
+      end type typ_dptab
+      type( typ_dptab ),dimension(NCAS0:NCAS1) :: dptemp
+      REAL              TIMES(NCAS0:NCAS1)
+      REAL              HXMIMX(6,2)
+      REAL              XYZ1(3),   XYZ2(3), R
+      DOUBLE PRECISION  XYZ1DR(3), XYZ2DR(3), D, XYZD(3,2)
+      DOUBLE PRECISION  DIR(3), NORMALE(3)
+
+      IF( NDIM .NE. 3 ) RETURN
+C
+C     NOM DU FICHIER VIDEO  SELON MODECO // 'lldr'
+      CALL VIDEONM( MODECO, 'lldr', NOMFGIF )
+C
+      MOREE2 = MOTVAR(6)
+C
+      NBSGPT = 0
+      MOSGPT = 0
+      MNSGPT = 0
+      MNVGPT = 0
+C
+      MNSOLE = 0
+      MNPILE = 0
+      MNVALS = 0
+      MNSTEF = 0
+      MNBARY = 0
+      MNNUFA = 0
+      NBCOUL = NDCOUL - N1COUL + 1
+C
+C     NBPOI  NOMBRE DE POINTS DU MAILLAGE DE L'OBJET
+      NBPOI  = MCN(MNPOGE+WNBPOI)
+C
+C     NBCOOR NOMBRE DE COORDONNEES D'UN POINT
+      NBCOOR = MCN(MNPOGE+WBCOOP)
+C
+C     MIN ET MAX DES COORDONNEES DES POINTS DU MAILLAGE DE L'OBJET
+      CALL MAJEXT( MNPOGE )
+      CALL MIMXPT( NBCOOR, NBPOI, RMCN(MNPOGE+WYZPOI), HXMIMX )
+C
+C     LONGUEUR DE LA DIAGONALE
+      DIAGON = SQRT( (HXMIMX(1,2)-HXMIMX(1,1))**2
+     %             + (HXMIMX(2,2)-HXMIMX(2,1))**2
+     %             + (HXMIMX(3,2)-HXMIMX(3,1))**2 )
+C
+C     PAR DEFAUT PROFIL DE LA TEMPERATURE SELON Z
+      NORMALE(1) = 0
+      NORMALE(2) = 0
+      NORMALE(3) = 1D0
+C
+C     PARAMETRES DES TAILLES DES TABLEAUX. A MODIFIER EVENTUELLEMENT
+C     MXSOUI : MAXIMUM D INTERVALLES DU SEGMENT UNITE
+C              MXSOUI ** 3 SOUS-TETRAEDRES CREES AU PLUS DANS UN TETRAEDRE
+      MXSOUI = 4
+C
+C     CREATION OU REDECOUVERTE DU TMS OBJET>>>FACE
+      CALL HACHOB( KNOMOB, 4, NTFAOB, MNFAOB, IERR )
+      IF( IERR .NE. 0 ) GOTO 9900
+C
+C     CREATION DU HACHAGE DES ARETES DES FACES FRONTALIERES DE L'OBJET
+      CALL HACHAF( KNOMOB, 0, NTFAOB, MNFAOB,
+     %             NTAFOB, MNAFOB, I )
+C
+C     MXPILE : MAXIMUM DE SOUS-TETRAEDRES GENERES DANS L EF REFERENCE
+      MXPILE = 6 * MXSOUI * MXSOUI * MXSOUI
+C     NPILE(4,MXPILE) PILE DES 4 SOMMETS DE CHAQUE SOUS-TETRAEDRE
+      MOPILE = 4 * MXPILE
+      CALL TNMCDC( 'ENTIER', MOPILE, MNPILE )
+C
+C     SOLEL (MXNOEL,NCAS0:NCAS1) SOLUTION AUX NOEUDS D'UN EF DU MAILLAGE
+C     FBASE (MXNOEL,3) VALEUR DES FONCTIONS DE BASE EN 3 POINTS
+C     COPOE (MXPOEL,3) COORDONNEES DES POINTS DE L EF COURANT
+      MOSOLE = MXNOEL*(NCAS1-NCAS0+1)+MXNOEL*3+MXPOEL*3
+      CALL TNMCDC( 'REEL2', MOSOLE, MNSOLE )
+      MNFBAS = MNSOLE + MOREE2 * MXNOEL*(NCAS1-NCAS0+1)
+      MNCOPO = MNFBAS + MOREE2 * MXNOEL*3
+C
+C     MXSOMM : MAXIMUM DE SOMMETS DES SOUS-TETRAEDRES DE L EF REFERENCE
+      MXSOMM = ( MXSOUI + 1 ) ** 3
+C
+C     VALST (NDIM+2,MXSOMM) COORDONNEES AUX SOMMETS DES SOUS-TETRAEDRES
+C                           DE L'EF DE REFERENCE
+C                           VALEUR DE LA SOLUTION AUX SOMMETS DES SOUS-TETRAEDRE
+C                           VALEUR DE LA COORDONNEE NOAXE SUR L'EF COURANT
+      MOVALS = 4 * MXSOMM
+      CALL TNMCDC( 'REEL',  MOVALS, MNSTEF )
+      CALL TNMCDC( 'REEL2', MOVALS, MNVALS )
+C
+C     COEFFICIENT D'AMPLIFICATION PAR DEFAUT
+      AMPLI = 1.0
+C
+C     PALETTE ARC EN CIEL
+      CALL PALCDE( 11 )
+C
+C     RE-INITIALISER LA DONNEE DES DROITES
+C     ------------------------------------
+C     PAR DEFAUT LA DROITE EST LA DIAGONALE DU RECTANGLE SECTION
+C     DU PLAN Z=MILIEU DE L'HEXAEDRE ENGLOBANT
+ 80   XYZ1DR(1) = HXMIMX(1,1)
+      XYZ1DR(2) = HXMIMX(2,1)
+      XYZ1DR(3) =(HXMIMX(3,1) + HXMIMX(3,2))/2
+C
+      XYZ2DR(1) = HXMIMX(1,2)
+      XYZ2DR(2) = HXMIMX(2,2)
+      XYZ2DR(3) =(HXMIMX(3,1) + HXMIMX(3,2))/2
+C
+ 90   IF( MNSGPT .GT. 0 ) CALL TNMCDS( 'REEL', MOSGPT, MNSGPT )
+      NBSGPT = 0
+      MOSGPT = 0
+      MNSGPT = 0
+C
+C     LECTURE DES DONNEES
+C     ===================
+ 100  CALL LIMTCL( 'profdroi', NMTCL )
+      IF( NMTCL .LT.  0 ) GOTO 9900
+      IF( NMTCL .EQ. 80 ) GOTO   80
+      IF( NMTCL .EQ. 90 ) THEN
+          IF( NBSGPT .LE. 0 ) THEN
+             GOTO 200
+          ELSE
+             GOTO 300
+          ENDIF
+      ENDIF
+C
+C     LECTURE DES XYZ DES 2 POINTS DEFINISSANT LA DROITE
+C     ..................................................
+      IF( NMTCL .EQ. 1 ) THEN
+C        XYZ DU 1-ER POINT DE LA DROITE
+         CALL INVITE( 133 )
+         NCVALS = 0
+         CALL LIRXYZ( NCVALS, XYZ1 )
+         IF( NCVALS .LT. 0 ) RETURN
+C
+C        XYZ DU 2-EME POINT DE LA DROITE
+         CALL INVITE( 134 )
+         NCVALS = 0
+         CALL LIRXYZ( NCVALS, XYZ2 )
+         IF( NCVALS .LT. 0 ) RETURN
+C
+C        PASSAGE EN DOUBLE PRECISION
+         XYZ1DR(1) = XYZ1(1)
+         XYZ1DR(2) = XYZ1(2)
+         XYZ1DR(3) = XYZ1(3)
+C
+         XYZ2DR(1) = XYZ2(1)
+         XYZ2DR(2) = XYZ2(2)
+         XYZ2DR(3) = XYZ2(3)
+         GOTO 90
+C
+      ELSE IF( NMTCL .EQ. 5 ) THEN
+C
+C        COULEUR des ARETES de la FRONTIERE
+C        ..................................
+         CALL LIMTCL( 'couleur0' , I )
+         IF( I .EQ. -1 ) GOTO 100
+         IF( I .EQ. -2 ) THEN
+C           COULEUR INVISIBLE A NE PAS TRACER
+            NCOAFR = -2
+         ELSE IF( I .EQ. 0 ) THEN
+C           LA COULEUR NOIRE
+            NCOAFR = 0
+         ELSE
+            NCOAFR = N1COEL + I
+         ENDIF
+         GOTO 100
+C
+      ELSE IF( NMTCL .EQ. 6 ) THEN
+C
+C        TYPE du TRAIT des ARETES de la FRONTIERE
+C        ........................................
+         CALL LIMTCL( 'typtrait' , I )
+         IF( I .EQ. -1 ) GOTO 100
+         NTLAFR = I
+         GOTO 100
+C
+      ELSE IF( NMTCL .EQ. 7 ) THEN
+C
+C        COULEUR des ARETES dans le plan de SECTION
+C        ..........................................
+         CALL LIMTCL( 'couleur0' , I )
+         IF( I .EQ. -1 ) GOTO 100
+         IF( I .EQ. -2 ) THEN
+C           COULEUR INVISIBLE A NE PAS TRACER
+            NCOAPL = -2
+         ELSE IF( I .EQ. 0 ) THEN
+C           LA COULEUR NOIRE
+            NCOAPL = 0
+         ELSE
+            NCOAPL = N1COEL + I
+         ENDIF
+         GOTO 100
+C
+      ELSE IF( NMTCL .EQ. 8 ) THEN
+C
+C        TYPE du TRAIT des ARETES dans le PLAN de SECTION
+C        ................................................
+         CALL LIMTCL( 'typtrait' , I )
+         IF( I .EQ. -1 ) GOTO 100
+         NTLAPL = I
+         GOTO 100
+C
+      ELSE IF( NMTCL .EQ. 9 ) THEN
+C
+C        DIRECTION DU PROFIL
+C        ...................
+         CALL LIMTCL( 'dirprofi', NMTCL1 )
+         IF( NMTCL1 .LT. 0 ) GOTO 100
+         GOTO( 110, 120, 130, 140, 140, 140 ),NMTCL1
+C        AXE DES X
+ 110     NORMALE(1) = 1D0
+         NORMALE(2) = 0
+         NORMALE(3) = 0
+         GOTO 100
+C        AXE DES Y
+ 120     NORMALE(1) = 0
+         NORMALE(2) = 1D0
+         NORMALE(3) = 0
+         GOTO 100
+C        AXE DES Y
+ 130     NORMALE(1) = 0
+         NORMALE(2) = 0
+         NORMALE(3) = 1D0
+         GOTO 100
+C        ORTHOGONAL A LA DROITE ET X
+ 140     DO 142 K=1,3
+C           TANGENTE A LA DROITE
+            XYZD(K,1) = XYZ2DR(K) - XYZ1DR(K)
+            XYZD(K,2) = 0
+ 142     CONTINUE
+C        AXE NMTCL1-3
+         XYZD(NMTCL1-3,2) = 1D0
+C        AXE ORTHOGONAL A LA DROITE ET A L'AXE PRESCRIT
+         CALL PROVEC( XYZD(1,1), XYZD(1,2), NORMALE )
+         D = SQRT( NORMALE(1)**2 + NORMALE(2)**2 + NORMALE(3)**2 )
+         IF( D .LT. DIAGON * 1D-3 ) THEN
+C           LA DROITE EST PARALLELE A L'AXE
+            NORMALE(1) = 0
+            NORMALE(2) = 0
+            NORMALE(3) = 1D0
+         ELSE
+C           NORMALISATION A 1 DU VECTEUR NORMAL
+            NORMALE(1) = NORMALE(1) / D
+            NORMALE(2) = NORMALE(2) / D
+            NORMALE(3) = NORMALE(3) / D
+         ENDIF
+         GOTO 100
+C
+      ELSE IF( NMTCL .EQ. 15 ) THEN
+C
+C        COEFFICIENT d'AMPLIFICATION
+C        ...........................
+ 144     CALL INVITD( 'AMPLIFICATION' )
+         NCVALS = 0
+         CALL LIRRSP( NCVALS, R )
+         IF( NCVALS .LT. 0 ) RETURN
+         IF( R .EQ. 0 ) GOTO 144
+         AMPLI = R
+         GOTO 90
+C
+      ENDIF
+      GOTO 100
+C
+C     CREATION DU TABLEAU DES XYZ DES SOMMETS INTERSECTION AVEC LES TETRAEDRES
+ 200  IF( MNSGPT .GT. 0 ) CALL TNMCDS( 'REEL', MOSGPT, MNSGPT )
+      MXSGPT = MAX( 2048, NBPOI/10 )
+      MOSGPT = 3 * 2 * MXSGPT + 2 * (NCAS1-NCAS0+1) * MXSGPT
+      CALL TNMCDC( 'REEL', MOSGPT, MNSGPT )
+      MNVGPT = MNSGPT + 3 * 2 * MXSGPT
+C
+C     LE NOMBRE D'ENTIERS PAR ARETE FRONTALIERE
+      MOARFR = MCN( MNAFOB + WOARFR )
+C     LA MAJORATION DU NOMBRE DES ARETES FRONTALIERES
+      MXARFR = MCN( MNAFOB + WXARFR )
+C     LE NUMERO DANS LAREFR DE LA PREMIERE ARETE FRONTALIERE
+      L1ARFR = MCN( MNAFOB + W1ARFR )
+C     LE NOMBRE D'ARETES FRONTALIERES DANS LE CHAINAGE
+      NBARFR = MCN( MNAFOB + WBARFR )
+      NBF0 = 0
+C
+C     CALCUL DES SEGMENTS D'INTERSECTION DROITE-TETRAEDRES DU MAILLAGE
+C     ----------------------------------------------------------------
+C     NOMBRE DE SEGMENTS D'INTERSECTION A TRACER
+      NBSGPT = 0
+C
+C     BOUCLE SUR LES DIFFERENTS TYPES D'ELEMENTS FINIS DU MAILLAGE
+      DO 250 I = 0, NBTYEL-1
+C
+C        L'ADRESSE MCN DU DEBUT DU TABLEAU NPEF DE CE TYPE D'EF
+         MNELE = MCN( MNELEM + I )
+C
+C        LE NUMERO DU TYPE DES ELEMENTS FINIS
+         NUTYEL = MCN( MNELE + WUTYEL )
+         IF( NUTYEL .EQ. 30 ) GOTO 250
+C        PAS DE TRACE DES 6CUBES, SEULEMENT DES 3Q1C EXTRAITS
+C
+C        LE NOMBRE DE TELS ELEMENTS
+         NBELEM = MCN(MNELE + WBELEM )
+C
+C        LES CARACTERISTIQUES DE L'ELEMENT FINI
+         CALL ELTYCA( NUTYEL )
+C
+C        L'ADRESSE MCN DU TABLEAU 'NPEF' POUR CE TYPE D'EF
+         MNPGEL = MNELE + WUNDEL
+         IF( NDPGST .GE. 2 ) THEN
+            MNPGEL = MNPGEL + MCN(MNELE+WBELEM) * MCN(MNELE+WBNDEL)
+         ENDIF
+C
+C        CALCUL DES FACES APPARTENANT AUX DROITES PROFIL DE L'OBJET
+         CALL TRLLD3( XYZ1DR, XYZ2DR, NDIM, NTDL, NCAS0, NCAS1,
+     %                NTYP,   TEMPER, dptemp,
+     %                NUTYEL, NBELEM,
+     %                NBNOE,  MCN(MNELE+WUNDEL), NBPOE, MCN(MNPGEL),
+     %                NBCOOR, NBPOI,  MCN(MNPOGE+WYZPOI),
+     %                MXSOMM, MCN(MNSOLE), MCN(MNCOPO),
+     %                MXPILE, MCN(MNPILE),
+     %                MCN(MNSTEF), MCN(MNVALS), MCN(MNFBAS),
+     %                MXSGPT, NBSGPT, RMCN(MNSGPT), RMCN(MNVGPT) )
+
+ 250  CONTINUE
+      IF( NBSGPT .LE. 0 ) GOTO 100
+C
+      IF( LANGAG .EQ. 0 ) THEN
+       WRITE(IMPRIM,*) 'NOMBRE DE COUPLES DE PT INTERSECTION=',NBSGPT
+       WRITE(IMPRIM,*) 'NOMBRE D''ARETES FRONTALIERES       =',NBARFR
+      ELSE
+      WRITE(IMPRIM,*)'NUMBER of COUPLES of INTERSECTION POINT=',NBSGPT
+      WRITE(IMPRIM,*)'NUMBER of BOUNDARY EDGES               =',NBARFR
+      ENDIF
+C
+      NBF = NBSGPT + NBARFR
+      IF( NBF0 .GT. 0 .AND. NBF0 .NE. NBF ) THEN
+         IF( MNBARY .GT. 0 ) CALL TNMCDS( 'REEL',   NBF0, MNBARY )
+         IF( MNNUFA .GT. 0 ) CALL TNMCDS( 'ENTIER', NBF0, MNNUFA )
+      ENDIF
+      IF( MNBARY .EQ. 0 ) CALL TNMCDC( 'REEL',   NBF, MNBARY )
+      IF( MNNUFA .EQ. 0 ) CALL TNMCDC( 'ENTIER', NBF, MNNUFA )
+      NBF0 = NBF
+C
+C     LA PALETTE ARC EN CIEL
+      CALL PALCDE(11)
+C
+C     --------------------------------------------------------------
+C     OPTIONS DE LA VISEE POUR VOIR L'OBJET ET LES DROITES DE PROFIL
+C     --------------------------------------------------------------
+ 300  CALL VISE3D( NMTCL )
+      IF( NMTCL .LT. 0 ) GOTO 100
+C
+      IF( NCAS0 .EQ. NCAS1 ) THEN
+         IF( LANGAG .EQ. 0 ) THEN
+            WRITE(IMPRIM,*) 'CAS TRACE', NCAS0
+         ELSE
+            WRITE(IMPRIM,*) 'DRAWN CASE', NCAS0
+         ENDIF
+      ENDIF
+C
+C     INITIALISATION DE L'ORBITE ZOOM DEPLACEMENT
+      IF( LORBITE .NE. 0 ) THEN
+         CALL ORBITE0( NOTYEV )
+         IF( NOTYEV .EQ. 0 ) GOTO 300
+      ENDIF
+C
+C     FORMATION DES TABLEAUX NUMERO DES FACES ET DISTANCE AXONOMETRIQUE
+C     POUR LES FACES DES COUPLES DE POINTS D'INTERSECTION DROITE-TETRAEDRES
+C     ---------------------------------------------------------------------
+ 400  CALL TRSGPT( NBSGPT, RMCN(MNSGPT),  MCN(MNNUFA), RMCN(MNBARY) )
+C
+C     FORMATION DES TABLEAUX NUMERO DES FACES ET DISTANCE AXONOMETRIQUE
+C     POUR LES ARETES FRONTALIERES DE L'OBJET
+C     ATTENTION LES ARETES FRONTALIERES DOIVENT OBLIGATOIREMENT ETRE APRES
+C               LES FACES DES DROITES DE PROFIL
+      CALL TRBARF( MOARFR, MXARFR, L1ARFR, MCN(MNAFOB+WAREFR),
+     %             NBCOOR, RMCN(MNPOGE+WYZPOI),
+     %             NBSGPT, MCN(MNNUFA), RMCN(MNBARY))
+C
+C     LE TRI PAR TAS DE CETTE DISTANCE
+C     LA FACE LA PLUS PROCHE EST LA PREMIERE
+      CALL TRITRP( NBF, RMCN(MNBARY), MCN(MNNUFA) )
+C
+      DO NCAS = NCAS0, NCAS1
+C
+C        TRACE EFFECTIF DE LA SOLUTION SUR LA DROITE D'INTERSECTION
+C        ----------------------------------------------------------
+C        L'ECRAN PIXELS EST EFFACE (PAS DE SCINTILLEMENT)
+         CALL EFFACEMEMPX
+C
+C        TRACE DES AXES 3D
+         NETAXE = 0
+         CALL TRAXE3
+C
+C        TEMPS DE CALCUL DU VECTEUR NCAS
+         TEMPS = TIMES( NCAS )
+C
+c        DEFINITION DE LA DIRECTION DE TRACE ET LA
+C        PONDERATION PAR L'AMPLIFICATION ET SELON TMAX-TMIN
+         IF( TMIN .NE. TMAX ) THEN
+            D = AMPLI / (TMAX-TMIN) * DIAGON*0.5D0
+         ELSE
+            D = 1D0
+         ENDIF
+         DO K=1,3
+            DIR(K) = NORMALE(K) * D
+         ENDDO
+C
+C        TRACE LA SOLUTION SUR LA DROITE D'INTERSECTION
+         CALL T3LLDR( DIR,    TMIN, TMAX,
+     %                NBARFR, NBSGPT, MCN(MNNUFA),
+     %                MOARFR, MXARFR, MCN(MNAFOB+WAREFR),
+     %                NBCOOR, RMCN(MNPOGE+WYZPOI),
+     %                RMCN(MNSGPT), NCAS0, NCAS1, NCAS, RMCN(MNVGPT) )
+C
+C        TRACE DU POINT DE TEMPERATURE MINIMALE ET MAXIMALE
+         CALL XVTYPETRAIT( LIGCON )
+C
+C        TRACE DU POINT DE TEMPERATURE MINIMALE ET MAXIMALE
+         CALL XVTYPETRAIT( LIGCON )
+         IF( NCAS .EQ. NCAMIN ) THEN
+            MN = MNPOGE + WYZPOI + NBCOOR*NOEMIN -NBCOOR
+            CALL SYMBOLE3D( NCNOIR, RMCN(MN), '.Min' )
+         ENDIF
+         IF( NCAS .EQ. NCAMAX ) THEN
+            MN = MNPOGE + WYZPOI + NBCOOR*NOEMAX -NBCOOR
+            CALL SYMBOLE3D( NCNOIR, RMCN(MN), '.Max' )
+         ENDIF
+
+C        CALCUL DU MIN ET MAX DU CAS NCAS
+         TMINCAS = 1D100
+         TMAXCAS =-1D100
+         IF( NTYP .EQ. 0 ) THEN
+            DO K = 1,NTDL
+               V = TEMPER( K, NCAS )
+               IF( V .LT. TMINCAS ) TMINCAS = V
+               IF( V .GT. TMAXCAS ) TMAXCAS = V
+            ENDDO
+         ELSE
+            DO K = 1,NTDL
+               V = dptemp( NCAS )%dptab( K )
+               IF( V .LT. TMINCAS ) TMINCAS = V
+               IF( V .GT. TMAXCAS ) TMAXCAS = V
+            ENDDO
+         ENDIF
+
+         TMINC = REAL( TMINCAS )
+         TMAXC = REAL( TMAXCAS )
+C
+C        TRACE LA LEGENDE DU TRACE DES ZONES DE COULEURS
+         CALL LEGZONTH( KNOMOB, NCAS, NOPROJ, MODECO,
+     %                  TMIN,   TMAX, TMINC,  TMAXC )
+C
+C        MISE SUR FICHIER NomfgifBoImage.xwd puis NomfgifNoImage.jpg
+C        DE LA PIXMAP de la FENETRE X11 ACTUELLE
+         CALL VIDEO1( NOMFGIF, NCAS )
+C
+C        ATTENDRE POUR LIRE LE TRACE
+         CALL ATTENDSEC( TEMP2TRAC )
+C
+C        FIN DE LA BOUCLE SUR LES CAS
+      ENDDO
+C
+C     CONSTRUIRE le FICHIER VIDEO Nomfic.gif A PARTIR DES FICHIERS
+C     CONSTRUITS de NOMS NomfgifNoImag.jpg
+C     ------------------------------------------------------------
+      CALL VIDEOFIN( NOMFGIF )
+C
+C     RETOUR POUR UNE NOUVELLE VISEE
+C     ------------------------------
+      NOUVIS = 1
+      IF( LORBITE .NE. 0 ) THEN
+         IF( NCAS0 .EQ. NCAS1 ) THEN
+C           ORBITE BOUTON ENFONCE et DEPLACE
+            CALL ORBITE1( NOTYEV )
+         ELSE
+C           ORBITE BOUTON ENFONCE et DEPLACE et RELACHE
+            CALL ORBITE3( NOTYEV )
+         ENDIF
+         IF( NOTYEV .EQ. 0 ) GOTO 300
+         GOTO 400
+      ELSE
+C        POUR LIRE LE TRACE AVANT D'AFFICHER UN MENU
+         CALL CLICSO
+      ENDIF
+      GOTO 300
+C
+C     SORTIE DU TRACE de la TEMPERATURE LE LONG DE DROITES
+C     ====================================================
+ 9900 IF( MNBARY .GT. 0 ) CALL TNMCDS( 'REEL',   NBF0,   MNBARY )
+      IF( MNNUFA .GT. 0 ) CALL TNMCDS( 'ENTIER', NBF0,   MNNUFA )
+      IF( MNSOLE .GT. 0 ) CALL TNMCDS( 'REEL2' , MOSOLE, MNSOLE )
+      IF( MNPILE .GT. 0 ) CALL TNMCDS( 'ENTIER', MOPILE, MNPILE )
+      IF( MNSTEF .GT. 0 ) CALL TNMCDS( 'REEL'  , MOVALS, MNSTEF )
+      IF( MNVALS .GT. 0 ) CALL TNMCDS( 'REEL2' , MOVALS, MNVALS )
+      IF( MNSGPT .GT. 0 ) CALL TNMCDS( 'REEL'  , MOSGPT, MNSGPT )
+      RETURN
+      END

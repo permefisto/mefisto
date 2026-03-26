@@ -1,0 +1,69 @@
+deftms ~>>>TRACE 'ATTRIBUTS du trace du MAILLAGE du PLSVO'
+ variable muet DATE 'date de creation du tableau'   reel2  ;
+ variable muet NUTD 'numero du tableau descripteur' entier ;
+ variable NBRCOU 'option NOIR et BLANC ou COULEURS' entier 
+ ( 0: 'NOIR et BLANC'
+ , 1: 'COULEURS' ) ;  
+ variable NCOUCA 'COULEUR des CARACTERES' entier  
+ ( 0: 'noir' , 1: 'rouge' , 2: 'vert' ,    3: 'bleu'
+ , 4: 'cyan' , 5: 'jaune' , 6: 'magenta' , 7: 'blanc'
+ , 8: 'gris_sombre', 9: 'gris_moyen',10: 'gris_clair',11: 'beige'
+ ,12: 'orange',     13: 'saumon',    14: 'rose',      15: 'turquoise' ) ;  
+ variable IAVARE 'avec ou non trace des aretes' entier
+ ( 0: 'PAS de trace des ARETES' 
+ , 1: 'TRACE des ARETES' ) ;  
+ variable PREDUA 'pourcentage de reduction des aretes des lignes' reel ;
+ variable NEPARL 'nombre EPAISSEURS des aretes des lignes' entier ;  
+ variable NCOUAL 'COULEUR des ARETES des LIGNES' entier 
+ ( 0: 'noir' , 1: 'rouge' , 2: 'vert' ,    3: 'bleu'
+ , 4: 'cyan' , 5: 'jaune' , 6: 'magenta' , 7: 'blanc'
+ , 8: 'gris_sombre', 9: 'gris_moyen',10: 'gris_clair',11: 'beige'
+ ,12: 'orange',     13: 'saumon',    14: 'rose',      15: 'turquoise' ) ;  
+ variable IAVFAC 'avec ou non trace des faces' entier
+ ( 0: 'PAS de trace des FACES'
+ , 1: 'TRACE des FACES' ) ;     
+ variable PREDUF 'pourcentage de reduction des faces' reel ;  
+ variable NEPARF 'nombre EPAISSEURS des ARETES des FACES' entier ;  
+ variable NCOUFA 'COULEUR des FACES' entier 
+ ( 0: 'noir' , 1: 'rouge' , 2: 'vert' ,    3: 'bleu'
+ , 4: 'cyan' , 5: 'jaune' , 6: 'magenta' , 7: 'blanc'
+ , 8: 'gris_sombre', 9: 'gris_moyen',10: 'gris_clair',11: 'beige'
+ ,12: 'orange',     13: 'saumon',    14: 'rose',      15: 'turquoise' ) ;  
+ variable NCOUAF 'COULEUR des ARETES des FACES' entier 
+ ( 0: 'noir' , 1: 'rouge' , 2: 'vert' ,    3: 'bleu'
+ , 4: 'cyan' , 5: 'jaune' , 6: 'magenta' , 7: 'blanc'
+ , 8: 'gris_sombre', 9: 'gris_moyen',10: 'gris_clair',11: 'beige'
+ ,12: 'orange',     13: 'saumon',    14: 'rose',      15: 'turquoise' ) ;  
+ variable IAVELO 'avec ou sans eloignement' entier 
+ ( 0: 'PAS d''ELOIGNEMENT' 
+ , 1: 'AVEC ELOIGNEMENT' ) ;
+ variable IAVNSO 'avec ou non trace du numero des SOMMETS' entier
+ ( 0: 'PAS de trace du NUMERO des SOMMETS'
+ , 1: 'TRACE du NUMERO des SOMMETS' ) ; 
+ variable NCONSO 'COULEUR des NUMEROS des SOMMETS' entier
+ ( 0: 'noir' , 1: 'rouge' , 2: 'vert' ,    3: 'bleu'
+ , 4: 'cyan' , 5: 'jaune' , 6: 'magenta' , 7: 'blanc'
+ , 8: 'gris_sombre', 9: 'gris_moyen',10: 'gris_clair',11: 'beige'
+ ,12: 'orange',     13: 'saumon',    14: 'rose',      15: 'turquoise' ) ;  
+ variable IAVNEF 'avec ou non trace du numero des EF' entier
+ ( 0: 'PAS de trace du NUMERO des EF'
+ , 1: 'TRACE du NUMERO des EF' ) ; 
+ variable NCONEF 'COULEUR des NUMEROS des EF' entier
+ ( 0: 'noir' , 1: 'rouge' , 2: 'vert' ,    3: 'bleu'
+ , 4: 'cyan' , 5: 'jaune' , 6: 'magenta' , 7: 'blanc'
+ , 8: 'gris_sombre', 9: 'gris_moyen',10: 'gris_clair',11: 'beige'
+ ,12: 'orange',     13: 'saumon',    14: 'rose',      15: 'turquoise' ) ;  
+ variable IAVTIT 'avec ou non le TITRE du trace' entier
+ ( 0: 'PAS de trace du TITRE'
+ , 1: 'TRACE du TITRE' ) ; 
+ variable LPPOIN 'POIGNEE des POINTS ou NON' entier
+ ( 0: 'NON' , 1: 'OUI' ); 
+ variable LPLIGN 'POIGNEE des LIGNES ou NON' entier
+ ( 0: 'NON' , 1: 'OUI' ); 
+ variable LPSURF 'POIGNEE des SURFACES ou NON' entier
+ ( 0: 'NON' , 1: 'OUI' ); 
+ variable LPVOLU 'POIGNEE des VOLUMES ou NON' entier
+ ( 0: 'NON' , 1: 'OUI' ); 
+ variable LPOBJE 'POIGNEE des OBJETS ou NON' entier
+ ( 0: 'NON' , 1: 'OUI' ); 
+fintms ;

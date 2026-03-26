@@ -1,0 +1,7 @@
+deftms ~>>>MATERIAUX 'material number of every finite element'
+variable muet DATE 'date of creation of the TMS'   reel2  ;
+variable muet NUTD 'number of the descriptor array TD' entier ; 
+variable NBDM   'number of materials' entier ;
+variable NBDMEF 'mesh finite elements number' entier ;
+tableau  NUDMEF(1..NBDMEF) 'material number of every FE' entier ;
+fintms ;

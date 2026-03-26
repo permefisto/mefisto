@@ -1,0 +1,90 @@
+---------------------------------------------------------------------
+NOUVEAUTES du logiciel MEFISTO     Version Francaise     Octobre 2014
+---------------------------------------------------------------------
+Verifier l'installation des fontes X11 par lecture du listage de la
+1-ere execution de Mefisto.
+
+Il est possible d'éxécuter Mefisto selon 3 modes:
+- en BATCH, sans aucune visualisation ou lecture interactive;
+  Par exemple pour mailler, taper la commande
+  echo NomProjet | MAILLER  NomFichierDonnéesMaillage >ListageOuNON
+  ou
+  cd NomProjet; $MEFISTO/pp/ppmail  NomFichierDonnéesMaillage
+  Attention: 99; {Sauver et sortir}
+  doit etre la dernière option du fichier NomFichierDonnéesMaillage
+  car il n'est pas possible de revenir en mode interactif.
+
+- en INTERACTIF, avec tracés graphiques, données au clavier ou souris
+  Par exemple pour mailler, taper la commande
+  MAILLER  >ListageOuNON
+
+- en INTERACTIF, avec tracés graphiques, pas de clavier ou souris
+  Par exemple pour mailler, taper la commande et les données
+  MAILLER  >ListageOuNON
+  NomProjet
+  liref NomFichierDonnéesMaillage ;
+  L'exécution donnera le tracé des maillages définis par le fichier
+  mais sans possibilité d'intervenir.
+
+Il en est de même avec ELASTICER FLUIDER THERMICER NLSER ...
+INITIER peut etre executé en mode BATCH sans NomFichierDonnées
+
+Des directives OPENMP ont été ajoutées dans le codage Fortran.
+Ne pas oublier d'initialiser la variable d'environnement
+OMP_NUM_THREADS (au nombre de threads par processeur:8 pour icore 7 )
+Cf https://www.ann.jussieu.fr/perronnet/OMPLJLL/OMPLJLL.html
+
+MAILLER:
+- Pour l'option 9 de volume (tetraedrisation reguliere), 
+il est possible de tetraedriser plusieurs millions de sommets.
+
+FLUIDER:
+- Resolution du probleme de NAVIER-STOKES instationnaire
+  pour un fluide 2D ou 3D incompressible pour des elements
+  finis de Taylor-Young et Brezzi-Fortin avec un
+  stockage profil des matrices et factorisation de CROUT.
+- Resolution avec OpenMP (execution sur plusieurs processeurs
+  Cf la demande de la commande $MEFISTO/bin/FLUIDER 
+  du nombre de threads disponibles pour l'execution)
+  INSTATIONNAIRE de NAVIER-STOKES 2d et 3d par une
+  methode de pas fractionnaires et factorisation de Cholesky
+  ou gradient conjugue (=> beaucoup moins de memoire utilisee)
+  avec la nouvelle condition aux limites sur la vitesse
+  convectee du fluide instationnaire sortant du domaine option 2;
+- Traces continus de la Vitesse, suivi de particules,
+  de la pression sur des surfaces de section du fluide,
+  du rotationnel de la vitesse...
+- Cf documentation mise a jour: User's Manual of Mefisto-FLUIDER
+- Cf https://www.ljll.math.upmc.fr/perronnet/NSROLL/NSROLL.html
+
+NLSER:
+- Resolution de la complexe NON-LINEAIRE SCHRODINGER Equation
+  i dU(t,X)/dt -Alfa Laplacian U(t,X) + N(t,|U(t,X)|**2) U(t,X)
+  -i OmegaZ ( x dU(t,X)/dy - y dU(t,X)/dx ) = F(t,X)
+  Cf la documentation initiale du menu docf/debunlse.
+  Cf https://www.ljll.math.upmc.fr/perronnet/NLSE/NLSE.html
+
+$MEFISTO/bin.lnx64:
+- Les librairies contiennent certains sous-programmes .f95
+  qui contiennent des directives OpenMP pour execution sur
+  plusieurs processeurs (threads) (Intel Core i7 => 8 maximum)
+- Les commandes terminees par 77 offrent une compilation gfortran
+  sequentielle SANS appel aux directives OpenMP
+  exemple: $MEFISTO/bin/cbflui77 donne  $MEFISTO/pp/ppflui
+  le binaire executable sequentiellement avec la commande FLUIDER
+- Les commandes NON terminees par 77 permettent une compilation
+  gfortran 95 avec l'option -fopenmp  et donc multi-threads
+  exemple: $MEFISTO/bin/cbflui donne  $MEFISTO/pp/ppflui le
+  binaire executable avec multi-threads avec la commande FLUIDER
+
+testa: fichiers de tests
+- Ecoulement de 0 a 120 secondes d'un fluide 2d ou 3d de
+  Reynolds=300 autour d'un rouleau dans une boite avec des
+  elements finis de Brezzi-Fortin (bf) ou Taylor-Hood (th)
+par gradient conjugue: rol2dbfcg, rol3dbfcg, rol2dthcg, rol3dthcg
+- Non Lineaire Schrodinger Equation tests dans testa/nlsgpe
+-----------------------------------------------------------------
+En cas de probleme, prevenir Alain PERRONNET
+E-mail  : alain@perronnet.com
+Internet: https://www.ljll.math.upmc.fr/perronnet
+-----------------------------------------------------------------

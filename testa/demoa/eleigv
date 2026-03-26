@@ -1,0 +1,64 @@
+{ ================================================================ }
+{ MEFISTO software : Version March 2009                            }
+{ USER name        : Alain Perronnet                               }
+{ PROJECT name     : demoa = demo anglaise                         }
+{ DATE             : 10/4/2009                                     }
+{ ================================================================ }
+@;
+@;
+
+1; CARDAN; { NAME of the OBJECT }
+ 
+2; { INPUT of STEADY ELASTICITY PROBLEM }
+
+ { VOLUME: CARDAN STRUCTURAL STEEL ASTM-A36 its ELASTICITY CHARACTERISTICS }
+   1;      { MASS DENSITY }
+   1;      { CONSTANT }
+   7800;   { VALUE of MASS DENSITY kg/m3 }
+
+   2;      { YOUNG MODULUS and POISSON COEFFICIENT }
+   1;      { MATERIAL 3D HOMOGENOUS ISOTROPIC }
+  200E9;   { Pascal or 200 GigaPascal (1GPa=1E9 N/m2) for its YOUNG MODULUS}
+           { STRESSES must be less than its YIELD STRENGTH 
+               which is 250*(1E6 N/m2, MPa)  and
+             400*(1E6 N/m2 or MPa) is its Ultimate Tensile Strength }
+   0.25;   { POISSON COEFFICIENT }
+
+   3;      { DILATATION & TEMPERATURE REFERENCE }
+   0;      { DELETED IF EXISTS }
+ @;
+
+ { SURFACE: CYL4 NO IMPOSED FORCE }
+   1;     { FORCE IMPOSED on BOUNDARY }
+   0;     { DELETED IF EXISTS }
+ @;
+
+ { SURFACE: CYL4_SYM NO IMPOSED FORCE }
+   1;     { FORCE IMPOSED on BOUNDARY }
+   0;     { DELETED IF EXISTS }
+ @;
+
+ { SURFACE: BASE with FIXATION }
+   2;      { FIXATION of FIXED DISPLACEMENTS }
+   1;      { CONSTANT }
+   3;      { NUMBER of FIXED DISPLACEMENT COMPONENTS }
+   1; 2; 3;{ NUMBER of EACH COMPONENT }
+   0; 0; 0;{ IMPOSED FIXATION VALUES of DISPLACEMENTS }
+ @;
+
+@;  {end of PLSV of the OBJECT}
+@;
+
+6;  { EIGENVALUE & VECTORS solver }
+ 1;    { SUB SPACES }
+ 0;    { MINIMUM VALUE of EIGENVALUES to be COMPUTED? }
+ 1E9;  { MAXIMUM VALUE of EIGENVALUES to be COMPUTED? }
+@;
+
+8; {DRAWING OF DISPLACEMENTS AND STRESSES}
+  2;   {DISPLACEMENTS}
+  2;   {AMPLIFICATION OF DISPLACEMENTS}
+  100; {AMPLIFICATION COEFFICIENT}
+  90; 90; {EXECUTE THE DRAWING}
+
+CLOSE;

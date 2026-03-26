@@ -1,0 +1,28 @@
+Les caracteristiques physiques du fluide sont definies ici
+
+1 : Rot Densite de MASSE
+2 : nu la VISCOSITE du FLUIDE
+3 : FOmega les FORCES INTERNES
+4 : Vo les VITESSES INITIALES
+5 : Po les pressions initiales
+
+Toutes peuvent etre definies a partir de constantes ou
+de fonctions ecrites par l'utilisateur
+
+Attention au choix des unites MKSA, ...
+
+Pour le probleme instationnaire, les vitesses et pressions initiales
+peuvent etre definies a partir de
+- le dernier vecteur vitesses-pressions calculees a l'instant initial
+- les constantes ou fonctions vitesses-pressions initiales sur l'objet (le fluide)
+- les constantes ou fonctions vitesses-pressions initiales sur les VSLP
+avec priorite des points, puis des lignes, puis des surfaces, puis des volumes,
+puis de l'objet. Ainsi une vitesse initiale en un point d'un volume sera prioritaire
+sur la vitesse initiale du volume.
+
+Taper @; ou la touche echappement pour passer au volume ou a la surface suivante
+
+Attention:
+Une caracteristique physique saisie est stockee. Pour ne plus l'employer ensuite,
+il est necessaire de la detruire sinon elle est reutilisee lors du
+calcul suivant!

@@ -1,0 +1,52 @@
+      SUBROUTINE INTPDP( NBPOID, POIDS, NDIM, NBPOL, POLYP, DPOLYP,
+     %                   PDP )
+C+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+C BUT :  CALCUL DE L'INTEGRALE P DP dx dy dz sur l'EF de REFERENCE
+C -----  DES POLYNOMES LAGRANGE x DES GRADIENTS DES POLYNOMES LAGRANGE
+C      ( NECESSAIRE POUR LE TETRAEDRE DE TAYLOR HOOD )
+C
+C ENTREES:
+C --------
+C NBPOID : NOMBRE DE  POIDS DE LA FORMULE D'INTEGRATION NUMERIQUE
+C POIDS  : VALEUR DES POIDS DE LA FORMULE D'INTEGRATION NUMERIQUE
+C NDIM   : DIMENSION DE L'ESPACE OU NOMBRE DE COORDONNEES
+C NBPOL  : NOMBRE DE POLYNOMES
+C DPOLYP : DPOLYP(NDIM,NBPOLY,NPI)
+C          DPOLYP( I  , J    , L ) = DPJ/DXI (XL,YL)
+C
+C SORTIE :
+C --------
+C PDP    : INTEGRALE Pi DPj/Dxl dX SUR LE TETRAEDRE UNITE
+C ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+C AUTEUR : ALAIN PERRONNET LJLL UPMC Paris&St PIERRE du PERRAY Juin 2011
+C23456---------------------------------------------------------------012
+      DOUBLE PRECISION POIDS(NBPOID), S
+      DOUBLE PRECISION POLYP(NBPOL,NBPOID)
+      DOUBLE PRECISION DPOLYP(NDIM,NBPOL,NBPOID)
+      DOUBLE PRECISION PDP(NBPOL,NDIM,NBPOL)
+C
+      DO 50 J=1,NBPOL
+         DO 40 L=1,NDIM
+            DO 30 I=1,NBPOL
+                  S = 0D0
+                  DO 10 M=1,NBPOID
+                     S = S + POIDS(M) * POLYP(I,M) * DPOLYP(L,J,M)
+ 10               CONTINUE
+                  IF( ABS(S) .LT. 1D-14 ) S=0D0
+                  PDP(I,L,J) = S
+ 30         CONTINUE
+ 40      CONTINUE
+ 50   CONTINUE
+C
+cccC     AFFICHAGE DES INTEGRALES P2 DP2 dX
+ccc      PRINT 10000
+ccc10000 FORMAT(//'INTEGRALE EXACTE des P2 DP2 dX pour le TETRAEDRE P2')
+ccc      DO 90 J=1,NBPOL
+ccc         DO 80 L=1,NDIM
+ccc            PRINT 10001, (I,L,J,PDP(I,L,J),I=1,NBPOL)
+ccc 80      CONTINUE
+ccc 90   CONTINUE
+ccc10001 FORMAT(2(3I3,1X,D25.17,4X))
+C
+      RETURN
+      END

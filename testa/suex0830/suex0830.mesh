@@ -1,0 +1,44 @@
+{ ==================================================================== }
+{ MEFISTO Software     : November 22-th 2011 Version                   }
+{ USER's Name          : ap                                            }
+{ Project Name         : suex08                                        }
+{ Date                 : 22/11/11   10h 25m 28s                        }
+{ ==================================================================== }
+ 3; { SURFACES faces of the object }
+ { NAME of the SURFACE or ESCAPE? }
+ square; i;{ in LEXICON ~>TRANSFO }
+ 8; { QUADRANGULATION of a SQUARE or a CIRCLE }
+ 1; { 2d SQUARE }
+ 5; { CARCEN 'NUMBER of EDGES in a direction of KERNEL' entier; }
+ 4; { CARCEC 'NUMBER of HOMOTHETIC LAYERS beyond KERNEL' entier; }
+ 5; { CARCEL 'LENGTH of square or circle KERNEL' reel ; }
+13; { CARCED 'TOTAL LENGTH of the square or circle' reel ; }
+
+ circle; i;{ in LEXICON ~>TRANSFO }
+ 8; { QUADRANGULATION of a SQUARE or a CIRCLE }
+ 2; { 2d CIRCLE }
+ 5; { CARCEN 'NUMBER of EDGES in a direction of KERNEL' entier; }
+ 4; { CARCEC 'NUMBER of HOMOTHETIC LAYERS beyond KERNEL' entier; }
+ 5; { CARCEL 'LENGTH of square or circle KERNEL' reel ; }
+13; { CARCED 'TOTAL LENGTH of the square or circle' reel ; }
+
+ squarei; i;{ in LEXICON ~>TRANSFO }
+ 30;{ QUALITY IMPROVMENT OF A TRIANGULATION }
+ square;{ NAME of SURFACE }
+ 0.5;   { QUALMN 'MAX quality to be improved' reel; }
+ 0;     { ANGL2P 'MAX angle degrees of coplanearity' reel; }
+
+ circlei; i;{ in LEXICON ~>TRANSFO }
+ 30;{ QUALITY IMPROVMENT OF A TRIANGULATION }
+ circle;{ NAME of SURFACE }
+ 0.5;   { QUALMN 'MAX quality to be improved' reel; }
+ 0;     { ANGL2P 'MAX angle degrees of coplanearity' reel; }
+
+@;
+
+10; { DRAWING of PLSVO meshes }
+ 3; { SURFACE or SURFACES }
+ 1; { ALL SURFACES with 0 Tangent }
+ 75;{ Activate TRANSLATION ORBIT ZOOM }
+ 90;{ Continue the DRAWING }
+CLOSE;

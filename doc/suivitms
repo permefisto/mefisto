@@ -1,0 +1,162 @@
+Avec cette option, le MENU suivant s'affiche
+1; Print the values of a TMS (Tableau Memoire Secondaire)
+2; INPUT the values of a TMS
+3; Print a TMS variable value
+4; IMPOSE the VALUE of a variable of a TMS
+5; CHANGE a NAME in a Lexicon
+
+An ARRAY in SECOND MEMORY STORAGE (TMS) is a set of informations
+stored in direct access file on disk, which may be saved at any time
+and recovers by its NAME defined by
+- ~> the beginning (name of the tree of names)
+- point or ligne or surface or volume or objet or transfo or ...
+- the character  >  as separator.
+
+Examples : 
+~>ligne>l1>nsef; give the FE list of the line named L1
+(excepted for a name file, upper or lower case letters are equals)
+~> is the root of the data base.
+
+~>surface>sphere>xyzsommet; give the FE list of 
+coordinates of vertices of the FE of the surface named sphere.
+
+The actual list of NAMES of TMS is
+~>FONCTION>>ARBRE
+~>LIGNE>>BSPLINE
+~>LIGNE>>DEFINITION
+~>LU
+~>OBJET>>DEFINITION
+~>OBJET>>ERREURTH
+~>OBJET>>NOUVNOEUD
+~>OBJET>>TOPOLOGIE
+~>POINT>>DEFINITION
+~>SURFACE>>BSPLINE
+~>SURFACE>>DEFINITION
+~>TRANSFO>>DEFINITION
+~>VOLUME>>DEFINITION
+~>>>ARETE
+~>>>ARETEFR
+~>>>CAPACITE
+~>>>CONDUCTIVITE
+~>>>CONTACT
+~>>>CONTRAINTE
+~>>>CONTRINIT
+~>>>DCONDUCTIVITE
+~>>>DILATATION
+~>>>DTEMPERATURE
+~>>>ECHANGE
+~>>>FACE 
+~>>>FIXATION
+~>>>FLUX
+~>>>FORCE
+~>>>INTERFACE
+~>>>JOINT
+~>>>MASSE
+~>>>MORSE
+~>>>NPEF
+~>>>NSEF
+~>>>PROFIL
+~>>>SOURCE
+~>>>TABLEAU1R
+~>>>TEMPERINIT
+~>>>TEXTE
+~>>>TRACE
+~>>>UNION
+~>>>VECTEUR
+~>>>XYZNOEUD
+~>>>XYZPOINT
+~>>>XYZSOMMET
+~>>>YOUNG
+~>>>DEPLACTINIT
+~>>>VITESSEINIT
+~>>>VITESSEFLUIDE
+
+When the NAME has  >>  it is necessar to add between these 2 successive >
+the name of the PLSVO
+For example : 
+To have the surface RECTANGLE definition, the name from
+~>SURFACE>>DEFINITION is: ~>surface>rectangle>definition;
+
+If the NAME begins with ~>>, it is necessary to preceed the name by a prefix
+point or ligne or surface or volume or objet or transfo or ...
+For example : ~>>>CONDUCTIVITE permits ~>volume>motor>conductivite;
+
+If the NAME has lost some suffixes, the name represents a directory
+which contains names of TMS which may be displayed
+For example : point; gives the actual list of points.
+
+~>ligne>axis; displays the TMS array list of the line names axis
+
+To obtain the array list of the root of the tree, type ~>;
+
+A LEXICON is  a TMS NAME without its suffix.
+Example : ~>point;  or ~>point>p1;  or ~>surface>rectangle;
+
+The NAME of a VARIABLE of a TMS is formed from
+- the TMS array NAME
+- following by (
+- following by the identificator of the variable
+- following by )
+- ended by ;
+Example :  ~>point>p1>xyzsommet(nbsom);  
+
+If the variable is one of an array, the name of its identificator
+is followed of
+- (
+- the value>0 of the first index
+- ,  following the value of the second indice ...
+- )
+Example: ~>surface>octogon>nsef(nusoef(2,5));
+dispay the number 2 of the FE 5 of the mesh of the surface
+named octogon.
+
+
+1; Print the values of a TMS (Tableau Memoire Secondaire)
+The generation rules of a TMS NAME have been done previously
+Example :
+ 1;
+ ~>ligne>axis>xyzsommet; 
+ {The coordinates of vertices of the line named axis}
+
+2; INPUT the values of a TMS
+The generation rules of a TMS NAME have been done previously
+(cf the file $MEFISTO/td/d and the grammar dans $MEFISTO/td/d/grammaire)
+Example :  2;   ~>ligne>axis>xyzsommet; 
+ {The coordinates of vertices of line named axis}
+ 3;  {number of vertices}
+ 0;  {number of tangents}
+ 3;  {number of coordinates}
+ 0; 0;   0;    { 3 coordinates of vertex 1 }
+ 0; 0.5; 0;    { 3 coordinates of vertex 2 }
+ 0; 0;   1;    { 3 coordinates of vertex 3 }
+
+3; Print a TMS variable value
+The generation rules of a TMS VARIABLE NAME have been done previously
+Example :
+ 3;
+ ~>ligne>axis>xyzsommet(nbsom); 
+ {The vertex number of the line named axis}
+
+4; {IMPOSE the VALUE of a variable of a TMS}
+The generation rules of a TMS VARIABLE NAME have been done previously
+Examples :
+ 4;
+ ~>ligne>axe>xyzsommet(nbsom);   {The NAME of the VARIABLE}
+ 5;      {vertices on the line named axis}
+
+ 4;
+ ~>surface>s>xyzsommet(xyzsom(varut)(3))
+ 0; { the new value of z of vertex varut  the integer value of 
+      the user's variable on the surface s }
+
+ATTENTION: Every MODIFICATION is under the User's responsability.
+If nbsom is greater than its old value, any call to this TMS => ERROR
+Use this option only for local debugging!
+
+5; CHANGE a NAME in a Lexicon
+The generation rules of a LEXICON NAME have been done previously
+Example :
+ 5;
+ point;   {Changement of a POINT NAME}
+ p1;      {Old NAME of the point}
+ p2;      {New NAME of the point}

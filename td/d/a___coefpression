@@ -1,0 +1,12 @@
+deftms ~>>>COEFPRESSION 'Coefficient de la pression du Fluide'
+variable muet DATE   'Date de creation du tableau'   reel2  ;
+variable muet NUTD   'Numero du tableau descripteur' entier ;  
+variable      LTCPRE 'Type du coefficient pression' entier
+( 1 : 'Coefficient constant'
+,-1 : 'Fonction CoefPression'
+, 0 : 'Coefficient a supprimer' ) ;
+cas LTCPRE
+ 1: variable CPRESS 'Coefficient de la Pression du Fluide'  reel ;
+-1: variable NFCPRE 'Nom fonction Coefficent de la Pression' ^~>FONCTION ;
+fincas ;   
+fintms ;

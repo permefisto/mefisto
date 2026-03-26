@@ -1,0 +1,3 @@
+A partir des 2 surfaces maillees S1 et S2 du plan xoy,
+il convient ici de choisir l'OPERATEUR LOGIQUE pour construire:
+1: S1 intersection S2  ou  2: S1 + S2  ou  3: S1 - S2.

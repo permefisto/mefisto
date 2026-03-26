@@ -1,0 +1,133 @@
+      SUBROUTINE DFSURF
+C ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+C BUT : DEFINIR LES SURFACES C-A-D
+C------ CREER ET LIRE LE TABLEAU ~>SURFACE>...>DEFINITION
+C       GENERER       LE TABLEAU ~>SURFACE>...>XYZSOMMET
+C       GENERER       LE TABLEAU ~>SURFACE>...>NSEF
+C       TRACER LES SURFACES SI LA CONSOLE EST INTERACTIVE GRAPHIQUE
+C ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+C AUTEUR : ALAIN PERRONNET ANALYSE NUMERIQUE UPMC PARIS  NOVEMBRE 1988
+C....................................................................012
+      IMPLICIT INTEGER (W)
+      include"./incl/langue.inc"
+      include"./incl/gsmenu.inc"
+      include"./incl/a_surface__definition.inc"
+      include"./incl/ntmnlt.inc"
+      include"./incl/trvari.inc"
+      COMMON / UNITES / LECTEU, IMPRIM, INTERA, NUNITE(29)
+      include"./incl/pp.inc"
+      COMMON            MCN(MOTMCN)
+      REAL              RMCN(1)
+      EQUIVALENCE      (MCN(1),RMCN(1))
+C
+      CHARACTER*24      KNOMSU
+      CHARACTER*80      KNMTD,KNMTS
+C
+C     NOM_DE_LA_SURFACE  LE CARACTERE @ POUR FINIR
+ 100  CALL INVITE( 43 )
+      NCVALS = 0
+      CALL LIRCAR(NCVALS, KNOMSU )
+      IF( NCVALS .EQ. -1 ) GOTO 9000
+C
+C     TRACE DU NOM DE LA SURFACE
+      CALL RECTEF( NRHIST )
+      NBLGRC(NRHIST) = 1
+      KHIST(1) = 'SURFACE: ' // KNOMSU
+      CALL LHISTO
+      ILEXIS = 1
+C
+C     RECHERCHE DU NOM DE LA SURFACE DANS LE LEXIQUE DES SURFACES
+ 150  IF( NTSURF .LE. 0 ) GOTO 9000
+      CALL LXLXOU( NTSURF, KNOMSU, NTLXSU, MNLXSU )
+C
+C     S'IL N'EXISTE PAS IL EST CREE
+      IF( NTLXSU .LE. 0 ) THEN
+         ILEXIS = 0
+         CALL LXLXDC( NTSURF, KNOMSU, 24, 8 )
+         GOTO 150
+      ENDIF
+C
+C     MODIFICATION OU CREATION DE LA DEFINITION DE LA SURFACE
+C     =====================================================
+      KNMTD = '~>SURFACE>>DEFINITION'
+      I     = INDEX( KNOMSU, ' ' )
+      IF( I .EQ. 1 ) THEN
+      NBLGRC(NRERR) = 1
+      KERR(1) = 'NOM INCORRECT DE SURFACE: '//KNOMSU
+      CALL LEREUR
+         GOTO 100
+      ELSE IF( I .EQ. 0 ) THEN
+         I = 25
+      ENDIF
+      KNMTS = '~>SURFACE>' // KNOMSU(1:I-1) // '>DEFINITION'
+      CALL MOTSTD( KNMTD, KNMTS, NRETOU )
+      IF( NRETOU .NE. 0 ) THEN
+C        DESTRUCTION SI LA SURFACE N'EXISTAIT PAS AVANT
+         IF( ILEXIS .EQ. 0 ) THEN
+            WRITE(IMPRIM,*) 'DESTRUCTION DU TMS:'//KNMTS
+            CALL LXLXDS( NTSURF, KNOMSU )
+         ENDIF
+         GOTO 100
+      ENDIF
+C
+C     CREATION DE LA SURFACE SELON LE TABLEAU DEFINITION
+C     OUVERTURE DU TABLEAU  'DEFINITION'
+      CALL LXTSOU( NTLXSU, 'DEFINITION', NTDFSU, MNDFSU )
+      IF( NTDFSU .LE. 0 ) THEN
+C        TABLEAU 'DEFINITION' INEXISTANT
+         NBLGRC(NRERR) = 1
+         KERR(1) = 'SURFACE NON DEFINIE: '//KNOMSU
+         CALL LEREUR
+         GOTO 100
+      ENDIF
+C
+C     LA DATE DE CREATION DU TABLEAU 'XYZSOMMET' DOIT ETRE
+C     POSTERIEURE A CELLE DU TABLEAU 'DEFINITION'
+C     MISE A JOUR DANS LE CAS D'UNE DONNEE DIRECTE DES TABLEAUX
+C     'XYZSOMMET' ET 'NSEF'
+      NUTYSU = MCN( MNDFSU + WUTYSU )
+      IF( NUTYSU .EQ. 10 ) THEN
+         CALL LXTSOU( NTLXSU, 'XYZSOMMET', NTSOSU, MNSOSU )
+C        MISE A JOUR DE SA DATE DE CREATION
+         CALL ECDATE( MCN( MNSOSU ) )
+         CALL LXTSOU( NTLXSU, 'NSEF', NTNSEF, MNNSEF )
+C        MISE A JOUR DE SA DATE DE CREATION
+         CALL ECDATE( MCN( MNNSEF) )
+      ENDIF
+C
+C     LA GENERATION DU TABLEAU 'XYZSOMMET' DE LA SURFACE
+C                   DU TABLEAU 'NSEF'      DE LA SURFACE
+C     --------------------------------------------------
+      IF( INTERA .LE. 0 ) THEN
+C        SI CONSOLE NON INTERACTIVE GRAPHIQUE
+C        ALORS GENERATION DES TABLEAUX 'NSEF' ET 'XYZSOMMET'
+         CALL MAILEX( 'SURFACE', KNOMSU,
+     %                 NTNSEF,   MNNSEF, NTSOSU, MNSOSU, IERR )
+         IF( IERR .NE. 0 ) THEN
+C           DESTRUCTION DU LEXIQUE DE LA SURFACE NON MAILLEE
+            NBLGRC(NRERR) = 2
+            IF( LANGAG .EQ. 0 ) THEN
+               KERR(1) = 'ATTENTION LA SURFACE ' // KNOMSU
+               KERR(2) = 'EST DETRUITE SUITE A PB LORS DU MAILLAGE'
+            ELSE
+               KERR(1) = 'ATTENTION: the SURFACE ' // KNOMSU
+               KERR(2) = 'is DELETED from the PROBLEM SEEN BEFORE'
+            ENDIF
+            CALL LEREUR
+            CALL LXLXDS( NTSURF, KNOMSU )
+         ENDIF
+      ELSE
+C        SI CONSOLE INTERACTIVE GRAPHIQUE ALORS
+C        AFFICHAGE DU TABLEAU DEFINITION
+C        GENERATION DES TABLEAUX 'NSEF' ET 'XYZSOMMET'
+C        LORS DU TRACE AUTOMATIQUE DE LA SURFACE
+C        LE NUMERO DE LA SURFACE
+         CALL AFTSTD( KNMTS )
+         CALL NUOBNM( 'SURFACE', KNOMSU, NUSURF )
+         CALL T1MOBJ( 'SURFACE', KNOMSU, NUSURF )
+      ENDIF
+      GOTO 100
+C
+C     FIN DE DEFINITION DES SURFACES
+ 9000 CALL RECTEF( NRHIST )
+      END

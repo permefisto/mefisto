@@ -1,0 +1,191 @@
+      SUBROUTINE SUORIENT( KNOMSU,
+     %                     NTEFSU, MNEFSU, NTSOSU, MNSOSU, IERR )
+C+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+C BUT :    ASSURER L'ORIENTATION DU MAILLAGE DE LA SURFACE
+C -----    PAR PARCOURS DES EF A TRAVERS LES ARETES COMMUNES
+C          ET PERMUTATION DES SOMMETS 2-NBSTEF DU SECOND EF
+C          D'UNE ORIENTATION DIFFERENTE DU PREMIER EF
+C ENTREES:
+C --------
+C NTLXSU : NUMERO DU TABLEAU TS DU LEXIQUE DE LA SURFACE A TRAITER
+C KNOMSU : NOM DE LA SURFACE A TRAITER
+C NTEFSU : NUMERO      DU TMS 'NSEF' DE LA SURFACE
+C MNEFSU : ADRESSE MCN DU TMS 'NSEF' DE LA SURFACE
+C          CF '~/td/d/a___nsef'
+C NTSOSU : NUMERO      DU TMS 'XYZSOMMET' DE LA SURFACE A TRAITER
+C MNSOSU : ADRESSE MCN DU TMS 'XYZSOMMET' DE LA SURFACE
+C          CF '~/td/d/a___xyzsommet'
+C IERR   : = 0 SI PAS D'ERREUR
+C          <>0 SI ERREUR
+C+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+C AUTEUR : PERRONNET ALAIN Embrun & St Pierre & LJLL UPMC   Janvier 2010
+C2345+7...............................................................72
+      include"./incl/langue.inc"
+      include"./incl/gsmenu.inc"
+      include"./incl/ntmnlt.inc"
+      include"./incl/a___xyzsommet.inc"
+      include"./incl/a___nsef.inc"
+      COMMON / UNITES / LECTEU, IMPRIM, INTERA, NUNITE(29)
+      include"./incl/pp.inc"
+      COMMON            MCN(MOTMCN)
+      REAL              RMCN(1)
+      EQUIVALENCE      (MCN(1),RMCN(1))
+      CHARACTER*(*)     KNOMSU
+C
+      IERR   = 0
+      MNSOSU = 0
+      MNEFSU = 0
+      MNARET = 0
+      MNTEAR = 0
+      MNTEEF = 0
+C
+C     NUMERO TMS DU LEXIQUE DE LA SURFACE A TRAITER
+      CALL LXLXOU( NTSURF, KNOMSU, NTLXSU, MNLXSU )
+      IF( NTLXSU .LE. 0 ) THEN
+         NBLGRC(NRERR) = 2
+         KERR(1) = KNOMSU
+         IF( LANGAG .EQ. 0 ) THEN
+            KERR(2) = 'SURFACE INCONNUE'
+         ELSE
+            KERR(2) = 'UNKNOWN SURFACE'
+         ENDIF
+         IERR = 1
+         RETURN
+      ENDIF
+C
+C     RESTAURATION DU TABLEAU XYZSOMMET DE LA SURFACE A TRAITER
+C     retrieve the array XYZSOMMET
+      CALL LXTSOU( NTLXSU, 'XYZSOMMET', NTSOSU, MNSOSU )
+      IF( NTSOSU .LE. 0 ) THEN
+         NBLGRC(NRERR) = 2
+         KERR(1) = KNOMSU
+         IF( LANGAG .EQ. 0 ) THEN
+            KERR(2) = 'SURFACE SANS TMS XYZSOMMET'
+         ELSE
+            KERR(2) = 'SURFACE WITHOUT XYZSOMMET TMS'
+         ENDIF
+         IERR = 1
+         RETURN
+      ENDIF
+C     LE NOMBRE DE SES SOMMETS ET TANGENTES
+C     the numbers of vertices and tangents
+      NBSOSU = MCN( MNSOSU+WNBSOM )
+      NBTGSU = MCN( MNSOSU+WNBTGS )
+C
+C     RESTAURATION DU TABLEAU NSEF
+C     retrieve the array NSEF
+      CALL LXTSOU( NTLXSU, 'NSEF', NTEFSU, MNEFSU )
+      IF( NTEFSU .LE. 0 ) THEN
+         NBLGRC(NRERR) = 2
+         KERR(1) = KNOMSU
+         IF( LANGAG .EQ. 0 ) THEN
+            KERR(2) = 'SURFACE SANS TMS NSEF'
+         ELSE
+            KERR(2) = 'SURFACE WITHOUT NSEF TMS'
+         ENDIF
+         IERR = 2
+         RETURN
+      ENDIF
+C
+C     LES PARAMETRES DES NO SOMMET DE LA SURFACE A DEPLACER
+      CALL NSEFPA( MCN(MNEFSU),
+     %             NUTYSU, NBSOEL, NBSOEF, NBTGEL,
+     %             LDAPEF, LDNGEF, LDTGEF, NBEFSU,
+     %             NX  , NY  , NZ  ,
+     %             IERR   )
+      IF( IERR .NE. 0 ) THEN
+         NBLGRC(NRERR) = 1
+         IF( LANGAG .EQ. 0 ) THEN
+            KERR(1) = 'SURFACE A TRAITER INCORRECTE'
+         ELSE
+            KERR(1) = 'INCORRECT SURFACE TO TREAT'
+         ENDIF
+         CALL LEREUR
+         IERR = 3
+         RETURN
+      ENDIF
+C
+      IF( NUTYSU .GT. 0 ) THEN
+         IF( LANGAG .EQ. 0 ) THEN
+          WRITE(IMPRIM,*)'MAILLAGE STRUCTURE d''une SURFACE => ORIENTEE'
+         ELSE
+            WRITE(IMPRIM,*) 'STRUCTURED MESH of a SURFACE => ORIENTED'
+         ENDIF
+         RETURN
+      ENDIF
+C
+C     CONSTRUCTION PAR HACHAGE DE LA LISTE DES ARETES DE LA SURFACE
+      CALL GEARSU( 4, NBEFSU, MCN(MNEFSU+WUSOEF), 2,
+     %             L1ARET, L2ARET, MNARET, IERR )
+      IF( IERR .NE. 0 ) THEN
+         NBLGRC(NRERR) = 1
+         IF( LANGAG .EQ. 0 ) THEN
+            KERR(1) = 'UNE ARETE APPARTIENT A AU MOINS 3 EF'
+         ELSE
+            KERR(1) = 'AN EDGE BELONGS TO AT LEAST 3 FINITE ELEMENTS'
+         ENDIF
+         CALL LEREUR
+         IERR = 4
+         RETURN
+      ENDIF
+C
+C     CONSTRUCTION DU TEMOIN DE PASSAGE SUR LES ARETES
+C                  DE LA PILE DES ARETES TRAITEES
+C                  DU NUMERO D'EF TRAITE POUR CETTE ARETE
+      CALL TNMCDC( 'ENTIER', 3*L2ARET, MNTEAR )
+      IF( MNTEAR .LE. 0 ) GOTO 9920
+      MNPIAR  = MNTEAR + L2ARET
+      MNPIEF  = MNPIAR + L2ARET
+C
+C     CONSTRUCTION DU TEMOIN DE PASSAGE SUR LES EF
+      CALL TNMCDC( 'ENTIER', NBEFSU, MNTEEF )
+      IF( MNTEEF .LE. 0 ) GOTO 9920
+C
+C     NOMBRE DE TRIANGLES QUADRANGLES A TG DE LA SURFACE
+C     number of triangles or quadrangles with tangents of the surface
+      NBEFAP = MCN( MNEFSU + WBEFAP )
+      NBEFTG = MCN( MNEFSU + WBEFTG )
+C
+C     ADRESSE 1-ER NO DE SOMMET DU PREMIER EF DE LA SURFACE
+      MNEFST = MNEFSU + WUSOEF
+C
+C     ADRESSE 1-ER POINTEUR SUR EF A TG
+      MNEFAPSU = MNEFST + 4*NBEFSU
+C     ADRESSE 1-ER CODE GEOMETRIQUE DES EF A TG
+C     MNEFCGSU = MNEFAPSU + NBEFAP
+C     ADRESSE NO DE TG DES ARETES A TG
+      MNEFSUTG = MNEFAPSU + NBEFAP + NBEFTG
+C
+      CALL SUORIENT1( NBEFSU, MCN(MNEFST),
+     %                NBEFAP, NBEFTG, MCN(MNEFAPSU), MCN(MNEFSUTG),
+     %                NBSOSU, MCN(MNSOSU+WYZSOM),
+     %                L1ARET, L2ARET, MCN(MNARET),
+     %                MCN(MNTEEF),MCN(MNTEAR), MCN(MNPIAR), MCN(MNPIEF),
+     %                IERR )
+C
+cccC     MISE A JOUR DU TABLEAU 'XYZSOMMET' DE LA SURFACE
+cccC     LA DATE DE CREATION
+ccc      CALL ECDATE(MCN(MNSOSU)) SINON DESTRUCTION ET ERREUR EN RECREATION
+cccC     CAR IL N'Y A PAS DE TABLEAU DEFINITION POUR CETTE MODIFICATION
+cccC     MISE A JOUR DU TABLEAU 'NSEF' DE LA SURFACE
+cccC     LA DATE DE CREATION
+ccc      CALL ECDATE(MCN(MNEFSU)) SINON DESTRUCTION ET ERREUR EN RECREATION
+cccC     CAR IL N'Y A PAS DE TABLEAU DEFINITION POUR CETTE MODIFICATION
+      GOTO 9990
+C
+ 9920 NBLGRC(NRERR) = 1
+      IF( LANGAG .EQ. 0 ) THEN
+         KERR(1) = 'PAS ASSEZ DE MEMOIRE MCN'
+      ELSE
+         KERR(1) = 'NOT ENOUGH MCN MEMORY'
+      ENDIF
+      CALL LEREUR
+      IERR = 2
+C
+C     LIBERATION DES TABLEAUX DEVENUS INUTILES
+ 9990 IF( MNTEEF .GT. 0 ) CALL TNMCDS( 'ENTIER', NBEFSU, MNTEEF )
+      IF( MNTEAR .GT. 0 ) CALL TNMCDS( 'ENTIER', 3*L2ARET, MNTEAR )
+      IF( MNARET .GT. 0 ) CALL TNMCDS( 'ENTIER', L1ARET*L2ARET, MNARET )
+C
+      RETURN
+      END

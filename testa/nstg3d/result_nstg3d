@@ -1,0 +1,180 @@
+Project ns3d: Navier-Stokes TAYLOR-GREEN vortex solution TESTS
+==============================================================
+The EXACT solution on [0,Pi]x[0,Pi]x[0,Pi] is known as
+
+DefVar  RhoWater; RhoWater=1000; { kg/m3 WATER MASS Density }
+DefVar  nu;       nu=8.9E-4;    { WATER VISCOSITY in Pa.s cf wikipedia}
+
+{The Taylor-Green Vortex Solution 2d Cf. wikipedia}
+{The exact-solutions: ZVelocity is ZERO => Solution 2d is 3d}
+DefFunc F(t); F=exp(- 2 * nu * t);  EndFunc;
+DefFunc XVelocity(t,x,y,z); XVelocity= sin(x)*cos(y)*F(t); EndFunc;
+DefFunc YVelocity(t,x,y,z); YVelocity=-cos(x)*sin(y)*F(t); EndFunc;
+DefFunc ZVelocity(t,x,y,z); ZVelocity=0; EndFunc;
+DefFunc Pressure (t,x,y,z); 
+   Pressure=RhoWater*(cos(2*x)+cos(2*y))*(F(t)**2)/4;
+EndFunc;
+
+
+TAYLOR-HOOD MESH: 12 edges in every direction
+ SPACE DIMENSION of PB             3
+ TYPE of FE                       20
+ NB of VERTICES                 2197
+ NB of POINTS                  15625
+ NB of NODES                   15625
+ NB of FE                      10368
+ NB of DoF PRESSURE             2197
+ NB of DoF VELOCITY            46875
+ NB of DoF VELOCITY+PRESSURE   49072
+
+TAYLOR-HOOD MESH: 20 edges in every direction
+ SPACE DIMENSION of PB             3
+ TYPE of FE                       20
+ NB of VERTICES                 9261
+ NB of POINTS                  68921
+ NB of NODES                   68921
+ NB of FE                      48000
+ NB of DoF PRESSURE             9261
+ NB of DoF VELOCITY           206763
+ NB of DoF VELOCITY+PRESSURE  216024
+
+
+BREZZI-FORTIN MESH: 20 edges in every direction
+ SPACE DIMENSION of PB             3
+ TYPE of FE                       19
+ NB of VERTICES                 9261
+ NB of POINTS                   9261
+ NB of NODES                    9261
+ NB of FE                      48000
+ NB of DoF PRESSURE             9261
+ NB of DoF VELOCITY           171783
+ NB of DoF VELOCITY+PRESSURE  181044
+
+
+f1: MATRIX   with ALL Degrees of Freedom (DoF) of Velocity X + Velocity Y + Pressure.
+f2: MATRICES with doF of 1 component of Velocity or Pressure. Fractional step Method.
+cr: Direct    Method by Crout    factorization AG=L D Lt with ALL DoF
+ch: Direct    Method by Cholesky factorization AG=L Lt   with DoF of 1 component of Velocity or Pressure
+cg: Iterative Method by Simple Conjugate Gradient        with DoF of 1 component of Velocity or Pressure
+
+VEXNORM(Node) = SQRT(  XExactVelocity**2 + YExactVelocity**2 + ZExactVelocity**2 )
+VERROR (Node) = SQRT( (XExactVelocity-XComputedVelocity)**2 
+                    + (YExactVelocity-YComputedVelocity)**2
+                    + (ZExactVelocity-ZComputedVelocity)**2 )
+VEXASOM = Sum( VEXNORM(Node) )
+VEXAMX  = MAX( VEXNORM(Node) )
+VERRSOM = Sum( VERROR(Node) )
+VERRMX  = MAX( VERROR(Node) )
+VERRLMX = MAX( VERROR(Node) / VEXNORM(Node) )
+
+VERRMX              = MAX  ABS VELOCITY ERROR = MXAVE
+VERRMX/VEXAMX*100   = MAX  REL VELOCITY ERROR = MXRVE
+VERRLMX             = NODE REL VELOCITY ERROR = MNRVE
+VERRSOM/VEXASOM*100 = MEAN REL VELOCITY ERROR = MERVE
+
+At TIME  0.999999: (Last step time) the VELOCITY ERRORS:
+12 edges
+lth1cr:   MXAVE=0.448631E-01 MXRVE= 4.49430%  MNRVE=0.210002%  MERVE= 2.01855%
+lth2ch:   MXAVE=0.448574E-01 MXRVE= 4.49373%  MNRVE=0.209824%  MERVE= 2.01866%
+lth2cg:   MXAVE=0.448894E-01 MXRVE= 4.49693%  MNRVE=0.209677%  MERVE= 2.01666%
+lth2cg2m: MXAVE=0.448991E-01 MXRVE= 4.49791%  MNRVE=0.209715%  MERVE= 2.01629%
+lth2cg9:  MXAVE=0.448895E-01 MXRVE= 4.49695%  MNRVE=0.209677%  MERVE= 2.01666%
+lth2cgMVG:MXAVE=0.448894E-01 MXRVE= 4.49693%  MNRVE=0.209677%  MERVE= 2.01666%
+
+20 edges
+lth2cgMVG20:AVE=0.135885E-01 MXRVE= 1.36127%  MNRVE=0.096527%  MERVE=0.671225%
+lth2cgVG20:XAVE=0.135885E-01 MXRVE= 1.36127%  MNRVE=0.096527%  MERVE=0.671228%
+lth2cgn:  MXAVE=0.135859E-01 MXRVE= 1.36101%  MNRVE=0.096577%  MERVE=0.671189%
+lth2cg20: MXAVE=0.135885E-01 MXRVE= 1.36127%  MNRVE=0.096527%  MERVE=0.671225%
+lth2cg:   MXAVE=0.135885E-01 MXRVE= 1.36127%  MNRVE=0.096527%  MERVE=0.671228%
+lbf1cr:   MXAVE=0.616643E-01 MXRVE= 6.17742%  MNRVE= 1.11347%  MERVE= 1.99326%
+lbf2ch:   MXAVE=0.616664E-01 MXRVE= 6.17762%  MNRVE= 1.11351%  MERVE= 1.99358%
+lbf2cg:   MXAVE=0.616687E-01 MXRVE= 6.17786%  MNRVE= 1.11355%  MERVE= 1.99352%
+
+
+ExPressure(Vertex) = Exact Pressure at Vertex
+PREXMI  = MIN( ExPressure(Vertex) )
+PREXMX  = MAX( ExPressure(Vertex) )
+PREXSOM = Sum( ABS( ExPressure(Vertex) ) )
+
+CoPressure(Vertex) = Computed Pressure at Vertex
+PRCAMI   = MIN( CoPressure(Vertex) )
+PRCAMX   = MAX( CoPressure(Vertex) )
+PRERRSOM = Sum( ABS( CoPressure(Vertex) - ExPressure(Vertex) ) )
+PRERRAMX = MAX( ABS( CoPressure(Vertex) - ExPressure(Vertex) ) )
+PRERRELA = ABS( ABS( CoPressure(Vertex) - ExPressure(Vertex) ) / ABS(ExPressure(Vertex)))
+
+PRERRAMX                     = MAX ABS  PRESSURE ERROR = MAPE
+PRERRAMX/(PREXMX-PREXMI)*100 = REL MAX  PRESSURE ERROR = RMPE
+PRERRSOM/PREXSOM*100         = REL MEAN PRESSURE ERROR = MRPE
+
+At TIME  0.999999: (Last step time) the PRESSURE ERRORS:
+12 edges
+lth1cr:   MAPE= 11.9290  RMPE= 1.19715%  MRPE= 1.23210%
+lth2ch:   MAPE= 11.9133  RMPE= 1.19558%  MRPE= 1.23142%
+lth2cg:   MAPE= 11.9594  RMPE= 1.20020%  MRPE= 1.23126%
+lth2cg2m: MAPE= 11.9670  RMPE= 1.20097%  MRPE= 1.23291%
+lth2cg9:  MAPE= 11.9592  RMPE= 1.20019%  MRPE= 1.23126%
+lth2cgMVG:MAPE= 11.9594  RMPE= 1.20020%  MRPE= 1.23126%
+
+20 edges
+lth2cgMVG20:PE= 4.62167  RMPE=0.463815%  MRPE=0.595599%
+lth2cg VG20:PE= 4.62164  RMPE=0.463812%  MRPE=0.595599%
+lth2cgn:  MAPE= 4.62829  RMPE=0.464479%  MRPE=0.595733%
+lth2cg20: MAPE= 4.62167  RMPE=0.463815%  MRPE=0.595599%
+lth2cg:   MAPE= 4.62164  RMPE=0.463812%  MRPE=0.595599%
+lbf1cr:   MAPE= 1.51962  RMPE=0.152504%  MRPE=0.186282%
+lbf2ch:   MAPE= 1.52559  RMPE=0.153103%  MRPE=0.187130%
+lbf2cg:   MAPE= 1.52226  RMPE=0.152768%  MRPE=0.186487%
+
+
+mesh 12 edges
+lth1cr:     CPU= 2119.77 CPU SECONDS
+lth2ch:     CPU=  541.72 CPU SECONDS
+lth2cg:     CPU=  392.54 CPU SECONDS
+lth2cg2m:   CPU=  307.86 CPU SECONDS
+lth2cg9:    CPU=  304.41 CPU SECONDS with VG PG VG  fluinth.f1
+lth2cgMVG:  CPU=  307.45 CPU SECONDS with VG PG MVG fluinth.f0
+
+mesh 20 edges
+lth2cgMVG20:CPU= 1297.62 CPU SECONDS with VG PG MVG fluinth.f0
+lth2cgVG20: CPU= 1293.62 CPU SECONDS with VG PG VG  fluinth.f1
+lth2cgn:    CPU= 1293.44 CPU SECONDS
+lth2cg20:   CPU= 1299.39 CPU SECONDS
+lth2cg20m:  CPU= 1302.58 CPU SECONDS
+lth2cg:     CPU= 1236.72 CPU SECONDS
+lbf1cr:     CPU= 1408.52 CPU SECONDS
+lbf2ch:     CPU= 1003.32 CPU SECONDS
+lbf2cg:     CPU=  990.88 CPU SECONDS
+
+mesh 12 edges
+lth1cr:     MATRICES and VECTORS= 433 858 942 MEMORY WORDS + NbVect * DofVP
+lth2ch:     MATRICES and VECTORS=  87 866 968 MEMORY WORDS + NbVect * DofVP
+lth2cg:     MATRICES and VECTORS=   1 547 429 MEMORY WORDS + NbVect * DofVP
+lth2cg9:    MATRICES and VECTORS=   1 428 490 MEMORY WORDS + NbVect * DofVP
+lth2cgMVG:  MATRICES and VECTORS=   1 547 417 MEMORY WORDS + NbVect * DofVP
+
+mesh 20 edges
+lth1cr20:   ONE MATRIX! 1 278 506 859*2 MEMORY WORDS ... NOT ENOUGH MEMORY!
+lth2cgMVG20:MATRICES and VECTORS=   6 818 801 MEMORY WORDS + NbVect * DofVP
+lth2cgVG20: MATRICES and VECTORS=   6 040 778 MEMORY WORDS + NbVect * DofVP
+lth2cg20:   MATRICES and VECTORS=   6 818 805 MEMORY WORDS + NbVect * DofVP
+lth2cg20m:  MATRICES and VECTORS=   6 040 326 MEMORY WORDS + NbVect * DofVP
+lth2cg7:    MATRICES and VECTORS=   6 040 654 MEMORY WORDS + NbVect * DofVP
+lth2cg:     MATRICES and VECTORS=  15 048 309 MEMORY WORDS
+lbf1cr:     MATRICES and VECTORS= 207 857 234 MEMORY WORDS + NbVect * DofVP
+lbf2ch:     MATRICES and VECTORS=  26 591 418 MEMORY WORDS + NbVect * DofVP
+lbf2cg:     MATRICES and VECTORS=   2 516 820 MEMORY WORDS + NbVect * DofVP
+
+CONCLUSIONS:
+
+- The accuracy of velocity with th is better than with bf;
+- The accuracy of pressure with bf is better than with th; (That is different of the 2d-case)
+- The methods f1 and f2 give the same results;
+- With the same mesh, the CPU TIME of f2 method is lower than f1 method;
+- With the same mesh, the CPU time of bf is lower greater than th;
+- The f2 memory storage is very lower than f1;
+- The f1 cr memory storage is very greater than f2 ch which is greater than f2 cg;
+
+Finally, the best velocity accuracy method is th2 cg;
+         the best pressure accuracy method is bf2 cg.

@@ -1,0 +1,19 @@
+deftms ~>>>DCONDUCTIVITE 'Gradient of the Conductivity'
+variable muet DATE 'date of creation of the TMS'   reel2  ;
+variable muet NUTD 'number of the descriptor array TD' entier ; 
+variable      LTDCON 'Type of gradient of conductivity' entier
+( 1 : '3D homogenous isotropic material'
+, 2 : 'axisymetric homogenous isotropic material'
+, 3 : '2D homogenous isotropic material'
+ 10 : 'anisotropic tensor of conductivity' ,
+ -1 : 'function gradient of conductivity' ,
+, 0 : 'delete the gradient of conductivity' ) ;
+cas LTDCON
+1..3 : tableau  DCONDU(1..3) 'gradient of conductivity'     reel   ;
+10   : variable NVDCON 'number of coefficients of gradient of conductivity'
+       entier ;
+       tableau  TEDCON(1:3,1..NVDCON) 
+ 'Gradient DX,DY,DZ of DC11,DC21,DC22,..., of conductivity tensor' reel ;  
+ -1 : variable NFDCON 'name of function gradient of conductivity' ^~>FONCTION ;
+fincas ;   
+fintms ;

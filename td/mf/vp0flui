@@ -1,0 +1,4 @@
+variable vp0flui 'DEPART ou REPRISE de la RESOLUTION' entier
+ ( 1  : 'DEPART avec le VECTEUR VITESSE+PRESSION deja calcule au TEMPS INITIAL}
+ , 2  : 'DEPART avec la DONNEE sur l''OBJET du VECTEUR VITESSE PRESSION a T0'
+ , 3  : 'REPRISE avec VECTEUR VITESSE PRESSION de TEMPS le PLUS PROCHE de T0' ) ;

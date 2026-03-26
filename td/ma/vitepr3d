@@ -1,0 +1,14 @@
+variable VITEPR3D '3D FLUID DRAWINGS of VELOCITY or PRESSURE' entier
+ ( 1 : 'The PRESSURE drawings'
+,  2 : 'The VELOCITY is drawn with ARROWS'
+,  3 : 'One VELOCITY COMPONENT X Y Z or VELOCITY MAGNITUDE'
+,  4 : '|VELOCITY|Mean Mx PRESSURE Mi Mx TEMPERATURE Mean Mi Mx(Time)'
+,  5 : 'The TEMPERATURE drawings'
+,  6 : 'The TEMPERATURE FLUX drawings'
+,  7 : 'COMPUTE and DRAW the RUN of PARTICLES in the FLUID'
+, 10 : 'The VORTICITY=Rotational(Velocity)'
+, 12 : 'The INTEGRAL of PRESSURE on OBJECT SURFACES'
+, 13 : 'The VELOCITY NORMAL FLUX on OBJECT SURFACES'
+, 90 : 'The PRINTING VELOCITY PRESSURE ERRORS at Nodes'
+, 91 : 'The |VELOCITY| ERRORS from Velocity_Exact(t,x,y,z,nc)'
+, 92 : 'The PRESSURE ERRORS from Pressure_Exact(t,x,y,z)' ) ;

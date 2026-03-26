@@ -1,0 +1,64 @@
+      SUBROUTINE VDTT1S( NS,  N1TETS, NOTETR,
+     %                   NBT, MXTENS, MNTENS )
+C+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+C BUT :    RETROUVER LE NUMERO DES TETRAEDRES DE SOMMET NS
+C -----
+C
+C ENTREES:
+C --------
+C NS     : NUMERO DU SOMMET COMMUN A TOUTES LES FACES
+C N1TETS : N1TETS(I) NUMERO D'UN TETRAEDRE AYANT POUR SOMMET I
+C NOTETR : LISTE DES TETRAEDRES
+C          SOMMET1,    SOMMET2,    SOMMET3,    SOMMET4,
+C          TETRAEDRE1, TETRAEDRE2, TETRAEDRE3, TETRAEDRE4
+C          DE L'AUTRE COTE DE LA FACE
+C          1: 123      2: 234      3: 341      4: 412
+C
+C MODIFIES:
+C ---------
+C MXTENS : NOMBRE D'ENTIERS DECLARES DU TABLEAU TENS
+C          =0 EN ENTREE DEMANDE UNE DECLARATION MNTENS EST CALCULE
+C          >0 EN ENTREE DEMANDE L'EMPLOI DU TABLEAU D'ADRESSE MNTENS
+C             ATTENTION CETTE ADRESSE PEUT ETRE CHANGEE PAR LA SUBROUTINE
+C
+C SORTIES:
+C --------
+C NBT    : NOMBRE DE TETRAEDRES AYANT NS COMME SOMMET
+C MNTENS : ADRESSE MCN DU TABLEAU TENS
+C          TENS(I) = NUMERO DU TETRAEDRE DE SOMMET NS
+C+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+C AUTEUR : ALAIN PERRONNET  ANALYSE NUMERIQUE PARIS UPMC       JUIN 1993
+C....................................................................012
+      include"./incl/pp.inc"
+      COMMON            MCN(MOTMCN)
+      COMMON / UNITES / LECTEU,IMPRIM,INTERA,NUNITE(29)
+      INTEGER           NOTETR(8,*),
+     %                  N1TETS(*)
+C
+C     RECHERCHE DES FACES DES TETRAEDRES DE SOMMET NS
+      CALL VDTE1S( NS,  N1TETS, NOTETR,
+     %             NBF, MXTENS, MNTENS )
+      MNTEF1 = MNTENS - 1
+C
+C     COMPRESSION DES TETRAEDRES APPARTENANT A PLUSIEURS FACES DE SOMMET NS
+      MNF = MNTENS - 2
+      NBT = 0
+      DO 20 I=1,NBF
+
+C        LE TETRAEDRE
+         MNF = MNF + 2
+         NT  = MCN( MNF )
+
+C        CE TETRAEDRE NT EST IL DEJA STOCKE?
+         DO J=1,NBT
+            IF( NT .EQ. MCN(MNTEF1+J) ) GOTO 20
+         ENDDO
+
+C        NON : IL EST AJOUTE
+         NBT = NBT + 1
+         MCN( MNTEF1+NBT ) = NT
+
+ 20   ENDDO
+C
+      RETURN
+      END

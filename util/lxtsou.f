@@ -1,0 +1,40 @@
+      SUBROUTINE LXTSOU( NTLX , KNOM , NOTAMS , MCTAMS )
+C+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+C BUT : OUVRIR LE NOM KNOM TABLEAU MS DU LEXIQUE NTLX
+C -----
+C
+C ENTREES :
+C ---------
+C NTLX   : NUMERO DU TABLEAU MS CONTENANT LE LEXIQUE
+C KNOM   : CHAINE DE CARACTERES NOM A RETROUVER DANS LE LEXIQUE
+C
+C SORTIES :
+C ---------
+C NOTAMS : NUMERO DE CE TABLEAU MS
+C          0 SI KNOM N'A PAS ETE RETROUVE DANS LE LEXIQUE ET RETOUR
+C          ==> NECESSITE DE FAIRE UN TEST EN RETOUR
+C MCTAMS : ADRESSE EN MEMOIRE CENTRALE MCN OU MCK DE CE TABLEAU MS
+C          0 SI KNOM N'A PAS ETE RETROUVE DANS LE LEXIQUE ET RETOUR
+C          ==> NECESSITE DE FAIRE UN TEST EN RETOUR
+C+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+C PROGRAMMEUR : ALAIN PERRONNET ANALYSE NUMERIQUE PARIS   OCTOBRE 1985
+C+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+      include"./incl/gsmenu.inc"
+      COMMON / UNITES / LECTEU,IMPRIM,NUNITE(30)
+      CHARACTER*(*) KNOM
+      CHARACTER*4   KTYPE
+C
+C     OUVERTURE DU TABLEAU MS DE NOM KNOM
+      CALL LXNMOU( NTLX , KNOM , KTYPE , NOTAMS , MCTAMS )
+C
+C     VERIFICATION : LE TYPE RECUPERE EST-IL UN TAMS ?
+      IF( KTYPE .NE. 'TAMS' .AND. MCTAMS .GT. 0 ) THEN
+         NBLGRC(NRERR) = 2
+         KERR(1) =  KNOM
+         KERR(2) = 'NOM DE TYPE '//KTYPE//' AU LIEU DE TAMS'
+         CALL LEREUR
+         NOTAMS = 0
+         MCTAMS = 0
+         RETURN
+      ENDIF
+      END

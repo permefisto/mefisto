@@ -1,0 +1,127 @@
+      SUBROUTINE DIAGBF( NBDLST, NBSOM,  NBELEM, NBSTEF, NUSTEF, NCODSA,
+     %                   LPDIAG, IERR )
+C ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+C BUT :    GENERER LE PROFIL DE LA MATRICE DU MAILLAGE POUR
+C -----    LES ELEMENTS FINIS DE BREZZI FORTIN en 2D ou 3D
+C
+C ENTREES:
+C --------
+C NBDLST : NOMBRE DE DEGRES DE LIBERTE EN UN SOMMET DU MAILLAGE
+C          EN VITESSE PRESSION C'EST NDIM + 1
+C          EN EXPLICITE C'EST 1 CAR SEULE LA PRESSION EST A INVERSER
+C NBSOM  : NOMBRE DE SOMMETS DES EF DE BREZZI-FORTIN
+C NBELEM : NOMBRE D'EF DE BREZZI-FORTIN
+C NBSTEF : NOMBRE DE SOMMETS DES EF BF (3 pour TRIANGLE ou 4 TETRAEDRE)
+C NUSTEF : NUSTEF(I,J) NO DU SOMMET J DE L'EF I
+C NCODSA : CODE DE STOCKAGE DE LA MATRICE PROFIL
+C          -1 : MATRICE NON SYMETRIQUE
+C           1 : MATRICE SYMETRIQUE
+C
+C SORTIES:
+C --------
+C LPDIAG : POINTEUR SUR LES COEFFICIENTS DIAGONAUX DE LA MATRICE PROFIL
+C IERR   : 0 SI PAS D'ERREUR
+C          2 SI LE POINTEUR DEVIENT NEGATIF PAR DEBORDEMENT DE 2**31
+C+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+C AUTEUR : ALAIN PERRONNET  TIMS NTU TAIPEI TAIWAN         NOVEMBRE 2009
+C23456---------------------------------------------------------------012
+      include"./incl/langue.inc"
+      include"./incl/gsmenu.inc"
+      include"./incl/pp.inc"
+      COMMON          MCN(MOTMCN)
+      COMMON /UNITES/ LECTEU,IMPRIM,NUNITE(30)
+C
+      INTEGER         NUSTEF(NBELEM,NBSTEF),  LPDIAG(0:*)
+C
+      IERR = 0
+      IF( NCODSA .EQ. 0 ) RETURN
+C
+C     LE NOMBRE TOTAL DE DEGRES DE LIBERTE DE L'OBJET SAUF BARYCENTRES
+      NBLIPR = NBSOM * NBDLST
+C
+C     MISE A NBSOM DU TABLEAU DU PLUS PETIT VOISIN DE CHAQUE SOMMET
+      MNMIVO = 0
+      CALL TNMCDC( 'ENTIER', NBSOM, MNMIVO )
+      MNMIV1 = MNMIVO - 1
+      DO 10 I = MNMIVO, MNMIV1+NBSOM
+         MCN( I ) = NBSOM
+ 10   CONTINUE
+C
+C     LA BOUCLE SUR LES EF DE BREZZI-FORTIN
+      DO 30 NUELEM=1,NBELEM
+         NMIN = NBLIPR
+C
+C        NMIN = NO MINIMUM DES NO DE SOMMETS DE L ELEMENT FINI
+         DO 15 I=1,NBSTEF
+            NMIN = MIN( NMIN, NUSTEF(NUELEM,I) )
+ 15      CONTINUE
+C
+C        MIVO(N) = NO DU PLUS PETIT VOISIN DU SOMMET N
+         DO 20 I=1,NBSTEF
+C           LE NUMERO DU SOMMET I DE L'ELEMENT NUELEM
+            N = NUSTEF(NUELEM,I)
+            MCN(MNMIV1+N) = MIN( MCN(MNMIV1+N), NMIN )
+ 20      CONTINUE
+ 30   CONTINUE
+C
+C     FORMATION DU TABLEAU LPDIAG DES POINTEURS SUR LA DIAGONALE
+      LPDIAG( 0 ) = 0
+      IDL = 0
+      IF( NCODSA .GT. 0 ) THEN
+C
+C        MATRICE SYMETRIQUE
+C        ------------------
+         DO 60 J=1,NBSOM
+C           NBDLST DEGRES DE LIBERTE PAR SOMMET
+            NBC = ( J - MCN(MNMIV1+J) ) * NBDLST
+            DO 50 I=1,NBDLST
+               NBC  = NBC + 1
+               IDL1 = IDL + 1
+               LPDIAG( IDL1 ) = LPDIAG( IDL ) + NBC
+C              DEBORDEMENT DES ENTIERS 2**31?
+               IF( LPDIAG( IDL1 ) .LE. 0 ) GOTO 9000
+               IDL = IDL1
+ 50         CONTINUE
+ 60      CONTINUE
+C
+      ELSE
+C
+C        MATRICE NON SYMETRIQUE
+C        ----------------------
+         DO 80 J=1,NBSOM
+C           NBDLST DEGRES DE LIBERTE PAR SOMMET
+            NBC = ( J - MCN(MNMIV1+J) ) * NBDLST
+            NBC = NBC + NBC - 1
+            DO 70 I=1,NBDLST
+               NBC  = NBC + 2
+               IDL1 = IDL + 1
+               LPDIAG( IDL1 ) = LPDIAG( IDL ) + NBC
+C              DEBORDEMENT DES ENTIERS 2**31?
+               IF( LPDIAG( IDL1 ) .LE. 0 ) GOTO 9000
+               IDL = IDL1
+ 70         CONTINUE
+            if( mod(idl1,100) .eq. 0 )
+     %         print *,'DIAGBF: lpdiag(',idl1,')=',lpdiag(idl1)
+ 80      CONTINUE
+      ENDIF
+      GOTO 9900
+C
+C     ERREUR DEBORDEMENT DU MAXIMUM DU STOCKAGE DES ENTIERS
+ 9000 NBLGRC(NRERR) = 3
+      WRITE(KERR(5)(1:12),'(I12)') J
+      IF( LANGAG .EQ. 0 ) THEN
+         KERR(1)='DIAGBF: LE POINTEUR DEBORDE 2**31 AU SOMMET'
+     %            //KERR(5)(1:12)
+         KERR(2)='DIAGBF: REDUIRE LE NOMBRE DE SOMMETS'
+      ELSE
+         KERR(1)='DIAGBF: The POINTER OVERFLOWS 2**31 at NODE'
+     %            //KERR(5)(1:12)
+         KERR(2)='DIAGBF: REDUCE the NODE NUMBER'
+      ENDIF
+      CALL LEREUR
+      IERR = 2
+C
+C     DESTRUCTION DU TABLEAU AUXILIAIRE
+ 9900 CALL TNMCDS( 'ENTIER', NBSOM, MNMIVO )
+      RETURN
+      END

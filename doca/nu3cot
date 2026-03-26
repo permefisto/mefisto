@@ -1,0 +1,17 @@
+The TRIANGLE, eventually deformed, is defined from
+the 3 lines which define its 3 edges.
+
+ATTENTION: The 3 lines must be given with a consecutive order or not
+
+           |\ 
+           |  \ 
+          L3    L2
+           |      \ 
+           ---L1---\
+ATTENTION:
+The number of sub-triangles will be equal to the square
+of the constant edge number of edges of the 3 lines.
+
+Example: T9; I; 9; L1; L2; L3; 
+Define a triangulation of contour the edges of lines L1 L2 L3
+which have all the same number of edges.

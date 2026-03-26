@@ -1,0 +1,5 @@
+Give the NAME of the POINT on which the MAPPING is executed
+
+Example: NEWPOINT; PLANE_SYMETRY; 50; P1;
+The NEWPOINT is the result of the mapping PLANE_SYMETRY
+of the point P1.

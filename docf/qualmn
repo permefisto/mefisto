@@ -1,0 +1,10 @@
+QUALMN est la valeur de la QUALITE Q ( 0 < Q < 1 )
+( 0 EF degenere, 1 EF equilateral )
+MINIMALE au dessous de laquelle un triangle de la
+triangulation doit etre supprime.
+
+Une valeur RAISONNABLE est 0.1  .
+
+Une valeur trop grande (>0.5) est DERAISONNABLE car
+modifierait par trop la geometrie de l'objet.
+Cette valeur trop grande est donc ramenee a 0.5 .

@@ -1,0 +1,6 @@
+variable INTERPOL
+ 'Les types d''INTERPOLATION' entier
+ ( 1 : 'AXISYMETRIQUE de DEGRE 1' ,
+   2 : 'AXISYMETRIQUE de DEGRE 2' ,
+   3 : 'LAGRANGE de DEGRE 1' ,
+   4 : 'LAGRANGE de DEGRE 2' ) ;

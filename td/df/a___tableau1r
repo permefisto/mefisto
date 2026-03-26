@@ -1,0 +1,7 @@
+deftms ~>>>TABLEAU1R 'tableau reel a 1 indice'
+variable muet DATE   'date de creation du tableau'   reel2 ;
+variable muet NUTD   'numero du tableau descripteur' entier ;
+variable MINI1R 'valeur minimale de l''indice du tableau' entier ;  
+variable MAXI1R 'valeur maximale de l''indice du tableau' entier ; 
+tableau  TABL1R(MINI1R..MAXI1R) 'valeurs des composantes du tableau' reel ;
+fintms ;

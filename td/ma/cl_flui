@@ -1,0 +1,6 @@
+variable CL_FLUI 'Boundary Condition on Fluid' entier
+( 1 : 'BOUNDARY EXTERIOR FORCE'
+, 2 : 'BLOCKING-UP the IMPOSED VELOCITY'
+, 3 : 'BLOCKING-UP the IMPOSED PRESSURE'
+, 4 : 'INITIAL VELOCITIES'
+, 5 : 'INITIAL PRESSURES' ) ;

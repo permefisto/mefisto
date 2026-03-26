@@ -1,0 +1,6 @@
+Ce sont les 2 rayons des cercles intersection du cone
+avec le plan orthogonal a l'axe du cone en chacun des
+2 points de definition de l'axe du tronc de cone
+
+Attention: Si les 2 rayons sont EGAUX, le TRONC
+           de CONE devient un CYLINDRE.

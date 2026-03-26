@@ -1,0 +1,6 @@
+variable TRACPOIN 'Drawing of Points' entier
+( 1: 'ALL POINTS with    TRANSLATION ORBIT ZOOM'
+, 2: 'ALL POINTS without TRANSLATION ORBIT ZOOM'
+, 3: 'One POINT  without TRANSLATION ORBIT ZOOM'
+, 7: 'The POINT NAME COLOR' 
+, 8: 'The DRAWING or NOT of POINT NAMES' );

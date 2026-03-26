@@ -1,0 +1,223 @@
+      SUBROUTINE SOUSD1( NBSODO , MNNOEU , NBTNOE , NUTYOB , NUOBJE ,
+     %                   NBNOIN , COOR   , MXOBNO ,  INTE , IERR )
+C+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+C BUT :  RETROUVER LES NOEUDS COMMUNS AUX SOUS-DOMAINES
+C -----
+C
+C ENTREES :
+C ---------
+C NBSODO : NOMBRE D'OBJETS A EXAMINER
+C MNNOEU : ADRESSES MCN DES TABLEAUX NOEUDS DE CES OBJETS
+C NBTNOE  : MAJORANT DU NOMBRE DE NOEUDS DE L'INTERFACE
+C NUTYOB : LE NUMERO DU TYPE DE L'OBJET
+C NUOBJE : LE NUMERO DE L'OBJET DANS LE LEXIQUE
+C
+C SORTIES :
+C ---------
+C NBNOIN : NOMBRE DE NOEUDS DE L'INTERFACE
+C COOR   : LES COORDONNEES DE CES NOEUDS
+C MXOBNO : NOMBRE MAXIMUM D'OBJETS CONTENANT UN MEME NOEUD
+C INTE   : POUR CHAQUE NOEUD DE L'INTERFACE
+C          - LE NOMBRE D'OBJETS QUI LE CONTIENNENT
+C          PUIS POUR CHACUN DE CES OBJETS
+C          - SON TYPE , SON NUMERO ET CELUI DU NOEUD DANS L'OBJET
+C IERR   : 0 SI PAS D'ERREUR , > 0 SINON
+C+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+C AUTEUR : PASCAL JOLY  ANALYSE NUMERIQUE UPMC PARIS  JUIN 1990
+C23456---------------------------------------------------------------012
+      IMPLICIT          INTEGER (W)
+      include"./incl/gsmenu.inc"
+      include"./incl/trvari.inc"
+      include"./incl/ntmnlt.inc"
+      include"./incl/a___xyznoeud.inc"
+      REAL              HEXSEC(6,2), COIN(6,2)
+      EQUIVALENCE      (HEXSEC(1,1),XMINS),(HEXSEC(2,1),YMINS),
+     %                 (HEXSEC(3,1),ZMINS),(HEXSEC(1,2),XMAXS),
+     %                 (HEXSEC(2,2),YMAXS),(HEXSEC(3,2),ZMAXS)
+      COMMON / EPSSSS / EPZERO,EPSXYZ
+      include"./incl/pp.inc"
+      COMMON           MCN(MOTMCN)
+      REAL             RMCN(1)
+      EQUIVALENCE     (RMCN(1),MCN(1))
+      COMMON / UNITES / LECTEU,IMPRIM,NUNITE(30)
+C
+      INTEGER  MNNOEU(NBSODO),NUTYOB(NBSODO),NUOBJE(NBSODO)
+      INTEGER  INTE(NBTNOE,*)
+      REAL     COOR(3,NBTNOE),XYZ1(3),XYZ2(3)
+C
+C     INITIALISATIONS
+C     ---------------
+      IERR   = 0
+      MNPAVE = 0
+      MNCHAI = 0
+C
+C     POUR ACCELERER L'IDENTIFICATION UN PAVAGE DE L'ESPACE EST FAIT
+C     RECHERCHE DU MIN_MAX DES NOEUDS DES 2 OBJETS
+      R = RINFO( 'GRAND' )
+      HEXSEC(1,1) = R
+      HEXSEC(2,1) = R
+      HEXSEC(3,1) = R
+      HEXSEC(1,2) = -R
+      HEXSEC(2,2) = -R
+      HEXSEC(3,2) = -R
+C
+C     NOMBRE DE NOEUDS DE L'INTERFACE
+      NBNOEU = 0
+      DO 10 NUSD = 1 , NBSODO
+C        LE TYPE DE L'OBJET PREMIER NUSD
+CCC         NUTY = NUTYOB(NUSD)
+C        LE NUMERO DE L'OBJET DANS SON LEXIQUE
+CCC         NUOB= NUOBJE(NUSD)
+C        LE NOMBRE DE NOEUDS DE L'OBJET NUSD ET DE L'INTERFACE
+         NBNOEU = NBNOEU + MCN( MNNOEU(NUSD) + WNBNOE )
+C        LE CADRE EXTREME DES COORDONNEES
+         CALL CADEXT( MNNOEU(NUSD) , COIN )
+         XMINS = MIN( XMINS, COIN(1,1) )
+         YMINS = MIN( YMINS, COIN(2,1) )
+         ZMINS = MIN( ZMINS, COIN(3,1) )
+         XMAXS = MAX( XMAXS, COIN(1,2) )
+         YMAXS = MAX( YMAXS, COIN(2,2) )
+         ZMAXS = MAX( ZMAXS, COIN(3,2) )
+ 10   CONTINUE
+      IF( IERR .NE. 0 ) RETURN
+C
+C     INITIALISATION DU PAVAGE
+C     DECLARATION ET OUVERTURE EN MC DU TABLEAU 'PAVES'
+      CALL TNMCDC( 'ENTIER' , 4096 , MNPAVE )
+C     MISE A ZERO DU CHAINAGE DES PAVES
+      CALL AZEROI( 4096 , MCN( MNPAVE) )
+C
+C     LE TABLEAU DES CHAINAGES DES NOEUDS DANS LES PAVES
+      CALL TNMCDC( 'ENTIER' , NBNOEU , MNCHAI )
+      CALL AZEROI( NBNOEU , MCN(MNCHAI) )
+C
+C     CALCUL DU NOMBRE D'INTERVALLES DANS CHAQUE DIRECTION
+      NBIPAX = 15
+      NBIPAY = 15
+      NBIPAZ = 15
+      MXPAVE = ( NBIPAX + 1 ) * ( NBIPAY + 1 ) * ( NBIPAZ + 1 ) - 1
+C
+C     CALCUL DES 'ECHELLES' DANS LES 3 DIRECTIONS
+      ECHPAX = XMAXS - XMINS
+      IF( ECHPAX .LE. EPSXYZ ) ECHPAX = 1.
+      ECHPAX = NBIPAX / ECHPAX
+C
+      ECHPAY = YMAXS - YMINS
+      IF( ECHPAY .LE. EPSXYZ ) ECHPAY = 1.
+      ECHPAY = NBIPAY / ECHPAY
+      ECHPAY = ECHPAY * ( NBIPAX + 1  )
+C
+      ECHPAZ = ZMAXS - ZMINS
+      IF( ECHPAZ .LE. EPSXYZ ) ECHPAZ = 1.
+      ECHPAZ = NBIPAZ / ECHPAZ
+      ECHPAZ = ECHPAZ * ( NBIPAX + 1  ) * ( NBIPAY + 1 )
+C
+C     LE NOMBRE DE NOEUDS DE L'INTERFACE APRES IDENTIFICATION
+      NBNOIN = 0
+C
+C     RECHERCHE DES NOEUDS DE L'INTERFACE
+C     -----------------------------------
+C
+      DO 50 NUSD=1,NBSODO
+C
+C        ADRESSE DU TABLEAU 'NOEUD' DE L'OBJET NUSD
+         MN = MNNOEU(NUSD)
+C        ADRESSE DE LA 1-ERE COORDONNEE DU 1-ER NOEUD
+         MNS = MN + WYZNOE - 4
+C        LE NOMBRE DE NOEUDS
+         NBNO = MCN( MN + WNBNOE )
+C
+         DO 40 NO=1,NBNO
+C           LE NUMERO DE PAVE DU NOEUD NO
+            MNS    = MNS + 3
+            NUPAVE = NINT( ( RMCN(MNS+1) - XMINS ) * ECHPAX
+     %                   + ( RMCN(MNS+2) - YMINS ) * ECHPAY
+     %                   + ( RMCN(MNS+3) - ZMINS ) * ECHPAZ )
+C           PROJECTION DANS LES PAVES EXTREMES
+            NUPAVE = MAX( 0      , NUPAVE )
+            NUPAVE = MIN( MXPAVE , NUPAVE )
+C
+C           LE PREMIER NOEUD DU PAVE NUPAVE
+            NONOEU = MCN( MNPAVE + NUPAVE )
+C
+ 15         IF( NONOEU .GT. 0 ) THEN
+C              LE NOEUD NONOEU EXISTE
+C              COMPARAISON DES 3 COORDONNEES
+               DO 20 K=1,3
+                  XYZ1(K)=COOR(K,NONOEU)
+                  XYZ2(K)=RMCN( MNS + K )
+ 20            CONTINUE
+               CALL XYZIDE(XYZ1,XYZ2,IDENT)
+               IF (IDENT.NE.1) GOTO 30
+C              LES NOEUDS NONOEU ET NO SONT IDENTIQUES
+               IA                = INTE(NONOEU,1) * 3 + 1
+               INTE(NONOEU,1)    = INTE(NONOEU,1) + 1
+               INTE(NONOEU,IA+1) = NUTYOB(NUSD)
+               INTE(NONOEU,IA+2) = NUOBJE(NUSD)
+               INTE(NONOEU,IA+3) = NO
+CCC              WRITE(IMPRIM,10019) NUTYOB(NUSD),NUOBJE(NUSD)
+CCC10019         FORMAT(/,' TYPE OBJET',I4,' NUMERO',I4)
+CCC              WRITE(IMPRIM,10020) NO,NONOEU,(INTE(NONOEU,K),K=1,IA+3)
+CCC10020         FORMAT(' LE  NOEUD =',I4,' EST IDENTIFIE AU NOEUD =',I4,
+CCC     %               ' DE L''INTERFACE',/,' INTE : ',121I4)
+CCC              WRITE(IMPRIM,10021) (RMCN(MNS+K),COOR(K,NONOEU),K=1,3)
+CCC10021         FORMAT(' COORDONNEES :',2D15.6)
+               GOTO 40
+C
+C              LE NOEUD N'EST PAS NO . PASSAGE AU NOEUD SUIVANT
+  30           NONOEU = MCN( MNCHAI - 1 + NONOEU )
+               GOTO 15
+            ENDIF
+C
+C           NOEUD NON IDENTIFIE . AJOUT DE CE NOEUD
+            NBNOIN = NBNOIN + 1
+            NONOEU = NBNOIN
+C           CHAINAGE DU NOUVEAU NOEUD EN DEBUT DE PAVE
+            MCN( MNCHAI-1+NONOEU ) = MCN( MNPAVE+NUPAVE )
+            MCN( MNPAVE+NUPAVE   ) = NONOEU
+C           LES  COORDONNEES
+            DO 31 K=1,3
+               COOR( K , NONOEU ) = RMCN( MNS + K )
+ 31         CONTINUE
+            INTE(NBNOIN,1)=1
+            INTE(NBNOIN,2)=NUTYOB(NUSD)
+            INTE(NBNOIN,3)=NUOBJE(NUSD)
+            INTE(NBNOIN,4)=NO
+C
+CCC           WRITE(IMPRIM,10119) NUTYOB(NUSD),NUOBJE(NUSD)
+CCC10119      FORMAT(/,' TYPE OBJET',I4,' NUMERO',I4)
+CCC           WRITE(IMPRIM,10120) NONOEU,(INTE(NONOEU,K),K=1,4)
+CCC10120      FORMAT(' CREATION DU NOEUD =',I4,
+CCC     %            ' DE L''INTERFACE',/,' INTE : ',41I4)
+CCC           WRITE(IMPRIM,10121) (COOR(K,NONOEU),K=1,3)
+CCC10121      FORMAT(' COORDONNEES :',D15.6)
+C
+ 40       CONTINUE
+50     CONTINUE
+C
+C     REAGENCEMENT DU TABLEAU INTERFACE
+C     ---------------------------------
+      MXOBNO = 0
+      NONOEU = NBNOIN
+      NBNOIN = 0
+      DO 60 NO = 1 , NONOEU
+         NBO = INTE(NO,1)
+         IF ( NBO .NE.1 ) THEN
+            IF ( NBO .GT. MXOBNO ) MXOBNO = NBO
+            NBNOIN = NBNOIN + 1
+            DO 61 LL = 1 , NBO * 3 + 1
+               INTE(NBNOIN,LL) = INTE(NO,LL)
+               DO 62 K = 1 , 3
+                  COOR(K,NBNOIN) = COOR(K,NO)
+ 62            CONTINUE
+ 61         CONTINUE
+         END IF
+ 60   CONTINUE
+C
+C     DESTRUCTION DES TABLEAUX TEMPORAIRES
+C     ------------------------------------
+      CALL TNMCDS( 'ENTIER' , 4096   , MNPAVE )
+      CALL TNMCDS( 'ENTIER' , NBNOEU , MNCHAI )
+C
+      RETURN
+      END

@@ -1,0 +1,210 @@
+      SUBROUTINE AJMIAR( NOFOTI, NBSOM, MXSOM, XYZSOM,
+     %                   NAR1, NT1, NAR2, NT2, NBTRIA, MXTRIA, NOTRIA,
+     %                   MXPILE, LHPILE, LAPILE, IERR )
+C+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+C BUT:     FAUT IL AJOUTER UN POINT 'MILIEU' SUR L'ARETE NS1-NS2 DE NT
+C ----     COMMUNE AU TRIANGLE NT2?
+
+
+C ENTREES:
+C --------
+C NOFOTI : NUMERO DE LA FONCTION 'TAILLE_IDEALE' DES ARETES SINON 0
+C MXSOM  : NOMBRE MAXIMAL DE SOMMETS DE LA TRIANGULATION
+C NAR1   : NUMERO DE 1 A 3 DE L'ARETE COMMUNE DU TRIANGLE NT1
+C NT1 NT2: NUMERO NOTRIA DES 2 TRIANGLES D'ARETE COMMUNE
+C NAR2   : NUMERO DE 1 A 3 DE L'ARETE COMMUNE DU TRIANGLE NT2
+C MXTRIA : NOMBRE MAXIMAL DE TRIANGLES DECLARABLES DANS NOTRIA
+C MXPILE : NOMBRE MAXIMALE D'ELEMENTS DE LA PILE (TRIANGLE,ARETE)
+
+C MODIFIES:
+C ---------
+C NBSOM  : NOMBRE DE SOMMETS DE LA TRIANGULATION AVANT et APRES
+C XYZSOM : X Y Z LES 3 COORDONNEES DES SOMMETS DE LA TRIANGULATION
+C NBTRIA : NOMBRE DE TRIANGLES DE LA TRIANGULATION
+C NOTRIA : NO XYZSOM DES 3 SOMMETS ET 0 POUR CHACUN DES NBTRIA TRIANGLES
+C LHPILE : HAUTEUR DE LA PILE DES (NO TRIANGLE, NO ARETE) AVANT ET APRES
+C          DES ARETES A ANANLYSER POUR ECHANGE DES DIAGONALES
+C LAPILE : LAPILE(1,N)=NUMERO NOTRIA DU TRIANGLE
+C          LAPILE(2,N)=NUMERO DE L'ARETE DU TRIANGLE
+
+C SORTIE :
+C --------
+CC IERR  : 0 SI AJOUT D'UN MILIEU et PAS D'ERREUR DETECTEE
+C         -1 SI PAS D'AJOUT DE MILIEU ET SANS ERREUR DETECTEE
+C          1 SI TAILLE_IDEALE NON CALCULABLE EN UN SOMMET
+C          2 SI TABLEAU XYZSOM SATURE (AUGMENTER MXSOM)
+C          3 SI TABLEAU NOTRIA SATURE (AUGMENTER MXTRIA)
+C+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+C AUTEUR: ALAIN PERRONNET LJLL UPMC PARIS & VEULETTES SUR MER Avril 2017
+C....................................................................012
+      REAL              XYZSOM(3,MXSOM)
+      INTEGER           NOTRIA(4,MXTRIA), LAPILE(2,MXPILE)
+      DOUBLE PRECISION  DXYZ(3,4), TI(4), LGARET, C
+
+      IERR = 0
+
+C     NO DES 2 SOMMETS DE L'ARETE NAR1 DU TRIANGLE NT1
+      IF( NAR1 .EQ. 3 ) THEN
+         NARS = 1
+      ELSE
+         NARS = NAR1 + 1
+      ENDIF
+      NS1 = NOTRIA( NAR1, NT1 )
+      NS2 = NOTRIA( NARS, NT1 )
+
+C     TAILLE IDEALE AU POINT NS1 et NS2
+      DO K=1,3
+         DXYZ(K,1) = XYZSOM(K,NS1)
+         DXYZ(K,2) = XYZSOM(K,NS2)
+      ENDDO
+      CALL TAILIDEA( NOFOTI, DXYZ(1,1), NCODEV, TI(1) )
+      IF( NCODEV .EQ. 0 ) GOTO 9991
+      CALL TAILIDEA( NOFOTI, DXYZ(1,2), NCODEV, TI(2) )
+      IF( NCODEV .EQ. 0 ) GOTO 9991
+
+C     LONGUEUR DE L'ARETE NS1-NS2
+      LGARET = SQRT( ( DXYZ(1,2) - DXYZ(1,1) ) ** 2
+     %             + ( DXYZ(2,2) - DXYZ(2,1) ) ** 2
+     %             + ( DXYZ(3,2) - DXYZ(3,1) ) ** 2 )
+
+      IF( MIN( TI(1), TI(2) ) .LT. LGARET * 0.53D0 ) THEN
+
+C        L'ARETE EST TROP LONGUE PAR RAPPORT A LA TAILLE_IDEALE
+C        EST IL LOGIQUE D'AJOUTER UN POINT SUR L'ARETE NS1-NS2
+C        A DISTANCE TI(1) DE NS1?
+C        ------------------------------------------------------
+         C = TI(1) / LGARET
+         DO K=1,3
+            DXYZ(K,1) = DXYZ(K,1) + ( DXYZ(K,2) - DXYZ(K,1) ) * C
+         ENDDO
+C        LA TAILLE IDEALE() EN CE POINT
+         CALL TAILIDEA( NOFOTI, DXYZ(1,1), NCODEV, TI(1) )
+
+C        LE 3-EME SOMMET DE NT1 EST NS3
+         IF( NAR1 .EQ. 1 ) THEN
+            N3 = 3
+         ELSE
+            N3 = NAR1 - 1
+         ENDIF
+         NS3 = NOTRIA( N3, NT1 )
+
+C        DISTANCE NS1-NS3 et la TAILLE_IDEALE() EN NS3
+         LGARET = 0D0
+         DO K=1,3
+            DXYZ( K, 3 ) = XYZSOM( K, NS3 )
+            LGARET = LGARET + ( DXYZ(K,3) - DXYZ(K,1) ) ** 2
+         ENDDO
+         LGARET = SQRT( LGARET )
+
+C        TAILLE IDEALE AU POINT NS3
+         CALL TAILIDEA( NOFOTI, DXYZ(1,3), NCODEV, TI(3) )
+
+C        SI LE POINT ENTRE NS1-NS2 EST TROP PROCHE DE NS3
+C        ALORS IL N'EST PAS CREE
+         IF( LGARET .LT. TI(3) ) GOTO 9000
+
+C        LE 3-EME SOMMET DE NT2 EST NS4
+         IF( NAR2 .EQ. 1 ) THEN
+            N4 = 3
+         ELSE
+            N4 = NAR2 - 1
+         ENDIF
+         NS4 = NOTRIA( N4, NT2 )
+
+C        DISTANCE NS1-NS4 et TAILLE_IDEALE() EN NS4
+         LGARET = 0D0
+         DO K=1,3
+            DXYZ( K, 4 ) = XYZSOM( K, NS4 )
+            LGARET = LGARET + ( DXYZ(K,4) - DXYZ(K,1) ) ** 2
+         ENDDO
+         LGARET = SQRT( LGARET )
+
+C        TAILLE IDEALE AU POINT NS4
+         CALL TAILIDEA( NOFOTI, DXYZ(1,4), NCODEV, TI(4) )
+
+C        SI LE POINT ENTRE NS1-NS2 EST TROP PROCHE DE NS4
+C        ALORS IL N'EST PAS CREE
+         IF( LGARET .LT. TI(4) ) GOTO 9000
+
+C        LE POINT SUR L'ARETE NS1-NS2 EST DEFINI AVEC LE NUMERO NBSOM
+C        ------------------------------------------------------------
+         IF( NBTRIA+2 .GT. MXTRIA ) GOTO 9993
+         IF( NBSOM    .GE. MXSOM  ) GOTO 9992
+         NBSOM = NBSOM + 1
+         DO K=1,3
+            XYZSOM(K,NBSOM) = REAL( DXYZ(K,1) )
+         ENDDO
+
+C        NT1+NT2 SONT DECOUPES EN 4 SOUS TRIANGLES
+C        -----------------------------------------
+         NOTRIA( 1, NT1 ) = NS3
+         NOTRIA( 2, NT1 ) = NS1
+         NOTRIA( 3, NT1 ) = NBSOM
+
+         NOTRIA( 1, NT2 ) = NS1
+         NOTRIA( 2, NT2 ) = NS4
+         NOTRIA( 3, NT2 ) = NBSOM
+
+C        AJOUT DU NOUVEAU TRIANGLE NBTRIA
+         NBTRIA = NBTRIA + 1
+         NOTRIA( 1, NBTRIA ) = NS4
+         NOTRIA( 2, NBTRIA ) = NS2
+         NOTRIA( 3, NBTRIA ) = NBSOM
+
+C        AJOUT DU NOUVEAU TRIANGLE NBTRIA
+         NBTRIA = NBTRIA + 1
+         NOTRIA( 1, NBTRIA ) = NS2
+         NOTRIA( 2, NBTRIA ) = NS3
+         NOTRIA( 3, NBTRIA ) = NBSOM
+
+
+         IF( LHPILE+4 .LE. MXPILE ) THEN
+
+C           AINSI PAS DE RISQUE DE DEBORDEMENT DE LA PILE
+C           AJOUT DES 4 ARETES FRONTALIERES SUSCEPTIBLES DE FAIRE
+C           UN ECHANGE DES DIAGONALES DES TRIANGLES NT1+NT2
+            LHPILE = LHPILE + 1
+            LAPILE( 1, LHPILE ) = NT1
+            LAPILE( 2, LHPILE ) = 1
+
+            LHPILE = LHPILE + 1
+            LAPILE( 1, LHPILE ) = NT2
+            LAPILE( 2, LHPILE ) = 1
+
+            LHPILE = LHPILE + 1
+            LAPILE( 1, LHPILE ) = NBTRIA - 1
+            LAPILE( 2, LHPILE ) = 1
+
+            LHPILE = LHPILE + 1
+            LAPILE( 1, LHPILE ) = NBTRIA
+            LAPILE( 2, LHPILE ) = 1
+
+         ENDIF
+
+         GOTO 9999
+
+      ENDIF
+
+C     PAS D'AJOUT DE POINT SUR L'ARETE NS1-NS2
+C     ----------------------------------------
+ 9000 IERR = -1
+      GOTO 9999
+
+
+C     PROBLEME DE CALCUL DE LA FONCTION TAILLE_IDEALE(x,y,z)
+ 9991 PRINT*,'ajmiar: CALCUL INCORRECT de TAILLE_IDEALE() AU SOMMET',
+     %       (DXYZ(L,2),L=1,3), ' TAILLE_IDEALE=',TI(2)
+      IERR = 1
+      GOTO 9999
+
+C     TABLEAU XYZSOM SATURE
+ 9992 PRINT *,'ajmiar: TABLEAU XYZSOM SATURE MXSOM=',MXSOM
+      IERR = 2
+      GOTO 9999
+
+C     TABLEAU NOTRIA SATURE
+ 9993 PRINT*,'ajmiar: TABLEAU NOTRIA SATURE MXTRIA=',MXTRIA
+      IERR = 3
+
+ 9999 RETURN
+      END

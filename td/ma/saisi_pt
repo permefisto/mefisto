@@ -1,0 +1,4 @@
+variable SAISI_PT 'INPUT POINT Types'  entier
+ ( 1 : 'TYPING of VALUES'
+ , 2 : 'MOUSE POINTING of 2D POINTS'
+ , 3 : 'MOUSE POINTING of 3D POINTS' ) ;

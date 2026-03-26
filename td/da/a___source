@@ -1,0 +1,12 @@
+deftms ~>>>SOURCE  'Source of heat'
+variable muet DATE 'date of creation of the TMS' reel2  ;
+variable muet NUTD 'number of the descriptor array TD' entier ; 
+variable    LTSOUR 'type of source' entier 
+ ( 1 : 'constant source' 
+, -1 : 'function source' 
+,  0 : 'delete this source' ) ;
+cas LTSOUR
+  1 : variable SOURCE 'value of the source' reel ; 
+ -1 : variable NFSOUR 'name of the function source' ^~>FONCTION ;
+fincas ;
+fintms ;

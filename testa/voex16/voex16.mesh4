@@ -1,0 +1,73 @@
+{ ==================================================================== }
+{ MEFISTO Software     : December 18-th 2009 Version                   }
+{ USER's Name          : dnhsieh                                       }
+{ Project Name         : p3_4                                          }
+{ Date                 :  4/01/10                                      }
+{ ==================================================================== }
+{                                                                      }
+ {********}
+ { POINTS }
+ {********}
+ 1; { POINTS vertices of the object }
+ 1; { TYPING of VALUES }
+ p1;  i; 1; 0; 5; 0; 
+ p2;  i; 1; 1; 5; 0;
+ p3;  i; 1; 5; 5; 0;
+ p4;  i; 1; 1; 4; 0;
+ p5;  i; 1; 4; 4; 0;
+ p6;  i; 1; 5; 4; 0;
+ p7;  i; 1; 0; 1; 0;
+ p8;  i; 1; 1; 1; 0;
+ p9;  i; 1; 4; 1; 0;
+ p10; i; 1; 0; 0; 0;
+ p11; i; 1; 4; 0; 0;
+ p12; i; 1; 5; 0; 0;
+  @;
+{                                                                      }
+ {*******}
+ { LINES }
+ {*******}
+ 2; { LINES edges of the object }
+ { STRAIGHT LINE }
+ p1p7;   i; 2; 4; 1; p1;  p7;
+ p7p8;   i; 2; 1; 1; p7;  p8;
+ p8p2;   i; 2; 4; 1; p8;  p2;
+ p2p1;   i; 2; 1; 1; p2;  p1;
+ p2p4;   i; 2; 1; 1; p2;  p4;
+ p4p6;   i; 2; 4; 1; p4;  p6;
+ p6p3;   i; 2; 1; 1; p6;  p3;
+ p3p2;   i; 2; 4; 1; p3;  p2;
+ p5p6;   i; 2; 1; 1; p5;  p6;
+ p6p12;  i; 2; 4; 1; p6;  p12;
+ p12p11; i; 2; 1; 1; p12; p11;
+ p11p5;  i; 2; 4; 1; p11; p5;
+ p7p9;   i; 2; 4; 1; p7;  p9;
+ p9p11;  i; 2; 1; 1; p9;  p11;
+ p11p10; i; 2; 4; 1; p11; p10;
+ p10p7;  i; 2; 1; 1; p10; p7;
+ @;
+{                                                                      }
+ {**********}
+ { SURFACES }
+ {**********}
+ 3; { SURFACES faces of the object }
+ { TRANSFINITE QUADRANGLE }
+ s1; i; 1; p1p7;  p7p8;   p8p2;   p2p1;  1;
+ s2; i; 1; p5p6;  p6p12;  p12p11; p11p5; 1; 
+ s3; i; 1; p7p9;  p9p11;  p11p10; p10p7; 1;
+ s4; i; 1; p2p4;  p4p6;   p6p3;   p3p2;  1;
+ { C0-CONTINUITY UNION OF SURFACES }
+ s; i; 51; 4; s1; s2; s3; s4;
+ @;
+{                                                                      }
+ {*********}
+ { VOLUMES }
+ {*********}
+ 4; { VOLUMES materials of the object }
+ { MAGNIFYING OF A 3D-SURFACE INTO LAYERS }
+ v16.4; i; 16; s; 2; 0.1; 3; 0.5;
+
+@;
+
+10; 4; 1; 90; {Drawing of volume mesh}
+CLOSE;

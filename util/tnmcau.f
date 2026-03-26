@@ -1,0 +1,123 @@
+      SUBROUTINE TNMCAU( KTYPE, NVTAM1, NVTAM2, NVACOP, MNTAMN )
+C++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+C BUT :    AUGMENTER LE NOMBRE DE VARIABLES D'UN TABLEAU NUMERIQUE
+C -----    EN MEMOIRE CENTRALE
+C
+C ENTREES :
+C ---------
+C KTYPE  : TYPE DU TABLEAU ('ENTIER','REEL',...)
+C NVTAM1 : NOMBRE DE VARIABLES AVANT L'AUGMENTATION
+C NVTAM2 : NOMBRE DE VARIABLES APRES L'AUGMENTATION
+C NVACOP : NOMBRE DE VARIABLES A COPIER DU TABLEAU AVANT AUGMENTATION
+C          DANS CELUI APRES AUGMENTATION (>=0)
+C
+C ENTREE ET SORTIE :
+C ------------------
+C MNTAMN : ADRESSE MCN DU TABLEAU AVANT ET APRES AUGMENTATION
+C
+C ATTENTION : SI NVTAM1 OU MNTAMN =<0 EN ENTREE,IL Y A SIMPLEMENT
+C =========== DECLARATION DU TABLEAU AVEC NVTAM2 VARIABLES
+C++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+C PROGRAMMEUR : ALAIN PERRONNET ANALYSE NUMERIQUE PARIS       MARS 1986
+C......................................................................
+      include"./incl/langue.inc"
+      include"./incl/gsmenu.inc"
+      COMMON / UNITES / LECTEU,IMPRIM,INTERA,NUNITE(29)
+      include"./incl/pp.inc"
+      COMMON            MCN(MOTMCN)
+      CHARACTER*(*)     KTYPE
+C
+C     PROTECTION CONTRE UNE MAUVAISE AUGMENTATION
+      IF( NVTAM1 .EQ. NVTAM2 ) THEN
+         IF( LANGAG .EQ. 0 ) THEN
+            WRITE(IMPRIM,*)
+     %     'TNMCAU: NOMBRE VARIABLES AVANT = APRES AUGMENTATION=',NVTAM1
+         ELSE
+            WRITE(IMPRIM,*)
+     %     'TNMCAU: INITIAL VARIABLE NUMBER = FINAL NUMBER =',NVTAM1
+         ENDIF
+         RETURN
+      ELSE IF( NVTAM1 .GT. NVTAM2 ) THEN
+         NBLGRC(NRERR) = 3
+         WRITE(KERR(MXLGER)(1:10),'(I10)') NVTAM1
+         WRITE(KERR(MXLGER-1)(1:10),'(I10)') NVTAM2
+         IF( LANGAG .EQ. 0 ) THEN
+            KERR(1) = 'TNMCAU: PLUS DE VARIABLES TABLEAU INITIAL ' //
+     %                 KERR(MXLGER)(1:10)
+            KERR(2)='QUE DANS LE TABLEAU FINAL ' // KERR(MXLGER-1)(1:10)
+            KERR(3) = 'PAS D''AUGMENTATION DE LA TAILLE'
+         ELSE
+            KERR(1) = 'TNMCAU: INITIAL VARIABLE NUMBER=' //
+     %                 KERR(MXLGER)(1:10)
+            KERR(2) = '> FINAL VARIABLE NUMBER=' // KERR(MXLGER-1)(1:10)
+            KERR(3) = 'THE SIZE OF THE ARRAY IS NOT AUGMENTED'
+         ENDIF
+         CALL LEREUR
+         RETURN
+      ENDIF
+C
+C     PROTECTION DU NOMBRE DE VARIABLES A COPIER
+      IF( NVACOP .GT. 0 ) THEN
+C
+C        PROTECTION CONTRE UNE VALEUR NVACOP INCOHERENTE
+         IF( NVACOP .GT. NVTAM1 ) THEN
+            NBLGRC(NRERR) = 2
+            WRITE(KERR(MXLGER)(1:10),'(I10)') NVACOP
+            WRITE(KERR(MXLGER-1)(1:10),'(I10)') NVTAM1
+            IF( LANGAG .EQ. 0 ) THEN
+               KERR(1) = 'TNMCAU: PLUS DE VARIABLES A RECOPIER ' //
+     %                    KERR(MXLGER)(1:10)
+               KERR(2) = 'QUE NE CONTENAIT LE TABLEAU DE ' //
+     %                    KERR(MXLGER-1)(1:10) // ' VARIABLES'
+            ELSE
+               KERR(1) = 'TNMCAU: TOO VARIABLES TO COPY ' //
+     %                    KERR(MXLGER)(1:10)
+               KERR(2) = 'THAN THE INITIAL ARRAY CONTAINS ' //
+     %                    KERR(MXLGER-1)(1:10)
+            ENDIF
+            CALL LEREUR
+            CALL XVPAUSE
+C           ARRET DE L'EXECUTION AVEC SAUVEGARDE DES TMS
+            CALL ARRET( 1 )
+         ENDIF
+C
+         IF( NVACOP .GT. NVTAM2 ) THEN
+            NBLGRC(NRERR) = 2
+            WRITE(KERR(MXLGER)(1:10),'(I10)') NVACOP
+            WRITE(KERR(MXLGER-1)(1:10),'(I10)') NVTAM2
+            IF( LANGAG .EQ. 0 ) THEN
+               KERR(1)='TNMCAU:PLUS DE VARIABLES A COPIER ' //
+     %                    KERR(MXLGER)(1:10)
+               KERR(2)='QUE LE FUTUR TABLEAU DE '//KERR(MXLGER-1)(1:10)
+     %               //' VARIABLES'
+            ELSE
+               KERR(1)='TNMCAU:TOO VARIABLES TO COPY ' //
+     %                    KERR(MXLGER)(1:10)
+             KERR(2)='THAN THE FINAL CAN CONTAIN '//KERR(MXLGER-1)(1:10)
+            ENDIF
+            CALL LEREUR
+            CALL XVPAUSE
+C           ARRET DE L'EXECUTION AVEC SAUVEGARDE DES TMS
+            CALL ARRET( 1 )
+         ENDIF
+      ENDIF
+C
+C     L'ADRESSE D'ENTREE DU TABLEAU
+      MN = MNTAMN
+C
+C     DECLARATION DU TABLEAU AUGMENTE
+      MNTAMN = 0
+      CALL TNMCDC( KTYPE , NVTAM2 , MNTAMN )
+C
+      IF( NVACOP .GT. 0 ) THEN
+C        LA COPIE EST EFFECTUEE DE L'ANCIEN DANS LE NOUVEAU TABLEAU
+         MOTS = MOTTAB( NUMTYP(KTYPE) , NVACOP )
+         CALL TRTATA( MCN(MN) , MCN(MNTAMN) , MOTS )
+      ENDIF
+C
+C     DESTRUCTION DU TABLEAU INITIAL
+      IF( MN .GT. 0 .AND. NVTAM1 .GT. 0 )
+     %   CALL TNMCDS( KTYPE , NVTAM1 , MN )
+
+      RETURN
+      END

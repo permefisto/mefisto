@@ -1,0 +1,737 @@
+      SUBROUTINE TRSSTR( NBISO,  VALISO, DFMXIS,
+     %                   NOST,   NOSURF, NOLA,   XYVAL,
+     %                   NOINTF, NBPOEL, COPOE,  FBASE,
+     %                   MXYZST, NBXYZ,  XYZST,  NOXYZ,
+     %                   MXNVTR, NBNVTR, NSNVTR, NUPLIS, NUISOP,
+     %                   NUMILF, NUMXLF, L1LGFR,
+     %                   MXARCH, NBARCH, N1ARCH, NSARCH, IERR )
+C+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+C BUT :    TRIANGULER UN SOUS-TRIANGLE SELON SES ARETES ISOVALEURS
+C -----
+C ENTREES:
+C --------
+C NBISO  : NOMBRE D'ISOVALEURS
+C VALISO : VALEURS DES NBISO ISOVALEURS
+C DFMXIS : DIFFERENCE MAXIMALE ENTRE 2 ISOVALEURS
+C NOST   : NUMERO DES 3 SOMMETS DU TRIANGLE
+C NOSURF : NUMERO DE LA SURFACE DU TRIANGLE
+C NOLA   : NUMERO DE LIGNE DES 3 ARETES DU TRIANGLE
+C XYVAL  : X, Y, VALEUR EN CHACUN DES SOMMETS
+C NOINTF : NUMERO DE L'INTERPOLATION DE CHACUNES DES 3 COMPOSANTES DE F
+C NBPOEL : NOMBRE DE POINTS DE L'EF
+C COPOE  : COORDONNEES DES NBPOEL POINTS DE L'EF
+C MXYZST : NOMBRE MAXIMAL DE SOMMETS DECLARABLES DANS XYZST
+C XYVAL  : X Y ET VALEUR AUX SOMMETS DES SOUS-TRIANGLES
+C NOXYZ  : NUMERO DANS XYZST DES SOMMETS DES SOUS-TRIANGLES
+C          DE L'EF ACTUEL (ILS SONT IDENTIFIES)
+C MXNVTR : NOMBRE MAXIMAL DE TRIANGLES DECLARABLES DANS NSNVTR
+C NUMILF : NUMERO MINIMAL DES LIGNES FRONTIERES DE L'OBJET
+C NUMXLF : NUMERO MAXIMAL DES LIGNES FRONTIERES DE L'OBJET
+C MXARCH : NOMBRE MAXIMAL D'ARETES DECLARABLES DANS NSARCH
+C
+C MODIFIES :
+C ----------
+C FBASE  : VALEUR DES POLYNOMES DE BASE EN UN POINT
+C NBXYZ  : NOMBRE DE SOMMETS ACTUELS DE LA TRIANGULATION
+C XYZST  : 3 COORDONNEES DES NBXYZ SOMMETS DE LA TRIANGULATION
+C NBNVTR : NOMBRE ACTUEL DE TRIANGLES DANS NSNVTR
+C NSNVTR : NUMERO DES 3 SOMMETS NO SURFACE DES NBNVTR TRIANGLES ACTUELS
+C          ATTENTION : SENS DIRECT NON ASSURE !
+C NUPLIS : NUMERO DE POINT OU LIGNE OU ISO DE CHACUN DES SOMMETS
+C          -NP SI NP EST LE NUMERO DU POINT UTILISATEUR DE CE SOMMET
+C          -1234567 SI LE SOMMET APPARTIENT A 2 LIGNES (SOMMET INITIAL)
+C          NU LIGNE SI LE SOMMET EST SUR UNE LIGNE UTILISATEUR
+C          0        SINON
+C NUISOP : NUMERO DE L'ISO DE CHAQUE POINT ET 0 SINON
+C L1LGFR : POUR CHAQUE LIGNE DE NUMILF A NUMXLF POINTE SUR LA PREMIERE
+C          ARETE CHAINEE DE LA LIGNE
+C NBARCH : NOMBRE D'ARETES CHAINEES DANS NSARCH
+C N1ARCH : NUMERO DANS NSARCH DE LA PREMIERE ARETE VIDE
+C NSARCH : NUMERO DES 2 SOMMETS DE L'ARETE, ARETE PRECEDENTE ET SUIVANTE
+C IERR   : 0 SI PAS D'ERREUR DETECTEE
+C          1 SATURATION DU TABLEAU NSARCH
+C          2 SATURATION DU TABLEAU XYZST
+C          3 SATURATION DU TABLEAU NSNVTR
+C+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+C AUTEUR : PERRONNET ALAIN UPMC ANALYSE NUMERIQUE PARIS     JANVIER 1995
+C2345X7..............................................................012
+      include"./incl/gsmenu.inc"
+      include"./incl/trvari.inc"
+C
+      LOGICAL           TRATRI
+      COMMON / DV2DCO / TRATRI
+C     TRACE OU NON DES TRIANGLES GENERES DANS LA TRIANGULATION
+CCC      REAL              COMIMX(3,2)
+C
+      INTEGER           NSNVTR(4,MXNVTR), NUPLIS(NBXYZ), NUISOP(NBXYZ),
+     %                  NOXYZ(*),
+     %                  L1LGFR(NUMILF:NUMXLF), NSARCH(4,MXARCH)
+      INTEGER           NOST(3), NOXYZS(3), NOLA(3), NOLAA(3),
+     %                  NSARI0(2), NSARIS(2)
+      REAL              VALISO(NBISO), XYVAL(3,*), XYZST(3,MXYZST)
+      REAL              PT(2,2), XY(2,3), XYZ(3)
+      DOUBLE PRECISION  XD,YD,ZD,PROSCD,
+     %                  FBASE(30),
+     %                  XREF(3),
+     %                  COPOE(NBPOEL,3)
+      EQUIVALENCE      (XD,XREF(1)),(YD,XREF(2)),(ZD,XREF(3))
+      DATA              ZD /0.D0/
+CCCC
+CCCC     POUR LA MISE AU POINT : TRACE GRAPHIQUE DU TRIANGLE ADAPTE
+CCC      IF( TRATRI ) THEN
+CCCC        LES TRACES SONT DEMANDES
+CCC         CALL EFFACE
+CCCC        LE CADRE OBJET GLOBAL EN UNITES UTILISATEUR EST CALCULE
+CCC         DO 1010 I1=1,3
+CCC            COMIMX(I1,1) = XYZST(I1, NOXYZ( NOST(1) ) )
+CCC            COMIMX(I1,2) = XYZST(I1, NOXYZ( NOST(1) ) )
+CCC 1010    CONTINUE
+CCC         DO 1020 I1=2,3
+CCC            DO 1015 I2=1,3
+CCC               S = XYZST(I2, NOXYZ( NOST(I1) ) )
+CCC               IF( S .LT. COMIMX(I2,1) ) COMIMX(I2,1)=S
+CCC               IF( S .GT. COMIMX(I2,1) ) COMIMX(I2,2)=S
+CCC 1015       CONTINUE
+CCC 1020    CONTINUE
+CCC         XE = COMIMX(1,2) - COMIMX(1,1)
+CCC         YE = COMIMX(2,2) - COMIMX(2,1)
+CCC         CALL ISOFENETRE( COMIMX(1,1)-XE/20, COMIMX(1,2)+XE/20,
+CCC     %                    COMIMX(2,1)-YE/20, COMIMX(2,2)+YE/20 )
+CCC      ENDIF
+CCCC
+C     =========================
+C     TRIANGULATION DU TRIANGLE
+C     =========================
+      PCDFIS = 0.01 * DFMXIS
+      NBNVT0 = NBNVTR
+C
+C     RECHERCHE DE LA VALEUR MINIMALE ET MAXIMALE AUX 3 SOMMETS DU TRIANGLE
+      I1 = 1
+      I3 = 1
+      V1 = XYVAL(3,NOST(1))
+      V3 = V1
+C
+      V2 = XYVAL(3,NOST(2))
+      IF( V2 .LT. V1 ) THEN
+          V1 = V2
+          I1 = 2
+      ELSE IF( V2 .GT. V3 ) THEN
+          V3 = V2
+          I3 = 2
+      ENDIF
+C
+      V2 = XYVAL(3,NOST(3))
+      IF( V2 .LT. V1 ) THEN
+          V1 = V2
+          I1 = 3
+      ELSE IF( V2 .GT. V3 ) THEN
+          V3 = V2
+          I3 = 3
+      ENDIF
+C
+C     LE NUMERO DE LIGNE DES 3 ARETES DU TRIANGLE APRES RENUMEROTATION SELON V
+      NOLAA(1) = NOLA(1)
+      NOLAA(2) = NOLA(2)
+      NOLAA(3) = NOLA(3)
+C
+      IF( V1 .EQ. V3 ) THEN
+C
+C         LES 3 SOMMETS DU TRIANGLE ONT MEME VALEUR . EST ELLE UNE ISOVALEUR ?
+C         ====================================================================
+          DO 10 I=1,NBISO
+             IF( ABS(VALISO(I)-V1) .LE. PCDFIS ) THEN
+C
+C               LE CONTOUR DU TRIANGLE FORME 3 ARETES POUR CETTE ISOVALEUR I
+C               ------------------------------------------------------------
+C               IL CONSTITUE UN TRIANGLE A LUI SEUL.SES 3 SOMMETS SONT SUR L'ISO
+                DO 5 K=1,3
+C                  SON NUMERO D'ISO EST IMPOSE
+                   NUISOP( NOXYZ( NOST(K) ) ) = I
+ 5              CONTINUE
+                GOTO 500
+             ENDIF
+ 10       CONTINUE
+          GOTO 500
+      ENDIF
+C
+C     TRIANGLE NON CONSTANT : RECHERCHE DE LA VALEUR INTERMEDIAIRE V2
+C     ===============================================================
+      DO 15 I2=1,3
+         IF( I2 .NE. I1 .AND. I2 .NE. I3 ) GOTO 16
+ 15   CONTINUE
+ 16   V2 = XYVAL(3,NOST(I2) )
+C
+C     LES 3 SOMMETS SONT REORDONNES SELON V1<=V2<=V3
+      DO 20 I=1,2
+         XY(I,1) = XYVAL(I,NOST(I1))
+         XY(I,2) = XYVAL(I,NOST(I2))
+         XY(I,3) = XYVAL(I,NOST(I3))
+ 20   CONTINUE
+C
+C     LES 3 NUMEROS DE LIGNES DES ARETES SONT RE-ORDONNES SELON LE MEME ORDRE
+      NL1 = NOLA(1)
+      NL2 = NOLA(2)
+      NL3 = NOLA(3)
+      IF( I1 .EQ. 1 ) THEN
+         IF( I2 .EQ. 3 ) THEN
+            NOLAA(1) = NL3
+            NOLAA(2) = NL2
+            NOLAA(3) = NL1
+         ENDIF
+      ELSE IF( I1 .EQ. 2 ) THEN
+         IF( I2 .EQ. 1 ) THEN
+            NOLAA(1) = NL1
+            NOLAA(2) = NL3
+            NOLAA(3) = NL2
+         ELSE IF( I2 .EQ. 3 ) THEN
+            NOLAA(1) = NL2
+            NOLAA(2) = NL3
+            NOLAA(3) = NL1
+         ENDIF
+      ELSE
+         IF( I2 .EQ. 1 ) THEN
+            NOLAA(1) = NL3
+            NOLAA(2) = NL1
+            NOLAA(3) = NL2
+         ELSE IF( I2 .EQ. 2 ) THEN
+            NOLAA(1) = NL2
+            NOLAA(2) = NL1
+            NOLAA(3) = NL3
+         ENDIF
+      ENDIF
+C
+C     RECHERCHE DE LA PREMIERE ISO APRES V1
+      DO 30 NB1 = 1, NBISO
+C        LE SOMMET NOST(I1) EST IL SUR UNE ISOVALEUR ?
+         IF( ABS(VALISO(NB1)-V1) .LE. PCDFIS ) THEN
+C            LE SOMMET NOST(I1) EST CONSIDERE SUR L'ISOVALEUR NB1
+             NUISOP(NOXYZ(NOST(I1))) = NB1
+         ENDIF
+         IF( VALISO(NB1) .GE. V1 ) GOTO 35
+ 30   CONTINUE
+C     LE TRIANGLE ACTUEL DEVIENT UN NOUVEAU
+      GOTO 500
+C
+C     BOUCLE SUR LES ISOVALEURS AU-DELA DE V1
+ 35   NBARI1 = 0
+      NBARI2 = 0
+C     LE NUMERO DANS NOXYZ DES 3 SOMMETS REORDONNES DU TRIANGLE
+      NOXYZS(1) = NOXYZ( NOST(I1) )
+      NOXYZS(2) = NOXYZ( NOST(I2) )
+      NOXYZS(3) = NOXYZ( NOST(I3) )
+C
+      NSARI0(1) = NOXYZS(1)
+      NSARI0(2) = NOXYZS(2)
+      I         = NB1
+      IF( VALISO(NB1) .GE. V2 ) GOTO 70
+C
+C     RECHERCHE D'UNE INTERSECTION ENTRE UNE ISOVALEUR ET LES ARETES 12 ET 13
+C     =======================================================================
+      DO 68 I=NB1,NBISO
+         VI = VALISO(I)
+         IF( VI .GE. V2 ) GOTO 70
+C
+C        L'ISO VI INTERSECTE L'ARETE 12 ET 13 SELON LES POINTS PT(*,1) ET PT(*,2
+         DO 40 K=1,2
+            PT(K,1) = ( XY(K,1) * ( V2 - VI ) +
+     %                  XY(K,2) * ( VI - V1 ) ) / ( V2 - V1 )
+            PT(K,2) = ( XY(K,1) * ( V3 - VI ) +
+     %                  XY(K,3) * ( VI - V1 ) ) / ( V3 - V1 )
+ 40      CONTINUE
+C
+C        COORDONNEES DE CES POINTS SUR L'EF COURANT
+         DO 58 K=1,2
+C
+C           LES 2 COORDONNEES DU SOMMET SUR L'EF UNITE
+            XD = PT(1,K)
+            YD = PT(2,K)
+C
+C           LA VALEUR DES NBN FONCTIONS DE BASE EN (XD,YD,0D0)
+            CALL INTERP(NOINTF,XD,YD,ZD,NBPOEL,FBASE)
+C
+C           PASSAGE A L'EF COURANT
+C           CALCUL DES COORDONNEES DES SOMMETS DES ARETES ISOVALEURS
+C           A PARTIR DE LA TRANSFORMATION F: EF REFERENCE -> EF COURANT
+            DO 42 L=1,2
+               XYZ(L) = REAL( PROSCD( FBASE, COPOE(1,L) , NBPOEL ) )
+ 42         CONTINUE
+            XYZ(3) = 0.0
+C
+C           IDENTIFICATION DE CE POINT PARMI XYZST
+            DO 44 L=NBXYZ,1,-1
+                CALL XYZIDE( XYZ, XYZST(1,L), IDENTQ )
+                IF( IDENTQ .NE. 0 ) THEN
+C                   POINT RETROUVE
+                    NSARIS(K) = L
+                    GOTO 46
+                ENDIF
+ 44         CONTINUE
+C
+C           POINT NON RETROUVE => IL EST AJOUTE
+            IF( NBXYZ .GE. MXYZST ) THEN
+C              SATURATION DE XYZST
+               GOTO 9998
+            ENDIF
+            NBXYZ = NBXYZ + 1
+            NSARIS( K ) = NBXYZ
+            XYZST(1,NBXYZ) = XYZ(1)
+            XYZST(2,NBXYZ) = XYZ(2)
+            XYZST(3,NBXYZ) = 0.0
+C
+C           LE SOMMET NBXYZ EST SUR L'ISOVALEUR I
+ 46         NUISOP( NSARIS(K) ) = I
+C
+            IF( NUPLIS( NBXYZ ) .EQ. 0 ) THEN
+               IF( K .EQ. 1 ) THEN
+C                 LE POINT APPARTIENT A L'ARETE 1 DU TRIANGLE
+                  KK = 1
+               ELSE
+C                 LE POINT APPARTIENT A L'ARETE 3 DU TRIANGLE
+                  KK = 3
+               ENDIF
+               IF( NOLAA(KK) .GT. 0 ) THEN
+C                 AJOUT DU NUMERO DE LIGNE
+                  NUPLIS(NBXYZ) = NOLAA(KK)
+               ENDIF
+            ENDIF
+ 58      CONTINUE
+C
+C        TRIANGULATION DE CETTE ARETE ISO
+         IF( NBARI1 .EQ. 0 ) THEN
+C
+C           LE PREMIER TRIANGLE SOMMET I1 - ARETE NSARIS(1:2)
+C           -------------------------------------------------
+            CALL AJNVTR( NSARI0(1), NSARIS(1), NSARIS(2),
+     %                   NOSURF, MXNVTR, NBNVTR, NSNVTR, IERR )
+            IF( IERR .NE. 0 ) RETURN
+C           TRACE EVENTUEL DU NOUVEAU TRIANGLE
+            CALL ADTRTR( XYZST, NSNVTR, NBNVTR, NCBLAN, NCROUG )
+C
+C           SI L'ARETE 12 EST SUR UNE LIGNE ALORS
+C              AJOUT DE CETTE SOUS-ARETE AU CHAINAGE DES ARETES DE CETTE LIGNE
+            IF( NOLAA(1) .GT. 0 ) THEN
+C              CHAINAGE SIMPLE DE CETTE ARETE DANS SA LIGNE
+               CALL AJARCH( NSARI0(1), NSARIS(1), L1LGFR(NOLAA(1)),
+     %                      MXARCH, NBARCH, N1ARCH, NSARCH, IERR )
+               IF( IERR .NE. 0 ) RETURN
+            ENDIF
+C
+C           SI L'ARETE 13 EST SUR UNE LIGNE ALORS
+C              AJOUT DE CETTE SOUS-ARETE AU CHAINAGE DES ARETES DE CETTE LIGNE
+            IF( NOLAA(3) .GT. 0 ) THEN
+C              CHAINAGE SIMPLE DE CETTE ARETE DANS SA LIGNE
+               CALL AJARCH( NSARI0(1), NSARIS(2), L1LGFR(NOLAA(3)),
+     %                      MXARCH, NBARCH, N1ARCH, NSARCH, IERR )
+               IF( IERR .NE. 0 ) RETURN
+            ENDIF
+C
+         ELSE
+C
+C           TRIANGULATION ENTRE 2 ARETES ISO NSARI0(1:2) ET NSARIS(1:2)
+C           -----------------------------------------------------------
+            CALL AJNVTR( NSARI0(2), NSARI0(1), NSARIS(2),
+     %                   NOSURF, MXNVTR, NBNVTR, NSNVTR, IERR )
+            IF( IERR .NE. 0 ) RETURN
+C           TRACE EVENTUEL DU NOUVEAU TRIANGLE
+            CALL ADTRTR( XYZST, NSNVTR, NBNVTR, NCBLAN, NCROUG )
+            CALL AJNVTR( NSARI0(1), NSARIS(1), NSARIS(2),
+     %                   NOSURF, MXNVTR, NBNVTR, NSNVTR, IERR )
+            IF( IERR .NE. 0 ) RETURN
+C           TRACE EVENTUEL DU NOUVEAU TRIANGLE
+            CALL ADTRTR( XYZST, NSNVTR, NBNVTR, NCBLAN, NCROUG )
+C
+C           SI L'ARETE 12 EST SUR UNE LIGNE ALORS
+C              AJOUT DE CETTE SOUS-ARETE AU CHAINAGE DES ARETES DE CETTE LIGNE
+            IF( NOLAA(1) .GT. 0 ) THEN
+C              CHAINAGE SIMPLE DE CETTE ARETE DANS SA LIGNE
+               CALL AJARCH( NSARI0(1), NSARIS(1), L1LGFR(NOLAA(1)),
+     %                      MXARCH, NBARCH, N1ARCH, NSARCH, IERR )
+               IF( IERR .NE. 0 ) RETURN
+            ENDIF
+C
+C           SI L'ARETE 13 EST SUR UNE LIGNE ALORS
+C              AJOUT DE CETTE SOUS-ARETE AU CHAINAGE DES ARETES DE CETTE LIGNE
+            IF( NOLAA(3) .GT. 0 ) THEN
+C              CHAINAGE SIMPLE DE CETTE ARETE DANS SA LIGNE
+               CALL AJARCH( NSARI0(2), NSARIS(2), L1LGFR(NOLAA(3)),
+     %                      MXARCH, NBARCH, N1ARCH, NSARCH, IERR )
+               IF( IERR .NE. 0 ) RETURN
+            ENDIF
+         ENDIF
+C
+C        PASSAGE A L'ISOVALEUR SUIVANTE
+         NBARI1 = NBARI1 + 1
+         NSARI0(1) = NSARIS(1)
+         NSARI0(2) = NSARIS(2)
+ 68   CONTINUE
+C
+C     RECHERCHE D'UNE INTERSECTION ENTRE UNE ISOVALEUR ET LES ARETES 23 ET 13
+C     =======================================================================
+C     LE SOMMET NOXYZS(2) EST IL SUR UNE ISOVALEUR ?
+ 70   DO 75 J=MAX(1,I-1),NBISO
+         IF( ABS(VALISO(J)-V2) .LE. PCDFIS ) THEN
+C           LE SOMMET NOST(I2) EST CONSIDERE SUR L'ISOVALEUR
+            NUISOP(NOXYZS(2)) = J
+         ENDIF
+ 75   CONTINUE
+C
+      DO 200 J=I,NBISO
+         VI = VALISO(J)
+         IF( VI .GE. V3 ) GOTO 210
+C
+C        L'ISO VI INTERSECTE L'ARETE 23 ET 13
+         DO 80 K=1,2
+            PT(K,1) = ( XY(K,2) * ( V3 - VI ) +
+     %                  XY(K,3) * ( VI - V2 ) ) / ( V3 - V2 )
+            PT(K,2) = ( XY(K,1) * ( V3 - VI ) +
+     %                  XY(K,3) * ( VI - V1 ) ) / ( V3 - V1 )
+ 80      CONTINUE
+C
+C        COORDONNEES DE CES POINTS SUR L'EF COURANT
+         DO 158 K=1,2
+C
+C           LES 2 COORDONNEES DU SOMMET SUR L'EF UNITE
+            XD = PT(1,K)
+            YD = PT(2,K)
+C
+C           LA VALEUR DES NBN FONCTIONS DE BASE EN (XD,YD,0D0)
+            CALL INTERP(NOINTF,XD,YD,ZD,NBPOEL,FBASE)
+C
+C           PASSAGE A L'EF COURANT
+C           CALCUL DES COORDONNEES DES SOMMETS DES ARETES ISOVALEURS
+C           A PARTIR DE LA TRANSFORMATION F: EF REFERENCE -> EF COURAN
+            DO 142 L=1,2
+               XYZ(L) = REAL( PROSCD( FBASE, COPOE(1,L) , NBPOEL ) )
+ 142        CONTINUE
+            XYZ(3) = 0.0
+C
+C           IDENTIFICATION DE CE POINT PARMI XYZST
+            DO 144 L=NBXYZ,1,-1
+                CALL XYZIDE( XYZ, XYZST(1,L), IDENTQ )
+                IF( IDENTQ .NE. 0 ) THEN
+C                   POINT RETROUVE
+                    NSARIS(K) = L
+                    GOTO 146
+                ENDIF
+ 144        CONTINUE
+C
+C           POINT NON RETROUVE => IL EST AJOUTE
+            IF( NBXYZ .GE. MXYZST ) THEN
+C              SATURATION DE XYZST
+               GOTO 9998
+            ENDIF
+            NBXYZ = NBXYZ + 1
+            NSARIS( K ) = NBXYZ
+            XYZST(1,NBXYZ) = XYZ(1)
+            XYZST(2,NBXYZ) = XYZ(2)
+            XYZST(3,NBXYZ) = 0.0
+C
+C           LE SOMMET EST SUR L'ISOVALEUR J
+ 146        NUISOP( NSARIS(K) ) = J
+C
+            IF( NUPLIS( NBXYZ ) .EQ. 0 ) THEN
+               IF( K .EQ. 1 ) THEN
+C                 LE POINT APPARTIENT A L'ARETE 2 DU TRIANGLE
+                  KK = 2
+               ELSE
+C                 LE POINT APPARTIENT A L'ARETE 3 DU TRIANGLE
+                  KK = 3
+               ENDIF
+               IF( NOLAA(KK) .GT. 0 ) THEN
+C                 AJOUT DU NUMERO DE LIGNE
+                  NUPLIS(NBXYZ) = NOLAA(KK)
+               ENDIF
+            ENDIF
+ 158     CONTINUE
+C
+C        TRIANGULATION DE CETTE ARETE ISO
+         IF( NBARI1 .EQ. 0 ) THEN
+C
+C           PAS DE TRIANGULATION AVANT CETTE ARETE ISOVALEUR
+C           LE QUADRANGLE S1 S2 NSARIS(1:2) DONNE 2 TRIANGLES
+C           -------------------------------------------------
+            IF( NOXYZS(1) .NE. NSARIS(2) ) THEN
+C              TRIANGULATION ENTRE LE SOMMET 1 ET CETTE ARETE ISO
+               CALL AJNVTR( NOXYZS(1), NOXYZS(2), NSARIS(2),
+     %                      NOSURF, MXNVTR, NBNVTR, NSNVTR, IERR )
+               IF( IERR .NE. 0 ) RETURN
+C              TRACE EVENTUEL DU NOUVEAU TRIANGLE
+               CALL ADTRTR( XYZST, NSNVTR, NBNVTR, NCBLAN, NCROUG )
+C
+C              SI L'ARETE 13 EST SUR UNE LIGNE ALORS
+C                 AJOUT DE CETTE SOUS-ARETE AU CHAINAGE DES ARETES DE CETTE LIGN
+               IF( NOLAA(3) .GT. 0 ) THEN
+C                 CHAINAGE SIMPLE DE CETTE ARETE DANS SA LIGNE
+                  CALL AJARCH( NSARI0(1), NSARIS(2), L1LGFR(NOLAA(3)),
+     %                         MXARCH, NBARCH, N1ARCH, NSARCH, IERR )
+                  IF( IERR .NE. 0 ) RETURN
+               ENDIF
+            ENDIF
+C
+C           SI L'ARETE 12 EST SUR UNE LIGNE ALORS
+C              AJOUT DE CETTE SOUS-ARETE AU CHAINAGE DES ARETES DE CETTE LIGNE
+            IF( NOLAA(1) .GT. 0 ) THEN
+C              CHAINAGE SIMPLE DE CETTE ARETE DANS SA LIGNE
+               CALL AJARCH( NSARI0(1), NOXYZS(2), L1LGFR(NOLAA(1)),
+     %                      MXARCH, NBARCH, N1ARCH, NSARCH, IERR )
+               IF( IERR .NE. 0 ) RETURN
+            ENDIF
+C
+C           LE TRIANGLE SOMMET I2 - NSARIS(1:2) EXISTE-T-IL ?
+            IF( NSARIS(1) .NE. NOXYZS(2) ) THEN
+               CALL AJNVTR( NSARIS(1), NSARIS(2), NOXYZS(2),
+     %                      NOSURF, MXNVTR, NBNVTR, NSNVTR, IERR )
+               IF( IERR .NE. 0 ) RETURN
+C              TRACE EVENTUEL DU NOUVEAU TRIANGLE
+               CALL ADTRTR( XYZST, NSNVTR, NBNVTR, NCBLAN, NCROUG )
+C
+C              SI L'ARETE 23 EST SUR UNE LIGNE ALORS
+C                 AJOUT DE CETTE SOUS-ARETE AU CHAINAGE DES ARETES DE CETTE LIGN
+               IF( NOLAA(2) .GT. 0 ) THEN
+C                 CHAINAGE SIMPLE DE CETTE ARETE DANS SA LIGNE
+                  CALL AJARCH( NOXYZS(2), NSARIS(1), L1LGFR(NOLAA(2)),
+     %                         MXARCH, NBARCH, N1ARCH, NSARCH, IERR )
+                  IF( IERR .NE. 0 ) RETURN
+               ENDIF
+            ENDIF
+C           LE TRAITEMENT A EU LIEU => NBARI1 = 1
+            NBARI1 = 1
+C
+         ELSE IF( NBARI2 .EQ. 0 ) THEN
+C
+C           TRIANGULATION ENTRE 2 ARETES ISO ET AVEC LE SOMMET I2
+C           -----------------------------------------------------
+            CALL AJNVTR( NSARI0(2), NSARI0(1), NSARIS(1),
+     %                   NOSURF, MXNVTR, NBNVTR, NSNVTR, IERR )
+            IF( IERR .NE. 0 ) RETURN
+C           TRACE EVENTUEL DU NOUVEAU TRIANGLE
+            CALL ADTRTR( XYZST, NSNVTR, NBNVTR, NCBLAN, NCROUG )
+            CALL AJNVTR( NSARI0(2), NSARIS(1), NSARIS(2),
+     %                   NOSURF, MXNVTR, NBNVTR, NSNVTR, IERR )
+            IF( IERR .NE. 0 ) RETURN
+C           TRACE EVENTUEL DU NOUVEAU TRIANGLE
+            CALL ADTRTR( XYZST, NSNVTR, NBNVTR, NCBLAN, NCROUG )
+            CALL AJNVTR( NSARI0(1), NOXYZS(2), NSARIS(1),
+     %                   NOSURF, MXNVTR, NBNVTR, NSNVTR, IERR )
+            IF( IERR .NE. 0 ) RETURN
+C           TRACE EVENTUEL DU NOUVEAU TRIANGLE
+            CALL ADTRTR( XYZST, NSNVTR, NBNVTR, NCBLAN, NCROUG )
+C
+C           SI L'ARETE 12 EST SUR UNE LIGNE ALORS
+C              AJOUT DE CETTE SOUS-ARETE AU CHAINAGE DES ARETES DE CETTE LIGNE
+            IF( NOLAA(1) .GT. 0 ) THEN
+C              CHAINAGE SIMPLE DE CETTE ARETE DANS SA LIGNE
+               CALL AJARCH( NSARI0(1), NOXYZS(2), L1LGFR(NOLAA(1)),
+     %                      MXARCH, NBARCH, N1ARCH, NSARCH, IERR )
+               IF( IERR .NE. 0 ) RETURN
+            ENDIF
+C
+C           SI L'ARETE 23 EST SUR UNE LIGNE ALORS
+C              AJOUT DE CETTE SOUS-ARETE AU CHAINAGE DES ARETES DE CETTE LIGNE
+            IF( NOLAA(2) .GT. 0 ) THEN
+C              CHAINAGE SIMPLE DE CETTE ARETE DANS SA LIGNE
+               CALL AJARCH( NOXYZS(2), NSARIS(1), L1LGFR(NOLAA(2)),
+     %                      MXARCH, NBARCH, N1ARCH, NSARCH, IERR )
+               IF( IERR .NE. 0 ) RETURN
+            ENDIF
+C
+C           SI L'ARETE 13 EST SUR UNE LIGNE ALORS
+C              AJOUT DE CETTE SOUS-ARETE AU CHAINAGE DES ARETES DE CETTE LIGNE
+            IF( NOLAA(3) .GT. 0 ) THEN
+C              CHAINAGE SIMPLE DE CETTE ARETE DANS SA LIGNE
+               CALL AJARCH( NSARI0(2), NSARIS(2), L1LGFR(NOLAA(3)),
+     %                      MXARCH, NBARCH, N1ARCH, NSARCH, IERR )
+               IF( IERR .NE. 0 ) RETURN
+            ENDIF
+C
+         ELSE
+C
+C           TRIANGULATION ENTRE 2 ARETES ISO SANS LE SOMMET I2
+C           --------------------------------------------------
+            CALL AJNVTR( NSARI0(2), NSARI0(1),NSARIS(1),
+     %                   NOSURF, MXNVTR, NBNVTR, NSNVTR, IERR )
+            IF( IERR .NE. 0 ) RETURN
+C           TRACE EVENTUEL DU NOUVEAU TRIANGLE
+            CALL ADTRTR( XYZST, NSNVTR, NBNVTR, NCBLAN, NCROUG )
+            CALL AJNVTR( NSARI0(2), NSARIS(1),NSARIS(2),
+     %                   NOSURF, MXNVTR, NBNVTR, NSNVTR, IERR )
+            IF( IERR .NE. 0 ) RETURN
+C           TRACE EVENTUEL DU NOUVEAU TRIANGLE
+            CALL ADTRTR( XYZST, NSNVTR, NBNVTR, NCBLAN, NCROUG )
+C
+C           SI L'ARETE 23 EST SUR UNE LIGNE ALORS
+C              AJOUT DE CETTE SOUS-ARETE AU CHAINAGE DES ARETES DE CETTE LIGNE
+            IF( NOLAA(2) .GT. 0 ) THEN
+C              CHAINAGE SIMPLE DE CETTE ARETE DANS SA LIGNE
+               CALL AJARCH( NSARI0(1), NSARIS(1), L1LGFR(NOLAA(2)),
+     %                      MXARCH, NBARCH, N1ARCH, NSARCH, IERR )
+               IF( IERR .NE. 0 ) RETURN
+            ENDIF
+C
+C           SI L'ARETE 13 EST SUR UNE LIGNE ALORS
+C              AJOUT DE CETTE SOUS-ARETE AU CHAINAGE DES ARETES DE CETTE LIGNE
+            IF( NOLAA(3) .GT. 0 ) THEN
+C              CHAINAGE SIMPLE DE CETTE ARETE DANS SA LIGNE
+               CALL AJARCH( NSARI0(2), NSARIS(2), L1LGFR(NOLAA(3)),
+     %                      MXARCH, NBARCH, N1ARCH, NSARCH, IERR )
+               IF( IERR .NE. 0 ) RETURN
+            ENDIF
+         ENDIF
+C
+C        PASSAGE A L'ISOVALEUR SUIVANTE
+         NBARI2 = NBARI2 + 1
+         NSARI0(1) = NSARIS(1)
+         NSARI0(2) = NSARIS(2)
+ 200  CONTINUE
+C
+C     COMPLETER LA TRIANGULATION SI ELLE EST INCOMPLETE
+C     =================================================
+C     LE SOMMET NOXYZS(3) EST IL SUR UNE ISOVALEUR ?
+ 210  DO 205 K=MAX(1,J-1),NBISO
+         IF( ABS(VALISO(K)-V3) .LE. PCDFIS ) THEN
+C           LE SOMMET NOXYZS(3) EST CONSIDERE SUR L'ISOVALEUR
+            NUISOP(NOXYZS(3)) = K
+         ENDIF
+ 205  CONTINUE
+C
+      IF( NBARI1 .EQ. 0 .AND. NBARI2 .EQ. 0 ) THEN
+C
+C        LE TRIANGLE INITIAL NOXYZS(1:3) EST AJOUTE
+C        ------------------------------------------
+         CALL AJNVTR( NOXYZS(1), NOXYZS(2), NOXYZS(3),
+     %                NOSURF, MXNVTR, NBNVTR, NSNVTR, IERR )
+         IF( IERR .NE. 0 ) RETURN
+C        TRACE EVENTUEL DU NOUVEAU TRIANGLE
+         CALL ADTRTR( XYZST, NSNVTR, NBNVTR, NCBLAN, NCROUG )
+C
+C        SI L'ARETE 12 EST SUR UNE LIGNE ALORS
+C           AJOUT DE CETTE SOUS-ARETE AU CHAINAGE DES ARETES DE CETTE LIGNE
+         IF( NOLAA(1) .GT. 0 ) THEN
+C           CHAINAGE SIMPLE DE CETTE ARETE DANS SA LIGNE
+            CALL AJARCH( NOXYZS(1), NOXYZS(2), L1LGFR(NOLAA(1)),
+     %                   MXARCH, NBARCH, N1ARCH, NSARCH, IERR )
+            IF( IERR .NE. 0 ) RETURN
+         ENDIF
+C
+C        SI L'ARETE 23 EST SUR UNE LIGNE ALORS
+C           AJOUT DE CETTE SOUS-ARETE AU CHAINAGE DES ARETES DE CETTE LIGNE
+         IF( NOLAA(2) .GT. 0 ) THEN
+C           CHAINAGE SIMPLE DE CETTE ARETE DANS SA LIGNE
+            CALL AJARCH( NOXYZS(2), NOXYZS(3), L1LGFR(NOLAA(2)),
+     %                   MXARCH, NBARCH, N1ARCH, NSARCH, IERR )
+            IF( IERR .NE. 0 ) RETURN
+         ENDIF
+C
+C        SI L'ARETE 13 EST SUR UNE LIGNE ALORS
+C           AJOUT DE CETTE SOUS-ARETE AU CHAINAGE DES ARETES DE CETTE LIGNE
+         IF( NOLAA(3) .GT. 0 ) THEN
+C           CHAINAGE SIMPLE DE CETTE ARETE DANS SA LIGNE
+            CALL AJARCH( NOXYZS(1), NOXYZS(3), L1LGFR(NOLAA(3)),
+     %                   MXARCH, NBARCH, N1ARCH, NSARCH, IERR )
+            IF( IERR .NE. 0 ) RETURN
+         ENDIF
+C
+      ELSE IF( NBARI2 .GT. 0 ) THEN
+C
+C        LE DERNIER TRIANGLE ARETE NSARI0(1:2) - SOMMET I3
+C        -------------------------------------------------
+         CALL AJNVTR( NSARI0(1), NOXYZS(3), NSARI0(2),
+     %                NOSURF, MXNVTR, NBNVTR, NSNVTR, IERR )
+         IF( IERR .NE. 0 ) RETURN
+C        TRACE EVENTUEL DU NOUVEAU TRIANGLE
+         CALL ADTRTR( XYZST, NSNVTR, NBNVTR, NCBLAN, NCROUG )
+C
+C        SI L'ARETE 23 EST SUR UNE LIGNE ALORS
+C           AJOUT DE CETTE SOUS-ARETE AU CHAINAGE DES ARETES DE CETTE LIGNE
+         IF( NOLAA(2) .GT. 0 ) THEN
+C           CHAINAGE SIMPLE DE CETTE ARETE DANS SA LIGNE
+            CALL AJARCH( NSARI0(1), NOXYZS(3), L1LGFR(NOLAA(2)),
+     %                   MXARCH, NBARCH, N1ARCH, NSARCH, IERR )
+            IF( IERR .NE. 0 ) RETURN
+         ENDIF
+C
+C        SI L'ARETE 13 EST SUR UNE LIGNE ALORS
+C           AJOUT DE CETTE SOUS-ARETE AU CHAINAGE DES ARETES DE CETTE LIGNE
+         IF( NOLAA(3) .GT. 0 ) THEN
+C           CHAINAGE SIMPLE DE CETTE ARETE DANS SA LIGNE
+            CALL AJARCH( NSARI0(2), NOXYZS(3), L1LGFR(NOLAA(3)),
+     %                   MXARCH, NBARCH, N1ARCH, NSARCH, IERR )
+            IF( IERR .NE. 0 ) RETURN
+         ENDIF
+C
+      ELSE
+C
+C        ICI NBARI1>0   LES 2 DERNIERS TRIANGLES NSARI0(1:2)-SOMMETS 2 3
+C        ---------------------------------------------------------------
+         CALL AJNVTR( NSARI0(1), NOXYZS(2), NSARI0(2),
+     %                NOSURF, MXNVTR, NBNVTR, NSNVTR, IERR )
+         IF( IERR .NE. 0 ) RETURN
+C        TRACE EVENTUEL DU NOUVEAU TRIANGLE
+         CALL ADTRTR( XYZST, NSNVTR, NBNVTR, NCBLAN, NCROUG )
+         CALL AJNVTR( NSARI0(2), NOXYZS(2), NOXYZS(3),
+     %                NOSURF, MXNVTR, NBNVTR, NSNVTR, IERR )
+         IF( IERR .NE. 0 ) RETURN
+C        TRACE EVENTUEL DU NOUVEAU TRIANGLE
+         CALL ADTRTR( XYZST, NSNVTR, NBNVTR, NCBLAN, NCROUG )
+C
+C        SI L'ARETE 12 EST SUR UNE LIGNE ALORS
+C           AJOUT DE CETTE SOUS-ARETE AU CHAINAGE DES ARETES DE CETTE LIGNE
+         IF( NOLAA(1) .GT. 0 ) THEN
+C           CHAINAGE SIMPLE DE CETTE ARETE DANS SA LIGNE
+            CALL AJARCH( NSARI0(1), NOXYZS(2), L1LGFR(NOLAA(1)),
+     %                   MXARCH, NBARCH, N1ARCH, NSARCH, IERR )
+            IF( IERR .NE. 0 ) RETURN
+         ENDIF
+C
+C        SI L'ARETE 23 EST SUR UNE LIGNE ALORS
+C           AJOUT DE CETTE SOUS-ARETE AU CHAINAGE DES ARETES DE CETTE LIGNE
+         IF( NOLAA(2) .GT. 0 ) THEN
+C           CHAINAGE SIMPLE DE CETTE ARETE DANS SA LIGNE
+            CALL AJARCH( NOXYZS(2), NOXYZS(3), L1LGFR(NOLAA(2)),
+     %                   MXARCH, NBARCH, N1ARCH, NSARCH, IERR )
+            IF( IERR .NE. 0 ) RETURN
+         ENDIF
+C
+C        SI L'ARETE 13 EST SUR UNE LIGNE ALORS
+C           AJOUT DE CETTE SOUS-ARETE AU CHAINAGE DES ARETES DE CETTE LIGNE
+         IF( NOLAA(3) .GT. 0 ) THEN
+C           CHAINAGE SIMPLE DE CETTE ARETE DANS SA LIGNE
+            CALL AJARCH( NSARI0(2), NOXYZS(3), L1LGFR(NOLAA(3)),
+     %                   MXARCH, NBARCH, N1ARCH, NSARCH, IERR )
+            IF( IERR .NE. 0 ) RETURN
+         ENDIF
+      ENDIF
+      RETURN
+C
+C     AJOUT DU TRIANGLE LUI-MEME PARMI LES NOUVEAUX
+C     ---------------------------------------------
+ 500  CALL AJNVTR( NOXYZ(NOST(1)), NOXYZ(NOST(2)), NOXYZ(NOST(3)),
+     %             NOSURF, MXNVTR, NBNVTR, NSNVTR, IERR )
+      IF( IERR .NE. 0 ) RETURN
+C     TRACE EVENTUEL DU NOUVEAU TRIANGLE
+      CALL ADTRTR( XYZST, NSNVTR, NBNVTR, NCBLAN, NCROUG )
+C
+C     TRAITEMENT DES EVENTUELLES ARETES SUR DES LIGNES
+      DO 510 K=1,3
+         IF( NOLAA(K) .GT. 0 ) THEN
+C            CHAINAGE SIMPLE DE CETTE ARETE DANS SA LIGNE
+             IF( K .LT. 3 ) THEN
+                KK = K + 1
+             ELSE
+                KK = 1
+             ENDIF
+             CALL AJARCH( NSNVTR(K,NBNVTR), NSNVTR(KK,NBNVTR),
+     %                    L1LGFR(NOLAA(K)),
+     %                    MXARCH, NBARCH, N1ARCH, NSARCH, IERR )
+             IF( IERR .NE. 0 ) RETURN
+         ENDIF
+ 510  CONTINUE
+      RETURN
+C
+C     SATURATION DU TABLEAU XYZST
+ 9998 NBLGRC(NRERR) = 1
+      KERR(1) = 'TRSSTR:SATURATION DU TABLEAU XYZST'
+      CALL LEREUR
+      IERR = 2
+      RETURN
+      END

@@ -1,0 +1,78 @@
+      SUBROUTINE BLDL0GC( NTDL,   NBCOEF, NBMATR, LPLIGN, LPCOLO, AG,
+     %                    NUDLIB )
+C ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+C BUT :  PRISE EN COMPTE DES C.L. DIRICHLET HOMOGENES SUR
+C -----  NBMATR MATRICES MORSES  AG(I,K) K=1,NBMATR (SYMETRIQUE OU NON)
+C        LA LIGNE ET COLONNE D'UN DL FIXE A ZERO EST SUPPRIMEE
+C
+C       | AG 11  AG 12 | | XG 1 |   | BG 1 |
+C                        |      | =            DEVIENT
+C                        | XD 2 |
+C
+C       | AG 11 | | XG 1 | = | BG 1 |
+C
+C ENTREES:
+C --------
+C NTDL   : NOMBRE DE LIGNES ET COLONNES D'UNE MATRICE AG EN ENTREE
+C NBCOEF : NOMBRE DE COEFFICIENTS (NON ZERO) STOCKES D'UNE MATRICE MORSE
+C NBMATR : NOMBRE DE MATRICES MORSES
+C LPLIGN : POINTEUR SUR LE COEFFICIENT DIAGONAL DE CHAQUE LIGNE
+C LPCOLO : NUMERO DE COLONNE DE CHACUN DES COEFFICIENTS NON NULS
+C AG     : NBMATR MATRICES MORSES  AG(LPLIGN(NTDL),NBMATR)
+C NUDLIB : NUDLIB(I) = NUMERO DE 1 A NBDLIB DU DL I (1 A NTDL) LIBRE
+C                    -(INDICE DANS NODLFX) SI LE DL I EST BLOQUE
+C SORTIES:
+C --------
+C  AG    : LES NBMATR MATRICES MORSES SONT REDUITES EN SORTIE
+C ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+C AUTEUR : ALAIN PERRONNET LJLL UPMC & ST PIERRE DU PERRAY DECEMBRE 2009
+C23456---------------------------------------------------------------012
+      DOUBLE PRECISION  AG(NBCOEF,NBMATR)
+      INTEGER           LPLIGN(0:NTDL), LPCOLO(*), NUDLIB(NTDL)
+C
+C     PARCOURS DES COEFFICIENTS D'UNE MATRICE MORSE INITIALE
+      K   = 0
+      KL  = 0
+      NLL = 0
+      LPL1= 0
+C
+      DO 50 NL = 1, NTDL
+C
+C        POINTEUR SUR LES COEFFICIENTS DIAGONAUX NL-1 et NL
+         LPL0 = LPL1
+         LPL1 = LPLIGN(NL)
+C
+         IF( NUDLIB(NL) .LT. 0 ) THEN
+C           TOUTE LA LIGNE EST SUPPRIMEE CAR DL FIXE A ZERO
+            K = K + LPL1 - LPL0
+            GOTO 50
+         ENDIF
+C
+C        LA LIGNE EST CELLE D'UN DL LIBRE
+         NLL = NLL + 1
+         DO 30 J = LPL0+1, LPL1
+C           LE COEFFICIENT
+            K  = K + 1
+C           LE NO DE COLONNE DU COEFFICIENT
+            NC = LPCOLO(K)
+C           LE NO DE COLONNE APRES SUPPRESSION
+            NCL = NUDLIB( NC )
+            IF( NCL .GT. 0 ) THEN
+C              COLONNE D'UN DL LIBRE
+               KL = KL + 1
+               LPCOLO(KL) = NCL
+               DO 10 M = 1, NBMATR
+                  AG(KL,M) = AG(K,M)
+ 10            CONTINUE
+C           ELSE
+C              COLONNE D'UN DL FIXE A ZERO => IL EST SUPPRIME
+            ENDIF
+ 30      CONTINUE
+C
+C        LE POINTEUR SUR LE COEFFICIENT DIAGONAL NL
+         LPLIGN(NLL) = KL
+C
+ 50   CONTINUE
+C
+      RETURN
+      END

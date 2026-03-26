@@ -1,0 +1,161 @@
+      SUBROUTINE ASMEGC( NBDL,   NODL,   NCODAE, AES, AE,
+     %                   NCODAG, LPLIGN, LPCOLO, AG )
+C ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+C BUT :   ASSEMBLER LA MATRICE ELEMENTAIRE EN LA MATRICE GLOBALE
+C -----   MORSE SYMETRIQUE OU NON TOUTE EN MEMOIRE CENTRALE
+C         (DIFFERENCE AVEC LE SP ASABGC PAS DE VECTEUR ELEMENTAIRE)
+
+C ENTREES:
+C --------
+C NBDL   : NOMBRE DE   DEGRES DE LIBERTE DE L ELEMENT FINI
+C NODL   : NO DES NBDL DEGRES DE LIBERTE DE L ELEMENT FINI
+C NCODAE : CODE DE STOCKAGE DE LA MATRICE ELEMENTAIRE
+C           0 : MATRICE DIAGONALE
+C          -1 : MATRICE NON SYMETRIQUE
+C           1 : MATRICE SYMETRIQUE
+C AES    : MATRICE ELEMENTAIRE SYMETRIQUE (NBDL * (NBDL+1) / 2 )
+C AE     : MATRICE ELEMENTAIRE  (NBDL,NBDL)
+C NCODAG : CODE DE STOCKAGE DE LA MATRICE GLOBALE MORSE
+C           0 : MATRICE DIAGONALE
+C          -1 : MATRICE NON SYMETRIQUE
+C           1 : MATRICE SYMETRIQUE
+C LPLIGN : TABLEAU POINTEUR SUR LES COEFFICIENTS DIAGONAUX
+C LPCOLO : TABLEAU DES NUMEROS DE COLONNES
+
+C SORTIES:
+C --------
+C AG     : MATRICE MORSE TOUTE EN MEMOIRE CENTRALE
+C ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+C AUTEUR :   A. PERRONNET LABORATOIRE ANALYSE NUMERIQUE PARIS   MAI 1989
+C MODIF OMP: A. PERRONNET LJLL UPMC & St Pierre du Perray  Decembre 2012
+C ......................................................................
+C$    use OMP_LIB
+      INTEGER           NODL(1:NBDL), LPLIGN(1:*), LPCOLO(1:*)
+      DOUBLE PRECISION  AES(1:*), AE(1:NBDL,1:NBDL), AG(1:*)
+
+      IF( NCODAE .EQ. 0 .AND. NCODAG .EQ. 0 ) THEN
+
+C        LES MATRICES ELEMENTAIRE ET GLOBALE SONT DIAGONALES
+C        ===================================================
+         DO I=1,NBDL
+C           LE NO GLOBAL DU I-EME DEGRE DE LIBERTE LOCAL
+            IEG = NODL( I )
+C           ASSEMBLAGE DE AE( IEG )
+C$OMP ATOMIC
+            AG( IEG ) = AG( IEG ) + AES( I )
+         ENDDO
+
+      ELSE IF( NCODAE .GT. 0 .AND. NCODAG .GT. 0 ) THEN
+C
+C        LES MATRICES ELEMENTAIRE ET GLOBALE SONT SYMETRIQUES
+C        ====================================================
+         L = 0
+         DO 40 I=1,NBDL
+C
+C           LE NO GLOBAL DU I-EME DEGRE DE LIBERTE LOCAL
+            IEG = NODL( I )
+C
+C           ASSEMBLAGE DE AES DANS AG
+C           LA BOUCLE SUR LES COLONNES DE LA MATRICE ELEMENTAIRE
+            DO 30 J=1,I
+               JEG = NODL( J )
+C              ADRESSES DANS LA MATRICE MORSE
+               IF(JEG.LE.IEG) THEN
+                  K1  = LPLIGN(IEG) + 1
+                  K2  = LPLIGN(IEG+1)
+                  KEG = JEG
+               ELSE
+                  K1  = LPLIGN(JEG) + 1
+                  K2  = LPLIGN(JEG+1)
+                  KEG = IEG
+               ENDIF
+C              RECHERCHE DU NUMERO DE COLONNE JEG PAR DICHOTOMIE
+               KI=K1
+               KS=K2
+ 21            KM=(KI+KS)/2
+               IF(LPCOLO(KM) .GT. KEG) GOTO 24
+               IF(LPCOLO(KM) .EQ. KEG) GOTO 23
+               KI=KM
+               GO TO 25
+
+ 24            KS=KM
+ 25            IF(KI+1 .GT. KS) GOTO 30
+               IF(KI+1 .LT. KS) GOTO 21
+
+               IF(LPCOLO(KI) .GT. KEG) GOTO 30
+               IF(LPCOLO(KI) .LT. KEG) GOTO 27
+               KM=KI
+               GO TO 23
+
+ 27            IF(LPCOLO(KS) .NE. KEG) GOTO 30
+               KM=KS
+
+ 23            IAJEG = KM
+               L     = L + 1
+C$OMP ATOMIC
+               AG( IAJEG ) = AG( IAJEG ) + AES( L )
+ 30         ENDDO
+ 40      ENDDO
+         RETURN
+C
+      ELSE IF( NCODAE .LT. 0 .AND. NCODAG .LT. 0 ) THEN
+C
+C        LES MATRICES ELEMENTAIRE ET GLOBALE SONT NON SYMETRIQUES
+C        ========================================================
+         DO I=1,NBDL
+C           LE NO GLOBAL DU I-EME DEGRE DE LIBERTE LOCAL
+            IEG = NODL( I )
+C           ADRESSES DANS LA MATRICE MORSE
+            K1 = LPLIGN(IEG) + 1
+            K2 = LPLIGN(IEG+1)
+C
+C           LA BOUCLE SUR LES COLONNES DE LA MATRICE ELEMENTAIRE
+            DO 130 J=1,NBDL
+               JEG = NODL( J )
+C              RECHERCHE DU NUMERO DE COLONNE JEG PAR DICHOTOMIE
+               KI=K1
+               KS=K2
+ 121           KM=(KI+KS)/2
+               IF(LPCOLO(KM) .GT. JEG) GOTO 124
+               IF(LPCOLO(KM) .EQ. JEG) GOTO 123
+               KI=KM
+               GO TO 125
+
+ 124           KS=KM
+ 125           IF(KI+1 .LT. KS)   GOTO 121
+               IF(KI+1 .GT. KS)   GOTO 130
+
+               IF(LPCOLO(KI) .LT. JEG) GOTO 127
+               IF(LPCOLO(KI) .GT. JEG) GOTO 130
+
+               KM=KI
+               GO TO 123
+
+ 127           IF(LPCOLO(KS) .NE. JEG) GOTO 130
+               KM=KS
+C
+ 123           IAJEG = KM
+C              ASSEMBLAGE DE AE(I,J)
+C$OMP ATOMIC
+               AG( IAJEG ) = AG( IAJEG ) + AE( I , J )
+ 130        ENDDO
+         ENDDO
+C
+      ELSE IF( NCODAE .EQ. 0 .AND. NCODAG .NE. 0 ) THEN
+
+C        LA MATRICE ELEMENTAIRE EST DIAGONALE MAIS
+C        LA MATRICE GLOBALE EST SYMETRIQUE OU NON SYMETRIQUE
+C        ===================================================
+         DO I=1,NBDL
+C           LE NO GLOBAL DU I-EME DEGRE DE LIBERTE LOCAL
+            IEG = NODL( I )
+C           SA POSITION SUR LA DIAGONALE DE LA MATRICE GLOBALE MORSE
+            IEG = LPLIGN( IEG + 1 )
+C           ASSEMBLAGE DE AES( IEG )
+C$OMP ATOMIC
+            AG( IEG ) = AG( IEG ) + AES( I )
+         ENDDO
+
+      ENDIF
+      RETURN
+      END

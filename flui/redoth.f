@@ -1,0 +1,109 @@
+      SUBROUTINE REDOTH( NBNOEF, NDIM,   XYZEF,
+     %                   NOOBVC, NUMIVO, NUMAVO, LTDEVO,
+     %                   Rho,    Cp,     Conduc, CoBOUS )
+C ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+C BUT :    RECUPERER LES DONNEES THERMIQUE DU FLUIDE SUPPOSEES CONSTANTES
+C -----
+C ENTREES:
+C --------
+C NBNOEF : NOMBRE DE SOMMETS D'UN EF
+C XYZEF  : 3 COORDONNEES DES NBNOEF SOMMETS DE L'EF
+C NOOBVC : NUMERO DE VOLUME DU TETRAEDRE
+C NUMIVO : NUMERO MINIMAL DES VOLUMES DE L'OBJET
+C NUMAVO : NUMERO MAXIMAL DES VOLUMES DE L'OBJET
+C LTDEVO : ADRESSE MCN DES TABLEAUX DES DONNEES DU FLUIDE
+
+C SORTIES:
+C --------
+C Rho    : DENSITE VOLUMIQUE DE MASSE DU FLUIDE
+C Cp     : DENSITE VOLUMIQUE DE CAPACITE THERMIQUE MASSIQUE
+C Conduc : DENSITE VOLUMIQUE DE LA CONDUCTIVITE THERMIQUE DU FLUIDE
+C CoBOUS : COEFFICIENT DE PROPORTIONNALITE DE LA DIFFERENCE DE
+C          TEMPERATURE A LA VARIATION DE LA MASSE VOLUMIQUE
+C          de l'APPROXIMATION de BOUSSINESQ
+C          Rho0-Rho = Rho CoBOUS (T-T0)
+cccC MNVIFL : ADRESSE MCN DU TMS a___vitessefluide du FLUIDE NOOBVC
+C+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+C AUTEUR : ALAIN PERRONNET St Pierre du Perray                  Mai 2022
+C23456---------------------------------------------------------------012
+      include"./incl/ntmnlt.inc"
+      include"./incl/donthe.inc"
+      include"./incl/a___vitessefluide.inc"
+      include"./incl/pp.inc"
+      COMMON            MCN(MOTMCN)
+
+      INTEGER           LTDEVO(1:MXDOTH,NUMIVO:NUMAVO)
+      REAL              XYZEF(NBNOEF,NDIM)
+      DOUBLE PRECISION  Rho, Cp, Conduc, TensCond(21),
+     %                  CoBous, XYZD(1:3), S
+
+C     NYOBJT : NUMERO DU TYPE D'OBJET (1:POINT, 2:LIGNE, 3:SURFACE, 4:VOLUME )
+      NYOBJT = NDIM + 1
+
+C     BARYCENTRE DE L'EF
+      DO K=1,NDIM
+         S = 0D0
+         DO N=1,NBNOEF
+            S = S + XYZEF(N,K)
+         ENDDO
+         XYZD(K) = S / NBNOEF
+      ENDDO
+      IF( NDIM .LT. 3 )  XYZD(3) = 0D0
+
+C     RECHERCHE DE LA DENSITE DE MASSE Rho AU BARYCENTRE DE L'EF
+      CALL REMASS( NTYOBJ, NOOBVC, 3, XYZD, LTDEVO(LPMAST,NOOBVC),
+     %             Rho )
+      IF( Rho .LE. 0 ) Rho = 1D0
+
+C     RECHERCHE DE Cp LA DENSITE VOLUMIQUE DE CAPACITE THERMIQUE MASSIQUE
+      CALL RECATHMA( NTYOBJ, NOOBVC, 3, XYZD, LTDEVO(LPCHMA,NOOBVC),
+     %               Cp )
+
+C     RECHERCHE DE LA CONDUCTIVITE Conduc AU BARYCENTRE DE L'EF
+C     A PARTIR DU TENSEUR DE CONDUCTIVITE TensCond
+      CALL RECOND( NTYOBJ, NOOBVC, 3, XYZD, LTDEVO(LPCOND,NOOBVC),
+     %             TensCond )
+      Conduc = TensCond(1)
+
+C     RECHERCHE DU COEFFICIENT DE PROPORTIONNALITE de BOUSSINESQ
+      IF( LTDEVO(LPCOBO,NOOBVC) .GT. 0 ) THEN
+C        IL EXISTE EN DONNEE UN COEFFICIENT CoBOUS
+         CALL RECOBO( NTYOBJ, NOOBVC, XYZD(1), XYZD(2), XYZD(3),
+     %                LTDEVO(LPCOBO,NOOBVC), CoBOUS )
+      ELSE
+C        IL N'EXISTE PAS DE DONNEE du COEFFICIENT CoBOUS
+         CoBOUS = 0D0
+      ENDIF
+
+
+C     PAS de RECHERCHE DU TYPE de la VITESSE de TRANSPORT de la TEMPERATURE
+C     CAR LA VITESSE EST PRISE EN COMPTE ensuite dans nst3th.f
+C     par l'APPEL de bgthbous.f
+cccccc      CALL REVIFL( NTYOBJ, NOOBVC, NDIM, 3, XYZD, LTDEVO(LPVIFL,NOOBVC),
+cccccc     %             S )
+ccc      MNVIFL = LTDEVO(LPVIFL,NOOBVC)
+ccc      IF( MNVIFL .GT. 0 ) THEN
+cccC        TYPE DES DONNEES DE LA VITESSE DU FLUIDE
+ccc         LTVIFL = MCN( MNVIFL + WTVIFL )
+ccc         PRINT*,'redoth: Type de la Vitesse du Fluide LTVIFL=',LTVIFL
+ccc         RETURN
+ccc      ENDIF
+cccC     LE TABLEAU a___vitessefluide N'EXISTE PAS => Il est CREE
+cccC     ETAPE NECESSAIRE POUR PRENDRE EN COMPTE DANS themkb
+cccC     POUR LE PROBLEME NST BOUSSINESQ LE TERME DE TRANSPORT DE LA TEMPERATURE
+ccc      CALL LXNLOU( NTMN(NYOBJT), NOOBVC, NTFLUI, MNFLUI )
+ccc      CALL LXTNDC( NTFLUI, 'VITESSEFLUIDE', 'ENTIER', 1 + WTVIFL )
+ccc      CALL LXTSOU( NTFLUI, 'VITESSEFLUIDE', NTVIFL, MNVIFL )
+cccC     LTVIFL 'Type de la Vitesse du Fluide'  entier
+cccC     ici VECTEUR VITESSE
+ccc      MCN(MNVIFL+WTVIFL) = 2
+cccC     AJOUT DE LA DATE
+ccc      CALL ECDATE( MCN(MNVIFL) )
+cccC     AJOUT DU NUMERO DU TABLEAU DESCRIPTEUR
+ccc      MCN( MNVIFL + MOTVAR(6) ) = NONMTD( '~>>>VITESSEFLUIDE' )
+cccC     MISE A JOUR DE LA PRESENCE DU TMS
+ccc      LTDEVO(LPVIFL,NOOBVC) = MNVIFL
+      LTDEVO(LPVIFL,NOOBVC) = 0
+
+      RETURN
+      END

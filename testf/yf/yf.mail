@@ -1,0 +1,881 @@
+{==============================================================================
+         A draft of the  Advanced Tactical Fighter : YF22
+  Fabrique par Lockheed Boeing et General Dynamics pour l'armee americaine
+===============================================================================}
+@;
+@;
+@;
+{ LE nombre d'ARETES par ligne }
+defvar arab, arbc,arcd,arde,aree,aref,arfg,argi,arhi,arij,arjk,arkl,arlm,armn,
+       arno,arop,arpq,arqr,s,ss;
+ arab=4;
+ arbc=8;
+ arcd=6;
+ arde=5;  
+ aree=5;
+ aref=aree;
+ arfg=aref; 
+ argi=aref;
+ arhi=5;
+ arij=aref;
+ arjk=aref;
+ arkl=aref;
+ arlm=aref;
+ armn=aref;
+ arno=aref;
+ arop=aref;
+ arpq=aref;
+ arqr=aref; 
+defvar ardd1,arnn,arii,arnez,arff,aret;
+ ardd1=4;
+ arnn=2;  
+ arii=2*aref;
+ arnez=8;
+ arff=5;  
+ aret=3; 
+defvar long_avion,rayon_boule,nbsub; 
+ long_avion=26;
+ rayon_boule=long_avion*2;  
+ nbsub=7;
+@;
+
+
+1;  1;  {POINTS de l'objet ====================================================}
+  centre_boule; i; 1; rayon_boule/2; 0; 0;
+  a;   i; 1; 0; 0; 1;
+  bh;  i; 1; 1; 0; 1.2;
+  bh2; i; 1; 1; 0.3; 1.3;
+
+  ch;  i; 1; 3.5; 0; 1.9;
+  ch1; i; 1; 3.5; 0.25; 1.9;
+  ch2; i; 1; 3.5; 0.9; 1.4;
+
+  dh;  i; 1; 4.8;    0;  2.4;
+  dh1; i; 1; 5.4;  0.6;  2.18; 
+  dh2; i; 1; 5.3;  1.1;  1.5;
+
+  eh;  i; 1; 6.7;   0; 3.2;
+  eh1; i; 1; 6.7; 0.3; 3; 
+defvar eh2x, fh2x;  
+     eh2X=6.5;      { abscisse de eh2 }
+     fh2X=7.5;      { abscisse de fh2 }
+  eh2; i; 1; eh2x; 0.7;  2.3;
+  eh3; i; 1; 6.5;  1.2;  1.6; 
+  eh7; i; 1; 8;    2.5;  1.38;
+
+  fh;  i; 1; 7.5;   0;   3.25;
+  fh1; i; 1; 7.5;  0.3;    3;
+  fh2; i; 1; fh2x; 0.7;  2.4;
+  fh3; i; 1; 7.65; 1.18;  1.8;
+  fh5; i; 1; 8.00;  1.72;  1.66;
+  fh6; i; 1; 8.35;  2.26;  1.52;
+  fh7; i; 1; 8.7;  2.70;  1.38; 
+
+  gh;  i; 1; 9;      0;    2.9;
+  gh1; i; 1; 9;   0.41;    2.6;
+  gh2; i; 1; 9.2;  0.85;   2.1;
+  gh3; i; 1; 9.5;  1.5;   1.87;
+  gh4; i; 1; 9.8;  2.2;   1.63;
+  gh5; i; 1; 10.1; 2.93;   1.4;
+  
+  cc1; i; 1; 5.0; 0.4; 2.3;     {la courbure du cockpit}
+  cc2; i; 1; 6.7;  0.15; 3.15;
+  cc3; i; 1; 7.5;  0.15; 3.15; 
+  cc4; i; 1; 9; 0.205;   2.8;
+
+  hh;  i; 1; 10.4;     0;  2.6775;
+
+  ih;  i; 1; 11.8;     0;  2.455;
+  ih1; i; 1; 11.87;    1;  2.136;
+  ih2; i; 1; 11.94;    2;  1.818;
+  ih3; i; 1; 12;       3;  1.5;
+  ih4; i; 1; 16.5;   5.9;  1.4;
+  ih5; i; 1; 19;     8.8;  1.3;
+
+  jh;  i; 1; 14.3;  0;     2.24;
+  jh1; i; 1; 14.3;  1;     2.05;
+  jh2; i; 1; 14.3;  2;     1.85;
+  jh3; i; 1; 14.3;  3;     1.65;
+  jh4; i; 1; 17.1;  5.9;   1.62;
+  jh5; i; 1; 20;    8.8;   1.4;
+
+  kh;  i; 1; 17.2; 0;     1.99;
+  kh1; i; 1; 17.2; 0.9;   1.945;
+  kh2; i; 1; 17.2; 2;     1.90; 
+  kh3; i; 1; 17.3; 2.95;  1.7;
+  kh4; i; 1; 19.1; 5.9;   1.6;   {redefini ensuite mais necessaire ici}
+  kh5; i; 1; 21; 8.8;     1.3;
+
+  lh;  i; 1; 19.1;    0;   1.826;
+  lh1; i; 1; 19.1;  0.8;   1.826;
+  lh2; i; 1; 19.2;  1.75;  1.826;
+  lh3; i; 1; 19.2;  2.1;   1.82;
+  lh4; i; 1; 19.4;  2.9;   1.6; 
+  lh5; i; 1; 20.0;  4.75;  1.65;
+  lh6; i; 1; 21.65; 6.25;  1.35;
+
+  mh;  i; 1; 21;      0;   1.661;
+  mh1; i; 1; 21;    0.8;   1.661;
+  mh2; i; 1;  21;   1.7;   1.661; 
+  mh3; I; 1;  21;  2.15;   1.7;  
+  mh4; I; 1;  21.45; 2.85; 1.58;
+  mh5; I; 1;  22.3;  3.7;  1.4;  
+
+  nh;  I; 1;  22.4;    0;   1.54;
+  nh1; I; 1;  22.4;  0.3;   1.54;  
+  nh2; I; 1;  22.4;  0.8;   1.54;  
+  nh3; I; 1;  22.4;  1.4;   1.54; 
+  nh4; I; 1;  22.4;  1.85;  1.56;
+  nh5; I; 1;  22.4;  2.15;  1.6; 
+  
+  oh;  I; 1;  23.5;    0;   1.445;
+  oh1; I; 1;  23.5;  0.3;   1.445;  
+  oh2; I; 1;  23.5;  1.55;  1.445;  
+  oh3; I; 1;  23.5;  1.93;  1.445;  
+  oh4; I; 1;  23.5;  2.06;  1.5;
+  oh5; I; 1;  23.1;  2.8;   1.57;  
+
+  ph ; I; 1;  24.6;  0;      1.35;  
+  ph1; I; 1;  24.5;  0.15;   1.4;  
+  ph2; I; 1;  24.4;  0.85;   1.5;  
+  ph3; I; 1;  24.35;  1.55;  1.4;  
+  ph4; I; 1;  24.6;  2.0;    1.35;  
+  ph5; I; 1;  25.6;  2.3;    1.5;  
+  ph6; I; 1;  24.5;  2.75;   1.56; 
+ 
+  qh1; I; 1;  25.9;  2.65;  1.52;  
+  qh2; I; 1;  25.5;  4.25;  1.5;  
+  qh3; I; 1;  25.2;  6.1;   1.4; 
+ 
+  rh1; I; 1;  27.2;  2.7;   1.4;  
+  rh2; I; 1;  26.2;  6.1;   1.4;  
+
+  sh1; I; 1;  25.7;  6.1;   1.48;
+  
+  { LES POINTS DU BAS DU YF22 }
+  bb ; I; 1;  1;    0;     0.8;  
+  bb1; I; 1;  1;  0.2;     0.9;  
+
+  cb ; I; 1;  3.5;  0;    0.35;  
+  cb1; I; 1;  3.5;  0.2;  0.45; 
+
+  db;  I; 1;  5.5;  0;    0.15;  
+  db1; I; 1;  5.5;  0.2;   0.3;
+
+  eb ; I; 1;  7.0;  0;    0.11;  
+  eb1; I; 1;  7.0;  0.2;  0.23;  
+ 
+  fb ; I; 1;  8.3;  0;     0.1;  
+  fb1; I; 1;  8.3;  0.2;  0.16; 
+ 
+  gb ; I; 1;  9.5;  0;       0;  
+  gb1; I; 1;  9.2;  0.14; 0.12;  
+  gb2; I; 1;  7.8;  1.2;   1.4;  
+  gb3; I; 1;  9.5;  0.23;     0;  
+  gb4; I; 1;  7.8;  1.36;   1.4;  
+  ggb4; i; 1; 7.8;  1.45;   1.4;
+  gb5; i; 1;  9.5;  0.5;  0.28;
+  gb6; i; 1;  9.5;  1.5;    1.4;
+ 
+  tu1; I; 1;  7.4;  0.28;  0.28;     { entree d'air du reacteur }
+  tu3; I; 1;  7.8;  1.30;  0.15;  
+  tu5; I; 1;  7.6;  0.79;  0.21;
+  tu6; I; 1;  9.5;  1.55;  0.15;
+  tu7; I; 1;  9.5;  2.3;   1.3;
+
+  ff1; I; 1;  8.1;  0.232;  0.16;  
+  ff2; I; 1;  8.35; 0.87 ;  0.12;
+  ff3; I; 1;  8.6;   1.6;  0.09;  
+
+  fff1; I; 1;  8.8;  0.23;  0.08;  
+  fff2; I; 1;  8.9;  0.96;  0.05;
+  fff3; I; 1;  9;    1.68;  0.02;  
+ 
+  gbb2; I; 1;  9.65;    1;     0;
+  gbb3; I; 1;  9.8;   1.7;     0;  
+  gbb4; I; 1;  10;    2.7;   1.3;  
+
+  ib ; I; 1;  12;  0;  0;  
+  ib1; I; 1;  12;  0.3;  0;  
+  ib2; I; 1;  12;  1;  0;  
+  ib3; I; 1;  12;  1.7;  0;  
+  ib4; I; 1;  12;  2.7;  1.2;  
+
+  jb ; I; 1;  14.7;  0;  0;  
+  jb1; I; 1;  14.7;  0.3;  0;  
+  jb2; I; 1;  14.7;  1;  0;  
+  jb3; I; 1;  14.7;  1.75;  0;  
+  jb4; I; 1;  14.7;  2.7;  1.2; 
+  jb5; I; 1;  14.7;  3;  1.4;  
+  jb6; I; 1;  17.1;  5.9;  1.34; 
+  jb7; i; 1;  20; 8.8; 1.2;  
+
+  kb ; I; 1;  16.5;  0;  0;  
+  kb1; I; 1;  16.5;  0.3;  0;  
+  kb2; I; 1;  16.5;  1;   0;  
+  kb3; I; 1;  16.5;  1.8;  0;  
+  kb4; I; 1;  16.5;  2.7;  1.2;  
+  kb5; I; 1;  16.5;  3;  1.28;  
+  kb6; I; 1;  19.1;  5.9;  1.3; 
+ 
+  lb;  I; 1;  18.6;  0;  0.1;  
+  lb1; I; 1;  18.6;  0.3;  0.1;  
+  lb2; I; 1;  18.6;  1;  0.1;   
+  lb3; I; 1;  18.6;  1.85;  0.1;  
+  lb4; I; 1;  18.6;  2.7;  1.2;  
+  lb5; I; 1;  18.6;  3;    1.25;  
+  lb6; I; 1;  20.0;  4.75; 1.26; 
+ 
+  mb ; I; 1;  21.1;  0;    0.55;  
+  mb1; I; 1;  21.1;  0.3;   0.4;  
+  mb2; I; 1;  21.1;  1;     0.4;  
+  mb3; I; 1;  21.1;  1.85;  0.4;  
+  mb4; I; 1;  21.1;  2.4;     1;  
+  mb5; I; 1;  21.1;  2.7;  1.14;  
+  mb6; I; 1;  21.1;  3;    1.36;  
+
+  nb ; I; 1;  22.4;  0;    0.95;
+  nb1; I; 1;  22.4;  0.3;   0.8;  
+  nb2; I; 1;  22.4;  1;     0.8;  
+  nb3; I; 1;  22.4;  1.55;  0.8; 
+  nb4; I; 1;  22.4;  1.8;  0.85;
+
+  ob ; I; 1;  23.5;     0;  1.15;  
+  ob1; I; 1;  23.5;   0.3;    1;  
+  ob2; I; 1;  23.5;  1.55;    1;  
+  ob3; I; 1;  22.8;  1.85;  0.9;  
+  ob4; I; 1;  23;    2.2;   1.2;  
+  ob5; I; 1;  22.5;  2.6;   1.3;
+  ob6; I; 1;  23.4;  2.9;  1.36; 
+  ob7; I; 1;  23.5;  1.8;  1.15; 
+  ob8; I; 1;  23.8;  2.0;  1.325;
+ 
+  pb2; I; 1;  24.2;     1;      1;  
+  pb5; I; 1;  25.15;  2.4;  1.335; 
+ 
+  qb1; I; 1;  25.7;  2.8;  1.32;  
+  qb2; I; 1;  25.3;  4.5;   1.4; 
+
+  { La DERIVE }
+  deriv1;   i; 1;  19.5;   4.1;  5.8;
+  deriv2;   i; 1;  21.5;   4.1;  5.8; 
+  deriv120; i; 1;  20.5; 4.0;  5.8;
+  deriv121; i; 1;  20.5; 4.2;  5.8;
+  deriv3;   i; 1;  21.17;  2.5;  3.05;
+  deriv4;   i; 1;  21.34;  3.3;  4.42;
+  deriv5;   i; 1;  21.17;  2.8;   3;
+  deriv6;   i; 1;  21.34;  3.45;  4.4;  
+
+  sb1;      I; 1;  25.7;     6.1; 1.32;
+@;  
+@;
+
+2;   { LIGNES aretes de l objet =============================================} 
+                                    { LE HAUT DU YF22 } 
+                                    { le NEZ et le COCKPIT } 
+ adh;   i;  2;  arab+arbc+arcd; 1; a; dh;
+ abh;   i;  35; adh; 1; arab; 
+ aeh3;  i; 3;  { arc de cercle }  arab+arbc+arcd+arde;  1;  a; eh3; ch2;   
+@;
+@;
+1; 1; {redefinition de bh}
+ bh;  i; 35; adh;  arab+1; arab+1; 
+ bh2; i; 35; aeh3; arab+1; arab+1;
+@;
+@;    
+
+2;
+ bhbh2; i;  2;  arab;  1; bh; bh2;
+ bhdh1; i;  2;  arbc+arcd;  1;  bh;   dh1; 
+ bhdh;  i;  35; adh; arab+1; arab+arbc+arcd;
+ dhdh1; i;  11;      { B-spline ouverte uniforme d interpolation }
+   ardd1;
+   1;                { RAGEBL 'raison geometrique espacant les sommets' reel  }
+   2;                { NDEGBL 'degre des polynomes de la B-spline' entier ; }
+   3;                { NBPCBL 'nombre de points de controle (>degre)' entier  }
+   dh; cc1; dh1;     { DANS LE LEXIQUE ~>POINT } 
+ axecock; i;  11;    { B-spline ouverte uniforme d interpolation }
+   arde+aref+arfg;  
+   1;                { RAGEBL 'raison geometrique espacant les sommets' reel  }
+   3;                { NDEGBL 'degre des polynomes de la B-spline' entier ; }
+   4;                { NBPCBL 'nombre de points de controle (>degre)' entier  }
+   dh; eh; fh; gh;   { DANS LE LEXIQUE ~>POINT } 
+ milieucock; i;  11; { B-spline ouverte uniforme d interpolation }
+   arde+aref+arfg;   { NBARLI 'nombre d''aretes de la ligne B-spline' entier  }
+   1;                { RAGEBL 'raison geometrique espacant les sommets' reel  }
+   3;                { NDEGBL 'degre des polynomes de la B-spline' entier ; }
+   4;                { NBPCBL 'nombre de points de controle (>degre)' entier  }
+   cc1; cc2; cc3; cc4;
+ hautcock; i;  11;   { B-spline ouverte uniforme d interpolation }
+   arde+aref+arfg;   { NBARLI 'nombre d''aretes de la ligne B-spline' entier  }
+   1;                { RAGEBL 'raison geometrique espacant les sommets' reel  }
+   3;                { NDEGBL 'degre des polynomes de la B-spline' entier ; }
+   4;                { NBPCBL 'nombre de points de controle (>degre)' entier  }
+   dh1; eh1; fh1; gh1;  { DANS LE LEXIQUE ~>POINT }
+ bascock; i; 11; arde+aref+arfg;  1; 
+   3;                { NDEGBL 'degre des polynomes de la B-spline' entier  }
+   4;                { NBPCBL 'nombre de points de controle (>degre)' entier }
+   dh1; eh2; fh2; gh1; { DANS LE LEXIQUE ~>POINT }
+ ghgh1;  i; 11; ardd1; 1;  2; 3; gh; cc4; gh1; 
+ ghhh;   i;  2; argi; 1; gh; hh;
+ hhih;   i;  2; arhi-1; 1; hh; ih; 
+ ghih;   i; 51; 2; ghhh; hhih;
+ gh1hh;  i;  2; argi; 1; gh1; hh;
+ abh2;   i; 35; aeh3;  1;  arab;
+ bh2eh3; i; 35; aeh3; arab+1; arab+arbc+arcd+arde;
+ eh3ih;  i; 11;  aref+arfg+argi;   1; 
+             3;  { NDEGBL 'degre des polynomes de la B-spline' entier ; }
+             4;  { NBPCBL 'nombre de points de controle (>degre)' entier ; }
+          eh3; fh3; gh2; ih; 
+ dh1eh2;  i; 35; bascock; 1; arde;
+ eh2fh2;  i; 35; bascock; arde+1; arde+aref;
+ fh2gh1;  i; 35; bascock; arde+aref+1; arde+aref+arfg;     
+ dh1eh1;  i; 35; hautcock; 1; arde;
+ eh1fh1;  i; 35; hautcock; arde+1; arde+aref;
+ fh1gh1;  i; 35; hautcock; arde+aref+1; arde+aref+arfg; 
+ eh1eh2;  i; 2; arde; 1; eh1; eh2;
+ fh1fh2;  i; 2; arde; 1; fh1; fh2; 
+
+ bhhh;   i; 51; 3; bhdh1; bascock; gh1hh;
+ bh2ih;  i; 51; 2; bh2eh3; eh3ih;  
+ dvcock; i; 51; 3; bhdh; dhdh1; bhdh1;  
+
+                                    { LE FUSELAGE } 
+ eh3eh7; i; 2; aree+aree+aree; 1; eh3; eh7;
+@;
+@;
+1; 1; {definition de eh4 eh5 et eh6 }  
+ eh4; i; 35; eh3eh7; arnn+1; arnn+1;
+ eh5; i; 35; eh3eh7; aree+1; aree+1;
+ eh6; i; 35; eh3eh7; aree+aree+1; aree+aree+1;
+@;
+@;
+
+2;
+ ihmh;   i; 11; arij+arjk+arkl+arlm; 1; 3; 5;
+                ih; jh; kh; lh; mh; 
+ eh3mh;  i; 51; 2; eh3ih; ihmh; 
+                 s=aref+arfg+argi+arij+arjk+arkl+arlm; 
+ eh5mh1; i; 11;  s; 1; 3; 8;  eh5; fh5; gh3; ih1; jh1; kh1; lh1; mh1;  
+
+                 s=aref+arfg+argi+arij+arjk+arkl+arlm+armn+arno+arop;   
+ eh6ph4; i; 11;  s; 1; 3; 11; eh6; fh6; gh4; ih2; jh2;
+                              kh2; lh3; mh3; nh5; oh4; ph4;   
+   
+ eh6kh2; i; 35; eh6ph4; 1; aref+arfg+argi+arij+arjk;
+ kh2mh2; i; 11; arkl+arlm; 1; 2; 3; kh2; lh2; mh2; 
+ eh6mh2; i; 51; 2; eh6kh2; kh2mh2;
+ 
+ eh7qh1; i; 11;  s; 1; 3; 11;
+                 eh7; fh7; gh5; ih3; jh3;
+                 kh3; lh4; mh4; oh5; ph6; qh1; 
+ eh7fh7; i; 35; eh7qh1; 1; aref; 
+ fh7gh5; i; 35; eh7qh1; aref+1; aref+arfg;
+ gbb4gh5; i; 2; aret; 1; gbb4; gh5;
+ eh3eh5; i; 35; eh3eh7; 1; aree;
+ eh3eh4; i; 35; eh3eh5; 1; arnn; 
+ eh4eh5; i; 35; eh3eh5; arnn+1; aree; 
+ eh5eh6; i; 35; eh3eh7; aree+1; aree+aree;
+ eh4eh6; i; 51; 2; eh4eh5; eh5eh6;  
+ eh6eh7; i; 35; eh3eh7; aree+aree+1; aree+aree+aree; 
+
+ mhmh1;  i; 2; aree; 1; mh; mh1; 
+ mh1mh2; i; 2; aree; 1; mh1; mh2; 
+ ph4qh1; i; 2; aree; 1; ph4; qh1;  
+ nhnh1;  i; 2; arnn; 1; nh;  nh1;
+ nhph;   i; 2; arno+arop; 1; nh; ph;
+ nh1oh1; i; 2; arno; 1; nh1; oh1;
+ oh1ph1; i; 2; arop; 1; oh1; ph1;
+ nh1ph1; i; 51; 2; nh1oh1; oh1ph1;
+ nh1nh2; i; 2; aree-arnn; 1; nh1; nh2;
+ nh2nh3; i; 2; aree-arnn; 1; nh2; nh3;
+ nh3nh4; i; 2; arnn; 1; nh3; nh4;  
+ oh1ph2; i; 2; aree-arnn; 1; oh1; ph2;
+ ph2oh2; i; 2; aree-arnn; 1; ph2; oh2;
+ nh2ph2; i; 2; arno; 1; nh2; ph2;
+ nh3oh2; i; 2; arno; 1; nh3; oh2;
+ oh2ph3; i; 2; arop; 1; oh2; ph3;
+ mh2nh4; i; 2; armn; 1; mh2; nh4;
+ nh4oh3; i; 2; arno; 1; nh4; oh3;
+ oh3ph4; i; 2; arop; 1; oh3; ph4;
+ ph3ph4; i; 2; arnn; 1; ph3; ph4;
+ nh3ph3; i; 51; 2; nh3oh2; oh2ph3;
+ nh4ph4; i; 51; 2; nh4oh3; oh3ph4; 
+ mhmmh;  i; 35;  mhmh1; 1; arnn; 
+ mh1nh2; i;  2;  armn; 1; mh1; nh2;
+ mmhmh1; i; 35;  mhmh1; arnn+1; aree;       
+ mh1mh12; i; 35; mh1mh2;  1; aree-arnn;
+ mh12mh2; i; 35; mh1mh2; aree-arnn+1; aree; 
+ kh3kh5; i; 3; arii+arii; 1; kh3; kh5; kh4; 
+@;
+
+1; 1;      { extraction des sommets extremites des lignes extraites }
+ mmh;  i; 35; mhmmh;  1+arnn; 1+arnn;
+ mh12; i; 35; mh12mh2;   1;   1; 
+ kh4; i; 35; kh3kh5; arii+1; arii+1; 
+@;
+@;   
+
+2; 
+  mhnh;    i; 2; armn; 1; mh; nh;                      
+  mmhnh1;  i; 2; armn; 1; mmh; nh1;
+  mh12nh3; i; 2; armn; 1; mh12; nh3;  
+  phph1;   i; 2; arnn; 1; ph; ph1;
+                                { LE DESSUS DE L'AILE ET STABILISATEUR} 
+  ih3ih5; i; 2; arii+arii; 1; ih3; ih5;   
+  jh3jh5; i; 3; arii+arii; 1; jh3; jh5; jh4;  
+  kh3lh6; i; 3; arii; 1; kh3; lh6; lh5; 
+  mh4kh4; i; 3; arii; 1; mh4; kh4; lh5;
+  kh3kh4; i; 35; kh3kh5; 1; arii;  
+  kh4kh5; i; 35; kh3kh5; arii+1; arii+arii;       
+  mh4mh5; i; 2; armn; 1; mh4; mh5;
+  ih5kh5; i; 3; arij+arjk; 1; ih5; kh5; jh5; 
+  ih5jh5; i; 35; ih5kh5; 1; arij;
+  jh5kh5; i; 35; ih5kh5; arij+1; arij+arjk;
+  mh5lh6; i; 2; arkl+arlm; 1; mh5; lh6;
+  lh6kh5; i; 2; arii; 1; lh6; kh5;
+  kh4lh6; i; 2; arii; 1; kh4; lh6;
+ s=aref+arfg+argi;
+  ih3jh3; i; 35; eh7qh1; s+1; s+arij;  
+                         s=s+arij;
+  jh3kh3; i; 35; eh7qh1; s+1; s+arjk; 
+                         s=s+arjk;
+  kh3mh4; i; 35; eh7qh1; s+1; s+arkl+arlm; 
+                                          { LE STABILISATEUR}  
+                         s=s+arkl+arlm;
+  mh4oh5; i; 35; eh7qh1; s+1; s+armn;  
+  oh5mh5; i; 2; armn; 1; oh5; mh5; ;   { arii=aref+aref }
+  oh5qh1; i; 35; eh7qh1; s+armn+1; s+armn+arno+arop;   
+
+{@;
+@;
+1; 1;
+  mh7;    i; 35; mh4mh5; aref+1; aref+1;
+  nh6;    i; 35; oh5mh5; aref+1; aref+1;
+@;
+@;
+
+2; 
+  mh4mh7; i; 35; mh4mh5; 1; aref;
+  qh1rh1; i; 2; arqr; 1; qh1; rh1;
+  mh5qh3; i; 2; arno+arop; 1; mh5; qh3;
+  qh1qh3; i; 3; arii; 1; qh1; qh3; qh2;
+  rh1rh2; i; 2; arii; 1; rh1; rh2;  
+  qh3rh2; i; 3; arqr; 1; qh3; rh2; sh1;
+
+  { La DERIVE } 
+  s=armn+arno+arop;
+  kh2deriv1; i; 2; s; 1; kh2; deriv1;
+  mh2deriv2; i; 11; s; 1; 3; 4; mh2; deriv3; deriv4; deriv2;
+  mh3deriv2; i; 11; s; 1; 3; 4; mh3; deriv5; deriv6; deriv2;
+  ph4deriv2; i; 2; s; 1; ph4; deriv2; 
+  s=aref+arfg+argi+arij+arjk;
+  kh2mh3; i; 35; eh6ph4; s+1; s+arkl+arlm; 
+  s=aref+arfg+argi+arij+arjk+arkl+arlm; 
+  mh2ph4; i; 51; 3; mh2nh4; nh4oh3; oh3ph4;
+  mh3ph4; i; 35; eh6ph4; s+1; s+armn+arno+arop; 
+  deriv1deriv20; i; 3; arkl+armn; 1; deriv1; deriv2;  deriv120;
+  deriv1deriv21; i; 3; arkl+armn; 1; deriv1; deriv2;  deriv121;
+@;  
+@;  
+
+3; {SURFACES de l'objet =====================================================}
+ axecock;   i; 3; arde+aref+arfg; ardd1;  
+               1; 1;   3; 2;   4; 3;
+                 dh; eh; fh; gh; 
+                 cc1; cc2; cc3; cc4;
+                 dh1; eh1; fh1; gh1;
+ avh;       i; 6; abh;  bhbh2; abh2; 
+ dvcock;    i; 6; bhdh; dhdh1; bhdh1;
+ basecock;  i; 1; bhhh; hhih; bh2ih; bhbh2; 2;
+
+ { basecock0; i; 1; bhhh; hhih; bh2ih; bhbh2; 2;
+   basecock;  i; 30; basecock0; 
+                0.0; QUALMN qualite au dessous de laquelle ameliorer
+                5.0; ANGL2P degres du petit angle de coplanearite}
+
+ travcock;  i; 6; dh1eh1; eh1eh2; dh1eh2;
+ quadcock;  i; 1; eh1fh1; fh1fh2; eh2fh2; eh1eh2; 2;
+ trarcock;  i; 6; fh1gh1; fh2gh1; fh1fh2; 
+ arcock;    i; 6; ghhh; gh1hh; ghgh1; 
+ cockpit;   i; 51; 8;
+               avh; dvcock; basecock; travcock; quadcock; 
+               trarcock; axecock;  arcock;
+ 
+ fush1;    i; 1; eh3mh; mhmh1; eh5mh1; eh3eh5;   2; 
+ fush2;    i; 1; eh5mh1; mh1mh2; eh6mh2; eh5eh6; 2;
+ fush3;    i; 1; eh6ph4; ph4qh1; eh7qh1; eh6eh7; 2;
+ fush;     i; 51; 3;  fush1; fush2; fush3;
+
+ tuymnh1;    i; 1; mhnh; nhnh1; mmhnh1; mhmmh;         2;
+ tuymnh2;    i; 1; mmhnh1;  nh1nh2; mh1nh2;  mmhmh1;   2; 
+ tuymnh3;    i; 1; mh1nh2;  nh2nh3; mh12nh3; mh1mh12;  2;
+ tuymnh4;    i; 1; mh12nh3; nh3nh4; mh2nh4;  mh12mh2;  2;
+ tuynph1;    i; 1; nhph;    phph1; nh1ph1;  nhnh1;     2;
+ tuynph2;    i; 1; nh1oh1;  oh1ph2; nh2ph2; nh1nh2;    2;
+ tuynph3;    i; 1; nh2ph2;  ph2oh2; nh3oh2; nh2nh3;    2;
+ tuynph4;    i; 1; nh3ph3;  ph3ph4; nh4ph4; nh3nh4;    2;
+ tuyh;       i; 51; 8;
+                   tuymnh1;  tuymnh2;  tuymnh3;
+                   tuymnh4;  tuynph1;  tuynph2;
+                   tuynph3;  tuynph4;
+
+ ailh1;      i; 1; ih3jh3;  jh3jh5; ih5jh5; ih3ih5;  2;
+ ailh2;      i; 1; jh3kh3;  kh3kh5; jh5kh5; jh3jh5;  2;
+ ailh3;      i; 6; kh4lh6;  lh6kh5; kh4kh5;
+ ailh4;      i; 6; kh3mh4;  mh4kh4; kh3kh4; 
+ ailh5;      i; 1; mh4mh5;  mh5lh6; kh4lh6; mh4kh4; 2;
+ ailh;       i; 51; 5; ailh1; ailh2; ailh3; ailh4; ailh5;
+
+ stabh1;     i; 6; mh4oh5; oh5mh5; mh4mh5;
+ stabh2;     i; 1; oh5qh1; qh1qh3; mh5qh3; oh5mh5; 2;
+ stabh3;     i; 1; qh1rh1; rh1rh2; qh3rh2; qh1qh3; 2;
+ stabh;      i; 51; 3; stabh1; stabh2; stabh3; 
+ 
+ deriv13;    i; 1; kh2mh2; mh2deriv2; deriv1deriv20; kh2deriv1;  2;
+ deriv14;    i; 1; kh2mh3; mh3deriv2; deriv1deriv21; kh2deriv1;  2;
+ deriv23;    i; 6; mh2ph4; ph4deriv2; mh2deriv2;
+ deriv24;    i; 6; mh3ph4; ph4deriv2; mh3deriv2;  
+ derivbout;  i; 33; 2; deriv1deriv20; deriv1deriv21;
+ derivh;     i; 51; 5; deriv13; deriv14; deriv23; deriv24; derivbout;
+ 
+ haut; i; 51; 6; cockpit; fush; tuyh; ailh; stabh; derivh; 
+
+@; 
+@;     
+                       
+2;   { LIGNES aretes de l objet =============================================} 
+      { LE DESSOUS DU YF22 }    
+ abb;   i;  2;  arab;  1;  a;  bb; 
+ bbbb1; i;  2;  arnn;  1;  bb; bb1;
+ abb1;  i;  2;  arab;  1;  a;  bb1; 
+ avb;   i; 51;  3; abb; bbbb1; abb1;  
+ bb1bh2; i; 2;  arab; 1; bb1; bh2;
+ 
+ bbgb;   i; 11; arbc+arcd+arde+aref+arfg; 1;
+                3;  6;
+                bb; cb; db; eb; fb; gb;  
+ bb1gb1;   i; 11; arbc+arcd+arde+aref+arfg; 1;
+                3;  6;
+                bb1; cb1; db1; eb1; fb1; gb1; 
+ eh3gb2; i; 2; aref+arfg; 1; eh3; gb2;
+ bh2gb2; i; 51; 2; bh2eh3; eh3gb2;
+ gbgb1;  i; 2;  arnn; 1; gb; gb1;
+ gb1gb2; i; 2;  arnez; 1; gb1; gb2; 
+ gbgb2;  i; 51; 2; gbgb1; gb1gb2;
+ gbgb3;  i; 2;  arnn; 1; gb; gb3;
+ gb3gb4; i; 2;  arnn+arnez; 1; gb3; gb4;
+ gb5gb6; i; 2;  arnn+arnez; 1; gb5; gb6;
+ gb2gb4; i; 2;  arnn; 1; gb2; gb4;
+ gb2eh3; i; 2;  aref+arfg; 1; gb2; eh3;
+ gb4eh4; i; 2;  aref+arfg; 1; gb4; eh4;  
+
+                                         { entree du reacteur }   
+                s=aree+aref+arfg;
+ tu1gb5; i; 2;  s; 1; tu1; gb5;
+ eh4gb6; i; 3;  s; 1; eh4; gb6; ggb4; 
+ eh6tu7; i; 2;  s; 1; eh6; tu7;
+ tu3tu6; i; 2;  s; 1; tu3; tu6;  
+
+ tu1eh4; i; 2;  arnez+arnn; 1; tu1; eh4;
+ tu3eh6; i; 2;  arnez+arnn; 1; tu3; eh6; 
+ tu6tu7; i; 2;  arnez+arnn; 1; tu6; tu7;   
+
+                s=aree+aree-arnn; 
+ tu1tu3; i; 11; s; 1; 2; 3; tu1; tu5; tu3;
+ gb5tu6; i; 2;  s; 1; gb5; tu6;
+ gb6tu7; i; 2;  s; 1; gb6; tu7;
+ gb4gb6; i; 2;  arnn; 1; gb4; gb6;  
+
+                                          { le fuselage }
+ gbnb;  i; 11;  argi+arij+arjk+arkl+arlm+armn;  1;
+                3; 7;
+                gb; ib; jb; kb; lb; mb; nb; 
+ nbnb1; i; 2;   arnn; 1; nb; nb1;
+ 
+ nbph; i;  11;  arno+arop; 1; 2; 3; nb; ob; ph;
+                                                  
+ tu3nb4; i; 11; aree+aref+arfg+argi+arij+arjk+arkl+arlm+armn;  1;
+                3; 10;
+                tu3; ff3; fff3; gbb3; ib3; jb3; kb3; lb3; mb3; nb4;
+ nb4ph4; i; 2;  arno+arop; 1; nb4; ph4;  
+ tu3lb3; i; 35; tu3nb4; 1; aree+aref+arfg+argi+arij+arjk+arkl;  
+                s=aree+aref+arfg+argi+arij+arjk+arkl+arlm+armn; 
+ lb3nb4; i; 35; tu3nb4; aree+aref+arfg+argi+arij+arjk+arkl+1; s;
+
+ gbb3nb4; i; 35; tu3nb4; aree+aref+arfg+1; s;
+ gbb3ph4; i; 51; 2; gbb3nb4; nb4ph4;
+
+ tu5nb2; i; 11; s; 1;
+                3; 10; 
+                tu5; ff2; fff2; gbb2; ib2; jb2; kb2; lb2; mb2; nb2;
+                     
+ tu1nb1; i; 11; s; 1;
+                3; 10; 
+                tu1; ff1; fff1; gb3; ib1; jb1; kb1; lb1; mb1; nb1;  
+
+                s=aree+aref+arfg;
+ tu1gb3; i; 35; tu1nb1; 1; s; 
+ tu1ff1; i; 35; tu1nb1; 1; aree;
+ tu1fff1; i; 35; tu1nb1; 1; aree+aref;
+ fff1gb3; i; 35; tu1nb1; aree+aref+1; aree+aref+arfg; 
+             s=aree+aref+arfg+argi+arij+arjk+arkl+arlm+armn;
+ gb3nb1; i; 35; tu1nb1; aree+aref+arfg+1; s; 
+
+ nb1ph1; i;  3; arno+arop; 1; nb1; ph1; ob1; 
+ nb1ob1; i; 35; nb1ph1; 1; arno;
+ ob1ph1; i; 35; nb1ph1; arno+1; arno+arop;
+
+ gb3lb1; i; 11; argi+arij+arjk+arkl; 1; 
+              3; 5;
+              gb3; ib1; jb1; kb1; lb1; 
+ lblb1; i; 2; arnn; 1; lb; lb1;
+
+ tu3gbb3; i; 35; tu3nb4; 1; aree+aref+arfg;    
+ tu5gbb2; i; 35; tu5nb2; 1; aree+aref+arfg; 
+
+@; 
+@;
+
+3;
+ fusb2;    i; 3; aree+aref+arfg+argi+arij+arjk+arkl+arlm+armn;
+                 aree-arnn+aree;  1; 1;
+                 3; 2; 
+                 10; 3;
+                 tu1; ff1; fff1; gb3;  ib1; jb1; kb1; lb1; mb1; nb1;
+                 tu5; ff2; fff2; gbb2; ib2; jb2; kb2; lb2; mb2; nb2;
+                 tu3; ff3; fff3; gbb3; ib3; jb3; kb3; lb3; mb3; nb4;
+@;
+@;
+
+2;
+ nb1nb4; i; 11; aree+aree-arnn; 1;
+                2; 3;
+                nb1; nb2; nb4;  
+ fh7lb4; i; 11; arfg+argi+arij+arjk+arkl; 1;
+                3; 6;
+                fh7; gbb4; ib4; jb4; kb4; lb4; 
+ fh7gbb4; i; 35; fh7lb4; 1; arfg; 
+ gbb4lb4; i; 35; fh7lb4; arfg+1; arfg+argi+arij+arjk+arkl; 
+ eh6lb4; i; 51; 3; eh6eh7; eh7fh7; fh7lb4;
+
+ lb3lb4; i; 2;  arnez+arnn; 1; lb3; lb4;
+ ih3lb5; i; 11; arij+arjk+arkl; 1;
+                3; 4;
+                ih3; jb5; kb5; lb5;  
+
+ eh7ih3; i; 35; eh7qh1; 1; aref+arfg+argi; 
+ eh7lb5; i; 51; 2; eh7ih3; ih3lb5; 
+ gh5ih3; i; 35; eh7ih3; aref+arfg+1; aref+arfg+argi; 
+ gh5lb5; i; 51; 2; gh5ih3; ih3lb5;
+ 
+                 s=argi+arij+arjk+arkl;
+                 ss=s+arlm;
+ lb3mb3; i; 35; gbb3ph4; s+1; ss; 
+                s=ss;
+                ss=ss+armn;
+ mb3nb4; i; 35; gbb3ph4; s+1; ss; 
+ 
+ lb4ph4; i; 11; arlm+armn+arno+arop; 1;
+                3; 5;
+                lb4; mb4; ob4; ob8; ph4;
+
+ lb4mb4; i; 35; lb4ph4; 1; arlm;
+ mb4ph4; i; 35; lb4ph4; arlm+1; arlm+armn+arno+arop;
+ mb4ob4; i; 35; lb4ph4; arlm+1; arlm+armn;
+ ob4ph4; i; 35; lb4ph4; arlm+armn+1; arlm+armn+arno+arop; 
+   
+ lb4mb6; i; 2; arlm; 1; lb4; mb6;
+ lb4lb5; i; 2; aret; 1; lb4; lb5;
+ mb4mb6; i; 11; arlm; 1;
+                2; 3;
+                mb4; mb5; mb6;  
+ mb6qb1; i; 11; armn+arno+arop; 1;
+                2; 3;
+                mb6; ob6; qb1;
+ mb6ob6; i; 35; mb6qb1; 1; armn; 
+@;     
+
+    { redefinition du point ob6 }
+1; 1; 
+ ob6; i; 35; mb6ob6; armn+1; armn+1; 
+@; 
+@;
+
+2;
+ ph4qb1; i; 11; arlm; 1;
+                2; 3;
+                ph4; pb5; qb1;
+ qb1qh1; i; 2; arnn; 1; qb1; qh1; 
+ { trar; i; 51; 3; ph4qb1; qb1qh1; ph4qh1; }
+@;
+@;
+
+1; 1; {redefinition de ob4 et nb2 nb3 }
+ ob4; i; 35; ob4ph4; 1; 1; 
+                s=aree-arnn+1;  
+ nbb2; i; 35; nb1nb4; s; s; 
+                s=aree-arnn+aree-arnn+1;  
+ nb3; i; 35; nb1nb4; s; s;
+@;
+@;
+
+2;  
+ ob4ob6; i; 11; arlm; 1;
+                2; 3;
+                ob4; ob5; ob6;     
+ nb4ob4; i; 2; arnez-arnn; 1; nb4; ob4;   
+ lb4ob4; i; 51; 2; lb4mb4; mb4ob4;
+ trbas;  i; 51; 3; nb4ph4; ob4ph4; nb4ob4; 
+ eh6ob4; i; 51; 2; eh6lb4; lb4ob4;  
+ lb5mb6; i; 2; arlm; 1; lb5; mb6; 
+
+ trfus5; i; 51; 3; lb4mb6; lb5mb6; lb4lb5; 
+
+ ob6qb1; i; 35; mb6qb1; armn+1; armn+arno+arop; 
+ qb1rh1; i; 2; arqr; 1; qb1; rh1; 
+
+ nb1nbb2; i; 35; nb1nb4; 1; aree-arnn;
+ nbb2nb3; i; 35; nb1nb4; aree-arnn+1; aree-arnn+aree-arnn;
+ nb3nb4; i; 35; nb1nb4; aree-arnn+aree-arnn+1; aree-arnn+aree; 
+
+@;
+@;
+
+1; 1; {redefinition de ob1}
+ ob1; i; 35; ob1ph1; 1; 1; 
+@;
+@;
+
+2;
+ ob1pb2; i; 2; aree-arnn; 1; ob1; pb2;
+ nbb2pb2; i; 2; arno; 1; nbb2; pb2;
+ pb2ob2; i; 2; aree-arnn; 1; pb2; ob2;
+ nb3ob2; i; 2; arno; 1; nb3; ob2; 
+ ob2ph3; i; 2; arop; 1; ob2; ph3;
+ nb3ph3; i; 51; 2; nb3ob2; ob2ph3;  
+
+ ob1oh1; i; 2; arop; 1; ob1; oh1;
+ pb2ph2; i; 2; arop; 1; pb2; ph2;
+ ob2oh2; i; 2; arop; 1; ob2; oh2;
+
+                                { LE DESSOUS DE L'AILE ET STABILISATEUR} 
+  ih5kh5b; i; 3; arij+arjk; 1; ih5; kh5; jb7; 
+  ih5jb7; i; 35; ih5kh5b; 1; arij;
+  jb7kh5; i; 35; ih5kh5b; arij+1; arij+arjk;
+  jb5jb7; i; 3; arii+arii; 1; jb5; jb7; jb6; 
+  kb5kh5; i; 3; arii+arii; 1; kb5; kh5; kb6; 
+@;
+@;
+ 1; 1; {redefinition de kb6 } 
+  kb6; i; 35; kb5kh5; arii+1; arii+1; 
+@;
+@;
+
+2;
+  mb6kb6; i; 3; arii; 1; mb6; kb6; lb6;
+  kb5lh6; i; 3; arii; 1; kb5; lh6; lb6; 
+  kb5kb6; i; 35; kb5kh5; 1; arii;            {arii=aref+aref}
+  kb6kh5; i; 35; kb5kh5; arii+1; arii+arii;  
+  mb6mh5; i; 2; armn; 1; mb6; mh5; 
+  ob6mh5; i; 2; armn; 1; ob6; mh5;         
+  kb6lh6; i; 2; arii; 1; kb6; lh6;  
+  ih3jb5; i; 35; ih3lb5; 1; arij; 
+  jb5kb5; i; 35; ih3lb5; arij+1; arij+arjk;
+  kb5lb5; i; 35; ih3lb5; arij+arjk+1; arij+arjk+arkl;  
+  kb5mb6; i; 51; 2; kb5lb5; lb5mb6; 
+  qb1qh3; i; 3; arii; 1; qb1; qh3; qb2; 
+  qh3rh2b; i; 3; arqr; 1; qh3; rh2; sb1;
+                                        
+  finstab; i; 51; 3; qb1qh1; qb1rh1; qh1rh1;
+
+  gb4fff1; i; 2; arnez+arnn; 1; gb4; fff1;
+  piege3; i; 51; 3; gb3gb4; gb4fff1; fff1gb3;
+  fusb5; i; 51; 3; fh7gbb4; gbb4gh5; fh7gh5;
+
+@;  
+@; 
+ 6; sym; 3; 4;  ib; lb; ih;
+@;
+@;
+
+3; {SURFACES de l'objet =====================================================}
+   {LE DESSOUS DU YF22 }                           
+ avb;     i; 9; 0.22; 1; 0; avb;   {modif 7/7/7}
+ avb1;    i; 6; abb1; bb1bh2; abh2; 
+ nezb;    i; 1; bbgb; gbgb1; bb1gb1; bbbb1;      2;
+ nezb10;  i; 1; bb1gb1; gb1gb2; bh2gb2; bb1bh2;  2;
+ nezb1;   i; 30; nezb10; 0.0; 5.0;
+ piege;   i; 1; gbgb3; gb3gb4; gb2gb4; gbgb2;    2;
+ piege1;  i; 1; gb2gb4; gb4eh4; eh3eh4; gb2eh3;  2;
+ piege3;  i; 9; 0.2; 1; 0; piege3; 
+ piege2;  i; 1; gb4eh4; gb4fff1; tu1fff1; tu1eh4; 2;
+ avantb;  i; 51; 8; avb; avb1; nezb; nezb1; piege; piege1; piege2; piege3;
+
+ entb;   i; 1; tu1gb5; gb5tu6; tu3tu6; tu1tu3; 2;
+ enth;   i; 1; eh4gb6; gb6tu7; eh6tu7; eh4eh6; 2;
+ entf;   i; 1; gb5tu6; tu6tu7; gb6tu7; gb5gb6; 2;
+ ent1;   i; 1; tu1gb5; gb5gb6; eh4gb6; tu1eh4; 2;
+ ent2;   i; 1; tu3tu6; tu6tu7; eh6tu7; tu3eh6; 2;
+ entree; i; 51; 5; entb; enth; entf; ent1; ent2;  
+
+ {le dessous du fuselage}
+ fusb1av;  i; 1; gbnb; nbnb1; gb3nb1; gbgb3; 2;
+ fusb1ar;  i; 1; nbph; phph1; nb1ph1; nbnb1; 2;
+
+ fusb3;    i; 1; tu3lb3; lb3lb4; eh6lb4; tu3eh6; 2;
+ fusb31;   i; 1; lb3nb4; nb4ob4; lb4ob4; lb3lb4; 2;
+ fusb4;    i; 1; gbb4lb4; lb4lb5; gh5lb5; gbb4gh5;  2;
+ fusb5;    i; 9; 0.2; 1; 0; fusb5;
+
+ trfus4;   i; 6; lb4mb4; mb4mb6; lb4mb6;
+ trfus5;   i; 9; 0.2; 1; 0; trfus5;
+ trbas;    i; 9; 0.2; 1; 0; trbas;
+ fusb7;    i; 1; mb4ob4; ob4ob6; mb6ob6; mb4mb6;   2;
+ fusb6;    i; 1; ob4ph4; ph4qb1; ob6qb1; ob4ob6;   2;
+ trar;     i; 6; ph4qb1; qb1qh1; ph4qh1; 
+ fusb;     i; 51; 13;
+                 fusb1av; fusb1ar; fusb2; fusb3; fusb31; fusb4; fusb5;
+                 trfus4; trfus5; trbas; fusb7; fusb6; trar;
+
+ tuynob1;  i; 1; nb1ob1; ob1pb2; nbb2pb2; nb1nbb2;  2;
+ tuynob2;  i; 1; nbb2pb2; pb2ob2; nb3ob2; nbb2nb3;  2;
+ tuynob3;  i; 1; nb3ph3; ph3ph4; nb4ph4; nb3nb4;    2;
+ stu1;     i; 6; ob1ph1; oh1ph1; ob1oh1;
+ seh4;     i; 1; ob1pb2; pb2ph2; oh1ph2; ob1oh1;  2;
+ stu3;     i; 1; pb2ob2; ob2oh2; ph2oh2; pb2ph2;  2;
+ seh6;     i; 6; ob2ph3; oh2ph3; ob2oh2; 
+ tuyb;     i; 51; 7;  tuynob1; tuynob2; tuynob3; 
+                      stu1; seh4; stu3; seh6;
+  
+ ailb1;      i; 1; ih3jb5;  jb5jb7; ih5jb7; ih3ih5; 2;
+ ailb2;      i; 1; jb5kb5;  kb5kh5; jb7kh5; jb5jb7; 2;
+ ailb3;      i; 6; kb6lh6;  lh6kh5; kb6kh5;
+ ailb4;      i; 6; kb5mb6; mb6kb6; kb5kb6;
+ ailb5;      i; 1; mb6mh5; mh5lh6; kb6lh6; mb6kb6; 2;
+ ailbout;    i; 33; 2; ih5kh5; ih5kh5b;
+ ailb;       i; 51; 6; ailb1; ailb2; ailb3; ailb4; ailb5; ailbout;
+
+ stabb1;     i; 6; mb6ob6; ob6mh5; mb6mh5;
+ stabb2;     i; 1; ob6qb1; qb1qh3; mh5qh3; ob6mh5;  2;
+ stabb3;     i; 1; qb1rh1; rh1rh2; qh3rh2b; qb1qh3; 2; 
+ finstab;    i; 9; 0.2; 1; 0; finstab;   
+ stabout;    i; 33; 2; qh3rh2; qh3rh2b;
+ stabb;      i; 51; 5; stabb1; stabb2; stabb3; finstab; stabout;
+
+ bas;   i; 51; 6;
+               avantb; entree; fusb; tuyb; ailb; stabb;
+
+ yfg;    i; 51; 2; haut; bas; 
+ yfd;  sym; 50; yfg;
+ yf;     i; 52; 2; yfg; yfd;
+
+ yft;   i; 31; yf; 4;   {triangulation des quadrangles}
+
+ yfa; i; 30; yft;
+            0.1;  {QUALMN qualite au dessous de laquelle ameliorer}
+            0.5;  {ANGL2P degres du petit angle de coplanearite}
+@;
+@;    
+
+fermer; 

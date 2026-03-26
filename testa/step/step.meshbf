@@ -1,0 +1,196 @@
+{ ========================================================= }
+{ MEFISTO Software     : May 24-th 2011 Version             }
+{ USER's  Name         : Alain Perronnet                    }
+{ Project Name         : step      Case 2 4 6               }
+{ Date                 : 2011/05/24                         }
+{ ========================================================= }
+DefVar hi,ht,hstep;  ht=1;        {total height}
+                     hi=0.5;      {in    height}
+                     hstep=ht-hi; {step  height}
+DefVar l,ll;         l =3;        {step  length}
+                     ll=22;       {total length}
+
+DefVar edgeL; edgeL=hstep/4;
+
+DefFunc Edge_Length(x,y,z);
+Edge_Length = edgeL;
+if x>(l*0.7) and x<(ll*0.75) then
+   Edge_Length = edgeL*0.7;
+EndIf;
+if x>l*0.8 and x<ll*0.5 and y<hstep*1.1 then
+   Edge_Length = edgeL*0.3;
+EndIf;
+if (x-l)**2+(y-hstep)**2 < 0.09 then
+   Edge_Length = edgeL*0.15;
+EndIf;
+EndFunc;
+
+
+19;  { min MAX of XYZ of PLSVO }
+ { X MINIMUM? }
+ 0;
+ { X MAXIMUM? }
+ ll;
+ { Y MINIMUM? }
+ 0;
+ { Y MAXIMUM? }
+ ht;
+ { Z MINIMUM? }
+ 0;
+ { Z MAXIMUM? }
+ 0;
+
+
+ 1;  { POINTS vertices of the object }
+ 1;  { TYPING of VALUES }
+ { NAME of the POINT or ESCAPE? }
+ A; i; 1; 0; hstep; 0;
+ { in LEXICON ~>TRANSFO }
+ { X Y Z COORDINATES }
+ { COORPO 'X Y Z of a point' xyz ; }
+ { NAME of the POINT or ESCAPE? }
+ B; i; 1; l; hstep; 0;
+ { in LEXICON ~>TRANSFO }
+ { X Y Z COORDINATES }
+ { COORPO 'X Y Z of a point' xyz ; }
+ { NAME of the POINT or ESCAPE? }
+ C; i; 1; l; 0; 0;
+ { in LEXICON ~>TRANSFO }
+ { X Y Z COORDINATES }
+ { COORPO 'X Y Z of a point' xyz ; }
+ { NAME of the POINT or ESCAPE? }
+ D; i; 1; ll; 0; 0;
+ { in LEXICON ~>TRANSFO }
+ { X Y Z COORDINATES }
+ { COORPO 'X Y Z of a point' xyz ; }
+ { NAME of the POINT or ESCAPE? }
+ E; i; 1; ll; ht; 0;
+ { in LEXICON ~>TRANSFO }
+ { X Y Z COORDINATES }
+ { COORPO 'X Y Z of a point' xyz ; }
+ { NAME of the POINT or ESCAPE? }
+ F; i; 1; 0; ht; 0;
+ { in LEXICON ~>TRANSFO }
+ { X Y Z COORDINATES }
+ { COORPO 'X Y Z of a point' xyz ; }
+ { NAME of the POINT or ESCAPE? }
+ @;
+
+
+ 2;
+ { LINES edges of the object }
+ { NAME of the LINE or ESCAPE? }
+ AB; I; 2; 10; 1; A; B;
+ { in LEXICON ~>TRANSFO }
+ { STRAIGHT LINE }
+ { NBARLI 'number of edges of the line' entier ; }
+ { RAIGEO 'geometrical ratio between the edges' reel ; }
+ { in LEXICON ~>POINT }
+ { in LEXICON ~>POINT }
+ { NAME of the LINE or ESCAPE? }
+ BC; I;2; 10; 1; B; C;
+ { in LEXICON ~>TRANSFO }
+ { STRAIGHT LINE }
+ { NBARLI 'number of edges of the line' entier ; }
+ { RAIGEO 'geometrical ratio between the edges' reel ; }
+ { in LEXICON ~>POINT }
+ { in LEXICON ~>POINT }
+ { NAME of the LINE or ESCAPE? }
+ CD; I; 2; 40; 1; C; D;
+ { in LEXICON ~>TRANSFO }
+ { STRAIGHT LINE }
+ { NBARLI 'number of edges of the line' entier ; }
+ { RAIGEO 'geometrical ratio between the edges' reel ; }
+ { in LEXICON ~>POINT }
+ { in LEXICON ~>POINT }
+ { NAME of the LINE or ESCAPE? }
+ DE; I; 2; 10; 1; D; E;
+ { in LEXICON ~>TRANSFO }
+ { STRAIGHT LINE }
+ { NBARLI 'number of edges of the line' entier ; }
+ { RAIGEO 'geometrical ratio between the edges' reel ; }
+ { in LEXICON ~>POINT }
+ { in LEXICON ~>POINT }
+ { NAME of the LINE or ESCAPE? }
+ EF; I; 2; 50; 1; E; F;
+ { in LEXICON ~>TRANSFO }
+ { STRAIGHT LINE }
+ { NBARLI 'number of edges of the line' entier ; }
+ { RAIGEO 'geometrical ratio between the edges' reel ; }
+ { in LEXICON ~>POINT }
+ { in LEXICON ~>POINT }
+ { NAME of the LINE or ESCAPE? }
+ FA; I; 2; 10; 1; F; A;
+ { in LEXICON ~>TRANSFO }
+ { STRAIGHT LINE }
+ { NBARLI 'number of edges of the line' entier ; }
+ { RAIGEO 'geometrical ratio between the edges' reel ; }
+ { in LEXICON ~>POINT }
+ { in LEXICON ~>POINT }
+ { NAME of the LINE or ESCAPE? }
+ marche; i; 51;6;
+ { in LEXICON ~>TRANSFO }
+ { UNION OF SEVERAL LINES }
+ { NBLIUN 'number of lines of the union' entier ; }
+ { NAME of LINE }
+ AB; BC; CD; DE; EF; FA;
+ { in LEXICON ~>LIGNE }
+ { in LEXICON ~>LIGNE }
+ { in LEXICON ~>LIGNE }
+ { in LEXICON ~>LIGNE }
+ { in LEXICON ~>LIGNE }
+ { in LEXICON ~>LIGNE }
+ { NAME of the LINE or ESCAPE? }
+ @;
+ @;
+
+
+ 3;
+ { SURFACES faces of the object }
+ { NAME of the SURFACE or ESCAPE? }
+ marche; i; { in LEXICON ~>TRANSFO }
+ 9;      { TRIANGULATION1 BETWEEN CLOSED LINES }
+ edgeL;  { ARETMX 'max length of edges of regular triangles' reel}
+ 1;      { NBLFTR 'number of closed lines contour of the surface'}
+ 0;      { NBPTIT 'number of internal points future vertices' }
+ marche; { NAME of LINE }
+ @;
+
+
+ 5; { OBJECTS parts of the object }
+ marche; { NAME of the OBJECT or ESCAPE? }
+ 0;{ 1D or 2D or 3D classic }
+ 8;{ NBDOBJ 'number of Points Lines Surfaces Volumes Objects of the object' }
+ { POINT or LINE or SURFACE or VOLUME or OBJECT? }
+ S; marche;
+ { POINT or LINE or SURFACE or VOLUME or OBJECT? }
+ L; AB;
+ { POINT or LINE or SURFACE or VOLUME or OBJECT? }
+ L; BC;
+ { POINT or LINE or SURFACE or VOLUME or OBJECT? }
+ L; CD;
+ { POINT or LINE or SURFACE or VOLUME or OBJECT? }
+ L; DE;
+ { POINT or LINE or SURFACE or VOLUME or OBJECT? }
+ L; EF;
+ { POINT or LINE or SURFACE or VOLUME or OBJECT? }
+ L; FA;
+ P; D;
+ { NTYOBJ(1..NBDOBJ) 'name of type PLSVO & PLSVO''s name' typeobjet ; }
+ @;
+
+
+ 7; { INTERPOLATION nodes of the mesh }
+ marche; { NAME of the OBJECT to be INTERPOLATED }
+{4;        LAGRANGE of DEGREE 2 => TAYLOR-HOOD   FE }
+ 3;      { LAGRANGE of DEGREE 1 => BREZZI-FORTIN FE }
+ @;
+
+
+ 10; { DRAWING of PLSVO meshes }
+ 5;  { OBJECT or OBJECTS }
+ 1;  { ALL OBJECTS 1 by 1 }
+ 75; { Activate TRANSLATION ORBIT ZOOM }
+ 90; { Continue the DRAWING }
+
+CLOSE;

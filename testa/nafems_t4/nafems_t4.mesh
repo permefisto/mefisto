@@ -1,0 +1,53 @@
+{ ==================================================================== }
+{ Software MEFISTO     : June 2007 Version                             }
+{ USER's Name          : Alain Perronnet                               }
+{ Project Name         : nafems_t4                                     }
+{ Date                 : 12 july 2007   11h 29m 26s                    }
+{ CONSTRUCTION of the MESH of HEAT TRANSFER with CONVECTION            }
+{ ==================================================================== }
+ 
+1;  1; { POINTS }
+  A; I; 1; 0;   0; 0;   { Input of X Y Z (Z obliged in 2D!) }
+  B; I; 1; 0.6; 0; 0;
+  C; I; 1; 0.6; 1; 0;
+  D; I; 1; 0;   1; 0;
+@;
+
+2;     { LINES }
+  AB; I; 2; 3; 1; A; B; {Segment from point A to point B with 3 edges}
+  BC; I; 2; 5; 1; B; C;
+  CD; I; 2; 3; 1; C; D;
+  DA; I; 2; 5; 1; D; A;
+@;
+
+3;     { A SURFACE }
+ABCD; I; 1;          { Transfinite Quadrangle}
+     AB; BC; CD; DA; { Names of 4 lines of contour}
+      1;             { Regular mesh }
+@;
+
+5;   { AN OBJECT }
+OB;
+  0; {CLASSICAL TREATMENT with RENUMBERING of NODES }
+  9; {OBJECT NUMBER with CHARACTERISTICS or BOUNDARY CONDITIONS
+      1 surface, 4 lines 4 points => 9 couples (Type,Name) }
+  SURFACE; ABCD;
+  LINE; AB;   LINE; BC;   LINE; CD;   L; DA;
+  POINT; A;   POINT; B;   POINT; C;   P; D;
+@;
+
+7;      { THE INTERPOLATION }
+ OB; 4; { LAGRANGE INTERPOLATION of degree 2 }
+@;
+
+91;   { File xyznpef of the object OB }
+  OB; { Name of the object }
+  0;  { Without tangents }
+@;
+
+10;   { DRAWING of PLSVO MESHES }
+   5; { All OBJECTS }
+   1; { ALL OBJECTS 1 by 1 }
+  90; { Continue the DRAWING }
+
+CLOSE;

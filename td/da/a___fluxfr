@@ -1,0 +1,9 @@
+deftms ~>>>FLUXFR 'Normal Heat Fluxes on the OBJET BOUNDARIES'
+variable muet DATE 'date of creation of the TMS'   reel2  ;
+variable muet NUTD 'number of the descriptor array TD' entier ;
+variable NBCAFF 'Case number of boundary fluxes' entier ;
+variable NTPLSF 'Number Type of the boundaries (1P 2L 3S)'  entier ; 
+variable NBPLSF 'Number of P or L or S at boundaries' entier ;
+tableau  FLUXFR(1..NBPLSF,1..NBCAFF) 'NORMAL FLUXES on each PLSF' reel2 ;
+tableau  NUPLSF(1..NBPLSF) 'PLS number in its directory' entier ;
+fintms ;

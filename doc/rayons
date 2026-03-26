@@ -1,0 +1,19 @@
+The 3 spherical coordinates of the point P are:
+the RADIUS    : square root of x*x + y*y + z*z of the point P
+the LONGITUDE : angle in degrees between the oX axis and the line
+                o Origin - M Projection of the point P onto 
+                the XoY plane
+the LATITUDE  : angle in degrees between the line Origin-point
+                and the line Origin-Projection of the point onto
+                the XoY plane
+
+              Z     P
+              |   / |
+              |  /  |
+              | /   |
+            o |/____|y___Y
+             /      |/
+           x/-------|M
+          X/
+
+Give the RADIUS or DISTANCE(Origin,P)

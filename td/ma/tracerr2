@@ -1,0 +1,6 @@
+variable TRACERR2 'Drawings of 2d ERRORS' entier
+ (  1 :  'ISO-ERRORS CURVES'
+ ,  2 :  'COLORED ZONES of ISO-ERRORS'
+ ,  4 :  'PROFILE Z=ERROR(X,Y)'
+ ,  5 :  'ALONG A LINE DEFINED BY 2 POINTS'
+ ,  6 :  'Curve ERROR(Time)' ) ;

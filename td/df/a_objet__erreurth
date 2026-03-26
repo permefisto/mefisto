@@ -1,0 +1,26 @@
+deftms ~>OBJET>>ERREURTH
+'les estimateurs d''erreurs en thermique, flux et laplacien'
+variable muet DATE 'date de creation du tableau'       reel2  ;
+variable muet NUTD 'numero du tableau descripteur'     entier ;
+variable MXARFA 'nombre maximal d''aretes ou faces'    entier ;
+variable NBPTAF 'nombre de points par arete ou face'   entier ;
+variable NBCAAF 'nombre de cas traites'                entier ;
+variable NBTTEF 'nombre total d''ef de l''objet'       entier ;
+variable LDERTH 'decalage pour aligner les reel2'      entier ;
+tableau  SFLUAF(1..2,1..NBPTAF,1..MXARFA,1..NBCAAF)
+'les 2 flux normaux aux points des aretes ou faces des EF' reel2 ;
+tableau  ERTHAF(1..MXARFA,1..NBCAAF) 
+'estimateur d''erreur thermique sur chaque arete ou face'  reel2 ;
+tableau  ERTHEF(1..NBTTEF,1..NBCAAF) 
+'estimateur d''erreur thermique sur chaque EF'           reel2 ;
+tableau  H1TEEF(1..NBTTEF,1..NBCAAF) 
+'norme H1 de la temperature sur chaque EF'               reel2 ;
+tableau  ESERTH(1..NBCAAF) 
+'estimateur d''erreur thermique sur le maillage total'   reel2 ;
+tableau  H1TEMP(1..NBCAAF) 
+'norme H1 de la temperature sur le maillage total'       reel2 ;
+tableau  EEH1TH(1..NBCAAF) 
+'max 1 ef estimateur d''erreur / norme temperature sur les EF' reel2 ;
+tableau  CPNFAF(1..3,1..NBPTAF,1..MXARFA,1..2)
+'xyz des points et normales des flux normaux aux points' reel ;
+fintms ; 

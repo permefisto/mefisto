@@ -1,0 +1,152 @@
+! =========================== 
+! FICHIER ~/incl/trvari.inc95
+! =========================== 
+
+!     IDENTIFICATEURS NECESSAIRES POUR LE TRACE GRAPHIQUE AVEC LA LIBRAIRIE xvue
+
+!     -------------------------------------------------------------------------
+      DOUBLE PRECISION  TEMP2TRAC, TEMPUSER
+      COMMON / TRVAPS / TEMP2TRAC, TEMPUSER, LASOPS, LVIDEO
+!     -------------------------------------------------------------------------
+!     TEMP2TRAC : TEMPS UTILISATEUR EN SECONDES ENTRE 2 TRACES
+!     LASOPS    : DEMANDE OU NON DE SORTIE DU TRACE DU MAILLAGE EN POSTSCRIPT
+!              0     : PAS DE SORTIE POSTSCRIPT
+!            +-1     : TRACE PS SANS LES MENUS (- pour desactiver localement)
+!            +-2     : TRACE PS AVEC LES MENUS (- pour desactiver localement)
+!            >|2|    : ETAT MOMENTANE DE GESTION DES RECTANGLES
+!     LVIDEO    : DEMANDE OU NON DE SORTIE DU TRACE SUR FICHIER VIDEO.gif
+!             =0     : PAS DE SORTIE DEMANDEE de VIDEO.gif
+!            <>0     : SORTIE DEMANDEE de VIDEO.gif
+
+!     -------------------------------------------------------------------------
+      COMMON / TRVAR0 / NCVISU
+!     -------------------------------------------------------------------------
+!     NCVISU : NUMERO DE LA visual->class SOUS X11
+!              0 PseudoColor
+!              1 GrayScale
+!              2 DirectColor
+!              3 StaticColor
+!              4 StaticGray
+!              5 TrueColor
+
+
+!     -------------------------------------------------------------------------
+      COMMON / TRVAR1 / NOPACL, N1CORE, NDCORE, N1COEL, NDCOEL, &
+                        N1COUL, NDCOUL, &
+                        NCNOIR, NCBLAN, NCROUG, NCJAUN, &
+                        NCVERT, NCCYAN, NCBLEU, NCMAGE, &
+                        NCGRIS, NCGRIM, NCGRIC, NCBEIG, &
+                        NCORAN, NCSAUM, NCROSE, NCTURQ
+!     -------------------------------------------------------------------------
+!     NOPACL : NUMERO DE LA PALETTE DE COULEURS ACTIVE 
+!     N1CORE : NUMERO DE LA PREMIERE COULEUR RESERVEE DE L'ECRAN
+!     NDCORE : NUMERO DE LA DERNIERE COULEUR RESERVEE DE L'ECRAN
+!     N1COEL : NUMERO DE LA PREMIERE COULEUR ELEMENTAIRE (NOIRE)
+!     NDCOEL : NUMERO DE LA DERNIERE COULEUR ELEMENTAIRE (BLANCHE)
+!     N1COUL : NUMERO DE LA PREMIERE COULEUR NON RESERVEE DE L'ECRAN
+!     NDCOUL : NUMERO DE LA DERNIERE COULEUR NON RESERVEE DE L'ECRAN
+!     SI N1COUL+1 = NDCOUL L'ECRAN EST CONSIDERE NOIR ET BLANC
+!     NCNOIR,...,NCMAGE : NUMERO DE CES COULEURS DANS LA PALETTE DES COULEURS
+!     NCNOIR=0 LES AUTRES =1 SUR UN ECRAN NOIR ET BLANC
+
+!     -------------------------------------------------------------------------
+      COMMON / TRVAR2 / NOPOCA, NPHACA, NPLACA, RALALH  
+!     -------------------------------------------------------------------------
+!     NOPOCA : NUMERO DE LA POLICE DES CARACTERES
+!     NPHACA : NOMBRE DE PIXELS DANS LA HAUTEUR DES CARACTERES
+!     NPLACA : NOMBRE DE PIXELS DANS LA LARGEUR DES CARACTERES
+!     RALALH : RAPPORT EN MM ECRAN ENTRE LARGEUR / HAUTEUR D'UN CARACTERE 
+
+!     -------------------------------------------------------------------------
+      COMMON / TRVAR3 / CXMMPX,CYMMPX, &
+                        LAMMEC,LHMMEC, LAPXEC,LHPXEC, &
+                        LAPXFE,LHPXFE, &
+                        XOBMIN,XOBMAX, YOBMIN,YOBMAX, &
+                        AXOBPX,BXOBPX, AYOBPX,BYOBPX
+!     -------------------------------------------------------------------------
+!     CXMMPX       : COEFFICIENT DE TRANSFORMATION DES MM EN PIXELS EN X
+!                    MM * CXMMPX => NB_PIXELS EN X
+!     1.0 / CXMMPX : COEFFICIENT DE CONVERSION DES PIXELS EN MM EN X
+!                    PX en X / CXMMPX => MM EN X          
+!     CYMMPX       : COEFFICIENT DE TRANSFORMATION DES MM EN PIXELS EN Y
+!                    MM * CYMMPX => NB_PIXELS EN Y
+!     1.0 / CYMMPX : COEFFICIENT DE CONVERSION DES PIXELS EN MM EN Y
+!                    PX en Y / CYMMPX => MM EN Y
+      REAL     CXMMPX,CYMMPX
+
+!     LAMMEC LHMMEC : LARGEUR ET HAUTEUR DE L'ECRAN EN MM
+      INTEGER  LAMMEC,LHMMEC
+!     LAPXEC LHPXEC : LARGEUR ET HAUTEUR DE L'ECRAN EN PIXELS
+      INTEGER  LAPXEC,LHPXEC 
+!     LAPXFE LHPXFE : LARGEUR ET HAUTEUR DE LA FENETRE EN PIXELS   
+      INTEGER  LAPXFE,LHPXFE  
+
+!     XOBMIN : ABSCISSE OBJET DE LA GAUCHE DE LA FENETRE
+!     XOBMAX : ABSCISSE OBJET DE LA DROITE DE LA FENETRE
+!     YOBMIN : ORDONNEE OBJET DU    BAS    DE LA FENETRE
+!     YOBMAX : ORDONNEE OBJET DU    HAUT   DE LA FENETRE
+      REAL     XOBMIN,XOBMAX, YOBMIN,YOBMAX
+
+!     XOB -> X PIXELS     NUPXEX(x) = AXOBPX * x + BXOBPX  
+!                         XOB2PX(nx) = ( nx - BXOBPX ) / AXOBPX
+!     AXOBPX = LAPXFE / ( XOBMAX - XOBMIN )
+!     BXOBPX = - 1.0  / ( XOBMAX - XOBMIN )
+
+!     YOB -> Y PIXELS     NUPXEY(y)  = AYOBPX * y + BYOBPX 
+!                         YOB2PX(ny) = ( ny - BYOBPX ) / AYOBPX
+!     AYOBPX = - LHPXFE / ( YOBMAX - YOBMIN )
+!     BYOBPX = 1.0 / ( YOBMAX - YOBMIN )
+      REAL    AXOBPX,BXOBPX, AYOBPX,BYOBPX
+
+!     -------------------------------------------------------------------------
+      COMMON / TRVAR4 / NDIMLI, NOTYVI, &
+                         AXOLAR, AXOHAU, AXOARR, AXOAVA, &
+                         AXLMIN, AXLMAX, AXHMIN, AXHMAX, &
+                         AXOPTV(6), AXOEIL(6), DIREVI(6), &
+                         AXOMAT(6,6), AXOOEIL(3), DPTVOEIL, &
+                         NBLAMP, AXOLAM(6,8)
+!     -------------------------------------------------------------------------
+!     NDIMLI : 1 VARIABLE  ENTIERE AUXILIAIRE 1=>1D 2=>2D 3=>3D        
+!     NOTYVI :   NUMERO DU TYPE DE LA VISEE
+!               0 SI NON INITIALISE 
+!               1 SI INITIALISE EN 2D
+!              11 SI AXONOMETRIE PAR PTV OEIL AXOARR ET AXOAVA
+!     AXOLAR : LARGEUR/2 VUE SUR L'ECRAN  (EN VALEUR ABSOLUE )
+!     AXLMIN, AXLMAX: EVENTUEL MIN ET MAX EN LARGEUR
+!     AXOHAU : HAUTEUR/2 VUE SUR L'ECRAN
+!     AXHMIN, AXHMAX: EVENTUEL MIN ET MAX EN HAUTEUR    
+!     AXOARR : DISTANCE A PTV DU PLAN ARRIERE DE SECTION 
+!     AXOAVA : DISTANCE A PTV DU PLAN AVANT   DE SECTION  
+!     AXOPTV : XYZ DU POINT VISE
+!     AXOEIL : XYZ DE L'OEIL
+!     AXOOEIL: XYZ DE L'AXONOMETRIE DE L'OEIL
+!     DPTVOEIL:DISTANCE PTV -> OEIL   
+!     DIREVI : TABLEAU AUXILIAIRE = AXOEIL - AXOPTV
+!              ECONOMISE DES CALCULS LORS DES TRACES AVEC CALCUL DE LA COULEUR
+!              DES FACES
+!     AXOMAT : MATRICE DE LA TRANSFORMATION (XYZAXO = AXOMAT * (xyz - PTV))
+
+!     NBLAMP : NOMBRE DE LAMPES
+!              0 => L'OEIL SERT D'UNIQUE LAMPE
+!     AXOLAM : XYZ DE CHACUNE DES NBLAMP (8 AU PLUS)
+
+!     -------------------------------------------------------------------------
+      COMMON / TRVAR5 /  RLONGITUDE0, RLATITUDE0, &
+                         LORBITE, NOBOUTON, NOETATBOUTON, &
+                         NOPX0, NOPY0, NOPX1, NOPY1, DIAMOB, &
+                         NORBITE
+!     -------------------------------------------------------------------------
+!     LORBITE:  =1 TEMOIN DE TRACE EN MODE ORBITE ZOOM TRANSLATION
+!               =0 SINON
+!     NOBOUTON: =1 a 3 NUMERO DU BOUTON ACTIF DE LA SOURIS
+!               =0 SI AUCUN ACTIF
+!     NOETATBOUTON: 1 SI LE BOUTON NON NUL ACTUEL EST ENFONCE NON RELACHE
+!                   0 SI LE BOUTON NON NUL ACTUEL A ETE ENFONCE PUIS RELACHE
+!     NOPX0, NOPY0: NUMERO EN X ET Y DU PIXELS OU LE BOUTON ACTUEL A ETE ENFONCE
+!     RLONGITUDE0: LONGITUDE INITIALE EN RADIANS OU LE BOUTON ACTUEL A ETE ENFONCE
+!     RLATITUDE0 : LATITUDE  INITIALE EN RADIANS OU LE BOUTON ACTUEL A ETE ENFONCE
+!     DIAMOB     : DIAMETRE DE L'HEXAEDRE ENGLOBANT L'OBJET
+!     NORBITE    : 0 AU DEPART
+!                  1 APRES EXECUTION DE ZOOM[123]D0 ou ORBITE0
+!                >=2 APRES EXECUTION D'AU MOINS UNE FOIS  ZOOM[123]D1 ou ORBITE[123]
+!                  0 A L'ABANDON DE  ZOOM[123]D1 ou ORBITE[123]

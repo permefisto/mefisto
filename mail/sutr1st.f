@@ -1,0 +1,428 @@
+      SUBROUTINE SUTR1ST( COSMAXPL, NBSOMM, XYZSOM,
+     %                    MXTRIA,   NBTRIA, NOTRIA,
+     %                    NSt,      MXTRST, NBTRST, NOTRST,
+     %                    MXARSI,   NBARSI, NOARSI,
+     %                    NBTNEW,   NB2DIA, NS1,    IERR )
+C+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+C BUT:    RETRIANGULATION DES NBTRST TRIANGLES DE SOMMET NSt
+C ----    SUPPOSES COPLANAIRES PAR SUPPRESSION DU SOMMET NSt
+
+C         CE SP EST INSPIRE en partie de arducf.f PLUS COMPLET
+C         ICI PAS DE DETECTION DE BOUCLES DES ARETES SIMPLES DU CF...
+
+C ENTREES:
+C --------
+C COSMAXPL: COSINUS DE L'ANGLE DIEDRE ENTRE LES 2 PLANS DES TRIANGLES
+C           AU DESSOUS DUQUEL LES 2 TRIANGLES SONT CONSIDERES NON-COPLANAIRES
+C NBSOMM : NOMBRE DE SOMMETS DE LA TRIANGULATION
+C XYZSOM : XYZ DES NBSOMM SOMMETS DE LA TRIANGULATION
+C MXTRIA : NOMBRE MAXIMAL DE TRIANGLES DECLARABLES DU TABLEAU NOTRIA
+C NBTRIA : NOMBRE DE TRIANGLES
+C NSt    : NUMERO XYZSOM DU SOMMET A SUPPRIMER
+C NBTRST : NOMBRE DE TRIANGLES COPLANAIRES    DE SOMMET NS
+C NOTRST : NUMERO NOTRIA DES NBTRST TRIANGLES DE SOMMET NS
+C MXARSI : MAXIMUM DE D'ARETES DU TABLEAU NOARSI
+
+C MODIFIES:
+C ---------
+C NOTRIA : NUMERO DE 1 A NBSOMM DES N1TRIA SOMMETS DU MAILLAGE
+C          1 2 3 LE NO XYZSOM DES 3 SOMMETS DU TRIANGLE
+C          4 5 6 LE NO NOTRIA DES TRIANGLES ADJACENTS PAR LES ARETES
+
+C SORTIES :
+C ---------
+C NBARSI : NOMBRE D'ARETES SIMPLES CONSECUTIVES DES NBTRST TRIANGLES
+C NOARSI : 1=NO TRIANGLE ADJACENT
+C          2,3= NO DES SOMMETS DE L'ARETE (CONSECUTIVES)
+C NBTNEW : NOMBRE DE TRIANGLES DE LA NOUVELLE TRIANGULATION
+C          NORMALEMENT NBTNEW=NBARSI-2
+C          =0 SI PAS DE RETRIANGULATION SANS LE SOMMET NSt
+C NOTRST : NUMERO DES NBTNEW NOUVEAUX TRIANGLES (ECRASES)
+C NB2DIA : LE NOMBRE D'ECHANGES DES DIAGONALES ENTRE 2 TRIANGLES ADJACENTS
+C NS1    : NUMERO XYZSOM DU SOMMET MAXIMISANT LA QUALITE MIN DES
+C          RETRIANGULATIONS
+C          =0 SI PAS DE RETRIANGULATION SANS LE SOMMET NSt
+C         (NS1 EST EN SORTIE LE SOMMET DE BEAUCOUP DES NBTNEW TRIANGLES)
+C IERR   : =0 PAS D'ERREUR DETECTEE
+C+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+C AUTEUR : PERRONNET ALAIN  Veulettes sur mer               Fevrier 2020
+C23456...............................................................012
+      COMMON / TRTETR /STOPTE, TRACTE
+      LOGICAL          STOPTE, TRACTE, TRACTE0
+      REAL             XYZSOM(3,NBSOMM)
+      INTEGER          NOTRIA(6,MXTRIA), NOTRST(MXTRST),NOARSI(3,MXARSI)
+C     NOARSI: LISTE DES ARETES SIMPLES DES NBTRST TRIANGLES DE SOMMET NS
+      INTEGER          NOSOTR(3), NOSOTR2(3)
+
+      TRACTE0 = TRACTE
+      IERR    = 0
+C     LE NOMBRE DES ARETES SIMPLES DES TRIANGLES DU CF
+      NBARSI  = 0
+C     LE NOMBRE D'ECHANGES DES DIAGONALES ENTRE 2 TRIANGLES ADJACENTS
+      NB2DIA  = 0
+C     NOMBRE DE TRIABGLES DE LA NOUVELLE TRIANGULATION
+      NBTNEW = 0
+      NS1    = 0
+
+      IF( NBTRST .LE. 7 ) GOTO 9999
+
+ccc      if( nst .eq. 241 .or. nst .eq. 1313 ) then
+ccc         tracte = .true.
+ccc      endif
+
+ccc      print*
+ccc      PRINT*,'sutr1st: SOMMET',NSt,': ESSAI de RETRIANGULATION de ses'
+ccc     %      ,NBTRST,' TRIANGLES en le SUPPRIMANT'
+
+C     TRACE DE NBTRST TRIANGLES DE NOTRIA, LEURS VOISINS et
+C     LEURS VOISINS DE VOISINS POUR VOIR LEUR ENVIRONNEMENT
+      CALL TRTRIAN( 'sutr1st 0', XYZSOM, 6, MXTRST, NBTRST, NOTRST,
+     %               NOTRIA )
+
+C     CONSTRUCTION DES ARETES PERIPHERIQUES DES NBTRST TRIANGLES
+      QTRMIN0 = 2.
+      DO 20 K = 1, NBTRST
+
+         NTRST = NOTRST( K )
+
+C        QUALITE DU TRIANGLE NTRST
+         CALL QUATRI( NOTRIA(1,NTRST), XYZSOM, QTR )
+         QTRMIN0 = MIN( QTRMIN0, QTR )
+
+C        TRAITEMENT DES 3 ARETES DU TRIANGLE NTRST DE NOTRIA
+         DO 10 N1 = 1, 3
+
+C           NO DES 2 SOMMETS DE L'ARETE N1 DE LA FACE NTRST
+            NS1 = NOTRIA( N1, NTRST )
+            IF( N1 .EQ. 3 ) THEN
+               N2 = 1
+            ELSE
+               N2 = N1+1
+            ENDIF
+            NS2 = NOTRIA( N2, NTRST )
+
+C           LE TRIANGLE OPPOSE A NTRST PAR SON ARETE N1
+            NTRAD = NOTRIA( 3+N1, NTRST )
+
+C           CETTE ARETE NS1-NS2 EST ELLE DEJA UNE ARETE DES TRIANGLES
+C           RECENSEES DANS LE TABLEAU NOARSI?
+            DO 5 KK = 1, NBTRST
+
+               IF( KK .EQ. K ) GOTO 5
+               NTRST2 = NOTRST( KK )
+
+               DO NN1=1,3
+
+C                 NO DES 2 SOMMETS DE L'ARETE NN1 DE LA FACE NTRST2
+                  NSA1 = NOTRIA( NN1, NTRST2 )
+                  IF( NN1 .EQ. 3 ) THEN
+                     NN2 = 1
+                  ELSE
+                     NN2 = NN1+1
+                  ENDIF
+                  NSA2 = NOTRIA( NN2, NTRST2 )
+
+                  IF( NSA1 .EQ. NS2 .AND. NSA2 .EQ. NS1 .OR.
+     %                NSA1 .EQ. NS1 .AND. NSA2 .EQ. NS2 ) THEN
+
+C                    L'ARETE NS1-NS2 EST UNE ARETE DOUBLE DES
+C                    TRIANGLES NOTRST
+C                    ----------------------------------------
+C                    PASSAGE A L'ARETE SUIVANTE DU TRIANGLE K
+                     GOTO 10
+
+                  ENDIF
+
+               ENDDO
+
+ 5          ENDDO
+
+C           L'ARETE NS1-NS2 EST UNE ARETE SIMPLE DES TRIANGLES DU CF
+C           --------------------------------------------------------
+C           STOCKAGE DANS NOARSI
+            NBARSI = NBARSI + 1
+
+C           LE TRIANGLE OPPOSE AU CF
+            NOARSI( 1, NBARSI ) = NTRAD
+C           LE SOMMET 1 DE L'ARETE
+            NOARSI( 2, NBARSI ) = NS1
+C           LE SOMMET 2 DE L'ARETE
+            NOARSI( 3, NBARSI ) = NS2
+
+ 10      ENDDO
+
+ 20   ENDDO
+
+
+C     LES ARETES SONT REORDONNEES CONSECUTIVEMENT
+C     ===========================================
+      DO 40 NA = 2, NBARSI
+
+C        LE NO DE SOMMET A RETROUVER
+         NS1 = NOARSI( 3, NA-1 )
+
+         DO 30 NAS = NA, NBARSI
+
+C           LE NO DES 2 SOMMETS DE L'ARETE NAS
+            NS2 = NOARSI( 2, NAS )
+            NS3 = NOARSI( 3, NAS )
+
+            IF( NS3 .EQ. NS1 ) THEN
+C              PERMUTATION DES 2 SOMMETS DE L'ARETE NAS
+               NOARSI( 2, NAS ) = NS3
+               NOARSI( 3, NAS ) = NS2
+               NS2 = NOARSI( 2, NAS )
+               NS3 = NOARSI( 3, NAS )
+C              MAINTENANT NS2=NS1 DEBUTE L'ARETE NAS
+            ENDIF
+
+            IF( NS2 .NE. NS1 ) GOTO 30
+
+C           PERMUTATION DES ARETES NA et NAS
+C           --------------------------------
+C           LE TRIANGLE ADJACENT A L'ARETE NAS
+            NTOPS = NOARSI(1,NAS)
+
+C           LE TRIANGLE ADJACENT A L'ARETE NA
+            NTOP = NOARSI(1,NA)
+C           LE NO DES 2 SOMMETS DE L'ARETE NA
+            NS4 = NOARSI(2,NA)
+            NS5 = NOARSI(3,NA)
+
+            NOARSI( 1, NA )  = NTOPS
+            NOARSI( 2, NA )  = NS1
+            NOARSI( 3, NA )  = NS3
+
+            NOARSI( 1, NAS )  = NTOP
+            NOARSI( 2, NAS )  = NS4
+            NOARSI( 3, NAS )  = NS5
+            GOTO 40
+
+ 30      ENDDO
+
+ 40   ENDDO
+
+C     AFFICHAGE DES ARETES SIMPLES DES NBTRST TRIANGLES NOTRST
+      if( nst .eq. 241 .or. nst .eq. 1313 ) then
+      print*
+      DO N = 1, NBTRST
+         NTRST = NOTRST( N )
+         PRINT*,'sutr1st: Triangle',NTRST,':',(notria(k,ntrst),k=1,6)
+      enddo
+      PRINT*,'sutr1st:',NBARSI,' ARETES SIMPLES des',NBTRST,
+     %       ' TRIANGLES de SOMMET',NSt,' de QUALITE MIN=',QTRMIN0,
+     %       ' PARMI les',NBTRIA,' TRIANGLES'
+      DO NA = 1, NBARSI
+         PRINT*,' ARETE',NA,' NoSt:', NOARSI(2,NA), NOARSI(3,NA),
+     %          ' NTr Adjacent=',NOARSI(1,NA),':',
+     %          (notria(k,NOARSI(1,NA)),k=1,6)
+      ENDDO
+      endif
+
+
+C     ON DOUBLE LE TABLEAU NOARSI POUR SIMULER LA CONSTRUCTION
+C     DES TRIANGLES DE SOMMET NS1 POUR LES DIFFERENTS NS1 POSSIBLES
+      DO N0 = 1, NBARSI
+         DO I=1,3
+            NOARSI( I, NBARSI+N0 ) = NOARSI( I, N0 )
+         ENDDO
+      ENDDO
+
+C     RECHERCHE DE LA TRIANGULATION DE MEILLEURE QUALITE DE LA SURFACE
+C     LIMITEE PAR LES ARETES SIMPLES DES NBTRST TRIANGLES NOTRST SANS
+C     LE SOMMET NSt
+C     ----------------------------------------------------------------
+      QTRMIMX  = -2.
+      N0QMAX   = 0
+      DO 50 N0 = 1, NBARSI
+
+C        LE SOMMET NS1 A LIER AVEC LES ARETES POUR FORMER LES
+C        NBARSI-2 TRIANGLES
+         NS1 = NOARSI( 2, N0 )
+         QTRMIN1  = 2.
+         COS2PMIN = 2.
+
+         DO NA = N0+1, N0+NBARSI-2
+
+C           LES 2 TRIANGLES ADJACENTS A L'ARETE NA ONT ILS
+C           UN ANGLE DE LEURS NORMALES TROP GRAND?
+            NS3 = NOARSI( 2, NA )
+            NS2 = NOARSI( 3, NA )
+            NS4 = NOARSI( 3, NA+1 )
+            IF( NS4 .EQ. NS1 ) GOTO 45
+
+C           LE COSINUS DE L'ANGLE DES NORMALES AUX TRIANGLES 123 et 214
+C           EST IL SUFFISAMMENT GRAND?
+            CALL COS2TR( XYZSOM(1,NS1), XYZSOM(1,NS2), XYZSOM(1,NS3),
+     %                   XYZSOM(1,NS2), XYZSOM(1,NS1), XYZSOM(1,NS4),
+     %                   COS2PL, IERR1, IERR2 )
+            COS2PMIN = MIN( COS2PMIN, COS2PL )
+
+            IF( IERR1 .NE. 0 .OR. IERR2 .NE. 0 ) GOTO 50
+C           SI UN TRIANGLE EST SANS NORMALE ALORS SOMMET N0 REJETTE
+
+            IF( COS2PL .LT. COSMAXPL ) THEN
+C              ANGLE DES NORMALES AUX 2 TRIANGLES TROP GRAND
+               GOTO 50
+            ENDIF
+
+C           NS1 EST JOINT A L'ARETE NA POUR FORMER UN TRIANGLE
+ 45         NOSOTR( 1 ) = NS1
+            NOSOTR( 2 ) = NS3
+            NOSOTR( 3 ) = NS2
+
+C           QUALITE DU TRIANGLE NOSOTR
+            CALL QUATRI( NOSOTR, XYZSOM, QTR )
+            QTRMIN1 = MIN( QTRMIN1, QTR )
+
+C           IDENTIFICATION DE NOSOTR et DU TRIANGLE ADJACENT A L'ARETE NA?
+            NTRADJ = NOARSI( 1, NA )
+            NOSOTR2( 1 ) = NOTRIA( 1, NTRADJ )
+            NOSOTR2( 2 ) = NOTRIA( 2, NTRADJ )
+            NOSOTR2( 3 ) = NOTRIA( 3, NTRADJ )
+C           TRI CROISSANT DES 3 NUMEROS
+            CALL TRI3NO( NOSOTR,  NOSOTR  )
+            CALL TRI3NO( NOSOTR2, NOSOTR2 )
+            IF( NOSOTR(1) .EQ. NOSOTR2(1) .AND.
+     %          NOSOTR(2) .EQ. NOSOTR2(2) .AND.
+     %          NOSOTR(3) .EQ. NOSOTR2(3) ) THEN
+C               LES 2 TRIANGLES SONT IDENTIQUES
+C               ABANDON DU SOMMET NS1 POUR SOMMET DE DEPART
+               GOTO 50
+            ENDIF
+
+         ENDDO
+
+C        BILAN POUR LES TRIANGLES DE SOMMET N0
+         IF( QTRMIN1 .GT. QTRMIMX ) THEN
+            N0QMAX  = N0
+            QTRMIMX = QTRMIN1
+            COSMIMX = COS2PMIN
+         ENDIF
+
+ 50   ENDDO
+
+      IF( N0QMAX .EQ. 0 .OR. QTRMIMX .LT. QTRMIN0 ) THEN
+      PRINT*,'sutr1st: RETRIANGULATION REFUSEE de la SUPPRESSION de NSt=
+     %',NSt,' car QUALITE MIN INITIALE=',QTRMIN0,
+     %' > QUALITE MinMax=',QTRMIMX,' COS2PL MinMax=',COS2PMIN
+         NBTNEW = 0
+         NS1    = 0
+         GOTO 9999
+      ENDIF
+
+C     LE SOMMET NS1 DE QUALITE MIN MAXIMISEE A LIER AVEC LES ARETES
+C     POUR FORMER LES NBARSI-2 TRIANGLES
+C     =============================================================
+      NS1 = NOARSI( 2, N0QMAX )
+
+      PRINT*,'sutr1st: QUALITE0=',QTRMIN0,' -> QUALITE MinMax=',QTRMIMX,
+     %       ' COS2PL MinMax=',COS2PMIN,' des',NBARSI-2,
+     %       ' NOUVEAUX TRIANGLES avec NS1=',NS1
+
+C     CONSTRUCTION DES NBARSI-2 TRIANGLES DE SOMMET NS1 QUALITE MIN MAX
+C     -----------------------------------------------------------------
+      NTRNEW = 0
+      DO NA = 2, NBARSI-1
+
+C        NUMERO DE L'ARETE A JOINDRE AU SOMMET NS1
+         NAT = N0QMAX -1 + NA
+
+C        CONSTRUCTION DU TRIANGLE NS1-ARETE NA+1
+         NBTNEW = NBTNEW + 1
+C        LE NO NOTRIA DU TRIANGLE A ECRASER PAR LES NOUVEAUX SOMMETS
+         NTRNEW = NOTRST( NA-1 )
+
+         NOTRIA( 1, NTRNEW ) = NS1
+         NS2 = NOARSI( 2, NAT )
+         NS3 = NOARSI( 3, NAT )
+         NOTRIA( 2, NTRNEW ) = NS2
+         NOTRIA( 3, NTRNEW ) = NS3
+
+C        LES TRIANGLES ADJACENTS DU TRIANGLE NTRNEW
+C        PAR SON ARETE 1
+         IF( NA .EQ. 2 ) THEN
+            NT0 = NOARSI( 1, N0QMAX )
+         ELSE
+            NT0 = NOTRST( NA - 2 )
+         ENDIF
+C        LE TRIANGLE QUI PRECEDE
+         NOTRIA( 4, NTRNEW ) = NT0
+
+C        PAR SON ARETE 2
+         NTRADJ = NOARSI( 1, NAT )
+         NOTRIA( 5, NTRNEW ) = NTRADJ
+C        NATA NO DE L'ARETE 2 DE NTRNEW DANS LE TRIANGLE NTRADJ
+         IF( NTRADJ .GT. 0 .AND. NOTRIA(1,NTRADJ) .GT. 0 ) THEN
+            CALL NUAR2STR( NS2, NS3, NOTRIA(1,NTRADJ), NATA )
+            NOTRIA( 3+NATA, NTRADJ ) = NTRNEW
+         ENDIF
+
+C        PAR SON ARETE 3
+C        LE TRIANGLE QUI SUIT
+         NOTRIA( 6, NTRNEW ) = NOTRST( NA )
+
+      ENDDO
+
+C     CORRECTION DES TRIANGLES ADJACENTS DU PREMIER TRIANGLE
+      NTRADJ = NOARSI( 1, N0QMAX )
+C     NO DE L'ARETE 1 DE NOTRST(1) DANS LE TRIANGLE NTRADJ
+      IF( NTRADJ .GT. 0 .AND. NOTRIA(1,NTRADJ) .GT. 0 ) THEN
+         CALL NUAR2STR( NS1, NOARSI(3,N0QMAX), NOTRIA(1,NTRADJ), NATA )
+         NOTRIA( 3+NATA, NTRADJ ) = NOTRST( 1 )
+      ENDIF
+
+C     CORRECTION DES TRIANGLES ADJACENTS DU DERNIER TRIANGLE
+      NADER  = N0QMAX-1+NBARSI
+      NTRADJ = NOARSI( 1, NADER )
+      NOTRIA( 6, NTRNEW ) = NTRADJ
+C     NO DE L'ARETE 3 DE NTRNEW DANS LE TRIANGLE NTRADJ
+      IF( NTRADJ.GT.0 .AND. NOTRIA(1,NTRADJ).GT.0 ) THEN
+         CALL NUAR2STR( NOARSI(2,NADER), NOARSI(3,NADER),
+     %                  NOTRIA(1,NTRADJ), NATA )
+         NOTRIA( 3+NATA, NTRADJ ) = NTRNEW
+      ENDIF
+
+C     SUPPRESSION DES 2 DERNIERS TRIANGLES NON ECRASES DE NOTRST
+      DO N=NBTNEW+1,NBTRST
+         NTR = NOTRST( N )
+         DO K=1,6
+            NOTRIA( K, NTR ) = 0
+         ENDDO
+         NOTRST( N ) = 0
+      ENDDO
+
+C     TRACE DES TRIANGLES NOTRST(1:NBTNEW) DE NOTRIA, LEURS VOISINS et
+C     LEURS VOISINS DE VOISINS POUR VOIR LEUR ENVIRONNEMENT
+      CALL TRTRIAN( 'sutr1st 1', XYZSOM, 6, MXTRST, NBTNEW, NOTRST,
+     %               NOTRIA )
+
+C     TENTATIVE D'ECHANGE DES DIAGONALES DES ARETES D'ADJACENCE
+      DO ITER=1,4
+         NB2D = 0
+         DO NT=1,NBTNEW
+            NTR = NOTRST( NT )
+            DO K = 1, 3
+               CALL EC2DIA( COSMAXPL, NTR,K, NOTRIA, NBSOM,XYZSOM, NT0 )
+               IF( NT0 .GT. 0 ) THEN
+                  NB2D   = NB2D + 1
+                  NB2DIA = NB2DIA + 1
+               ENDIF
+            ENDDO
+         ENDDO
+         IF( NB2D .EQ. 0 ) GOTO 9900
+      ENDDO
+
+ 9900 PRINT*,'sutr1st: SUPPRESSION du SOMMET',NSt,
+     %       ': RETRIANGULATION REUSSIE avec',NB2DIA,
+     %       ' ECHANGES des DIAGONALES 2Tr<->2Tr. Sortie avec NS1=',NS1
+
+C     TRACE DES TRIANGLES NOTRST(1:NBTNEW) DE NOTRIA, LEURS VOISINS et
+C     LEURS VOISINS DE VOISINS POUR VOIR LEUR ENVIRONNEMENT
+      tracte = .true.
+      CALL TRTRIAN( 'sutr1st 2', XYZSOM, 6, MXTRST, NBTNEW, NOTRST,
+     %               NOTRIA )
+
+ 9999 TRACTE = TRACTE0
+      RETURN
+      END

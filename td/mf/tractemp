@@ -1,0 +1,9 @@
+variable TRACTEMP 'trace des TEMPERATURES' entier
+ (  1 :  'ISOTHERMES'
+ ,  2 :  'ZONES COULEURS ISOTHERMES'
+ ,  3 :  'ZONES par SECTIONS X ou Y ou Z=CTE'
+ ,  4 :  'PROFILS dans PLANS X ou Y ou Z=CTE'
+ ,  5 :  'LE LONG d''une DROITE def 2 POINTS'
+ ,  7 :  'En 2D SURFACE(X,Y,TEMPERATURE(X,Y))'
+ ,  8 :  'En 2D ERREUR si TEMPERATURE_EXACTE()'
+ ,  9 :  'AFFICHAGE des TEMPERATURES' ) ;

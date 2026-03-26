@@ -1,0 +1,11 @@
+The VERTICES are extracted of a PLSV i.e.
+Point, Line, Surface, Volume. 
+
+Give the TYPE ( P or L or S or V ), then its NAME.
+
+Example:  L;  CONTOUR; 
+          deffunc PLANXY(x,y,z); PLANXY = (z=0); endfunc;
+          PLANXY;
+extract the vertices of the LINE CONTOUR
+of which the 3 coordinates x,y,z gives true by PLANXY
+(here, all the vertices of the line CONTOUR on the PLANE z=0)

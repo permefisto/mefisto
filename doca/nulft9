@@ -1,0 +1,19 @@
+The number of CLOSED LINES of the BOUNDARY must be >=1.
+The first line must be this one which contains all others.
+
+Example:                 L1            (said ENVELOPE)
+          ------------------------------------------------------
+         |                                                      |
+         |                                 /\                   | 
+         |    ---------                   /  \ L3               | 
+         |   |         |                 /    \                 |   
+         |   |         |L2               \    /                 |
+         |   |         |                  \  /                  | 
+         |    ---------                    \/                   | 
+         |                                                      |  
+          ------------------------------------------------------  
+
+Here, 3 LINES L1; L2; L3; to give with L1 ahead because
+L1 "contains" L2 and L3.
+
+The"HOLES" are given after the "ENVELOPE".

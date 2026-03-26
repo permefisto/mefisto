@@ -1,0 +1,80 @@
+
+13: B-spline ouverte non uniforme polynomiale (a ete supprimee)
+    Une B-spline non uniforme est une courbe parametree
+    polynomiale par morceaux (image de segments non tous egaux)
+    Il est ici possible de definir
+    le degre des polynomes
+    le nombre et le nom des points de controle
+    le nombre d'aretes decoupant cette courbe 
+    les tailles des aretes peuvent former une progression
+    geometrique 
+    la valeur des parametres definie un segment de R dont 
+    l'image est la courbe B-spline.
+    Une repetition d'un parametre supprime une classe
+    de continuite en ce parametre.
+    ATTENTION: Le nombre de points de controle doit
+               etre strictement superieur au degre des
+               polynomes 
+               Les POINTS de CONTROLE, excepte le premier et
+               dernier ne sont pas sur la courbe.
+    Exemple: LIGNE13; I; 13;
+             28; 1; 3; 4; P1;P2;P3;P4;
+             {nombre de parametres=nombre points+degre+1} 8;
+             0;0;0;0;1;1;1;1;
+    definit une courbe formee de 28 aretes,
+    de tailles constantes, polynomiale par morceaux de
+    degre 3 et passant par P1 et P4 seulement,
+    tangente en P1 a P1-P2 et P3-P4 en P4.
+
+
+
+14: B-spline ouverte non uniforme rationnelle (a ete supprimee)
+    Une B-spline non uniforme rationnelle est une courbe
+    parametree sous la forme d'une fraction rationnelle
+    par morceaux (image de segments non tous egaux). 
+    Il est ici possible de definir
+    le degre des polynomes numerateur et denominateur
+    le nombre et le nom des points de controle
+    le nombre d'aretes decoupant cette courbe 
+    les tailles des aretes peuvent former une progression
+    geometrique 
+    la valeur des parametres qui definit un segment de R dont 
+    l'image est la courbe B-spline.
+    Une repetition d'un parametre supprime une classe
+    de continuite en ce parametre.
+    ATTENTION: Le nombre de points d'interpolation doit
+               etre strictement superieur au degre des
+               polynomes 
+               Les POINTS de CONTROLE, excepte le premier et
+               dernier ne sont pas sur la courbe. 
+    Les poids ponderent au numerateur les produits des points de
+    controle par les fonctions polynomiales B-splines et au
+    denominateur ces memes fonstions B-splines polynomiales.
+    Exemple : L14; i; 14;
+              50; 1; 2;
+              9;  P1;P2;P3;P4;P5;P6;P7;P8;P1; 
+   { sommets P2 P4 P6 P8 et milieux P1 P3 P5 P7 d'un carre }
+             12;
+   { NBNOBR 'nombre de noeuds (nombre de points + degre + 1)' }
+             0;0;0; 1/4;1/4; 1/2;1/2; 3/4;3/4; 1;1;1;
+   { NOETBR(1..NBNOBR) 'toutes les valeurs du parametre' }
+             defvar r2; r2=1/sqrt(2);
+             1;r2;1;r2;1;r2;1;r2;1;
+   { POIDBR(1..NBPCBL) 'poids en chaque point' reel ; }
+    definit un cercle forme de 50 aretes de tailles constantes, 
+    B-spline rationnelle par morceaux de numerateur
+    et denominateur des polynomes de degre 2 
+    passant par P1, P3, P5, P7 et
+    tangente en P1 a P1-P2 , en P3 a P3-P4 , en P5 a P5-P6
+    en P7 a P7-P8
+
+
+23: B-spline fermee  non uniforme polynomiale (a ete supprimee)
+
+
+24: B-spline fermee  non uniforme rationnelle (a ete supprimee)
+
+
+41: destructuration d'une ligne structuree 
+    C'est l'operation inverse de la precedente.
+    Exemple: L41_NON_STRUCTUREE; I; 41; LIGNE_STRUCTUREE; 

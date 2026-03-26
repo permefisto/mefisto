@@ -1,0 +1,8 @@
+2 POSSIBLE CASES:  
+
+ 1. The quadrangulation is the IMAGE of UNIT SQUARE
+    regularly meshed by rectangles.   
+    
+ 2. The quadrangulation is the IMAGE of UNIT SQUARE
+    unregularly meshed from the curvilinear coordinate
+    of each edge by the COOK, GORDON, HALL method.

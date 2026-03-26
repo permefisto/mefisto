@@ -1,0 +1,89 @@
+      SUBROUTINE INTARAR( X1, Y1, X2, Y2, X3, Y3, X4, Y4,
+     %                    LINTER, X, Y )
+C+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+C BUT :    EXISTENCE OU NON  D'UNE INTERSECTION A L'INTERIEUR
+C -----    DES 2 ARETES X1Y1-X2Y2 et X3Y3-X4Y4
+C          ATTENTION LES INTERSECTIONS AU SOMMET SONT COMPTEES
+C
+C ENTREES:
+C --------
+C Xi, Yi : ABSCISSE ET ORDONNEE DES 4 SOMMETS
+C
+C SORTIE :
+C --------
+C LINTER : -1 SI NS3-NS4 PARALLELE A NS1 NS2
+C           0 SI NS3-NS4 N'INTERSECTE PAS NS1-NS2 ENTRE LES ARETES
+C           1 SI NS3-NS4   INTERSECTE     NS1-NS2 ENTRE LES ARETES
+C           2 SI LE POINT D'INTERSECTION EST NS1  ENTRE NS3-NS4
+C           3 SI LE POINT D'INTERSECTION EST NS3  ENTRE NS1-NS2
+C           4 SI LE POINT D'INTERSECTION EST NS4  ENTRE NS1-NS2
+C X,Y    :  2 COORDONNEES DU POINT D'INTERSECTION S'IL EXISTE(LINTER>=1)
+C+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+C AUTEUR: ALAIN PERRONNET ANALYSE NUMERIQUE PARIS UPMC      FEVRIER 1992
+C AUTEUR: ALAIN PERRONNET LJLL UPMC PARIS  St PIERRE du PERRAY JUIN 2009
+C23456---------------------------------------------------------------012
+      DOUBLE PRECISION   EPSMOI, EPS, UNMEPS, UNPEPS
+      PARAMETER        ( EPSMOI=-0.000001D0, EPS=0.001D0,
+     %                   UNMEPS= 0.999D0, UNPEPS=1.000001D0 )
+      DOUBLE PRECISION  X1, Y1, X2, Y2, X3, Y3, X4, Y4
+      DOUBLE PRECISION  X21, Y21, D21, X43, Y43, D43, D, X, Y, P21, P43
+C
+      X21 = X2 - X1
+      Y21 = Y2 - Y1
+      D21 = X21**2 + Y21**2
+C
+      X43 = X4 - X3
+      Y43 = Y4 - Y3
+      D43 = X43**2 + Y43**2
+C
+C     LES 2 ARETES SONT-ELLES JUGEES PARALLELES ?
+      D = X43 * Y21 - Y43 * X21
+      IF( D*D .LE. 0.000001D0 * D21 * D43 ) THEN
+C        COTE I PARALLELE A S1-S2
+         LINTER = -1
+         RETURN
+      ENDIF
+C
+C     LES 2 COORDONNEES DU POINT D'INTERSECTION
+      X = ( X1*X43*Y21-X3*X21*Y43-(Y1-Y3)*X21*X43) / D
+      Y = (-Y1*Y43*X21+Y3*Y21*X43+(X1-X3)*Y21*Y43) / D
+C
+C     COORDONNEE BARYCENTRIQUE DE X,Y DANS LE REPERE S1-S2
+      P21 = ( ( X - X1 ) * X21 + ( Y - Y1 ) * Y21 ) / D21
+C     COORDONNEE BARYCENTRIQUE DE X,Y DANS LE REPERE S3-S4
+      P43 = ( ( X - X3 ) * X43 + ( Y - Y3 ) * Y43 ) / D43
+C
+C
+      IF( EPSMOI .LE. P21 .AND. P21 .LE. UNPEPS ) THEN
+C        X,Y EST ENTRE S1-S2
+         IF( (P21 .LE. EPS)  .AND.
+     %       (EPSMOI .LE. P43 .AND. P43 .LE. UNPEPS) ) THEN
+C           LE POINT X,Y EST PROCHE DE S1 ET INTERNE A S3-S4
+            LINTER = 2
+            X = X1
+            Y = Y1
+            RETURN
+         ELSE IF( EPSMOI .LE. P43 .AND. P43 .LE. EPS ) THEN
+C           LE POINT X,Y EST PROCHE DE S3 ET ENTRE S1-S2
+            LINTER = 3
+            X = X3
+            Y = Y3
+            RETURN
+         ELSE IF( UNMEPS .LE. P43 .AND. P43 .LE. UNPEPS ) THEN
+C           LE POINT X,Y EST PROCHE DE S4 ET ENTRE S1-S2
+            LINTER = 4
+            X = X4
+            Y = Y4
+            RETURN
+         ELSE IF( EPS .LE. P43 .AND. P43 .LE. UNMEPS ) THEN
+C           LE POINT X,Y EST ENTRE S3-S4
+            LINTER = 1
+            RETURN
+         ENDIF
+      ENDIF
+C
+C     PAS D'INTERSECTION A L'INTERIEUR DES ARETES
+      LINTER = 0
+C
+      RETURN
+      END

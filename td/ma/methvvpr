@@ -1,0 +1,3 @@
+variable METHVVPR 'Eigenvalue solver types' entier
+ ( 1 : 'SUB SPACES'
+ , 2 : 'INVERSE ITERATION' )  ;

@@ -1,0 +1,33 @@
+@;
+@;
+5; { OBJECTS parts of the object }
+ hexahedron; 0; { classic 2D ou 3D }
+  7; { number of Points Lines Surfaces Volumes Objects of the object }
+ v; hexahedron; { POINT or LINE or SURFACE or VOLUME or OBJECT? }
+ s; ABCD0;        { name of type PLSVO and name of PLSVO}
+ s; ABCD1;
+ s; ABAB;
+ s; BCBC;
+ s; CDCD;
+ s; DADA;
+
+ { NAME of the OBJECT or ESCAPE? }
+@;
+
+7; { INTERPOLATION definition of nodes of the mesh }
+   hexahedron; { NAME of the OBJECT to be INTERPOLATED? }
+   4; { LAGRANGE of DEGREE 2 }
+
+ { NAME of the OBJECT to be INTERPOLATED? }
+@;
+
+10;
+ { DRAWING of PLSVO meshes }
+ 5; { OBJECT }
+ 3; { ONE OBJECT }
+ { NAME of the OBJECT? }
+ hexahedron;
+ 90; { Continue the DRAWING }
+ 90; { Continue the DRAWING }
+
+CLOSE;

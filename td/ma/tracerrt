@@ -1,0 +1,6 @@
+variable TRACERRT 'ERROR ESTIMATOR of TEMPERATURES' entier
+( 1 : 'NUMBER of CM of the MAX ARROW'
+, 2 : '1 CM SCALE of NORMAL FLUX JUMP'
+, 5 : 'COLOR of MESH''s EDGES'
+, 6 : 'DRAWING TYPE of EDGES'
+, 7 : 'COLOR of ARROWS' );

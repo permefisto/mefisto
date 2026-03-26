@@ -1,0 +1,41 @@
+, 13 : 'B-spline ouverte non uniforme polynomiale C?'
+ 13: variable NBARLI 'nombre d''aretes de la ligne B-spline' entier ;
+     variable RAGEBL 'raison geometrique espacant les sommets' reel ;
+     variable NDEGBL 'degre des polynomes de la B-spline' entier ;
+     variable NBPCBL 'nombre de points de controle (>degre)' entier ;
+     tableau  NUPLBO(1..NBPCBL) 'nom des points de controle'   ^~>POINT ;
+     variable NBNOBO 'nombre de noeuds (nombre de points + degre + 1)' entier ;
+     tableau  NOETBO(1..NBNOBO) 'toutes les valeurs des noeuds' reel ;
+
+
+, 14 : 'B-spline ouverte non uniforme rationnelle C?'
+ 14: variable NBARLI 'nombre d''aretes de la ligne B-spline' entier ;
+     variable RAGEBL 'raison geometrique espacant les sommets' reel ;
+     variable NDEGBL 'degre des polynomes de la B-spline' entier ;
+     variable NBPCBL 'nombre de points de controle (>degre)' entier ;
+     tableau  NUPCBR(1..NBPCBL) 'nom des points de controle'   ^~>POINT ;
+     variable NBNOBR 'nombre de noeuds (nombre de points + degre + 1)' entier ;
+     tableau  NOETBR(1..NBNOBR) 'toutes les valeurs des noeuds' reel ;
+     tableau  POIDBR(1..NBPCBL) 'poids en chaque point' reel ;
+
+
+, 23 : 'B-spline fermee  non uniforme polynomiale C?'
+ 23: variable NBARLI 'nombre d''aretes de la ligne B-spline' entier ;
+     variable RAGEBL 'raison geometrique espacant les sommets' reel ;
+     variable NDEGBL 'degre des polynomes de la B-spline' entier ;
+     variable NBPCBL 'nombre de points de controle (>degre)' entier ;
+     tableau  NUPLBF(1..NBPCBL) 'nom des points de controle'   ^~>POINT ;
+     tableau  NOETBF(1..NBPCBL) 'toutes les valeurs des noeuds' reel ;
+
+
+, 24 : 'B-spline fermee  non uniforme rationnelle C?' 24: variable NBARLI 'nombre d''aretes de la ligne B-spline' entier ;
+     variable RAGEBL 'raison geometrique espacant les sommets' reel ;
+     variable NDEGBL 'degre des polynomes de la B-spline' entier ;
+     variable NBPCBL 'nombre de points de controle (>degre)' entier ;
+     tableau  NUPRBF(1..NBPCBL) 'nom des points de controle'   ^~>POINT ;
+     tableau  NOERBF(1..NBPCBL) 'toutes les valeurs des noeuds' reel ;
+     tableau  POIDBF(1..NBPCBL) 'poids en chaque point' reel ;
+
+
+, 41 : 'destructuration d''une ligne structuree'
+ 41 : variable NULIIN 'nom de la ligne initiale'  ^~>LIGNE ;  

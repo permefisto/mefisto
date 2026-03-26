@@ -1,0 +1,75 @@
+      SUBROUTINE BSPLS3( DEGRE , NBCOMP , NBINBS , PARAMB , SPLINE ,
+     %                   LUX , UX , LIGNE0 , NBPOIN , XYZ )
+C++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+C BUT :    PLACER APRES CALCUL LES 3 COORDONNEES DES LUX POINTS
+C -----    DE LA LIGNE B-SPLINE AUX VALEURS DU PARAMETRE UX DANS XYZ
+C          A PARTIR DE LA LIGNE LIGNE0+1
+C
+C ENTREES:
+C --------
+C DEGRE  : DEGRE DES POLYNOMES DE LA B-SPLINE
+C NBCOMP : NOMBRE DE COMPOSANTES
+C NBINBS : NOMBRE D'INTERVALLES DE LA B-SPLINE
+C PARAMB : PARAMETRES DE LA LIGNE B-SPLINE
+C SPLINE : COEFFICIENTS DES POLYNOMES DE LA B-SPLINE
+C LUX    : NOMBRE DE POINTS A CALCULER SUR LA LIGNE B-SPLINE
+C UX     : VALEURS DU PARAMETRE POUR LE CALCUL DES POINTS
+C LIGNE0 : LIGNE PRECEDANT LE PREMIER POINT A PLACER DANS XYZ
+C NBPOIN : LE NOMBRE TOTAL DE LIGNES DE XYZ
+C
+C SORTIES:
+C --------
+C XYZ    : LES 3 COORDONNEES DES NBPOIN POINTS
+C+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+C AUTEUR : ALAIN PERONNET ANALYSE NUMERIQUE UPMC PARIS       JUIN  1990
+C2345X7..............................................................012
+      include"./incl/gsmenu.inc"
+      INTEGER          DEGRE
+      REAL             PARAMB(0:NBINBS),
+     %                 SPLINE(0:DEGRE,1:NBINBS,1:NBCOMP),
+     %                 UX(1:LUX+1)
+      DOUBLE PRECISION XYZ(1:NBPOIN,1:3)
+      DOUBLE PRECISION D,R,A
+C
+      IF( PARAMB(NBINBS) .LT. UX(LUX) ) THEN
+         NBLGRC(NRERR) = 2
+         KERR(1) = 'INCOHERENCE ENTRE LE PARAMETRE D''UNE LIGNE'
+         KERR(2) = 'ET CELUI EN X DE LA SURFACE B-SPLINE'
+         CALL LEREUR
+         RETURN
+      ENDIF
+C
+      D  = 1D0
+      I1 = 1
+      DO 100 N=1,LUX
+C
+C        L'INTERVALLE  [PARAMB(I1-1),PARAMB(I1)[  CONTIENT UX(N)
+ 40      IF( UX(N) .GE. PARAMB(I1) ) THEN
+C           PASSAGE A L'INTERVALLE SUIVANT DE PARAMB
+            I1 = I1 + 1
+            IF( I1 .LE. NBINBS ) GOTO 40
+C           ATTENTION AU DERNIER NOEUD SANS INTERVALLE
+            I1 = NBINBS
+         ENDIF
+C
+C        UX(N) EST DANS L'INTERVALLE PARAMB(I1-1) PARAMB(I1)
+         R = UX(N) - PARAMB(I1-1)
+C
+         IF( NBCOMP .EQ. 4 ) THEN
+C           B-SPLINE RATIONNELLE : CALCUL DU DENOMINATEUR
+            D = SPLINE(DEGRE,I1,4)
+            DO 60 M=DEGRE-1,0,-1
+               D = D * R + SPLINE(M,I1,4)
+ 60         CONTINUE
+            D = 1.D0 / D
+         ENDIF
+C
+         DO 80 J=1,3
+            A = SPLINE(DEGRE,I1,J)
+            DO 70 M=DEGRE-1,0,-1
+               A = A * R + SPLINE(M,I1,J)
+ 70         CONTINUE
+            XYZ(LIGNE0+N,J) = A * D
+ 80      CONTINUE
+ 100  CONTINUE
+      END

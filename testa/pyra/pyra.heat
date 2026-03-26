@@ -1,0 +1,47 @@
+{ ==================================================================== }
+{ MEFISTO Software     : October 1-th 2007 Version                     }
+{ USER's Name          : Alain Perronnet                               }
+{ Project Name         : pyra                                          }
+{ Date                 :  2/10/ 7   11h 27m 03s                        }
+{ ==================================================================== }
+ 1;
+ { OBJECT NAME to treat }
+ { NAME of the OBJECT? }
+ { NAME of OBJECT }
+ pyra;
+
+ 2; { HEAT TRANSFER INPUT DATA }
+
+ { VOLUME: CYL }
+ 2;
+ { [A] HEAT CONDUCTIVITY }
+ 1;
+ { 3D HOMOGENOUS ISOTROPIC material }
+ 200;
+ { CONDUC 'constant material conductivity' reel ; }
+ @;
+
+ { SURFACE: GAUCHE }
+ 3;
+ { Theta_D CONTACT imposed temperature }
+ 1;
+ { constant imposed temperature }
+ 10;
+ { CONTAC 'imposed temperature value' reel ; }
+ @;
+
+ { SURFACE: DROITE }
+ 3;
+ { Theta_D CONTACT imposed temperature }
+ 1;
+ { constant imposed temperature }
+ 50;
+ { CONTAC 'imposed temperature value' reel ; }
+ @;
+
+3; { STEADY HEAT TRANSFER solver }
+ 1;{ Coefficients are INDEPENDENT of TEMPERATURE }
+ 1;{ CHOLESKY with SKYLINE STORAGE }
+
+
+CLOSE;

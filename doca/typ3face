@@ -1,0 +1,18 @@
+The 3 farest FACES of the MIN-MAX coordinate HEXAHEDRON
+will be drawn and completed with the options:
+
+0: NO DRAWING
+   Suppress this type of drawings
+
+1: Only 8 GLOBAL EDGES are drawn
+
+2: QUADRILATERAL GRIDS
+   The 3 faces are drawn with quadrilateral grids
+   without background color
+
+3: BACKGROUND of 3 FACES has the same color
+
+4: CHESS-BOARD with 2 COLORS on the 3 FACES
+   The 3 faces are drawn with quadrangles of alternated colors
+   The edge greatest length is cut into 10 + 2 margins
+   The 2 other dimensions are adjusted to an integer number

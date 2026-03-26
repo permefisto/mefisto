@@ -1,0 +1,4 @@
+Le numero du dernier sommet a extraire de la ligne.
+Ce nombre doit etre positif.
+Si sa valeur excede le nombre de sommets de la ligne
+sa valeur est ramenee a ce nombre maximal.

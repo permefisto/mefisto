@@ -1,0 +1,221 @@
+      SUBROUTINE AUGTRIANG( MULTIP,  NTLXSU,  NUSUIN,
+     %                      NTXYZ1,  MNXYZ1,  NTNSEF1, MNNSEF1,
+     %                      MOXYZS1, MONSEF1, IERR )
+C+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+C BUT :    CONSTRUIRE A PARTIR DE LA SURFACE NUSUIN UNE TRIANGULATION
+C -----    NON STRUCTUREE MULTIP FOIS PLUS GRANDE AVEC EVENTUELLE
+C          SUPPRESSION DES TANGENTES AUX ARETES SI PRESENCE INITIALE
+C
+C ENTREES:
+C --------
+C MULTIP : NOMBRE DE FOIS MULTILIER LES TABLEAUX XYZSOM ET NSEF
+C NTLXSU : NUMERO DU TABLEAU TS DU LEXIQUE DE LA SURFACE FINALE
+C NUSUIN : NUMERO DE LA SURFACE INITIALE DANS LE LEXIQUE DES SURFACES
+C
+C SORTIES:
+C --------
+C NTXYZ1 : NO TMS      DU TMS XYZSOMMET DU MAILLAGE DE LA SURFACE FINALE
+C MNXYZ1 : ADRESSE MCN DU TMS XYZSOMMET DU MAILLAGE DE LA SURFACE FINALE
+C NTNSEF1: NO TMS      DU TMS NSEF      DU MAILLAGE DE LA SURFACE FINALE
+C MNNSEF1: ADRESSE MCN DU TMS NSEF      DU MAILLAGE DE LA SURFACE FINALE
+C MOXYZS1: TAILLE      DU TMS XYZSOMMET DU MAILLAGE DE LA SURFACE FINALE
+C MONSEF1: TAILLE      DU TMS NSEF      DU MAILLAGE DE LA SURFACE FINALE
+C IERR   : 0 SI PAS ERREUR
+C+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+C AUTEURS: NICOLAS LEVI  DEA ANALYSE NUMERIQUE UPMC PARIS   JANVIER 2000
+C MODIFS : A. PERRONNET Laboratoire J-L. LIONS UPMC PARIS SEPTEMBRE 2007
+C2345X7..............................................................012
+      COMMON / UNITES / LECTEU, IMPRIM, INTERA, NUNITE(29)
+      include"./incl/langue.inc"
+      include"./incl/gsmenu.inc"
+      include"./incl/a_surface__definition.inc"
+      include"./incl/a___xyzsommet.inc"
+      include"./incl/a___nsef.inc"
+      include"./incl/ntmnlt.inc"
+      include"./incl/pp.inc"
+      COMMON             MCN(MOTMCN)
+      REAL              RMCN(1)
+      EQUIVALENCE      (RMCN(1),MCN(1))
+      CHARACTER*24      KNOM
+      INTEGER           NOSOEL(1:12)
+C
+      MNSOEL = 0
+      IERR   = 0
+C
+C     LE TABLEAU LEXIQUE DE CETTE SURFACE NUSUIN INITIALE
+      CALL LXNLOU( NTSURF, NUSUIN, NTLXSI, MNLXSI )
+      IF( NTLXSI .LE. 0 ) THEN
+         NBLGRC(NRERR) = 1
+         IF( LANGAG .EQ. 0 ) THEN
+            KERR(1) = 'SURFACE INITIALE INCONNUE'
+         ELSE
+            KERR(1) = 'UNKNOWN INITIAL SURFACE'
+         ENDIF
+         CALL LEREUR
+         IERR = 1
+         RETURN
+      ENDIF
+      CALL NMOBNU( 'SURFACE', NUSUIN, KNOM )
+C
+C     LE TABLEAU 'NSEF' DE CETTE SURFACE INITIALE
+      CALL LXTSOU( NTLXSI, 'NSEF', NTNSEF0, MNNSEF0 )
+      IF( NTNSEF0 .LE. 0 ) THEN
+         NBLGRC(NRERR) = 2
+         KERR(1) = 'SURFACE ' // KNOM
+         IF( LANGAG .EQ. 0 ) THEN
+            KERR(2) = 'SURFACE SANS NSEF'
+         ELSE
+            KERR(2) = 'SURFACE WITHOUT NSEF'
+         ENDIF
+         CALL LEREUR
+         IERR = 2
+         RETURN
+      ENDIF
+C
+C     LE TABLEAU 'XYZSOMMET' DE CETTE SURFACE
+      CALL LXTSOU( NTLXSI, 'XYZSOMMET', NTXYZ0, MNXYZ0 )
+      IF( NTXYZ0 .LE. 0 ) THEN
+         NBLGRC(NRERR) = 2
+         KERR(1) = 'SURFACE ' // KNOM
+         IF( LANGAG .EQ. 0 ) THEN
+            KERR(2) = 'SURFACE SANS SOMMETS'
+         ELSE
+            KERR(2) = 'SURFACE WITHOUT VERTICES'
+         ENDIF
+         CALL LEREUR
+         IERR = 3
+         RETURN
+      ENDIF
+C
+C     CREATION AGRANDIE ET COPIE DE 'XYZSOMMET'
+C     =========================================
+      CALL LXTSOU( NTLXSU, 'XYZSOMMET', NTXYZ1, MNXYZ1)
+      IF( NTXYZ1 .NE. 0 ) THEN
+         CALL LXTSDS( NTLXSU, 'XYZSOMMET' )
+      ENDIF
+      NBSOM   = MCN( MNXYZ0 + WNBSOM)
+      NBCOOR  = MCN( MNXYZ0 + WBCOOR)
+      MOXYZS1 = WYZSOM + MULTIP * ( NBCOOR*NBSOM + 256 )
+      CALL LXTNDC( NTLXSU, 'XYZSOMMET', 'MOTS', MOXYZS1 )
+      CALL LXTSOU( NTLXSU, 'XYZSOMMET', NTXYZ1, MNXYZ1)
+C     COPIE DU TMS XYZSOMMET INITIAL DANS LE FINAL
+      CALL TRTATA( MCN(MNXYZ0), MCN(MNXYZ1), WYZSOM+NBCOOR*NBSOM )
+      MCN(MNXYZ1+WBCOOR) = NBCOOR
+      MCN(MNXYZ1+WNBSOM) = NBSOM
+      CALL ECDATE( MCN(MNXYZ1) )
+      MCN(MNXYZ1+MOTVAR(6))=NONMTD('~>>>XYZSOMMET')
+C
+C     CREATION AGRANDIE DU TMS 'NSEF'
+C     ===============================
+C     LE NOMBRE D'EF ACTUELS
+      NBEF = MCN(MNNSEF0+WBEFOB)
+      IF( NBEF .LE. 0 ) THEN
+         NBLGRC(NRERR) = 1
+         IF( LANGAG .EQ. 0 ) THEN
+            KERR(1) = 'MAILLAGE SANS EF'
+         ELSE
+            KERR(1) = 'MESH WITHOUT FINITE ELEMENT'
+         ENDIF
+         CALL LEREUR
+         IERR = 4
+         RETURN
+      ENDIF
+C
+C     LES PROPRIETES DU MAILLAGE INITIAL
+      CALL NSEFPA( MCN(MNNSEF0),
+     %             NUTYMA, NBSOEL, NBSOEF, NBTGEF,
+     %             LDAPEF, LDNGEF, LDTGEF, NBEFOB,
+     %             NX    , NY    , NZ    ,
+     %             IERR   )
+      IF( IERR .NE. 0 ) THEN
+         NBLGRC(NRERR) = 1
+         IF( LANGAG .EQ. 0 ) THEN
+            KERR(1) = 'MAILLAGE INCORRECT'
+         ELSE
+            KERR(1) = 'INCORRECT MESH'
+         ENDIF
+         CALL LEREUR
+         IERR = 5
+         RETURN
+      ENDIF
+C
+      CALL LXTSOU( NTLXSU, 'NSEF', NTNSEF1, MNNSEF1)
+      IF( NTNSEF1 .NE. 0 ) THEN
+         CALL LXTSDS( NTLXSU, 'NSEF' )
+      ENDIF
+      MONSEF1 = WUSOEF + MULTIP * 4*NBEF + 4*512
+      CALL LXTNDC( NTLXSU, 'NSEF', 'MOTS',  MONSEF1  )
+      CALL LXTSOU( NTLXSU, 'NSEF', NTNSEF1, MNNSEF1 )
+      IF( NTNSEF1 .LE. 0 ) THEN
+         NBLGRC(NRERR) = 1
+         IF( LANGAG .EQ. 0 ) THEN
+            KERR(1) = 'PAS ASSEZ DE MEMOIRE CENTRALE NBEF TROP GRAND'
+         ELSE
+            KERR(1) = 'NOT ENOUGH MCN MEMORY NBEF TOO GREAT'
+         ENDIF
+         CALL LEREUR
+         IERR = 6
+         RETURN
+      ENDIF
+      MNSOEL = MNNSEF1 + WUSOEF
+C
+C     BOUCLE SUR LES EF DE LA SURFACE INITIALE
+C     ========================================
+      NBEF1 = 0
+      MN = MNNSEF1 + WUSOEF
+      DO 10 I=1,NBEF
+C
+C        PARAMETRES DE L'EF
+         CALL NSEFNS( I, NUTYMA, NBSOEF, NBTGEF,
+     %                LDAPEF, LDNGEF, LDTGEF, MNNSEF0,
+     %                NX, NY, NZ, NCOGEL, NUGEEF, NUEFTG, NOSOEL, IERR )
+C
+C        TRANSFERT DANS MNSOEL
+         NBEF1 = NBEF1 + 1
+         MCN(MN  ) = NOSOEL(1)
+         MCN(MN+1) = NOSOEL(2)
+         MCN(MN+2) = NOSOEL(3)
+         MCN(MN+3) = 0
+C
+C        L'EF EST IL UN QUADRANGLE?
+         IF( NOSOEL(4) .GT. 0 ) THEN
+C           LE QUADRANGLE DONNE 2 TRIANGLES
+            NBEF1 = NBEF1 + 1
+            MN = MN + 4
+            MCN(MN  ) = NOSOEL(1)
+            MCN(MN+1) = NOSOEL(3)
+            MCN(MN+2) = NOSOEL(4)
+            MCN(MN+3) = 0
+         ENDIF
+         MN = MN + 4
+C
+10    CONTINUE
+C
+C     TYPE DE PLSVO ici SURFACE
+      MCN(MNNSEF1+WUTYOB)=3
+C
+C     LE TYPE NON FERME DE FERMETURE DU MAILLAGE
+      MCN(MNNSEF1+WUTFMA)=0
+C
+C     NOMBRE DE SOMMETS PAR EF
+      MCN(MNNSEF1+WBSOEF)=4
+C
+C     NOMBRE DE TANGENTES STOCKEES PAR EF
+      MCN(MNNSEF1+WBTGEF)=0
+C
+C     NOMBRE D'EF
+      MCN(MNNSEF1+WBEFOB)=NBEF1
+C
+C     PAS DE TG D'EF
+      MCN(MNNSEF1+WBEFTG)=0
+      MCN(MNNSEF1+WBEFAP)=0
+C
+C     TYPE DU MAILLAGE, NON STRUCTURE
+      MCN(MNNSEF1+WUTYMA)=0
+C
+C     DATE ET NO DE TMS
+      CALL ECDATE( MCN(MNNSEF1) )
+      MCN(MNNSEF1+MOTVAR(6))=NONMTD( '~>>>NSEF' )
+C
+      RETURN
+      END

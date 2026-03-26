@@ -1,0 +1,8 @@
+variable TRACISOV 'Trace des ISOVALEURS' entier
+( 1 : 'Numero du CAS a tracer'
+, 2 : 'Nombre d''ISOVALEURS'
+, 5 : 'COULEUR des ARETES du MAILLAGE'
+, 6 : 'TYPE TRAIT des ARETES MAILLAGE'
+, 7 : 'COULEUR des ARETES ISOVALEURS'
+, 8 : 'TYPE TRAIT ARETES ISOVALEURS'
+,90 : 'EXECUTION' ) ;

@@ -1,0 +1,86 @@
+Ce MENU definit les PARAMETRES du TRACE 2D ou encore
+le RECTANGLE extreme visible dans la fenetre ecran.
+ 
+19: % REDUCTION des FACES
+    pour mieux voir la position des edges ou voir derriere
+
+22: AGRANDIR 2 clics SOURIS Min MAX 
+    Avec la souris, definir dans la fenetre 2 points min max.
+    Ces points deviennent ensuite les coins extremes de la fenetre
+    suivante. 
+    Seuls les PLSVO contenus dans cette nouvelle fenetre seront
+    visibles sur l'ecran.
+
+23: REDUIRE  par 2 clics SOURIS
+    Avec la souris, definir dans la fenetre les 2 points min max
+    tels que la totalit'e de l'actuelle fenetre
+    occupera dans la future fenetre.
+
+24: TRANSLATER par 2 clics SOURIS
+    Avec la souris, definir un premier point P1.
+    Avec la souris, definir un second  point P2.
+    Le trac'e sera fait avec la translation definie par le vecteur P1P2.
+
+25: FENETRE 2D [Xmin MAX] [Ymin MAX]
+    Definit la fenetre en coordonnees OBJET 2D pour les
+    traces ulterieurs.
+
+26: RE-DEFINITION des XYZ EXTREMES
+    DEMANDE et IMPOSE les COORDONNEES EXTREMES XYZ de tous
+    les POINTS ou SOMMETS, et DEFINIT ainsi le nouveau
+    CADRE OBJET par defaut.
+    Pour revenir en 2D, il suffit de fournir Zmin=ZMAX=0 
+    Seuls les PLSVO contenus dans cet HEXAEDRE min max seront 
+    traces sur l'ecran. 
+
+27: SCENE TOTALE des XYZ EXTREMES
+    Impose un CADRE OBJET defini par les COORDONNEES
+    EXTREMES calculees ou definies par 16.  
+    En general, l'objet est ainsi trace entierement.
+
+34: LOUPE ou GROSSISSEMENT du trac'e
+    Demande le GROSSISSEMENT du trace actuel 
+    Si la valeur = 2, la largeur et hauteur de la SCENE reduisent de moitie
+    >1 => impression de grossissement de l'objet (loupe)
+    <1 => impression de reduction de l'objet en voyant mieux l'ensemble
+
+36: CHANGER la PALETTE des COULEURS
+    Le numero de 1 a 16 definit la palette des couleurs
+    1:Les COULEURS varient rapidement et s'assombrissent
+      L'intensite decroit.
+    2:Les COULEURS varient rapidement et s'assombrissent.
+    3:Palette ARC EN CIEL
+    4:Palette du CYAN    au BLEU  puis au BLEU  NOIR.
+    5:Palette du JAUNE   au ROUGE puis au ROUGE NOIR.
+    6:Palette du JAUNE   au VERT  puis au VERT  NOIR.
+    7:Palette du MAGENTA au ROUGE puis au ROUGE NOIR.
+    8:Palette du MAGENTA au BLEU  puis au BLEU  NOIR. 
+    9:Palette du CYAN    au VERT  puis au VERT  NOIR.
+   10:Palette de 256 GRIS.         
+   11:Palette ARC EN CIEL CLAIRE SANS VERT pour les ZONES ISOVALEURS.
+   12:Palette du BLEU au ROUGE PAR le VERT JAUNE ORANGE
+      pour la QUALITE des EF. 
+   13:Palette du ROUGE au VERT en passant par le JAUNE avec
+      passage ressere autour du JAUNE et du NOIR est ajoute aux couleurs
+   14:Palette ARC EN CIEL    CONTINUE pour les ZONES ISOVALEURS
+   15:Palette ARC EN CIEL DISCONTINUE pour les ZONES ISOVALEURS
+   16:Palette BLEU BLANC ROUGE CONTINUE pour les ZONES ISOVALEURS.
+ 
+49: AXES du REPERE de l'objet
+    Differentes possibilites de representer les axes du repere
+
+50: EFFACER le trace actuel
+
+60: ENCADRER une figure deja tracee pour ameliorer la presentation
+
+75: Activer la TRANSLATION ZOOM alors
+un mouvement de la souris donne avec le
+bouton 1 de la souris une translation du PLSVO
+Attention: bouton 2 de la souris fait abandonner
+bouton 3 de la souris un zoom du PLSVO
+Pour ABANDONNER, frapper la touche ECHAPPEMENT.
+
+76: Arreter la TRANSLATION ZOOM commandee par la souris
+Revient au mode sans mouvement du PLSVO avec la souris
+
+90: EXECUTER le TRACE

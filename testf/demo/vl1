@@ -1,0 +1,17 @@
+{ ==================================================================== }
+{ Logiciel MEFISTO     : Version Decembre 1999                         }
+{ Nom de l'Utilisateur : perronnet                                     }
+{ Nom du Projet        : demo                                          }
+{ Date                 : 03/06/00                                      }
+{ ==================================================================== }
+@;
+@;
+@;
+
+4;  { volumes materiaux de l objet }
+ cardan4_v8; i;  8; 1;      cardan4;
+ cardan4_v9; i;  9; 50000;  arete;  4.0;  0;  1;  cardan4_v8; {tetraedrisation 1/4 piece}
+ cardan4;    i; 30; cardan4_v9;  0.4; 3.0; 10;
+@;
+
+fermer;

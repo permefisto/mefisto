@@ -1,0 +1,16 @@
+The NODES define the interval of definition of the
+B-SPLINE parameter and determine the segments on which
+each component (2 in 2d, 3 in 3d) of the B-SPLINE line
+is a polynomial or rational function.
+
+The number of nodes of the OPENED B-SPLINE is equal to
+the number of points + degree of polynomials + 1.
+
+The node may be repeated but a node repeated 3 times
+will be count 3 for this number.
+
+Example: 10; { 10 nodes }
+         0;0;0; 1;1; 2.2; 3; 5;5;5; {values of 10 nodes}
+
+The length of segments (between 2 distinct nodes) induces
+to the form of the B-SPLINE CURVE.

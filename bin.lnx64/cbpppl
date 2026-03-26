@@ -1,0 +1,69 @@
+#!/bin/bash
+#  compilation et edition de liens de pppl.f
+#  Alain Perronnet    Juin 1997
+# 
+echo     
+echo ===================================================================
+echo MEFISTO-HP: Compilation Edition de liens de $mefisto/prpr/pppl.f
+echo ===================================================================
+cd $mefisto
+
+#Creation du repertoire pp s'il n'existe pas
+if test ! -d pp
+then
+   mkdir pp
+fi
+#  
+# compilation conditionnelle de xvuelc.c 
+if test -f xvue/xvuelc.o
+then
+   echo "xvue/xvuelc.o NON recompile"
+else 
+   bin/ccxvue
+fi
+
+nompp=pp/pppl
+if test -f $nompp
+then
+  rm $nompp
+fi
+#
+echo "Un peu de patience: Compilation pppl et Edition de liens en cours ..."
+
+### SUR SGI 
+### f77 -O3 -Nn16382 prpr/pppl.f mail/lib util/lib xvue/lib xvue/xvuelc.o \
+###     -lXm -lXt -lX11 -lXext \
+###     -o $nompp
+
+### SUR IBM 
+### f77 -O3 -qmaxmem=-1 prpr/pppl.f mail/lib util/lib xvue/lib xvue/xvuelc.o \
+###     -lXm -lXt -lX11 -lXext \
+###     -o $nompp
+
+### SUR HP OPTIMISE : 
+### f77 +ppu +O prpr/pppl.f mail/lib util/lib xvue/lib xvue/xvuelc.o \
+###            /usr/lib/Motif1.2/libXm.sl /usr/lib/X11R5/libXhp11.sl /usr/lib/X11R5/libXt.sl \
+###            /usr/lib/X11R5/libXext.a /usr/lib/X11R5/libX11.sl \
+###            /usr/lib/X11R5/libX11.a \
+###           -o $nompp
+
+# SUR HP avec debogueur :
+f77 +ppu -g prpr/pppl.f util/lib xvue/lib xvue/xvuelc.o \
+            /usr/lib/Motif1.2/libXm.sl /usr/lib/X11R5/libXhp11.sl /usr/lib/X11R5/libXt.sl \
+            /usr/lib/X11R5/libXext.a /usr/lib/X11R5/libX11.sl \
+            /usr/lib/X11R5/libX11.a \
+           -o $nompp
+
+rm pppl.o
+
+if test -f $nompp
+then 
+   chmod 755 $nompp
+   echo "Le repertoire $mefisto/pp"
+   ls -l $mefisto/pp
+   echo "$mefisto/$nompp est PRET a l'emploi" 
+#  appel du debogueur 
+   /opt/langtools/bin/dde -do "property sdir $mefisto" $mefisto/$nompp
+else
+   echo "$nompp est INCORRECT"
+fi

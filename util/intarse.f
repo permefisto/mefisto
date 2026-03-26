@@ -1,0 +1,59 @@
+      SUBROUTINE INTARSE( X1, Y1, X2, Y2, X3, Y3, X4, Y4,
+     %                    LINTER, X, Y )
+C+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+C BUT :    EXISTENCE OU NON  D'UNE INTERSECTION A L'INTERIEUR
+C -----    DE L'ARETE X1Y1-X2Y2 du SEGMENT X3Y3-X4Y4
+C          ATTENTION LES INTERSECTIONS AU SOMMET SONT COMPTEES
+C
+C ENTREES:
+C --------
+C Xi, Yi : ABSCISSE ET ORDONNEE DES 4 SOMMETS
+C
+C SORTIE :
+C --------
+C LINTER : -1 SI S3-S4 PARALLELE A S1-S2
+C           0 SI S3-S4 N'INTERSECTE PAS S1-S2 ENTRE CES 2 SOMMETS
+C           1 SI S3-S4   INTERSECTE     S1-S2 ENTRE CES 2 SOMMETS
+C X,Y    :  2 COORDONNEES DU POINT D'INTERSECTION DU SEGMENT X3Y3-X4Y4
+C           SUR L'ARETE X1Y1-X2Y2
+C+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+C AUTEUR: ALAIN PERRONNET LJLL UPMC PARIS  St PIERRE du PERRAY JUIN 2009
+C23456---------------------------------------------------------------012
+      DOUBLE PRECISION   EPSMOI, UNPEPS
+      PARAMETER        ( EPSMOI=-0.000001D0, UNPEPS=1.000001D0 )
+      DOUBLE PRECISION  X1, Y1, X2, Y2, X3, Y3, X4, Y4
+      DOUBLE PRECISION  X21, Y21, D21, X43, Y43, D43, D, X, Y, CB12
+C
+      X21 = X2 - X1
+      Y21 = Y2 - Y1
+      D21 = X21**2 + Y21**2
+C
+      X43 = X4 - X3
+      Y43 = Y4 - Y3
+      D43 = X43**2 + Y43**2
+C
+C     LES 2 ARETES SONT-ELLES JUGEES PARALLELES ?
+      D = X43 * Y21 - Y43 * X21
+      IF( D*D .LE. 0.000001D0 * D21 * D43 ) THEN
+C        COTE I PARALLELE A S1-S2
+         LINTER = -1
+         RETURN
+      ENDIF
+C
+C     LES 2 COORDONNEES DU POINT D'INTERSECTION
+      X = ( X1*X43*Y21-X3*X21*Y43-(Y1-Y3)*X21*X43) / D
+      Y = (-Y1*Y43*X21+Y3*Y21*X43+(X1-X3)*Y21*Y43) / D
+C
+C     COORDONNEE BARYCENTRIQUE DE X,Y DANS LE SEGMENT S1-S2
+      CB12 = ( ( X - X1 ) * X21 + ( Y - Y1 ) * Y21 ) / D21
+C
+      IF( EPSMOI .LE. CB12 .AND. CB12 .LE. UNPEPS ) THEN
+C        X,Y EST ENTRE S1-S2
+         LINTER = 1
+      ELSE
+C        PAS D'INTERSECTION A L'INTERIEUR DE S1-S2
+         LINTER = 0
+      ENDIF
+C
+      RETURN
+      END

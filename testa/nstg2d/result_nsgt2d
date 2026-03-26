@@ -1,0 +1,122 @@
+Project ns2d: Navier-Stokes TAYLOR-GREEN vortex solution TESTS
+==============================================================
+The EXACT solution on [0,Pi]x[0,Pi] is known as
+
+DefVar  RhoWater; RhoWater=1000; { kg/m3 WATER MASS Density }
+DefVar  nu;       nu=8.9E-4;    { WATER VISCOSITY in Pa.s cf wikipedia}
+
+{The Taylor-Green Vortex Solution 2d Cf. wikipedia}
+DefFunc F(t); F=exp(- 2 * nu * t);  EndFunc;
+DefFunc XVelocity(t,x,y); XVelocity= sin(x)*cos(y)*F(t); EndFunc;
+DefFunc YVelocity(t,x,y); YVelocity=-cos(x)*sin(y)*F(t); EndFunc;
+DefFunc Pressure (t,x,y); 
+   Pressure=RhoWater*(cos(2*x)+cos(2*y))*(F(t)**2)/4;
+EndFunc;
+
+The [0,Pi]x[0,Pi] mesh with Brezzi-Fortin (bf) or Taylor-Hood (th) finite elements:
+
+ SPACE DIMENSION of PB           2
+ TYPE of FE                     13 bf     13 bf2    15 th     15 th2
+ NB of VERTICES               2601 bf  10201 bf2   676 th  10201 th2
+ NB of POINTS                 2601 bf  10201 bf2  2601 th  40401 th2
+ NB of NODES                  5601 bf  10201 bf2  2601 th  40401 th2
+ NB of FE                     5000     20000 bf2  1250 th  20000 th2
+ NB of DoF PRESSURE           2601 bf  10201 bf2   676 th  10201 th2
+ NB of DoF VELOCITY          15202 bf  60402 bf2  5202 th  80802 th2
+ NB of DoF VELOCITY+PRESSURE 17803 bf  70603 bf2  5878 th  91003 th2
+
+f1: MATRIX   with ALL Degrees of Freedom (DoF) of Velocity X + Velocity Y + Pressure. Totally Implicit Scheme
+f2: MATRICES with doF of 1 component of Velocity or Pressure. Fractional Implicit Scheme
+cr: Direct    Method by Crout    factorization AG=L D Lt with ALL DoF  and Totally Implicit Scheme
+ch: Direct    Method by Cholesky factorization AG=L Lt   with DoF of 1 component of Velocity or Pressure and Fractional Scheme
+cg: Iterative Method by Simple Conjugate Gradient        with DoF of 1 component of Velocity or Pressure and Fractional Scheme
+
+
+VEXNORM(Node) = SQRT(  XExactVelocity**2 + YExactVelocity**2 + ZExactVelocity**2 )
+VERROR (Node) = SQRT( (XExactVelocity-XComputedVelocity)**2
+                    + (YExactVelocity-YComputedVelocity)**2 )
+VEXASOM = Sum( VEXNORM(Node) )
+VEXAMX  = MAX( VEXNORM(Node) )
+VERRSOM = Sum( VERROR(Node) )
+VERRMX  = MAX( VERROR(Node) )
+VERRLMX = MAX( VERROR(Node) / VEXNORM(Node) )
+
+VERRMX              = MAX  ABS VELOCITY ERROR = MXAVE
+VERRMX/VEXAMX*100   = MAX  REL VELOCITY ERROR = MXRVE
+VERRLMX             = NODE REL VELOCITY ERROR = MNRVE
+VERRSOM/VEXASOM*100 = MEAN REL VELOCITY ERROR = MERVE
+
+At TIME  0.999999: (Last step time) the VELOCITY ERRORS:
+bf f1cr: MXAVE=0.799810E-01 MXRVE=7.99812%  MNRVE=2.54741%  MERVE=0.771074% with Int Epsilon P1 P1 dX
+bf f2ch: MXAVE=0.798213E-01 MXRVE=7.98214%  MNRVE=2.54741%  MERVE=0.756167%
+bf f2cg: MXAVE=0.798237E-01 MXRVE=7.98239%  MNRVE=2.54741%  MERVE=0.756014%
+         MXAVE=0.799771E-01 MXRVE=7.99773%  MNRVE=2.54741%  MERVE=0.760986%
+bf2f2cg: MXAVE=0.378043E-01 MXRVE=3.78044%  MNRVE=2.48071%  MERVE=0.327981%
+thf1crgrad:MXA=0.161197E-01 MXRVE=1.61197%  MNRVE=0.11658%  MERVE=0.694004% with Int Epsilon Grad P1 Grad P1 dX 1E-7
+         MXAVE=0.160015E-01 MXRVE=1.60015%  MNRVE=0.11643%  MERVE=0.692739% with Int Epsilon Grad P1 Grad P1 dX 1E-9
+th f1cr: MXAVE=0.160003E-01 MXRVE=1.60004%  MNRVE=0.11643%  MERVE=0.692732% with Int Epsilon P1 P1 dX
+th f2ch: MXAVE=0.160001E-01 MXRVE=1.60001%  MNRVE=0.11648%  MERVE=0.692729%
+th f2cg: MXAVE=0.159586E-01 MXRVE=1.59586%  MNRVE=0.11620%  MERVE=0.692506% -g compilation option
+         MXAVE=0.159586E-01 MXRVE=1.59586%  MNRVE=0.11620%  MERVE=0.692506% -O compilation option
+th2 f2cg:MXAVE=0.503667E-02 MXRVE=0.50367%  MNRVE=0.02244%  MERVE=0.285038%
+
+
+ExPressure(Vertex) = Exact Pressure at Vertex
+PREXMI  = MIN( ExPressure(Vertex) )
+PREXMX  = MAX( ExPressure(Vertex) )
+PREXSOM = Sum( ABS( ExPressure(Vertex) ) )
+
+CoPressure(Vertex) = Computed Pressure at Vertex
+PRCAMI   = MIN( CoPressure(Vertex) )
+PRCAMX   = MAX( CoPressure(Vertex) )
+
+PRERRSOM = Sum( ABS( CoPressure(Vertex) - ExPressure(Vertex) ) )
+PRERRAMX = MAX( ABS( CoPressure(Vertex) - ExPressure(Vertex) ) )
+PRERRELA = ABS( ABS( CoPressure(Vertex) - ExPressure(Vertex) ) / ABS(ExPressure(Vertex)))
+
+PRERRAMX                     = MAX  ABS PRESSURE ERROR = MAPE
+PRERRAMX/(PREXMX-PREXMI)*100 = REL  MAX PRESSURE ERROR = RMPE
+PRERRSOM/PREXSOM*100         = MEAN REL PRESSURE ERROR = MRPE
+
+At TIME  0.999999: (Last step time) the PRESSURE ERRORS:
+bf f1cr: MAPE=20.5220  RMPE=2.05220%  MRPE=1.02766% with Int Epsilon P1 P1 dX
+bf f2ch: MAPE=18.6119  RMPE=1.86120%  MRPE=0.96369%
+bf f2cg: MAPE=18.5143  RMPE=1.85144%  MRPE=0.95457%
+         MAPE=20.2570  RMPE=2.02571%  MRPE=1.01752%
+bf2f2cg: MAPE= 3.4794  RMPE=0.34794%  MRPE=0.45029%
+th f1crgrad:E= 9.3268  RMPE=0.93638%  MRPE=1.37320% with Int Epsilon Grad P1 Grad P1 dX Epsilon=1E-7
+         MAPE= 8.8948  RMPE=0.89301%  MRPE=1.33304% with Int Epsilon Grad P1 Grad P1 dX Epsilon=1E-9
+th f1cr: MAPE= 8.8905  RMPE=0.89257%  MRPE=1.33264% with Int Epsilon P1 P1 dX
+th f2ch: MAPE= 8.8908  RMPE=0.89261%  MRPE=1.33268%
+th f2cg: MAPE= 8.8718  RMPE=0.89069%  MRPE=1.33067% -g compilation option
+         MAPE= 8.8718  RMPE=0.89069%  MRPE=1.33067% -O compilation option
+th2f2cg: MAPE= 2.8650  RMPE=0.28651%  MRPE=0.36149%
+
+TOTAL COMPUTATION TIME = CPU
+bf f1cr: CPU= 24.88 CPU SECONDS SKYLINE   MATRICES and VECTORS= 3898756 MEMORY WORDS
+bf f2ch: CPU= 24.92 CPU SECONDS SKYLINE   MATRICES and VECTORS=  577932 MEMORY WORDS
+bf f2cg: CPU= 24.45 CPU SECONDS SKYLINE   MATRICES and VECTORS=  273042 MEMORY WORDS
+bf2f2cg: CPU=100.57 CPU SECONDS CONDENSED MATRICES and VECTORS= 2599118 MEMORY WORDS
+th f1crgrad:= 10.29 CPU SECONDS SKYLINE   MATRICES and VECTORS= 3421238 MEMORY WORDS
+th f1cr: CPU= 10.58 CPU SECONDS SKYLINE   MATRICES and VECTORS= 3421238 MEMORY WORDS
+th f2ch: CPU=  9.99 CPU SECONDS SKYLINE   MATRICES and VECTORS= 1447364 MEMORY WORDS
+th f2cg: CPU=  9.83 CPU SECONDS CONDENSED MATRICES and VECTORS=  216154 MEMORY WORDS -g compilation option
+th f2cg: CPU=  4.82 CPU SECONDS CONDENSED MATRICES and VECTORS=  270253 MEMORY WORDS -O compilation option
+th2f2cg: CPU=134.10 CPU SECONDS CONDENSED MATRICES and VECTORS= 4132887 MEMORY WORDS
+
+CONCLUSIONS:
+- The accuracy of velocity with th is better than with bf;
+- The accuracy of pressure with th is better than with bf, excepted at the first step of time;
+- The methods f1 and f2 give the same results;
+- The penalization method f1cr by Integral Epsilon P1 P1 dX and
+      f1cr Grad Integral Epsilon Grad P1 Grad P1 dX give the same results;
+- The penalization method f1cr with Epsilon=1e-7 or 1e-9 give the same results;
+- The bf velocity error is divided by 2 when the number of edges is divided by 2;
+- The bf pressure max error is divided by more than 5 when the number of edges is divided by 2;
+- The th velocity error is divided by 3 when the number of edges is divided by 2;
+- The th pressure max error is divided by 3 when the number of edges is divided by 2;
+- The CPU time of th is lower than bf with the same mesh;
+- The memory storage with f2 is lower than f1;
+- The lowest memory storage is obtained with f2cg;
+
+Finally, th f2cg is the best method.

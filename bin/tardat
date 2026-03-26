@@ -1,0 +1,37 @@
+telnet oryx  ou cobs (Michel)
+login:
+password:
+cd
+cd ..
+pwd
+ll
+
+si necessaire rembobiner
+mt -t /net/oryx/dev/rmt/3m rewind
+
+SAUVEGARDE effective sur DAT avec rembobinage a la fin
+tar cvf /net/oryx/dev/rmt/3m REPERTOIRE
+  ou tar cvf /dev/rmt/3m REPERTOIRE(SI ON EST DEJA SUR oryx)
+
+sauvegarde effective SANS rembobinage a la fin pour en mettre derriere
+tar cvf /net/oryx/dev/rmt/3mn 
+
+exit    pour quitter oryx
+
+   => sauvegarde de REPERTOIRE sur le DAT de oryx
+=====================================================================
+
+RELECTURE du DAT
+
+tar xvf /net/oryx/dev/rmt/3m REPERTOIRE
+  ou tar xvf /dev/rmt/3m REPERTOIRE(SI ON EST DEJA SUR oryx)
+
+=====================================================================
+
+UNE CARTOUCHE SUR ROSE a remplir
+mt -f /dev/rct8 rewind            pour rembobiner
+
+tar cvf /dev/rct8  NomFichier     pour le stockage
+                                                 
+=====================================================================
+REMARQUE : Sur SUN remplacer RCT par RST

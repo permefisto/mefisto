@@ -1,0 +1,95 @@
+      SUBROUTINE TO2LAG( NUELEM, Omega,  D2PI,   NOAXIS, NBJEUX, JEU,
+     %                   NBPOLY, NPI,    POLY,
+     %                   NOOBSF, NUMISU, NUMASU, LTDESU,
+     %                   F1, F2, POIDEL, DP,
+     %                   ROTAEF )
+C ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+C BUT :    CALCUL DE LA MATRICE ELEMENTAIRE DUE A LA ROTATION
+C -----    [ OmegaZ (xd/dy-yd/dx) ]
+C          DES EF BIDIMENSIONNELS LAGRANGE DE DEGRE 1 OU 2
+C          ISOPARAMETRIQUES POUR TESTNL=7 SCHEMA IMPLICITE
+C
+C ENTREES:
+C --------
+C NUELEM : NUMERO DE L'EF TRAITE
+C Omega  : VITESSE ANGULAIRE DE LA ROTATION
+C D2PI   : 2 FOIS PI
+C NOAXIS : 1 SI PROBLEME AXISYMETRIQUE, 0 SINON
+C NBJEUX : NOMBRE DE JEUX DE DONNEES
+C JEU    : NUMERO DU JEU  DE DONNEES POUR CE CALCUL DE LA MATRICE ELEMENTAIRE
+C
+C NBPOLY : NBRE DE POLYNOMES DE L'ELEMENT SURFACE
+C NPI    : NBRE DE POINTS D INTEGRATION NUMERIQUE SUR LA SURFACE
+C POLY   : VALEUR DES POLYNOMES DE BASE AUX POINTS D'INTEGRATION
+C           POLY(I,L)= P(I) (XL)
+C
+C NOOBSF : NUMERO DE L'OBJET SURFACE DE CET ELEMENT
+C NUMISU : NUMERO MINIMAL DES OBJETS SURFACES
+C NUMASU : NUMERO MAXIMAL DES OBJETS SURFACES
+C LTDESU : TABLEAU DES ADRESSES DU TABLEAU DES DONNEES VITESSE ANGULAIRE
+C          DES OBJETS SURFACES
+C F1     : COORDONNEES XX DES NPI POINTS D INTEGRATION DE L'EF
+C F2     : COORDONNEES YY DES NPI POINTS D INTEGRATION DE L'EF
+C POIDEL : DELTA * POIDS(NPI) DES NPI POINTS D INTEGRATION
+C DP     : GRADIENT DES POLYNOMES DE BASE SUR L ELEMENT COURANT
+C          AUX POINTS D'INTEGRATION NUMERIQUE
+C
+C SORTIES:
+C --------
+C ROTAEF : MATRICE DE ROTATION ELEMENTAIRE (NBPOLY,NBPOLY)
+C ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+C AUTEUR :ALAIN PERRONNET LJLL UPMC Saint Pierre du Perray Novembre 2013
+C23456---------------------------------------------------------------012
+      include"./incl/donthe.inc"
+      include"./incl/cthet.inc"
+      include"./incl/cnonlin.inc"
+C
+      DOUBLE PRECISION  Omega(3), D2PI, COEF, S
+      DOUBLE PRECISION  POLY(NBPOLY, NPI), DP(2,NBPOLY,NPI),
+     %                  F1(NPI), F2(NPI), POIDEL(NPI),
+     %                  ROTAEF(NBPOLY,NBPOLY)
+      INTEGER           LTDESU( 1:MXDOTH, 1:NBJEUX, NUMISU:NUMASU )
+
+C     INITIALISATION DE LA VITESSE ANGULAIRE Omega/Z SUPPOSEE CONSTANTE
+C     -----------------------------------------------------------------
+      IF( NUELEM .EQ. 1 ) THEN
+         MN = LTDESU(LPVIANT,JEU,NOOBSF)
+         IF( MN .GT. 0 ) THEN
+C            RECUPERATION DE LA VITESSE ANGULAIRE Omega SUPPOSEE CONSTANTE
+C            VECTEUR(3) DE VITESSE ANGULAIRE AU 1-ER POINT D'INTEGRATION
+             CALL REVIAN( 3, NOOBSF, F1(1), F2(1), 0D0,
+     %                    LTDESU(LPVIANT,JEU,NOOBSF), Omega )
+C            POUR UNE SEULE COMPOSANTE DONNEE Omega(1)=Omega/Z
+          ELSE
+C            PAS DE ROTATION
+             Omega(1) = 0D0
+             Omega(2) = 0D0
+             Omega(3) = 0D0
+          ENDIF
+      ENDIF
+C
+      IF( NOAXIS .NE. 0 ) THEN
+C        EF AXISYMETRIQUE  Attention:CAS A REVOIR AU NVEAU DES DERIVEES
+         COEF = OMEGA(1) * D2PI * F1(1)
+         PRINT *,'SP TO2LAG: A METTRE A JOUR EN AXISYMETRIE'
+         CALL ARRET(100)
+      ELSE
+C        EF NON AXISYMETRIQUE
+         COEF = OMEGA(1)
+      ENDIF
+C
+C     CONTRIBUTION DE LA SURFACE
+C     ==========================
+      DO I=1,NBPOLY
+         DO J=1,NBPOLY
+            S = 0.D0
+            DO L=1,NPI
+               S = S + COEF * POIDEL(L) * POLY(I,L) * 
+     %           ( F1(L) * DP(2,J,L) - F2(L) * DP(1,J,L) )
+            ENDDO
+            ROTAEF(I,J) = S
+         ENDDO
+      ENDDO
+
+      RETURN
+      END

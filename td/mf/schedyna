@@ -1,0 +1,3 @@
+variable SCHEDYNA 'schema en temps de la DYNAMIQUE' entier
+(1 : 'NEWMARK  IMPLICIT inconditionnellement STABLE' ) ;
+

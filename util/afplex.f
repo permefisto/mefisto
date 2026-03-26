@@ -1,0 +1,63 @@
+      SUBROUTINE AFPLEX( NUMERO , KLEXIQ )
+C+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+C BUT : AFFICHER LE POINTEUR NUMERO SUR LE LEXIQUE KLEXIQ
+C -----
+C
+C ENTREES :
+C ---------
+C NUMERO : NUMERO DU NOM DANS LE LEXIQUE
+C KLEXIQ : NOM DU LEXIQUE
+C+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+C AUTEUR : ALAIN PERRONNET ANALYSE NUMERIQUE UPMC PARIS SEPTEMBRE 1988
+C23456---------------------------------------------------------------012
+      include"./incl/td.inc"
+      include"./incl/gsmenu.inc"
+      CHARACTER*(*)     KLEXIQ
+      CHARACTER*48      KNOM
+      include"./incl/pp.inc"
+      COMMON            MCN(MOTMCN)
+      COMMON / UNITES / LECTEU,IMPRIM,NUNITE(30)
+C
+C     LA LIGNE EST BUFFERISEE A L'AIDE DU POINTEUR LCLIGN DERNIER
+C     CARACTERE ENTRE DANS LA LIGNE
+C
+      IF( IMPRES*NOMUET .LE. 0 ) RETURN
+C
+C     OUVERTURE DU LEXIQUE
+      CALL LXOUVR( KLEXIQ , NTLX , MNLX )
+C
+      IF( NUMERO .LE. 0 ) THEN
+         NBLGRC(NRERR) = 1
+         WRITE(KERR(2)(1:12),'(I12)') NUMERO
+         KERR(1) = KERR(2)(1:12) //' NUMERO INCORRECT DANS LE LEXIQUE'
+     %          // KLEXIQ
+         CALL LEREUR
+         RETURN
+      ENDIF
+C
+C     MNLX : ADRESSE MCN DU LEXIQUE
+C     M1LX : NOMBRE D ENTIERS PAR NOM ET ATTRIBUTS DU LEXIQUE
+      M1LX   = MCN( MNLX )
+C     NBENNM : NOMBRE D'ENTIERS POUR STOCKER LES CARACTERES D'UN NOM
+      NBENNM = MCN( MNLX + 2 )
+C     NBCANM : NOMBRE DE CARACTERES D'UN NOM DU LEXIQUE
+      NBCANM = MCN( MNLX + 3 )
+C
+C     TRANSFORMATION DES NBENNM ENTIERS EN CARACTERES
+      MN = MNLX + M1LX * NUMERO
+      CALL ENTNOM( NBENNM , MCN(MN) , KNOM )
+C
+C     AFFICHAGE DU NOM
+      DO 10 I=NBCANM,1,-1
+         IF( KNOM(I:I) .NE. ' ' ) GOTO 20
+ 10   CONTINUE
+      I = I + 1
+C
+C     LE NOMBRE DE CARACTERES A AFFICHER
+ 20   IF( NCLIGN-LCLIGN .LT. I ) THEN
+         CALL AFLIGN
+      ENDIF
+C
+      KLIGNE(LCLIGN+1:LCLIGN+I) = ' ' // KNOM(1:I-1)
+      LCLIGN = LCLIGN + I
+      END

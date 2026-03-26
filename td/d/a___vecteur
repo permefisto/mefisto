@@ -1,0 +1,9 @@
+deftms ~>>>VECTEUR 'TABLEAU de VECTEURS'
+variable muet DATE  'date de creation du tableau'         reel2  ;
+variable muet NUTD  'numero du tableau descripteur'       entier ;
+variable NBCOVE 'Nombre de composantes de chaque VECTEUR' entier ;
+variable NBVECT 'Nombre de VECTEURS'                      entier ;
+variable NBCPIN 'Nombre d''informations complementaires'  entier ;
+tableau  VECTEU(1..NBCOVE,1..NBVECT) 'Composantes des VECTEURS' reel2 ;
+tableau  CPINFO(1..NBCPIN) 'Complements,temps,...' reel ;
+fintms ;

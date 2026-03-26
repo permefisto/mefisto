@@ -1,0 +1,7 @@
+variable COEFNLSE 'SCHRODINGER Equation INPUT' entier
+( 1 : 'Rho    MASS Density'
+, 2 : 'Alfa   Laplacian Coefficient'
+, 4 : 'FOmega Complex Force Second Member'
+, 6 : 'Beta   Coefficient (ur**2+ui**2) ur ou ui'
+, 8 : 'INITIAL Complex Wave Value'
+, 9 : 'Omega  Rotation Angular Velocity' ) ;

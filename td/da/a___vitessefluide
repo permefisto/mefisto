@@ -1,0 +1,14 @@
+deftms ~>>>VITESSEFLUIDE 'Velocity of heat fluid'
+variable muet DATE 'date of creation of the TMS'   reel2  ;
+variable muet NUTD 'number of the descriptor array TD' entier ; 
+variable      LTVIFL 'type of Velocity of heat fluid'  entier 
+(  2 : 'VECTOR Velocity of heat fluid' 
+,  1 : 'CONSTANT Velocity of heat fluid' 
+, -1 : 'FUNCTION Velocity of heat fluid' 
+,  0 : 'DELETE Velocity of heat fluid'  ) ;
+cas LTVIFL
+ 1 : variable NBVIFL 'number of Velocity Components (1 or 2 or 3)' entier ;
+     tableau  VAVIFL(1..NBVIFL) 'Velocity of fluid' reel ; 
+-1 : variable NFVIFL 'name of function Velocity of fluid' ^~>FONCTION ;
+fincas ;   
+fintms ;

@@ -1,0 +1,35 @@
+      SUBROUTINE VERIFTETR( NT, MXTETR, NOTETR, NBSOMM, PTXYZD, V )
+C++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+C BUT :    VERIFIER LE NUMERO DES 4 SOMMETS DES TETRAEDRES DE NOTETR
+C -----    CALCULER SON VOLUME
+C
+C ENTREES:
+C --------
+C NT     : NUMERO DU TETRAEDRE DANS NOTETR
+C MXTETR : NOMBRE MAXIMAL DE TETRAEDRES DECLARABLES DANS NOTETR
+C NOTETR : LISTE DES TETRAEDRES
+C          SOMMET1,    SOMMET2,    SOMMET3,    SOMMET4,
+C          TETRAEDRE1, TETRAEDRE2, TETRAEDRE3, TETRAEDRE4
+C          DE L'AUTRE COTE DE LA FACE
+C          1: 123      2: 234      3: 341      4: 412
+C NBSOMM : NOMBRE DE SOMMETS DE LA TETRAEDRISATION
+C PTXYZD : X Y Z DISTANCE SOUHAITEE DES SOMMETS
+C
+C SORTIES:
+C --------
+C V      : VOLUME SIGNE DU TETRAEDRE NT
+C+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+C AUTEUR : ALAIN PERRONNET LJLL UPMC et St Pierre du Perray    AOUT 2010
+C2345X7..............................................................012
+      INTEGER           NOTETR(8,MXTETR)
+      DOUBLE PRECISION  PTXYZD(4,NBSOMM), V
+C
+      DO NT = 1, MXTETR
+         IF( NOTETR(1,NT) .GT. 0 ) THEN
+C           NT EST UN TETRAEDRE INITIALISE
+            CALL VERIF1TETR( NT, NOTETR, NBSOMM, PTXYZD, V )
+         ENDIF
+      ENDDO
+C
+      RETURN
+      END

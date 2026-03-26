@@ -1,0 +1,4 @@
+variable ResoELIN 'Unstationary Elasticity Coefficient Types' entier
+(1: 'DENSITY YOUNG POISSON INDEPENDENT of TIME & DISPLT',
+ 2: 'At least one FORCE depends of TIME & DISPLACEMENTS',
+ 3: 'At least one COEFFICIENT depends of TIME & DISPLACEMENTS' ) ;

@@ -1,0 +1,4 @@
+Le nombre de tranches M est egal au nombre de deplacements
+de la surface a effectuer pour creer les pentaedres et hexaedres
+du volume a partir des N triangles et/ou quadrangles de la surface
+Ainsi, M*N Elements Finis 3D seront generes.

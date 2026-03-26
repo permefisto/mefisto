@@ -1,0 +1,93 @@
+thstoke34cr
+ Time STEP       99 at Time=  0.989999     VelocMean=  0.291667     VelocMax=  0.500005     PressMean=   1.25005     PressMax-Min=   2.50005     Flux-=  -1.33333     Flux+=   1.33333     Flux-+ =   0.00000    
+ Time STEP      100 at Time=  0.999999     VelocMean=  0.291667     VelocMax=  0.500005     PressMean=   1.25005     PressMax-Min=   2.50005     Flux-=  -1.33333     Flux+=   1.33333     Flux-+ =   0.00000
+ MEANS and MAXIMA of Velocity DURING the INTERVAL of TIME (   0.0000000000000000      ,  1.0       )
+ Time STEP      100 at Time=  0.999999     VelocMean=  0.291667     VelocMax=  0.500005     PressMean=   1.25005     PressMax-Min=   2.50005     Flux-=  -1.33333     Flux+=   1.33333     Flux-+ =   0.00000
+
+bfstoke34cr
+ Time STEP      199 at Time=   1.99000     VelocMean=  0.288308     VelocMax=  0.500000     PressMean=   1.21271     PressMax-Min=   2.42534     Flux-=  -1.25000     Flux+=   1.25000     Flux-+ =   0.00000    
+ Time STEP      200 at Time=   2.00000     VelocMean=  0.288308     VelocMax=  0.500000     PressMean=   1.21271     PressMax-Min=   2.42534     Flux-=  -1.25000     Flux+=   1.25000     Flux-+ =   0.00000
+ MEANS and MAXIMA of Velocity DURING the INTERVAL of TIME (   0.0000000000000000      ,  2.0       )
+ Time STEP      200 at Time=   2.00000     VelocMean=  0.288308     VelocMax=  0.500000     PressMean=   1.21271     PressMax-Min=   2.42534     Flux-=  -1.25000     Flux+=   1.25000     Flux-+ =   0.00000
+
+thns5cr
+ Time STEP       99 at Time=  0.989999     VelocMean=  0.291651     VelocMax=  0.500000     PressMean=   1.25543     PressMax-Min=   2.50989     Flux-=  -1.33333     Flux+=   1.33333     Flux-+ =   0.00000    
+ Time STEP      100 at Time=  0.999999     VelocMean=  0.291652     VelocMax=  0.500000     PressMean=   1.25515     PressMax-Min=   2.50939     Flux-=  -1.33333     Flux+=   1.33333     Flux-+ =   0.00000
+ MEANS and MAXIMA of Velocity DURING the INTERVAL of TIME (   0.0000000000000000      ,  1.0       )
+ Time STEP      100 at Time=  0.999999     VelocMean=  0.288102     VelocMax=  0.500000     PressMean=   3.32327     PressMax-Min=   376.357     Flux-=  -1.33333     Flux+=   1.33333     Flux-+ =   0.00000
+ 
+thns5cg EPS=1E-3
+ Time STEP        0 at Time=   0.00000     VelocMean=  0.277778E-01 VelocMax=  0.500000     PressMean=   0.00000     PressMax-Min=   0.00000     Flux-=  -1.33333     Flux+=   1.33333     Flux-+=   0.00000    
+ Time STEP        1 at Time=  0.100000E-01 VelocMean=  0.301870     VelocMax=   1.08082     PressMean=   31.4146     PressMax-Min=   344.023     Flux-=  -1.33333     Flux+=   1.33333     Flux-+=   0.00000    
+ Time STEP        2 at Time=  0.200000E-01 VelocMean=  0.437513     VelocMax=   1.35304     PressMean=   31.9039     PressMax-Min=   329.629     Flux-=  -1.33333     Flux+=   1.33333     Flux-+=   0.00000    
+ Time STEP        3 at Time=  0.300000E-01 VelocMean=  0.606293     VelocMax=   1.87188     PressMean=   32.6078     PressMax-Min=   307.894     Flux-=  -1.33333     Flux+=   1.33333     Flux-+=   0.00000    
+ Time STEP        4 at Time=  0.400000E-01 VelocMean=  0.573204     VelocMax=   1.38212     PressMean=   1.94446     PressMax-Min=   77.1918     Flux-=  -1.33333     Flux+=   1.33333     Flux-+=   0.00000    
+ Time STEP        5 at Time=  0.500000E-01 VelocMean=  0.524930     VelocMax=   1.18775     PressMean=   2.28631     PressMax-Min=   73.3242     Flux-=  -1.33333     Flux+=   1.33333     Flux-+=   0.00000    
+ Time STEP        6 at Time=  0.600000E-01 VelocMean=  0.483136     VelocMax=   1.02891     PressMean=   2.73148     PressMax-Min=   72.5720     Flux-=  -1.33333     Flux+=   1.33333     Flux-+=   0.00000    
+ Time STEP        7 at Time=  0.700000E-01 VelocMean=  0.464016     VelocMax=   1.10893     PressMean=  0.806300     PressMax-Min=   47.7780     Flux-=  -1.33333     Flux+=   1.33333     Flux-+=   0.00000    
+ Time STEP        8 at Time=  0.800000E-01 VelocMean=  0.446003     VelocMax=  0.968516     PressMean=   1.04595     PressMax-Min=   39.1256     Flux-=  -1.33333     Flux+=   1.33333     Flux-+=   0.00000    
+ Time STEP        9 at Time=  0.900000E-01 VelocMean=  0.396013     VelocMax=  0.856954     PressMean=   3.18765     PressMax-Min=   106.091     Flux-=  -1.33333     Flux+=   1.33333     Flux-+=   0.00000    
+ Time STEP       10 at Time=  0.100000     VelocMean=  0.359558     VelocMax=  0.720446     PressMean=   3.16614     PressMax-Min=   72.5921     Flux-=  -1.33333     Flux+=   1.33333     Flux-+=   0.00000    
+ Time STEP       99 at Time=  0.989999     VelocMean=  0.231375     VelocMax=  0.500000     PressMean=  0.374343E-01 PressMax-Min=   7.00142     Flux-=  -1.33333     Flux+=   1.33333     Flux-+=   0.00000    
+ Time STEP      100 at Time=  0.999999     VelocMean=  0.230809     VelocMax=  0.500000     PressMean=  0.357366E-01 PressMax-Min=   4.83013     Flux-=  -1.33333     Flux+=   1.33333     Flux-+=   0.00000
+ MEANS and MAXIMA of Velocity DURING the INTERVAL of TIME (   0.0000000000000000      ,  1.0       )
+ Time STEP      100 at Time=  0.999999     VelocMean=  0.278418     VelocMax=   1.87188     PressMean=   1.13980     PressMax-Min=   344.023     Flux-=  -1.33333     Flux+=   1.33333     Flux-+=   0.00000    
+
+thns5cg EPS=1E-5
+ Time STEP        0 at Time=   0.00000     VelocMean=  0.277778E-01 VelocMax=  0.500000     PressMean=   0.00000     PressMax-Min=   0.00000     Flux-=  -1.33333     Flux+=   1.33333     Flux-+=   0.00000    
+ Time STEP        1 at Time=  0.100000E-01 VelocMean=  0.471191     VelocMax=   2.38043     PressMean=  -10.4672     PressMax-Min=   192.723     Flux-=  -1.33333     Flux+=   1.33333     Flux-+=   0.00000    
+ Time STEP        2 at Time=  0.200000E-01 VelocMean=  0.247594     VelocMax=   1.26001     PressMean=   3.28069     PressMax-Min=   206.952     Flux-=  -1.33333     Flux+=   1.33333     Flux-+=   0.00000    
+ Time STEP        3 at Time=  0.300000E-01 VelocMean=  0.204595     VelocMax=  0.901306     PressMean=  0.580148     PressMax-Min=   33.4838     Flux-=  -1.33333     Flux+=   1.33333     Flux-+=   0.00000    
+ Time STEP        4 at Time=  0.400000E-01 VelocMean=  0.168849     VelocMax=  0.663531     PressMean=  0.318652     PressMax-Min=   12.8598     Flux-=  -1.33333     Flux+=   1.33333     Flux-+=   0.00000    
+ Time STEP        5 at Time=  0.500000E-01 VelocMean=  0.156637     VelocMax=  0.570970     PressMean=  0.570252     PressMax-Min=   18.3464     Flux-=  -1.33333     Flux+=   1.33333     Flux-+=   0.00000    
+ Time STEP        6 at Time=  0.600000E-01 VelocMean=  0.143026     VelocMax=  0.500000     PressMean=  0.243682     PressMax-Min=   11.7297     Flux-=  -1.33333     Flux+=   1.33333     Flux-+=   0.00000    
+ Time STEP        7 at Time=  0.700000E-01 VelocMean=  0.140590     VelocMax=  0.500000     PressMean=  0.452313     PressMax-Min=   16.2052     Flux-=  -1.33333     Flux+=   1.33333     Flux-+=   0.00000    
+ Time STEP        8 at Time=  0.800000E-01 VelocMean=  0.133515     VelocMax=  0.500000     PressMean=  0.249119     PressMax-Min=   10.7318     Flux-=  -1.33333     Flux+=   1.33333     Flux-+=   0.00000    
+ Time STEP        9 at Time=  0.900000E-01 VelocMean=  0.134925     VelocMax=  0.500000     PressMean=  0.540373     PressMax-Min=   15.5935     Flux-=  -1.33333     Flux+=   1.33333     Flux-+=   0.00000    
+ Time STEP       10 at Time=  0.100000     VelocMean=  0.130672     VelocMax=  0.500000     PressMean=  0.214269     PressMax-Min=   8.74763     Flux-=  -1.33333     Flux+=   1.33333     Flux-+=   0.00000    
+ Time STEP       99 at Time=  0.989999     VelocMean=  0.226687     VelocMax=  0.500000     PressMean=  0.926299E-01 PressMax-Min=   3.99242     Flux-=  -1.33333     Flux+=   1.33333     Flux-+=   0.00000    
+ Time STEP      100 at Time=  0.999999     VelocMean=  0.226727     VelocMax=  0.500000     PressMean= -0.404920E-01 PressMax-Min=   4.80267     Flux-=  -1.33333     Flux+=   1.33333     Flux-+=   0.00000
+ MEANS and MAXIMA of Velocity DURING the INTERVAL of TIME (   0.0000000000000000      ,  0.99999934434890747       )
+ Time STEP      100 at Time=  0.999999     VelocMean=  0.209265     VelocMax=   2.38043     PressMean=  0.202066     PressMax-Min=   206.952     Flux-=  -1.33333     Flux+=   1.33333     Flux-+=   0.00000    
+
+bfns5cr
+ Time STEP       99 at Time=  0.989999     VelocMean=  0.288345     VelocMax=  0.500000     PressMean=   1.21452     PressMax-Min=   2.42622     Flux-=  -1.25000     Flux+=   1.25000     Flux-+ =   0.00000    
+ Time STEP      100 at Time=  0.999999     VelocMean=  0.288345     VelocMax=  0.500000     PressMean=   1.21447     PressMax-Min=   2.42613     Flux-=  -1.25000     Flux+=   1.25000     Flux-+ =   0.00000
+ MEANS and MAXIMA of Velocity DURING the INTERVAL of TIME (   0.0000000000000000      ,  1.0       )
+ Time STEP      100 at Time=  0.999999     VelocMean=  0.286042     VelocMax=  0.500000     PressMean=   3.14171     PressMax-Min=   353.220     Flux-=  -1.25000     Flux+=   1.25000     Flux-+ =   0.00000
+
+bfns5cg
+ Time STEP       99 at Time=  0.989999     VelocMean=  0.557879     VelocMax=   2.96385     PressMean= -0.913478     PressMax-Min=   30.2505     Flux-=  -1.25000     Flux+=   1.25000     Flux-+=   0.00000    
+ Time STEP      100 at Time=  0.999999     VelocMean=  0.544250     VelocMax=   2.93515     PressMean= -0.888272     PressMax-Min=   23.4601     Flux-=  -1.25000     Flux+=   1.25000     Flux-+=   0.00000
+ MEANS and MAXIMA of Velocity DURING the INTERVAL of TIME (   0.0000000000000000      ,  1.0       )
+ Time STEP      100 at Time=  0.999999     VelocMean=   31.8251     VelocMax=   3462.84     PressMean=   587.456     PressMax-Min=   298271.     Flux-=  -1.25000     Flux+=   1.25000     Flux-+=   0.00000    
+
+bfns5cg.1
+ Time STEP      199 at Time=  0.989999     VelocMean=  0.276265     VelocMax=  0.520182     PressMean= -0.459028     PressMax-Min=   4.97423     Flux-=  -1.25000     Flux+=   1.25000     Flux-+=   0.00000    
+ Time STEP      200 at Time=  0.999999     VelocMean=  0.275101     VelocMax=  0.513481     PressMean= -0.171129     PressMax-Min=   6.25678     Flux-=  -1.25000     Flux+=   1.25000     Flux-+=   0.00000
+ MEANS and MAXIMA of Velocity DURING the INTERVAL of TIME (   0.0000000000000000      ,  1.0       )
+ Time STEP      200 at Time=  0.999999     VelocMean=  0.154646     VelocMax=  0.688353     PressMean= -0.771942E-01 PressMax-Min=   137.582     Flux-=  -1.25000     Flux+=   1.25000     Flux-+=   0.00000    
+
+thns6cr
+ Time STEP       99 at Time=  0.989999     VelocMean=  0.291650     VelocMax=  0.500000     PressMean=   1.25538     PressMax-Min=   2.50984     Flux-=  -1.33333     Flux+=   1.33333     Flux-+ =   0.00000    
+ Time STEP      100 at Time=  0.999999     VelocMean=  0.291651     VelocMax=  0.500000     PressMean=   1.25511     PressMax-Min=   2.50934     Flux-=  -1.33333     Flux+=   1.33333     Flux-+ =   0.00000
+ MEANS and MAXIMA of Velocity DURING the INTERVAL of TIME (   0.0000000000000000      ,  1.0       )
+ Time STEP      100 at Time=  0.999999     VelocMean=  0.288099     VelocMax=  0.516509     PressMean=   3.32318     PressMax-Min=   335.771     Flux-=  -1.33333     Flux+=   1.33333     Flux-+ =   0.00000
+
+thns6cg
+ Time STEP       99 at Time=  0.989999     VelocMean=  0.285706     VelocMax=  0.509077     PressMean=   2.08985     PressMax-Min=   3.99324     Flux-=  -1.33333     Flux+=   1.33333     Flux-+=   0.00000    
+ Time STEP      100 at Time=  0.999999     VelocMean=  0.285133     VelocMax=  0.508066     PressMean=   2.16681     PressMax-Min=   4.34664     Flux-=  -1.33333     Flux+=   1.33333     Flux-+=   0.00000
+ MEANS and MAXIMA of Velocity DURING the INTERVAL of TIME (   0.0000000000000000      ,  1.0       )
+ Time STEP      100 at Time=  0.999999     VelocMean=  0.284035     VelocMax=   1.16528     PressMean=   3.97618     PressMax-Min=   120.610     Flux-=  -1.33333     Flux+=   1.33333     Flux-+=   0.00000    
+
+bfns6cr
+ Time STEP       99 at Time=  0.989999     VelocMean=  0.288251     VelocMax=  0.685185     PressMean=  0.336163     PressMax-Min=   7.44798     Flux-=  -1.25000     Flux+=   1.25000     Flux-+=   0.00000    
+ Time STEP      100 at Time=  0.999999     VelocMean=  0.290370     VelocMax=  0.756941     PressMean=  0.309733     PressMax-Min=   7.47470     Flux-=  -1.25000     Flux+=   1.25000     Flux-+=   0.00000
+ MEANS and MAXIMA of Velocity DURING the INTERVAL of TIME (   0.0000000000000000      ,  1.0       )
+ Time STEP      100 at Time=  0.999999     VelocMean=  0.293448     VelocMax=   1.65718     PressMean=  0.919727     PressMax-Min=   305.389     Flux-=  -1.25000     Flux+=   1.25000     Flux-+=   0.00000    
+
+bfns6cg
+ Time STEP       99 at Time=  0.989999     VelocMean=  0.286491     VelocMax=  0.662408     PressMean=  -1.70133     PressMax-Min=   4.11144     Flux-=  -1.25000     Flux+=   1.25000     Flux-+=   0.00000    
+ Time STEP      100 at Time=  0.999999     VelocMean=  0.286809     VelocMax=  0.657472     PressMean=  -1.73032     PressMax-Min=   3.66915     Flux-=  -1.25000     Flux+=   1.25000     Flux-+=   0.00000
+ MEANS and MAXIMA of Velocity DURING the INTERVAL of TIME (   0.0000000000000000      ,  1.0       )
+ Time STEP      100 at Time=  0.999999     VelocMean=  0.285150     VelocMax=  0.936004     PressMean=  0.320393     PressMax-Min=   76.9137     Flux-=  -1.25000     Flux+=   1.25000     Flux-+=   0.00000    

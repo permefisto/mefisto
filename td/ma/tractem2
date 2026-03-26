@@ -1,0 +1,5 @@
+variable TRACTEM2 'Drawings of 2d TEMPERATURES' entier
+ (  1 :  'ISOTHERMAL LINES'
+ ,  2 :  'ZONES of ISOTHERMAL COLORS'
+ ,  7 :  'SURFACE(X,Y,TEMPERATURE(X,Y))'
+ ,  8 :  'ERROR from EXACT_TEMPERATURE()' ) ;

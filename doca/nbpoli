@@ -1,0 +1,4 @@
+NBPOLI is the number of points of the line
+extremities included.
+Between 2 consecutive points one edge will
+be created.

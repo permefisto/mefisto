@@ -1,0 +1,9 @@
+deftms ~>>>VECTEUR 'ARRAY of VECTORS'
+variable muet DATE 'date of creation of the TMS' reel2 ;
+variable muet NUTD 'number of the descriptor array TD' entier ;
+variable NBCOVE 'number of components of each vector' entier ;
+variable NBVECT 'number of vectors'                   entier ;
+variable NBCPIN 'number of associated informations'   entier ;
+tableau  VECTEU(1..NBCOVE,1..NBVECT) 'components of vectors' reel2 ;
+tableau  CPINFO(1..NBCPIN) 'asoociated infos, time,...' reel ;
+fintms ;

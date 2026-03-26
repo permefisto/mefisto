@@ -1,0 +1,7 @@
+Ce rayon doit etre un nombre reel positif et 
+strictement superieur a la demi distance entre
+les 2 points P1, P2 sur l'arc de cercle.
+
+Plus precisement :
+si     RAYON-DISTANCE(P1,P2)*0.5 <= 1E-3*DISTANCE(P1,P2) 
+alors  PAS de calcul du CERCLE !

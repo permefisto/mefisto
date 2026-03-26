@@ -1,0 +1,60 @@
+{ ==================================================================== }
+{ Software MEFISTO     : June 2007 Version                             }
+{ USER's Name          : Alain Perronnet                               }
+{ Project Name         : wave by Newmark and decentred schemes         }
+{ Date                 : 31/07/2007  10h 03m 24s                       }
+{ ==================================================================== }
+DefVar a, b; a=60; b=40;
+
+19; { min MAX of XYZ of PLSVO }
+ -1;  { X MINIMUM? }
+ a+1; { X MAXIMUM? }
+ -1;  { Y MINIMUM? }
+ b+1; { Y MAXIMUM? }
+ 0;   { Z MINIMUM? }
+ 0;   { Z MAXIMUM? }
+
+3;  { SURFACES faces of the object }
+ s;   { NAME of the SURFACE or ESCAPE? }
+ i;   { NAME of TRANSFORMATION }
+ 11;  { 2D STRUCTURED RECTANGLE OF EDGES 1 }
+ a;   { NBINQX 'number of X-edges' entier ; }
+ b;   { NBINQY 'number of Y-edges' entier ; }
+      { NAME of the SURFACE or ESCAPE? }
+@;
+
+2;  { LINES edges of the object }
+ boundary; { NAME of the LINE or ESCAPE? }
+ i;        { NAME of TRANSFORMATION }
+ 37;       { INTERNAL OR BOUNDARY EDGES OF A SURFACE }
+ s;        { NAME of SURFACE }
+           { NAME of CRITERION FUNCTION }
+ DefFunc criterion(x,y,z);
+    criterion=1;
+ EndFunc;
+ criterion;
+ 1;        { boundary edges }
+           { NAME of the LINE or ESCAPE? }
+@;
+
+5;  { OBJECTS parts of the object }
+ membrane; { NAME of the OBJECT or ESCAPE? }
+ 0;        { 2D or 3D classic }
+ 2; { NBDOBJ 'number of Points Lines Surfaces Volumes Objects of the object' }
+ s; s; { POINT or LINE or SURFACE or VOLUME or OBJECT and NAME of PLSVO }
+ l; boundary;
+ { NAME of the OBJECT or ESCAPE? }
+@;
+
+7;  { INTERPOLATION nodes of the mesh }
+ membrane; { NAME of the OBJECT to be INTERPOLATED? }
+ 4;  { LAGRANGE of DEGREE 2 }
+     { NAME of the OBJECT to be INTERPOLATED? }
+@;
+
+10; { DRAWING of PLSVO meshes }
+ 5;  { OBJECT or OBJECTS }
+ 1;  { ALL OBJECTS 1 by 1 }
+ 90; { Continue the DRAWING }
+ @;
+CLOSE;

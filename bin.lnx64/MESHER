@@ -1,0 +1,72 @@
+#!/bin/bash
+#  execution du MAILLEUR de Mefisto par MAILLER ou MESHER
+#  Alain Perronnet Mars 2013 Version LINUX 64 bits + Fortran95 + OpenMP + Batch
+#  Appel:
+#  MAILLER Nom du fichier des donnees de MAILLER  (AVEC Nom =>Batch ou SANS   =>Interactif)
+#  MESHER  Nom du fichier des donnees de MESHER   (WITH Name=>Batch ou WITHOUT=>Interactif)
+
+if test -f $MEFISTO/td/m/anglais
+then
+  LANGAGE=1
+  LANGUE=ANGLAISE
+  echo "Arguments Number=$#"
+  echo "arg0=$0"
+  echo "arg1=$1"
+  echo "MESHER data file NAME=$*"
+  echo
+  echo '==============================================================='
+  echo '     MEFISTO-MESHER: MESH an OBJECT under LINUX 64 bits'
+  echo '==============================================================='
+  echo 'Project (low case) name' \?
+else
+  LANGAGE=0
+  LANGUE=FRANCAISE
+  echo "Nombre Arguments=$#"
+  echo "arg0=$0"
+  echo "arg1=$1"
+  echo "Nom du Fichier des Donnees de MAILLER=$*"
+  echo
+  echo '==============================================================='
+  echo '     MEFISTO-MAILLEUR: MAILLER un OBJET sur sous LINUX 64 bits'
+  echo '==============================================================='
+  echo 'nom (en minuscules) du projet' \?
+fi
+read nomproj
+
+echo
+# Demande du nombre de threads
+#if [ $LANGAGE = 0 ]
+#then
+#   echo 'Nombre de threads en execution de MAILLER' \?
+#else
+#   echo 'Number of threads on MESHER execution' \?
+#fi
+#read   OMP_NUM_THREADS
+#export OMP_NUM_THREADS
+echo OMP_NUMBER_THREADS=$OMP_NUM_THREADS
+
+direxec=$MEFISTOX/$nomproj
+echo
+if [ $LANGAGE = 0 ]
+then
+  echo "Execution MEFISTO MAILLER dans repertoire $direxec avec $OMP_NUM_THREADS threads"
+else
+  echo "Execution MEFISTO MESHER in directory $direxec on $OMP_NUM_THREADS threads"
+fi
+
+if test -d $direxec
+then
+  cd  $direxec 
+  time $MEFISTO/pp/ppmail $*
+else  
+  if [ $LANGAGE = 0 ]
+  then
+    echo Commande INITIER non prealablement executee
+    echo "avec ce nom de projet $nomproj"
+    echo Executer INITIER
+  else
+    echo Command INITIER NOT EXECUTED BEFORE
+    echo "with this project name $nomproj"
+    echo Execute INITIER
+  fi
+fi

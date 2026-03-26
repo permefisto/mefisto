@@ -1,0 +1,126 @@
+      SUBROUTINE LAVERT
+C+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+C BUT : IMPRIMER OU TRACER L'AVERTISSEMENT RANGE DANS KERR
+C -----
+C+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+C AUTEUR : ALAIN PERRONNET SAINT PIERRE DU PERRAY              AOUT 2012
+C23456---------------------------------------------------------------012
+      include"./incl/gsmenu.inc"
+      include"./incl/trvari.inc"
+      include"./incl/langue.inc"
+      COMMON / UNITES / LECTEU,IMPRIM,INTERA,NFDOCU,NFFRAP,NUNITE(27)
+C
+C     SUR L'IMPRIMANTE ET LE FICHIER FRAPPE.00x
+C     =========================================
+10000 FORMAT('{',94('#'),T96,'}')
+10001 FORMAT(
+     %'{AVERTISSEMENT:',T96,'}')
+10002 FORMAT(
+     %'{WARNING:',T96,'}')
+C
+      WRITE(IMPRIM,*)
+      WRITE(IMPRIM,*)
+      WRITE(NFFRAP,*)
+      WRITE(NFFRAP,*)
+      WRITE(IMPRIM,10000)
+      WRITE(NFFRAP,10000)
+      IF( LANGAG .EQ. 0 ) THEN
+         WRITE(IMPRIM,10001)
+         WRITE(NFFRAP,10001)
+      ELSE
+         WRITE(IMPRIM,10002)
+         WRITE(NFFRAP,10002)
+      ENDIF
+C
+      DO I=1,NBLGRC(NRERR)
+C        CALCULE LA LONGUEUR DE LA CHAINE
+C       (INDICE DU DERNIER CARACTERE NON BLANC
+         NBC = NUDCNB( KERR(I) )
+         IF( NBC .LE. 94 ) THEN
+            WRITE(IMPRIM,10010) KERR(I)(1:NBC)
+            WRITE(NFFRAP,10010) KERR(I)(1:NBC)
+         ELSE  IF( NBC .GT. 0 ) THEN
+            WRITE(IMPRIM,10011) KERR(I)(1:NBC)
+            WRITE(NFFRAP,10011) KERR(I)(1:NBC)
+         ENDIF
+      ENDDO
+10010 FORMAT('{',A,T96,'}')
+10011 FORMAT('{',A,'}')
+C
+      WRITE(IMPRIM,10000)
+      WRITE(NFFRAP,10000)
+      WRITE(IMPRIM,*)
+      WRITE(IMPRIM,*)
+      WRITE(NFFRAP,*)
+      WRITE(NFFRAP,*)
+C
+      IF( INTERA .GE. 3 ) THEN
+C
+C        SAUVEGARDE DE LA FENETRE MEFISTO
+C        ================================
+CCC         CALL SAUVEFENETRE
+C
+C        SUR L'ECRAN
+C        ===========
+C        L'ANCIENNE ERREUR EST EFFACEE
+CCC         CALL RECTEF( NRERR0 )
+C
+C        LES COULEURS FOND BORD ET CARACTERES
+         NFRECT( NRERR ) = NCROUG
+         NBRECT( NRERR ) = NCORAN
+         NKRECT( NRERR ) = NCNOIR
+C
+C        AJOUT DU TEXTE POUR L'ARRET
+         NBLGRC( NRERR ) = MIN( MXLGER, NBLGRC(NRERR)+1 )
+         IF( LANGAG .EQ. 0 ) THEN
+            KERR( NBLGRC(NRERR) ) = '... Cliquer pour CONTINUER ...'
+         ELSE
+            KERR( NBLGRC(NRERR) ) = '... Click to CONTINUE ...'
+         ENDIF
+C
+C        SUPPRESSION DES BLANCS INUTILES ET CALCUL
+C        DU CARACTERE LE PLUS A GAUCHE DES LIGNES D'AVERTISSEMENT
+         MDRECT(NRERR) = 0
+         DO I=1,NBLGRC( NRERR )
+CCC            CALL UNSEBL( KERR(I) , N )
+CCC            MDRECT(NRERR) = MAX( N , MDRECT(NRERR) )
+CCC
+C           LE CARACTERE LE PLUS A GAUCHE DES LIGNES D'AVERTISSEMENT
+            MDRECT(NRERR) = MAX( NUDCNB(KERR(I)), MDRECT(NRERR) )
+         ENDDO
+C
+C        LA LARGEUR ET HAUTEUR
+         LAPX = LAMXPXTXT( NBLGRC(NRERR), KERR )
+         DXRECT(NRERR) = ECARLR(NRERR) * 2 + LAPX
+         DYRECT(NRERR) = NBLGRC(NRERR) * DYLGRC(NRERR)
+C
+C        POSITION EN HAUT A GAUCHE
+         XRECT(NRERR) = LAPXFE - 2*ECARRC - DXRECT(NRERR)
+         YRECT(NRERR) = MAX( ECARRC, YRECT(NRLGSA) )
+C
+C        LE TRACE DU TEXTE DE L'AVERTISSEMENT
+         CALL RECTTX( NRERR , KERR , 0 , NA )
+C
+C        COPIE DES PARAMETRES POUR LE FUTUR EFFACEMENT
+         NBLGRC( NRERR0 ) = NBLGRC( NRERR )
+         NFRECT( NRERR0 ) = NFRECT( NRERR )
+         NBRECT( NRERR0 ) = NBRECT( NRERR )
+         NKRECT( NRERR0 ) = NKRECT( NRERR )
+         XRECT ( NRERR0 ) = XRECT ( NRERR )
+         YRECT ( NRERR0 ) = YRECT ( NRERR )
+         DXRECT( NRERR0 ) = DXRECT( NRERR )
+         DYRECT( NRERR0 ) = DYRECT( NRERR )
+C
+C        ARRET POUR PERMETTRE LA LECTURE DE L'AVERTISSEMENT
+         CALL SAIPTC( NOTYEV, NOPXX, NOPXY, I )
+C
+C        L'AVERTISSEMENT ou ERREUR EST EFFACE
+         CALL RECTEF( NRERR )
+C
+C        RESTAURATION DE LA FENETRE MEFISTO
+         CALL RESTAUREFENETRE
+C
+      ENDIF
+C
+      RETURN
+      END

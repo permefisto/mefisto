@@ -1,0 +1,52 @@
+{ ==================================================================== }
+{ MEFISTO Software     : January 27, 2023 version                      }
+{ USER's Name          : Alain Perronnet                               }
+{ Project Name         : tube2d   Computed Time 0.5 to 1.0             }
+{ Date                 : 23/01/27 18h 22m 40s                          }
+{ ==================================================================== }
+ 8; { FRACTIONAL UNSTEADY NAVIER-STOKES SOLVER  =================}
+ 2;
+ { CONJUGATE GRADIENT with CONDENSED STORAGE }
+ { INCOMPLETE FACTORISATION LEVEL? }
+ 1;
+ { INITIAL TIME? }
+ 0.5;
+ { FINAL TIME? }
+ 1;
+ { STEP of TIME? }
+ 0.01;
+ { NUMBER of ADDED SOLUTION VECTORS? }
+ 50;
+
+
+ 10; { DRAWING of VELOCITIES PRESSURES TEMPERATURES ===========}
+ 2;
+ { INITIAL and FINAL TIME of SOLUTIONS VECTORS to DRAW }
+ { INITIAL TIME? }
+ 0;
+ { FINAL TIME? }
+ 2;
+ 1;
+ { The PRESSURE drawings }
+ 9;
+ { In 2D SURFACE(X,Y,PRESSURE(X,Y)) }
+ 90;
+ { DRAWING of SOLUTION from Z }
+ 90;
+ { Continue the DRAWING }
+ @;
+ @;
+ @;
+ 2;
+ { The VELOCITY is drawn with ARROWS }
+ 90;
+ { DRAWING of VELOCITY ARROWS }
+ 90;
+ { Continue the DRAWING }
+ @;
+ @;
+ @;
+ @;
+
+CLOSE;
+

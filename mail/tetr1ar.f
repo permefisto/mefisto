@@ -1,0 +1,51 @@
+      SUBROUTINE TETR1AR( NBEF,   NUSOTE, NSAR1, NSAR2,
+     %                    MXTEAR, NBTEAR, NOTEAR )
+C+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+C BUT :    LISTER DANS NOTEAR LE NUMERO NOTETR DES NBTEAR TETRAEDRES
+C -----    d'ARETE NSAR1 NSAR2
+
+C ENTREES:
+C --------
+C NSAR1  : NUMERO DU SOMMET 1 DE L'ARETE
+C NUSOTE : LISTE DU NO DES SOMMETS DES NBEF TETRAEDRES ( POUR UN OBJET )
+C          NUSOTE(NTE,NST) NO XYZPOI DU SOMMET NST (1a4) DU TETRAEDRE NTE
+C MXTEAR : NOMBRE D'ENTIERS DU TABLEAU NOTEAR
+
+C SORTIES:
+C --------
+C NBTEAR : NOMBRE DE TETRAEDRES DE SOMMET NOST SI IERR=0
+C NOTEAR : NOTEAR(I) >0 NUMERO NOTETR DU TETRAEDRE I DE SOMMET NOST
+C+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+C AUTEUR : ALAIN PERRONNET Saint Pierre du Perray           Octobre 2020
+C2345X7..............................................................012
+      INTEGER  NBEF, NUSOTE(NBEF,4), NOTEAR(MXTEAR)
+
+C     NO DES TETRAEDRES DE SOMMET NSAR1
+      CALL TETR1ST( NBEF, NUSOTE, NSAR1, MXTEAR, NBTE1S, NOTEAR )
+
+C     ELIMINATION DES TETRAEDRES N'AYANT PAS LE SOMMET NSAR2
+      DO 10 N = 1, NBTE1S
+
+         NTE = NOTEAR( N )
+
+         DO K = 1, 4
+            IF( NUSOTE( NTE, K ) .EQ. NSAR2 ) GOTO 10
+         ENDDO
+
+         NOTEAR( N ) = 0
+
+ 10   ENDDO
+
+C     COMPRESSION DU TABLEAU NOTEAR
+      NBTEAR = 0
+      DO N = 1, NBTE1S
+         NTE = NOTEAR( N )
+         IF( NTE .GT. 0 ) THEN
+            NBTEAR = NBTEAR + 1
+            NOTEAR( NBTEAR ) = NTE
+         ENDIF
+      ENDDO
+
+      RETURN
+      END
+

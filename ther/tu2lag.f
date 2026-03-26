@@ -1,0 +1,97 @@
+      SUBROUTINE TU2LAG( D2PI,   NOAXIS, NBJEUX, JEU,
+     &                   NBPOLY, NPI,    POLY,   NODL,
+     &                   NOOBSF, NUMISU, NUMASU, LTDESU,
+     &                   F1,     F2,     POIDEL,
+     &                   UG,     ALPHA,
+     &                   RESULT )
+C ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+C BUT :    CALCUL de INTEGRALE COEF TEMP Ue**ALPHA  dX sur l'EF
+C -----    LAGRANGE ISOPARAMETRIQUE 2D SAUF TRIANGLE 2P1D DE DEGRE 1
+C
+C ENTREES:
+C --------
+C D2PI   : 2 FOIS PI
+C NOAXIS : 1 SI PROBLEME AXISYMETRIQUE, 0 SINON
+C X      : LES 2 COORDONNEES DES NBPOLY POINTS DE L'ELEMENT FINI
+C NBJEUX : NOMBRE DE JEUX DE DONNEES
+C JEU    : NUMERO DU JEU  DE DONNEES POUR CE CALCUL DE LA MATRICE ELEMENTAIRE
+C
+C NBPOLY : NOMBRE DE POLYNOMES DE L'ELEMENT SURFACE
+C NPI    : NOMBRE DE POINTS D INTEGRATION NUMERIQUE SUR LA SURFACE
+C POIDS  : LES NPI POIDS DE LA FORMULE D INTEGRATION
+C POLY   : VALEUR DES POLYNOMES DE BASE AUX POINTS D'INTEGRATION
+C          POLY(I,L)= P(I) (XL)
+C
+C NODL   : NUMERO DE DEGRE DE LIBERTE GLOBAL DES NBPOLY DL LOCAUX
+C NOOBSF : NUMERO DE L'OBJET SURFACE DE CET ELEMENT
+C NUMISU : NUMERO MINIMAL DES OBJETS SURFACES
+C NUMASU : NUMERO MAXIMAL DES OBJETS SURFACES
+C LTDESU : TABLEAU DES ADRESSES DU TABLEAU DES DONNEES CONDUCTIVITE DES SURFACES
+C
+C F1     : COORDONNEES XX DES NPI POINTS D INTEGRATION DE L ELEMENT
+C F2     : COORDONNEES YY DES NPI POINTS D INTEGRATION DE L ELEMENT
+C POIDEL : DELTA * POIDS(NPI) DES NPI POINTS D INTEGRATION
+C UG     : VECTEUR SOLUTION A ELEVER A LA PUISSANCE ALPHA
+C ALPHA  : ENTIER EXPOSANT DE Ue
+C
+C SORTIES:
+C --------
+C RESULT : AJOUT de l'INTEGRALE COEF_TEMP  Ue ** ALPHA  dX  de cet EF
+C ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+C AUTEUR : ALAIN PERRONNET St PIERRE DU PERRAY & LJLL UPMC  JANVIER 2010
+C23456---------------------------------------------------------------012
+      include"./incl/gsmenu.inc"
+      include"./incl/donthe.inc"
+      include"./incl/cthet.inc"
+      include"./incl/cnonlin.inc"
+C
+      DOUBLE PRECISION D2PI
+      DOUBLE PRECISION POLY(NBPOLY,NPI),
+     %                 F1(NPI),F2(NPI),POIDEL(NPI)
+      INTEGER          LTDESU( 1:MXDOTH, 1:NBJEUX, NUMISU:NUMASU )
+C
+      DOUBLE PRECISION DELTA, XYZPI(3)
+      DOUBLE PRECISION UG(1:*)
+      DOUBLE PRECISION COEFTE, UEL
+      DOUBLE PRECISION RESULT
+      INTEGER          ALPHA, NODL(NBPOLY)
+C
+C     ===========================================================
+C     CONTRIBUTION DE LA SURFACE AU COEFFICIENT DE LA TEMPERATURE
+C     ===========================================================
+      IF( LTDESU(LPCOET,JEU,NOOBSF) .GT. 0 ) THEN
+         DO L=1,NPI
+C
+C           CALCUL DE LA SOLUTION AU POINT D'INTEGRATION L
+            UEL = 0D0
+            DO K = 1, NBPOLY
+               UEL = UEL + POLY(K,L) * UG( NODL(K) )
+            ENDDO
+            TEMPEL = UEL
+C
+C           RECHERCHE DU COEFFICIENT DE LA TEMPERATURE AU POINT D'INTEGRATION L
+            XYZPI(1) = F1(L)
+            XYZPI(2) = F2(L)
+            XYZPI(3) = 0D0
+            CALL RECOET( 3, NOOBSF, 3, XYZPI,
+     %                   LTDESU(LPCOET,JEU,NOOBSF), COEFTE )
+C
+            IF( NOAXIS .NE. 0 ) THEN
+C              EF AXISYMETRIQUE
+               DELTA = POIDEL(L) * D2PI * F1(L)
+            ELSE
+C              EF NON AXISYMETRIQUE
+               DELTA = POIDEL(L)
+            ENDIF
+C
+C           COEF TEMPERATURE = COEFTE * POIDS * DELTA
+            COEFTE = COEFTE * DELTA
+C
+C           CONTIBUTION A INTEGRALE( A ( [Pol(bl] {ue} ) ** ALPHA )
+            RESULT = RESULT + COEFTE * UEL ** ALPHA
+C
+         ENDDO
+      ENDIF
+C
+      RETURN
+      END

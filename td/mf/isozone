@@ -1,0 +1,3 @@
+variable ISOZONE 'trace iso ou zone' entier
+( 1 :  'ISOVALEURS'
+, 2 :  'ZONES COLOREES' ) ;

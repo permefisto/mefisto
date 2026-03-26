@@ -1,0 +1,101 @@
+{ ==================================================================== }
+{ Software MEFISTO     : October 10-th 2007 Version                    }
+{ USER's Name          : Alain Perronnet                               }
+{ Project Name         : hexa                                          }
+{ Date                 : 10/10/2007                                    }
+{ PROJECT              : Test 3D THERMO-ELASTICITY                     }
+{ ==================================================================== }
+@;
+@;
+{ DATA ----------------------------------------------------------------}
+
+{Rot MASS Density, Cp MASSIC HEAT and its product RotCp}
+DefVar Rot, Cp, RotCp; Rot=7800;     {Acier}
+            Cp=1500; RotCp= Rot * Cp;
+
+{Conductivity}
+DefVar k; k=26; {W m-1 K-1 Acier inox at 20 Celsius degrees};
+
+{Heat transfer coefficient on Fourier-Robin surfaces}
+DefVar gTOP, gBASE, gFRONT, gBACK;
+gTOP=50; gBASE=gTOP; gFRONT=gTOP; gBACK=gTOP;
+DefVar RefTemp; RefTemp=20;
+DefVar AirTemp; AirTemp=20;
+
+
+{ ==================== The STEADY HEAT PROBLEM  ============================}
+
+1;  { NAME of the OBJECT to TREAT }
+ hexahedron;
+
+2;  { DATA for the STEADY HEAT PROBLEM }
+
+ { VOLUME: HEXAHEDRON }
+  2;  { density HEAT CONDUCTIVITY }
+     3; { 3D HOMOGENOUS ISOTROPIC material }
+     k; { CONDUC constant value of the material conductivity }
+ @;
+
+ { SURFACE: TOP }
+  1; { ECHANGE heat transfer coefficient  Robin condition }
+      1; {constant heat transfer coefficient}
+      gTOP; {heat transfer coefficient value}
+  2;  { source of heat imposed at the boundary }
+      1; { constant source }
+      gTOP*AirTemp; { value }
+  @;
+
+ { SURFACE: BASE }
+  1; { ECHANGE heat transfer coefficient  Robin condition }
+      1; {constant heat transfer coefficient}
+      gBASE; {heat transfer coefficient value}
+  2;  { source of heat imposed at the boundary }
+      1; { constant source }
+      gBASE*AirTemp; { value }
+  @;
+
+ { SURFACE: RIGHT }
+  3;  { CONTACT imposed temperature  Dirichlet condition }
+      1;  { constant temperature }
+      50; { Value of temperature }
+  @;
+
+ { SURFACE: LEFT }
+  3;  { CONTACT imposed temperature  Dirichlet condition }
+      1;  { constant temperature }
+      20; { Value of temperature }
+   @;
+
+ { SURFACE: FRONT }
+  1; { ECHANGE heat transfer coefficient  Robin condition }
+      1; {constant heat transfer coefficient}
+      gFRONT; {heat transfer coefficient value}
+  2;  { source of heat imposed at the boundary }
+      1; { constant source }
+      gFRONT*AirTemp; { value }
+  @;
+
+ { SURFACE: BACK }
+  1; { ECHANGE heat transfer coefficient  Robin condition }
+      1; {constant heat transfer coefficient}
+      gBACK; {heat transfer coefficient value}
+  2;  { source of heat imposed at the boundary }
+      1; { constant source }
+      gBACK*AirTemp; { value }
+  @;
+
+ { POINT: PTDIAG }
+@;
+@;
+
+3;  { SOLUTION of the STEADY LINEAR HEAT PROBLEM }
+    1; { RESOLUTION pb THERMIQUE LINEAIRE STATIONNAIRE }
+    1; { Solution by factorization CHOLESKY on skyline storage }
+   {2;  Solution by Conjuguate Gradient preconditioned by levels }
+   {1;  1 level for the preconditioner }
+@;
+
+
+8; {DRAWING of the temperature or fluxes }
+  2; 3; 1; 11; 1; 12; 90; {Drawing of temperature on a plane section x=Cte}
+CLOSE;

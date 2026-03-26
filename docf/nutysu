@@ -1,0 +1,768 @@
+Quelques NOTIONS pour MAILLER une SURFACE:
+==========================================
+
+Le maillage d'une SURFACE est un ensemble de EF, TRIANGLES et/ou 
+QUADRANGLES stockes dans 2 TMS a___xyzsommet  et  a___nsef,
+definis par:
+
+- NBSOM sommets de coordonnees (Xi,Yi,Zi) dans le TMS a___xyzsommet
+- le tableau du no des 4 sommets (NS1, NS2, NS3, NS4) avec NS4=0
+si l'EF est un triangle, (1<=NS<=NBSOM) des NBEFOB EF
+
+               *V3                         V4*
+              .    .                        .     .
+             .        .                    .             *V3
+            .           .                 .               .
+           .               .             .                 .
+        V1*..................*V2      V1*..................*V2
+          un triangle droit              un quadrangle droit
+          (P1 interpolation)             (Q1 interpolation)
+
+Eventuellement,
+- NBTGS tangentes de composantes (TXi,TYi,TZi) dans le TMS a___xyzsommet
+- le tableau des 8 numeros de tangentes NTG1 a NTG8 aux aretes
+si l'EF est COURBE (pour un triangle, NTG7=NTG8=0) dans le TMS a___nsef
+En chaque sommet d'un EF courbe, il y a 2 tangentes aux 2 aretes.
+NTGi=0 rend le vecteur tangent egal au vecteur de l'arete.
+
+Ce stockage permet une parametrisation de l'EF par des polynomes
+par morceaux de degre 3 pour rendre l'INTERPOLATION C1-CONTINUE
+
+             ^       ^
+            /         \              ^
+           /    *V3 .  \             |      V4* .
+          /  .       .  \            |   .        .       ^
+         / .            .\           |  .             *V3 |
+        / .              .\          | .                . |
+       /.                 .\         |.                  .|
+      V*...................*V2      V1*..................*V2
+        un triangle courbe             un quadrangle courbe
+      P3 interpolation par morceaux    P3 interpolation par morceaux
+      due a Clough and Tocher          due a Fraeijs de Veubeke and Sander
+
+En fait, si un TRIANGLE est subdivise en M**2 triangles,
+ou si un QUADRANGLE est subdivise en MxN quadrangles
+il est suffisant de stocker ces 1 ou 2 entiers pour obtenir
+une numerotation implicite des sommets et tangentes des EF.
+Dans ce cas le maillage est dit STRUCTURE.
+Sinon, il est dit NON STRUCTURE.
+
+La qualite des EF DEPEND de la qualite des aretes des lignes 
+de la frontiere de la surface car le maillage de cette frontiere
+est respectee dans celle de la surface.
+=> une augmentation ou diminution REGULIERE de la longueur des aretes
+est necessaire!
+
+Attention:
+L'Utilisateur peut fournir la fonction
+TAILLE_IDEALE(x,y,z) pour obtenir une triangulation ou la
+longueur des aretes autour du point (x,y,z) sera le resultat
+de l'appel de cette fonction au point (x,y,z)!
+La presence de la fonction suffit a son utilisation.
+
+Par contre pour creer des maillages structures, cette fonction,
+meme presente, ne sera pas utilisee car elle contredit les principes
+des algorithmes de creation de maillages structures.
+
+Exemple d'entree de la fonction Taille_Ideale:
+DefVar lxf,lh2,lh3;
+lh2=0.3;
+lh3=0.7;
+lxf=max(lh2,lh3);
+
+DefFonc Taille_Ideale(x,y,z);
+  Taille_Ideale=0.45;
+  Si x<lxf and y>-(lh3+lh2)*1.2
+    Alors Taille_Ideale=0.15;
+  Else
+    Si x<lxf and y>-(lh3+lh2)*1.8
+    Alors Taille_Ideale=0.28;
+    FinSi;
+  FinSi;
+FinFonc;
+
+Ici, majuscules et minuscules ne sont pas significatives!
+
+
+Une SURFACE peut etre definie par l'une des OPTIONS SUIVANTES:
+-------------------------------------------------------------
+
+1 : QUADRANGLE ALGEBRIQUE STRUCTURE OU NON
+Le QUADRANGLE, eventuellement deforme,est defini a partir 
+de 4 lignes definissant son contour. 
+Chacune des 4 lignes peut etre une ligne union de lignes.
+Une INTERPOLATION POLYNOMIALE transporte une quadrangulation
+du carre unite sur le quadrangle en respectant les 4 lignes
+du  contour.   
+
+ATTENTION:
+- soit, le NOMBRE des ARETES des LIGNES 1 et 3 est le MEME
+        et le maillage est une quadrangulation structuree; 
+- soit, le NOMBRE des ARETES des LIGNES 2 et 4 est le MEME
+        et le maillage contient des triangles et des quadrangles
+        et n'est pas structure et de plus, la difference des
+        nombres d'aretes des 2 lignes opposees doit etre inferieure
+        au nombre commun des aretes des 2 autres lignes.
+        Plus precisement :
+        --------L3-----------  Ni le nombre d'aretes de la ligne Li
+        |                   |    soit N1=N3 et N2=N4   => cas 1
+        L4                 L2    soit N1=N3 et N4<N2 et N1>=N2-N4
+        |                   |    soit N2=N4 et N3<N1 et N2>=N1-N3
+        --------L1-----------                          => cas 2
+- soit, Le NOMBRE des ARETES des LIGNES 1 2 3 4 est QUELCONQUE
+        et le maillage est une triangulation non structuree (cas 3)
+        ATTENTION: la longueur des aretes du plus grand cote
+                   doit etre INFERIEURE a la somme des 3 autres.
+
+2 CAS POSSIBLES :
+ 1. LAGRANGE et la quadrangulation est l'IMAGE du CARRE UNITE
+    maille regulierement (par des rectangles).       
+ 2. LAGRANGE et la quadrangulation est l'IMAGE du CARRE UNITE
+    maille irregulierement en fonction de la coordonnee curviligne
+    des points de chaque ligne qui definit alors des quadrangles
+    (methode de COOK, GORDON, HALL)       
+
+Exemple: S1; I; 1;  L1; L2; L3; L4;  2;
+         Definit une quadrangulation irreguliere de
+         contour les aretes des lignes L1 L2 L3 L4
+         si le nombre d'aretes des cotes 1 3 sont egaux et
+         si le nombre d'aretes des cotes 2 4  sont egaux
+
+ATTENTION: Un recouvrement d'EF ou une sortie du contour peuvent
+apparaitre si les lignes presentent de violentes oscillations.
+Ce cas n'est pas detecte. Une visualisation montrera la validite
+ou non du maillage. Ce probleme est corrige dans le cas ELLIPTIQUE
+
+2 : QUADRANGLE ELLIPTIQUE STRUCTURE PLAN
+Le QUADRANGLE, eventuellement deforme,est defini a partir 
+de 4 lignes definissant son contour. 
+Chacune des 4 lignes peut etre une ligne union de lignes.
+La RESOLUTION d'un SYSTEME d'EQUATIONS aux DERIVEES PARTIELLES
+ELLIPTIQUES NON LINEAIRES (Methode de WINSLOW) transporte une
+quadrangulation du carre unite sur le quadrangle en respectant
+les 4 lignes du  contour. 
+ATTENTION:
+Le NOMBRE des ARETES des LIGNES 1 et 3 doit etre le meme
+Le NOMBRE des ARETES des LIGNES 2 et 4 doit etre le meme 
+           --------L3-----------
+           |                   |  
+           L4                 L2
+           |                   |
+           --------L1-----------  
+Exemple: S2; I; 2; L1; L2; L3; L4;
+         Definit une quadrangulation de contour les aretes
+         des lignes L1 L2 L3 L4 
+
+ATTENTION: Le recouvrement d'EF ou une sortie du contour sont corriges
+automatiquement grace a des FONCTIONS de CONTROLE places sur le
+contour et etendues a l'interieur du domaine
+Il est possible d'indiquer 
+-le nombre maximal d'iterations de correction a effectuer,
+-un facteur par cote pour obtenir un ecrasement ou une expansion 
+ des quadrangles EF proches (cf DOC de FADI2D)
+Exemple: S2; I; 2; L1; L2; L3; L4;  5; 0.1; 1; 2; 0;
+         Definit une quadrangulation de contour les aretes
+         des lignes L1 L2 L3 L4 avec des quadrangles 
+         10 fois moins haut que large pres de L1
+         carres au voisinage de L2
+          2 fois plus haut que large pres de L3 
+         et sans amelioration des tailles pres de L4
+         (mais avec amelioration des angles vers 90 degres)
+REMARQUE: En general, la QUADRANGULATION ELLIPTIQUE est PLUS
+         "ORTHOGONALE" que la QUADRANGULATION ALGEBRIQUE mais 
+          aussi PLUS COUTEUSE.
+          Pour un RECTANGLE de cotes decoupes regulierement,
+          utiliser de preference la methode algebrique 
+          plus economique et dans ce cas autant "orthogonale"
+
+3 : QUADRANGLE STRUCTURE B-SPLINE A PARTIR DE POINTS D'INTERPOLATION
+La surface B-spline uniforme polynomiale est definie a partir de
+-son nombre d'aretes en X et Y
+(En fait X et Y designent ici les 2 parametres d'image la B-spline)
+-la raison geometrique de taille des aretes en X et Y
+-le degre des polynomes en X et Y 
+-le nombre de points d'interpolation en X et Y (>degre>=1)
+ATTENTION: Pour obtenir un passage par les POINTS d'INTERPOLATION
+des quadrangles generes, il faut choisir des raisons egales a 1 et
+un nombre d'aretes multiple de (nombre de points d'interpolation-1)
+En effet, la surface passe par les points, mais par forcement le
+maillage qui en est une approximation.  
+Exemple: CAPOT_VOITURE;  I; 3;
+         defvar nax1,nay1; nax1=6; nay1=9; {variables utilisateur}
+         nax1 {SOMMETS EN X}; nay1 {SOMMETS EN Y };
+         1    {RAISON EN X};   1   {RAISON  EN Y };  
+         2    {DEGRE  EN X};   3   {DEGRE   EN Y };
+         3    {POINTS EN X};   4   {POINTS  EN Y };
+         C3.1; C2.1; C1.1;  C3.2; C2.2; C1.2;
+         C3.3; C2.3; C1.3;  C3.4; C2.4; C1.4; 
+         {les points d'interpolation}
+
+4 : QUADRANGLE B-SPLINE INTERPOLATION de SOMMETS de LIGNES
+La surface B-spline uniforme polynomiale est definie a partir de
+-son nombre d'aretes en X et Y
+(En fait X et Y designent ici les 2 parametres d'image la B-spline)
+-la raison geometrique de taille des aretes en X et Y
+-le degre des polynomes en X et Y 
+-le nombre en V de lignes(U) d'interpolation
+-le nom des lignes(U) d''interpolation
+
+6 : TRIANGLE STRUCTURE TRANSFINI
+Le triangle est defini par les aretes des 3 lignes formant
+chacune un cote.
+Le nombre d'aretes (>0) peut ou non etre le meme pour les 3 lignes. 
+Si c'est le meme, une triangulation structuree est generee
+sinon, une triangulation non structuree est creee.
+Dans ce dernier cas, la longueur des aretes du plus grand cote
+doit etre INFERIEURE a la somme des 2 autres.
+
+ATTENTION: Un recouvrement d'EF ou une sortie du contour peuvent
+apparaitre si les lignes presentent de violentes oscillations.
+Ce cas n'est pas detecte. Une visualisation montrera la validite
+ou non du maillage.  
+Exemple:   S6; I; 6; COTE1; COTE2; COTE3;
+La triangulation de la surface S9 respecte les sommets et aretes
+du contour forme des 3 lignes COTE1 COTE2 COTE3, l'ensemble devant
+constituer une ligne fermee, pas trop distante d'un triangle.
+
+8: QUADRANGULATION d'un CERCLE ou CARRE 2D
+Un carre central (ou noyau) est decoupe regulierement
+au centre de couches peripheriques
+Le nombre d'aretes dans une des 2 directions du noyau et
+le nombre de couches peripheriques
+la largeur du noyau et le diametre total sont a donner
+
+9 : TRIANGULATION DELAUNAY D'UN CONTOUR DE LIGNES FERMEES 
+recouvert par un ARBRE-4 de Triangles Equilateraux.
+Le domaine a mailler est defini par une liste de LIGNES FERMEES
+La premiere est la ligne ENVELOPPANT toutes les autres.
+Le nombre NBLFTR de LIGNES FERMEES du CONTOUR du domaine a mailler
+est superieur ou egal a 1.
+La premiere ligne est toujours celle qui contient geometriquement
+toutes les autres   
+
+Exemple:                 L1            (dite ENVELOPPE)
+          ------------------------------------------------------
+         |                                                      |
+         |                                 /\                   | 
+         |    ---------                   /  \ L3               | 
+         |   |         |                 /    \                 |   
+         |   |         |L2               \    /                 |
+         |   |         |                  \  /                  | 
+         |    ---------                    \/                   | 
+         |                                                      |  
+          ------------------------------------------------------  
+Ici, 3 LIGNES L1; L2; L3; a donner dans cet ordre puisque L1
+"contient" les lignes L2 et L3. La triangulation s'effectuera
+"entre" L1 et L2 L3. L2 et L3 apparaissent comme des "TROUS".
+
+L'ensemble des sommets des aretes de ces lignes constitue une
+partie de l'ensemble des futurs sommets de la triangulation.
+Ces sommets sont joints 3 a 3 pour former la triangulation.
+Des points INTERNES sont ajoutes a partir d'une GRILLE REGULIERE
+de triangles EQUILATERAUX de taille fixee ARETMX.
+Ce reel ARETMX designe la longueur de l'arete de la grille
+des triangles equilateraux qui recouvre l'objet complet.
+Des triangles reguliers, de cote une arete de cette taille,
+seront ensuite generes.      
+
+Si l'Utilisateur N'a PAS donne la fonction
+DefFonc Taille_Ideale(x,y,z); ...
+Alors
+  les triangles trop volumineux seront reduits par
+  introduction de leur barycentre.   
+Sinon
+  La longueur des triangles verifiera Taille_Ideale(x,y,z)
+
+C'est la methode pour indiquer autour du point (x,y,z)
+la longueur des aretes des triangles!
+
+Exemple de donnee de cette fonction:
+DefVar lxf,lh2,lh3;
+lh2=0.3;
+lh3=0.7;
+lxf=max(lh2,lh3);
+
+DefFonc Taille_Ideale(x,y,z);
+  Taille_Ideale=0.45;
+  Si x<lxf et y>-(lh3+lh2)*1.2
+    Alors Taille_Ideale=0.15;
+  Sinon
+    Si x<lxf et y>-(lh3+lh2)*1.8
+    Alors Taille_Ideale=0.28;
+    Finsi;
+  FinSi;
+FinFonc;
+
+D'autres points INTERNES sont ajoutes pour homogeneiser.
+Enfin, la triangulation est amelioree par des iterations placant
+un sommet interne au barycentre de ses voisins et par reduction
+de la topologie (1 sommet appartient a 5 ou 6 ou 7 triangles).
+Les eventuelles aretes perdues des lignes initiales sont 
+imposees dans l'ensemble des aretes de la triangulation.
+Exemple: CERCLE; I; 9;
+1.5; 2; 1; LIGNE_CERCLE; TROU; PT_INTERNE; 0.01;
+Definit une triangulation de l'interieur du domaine de contour
+les lignes fermees LIGNE_CERCLE et TROU;
+avec une arete des triangles equilateraux formant la grille des
+sommets internes (grille de fond) de taille egale a 1.5;
+1 point interne de nom  PT_INTERNE autour duquel les aretes
+des triangles doivent etre de longueur inferieure a 0.01
+
+10: DONNEE DES TABLEAUX XYZSOMMET ET NSEF
+Ces 2 tableaux sont a initialiser valeur apres valeur
+Exemple: UN_TRIANGLE_EQUILATERAL; I; 10;
+         3;0;3;   0;0;0; 1;0;0;  0.5;sqrt(3)/2;0; {3 sommets 0tg}
+         3; 0; 4; 0; {surface notclosed 4sommets/EF 0tg}
+         1; 0; 0; 0; {1triangle 0tg non structure}
+         1; 2; 3; 0; {4 no des sommet}
+definit une surface formee d'un triangle equilateral de cote 1
+
+11: RECTANGLE STRUCTURE PLAN  
+La QUADRANGULATION du RECTANGLE [0,NBINQX] * [0,NBINQY] est
+formee de carres de cotes de longueur 1.
+Exemple: RECTANGLE11; I; 11; 7; 4;
+Definit 7*4=28 carres de longueur 1, avec 7 ARETES en X et 4 en Y
+Toute TRANSFORMATION est ensuite utilisable sur ce rectangle.
+
+12: TRIANGLE RECTANGLE STRUCTURE PLAN 
+La TRIANGULATION du TRIANGLE (0,0) (NBINTR,0) (0,NBINTR) est
+formee de TRIANGLES RECTANGLES UNITES.
+Exemple: TRIANGLE12; I ; 12; 6;
+Definit 6*6=36 triangles rectangles unites  
+Toute TRANSFORMATION est ensuite utilisable sur ce triangle.
+
+13: QUADRANGULATION D'UNE LIGNE CONVEXE FERMEE AVEC UN
+NOMBRE PAIR D'ARETES. 2 aretes consecutives de la ligne sont
+jointes au barycentre des sommets pour former un quadrangle.
+Au total, le nombre de quadrangles est egal a la moitie du nombre
+des aretes de la ligne convexe fermee.
+
+14: TRANCHES A PARTIR D'UNE LIGNE GENERATRICE ou EXTRUSION
+La ligne generatrice subit N deplacements qui creent autant de
+tranches ou couches. Les M aretes generent N*M quadrangles 
+ATTENTION: Ces QUADRANGLES ne doivent pas degenerer en
+TRIANGLES ou ARETES ou POINTS. 
+Par contre, la derniere ligne peut redonner la premiere, formant
+ainsi une couronne.  
+Le DEPLACEMENT de la LIGNE GENERATRICE peut etre definie selon 7 options:
+0: a la ligne initiale est associe un repere orthonorme E0
+   defini par 3 points P01 P02 P03 
+   P01 est l'origine
+   P01-P02 definit le vecteur canonique E1
+   E1 PRODUIT VECTORIEL P01-P03 normalise definit E2
+   E3 = E1 PRODUIT VECTORIEL E2
+   A tout deplacement I sont associes 3 points qui definissent
+   de la meme maniere un repere EI.
+   La TRANSFORMATION de la ligne initiale est alors celle 
+   definie par le deplacement du repere E0 en le repere EI. 
+   Les sommets des aretes des lignes transformees sont relies 2 a 2.
+Exemple: S14.0; I; 14; LIGNE_INITIALE; 0; 2; {nombre de tranches}
+         P01;P02;P03;  P11;P12;P13;   P21;P22;P23;
+        {les 3 points de definition des reperes}
+1: 3 lignes definissent les transformations de la ligne 
+   Meme methode que precedemment, les 3 points de definition
+   etant les sommets des aretes des 3 lignes
+   Le premier sommet des 3 lignes definit P01 P02 P03, ...  
+Exemple: S14.1; I; 14; LIGNE_INITIALE; 1; L1; L2; L3;
+        {les 3 lignes de sommets definissant les reperes}
+2: lignes translatees d'une cote Z>0 constante (empilement)
+   La ligne precedente est translatee d'une cote Z constante. 
+Exemple: S14.2; I; 14; LIGNE_INITIALE; 2; 3; {tranches}
+         6; {cote maximale a decouper en 3 tranches d'epaisseur Z=2}
+3: lignes translatees d'une cote z>0 precisee pour chaque ligne 
+   La ligne initiale est translatee d'une cote Z variable
+   ATTENTION: Il s'agit de la cote ABSOLUE et non relative
+              a la ligne precedente  
+Exemple: S14.3; I; 14; LIGNE_INITIALE; 3; 2; {tranches}
+         4; 7; {cote absolue de chacune des 2 tranches}
+4: le  vecteur  translation  (x y z) valable pour toutes les tranches 
+   La ligne precedente est translatee d'un VECTEUR CONSTANT non nul 
+Exemple: S14.4; I; 14; LIGNE_INITIALE; 4; 5; {tranches}
+   1; 2; 3; {les 3 composantes du vecteur constant de translation}
+5: les vecteurs translations (x y z) definis un par tranche  
+   La ligne precedente est translatee d'un VECTEUR non nul 
+Exemple: S14.5; I; 14; LIGNE_INITIALE; 5; 2; {tranches}  1; 2; 3;
+{les 3 composantes de la 1-ere translation relative a la ligne initiale}
+ 1; 2; 5;
+{les 3 composantes de la 2-eme translation relative a la ligne precedente}
+{les translations s'ajoutent}
+6: 3 fonctions X Y Z(no_couche,x,y,z) transforment la ligne initiale
+   Les sommets de la ligne initiale subissent une transformation
+   de R3 dans R3 definie par 3 fonctions utilisateur. 
+   Par exemple: ABSCISSE(no_tranche,x,y,z)
+                ORDONNEE(no_tranche,x,y,z)
+                COTE    (no_tranche,x,y,z)
+   Tout sommet (x,y,z) de la ligne initiale devient le sommet
+   (ABSCISSE(no_tranche,x,y,z), ORDONNEE(no_tranche,x,y,z),
+    COTE    (no_tranche,x,y,z)) de la ligne de la tranche no_tranche  
+Exemple: S14.6; I; 14; LIGNE_INITIALE; 6; 5; {tranches}
+ ABSCISSE; ORDONNEE; COTE; {Le nom des 3 fonctions de la transformation}
+
+15: ROTATION D'UNE LIGNE AUTOUR D'UN AXE 
+La ligne generatrice subit N rotations qui creent autant de
+tranches. Les M aretes generent N*M quadrangles.
+Des sommets de la ligne peuvent etre sur l'axe de rotation. 
+Les quadrangles deviennent alors des triangles. 
+L'angle total de rotation peut atteindre 360 degres.
+Exemples: 
+S15.0; I; 15; LIGNE_INITIALE; P1_AXE; P2_AXE; 36; {rotations}
+0; {angles constants} 10; {degres} 
+Definit une surface par 36 rotations cumulees de 10 degres 
+des aretes de la LIGNE_INITIALE.                           
+
+S15.1; I; 15; LIGNE_INITIALE; P1_AXE; P2_AXE; 4; {rotations}
+1; {angles a preciser pour chaque rotation}
+20; 30; 40; 50;
+{les rotations s'ajoutent par rapport a la ligne initiale} 
+Definit une surface par 4 rotations de 20 puis 50 puis 90
+puis 140 degres de la ligne initiale autour de l'axe defini
+par les points P1_AXE et P2_AXE
+
+16: COUCHES GROSSIES ou EXTRUDEES D'UNE LIGNE 2D
+La ligne initiale doit avoir ses aretes toutes decrites dans le meme sens
+Dans la direction normale aux aretes une quadrangulation est effectuee
+composee de NBCOLI couches, chacunes d'une petite epaisseur EPCOLI
+pour representer des couches limites. 
+Ensuite, NBDECO autres couches sont quadrangulees avec pour epaisseur une
+variation lineaire entre EPCOLI et la derniere epaisseur EPDECO a fournir
+Attention: Si les normales aux aretes se croisent, la quadrangulation
+eloignee de la ligne initiale peut devenir INCORRECTE par croisements...
+Il faut se limiter a un voisinage de la ligne...
+Les 2 epaisseurs fournies doivent etre de meme signe.
+Si une epaisseur est negative, les 2 epaisseurs sont supposees negatives,
+les couches sont alors faites de l'autre cote de la ligne initiale.
+
+17: 1/8 DE LA SURFACE D'UNE SPHERE
+La triangulation reguliere generee est obtenue par subdivision
+reguliere d'un triangle 
+de sommet 1 Centre + Rayon * (1,0,0)
+de sommet 2 Centre + Rayon * (0,1,0)
+de sommet 3 Centre + Rayon * (0,0,1) 
+et projection des sommets intermediaires sur la sphere
+Exemple: DEFVAR NT; NT=6; SPHERE_8; I; 17; NT**2; 1; CENTRE;
+Definit 36 triangles de sommets sur la huitieme de sphere de centre
+le point CENTRE et de rayon 1 situe dans le secteur X Y et Z >0
+
+18: 1/1 DE LA SURFACE D'UNE SPHERE
+La triangulation reguliere generee est obtenue par subdivision
+reguliere des 20 triangles equilateraux d'un icosaedre ayant
+ses 12 sommets sur la sphere et projection des sommets ainsi
+ajoutes sur la sphere. 
+Exemple: DEFVAR N; N=5; SPHERE18; I; 18; 20*N**2; 1; CENTRE;
+Definit 500 triangles de sommets sur la sphere de centre
+le point CENTRE et de rayon 1. 
+ATTENTION: Les triangles, sauf cas N=1, ne sont pas equilateraux
+ 
+19: TRIANGULATION2 DE LIGNES FERMEES PAR SUBDIVISION
+Les donnees sont les memes que 9: TRIANGULATION1.
+Seul l'algorithme de triangulation differe.
+Il cree des triangles a partir des aretes des lignes fermees,
+puis ajoute des points internes d'une grille plus ou moins
+fine selon la valeur de ARETMX ou de la fonction TAILEE_IDEALE(x,y,z).
+Puis, la qualite des triangles est affinee.
+
+20: SURFACES EXTRUDEES A PARTIR d'UN POLYGONE PLAN
+Un polygone ouvert ou ferme est translate selon le vecteur
+d'extremites 2 points.
+Si le polygone est ferme, la surface finale triangulee est fermee.
+(Frontiere d'un solide)
+2 possibilites pour definir la taille des aretes:
+. Option 0 du menu debut: la longueur constante des aretes est donnee.
+. Option donnee de la fonction TAILLE_IDEALE(x,y,z) qui definit
+au point x,y,z la longeur des aretes qui en partent.
+
+21: SURFACE FERMEE d'UNE BOITE ou PARALLELIPIPEDE RECTANGLE
+A partir d'un point CENTRE, une longueur en X, une largeur en Y,
+une hauteur Z, la surface d'un PARALLELIPIPEDE RECTANGLE, c-a-d ses
+6 faces rectangulaires, est triangulee selon 
+soit, l'Option 0 du menu debut: La longueur constante des aretes
+soit, la fonction TAILLE_IDEALE(x,y,z) ecrite par l'utilisateur.
+
+22: SURFACE FERMEE d'UN CYLINDRE ou CONE
+L'axe est defini par 2 points, inferieur et superieur.
+Dans le plan perpendiculaire a l'axe, les rayons, inferieur et
+superieur definissent les 2 cercles.
+Si les rayons sont differents, le cylindre devient un tronc de cone.
+Les 3 faces sont triangulees selon
+soit, l'option 0 du menu debut: La longueur constante des aretes
+soit, la fonction TAILLE_IDEALE(x,y,z) ecrite par l'utilisateur.
+
+23: SURFACE FERMEE d'UN TORE
+Le point CENTRE du tore, un point definissant l'axe propre X,
+un point definissant l'axe propre Y, le GRAND rayon et le PETIT
+rayon definissent le tore.
+Avec l'option 0 du menu debut: la longueur constante des aretes
+definit une quadrangulation de sa surface fermee.
+Avec la fonction TAILLE_IDEALE(x,y,z), la surface du tore
+est triangulee.
+
+27: SECTEUR ANGULAIRE d'UN TRONC de CONE ou CYLINDRE
+La surface est celle d'un quadrangle qui s'appuie sur tout ou
+une partie d'un cylindre de base inferieure un arc de cercle
+dans le plan Z=0 et de base superieure un arc de cercle dans
+un plan Z=COTE(<>0) du POINT superieur de l'AXE.
+L'angle constant se mesure en degres a partir de l'axe OX. 
+L'axe du cylindre est defini par l'origine et un point a donner.
+Les tailles des aretes tant dans le secteur angulaire qu'en
+hauteur peuvent etre en progression geometrique ou constantes.
+Exemple: S21; i; 21;
+18; {aretes sur l'angle}
+1; {taille constante}
+2; 3; {rayons du cercle en Z=O et du cercle superieur}
+180;  {degres pour 1/2 cylindre (360 est permis}
+5;{aretes en hauteur} 1.2; {de tailles croissantes selon cette raison}
+CENTRE_CERCLE_SUP; {Definit l'axe ORIGINE-ce POINT}
+Definit un demi-cylindre, d'axe ORIGINE-CENTRE_CERCLE_SUP,
+avec 18*5=90 quadrangles.
+
+28: SURFACE AVEC CONGE 
+Une surface CONGE est definie par 2 lignes, elles memes definies par
+3 points et un rayon d'arc de cercle tangent
+Le conge est une surface reglee s'appuyant sur ces 2 lignes.
+Une quadrangulation structuree est generee.  
+                              P4--------------- .      *P5
+                                                   .
+                                                     .
+                        /                /            .
+              EPAISSEUR/                /              |
+                      /                /               |
+                                                       |
+                                                       P6
+                P1--------------- .      *P2      
+                                      .           /
+                                        .       /
+                                              /     /
+                                         .        /
+                                         |      /
+                                         |  
+                                         |
+                                         P3
+Exemple: S28; I; 28; 
+2.2; 2.5; {rayons du cercle 1 et 2}
+25; {aretes sur chacune des 2 lignes}
+10; {aretes dans l'epaisseur ou couches}
+P1_L1; P2_L1; P3_L1; 
+{ligne 1 partant de P1_L1 vers P2_L1 puis tangente a l'arc de cercle,
+puis tangente a P2_L1 P3_L1 et arrivant a P3_L1 et ne passant donc
+pas par P2_L1}      
+P1_L2; P2_L2; P3_L2; 
+{ligne 2 partant de P1_L2 vers P2_L2 puis tangente a l'arc de cercle,
+puis tangente a P2_L2 P3_L2 et arrivant a P3_L2 et ne passant donc
+pas par P2_L2}  
+
+29: MODIFIER un 2D ou 3D MAILLAGE AVEC MENU ET SOURIS
+A partir d'un maillage de triangles et/ou quadrangles divises en 
+2 triangles, a l'aide de la souris, il est possible de modifier le 
+maillage 2D ou 3D.
+
+  1: 'DEPLACER(Bouton1) ORBITER(Bouton2) ZOOMER(Bouton3) le MAILLAGE'
+      Sortie par la touche Echappement
+
+  2: 'DEPLACER un SOMMET en 3D'
+      2clics: Le 1-er designe le sommet; le second positionne le sommet
+
+  3: 'RETOUR aux XYZ INITIALES du SOMMET precedemment deplace.
+
+  4: 'SUPPRIMER un SOMMET du MAILLAGE'
+      Si sommet interne, retriangulation des triangles adjacents
+      sans ce sommet
+      Si sommet frontalier, suppression des sommets adjacents
+
+  5: 'AJOUTER un SOMMET DANS UN TRIANGLE'
+      1 clic interne a un triangle et a l'endroit du nouveau sommet
+      3 sous triangles sont crees dans le triangle initial
+
+  6: 'COUPER une ARETE COMMUNE a 2 TRIANGLES'
+      1 clic pour designer l'arete et ajout du sommet milieu de l'arete
+
+  7: 'ECHANGER une DIAGONALE de 2 TRIANGLES'
+      1 clic pour designer l'arete et echange avec l'autre diagonale
+
+  8: 'TRIANGULATION DELAUNAY'
+      Pour une arete commune a 2 triangles, echange avec l'autre diagonale
+      si R1+R2 > R3+R4 R rayon du cercle circonscrit au triangle
+      pour les 2 choix de 2 triangles
+
+  9: '3 SOMMETS CREENT 1 TRIANGLE'
+      3 clics pour designer les sommets
+
+ 10: '1 POINT EXTERNE+2 SOMMETS CREENT 1 TRIANGLE'
+      1 clic en 2D pour designer le point externe au maillage
+      Frappe de X Y Z du point externe
+      2 clics pour designer les sommets
+
+ 11: 'TUER un TRIANGLE 3D'
+      1 clic interne pour designer le triangle
+
+ 90: 'STOPPER et SAUVER les MODIFICATIONS'
+
+30: AMELIORATION D'UNE TRIANGULATION 
+Pour un TRIANGLE la QUALITE = c * r /R where
+r est le rayon du cercle inscrit
+R est le rayon du cercle circonscrit
+c est un coefficient pour que le triangle equilateral est une qualite 1
+
+Les triangles de plus mauvaise qualite peuvent etre supprimes
+- soit par echange des diagonales du quadrangle forme par les 2 
+  triangles ayant une arete commune
+- soit si le plus petit angle est tres faible
+- soit au prix de la subdivision en 2 triangles du triangle adjacent
+  par le plus grand cote oppose au plus grand angle (>160 degres)
+Les triangles de qualite inferieure a QUALMN sont supprimes.
+Si QUALMN=0, seuls l'echange des diagonales est essaye.
+La triangulation adjacente est amelioree si l'angle entre leurs plans
+est inferieur ou egal a ANGL2P.
+Exemple: S30_TRIANGULATION_AMELIOREE; I; 30; TRIANGULATION;
+         0.1; {QUALMN}  8; {degres pour ANGL2P}  
+ATTENTION: La geometrie est approchee, mais, pas respectee totalement.
+
+31: TRIANGULATION D'UNE QUADRANGULATION 
+Chacun des quadrangles S4------S3
+                       |       |
+                       S1------S2
+du maillage de la surface est decoupe en 2 triangles selon
+1: S1-S2-S3  et  S1-S3-S4
+2: S1-S2-S4  et  S2-S3-S4
+3: le plus grand des angles du quadrangle qui est decoupe
+Exemple: S31_TRIANGULATION; I; 31; QUADRANGULATION; 3; 
+
+32: JONCTION POINT ARETES D'UNE LIGNE
+Les triangles ont pour sommet le point et les 2 sommets de
+chaque arete de la ligne.
+Cette option est utile pour fermer certaines surfaces par
+un cone ou une portion de cone.
+Exemple: S32; I; 32; CENTRE; LIGNE_A_JOINDRE;
+
+33: JONCTION ENTRE ARETES DE PLUSIEURS LIGNES 
+Les lignes sont supposees ne pas s'intersecter et rester
+"presque" paralleles.
+De plus le nombre d'aretes entre 2 lignes successives doit
+etre soit constant, soit de difference egale a 1.
+Les aretes jointes 2 a 2 forment autant de quadrangles si
+le nombre d'aretes est constant, et sinon, une triangulation
+en "DENTS de SCIE" est formee.
+Exemple: S33; I; 33;  5; {lignes}
+L1;L2;L3;L4;L5; {noms des lignes}
+
+34: QUADRANGULATION STRUCTUREE EXTRAITE D'UN HEXAEDRE STRUCTURE 
+Extrait d'un volume la quadrangulation definie par 2 intervalles
+des numeros de sommets (de 1 a nb aretes+1) par direction
+parmi les 3 indices de definition du volume structure
+Parmi les 3 intervalles demandes, l'un d'eux doit etre reduit
+a un point
+Exemple: S34; I; 34; VOLUME_STRUCTURE; 2;5; 4;8;  1;1;
+Extrait les quadrangles des 3 couches des sommets 2 a 5 en I, 
+des 4 couches des sommets 4 a 8 en J obtenus pour K=1.
+
+35: QUADRANGULATION STRUCTUREE EXTRAITE D'UN QUADRANGLE STRUCTURE 
+Extrait d'un quadrangle la quadrangulation definie par 2 intervalles
+des numeros d'aretes (1 a nb aretes) parmi les 2 indices de definition
+du quadrangle structure
+Exemple: S35; I; 35; QUADRANGLE_STRUCTURE; 2;5; 4;5;
+Extrait les quadrangles des 3 couches d'aretes 2 a 5 en I et 
+d'aretes 4, 5 en J.
+                                  
+36: SURFACE EXTRAITE D''UNE SURFACE SUR CRITERE
+Toute face de la surface dont les 3 coordonnees des sommets
+donnent VRAI ou 1 a la fonction logique, forme une face de la 
+surface extraite 
+Exemple: S36; I; 36; SURFACE_INITIALE;
+deffonc PLAN_X_POSITIF(x,y,z); 
+  PLAN_X_POSITIF = (x>=-0.00001);
+finfonc;
+PLAN_X_POSITIF;
+extrait les faces dont tous les sommets ont une abscisse
+positive ou nulle (-0.00001 pour les erreurs d'arrondi!)
+                                      
+37: SURFACE EXTRAITE D''UN VOLUME
+Toute face d'un EF du volume dont les 3 coordonnees des sommets
+donnent VRAI ou 1 a la fonction logique,forme un triangle ou
+un quadrangle de la surface extraite 
+Exemple: S37; I; 37; VOLUME_EXISTANT;
+deffonc Z_POSITIF(x,y,z);
+        Z_POSITIF = z>0.00001; finfonc;
+        Z_POSITIF; 3;
+extrait les faces dont les sommets ont une cote >0
+Le dernier entier (ici 3) definit le type des faces a extraire
+1 : les seules faces frontalieres (appartenant a 1 seul EF)
+2 : les seules faces internes     (appartenant a 2 EF)
+3 : n'importe quel type de face
+
+38: SURFACE EXTRAITE CLIQUEE D'UNE SURFACE
+Les triangles ou quadrangles dont tous les sommets sont internes
+a un rectangle defini par 2 points extremes cliques, sont extraits.
+En 3d, l'emploi de la normale evite de recuperer les EF non visibles
+
+39: SUBDIVISION des EF 2d en 4 SOUS EF de meme type
+
+40: SURFACE EXTRAITE = SURFACE1 - SURFACE2
+Les EF de la surface2 sont retires des EF de la surface1
+Attention, les EF de la surface2 doivent etre les memes dans surface1
+
+41: SURFACE 3D EXTRAITE si (NORMALE,VECTEUR)>=0
+Extraire un triangle ou quadrangle d'une surface 3D si en
+tous ces sommets le produit scalaire (NORMALE,VECTEUR)>=0
+
+42: SURFACE RENDUE G1-CONTINUE SI TANGENTES
+Pour chacun des sommets avec des tangentes de la surface, 
+le point extremite de ces tangentes est projete sur le plan,
+d'une part, passant par ce sommet et d'autre part, realisant la
+minimisation de la somme des carres des distances de ce plan aux
+points extremites de ces tangentes en ce sommet.
+Ainsi, toutes les tangentes du sommet se trouvent dans un meme plan
+ce qui assure une geometrie G1-continue de la surface
+Exemple: S42; i; 42; abcde;
+La surface S42, en chaque sommet a ses tangentes dans un meme plan.
+
+45: OPERATEURS LOGIQUES SUR 2 MAILLAGES de R2 ou R3
+Dans R3, les 2 surfaces doivent etre fermees, c-a-d chacune
+la frontiere d'un solide. (Toute arete appartient a 2 triangles)
+A partir des 2 surfaces maillees S1 et S2 du plan xoy ou R3,
+il est possible de construire la triangulation des surfaces
+S1 intersection S2 ou S1 + S2 ou S1 - S2
+Le maillage resultant est une triangulation.
+
+48: POINTS IMPOSES COMME PLUS PROCHE SOMMET de la SURFACE
+    Les 3 coordonnees du plus proche sommet de la surface
+    se voit imposer les 3 coordonnees du point designe.
+    Attention, la qualite des elements finis peut en patir.
+
+50: TRANSFORMATION  D'UNE SURFACE EXISTANTE 
+Une SURFACE deja existante est transformee a l'aide d'une
+transformation predefinie
+Exemple: S50; SYMETRIE_DROITE; 50; SURFACE_INITIALE;
+Les sommets de la SURFACE S50 sont les images des sommets
+de la SURFACE_INITIALE par la transformation SYMETRIE_DROITE
+
+51: UNION DE PLUSIEURS SURFACES 
+Sa surface est en fait une UNION de SURFACES regroupees 
+sous un meme nom. Une UNION de surfaces se manipule comme
+une surface.
+Les sommets communs a 2 surfaces sont identifies en un seul sommet.
+Si cette identification est incorrecte, voyez les seuils 
+EPSXYZ ou EPZERO d'identification decrits et modifiables
+dans l'option 20 du menu Debut
+Exemple: S51; I; 51; 5; S1;S2;S3;S4;S5;
+
+52: UNION G1-CONTINUE DE PLUSIEURS SURFACES
+Pour chacun des sommets avec des tangentes de la surface union, 
+le point extremite de ces tangentes est projete sur le plan,
+d'une part, passant par ce sommet et d'autre part, realisant la
+minimisation de la somme des carres des distances de ce plan aux
+points extremites de ces tangentes en ce sommet.
+Ainsi, toutes les tangentes du sommet se trouvent dans un meme plan
+ce qui assure une geometrie G1-continue de la surface
+Exemple: S52; i; 52; 2; abe; bcde;
+La surface S52, union des surfaces abe et bcde, a en chacun
+de ses sommets ses tangentes dans un meme plan.
+
+81: RENOMMER UNE SURFACE 
+Renomme le NOM d'une SURFACE comme suit
+Un nom a ete fourni pour arriver ici.
+C'est le NOUVEAU NOM due la SURFACE.
+L'ANCIEN NOM de la surface sera demande apres. 
+Exemple: S81; I; 81; S0;   Renomme la surface S0 en S81
+
+82: DETRUIT LA SURFACE DONT LE NOM VIENT D'ETRE DONNE.
+Exemple: S82; I; 82;   detruit la surface S82 si elle existait
+

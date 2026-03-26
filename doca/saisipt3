@@ -1,0 +1,65 @@
+The idea:
+Click a point in a frame to define 2 coordinates;
+Click an other point in an other frame to define
+the third coordinate.
+
+1: GENERIC NAME of POINTS
+   To define a GENERIC NAME which will be concatened 
+   to the number of generation
+   Example : P => P1 P2 P3 ...
+
+2: NAME of the MAPPING of the POINTS
+   If the MAPPING is different of I, all input points
+   will be transported by this mapping.
+
+The MINIMUM and MAXIMUM of the INPUT FRAME for the
+clicked points may be done by:
+3: ABSCISSE MIN MAX & STEP of FRAME for the X abscisses
+4: ORDINATE MIN MAX & STEP of FRAME for the Y ordinates
+5: COTE     MIN MAX & STEP of FRAME for the Z cotes
+
+20: the input by ckicking of points may begin...
+    Move the mouse
+    Click to define 2 coordinates
+    ...
+
+A menu appears and may be used:
+
+  DELETE a POINT: To delete a point
+   Move the mouse in the rectangle DELETE a POINT and click
+   Move the mouse in the vicinity of a point and click
+   => the point disappears
+
+  X-ATTRACTION:   
+   Move the mouse in the rectangle X-ATTRACTION and click.
+   Every future clicked point will be projected on the
+   nearest X-graduation
+ 
+  NO X-ATTRACTION:   
+   Move the mouse in the rectangle NO X-ATTRACTION and click.
+   Every future clicked point will NOT be projected on the
+   nearest X-graduation. The X of the click will NOT be modified.
+
+  Y-ATTRACTION:   
+   Move the mouse in the rectangle Y-ATTRACTION and click.
+   Every future clicked point will be projected on the
+   nearest Y-graduation
+ 
+  NO Y-ATTRACTION:   
+   Move the mouse in the rectangle NO Y-ATTRACTION and click.
+   Every future clicked point will NOT be projected on the
+   nearest Y-graduation. The Y of the click will NOT be modified.
+
+  Z-ATTRACTION:   
+   Move the mouse in the rectangle Z-ATTRACTION and click.
+   Every future clicked point will be projected on the
+   nearest Z-graduation
+ 
+  NO Z-ATTRACTION:   
+   Move the mouse in the rectangle NO Z-ATTRACTION and click.
+   Every future clicked point will NOT be projected on the
+   nearest Z-graduation. The Z of the click will NOT be modified.
+
+  ESCAPE: To abandon the clicking of points
+   Move the mouse in the rectangle ESCAPE and click.
+   The execution return of one level in the menu tree.

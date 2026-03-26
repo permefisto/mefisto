@@ -1,0 +1,2 @@
+The number of the tetrahedrization vertices is in fact an upper bound.
+Do not sub-estimate this value because the mesh may be not made.

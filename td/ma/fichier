@@ -1,0 +1,4 @@
+variable FICHIER 'Characteristics of an MS file' entier
+( 1 : 'File Page Number' ,
+  2 : 'Word number of a page of a file' ,
+  3 : 'Add a file to the MS' );

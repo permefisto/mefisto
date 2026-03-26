@@ -1,0 +1,302 @@
+      SUBROUTINE XYNS2D( KNOMOB,
+     %                   NTXYZS, MNXYZS, NTNSEF, MNNSEF )
+C+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+C BUT :    CONSTRUIRE LES TMS XYZSOMMET ET NSEF D'UN OBJET 2D
+C -----    RESTRICTIONS : OBJET 2D SURFACIQUE ET PAS DE TANGENTES FINALES
+C
+C ENTREE :
+C --------
+C KNOMOB : NOM DE L'OBJET
+C
+C SORTIES:
+C --------
+C NTXYZS : NUMERO      DU TMS XYZSOMMET DE L'OBJET, 0 SI ERREUR
+C MNXYZS : ADRESSE MCN DU TMS XYZSOMMET DE L'OBJET, 0 SI ERREUR
+C NTNSEF : NUMERO      DU TMS NSEF      DE L'OBJET, 0 SI ERREUR
+C MNNSEF : ADRESSE MCN DU TMS NSEF      DE L'OBJET, 0 SI ERREUR
+C+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+C AUTEUR : ALAIN PERRONNET ANALYSE NUMERIQUE UPMC PARIS        MARS 1998
+C23456---------------------------------------------------------------012
+      PARAMETER     (MXTYEL=7)
+      include"./incl/gsmenu.inc"
+      include"./incl/ntmnlt.inc"
+      include"./incl/a___npef.inc"
+      include"./incl/a___nsef.inc"
+      include"./incl/a___xyzpoint.inc"
+      include"./incl/a___xyznoeud.inc"
+      include"./incl/a___xyzsommet.inc"
+      include"./incl/ponoel.inc"
+C
+      COMMON / UNITES / LECTEU,IMPRIM,INTERA,NUNITE(29)
+      include"./incl/pp.inc"
+      COMMON            MCN(MOTMCN)
+      REAL              RMCN(1)
+      EQUIVALENCE      (MCN(1),RMCN(1))
+      CHARACTER*(*)     KNOMOB
+      CHARACTER*4       NOMELE(2)
+      INTEGER           NOEUDS(9)
+C
+      NTXYZS = 0
+      MNXYZS = 0
+      NTNSEF = 0
+      MNNSEF = 0
+C
+C     RECHERCHE DU NOM DE L'OBJET DANS LE LEXIQUE DES OBJETS
+C     ======================================================
+      CALL LXLXOU( NTOBJE, KNOMOB, NTLXOB, MNLXOB )
+C     S'IL N'EXISTE PAS RETOUR
+      IF( NTLXOB .LE. 0 ) THEN
+         NBLGRC(NRERR) = 2
+         KERR(1) = KNOMOB
+         KERR(2) ='ERREUR: OBJET INCONNU'
+         CALL LEREUR
+         CALL LXIM( NTOBJE )
+         IERR = 1
+         RETURN
+      ENDIF
+C
+C     RECHERCHE DU TABLEAU DEFINITION
+      CALL LXTSOU( NTLXOB, 'DEFINITION', NTDFOB, MNDFOB )
+C     S'IL N'EXISTE PAS RETOUR
+      IF( NTDFOB .LE. 0 ) THEN
+         NBLGRC(NRERR) = 2
+         KERR(1) = KNOMOB
+         KERR(2) ='ERREUR: OBJET SANS DEFINITION'
+         CALL LEREUR
+         IERR = 2
+         RETURN
+      ENDIF
+C
+C     ADRESSAGE DES ADRESSES DES TABLEAUX NPEF"xxxx DE CET OBJET
+      MNELEM = 0
+      CALL TNMCDC( 'ENTIER', 2*MXTYEL, MNELEM )
+      MNTELE = MNELEM + MXTYEL
+C
+C     RECHERCHE DES TABLEAUX XYZNOEUD XYZPOINT ASSOCIES A L'OBJET
+      CALL NDPGEL( NTLXOB, NTTOPO, MNTOPO ,
+     %             NTXYZP, MNXYZP, NTXYZN, MNXYZN ,
+     %             NBTYEL, MCN(MNTELE), MCN(MNELEM), IERR )
+      IF( IERR .NE. 0 ) RETURN
+C
+C     NDIM LA DIMENSION 2 OU 3 DE L'ESPACE DES COORDONNEES
+C     ATTENTION: CETTE PROGRAMMATION SOUS ENTEND NOEUDS=POINTS
+      NBPOI = MCN(MNXYZP+WNBPOI)
+      CALL DIMCOO( NBPOI, MCN(MNXYZP+WYZPOI), NDIM )
+      IF( NDIM .NE. 2 ) THEN
+         NBLGRC(NRERR) = 2
+         KERR(1) = KNOMOB
+         KERR(2) ='ERREUR: OBJET NON EN 2D'
+         CALL LEREUR
+         IERR = 4
+         RETURN
+      ENDIF
+C
+C     CALCUL DU NOMBRE DE TRIANGLES ET QUADRANGLES
+C     ============================================
+      NBTRI = 0
+      NBQUA = 0
+      DO 10 NOTYEL = 1, NBTYEL
+C
+C        L'ADRESSE DU TABLEAU NPEF"xxxx
+         MNELE = MCN( MNELEM - 1 + NOTYEL )
+C
+C        LE NUMERO DU TYPE DE L'ELEMENT FINI
+         NUTYEL = MCN( MNELE + WUTYEL )
+C
+C        NCOGEL LE CODE GEOMETRIQUE DE L'ELEMENT FINI EST CALCULE
+         CALL ELNUCG( NUTYEL, NCOGEL )
+         IF( NCOGEL .NE. 3 .AND. NCOGEL .NE. 4 ) THEN
+            NBLGRC(NRERR) = 2
+            KERR(1) = KNOMOB
+            KERR(2) ='ERREUR: EF NON EN DIMENSION 2'
+            CALL LEREUR
+            IERR = 3
+            RETURN
+         ENDIF
+C
+C        LE NOMBRE D'ELEMENTS FINIS DE CE TYPE
+         NBELEM = MCN( MNELE + WBELEM )
+C
+C        LE NOMBRE D'EF ET DE SOMMETS DU MAILLAGE 2D
+         IF( NCOGEL .EQ. 3 ) THEN
+            NBTRI = NBTRI + NBELEM
+         ELSE
+            NBQUA = NBQUA + NBELEM
+         ENDIF
+C
+ 10   CONTINUE
+C
+C     UN TMC POUR LE NUMERO DE SOMMET DE CHAQUE POINT=NOEUD
+      CALL TNMCDC( 'ENTIER', NBPOI, MNNSNP )
+      CALL AZEROI( MCN(MNNSNP), NBPOI )
+      MNSOMT = MNNSNP - 1
+C
+C     CALCUL DU NOMBRE EXACT DE SOMMETS ET DU NUMERO DES SOMMETS
+C     ==========================================================
+      DO 50 NOTYEL = 1, NBTYEL
+C
+C        L'ADRESSE DU TABLEAU NPEF"xxxx
+         MNELE = MCN( MNELEM - 1 + NOTYEL )
+C
+C        LE NUMERO DU TYPE DE L'ELEMENT FINI
+         NUTYEL = MCN( MNELE + WUTYEL )
+C
+C        NCOGEL LE CODE GEOMETRIQUE DE L'ELEMENT FINI EST CALCULE
+         CALL ELNUCG( NUTYEL, NCOGEL )
+C
+C        LE NOMBRE D'ELEMENTS FINIS DE CE TYPE
+         NBELEM = MCN( MNELE + WBELEM )
+C
+C        LES CARACTERISTIQUES DE L'ELEMENT FINI
+         CALL ELNUNM( NUTYEL, NOMELE )
+         CALL ELTYCA( NUTYEL )
+C
+C        LES ADRESSAGES POUR RECUPERER LES INFORMATIONS
+C        SELON LE TYPE DE L'ELEMENT FINI
+         GOTO( 41, 41, 41, 41, 40, 40, 40, 40, 40, 40,
+     &         40, 40, 41, 40, 41, 41, 40, 41, 41, 41,
+     &         41, 41, 41, 41, 40, 40, 40, 40, 41, 40 ),NUTYEL
+C
+C        ERREUR
+ 40      NBLGRC(NRERR) = 1
+         KERR(1) = 'ERREUR: EF '// NOMELE(1)
+     &             // NOMELE(2) //' NON PROGRAMME'
+         CALL LEREUR
+         GOTO 9900
+C
+C        LA BOUCLE SUR LES EF DE CE TYPE NUTYEL
+ 41      DO 45 NUELEM = 1, NBELEM
+C
+C           LE NO DES NOEUDS DE L'ELEMENT FINI
+            CALL EFNOEU( MNELE, NUELEM, NBNDEL, NOEUDS )
+C
+            DO 43 I = 1, NCOGEL
+C              LE NOEUD I EST UN SOMMET
+               MCN( MNSOMT + NOEUDS(I) ) = 1
+ 43         CONTINUE
+C
+ 45      CONTINUE
+ 50   CONTINUE
+C
+C     NUMEROTATION DES SOMMETS
+C     ========================
+      NBSOM = 0
+      DO 60 I=1,NBPOI
+         IF( MCN(MNSOMT+I) .NE. 0 ) THEN
+C           UN SOMMET DE PLUS
+            NBSOM = NBSOM + 1
+            MCN(MNSOMT+I) = NBSOM
+         ENDIF
+ 60   CONTINUE
+C
+C     CREATION DU TMS XYZSOMMET DE L'OBJET
+C     ====================================
+C     SI CE TMS EXISTE L'INTERPOLATION EST P1 ET LE TMS EST CORRECT
+      CALL LXTSOU( NTLXOB, 'XYZSOMMET', NTXYZS, MNXYZS )
+      IF( NTXYZS .EQ. 0 ) THEN
+C
+C        CONSTRUCTION DU TABLEAU XYZSOMMET DES SOMMETS DE L'OBJET
+         CALL LXTNDC( NTLXOB, 'XYZSOMMET', 'MOTS', WYZSOM+3*NBSOM )
+         CALL LXTSOU( NTLXOB, 'XYZSOMMET', NTXYZS, MNXYZS )
+C        LE NOMBRE DE SOMMETS
+         MCN( MNXYZS + WNBSOM ) = NBSOM
+C        LE NOMBRE DE TANGENTES
+         MCN( MNXYZS + WNBTGS ) = 0
+C
+C        ADRESSE MCN DES XYZ DES SOMMETS
+         MNS = MNXYZS + WYZSOM - 3
+C        ADRESSE MCN DES XYZ DES NOEUDS=POINTS
+         MNN = MNXYZP + WYZPOI - 3
+C
+         DO 70 I=1,NBPOI
+            MNN = MNN + 3
+            IF( MCN( MNSOMT + I ) .NE. 0 ) THEN
+C              LE NOEUD EST UN SOMMET DE NUMERO NS
+               NS  = MCN( MNSOMT + I )
+               MNS = MNS + 3
+               RMCN( MNS     ) = RMCN( MNN     )
+               RMCN( MNS + 1 ) = RMCN( MNN + 1 )
+               RMCN( MNS + 2 ) = RMCN( MNN + 2 )
+            ENDIF
+ 70      CONTINUE
+C
+C        LA DATE DE CREATION
+         CALL ECDATE( MCN(MNXYZS) )
+C        LE NUMERO DU TABLEAU DESCRIPTEUR
+         MCN( MNXYZS + MOTVAR(6) ) = NONMTD( '~>>>XYZSOMMET' )
+C
+      ENDIF
+C
+C     CREATION DU TMS NSEF DE L'OBJET
+C     ===============================
+      CALL LXTSOU( NTLXOB, 'NSEF', NTNSEF, MNNSEF )
+      IF( NTNSEF .GT. 0 ) THEN
+C        DESTRUCTION DU TMS 'NSEF' DE L'OBJET
+         CALL LXTSDS( NTLXOB,  'NSEF' )
+      ENDIF
+C
+C     LE NOMBRE D'EF
+      NBEFOB = NBTRI + NBQUA
+      CALL LXTNDC( NTLXOB, 'NSEF', 'MOTS', WUSOEF+4*NBEFOB )
+      CALL LXTSOU( NTLXOB, 'NSEF', NTNSEF, MNNSEF )
+C     LE TYPE DE L'OBJET  ICI = 3 SURFACE!
+      MCN( MNNSEF + WUTYOB ) = 3
+C     SURFACE NON FERMEE
+      MCN( MNNSEF + WUTFMA ) = 0
+C     4 SOMMETS PAR EF
+      MCN( MNNSEF + WBSOEF ) = 4
+C     0 TANGENTE PAR EF
+      MCN( MNNSEF + WBTGEF ) = 0
+C     NOMBRE D'EF
+      MCN( MNNSEF + WBEFOB ) = NBEFOB
+C     NOMBRE D'EF A TGS
+      MCN( MNNSEF + WBEFTG ) = 0
+C     NOMBRE D'EF AVEC POINTEUR
+      MCN( MNNSEF + WBEFAP ) = 0
+C     MAILLAGE NON STRUCTURE
+      MCN( MNNSEF + WUTYMA ) = 0
+C
+C     ADRESSE MCN DU NUMERO DES 4 SOMMETS DES EF
+      MNN = MNNSEF + WUSOEF - 4
+C
+      DO 100 NOTYEL = 1, NBTYEL
+C
+C        L'ADRESSE DU TABLEAU NPEF"xxxx
+         MNELE = MCN( MNELEM - 1 + NOTYEL )
+C
+C        LE NUMERO DU TYPE DE L'ELEMENT FINI
+         NUTYEL = MCN( MNELE + WUTYEL )
+C
+C        NCOGEL LE CODE GEOMETRIQUE DE L'ELEMENT FINI EST CALCULE
+         CALL ELNUCG( NUTYEL, NCOGEL )
+C
+C        LE NOMBRE D'ELEMENTS FINIS DE CE TYPE
+         NBELEM = MCN( MNELE + WBELEM )
+C
+C        LA BOUCLE SUR LES EF DE CE TYPE NUTYEL
+         DO 95 NUELEM = 1, NBELEM
+C
+C           LES NOEUDS DE L'ELEMENT FINI
+            CALL EFNOEU( MNELE, NUELEM, NBNDEL, NOEUDS )
+C
+            MNN = MNN + 4
+            DO 80 I=1,NCOGEL
+C              LE NUMERO DE SOMMET DU NOEUD I
+               NS = MCN( MNSOMT + NOEUDS(I) )
+               MCN( MNN + I ) = NS
+  80        CONTINUE
+C           LE 4-EME SOMMET D'UN TRIANGLE EST MIS A ZERO
+            IF( NCOGEL .EQ. 3 )  MCN( MNN+4 ) = 0
+C
+  95     CONTINUE
+ 100  CONTINUE
+C
+C     LA DATE DE CREATION
+      CALL ECDATE( MCN(MNNSEF) )
+C     LE NUMERO DU TABLEAU DESCRIPTEUR
+      MCN( MNNSEF + MOTVAR(6) ) = NONMTD( '~>>>NSEF' )
+C
+C     DESTRUCTION DU TMC AUXILIAIRE
+ 9900 CALL TNMCDS( 'ENTIER', NBPOI, MNNSNP )
+      RETURN
+      END

@@ -1,0 +1,167 @@
+      SUBROUTINE BGNS1TH3( DT,     Rho,
+     %                     NBNOVI, XYZNOE,
+     %                     NTDLVP, NDDLNO,
+     %                     NBELEM, NUNOEF,
+     %                     NBVVEF, NBSFEF,
+     %                     NUVVEF, NUSFEF,
+     %                     NUMISU, NUMASU, LTDESU,
+     %                     NUMIVO, NUMAVO, LTDEVO,
+     %                     MOFACE, MXFACE, LFACES,
+     %                     UG0,    VITMAX,
+     %                     FG1,    FG2,    NBCHTL, IERR )
+C ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+C BUT: CONSTRUIRE ET ASSEMBLER LE SECOND MEMBRE GLOBAL BG DU PROBLEME
+C ---- ( [MG(Rho)] + dt theta [KG(Mhu)] ) {u(tn+1,x)} = {Rho*u(tn,X(tn;tn+1,x))
+C                  + dt * theta {fg(tn+1)} + dt * (1-theta) {fg(tn)}
+C                  - dt (1-theta) [KG(Mhu)] ) {u(tn)}
+C      CALCUL DU SECOND MEMBRE DU SYSTEME LINEAIRE:
+C      {Rho*u(tn,X(tn;tn+1,x))   + dt * theta {fg(tn+1)}
+C      + dt * (1-theta) {fg(tn)} - dt (1-theta) [KG(Mhu)] ) {u(tn)}
+C      POUR LE TETRAEDRE TAYLOR-HOOD P2 EN VITESSE et P1 EN PRESSION
+
+C ENTREES:
+C --------
+C DT     : PAS CONSTANT DU TEMPS
+C Rho    : DENSITE DE MASSE du FLUIDE
+C NDIM   : DIMENSION DE L'ESPACE DES COORDONNEES 2 ou 3
+C NBNOVI : NOMBRE DE NOEUDS VITESSE SOMMETS et MILIEUX DES ARETES DES EF
+C NDDLNO : NUMERO DU DERNIER DL DE CHAQUE NOEUD VITESSE (0:NBNOVI)
+C          A UTILISER POUR RETROUVER LES DL PRESSION DES VECTEURS VXYZPN0
+C XYZNOE : XYZNOE(3,NBNOVI)  3 COORDONNEES DES NOEUDS DU MAILLAGE
+C NTDLVP : NOMBRE TOTAL DE DL VITESSE (3*NBNOVI) + PRESSION NBSOM
+
+C NUTYEL : NUMERO DU TYPE D'EF ( 20 TETRAEDRE TAYLOR-HOOD )
+C NBNOEF : NOMBRE DE NOEUDS D'UN EF DE CE TYPE
+C          ( 4 ou 6 POUR LE TRIANGLE, 5 ou 10 POUR LE TETRAEDRE)
+C NBDLMX : NOMBRE DE DEGRES DE LIBERTE D'UN EF
+C          ( 11 si BF2, 19 si BF3, 15 si TH2, 34 si TH3 )
+C NBELEM : NOMBRE D'EF DU MAILLAGE
+C NUNOEF : NUNOEF(NBELEM,10) NO DES NOEUDS DES NBELEM EF
+
+C NBVVEF : NOMBRE DE VOLUME  POUR 1 EF DE CE TYPE
+C NBSFEF : NOMBRE DE FACES   POUR 1 EF DE CE TYPE
+C NUVVEF : TABLEAU DU NUMERO DE VOLUME DE CHAQUE ELEMENT FINI
+C NUSFEF : TABLEAU DU NUMERO DE SURFACE DES FACES   DE CHAQUE EF
+
+C NUMISU : NUMERO MINIMAL DES OBJETS SURFACES
+C NUMASU : NUMERO MAXIMAL DES OBJETS SURFACES
+C LTDESU : TABLEAU DES ADRESSES DU TABLEAU DES DONNEES DU FLUIDE
+C          DES SURFACES
+
+C NUMIVO : NUMERO MINIMAL DES OBJETS VOLUMES
+C NUMAVO : NUMERO MAXIMAL DES OBJETS VOLUMES
+C LTDEVO : TABLEAU DES ADRESSES DU TABLEAU DES DONNEES DU FLUIDE
+C          DES VOLUMES
+
+C MOFACE : NOMBRE DE MOTS POUR LES INFO D'UNE FACE
+C MXFACE : NOMBRE MAXIMAL D'FACES DECLAREES
+C LFACES : EN 3D SEULEMENT ADRESSE MCN DU 1-ER MOT DU TABLEAU LFACE
+
+C UG0    : VECTEUR GLOBAL des DL VITESSES-PRESSIONS (1:NTDLVP) au TEMPS tn
+C VITMAX : NORME DE LA VITESSE MAXIMALE AU TEMPS PRECEDANT
+
+C SORTIES:
+C --------
+C FG1    : PREMIER VECTEUR GLOBAL SECOND MEMBRE ASSEMBLE
+C FG2    : SECOND  VECTEUR GLOBAL SECOND MEMBRE ASSEMBLE
+C NBCHTL : NOMBRE DE REMONTEES DE LA CARACTERISTIQUE TROP LONGUES
+C IERR   : 0 PAS DE PROBLEME, >0 PROBLEME RENCONTRE
+C+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+C AUTEUR : ALAIN PERRONNET LJLL UPMC & St Pierre du Perray  Janvier 2013
+C23456---------------------------------------------------------------012
+C$    USE OMP_LIB
+      IMPLICIT NONE
+      include"./incl/threads.inc"
+      include"./incl/donflu.inc"
+      REAL              DT
+      DOUBLE PRECISION  Rho, VITMAX,
+     %                  UG0(NTDLVP), FG2(NTDLVP), FG1(NTDLVP)
+
+      INTEGER           NUNOEF(NBELEM,10), NDDLNO(0:NBNOVI)
+      INTEGER           NUMISU, NUMASU, LTDESU(1:MXDOFL,NUMISU:NUMASU)
+      INTEGER           NUMIVO, NUMAVO, LTDEVO(1:MXDOFL,NUMIVO:NUMAVO)
+      INTEGER           NUVVEF(NBVVEF,NBELEM), NUSFEF(NBSFEF,NBELEM)
+
+      REAL              XYZNOE(3,NBNOVI)
+      INTEGER           NBELEM, NTDLVP, NBNOVI, NBVVEF, NBSFEF,
+     %                  MOFACE, MXFACE, LFACES(MOFACE,MXFACE),
+     %                  NBCHTL, IERR
+
+      DOUBLE PRECISION  BE1(34), BE2(34)
+      INTEGER           NONOEF(10), NOGLDL(34), NUELEM, N, I
+      REAL              COORDP(10,3)
+
+C///////////////////////////////////////////////////////////////////////
+C$OMP PARALLEL PRIVATE( NUELEM,N,I,NONOEF,COORDP,BE1,BE2,NOGLDL )
+C     LA BOUCLE SUR LES ELEMENTS FINIS TETRAEDRES TAYLOR-HOOD
+C$OMP DO SCHEDULE( STATIC, NBELEM/NBTHREADS )
+      DO NUELEM = 1, NBELEM
+
+C        NO DES NOEUDS DE L'ELEMENT FINI NUELEM
+C        INTERPOLATION DU FLUIDE avec F: echapeau->e  P1 ndim
+C        COORDONNEES DES POINTS=NOEUDS DE L'ELEMENT FINI
+         DO I = 1, 10
+C           NUMERO DU NOEUD
+            N = NUNOEF(NUELEM,I)
+            NONOEF(I) = N
+            COORDP(I,1) = XYZNOE(1,N)
+            COORDP(I,2) = XYZNOE(2,N)
+            COORDP(I,3) = XYZNOE(3,N)
+         ENDDO
+
+C        SECOND MEMBRE ELEMENTAIRE
+         CALL F3SP2P1( COORDP,
+     %                 NUSFEF(1,NUELEM), NUMISU, NUMASU, LTDESU,
+     %                 NUVVEF(1,NUELEM), NUMIVO, NUMAVO, LTDEVO,
+     %                 BE2 )
+
+C        SECOND MEMBRE ELEMENTAIRE du TRANSPORT pour NAVIER-STOKES
+         CALL F3SNVP2P1( NUELEM, NBELEM, NUNOEF,
+     %                   MOFACE, MXFACE, LFACES,
+     %                   DT, Rho, XYZNOE, NDDLNO,
+     %                   UG0, VITMAX,
+     %                   BE1, IERR )
+
+         IF( IERR .EQ. 4 ) THEN
+C$OMP       ATOMIC
+            NBCHTL = NBCHTL + 1
+         ENDIF
+
+C        NOGLDL: NUMERO GLOBAL DES DEGRES DE LIBERTE DE L'ELEMENT FINI
+         DO I=1,4
+            N = NDDLNO(NONOEF(I) - 1)
+            NOGLDL(I   ) = N + 1
+            NOGLDL(I+10) = N + 2
+            NOGLDL(I+20) = N + 3
+            NOGLDL(I+30) = N + 4
+         ENDDO
+         DO I=5,10
+            N = NDDLNO(NONOEF(I) - 1)
+            NOGLDL(I   ) = N + 1
+            NOGLDL(I+10) = N + 2
+            NOGLDL(I+20) = N + 3
+         ENDDO
+
+C        ASSEMBLAGE DU VECTEUR TRANSPORT BE1 DANS LE TABLEAU GLOBAL FG1
+C        ASSEMBLAGE DU VECTEUR FORCE     BE2 DANS LE TABLEAU GLOBAL FG2
+         DO I = 1, 34
+
+C           LE NO GLOBAL DU I-EME DEGRE DE LIBERTE LOCAL DANS L'EF
+            N = NOGLDL( I )
+
+C           ASSEMBLAGE DE LA I-EME COMPOSANTE DE BE DANS BG
+C$OMP       ATOMIC
+            FG1( N ) = FG1( N ) + BE1(I)
+C$OMP       ATOMIC
+            FG2( N ) = FG2( N ) + BE2(I)
+
+         ENDDO
+
+      ENDDO
+C$OMP END DO
+C$OMP END PARALLEL
+C///////////////////////////////////////////////////////////////////////
+C
+C     FIN DE LA BOUCLE SUR LES EF POUR LA CONSTRUCTION DE FG1, FG2
+      RETURN
+      END

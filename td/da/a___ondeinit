@@ -1,0 +1,15 @@
+deftms ~>>>ONDEINIT 'INITIAL WAVE'
+variable muet DATE 'date of creation of the TMS' reel2  ;
+variable muet NUTD 'number of the descriptor array TD' entier ;
+variable      LTOND0 'type of INITIAL Wave' entier
+( -1 : 'FUNCTION INITIAL Wave'
+,  0 : 'DELETE the function INITIAL Wave'
+,  1 : 'CONSTANT INITIAL Wave'
+,  2 : 'INITIAL Wave EXISTING'
+,  3 : 'EIGENVECTOR EXISTING' ) ;
+cas LTOND0
+-1 : variable NFOND0 'NAME of INITIAL Wave FUNCTION' ^~>FONCTION ;
+ 1 : tableau  VAOND0(1..2) 'constant INITIAL Wave' reel ;
+ 3 : variable NUVPON 'EIGENVECTOR Number' entier ;
+fincas ;
+fintms ;

@@ -1,0 +1,3 @@
+variable TGouPAS 'SANS ou AVEC les TANGENTES' entier
+ ( 0  : 'SANS les TANGENTES'
+ , 1  : 'AVEC les TANGENTES' ) ;

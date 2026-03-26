@@ -1,0 +1,253 @@
+      SUBROUTINE XYDSTR( NTYEF,  NBEF,   NBNOEF, NUNOTR,
+     %                   MOARET, MXARET, MNLARE,
+     %                   XYZPOI, NEF0,   XPT, YPT,  NEF, IERR )
+C ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+C BUT :    RETROUVER  EN PARTANT DU TRIANGLE NEF0 LE TRIANGLE NEF
+C -----    CONTENANT LE POINT (XPT,YPT) DANS LA TRIANGULATION 
+C          D'UN OBJET DEFINIE PAR LE TABLEAU NUNOTR et a PARTIR
+C          de la DIRECTION du VECTEUR NORMAL AUX ARETES des TRIANGLES
+C
+C ENTREES:
+C --------
+C NTYEF  : NUMERO DU TYPE DE L'EF DANS LES TYPES DU MAILLAGE
+C          DE 1 A NBTYEF. SI UN SEUL TYPE D'EF => NTYEF=1
+C NBEF   : NOMBRE DE TRIANGLES DU MAILLAGE
+C NBNOEF : NOMBRE DE NOEUDS D'UN TRIANGLE
+C NUNOTR : NUMERO DES NBNOEF NOEUDS DE CHAQUE TRIANGLE
+C
+C MOARET : NOMBRE DE MOTS DE CHAQUE ARETE DU TABLEAU LARETE
+C MXARET : NOMBRE MAXIMAL D'ARETES DU TABLEAU LARETE
+C MNLARE : ADRESSE MCN DU TABLEAU LARETE cf hachag.f
+C
+C XYZPOI : 3 COORDONNEES DES SOMMETS DES TRIANGLES
+C NEF0   : NUMERO DE L'EF DE DEPART DE LA RECHERCHE DU TRIANGLE CONTENANT PT
+C XPT,YPT: COORDONNEES DU POINT DE TRIANGLE NEF LE CONTENANT A RETROUVER
+C
+C SORTIES:
+C --------
+C NEF    : NUMERO DU TRIANGLE CONTENANT LE POINT XPT,YPT SI IERR=0
+C IERR   : 0 PAS D'ERREUR LE POINT XPT,YPT EST DANS LE TRIANGLE NEF
+C          1 POINT PROCHE D'UNE ARETE NON RETROUVEE DANS LE MAILLAGE
+C          2 ARETE APPARTENANT A 3 TRIANGLES
+C          3 POINT SORTANT. PAS de TRIANGLE derriere LA PLUS PROCHE ARETE
+C          4 NOMBRE DE TRIANGLES PARCOURUS TROP GRAND (BOUCLE?)
+C+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+C AUTEUR : ALAIN PERRONNET TIMS NTU TAIPEI TAIWAN          Decembre 2009
+C AUTEUR : ALAIN PERRONNET LJLL UPMC & St Pierre du Perray     Mars 2010
+C23456---------------------------------------------------------------012
+      include"./incl/langue.inc"
+      include"./incl/gsmenu.inc"
+      include"./incl/nctyef.inc"
+      COMMON / UNITES / LECTEU,IMPRIM,INTERA,NUNITE(29)
+      include"./incl/pp.inc"
+      COMMON            MCN(MOTMCN)
+      REAL              RMCN(1)
+      EQUIVALENCE      (MCN(1),RMCN(1))
+      INTEGER           NUNOTR( NBEF, NBNOEF ), NGS(2)
+      REAL              XYZPOI( 3, * )
+      DOUBLE PRECISION  XPT, YPT
+      DOUBLE PRECISION  X1,X2,X3, Y1,Y2,Y3, DN, DMPT, D,
+     %                  COSMAX, CB1,CB2,CB3, XM, YM, XN, YN
+      INTRINSIC         SQRT, ABS
+C
+C     DEPART A PARTIR DU TRIANGLE NEF0
+      NBTRMX = MIN( NBEF/10, 500 )
+      NBTRPA = 0
+      NEF    = NEF0
+      NBSEG  = 0
+      LIBREA = 0
+
+C     MODIFICATION DE XPT YPT ZPT POUR AMELIORER LE CALCUL DES 
+C     COORDONNEES BARYCENTRIQUES
+      IF( ABS(XPT) .LT. 1D-20 ) XPT=0D0
+      IF( ABS(YPT) .LT. 1D-20 ) YPT=0D0
+
+C     CALCUL DES 3 COORDONNEES BARYCENTRIQUES DU
+C     POINT (XPT,YPT) DANS LE TRIANGLE NEF
+ 10   NBTRPA = NBTRPA + 1
+      N1 = NUNOTR( NEF, 1 )
+      X1 = XYZPOI( 1, N1 )
+      Y1 = XYZPOI( 2, N1 )
+
+      N2 = NUNOTR( NEF, 2 )
+      X2 = XYZPOI( 1, N2 )
+      Y2 = XYZPOI( 2, N2 )
+
+      N3 = NUNOTR( NEF, 3 )
+      X3 = XYZPOI( 1, N3 )
+      Y3 = XYZPOI( 2, N3 )
+
+      D   = ( (X2-X1 )*(Y3-Y1 ) - (X3-X1 )*(Y2-Y1 ) )
+      CB1 = ( (X2-XPT)*(Y3-YPT) - (X3-XPT)*(Y2-YPT) ) / D
+      CB2 = ( (X3-XPT)*(Y1-YPT) - (X1-XPT)*(Y3-YPT) ) / D
+      CB3 = ( (X1-XPT)*(Y2-YPT) - (X2-XPT)*(Y1-YPT) ) / D
+
+ccc      IF( CB1 .GE.-0.000001D0 .AND. CB1 .LE. 1.000001D0 .AND.
+ccc     %    CB2 .GE.-0.000001D0 .AND. CB2 .LE. 1.000001D0 .AND.
+ccc     %    CB3 .GE.-0.000001D0 .AND. CB3 .LE. 1.000001D0 ) THEN 30/09/2020
+
+      IF( ABS(CB1) + ABS(CB2) + ABS(CB3) .LT. 1.0001D0 ) THEN
+C        LE POINT (XPT,YPT) EST DANS LE TRIANGLE NEF => RETOUR
+         IERR = 0
+         RETURN
+      ENDIF
+
+C     LE POINT (XPT,YPT) EST EXTERIEUR AU TRIANGLE NEF
+C     RECHERCHE DE L'ARETE DE L'EF NEF QUI REGARDE LE POINT XPT,YPT
+      NOAMAX = 0
+      COSMAX = -2D0
+C     BOUCLE SUR LES 3 ARETES DU TRIANGLE
+      DO 20 K=1,3
+
+C        ARETE K DE NEF
+         N1 = NUNOTR( NEF, K )
+         IF( K .EQ. 3 ) THEN
+            N2 = NUNOTR( NEF, 1 )
+         ELSE
+            N2 = NUNOTR( NEF, K+1 )
+         ENDIF
+C        LES COORDONNEES DES 2 SOMMETS DE L'ARETE K
+         X1 = XYZPOI( 1, N1 )
+         Y1 = XYZPOI( 2, N1 )
+         X2 = XYZPOI( 1, N2 )
+         Y2 = XYZPOI( 2, N2 )
+
+C        LES COMPOSANTES DU VECTEUR MILIEU DE L'ARETE K -> PT
+         XM = XPT - ( X1 + X2 ) * 0.5D0
+         YM = YPT - ( Y1 + Y2 ) * 0.5D0
+C        CARRE DE LA LONGUEUR DU SEGMENT (XM,YM) - (XPT,YPT)
+         DMPT = XM**2 + YM**2
+         IF( DMPT .LE. 0D0 ) THEN
+C           XPT YPT EST LE MILIEU DE L'ARETE K
+            IERR = 0
+            RETURN
+         ENDIF
+
+C        LES COMPOSANTES DU VECTEUR NORMAL A L'ARETE K
+         XN = Y2 - Y1
+         YN = X1 - X2
+C        CARRE DE LA LONGUEUR DE L'ARETE OU DU VECTEUR NORMAL
+         DN = XN**2 + YN**2
+
+C        COSINUS ANGLE (NORMALE A L'ARETE,MILIEU-PT)
+         D  = ( XN * XM + YN * YM ) / SQRT( DN * DMPT )
+         IF( D .GT. COSMAX ) THEN
+            NOAMAX = K
+            COSMAX = D
+         ENDIF
+
+ 20   CONTINUE
+
+C     RECHERCHE DU TRIANGLE DE L'AUTRE COTE DE L'ARETE NOAMAX
+      N1 = NUNOTR( NEF, NOAMAX )
+      IF( NOAMAX .EQ. 3 ) THEN
+         N2 = NUNOTR( NEF, 1 )
+      ELSE
+         N2 = NUNOTR( NEF, NOAMAX+1 )
+      ENDIF
+      IF( N1 .LT. N2 ) THEN
+         NGS(1) = N1
+         NGS(2) = N2
+      ELSE
+         NGS(1) = N2
+         NGS(2) = N1
+      ENDIF
+
+C     HACHAGE POUR RETROUVER L'ARETE DANS LA TRIANGULATION
+      CALL HACHAG( 2, NGS, MOARET, MXARET, MCN(MNLARE), 3,
+     &             LIBREA, NOAR )
+      IF( NOAR .LE. 0 ) THEN
+C        ERREUR: ARETE NON RETROUVEE => PROBLEME!
+         NBLGRC(NRERR) = 2
+         WRITE(KERR(MXLGER)(1:24),'(2I12)') N1,N2
+         IF( LANGAG .EQ. 0 ) THEN
+            KERR(1) = 'XYDSTR: ARETE NON RETROUVEE DANS LE MAILLAGE'
+            KERR(2) = 'SOMMETS de l''ARETE: ' // KERR(MXLGER)(1:24)
+         ELSE
+            KERR(1) = 'XYDSTR: EDGE NOT IN THE MESH'
+            KERR(2) = 'EDGE VERTICES: ' // KERR(MXLGER)(1:24)
+         ENDIF
+         CALL LEREUR
+         IERR = 1
+         RETURN
+      ENDIF
+
+C     ADRESSE DE L'ARETE NOAR DANS LE TABLEAU LARETE
+      MNA = MNLARE + MOARET * (NOAR-1)
+C     LE CODAGE DU NUMERO DE TYPE D'EF POUR LE NO D'EF DANS LARETE
+      NUCYEF = NCTYEF * NTYEF
+      NEF1 = ABS( MCN( MNA + 3 ) )
+      IF( NEF1 .GT. NUCYEF ) NEF1 = NEF1 - NUCYEF
+      NEF2 = ABS( MCN( MNA + 4 ) )
+      IF( NEF2 .GT. NUCYEF ) NEF2 = NEF2 - NUCYEF
+C
+      IF( NEF1 .EQ. NEF ) THEN
+C        NEF2 EST LE TRIANGLE DE L'AUTRE COTE DE L'ARETE
+         NEF = NEF2
+      ELSE IF( NEF2 .EQ. NEF ) THEN
+C        NEF1 EST LE TRIANGLE DE L'AUTRE COTE DE L'ARETE
+         NEF = NEF1
+      ELSE
+         NBLGRC(NRERR) = 2
+         WRITE(KERR(MXLGER)(1:36),'(3I12)') NEF1, NEF2, NEF
+         IF( LANGAG .EQ. 0 ) THEN
+            KERR(1) = 'PROBLEME XYDSTR: FACE DANS 3 TRIANGLES'
+            KERR(2) = 'NUMERO DES 3 EF: ' // KERR(MXLGER)(1:36)
+         ELSE
+            KERR(1) = 'XYDSTR PROBLEM: FACE INTO 3 TRIANGLES'
+            KERR(2) = 'No of 3 FINITE ELEMENTS: ' // KERR(MXLGER)(1:36)
+         ENDIF
+         CALL LEREUR
+         IERR = 2
+         RETURN
+      ENDIF
+
+      IF( NEF .LE. 0 ) THEN
+C        PAS DE TRIANGLE ADJACENT => LE POINT XPT,YPT SORT DU MAILLAGE
+ccc         NBLGRC(NRERR) = 3
+ccc         WRITE(KERR(2),'(''X='',G14.6,''  Y='',G14.6)') XPT, YPT
+ccc         IF( LANGAG .EQ. 0 ) THEN
+ccc            KERR(1) ='XYDSTR: PAS de TRIANGLE CONTENANT le POINT'
+ccc            KERR(3) ='CE POINT est EXTERIEUR au MAILLAGE'
+ccc         ELSE
+ccc            KERR(1) ='XYDSTR: NO TRIANGLE CONTAINS THE POINT'
+ccc            KERR(3) ='THIS POINT IS OUTSIDE the MESH'
+ccc         ENDIF
+ccc         CALL LEREUR
+         IERR = 3
+         GOTO 9900
+      ENDIF
+
+C     TEST POUR TROP DE TRIANGLES PARCOURUS
+      IF( NBTRPA .GE. NBTRMX ) THEN
+         NBLGRC(NRERR) = 3
+         WRITE(KERR(2),'(''X='',G14.6,''  Y='',G14.6)') XPT, YPT
+         WRITE(KERR(5)(1:12),'(I12)' ) NEF
+         IF( LANGAG .EQ. 0 ) THEN
+            KERR(1) ='XYDSTR: TROP DE TRIANGLES PARCOURUS POUR REMONTER
+     %LA CARACTERISTIQUE'
+            KERR(3) ='NON RETROUVE. ARRET DU PARCOURS DANS LE TRIANGLE'
+     %                // KERR(5)(1:12)
+         ELSE
+            KERR(1) ='XYDSTR: TOO MANY TRIANGLES IN THE PATH TO INTEGRAT
+     %E BACKWARD THE CHARACTERISTIC'
+            KERR(3) ='NOT FOUND. The TRAVEL STOPS IN THE TRIANGLE'
+     %                // KERR(5)(1:12)
+         ENDIF
+         CALL LEREUR
+         IERR = 4
+         GOTO 9900
+      ENDIF
+      GOTO 10
+
+C     NEF EST LE DERNIER EF PARCOURU
+ 9900 IF( NEF2 .EQ. NEF ) THEN
+C        NEF1 EST LE TRIANGLE PRECEDENT
+         NEF = NEF1
+      ELSE
+C        NEF2 EST LE TRIANGLE PRECEDENT
+         NEF = NEF2
+      ENDIF
+
+      RETURN
+      END

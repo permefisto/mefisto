@@ -1,0 +1,15 @@
+@;
+@;
+3; {SURFACES}
+ABCD0; i; 1; A0B0; B0C0; C0D0; D0A0; 1;
+ABCD1; i; 1; A1B1; B1C1; C1D1; D1A1; 1;
+ABAB;  i; 1; A0B0; B0B1; A1B1; A0A1; 1;
+BCBC;  i; 1; B0C0; C0C1; B1C1; B0B1; 1;
+CDCD;  i; 1; C0D0; D0D1; C1D1; C0C1; 1;
+DADA;  i; 1; D0A0; A0A1; D1A1; D0D1; 1;
+@;
+
+10; {drawings}
+   3; 1; 90;
+CLOSE;
+

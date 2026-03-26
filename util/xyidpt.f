@@ -1,0 +1,38 @@
+      SUBROUTINE XYIDPT( X, Y, NBSTAR, XYSTAR, NOSTAR )
+C++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+C BUT : IDENTIFIER XY A L'UN DES POINTS DE XYSTAR OU L'AJOUTER
+C ----- PAS DE CONTROLE DE DEBORDEMENT DU TABLEAU XYSTAR
+C       SUPPOSE ASSEZ GRAND
+C
+C ENTREES:
+C --------
+C X, Y   : 2 COORDONNEES DU POINT A IDENTIFIER
+C
+C MODIFIES:
+C ---------
+C NBSTAR : NOMBRE DE POINTS ACTUELS DU TABLEAU XYSTAR
+C XYSTAR : X, Y DES NBSTAR POINTS
+C
+C SORTIE :
+C --------
+C NOSTAR : NUMERO DU POINT XY DANS NOSTAR
+C+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+C AUTEUR : PERRONNET ALAIN UPMC ANALYSE NUMERIQUE PARIS     JANVIER 1995
+C2345X7..............................................................012
+      REAL     XYSTAR(3,NBSTAR)
+C
+      DO 10 NOSTAR=1,NBSTAR
+         DD = (XYSTAR(1,NOSTAR)-X)**2 + (XYSTAR(2,NOSTAR)-Y)**2
+         IF( DD .LT. 1E-6 ) THEN
+C           ATTENTION: COORDONNEES DANS L'EF UNITE => PAS DE TEST RELATIF
+C           NOSTAR IDENTIFIE AVEC CE POINT XY
+            RETURN
+         ENDIF
+ 10   CONTINUE
+C
+C     POINT XY AJOUTE
+      NBSTAR = NBSTAR + 1
+      NOSTAR = NBSTAR
+      XYSTAR(1,NBSTAR) = X
+      XYSTAR(2,NBSTAR) = Y
+      END

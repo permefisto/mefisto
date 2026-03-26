@@ -1,0 +1,4 @@
+variable SOLSURF3 'Solution DRAWING on SURFACES 3D' entier
+( 5  : 'COLOR of Boundary EDGES'
+, 6  : 'DRAWING TYPE of Boundary EDGES'
+, 90 : 'EXECUTION of the DRAWING' ) ;

@@ -1,0 +1,94 @@
+---------------------------------------------------------------------
+NOUVEAUTES du logiciel MEFISTO     Version Francaise    Decembre 2024 
+---------------------------------------------------------------------
+Il est possible d'éxécuter Mefisto selon 3 modes:
+
+- en BATCH, sans aucune visualisation ou lecture interactive;
+  Par exemple pour mailler, taper la commande
+  echo NomProjet | MAILLER  NomFichierDonnéesMaillage  >ListageOuNON
+  ou
+  cd NomProjet; $MEFISTO/pp/ppmail  NomFichierDonnéesMaillage
+  Attention: L'option 99; {Sauver et sortir}
+  doit etre la dernière option du fichier NomFichierDonnéesMaillage
+  car il n'est pas possible de revenir en mode interactif.
+
+- en INTERACTIF, avec tracés graphiques, données au clavier ou souris
+  Par exemple pour mailler, taper la commande
+  MAILLER  >ListageOuNON
+
+- en INTERACTIF, avec tracés graphiques, pas de clavier ou souris
+  Par exemple pour mailler, taper la commande et les données
+  MAILLER  >ListageOuNON
+  NomProjet
+  liref NomFichierDonnéesMaillage ;
+  L'exécution donnera le tracé des maillages définis par le fichier
+  mais sans possibilité d'intervenir.
+
+Il en est de même avec ELASTICER FLUIDER THERMICER NLSER ...
+INITIER peut etre executé en mode BATCH sans NomFichierDonnées
+
+Des directives OPENMP ont été ajoutées dans le codage Fortran.
+Ne pas oublier d'INITIALISER la variable d'environnement
+OMP_NUM_THREADS (nombre de threads par processeur:12 pour Intel Icore 7)
+Cf https://www.ann.jussieu.fr/perronnet/OMPLJLL/OMPLJLL.html
+
+MAILLER:
+- Amélioration de l'option 9 et 19 de tétraedrisation de volumes.
+- Option 29: Nouvelles options de modifications interactives
+  des surfaces 2d ou 3d à partir de menus et de clics de la souris
+
+FLUIDER:
+- La convection naturelle sous l'hypothese de Boussinesq est proposée.
+  Conjointement à la vitesse et pression, la température est calculée
+  avec des éléments finis de Taylor-Hood. Cf testa/recth
+- Le stockage du vecteur VITESSES+PRESSIONS+TEMPERATURES a chaque temps
+  peut devenir tres important, chacun d'eux est stocke dans un fichier.
+  Tout trace demande l'intervalle de temps des traces a effectuer.
+  ATTENTION: La MEMOIRE CENTRALE+SWAP peut devenir INSUFFISANTE!...
+  Cf testa/d123_r/d123_r_12_pad123
+- Cf documentation mise a jour: User's Manual of Mefisto-FLUIDER
+- Cf https://www.ljll.fr/perronnet/NSROLL/NSROLL.html
+- Cf https://www.ljll.fr/perronnet/COVID/COVID_respiration.html
+- Cf testa/d123_r/
+
+NLSER:
+- Resolution de la complexe NON-LINEAIRE SCHRODINGER Equation
+  i dU(t,X)/dt -Alfa Laplacian U(t,X) + N(t,|U(t,X)|**2) U(t,X)
+  -i OmegaZ ( x dU(t,X)/dy - y dU(t,X)/dx ) = F(t,X)
+  Cf la documentation initiale du menu docf/debunlse.
+  Cf https://www.ljll.fr/perronnet/NLSE/NLSE.html
+
+$MEFISTO/bin.lnx64:
+- Les librairies contiennent certains sous-programmes .f95
+  qui contiennent des directives OpenMP pour execution sur
+  plusieurs processeurs (threads) (Intel Core i7 => 12 maximum)
+- Les subroutines terminees par .f offrent une compilation gfortran
+  sequentielle SANS appel aux directives OpenMP
+  exemple: $MEFISTO/bin/cbflui donne  $MEFISTO/pp/ppflui
+  le binaire executable sequentiellement avec la commande FLUIDER
+- Les subroutines terminees par .f95 permettent une compilation
+  gfortran 95 avec l'option -fopenmp  et donc multi-threads.
+  Elle remplace le resultat de la compilation du meme fichier .f
+  exemple: $MEFISTO/bin/cbflui donne  $MEFISTO/pp/ppflui
+  binaire executable avec multi-threads avec la commande FLUIDER
+
+testa: fichiers de tests
+- d123_r: Fichiers de donnees Mefisto pour obtenir les resultats de
+  https://www.ljll.fr/perronnet/COVID/COVID_respiration.html
+- Ecoulement de 0 a 120 secondes d'un fluide 2d ou 3d de
+  Reynolds=300 autour d'un rouleau dans une boite avec des
+  elements finis de Brezzi-Fortin (bf) ou Taylor-Hood (th)
+  par gradient conjugue: rol2dbfcg, rol3dbfcg, rol2dthcg, rol3dthcg
+- Non Lineaire Schrodinger Equation tests dans testa/nlsgpe
+
+EXPORTER: Apres construction du maillage de Points, Lignes, Surfaces,
+Volumes, Objets, il est possible d'en exporter dans le format
+specifique d'un logiciel (NEKTON, FIDAP, FREEFEM, OpenFOAM, Modulef,
+LS-DYNA) ou STL pour impression 3D d'une surface triangulee fermee.
+(Cf testa/torusstl)
+
+-----------------------------------------------------------------
+En cas de probleme, prevenir Alain PERRONNET
+E-mail  : alain@perronnet.com
+Internet: https://www.ljll.math.fr/perronnet
+-----------------------------------------------------------------

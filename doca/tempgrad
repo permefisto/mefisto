@@ -1,0 +1,44 @@
+This menu define the drawing or printing options:
+- either the iso-surfaces of the solution or color zones
+- or the gradient solution with arrows
+- or the normal fluxes of heat with arrows.
+
+1: CASE NUMBER of SOLUTION
+If the problem is   steady, the number of CASE is equal to 1.
+If the problem is unsteady, the solution is stored
+every n steps of time.
+If the number of CASE is 3, then the solution at the 2nd
+steps of time will be drawn.
+The solution at Time 0 forms the CASE 1.
+
+2: Drawings of TEMPERATURES
+may be drawn after as
+  1 :  ISOTHERMAL LINES or SURFACES
+  2 :  ZONES of ISOTHERMAL COLORS
+  3 :  ZONES by CUTTING PLANES X or Y or Z=CTE
+  4 :  PROFILES by CUTTING PLANES X or Y or Z=CTE
+  5 :  ALONG A LINE DEFINED BY 2 POINTS
+  7 :  2D SURFACE(X,Y,TEMPERATURE(X,Y))
+  8 :  2D ERROR from TEMPERATURE_EXACTE()
+  9 :  PRINTING of TEMPERATURES
+
+3 : Drawings of TEMPERATURE GRADIENTS drawn with ARROWS 
+    at integration points
+
+4 : Drawings of HEAT NORMAL FLUXES with ARROWS at interface points
+    of FE
+
+5 : Drawings of ERROR ESTIMATORS only in 2D drawn COLORS and ARROWS
+
+7 : Printings of NODES TEMPERATURES for a given case
+
+8 : Printings of TEMPERATURE GRADIENTS for a given case
+    at numerical quadrature formula Points of every FE
+
+9 : Printings of HEAT NORMAL FLUXES for a given case
+    at some Points of every FE
+    and for each boundary (Points in 1d, Lines in 2d, Surface in 3d)
+    of the OBJECT
+
+10: Printings of HEAT FLUXES on PLS of the OBJECT
+    for each boundary (Points in 1d, Lines in 2d, Surface in 3d)

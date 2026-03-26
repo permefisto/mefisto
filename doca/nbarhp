@@ -1,0 +1,8 @@
+The pentahedron of vertices
+(0,0,0)       (NBACTP,0,0)      (0,NBACTP,0)
+(0,0,NBARHP)  (NBACTP,0,NBARHP) (0,NBACTP,NBARHP)
+is subdivided into NBACTP * NBACTP * NBARHP pentahedra.
+
+Example:
+PENTAHEDRON13; I; 13; 5; 6;
+Define 5*5*6=150 equal regular pentahedra.

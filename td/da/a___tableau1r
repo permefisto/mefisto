@@ -1,0 +1,7 @@
+deftms ~>>>TABLEAU1R 'real array with one index'
+variable muet DATE 'date of creation of the TMS' reel2  ;
+variable muet NUTD 'number of the descriptor array TD' entier ; 
+variable MINI1R 'min value of the index' entier ;  
+variable MAXI1R 'max value of the index' entier ; 
+tableau  TABL1R(MINI1R..MAXI1R) 'real values of the array' reel ;
+fintms ;

@@ -1,0 +1,56 @@
+{ ======================================================================== }
+{ Software MEFISTO  : 2011 August 4, Version                               }
+{ USER's  Name      : Alain Perronnet                                      }
+{ Project Name      : cylbreak2d the Unsteady NLSE on a square [-12,12]**2 }
+{ IMPLICIT Method on  idu(t,X)/dt -Alfa Laplacian u(t,X) +Beta u(t,X)**3=0 }
+{                     Data of semi-implicit scheme to solve NLSE problem   }
+{ Date              : 2011/08/04                                           }
+{ ======================================================================== }
+DefVar Pis3;  Pis3  = atan(1) * 4 / 3;
+DefVar Mass;  Mass  = 1.0;
+DefVar Alfa;  Alfa  =-1.0;
+DefVar Beta;  Beta  = 1.0;
+
+DefFunc NLSECoef(t,x,y,z,ntyobj,nuobj,WaveR,WaveI);
+  NLSECoef = Beta * ( WaveR**2 + WaveI**2 );
+EndFunc;
+
+{ The initial conditions of the Wave }
+DefFunc InitWave(t,x,y,z,ntyob,nuobjt,partnb);
+  If partnb=1 then
+    InitWave = exp(-y*y/16) * (1+ 0.001*sin(Pis3*x)); {Real Part}
+  else
+    InitWave = 0;  {Imaginary Part}
+  EndIf;
+EndFunc;
+
+{DATA for the Non Linear Schrodinger Equations}
+
+2; { HEAT INPUT DATA }
+  {Surface SQUARE}
+  1;    { Mass density }
+  1;    { Mass density is a Constant }
+  Mass; { Mass density Value }
+
+  2;    { Alfa heat conductivity Coefficient of Laplacians }
+  3;    { 2D material Homogenous isotropic constant conductivity }
+  Alfa; { Constant Coefficient of Laplacians }
+
+  6;    { NLSE Coefficient of U: Beta * ( WaveR**2 + WaveI**2 ) }
+  -1;        { Function }
+   NLSECoef; { Function Name }
+ @;
+
+ {Line BOUNDARY}
+@;
+
+5; {Algo1: IMPLICIT idu(t,X)/dt -Alfa Laplacian u(t,X) +Beta u(t,X)**3=0 }
+  0;       { Initial TIME }
+ -1;       { Real & Imaginary Part of INITIAL Wave FUNCTION of SQUARE }
+ InitWave; { NAME of the Initial Wave FUNCTION on the object }
+  5;       { Final TIME }
+  0.001;   { Step of TIME }
+  200;     { Number of Wave Vectors to Store }
+  1;       { Skyline Crout Factorization A=L D tL }
+@;
+CLOSE;

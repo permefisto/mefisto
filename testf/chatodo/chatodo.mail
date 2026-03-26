@@ -1,0 +1,206 @@
+{ ====================================================== }
+{ MEFISTO Version Octobre 1999     PROJET: chateau d'eau }
+{ Utilisateur: Perronnet Alain     Date:   14/10/99      }
+{ ====================================================== }
+DefVar Pi;
+Pi=atan(1)*4;
+
+DefVar lh1,lh2,lh3,lh4,lh5,lh6,lh7,Hm;
+Hm=7;
+lh2=0.3;
+lh3=0.7;
+lh1=Hm-(lh2+lh3);
+lh4=2;
+lh5=0.3;
+lh6=2.5;
+lh7=0.2;
+
+DefVar la1,la2,la3,la4,Dm,lr;
+la1=1.7;
+la2=0.3;
+la3=0.6;
+Dm=8;
+lr=la1+la2+la3;
+la4=Dm-lr;
+
+DefVar alfa,ld1,le1,le2,lf1,lf2;
+alfa=30;
+ld1=la1;
+le1=ld1+lh6*tan(alfa*Pi/180);
+le2=0.2;
+lf1=ld1+(lh6+lh7)*tan(alfa*Pi/180);
+lf2=le2;
+
+DefVar lrf;
+lrf=max(lr,lf1+lf2)+0.2;
+
+
+1; 1; { POINTS sommets de l objet }
+c1; i; 1; 0; lh4; 0;
+c2; i; 1; la1; lh4; 0;
+c3; i; 1; la1+la2; lh4; 0;
+
+d1; i; 1; 0; lh4+lh5; 0;
+d2; i; 1; ld1; lh4+lh5; 0;
+d3; i; 1; la1+la2; lh4+lh5; 0;
+
+e1; i; 1; 0; lh4+lh5+lh6; 0;
+e2; i; 1; le1; lh4+lh5+lh6; 0;
+e3; i; 1; le1+le2; lh4+lh5+lh6; 0;
+
+f1; i; 1; 0;       lh4+lh5+lh6+lh7; 0;
+f2; i; 1; lf1;     lh4+lh5+lh6+lh7; 0;
+f3; i; 1; lf1+lf2; lh4+lh5+lh6+lh7; 0;
+
+b1; i; 1; 0;       -(lh1+lh2+lh3); 0;
+b2; i; 1; Dm;      -(lh1+lh2+lh3); 0;
+
+H1; i; 1; 0;         0; 0;
+H2; i; 1; la1;       0; 0;
+H3; I; 1; la1+la2;   0; 0;
+H4; i; 1; Dm;        0; 0;
+
+RB1; i; 1; 0;           -lh3-lh2; 0;
+RB2; i; 1; la1;         -lh3-lh2; 0;
+RB3; i; 1; la1+la2;     -lh3-lh2; 0;
+RB4; i; 1; la1+la2+la3; -lh3-lh2; 0;
+
+RH1; i; 1; 0;           -lh3; 0;
+RH2; i; 1; la1;         -lh3; 0;
+RH3; i; 1; la1+la2;     -lh3; 0;
+RH4; i; 1; la1+la2+la3; -lh3; 0;
+@;
+
+DefFonc Taille_Ideale(r,z,w);
+  Taille_Ideale=0.45;
+  Si r<lrf et z>-(lh3+lh2)*1.2
+    Alors Taille_Ideale=0.15;
+  Sinon
+    Si r<lrf et z>-(lh3+lh2)*1.8
+    Alors Taille_Ideale=0.28;
+    Finsi;
+  FinSi;
+FinFonc;
+
+ Defvar nbarbase;
+ nbarbase=20;
+ Defvar nbaradierg;
+ nbaradierg=20;
+ DefVar nbaradierd; nbaradierd=10;
+ defvar nbaradierm; nbaradierm=5;
+ Defvar nbahg; nbahg=20;
+ Defvar nbahm; nbahm=5;
+ Defvar nbahd; nbahd=20;
+
+
+2;{ LIGNES aretes de l objet }
+
+h2c2; i; 2; nbahg;      1; h2; c2;
+h3c3; i; 2; nbahg;      1; h3; c3;
+
+c1c2; i; 2; nbahg;      1; c1; c2;
+c2c3; i; 2; nbaradierm; 1; c2; c3;
+
+d1d2; i; 2; nbahg;      1; d1; d2;
+d2d3; i; 2; nbaradierm; 1; d2; d3;
+d2e2; i; 2; nbahg;      1; d2; e2;
+d3e3; i; 2; nbahg;      1; d3; e3;
+
+c1d1; i; 2; nbaradierm; 1; c1; d1;
+c2d2; i; 2; nbaradierm; 1; c2; d2;
+c3d3; i; 2; nbaradierm; 1; c3; d3;
+
+e1e2; i; 2; nbahg;      1; e1; e2;
+e2e3; i; 2; nbaradierm; 1; e2; e3;
+
+f1f2; i; 2; nbahg;      1; f1; f2;
+f2f3; i; 2; nbaradierm; 1; f2; f3;
+
+e1f1; i; 2; nbaradierm; 1; e1; f1;
+e2f2; i; 2; nbaradierm; 1; e2; f2;
+e3f3; i; 2; nbaradierm; 1; e3; f3;
+
+b1b2;   i; 2; nbarbase;   1;   b1;  b2;
+b1rb1;  i; 2; nbarbase;   0.9; b1; rb1;
+
+rb1rb2; i; 2; nbaradierg; 1; rb1; rb2;
+rb2rb3; i; 2; nbaradierm; 1; rb2; rb3;
+rb3rb4; i; 2; nbaradierd; 1; rb3; rb4;
+
+rh1rh2; i; 2; nbaradierg; 1; rh1; rh2;
+rh3rh4; i; 2; nbaradierd; 1; rh3; rh4;
+RB1RH1; i; 2; nbaradierm; 1; rb1; rh1;
+rh1h1;  i; 2; nbahg/2;  1.1; rh1;  h1;
+h1h2;   i; 2; nbahg;      1;  h1;  h2;
+rh2h2;  i; 2; nbahg/2;  1.1; rh2;  h2;
+rh3h3;  i; 2; nbahg/2;  1.1; rh3;  h3;
+h3h4;   i; 2; nbahd;    1.1;  h3;  h4;
+
+b2h4;   i; 2; 14;         1;  b2;  h4;
+rb4rh4; i; 2; nbaradierm; 1; rb4; rh4;
+h2h3;   i; 2; nbaradierm; 1;  h2;  h3;
+
+rl; i; 51; { union de plusieurs lignes }
+ 10; { nombre de lignes de l'union }
+ RB1RB2; RB2RB3; RB3RB4; RB4RH4; RH3RH4;
+ RH3H3;  H2H3;   RH2H2;  RH1RH2; RB1RH1;
+gterre; i; 51; { union de plusieurs lignes }
+ 10; { nombre de lignes de l'union }
+ B1B2;   B2H4;   H3H4;   RH3H3;  RH3RH4;
+ RB4RH4; RB3RB4; RB2RB3; RB1RB2; B1RB1;
+@;
+
+3; { SURFACES faces de l objet }
+ radier; i; 9;{ triangulation de lignes fermees par TE }
+ 0.07;{ ARETMX 'taille max des aretes des triangles equilateraux}
+ 1;{ NBLFTR 'nombre de lignes fermees contour de la surface}
+ 0;{ NBPTIT 'nombre de points internes futurs sommets}
+rl;{ NOM DE LIGNE }
+
+ petiteterre; i; 1; { quadrangle ALGEBRIQUE structure ou non }
+ RH1RH2; RH2H2; H1H2; RH1H1; 2;
+
+ grandeterre; i; 9;{ triangulation de lignes fermees par TE }
+ 10; { ARETMX 'taille max des aretes des triangles equilateraux}
+ 1;{ NBLFTR 'nombre de lignes fermees contour de la surface}
+ 0;{ NBPTIT 'nombre de points internes futurs sommets}
+ gterre; { NOM DE LIGNE }
+
+ mur;          i; 1; h2h3; h3c3; c2c3; h2c2; 1;
+ bgreservoir;  i; 1; c1c2; c2d2; d1d2; c1d1; 1;
+ bdreservoir;  i; 1; c2c3; c3d3; d2d3; c2d2; 1;
+ murreservoir; i; 1; d2d3; d3e3; e2e3; d2e2; 1;
+ hgreservoir;  i; 1; e1e2; e2f2; f1f2; e1f1; 1;
+ hdreservoir;  i; 1; e2e3; e3f3; f2f3; e2f2; 1;
+
+@;
+
+2; { LIGNES aretes de l objet }
+ axe;      i; 51; 5; e1f1; c1d1; RH1H1; RB1RH1; B1RB1;
+ deplnul;  i; 51; 2; B2H4; B1B2;
+@;
+
+3;{ SURFACES faces de l objet }
+ terre; i; 51; 2; petiteterre; grandeterre;
+ beton; i; 51; 7;
+       radier;      mur;
+       bgreservoir; bdreservoir; murreservoir; hgreservoir; hdreservoir;
+@;
+
+5;{ OBJETS parties de l OBJET }
+ CHATEAU;  0; { resolution classique 2D ou 3D avec renumerotation }
+ 5; { nombre des Points Lignes Surfaces Volumes Objets de l'objet }
+ S; TERRE;
+ S; BETON;
+ L; D2E2;
+ L; D1D2;
+ L; DEPLNUL;
+@;
+
+7; { Interpolation }
+ chateau;
+ 2; {AXISYMETRIQUE LAGRANGE DE DEGRE 2}
+@;
+
+10; 5; 90; { TRACE de l'OBJET }
+FERMER;

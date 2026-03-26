@@ -1,0 +1,507 @@
+      SUBROUTINE TRVI3DPLEF( KNOMOB, NBSOMT, NBPOI,  XYZPOI,
+     %                       NBTYEL, MNELEM, CMVITE,
+     %                       NCAS0,  NCAS1,  NCAS,
+     %                       vitx,   vity,   vitz,   TIMES )
+C+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+C BUT :    TRACE DES VITESSES DES EF SECTIONNES PAR UN
+C -----    PLAN X OU Y OU Z = CONSTANTE  OU UN PLAN QUELCONQUE
+C          SUR UN OBJET 3D
+C
+C ENTREES:
+C --------
+C KNOMOB : NOM DE L'OBJET 3D
+C NBSOMT : NOMBRE DE SOMMETS DU MAILLAGE
+C NBPOI  : NOMBRE DE POINTS = SOMMETS DES TETRAEDRES
+C XYZPOI : NBCOOR COORDONNEES DES NBPOI POINTS DES EF
+C NBTYEL : LE NOMBRE DE TYPES D'ELEMENTS FINIS DANS CETTE TOPOLOGIE
+C MNELEM : ADRESSE MCN DES TABLEAUX ELEMENTS FINIS DE CETTE TOPOLOGIE
+C CMVITE : NOMBRE DE CM POUR L'UNITE DE VITESSE
+
+C NCAS0:NCAS1 : NOMBRE DE VECTEURS VITESSE STOCKES  (=NCAS1-NCAS0+1)
+C NCAS0  : NUMERO DU PREMIER CAS RETROUVE PARMI LES VECTEURS DES FICHIERS
+C NCAS1  : NUMERO DU DERNIER CAS RETROUVE PARMI LES VECTEURS DES FICHIERS
+C NCAS   : NUMERO DU VECTEUR VITESSE A TRACER
+
+C VITX   : COMPOSANTE X DE LA VITESSE EN CHAQUE POINT DES TETRAEDRES
+C VITY   : COMPOSANTE Y DE LA VITESSE EN CHAQUE POINT DES TETRAEDRES
+C VITZ   : COMPOSANTE Z DE LA VITESSE EN CHAQUE POINT DES TETRAEDRES
+C TIMES  : TEMPS DU CALCUL DES NCAS0:NCAS1 VECTEURS
+C+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+C AUTEUR : ALAIN PERRONNET Laboratoire JL LIONS UPMC Paris  Fevrier 2007
+C MODIFS : ALAIN PERRONNET Saint PIERRE du PERRAY           Fevrier 2022
+C23456...............................................................012
+      include"./incl/langue.inc"
+      include"./incl/gsmenu.inc"
+      include"./incl/a_objet__topologie.inc"
+      include"./incl/a___npef.inc"
+      include"./incl/a___vecteur.inc"
+      include"./incl/a___xyzpoint.inc"
+      include"./incl/a___xyznoeud.inc"
+      include"./incl/a___face.inc"
+      include"./incl/a___aretefr.inc"
+      include"./incl/a___dtemperature.inc"
+      include"./incl/ponoel.inc"
+      include"./incl/donele.inc"
+      include"./incl/trvari.inc"
+      include"./incl/mecoit.inc"
+      include"./incl/xyzext.inc"
+      include"./incl/ctemps.inc"
+
+      COMMON / UNITES / LECTEU, IMPRIM, NUNITE(30)
+      include"./incl/pp.inc"
+      COMMON             MCN(MOTMCN)
+      REAL              RMCN(1)
+      EQUIVALENCE      (RMCN(1),MCN(1))
+      CHARACTER*(*)     KNOMOB
+      CHARACTER*120     KNOM
+
+      REAL              XYZPOI(3,NBPOI)
+      REAL              TIMES(NCAS0:NCAS1)
+
+      type typ_dptab
+         DOUBLE PRECISION, dimension(:), pointer :: dptab
+      end type typ_dptab
+      type( typ_dptab ), dimension(NCAS0:NCAS1) :: vitx, vity, vitz
+
+      REAL, allocatable, dimension(:,:) :: XYZDFL
+
+      INTRINSIC         SQRT
+
+C     VARIABLES PERSO
+      REAL              NORM
+      REAL              VNORMAL(3)
+      REAL              PTPLAN(3), APTPLAN(3)
+      REAL              XYZ0(3), XYZ(3)
+      REAL              COPLAN, COPLANMIN, COPLANMAX, PROSCR
+      REAL              XYZPLAN(3,4)
+      INTEGER           NOPTEF(64)
+      CHARACTER*4       NOMELE(2)
+C
+      NBCOOR = 3
+      MNBARY = 0
+      MNBAFR = 0
+      MNNOBA = 0
+      MNNBFR = 0
+      MNAREF = 0
+      NBCOUL = NDCOUL - N1COUL + 1
+      IALXYZDFL = 1
+C
+C     CONSTRUCTION DES FACES FRONTALIERES ET DE LEURS BARYCENTRES
+C     ===========================================================
+C     CREATION OU REDECOUVERTE DU TMS OBJET>>>FACE
+      CALL HACHOB( KNOMOB, 4, NTFAOB, MNFAOB, IERR )
+      IF( IERR .NE. 0 ) RETURN
+C
+C     CREATION DU HACHAGE DES ARETES DES FACES FRONTALIERES DE L'OBJET
+      CALL HACHAF( KNOMOB, 0, NTFAOB, MNFAOB,
+     %             NTAFOB, MNAFOB, I )
+C
+C     LE NOMBRE D'ENTIERS PAR ARETE FRONTALIERE
+      MOARFR = MCN( MNAFOB + WOARFR )
+C     LA MAJORATION DU NOMBRE DES ARETES FRONTALIERES
+      MXARFR = MCN( MNAFOB + WXARFR )
+C     LE NUMERO DANS LAREFR DE LA PREMIERE ARETE FRONTALIERE
+      L1ARFR = MCN( MNAFOB + W1ARFR )
+C     LE NOMBRE D'ARETES FRONTALIERES DANS LE CHAINAGE
+      NBARFR = MCN( MNAFOB + WBARFR )
+C
+C     RESERVATION DES TABLEAUX NO XYZ POUR LE TRI
+      CALL TNMCDC( 'ENTIER',  NBARFR, MNNBFR )
+      CALL TNMCDC( 'REEL'  ,3*NBARFR, MNBAFR )
+C
+C     CALCULER LE BARYCENTRE DE CHAQUE FACE FRONTALIERE
+C              LE NUMERO DE LA FACE POUR LE TRI PAR TAS ULTERIEUR
+      CALL TRIARFR( MOARFR, L1ARFR, MCN(MNAFOB+WAREFR), XYZPOI,
+     %              NBARFR, MCN(MNNBFR), RMCN(MNBAFR) )
+C
+C     TABLEAU DES XYZ DIRECTION + LONGUEUR DES FLECHES VITESSES
+C     NOMBRE TOTAL D'ELEMENTS FINIS
+      MXFLEC = 6 * NBELFIN( NBTYEL, MNELEM ) + 1024
+
+      PRINT*, 'ALLOCATION DEMAND  of',7,'x',MXFLEC,' REAL of XYZDFL'
+      ALLOCATE( XYZDFL(1:7, 1:MXFLEC), STAT=IALXYZDFL )
+      IF( IALXYZDFL .NE. 0 ) THEN
+         PRINT*,'ALLOCATION ERROR   of',7,'x',MXFLEC,' REAL of XYZDFL'
+         GOTO 9000
+      ENDIF
+
+      MXAREF = 10 * NBARFR + 1024
+      CALL TNMCDC( 'ENTIER', MXAREF*2, MNAREF )
+C
+C     LECTURE DES DONNEES DE DEFINITION DU PLAN DE SECTION
+C     ----------------------------------------------------
+ 100  CALL LIMTCL( 'sectvopl', NOAXE )
+      IF( NOAXE .LE. 0 ) GOTO 9000
+      IF( NOAXE .EQ. 4 ) THEN
+C
+C        COUPE SELON UN PLAN DE VECTEUR NORMAL A DEFINIR
+C        ENTREE X DU VECTEUR NORMAL
+         CALL INVITE( 135 )
+         NCVALS = 0
+         CALL LIRRSP( NCVALS, VNORMAL(1) )
+         IF (NCVALS .LE. 0) GOTO 100
+C
+C        ENTREE Y DU VECTEUR NORMAL
+         CALL INVITE( 136 )
+         NCVALS = 0
+         CALL LIRRSP( NCVALS, VNORMAL(2) )
+         IF (NCVALS .LE. 0) GOTO 100
+C
+C        ENTREE Z DU VECTEUR NORMAL
+         CALL INVITE( 137 )
+         NCVALS = 0
+         CALL LIRRSP( NCVALS, VNORMAL(3) )
+         IF (NCVALS .LE. 0) GOTO 100
+C
+C        NORMALISATION DU VECTEUR VNORMAL
+         NORM = SQRT( VNORMAL(1)**2 + VNORMAL(2)**2 + VNORMAL(3)**2 )
+C
+         IF (NORM .LT. 1E-8) THEN
+            NBLGRC(NRERR) = 2
+            IF( LANGAG .EQ. 0 ) THEN
+               KERR(1) = 'TRVI3DPLEF: VECTEUR NORMAL AU PLAN NUL'
+               KERR(2) = '            VEUILLEZ RECOMMENCER'
+            ELSE
+               KERR(1) = 'TRVI3DPLEF: NULL NORMAL VECTOR'
+               KERR(2) = '            GIVE IT AGAIN'
+            ENDIF
+            CALL LEREUR
+            GOTO 100
+         ENDIF
+C
+         DO 110 I=1,3
+            VNORMAL(I) = VNORMAL(I) / NORM
+ 110     CONTINUE
+C
+C        ICI VNORMAL EST LE VECTEUR NORMAL UNITE DU PLAN DE SECTION
+      ENDIF
+C
+C     -----------------------------------------------------------
+C     OPTIONS DE LA VISEE POUR VOIR L'OBJET ET LE PLAN DE SECTION
+C     -----------------------------------------------------------
+ 150  CALL VISE3D( NMTCL )
+      IF( NMTCL .LT. 0 ) GOTO 100
+C
+C     LES COORDONNEES EXTREMES SONT CELLES DE CET OBJET
+      CALL MIMXPT( NBCOOR, NBPOI, XYZPOI, COOEXT )
+C     CADRE AVEC 20% EN PLUS
+      DO 160 I=1,NBCOOR
+         EC = ( COOEXT(I,2) - COOEXT(I,1) ) * 1.2 / 2
+         CM = ( COOEXT(I,1) + COOEXT(I,2) ) / 2
+         COOEXT(I,1) = CM - EC
+         COOEXT(I,2) = CM + EC
+ 160  CONTINUE
+C
+C     DEFINITION DE LA VISEE AXONOMETRIQUE POUR DEFINIR LE PLAN DE SECTION
+C     --------------------------------------------------------------------
+C     POINT VU LE CENTRE DE L'HEXAEDRE ENGLOBANT
+      AXOPTV(1) = ( COOEXT(1,1) + COOEXT(1,2) ) * 0.5
+      AXOPTV(2) = ( COOEXT(2,1) + COOEXT(2,2) ) * 0.5
+      AXOPTV(3) = ( COOEXT(3,1) + COOEXT(3,2) ) * 0.5
+C     POSITION DE L'OEIL
+      AXOEIL(1) = AXOPTV(1) + 4.0 * ( COOEXT(1,2) - COOEXT(1,1) )
+      AXOEIL(2) = AXOPTV(2) + 3.0 * ( COOEXT(2,2) - COOEXT(2,1) )
+      AXOEIL(3) = AXOPTV(3) + 3.5 * ( COOEXT(3,2) - COOEXT(3,1) )
+C     LARGEUR/2 et HAUTEUR/2 de la FENETRE
+      AXOLAR = (COOEXT(1,2)-COOEXT(1,1) + COOEXT(2,2)-COOEXT(2,1))*0.45
+      AXOHAU = ( COOEXT(3,2) - COOEXT(3,1) ) * 0.85
+C     PAS DE PLAN ARRIERE ET AVANT
+      AXOARR = 0
+      AXOAVA = 0
+      CALL AXONOMETRIE( AXOPTV, AXOEIL, AXOLAR, AXOHAU, AXOARR, AXOAVA )
+C
+C     LE BARYCENTRE DE L'HEXAEDRE ENGLOBANT SERT DE POSITION
+C     DE DEPART DU PLAN DE SECTION DES EF
+      PTPLAN(1) = AXOPTV(1)
+      PTPLAN(2) = AXOPTV(2)
+      PTPLAN(3) = AXOPTV(3)
+C     LES COORDONNEES AXONOMETRIQUES DU POINT DU PLAN
+      CALL XYZAXO( PTPLAN, APTPLAN )
+C
+C     COORDONNEE MINIMALE ET MAXIMALE DU PLAN DE SECTION
+      IF( NOAXE .LE. 3 ) THEN
+C        COORDONNEE SELON L'AXE NOAXE
+         COPLANMIN = COOEXT(NOAXE,1)
+         COPLANMAX = COOEXT(NOAXE,2)
+      ELSE
+C        LA COORDONNEE SELON LA DIRECTION NORMALE
+         COPLAN0   = PROSCR( PTPLAN,      VNORMAL, 3 )
+         COPLANMIN = PROSCR( COOEXT(1,1), VNORMAL, 3 )
+         COPLANMAX = PROSCR( COOEXT(1,2), VNORMAL, 3 )
+      ENDIF
+      IF( COPLANMIN .GT. COPLANMAX ) THEN
+         C         = COPLANMIN
+         COPLANMIN = COPLANMAX
+         COPLANMAX = C
+      ENDIF
+C
+C     ECART MAXIMAL MIN-MAX = DIAGONALE DE L'HEXAEDRE
+      ECMX = SQRT( (COOEXT(1,2)-COOEXT(1,1))**2 +
+     %             (COOEXT(2,2)-COOEXT(2,1))**2 +
+     %             (COOEXT(3,2)-COOEXT(3,1))**2 )
+C
+C     INITIALISATION DU TRACE INTERACTIF SELON LE DEPLACEMENT DE LA SOURIS
+      CALL ORBITE0( NOTYEV )
+      IF( NOTYEV .EQ. 0 ) GOTO 9000
+      NOPX0 = LAPXFE / 2
+      NOPY0 = LHPXFE / 2
+C     LE POINTEUR DE LA SOURIS EST CENTRE DANS LA FENETRE
+      CALL DEPLSOURIS( NOPX0, NOPY0 )
+C
+C     MISE A JOUR DU DEPLACEMENT DE LA SOURIS POUR POSITIONNER LE PLAN
+C     ----------------------------------------------------------------
+ 200  CALL ORBITE2( NOTYEV )
+      IF( NOTYEV .EQ.  0 ) GOTO 150
+      IF( NOTYEV .EQ. -3 ) THEN
+C
+C        DEPLACEMENT EN COORDONNEE AXONOMETRIQUE
+C        PAR RAPPORT A CELUI EN PIXELS
+         APTPLAN(1) = APTPLAN(1) + ECMX*2 * FLOAT( NOPX1 - NOPX0 )
+     %                           / FLOAT(LAPXFE)
+         APTPLAN(2) = APTPLAN(2) + ECMX*2 * FLOAT( NOPY0 - NOPY1 )
+     %                           / FLOAT(LHPXFE)
+C        PASSAGE AUX COORDONNEES CARTESIENNES
+         CALL AXOXYZ( APTPLAN, PTPLAN )
+C
+C        SELON NOAXE CALCUL DE COPLAN SELON LA NORMALE AU PLAN
+C        ET DES 4 SOMMETS DU CARRE DE VISUALISATION DU PLAN
+         CALL SCTPLN( NOAXE,  VNORMAL,
+     %                PTPLAN, COPLAN0, COPLANMIN, COPLANMAX,
+     %                COPLAN, XYZPLAN )
+C
+C        MISE A JOUR DU PIXEL INITIAL DE LA SOURIS
+         NOPX0 = NOPX1
+         NOPY0 = NOPY1
+      ENDIF
+C
+C     CONSTRUCTION DES VECTEURS VITESSES
+C     BOUCLE SUR LES DIFFERENTS TYPES D'ELEMENTS FINIS DU MAILLAGE
+C     ============================================================
+      CMMXFL = 0.
+      NBFLEC = 0
+      NBAREF = 0
+      DO 250 I = 0, NBTYEL-1
+C
+C        L'ADRESSE MCN DU DEBUT DU TABLEAU NPEF DE CE TYPE D'EF
+         MNELE = MCN( MNELEM + I )
+C
+C        LE NUMERO DU TYPE DES ELEMENTS FINIS
+         NUTYEL = MCN( MNELE + WUTYEL )
+C
+C        LE NOMBRE DE TELS ELEMENTS FINIS
+         NBELEM = MCN( MNELE + WBELEM )
+C
+C        LES CARACTERISTIQUES DE L'ELEMENT FINI
+         CALL ELNUNM( NUTYEL, NOMELE )
+         CALL ELTYCA( NUTYEL )
+C
+C        L'ADRESSE MCN DU TABLEAU 'NPEF' POUR CE TYPE D'EF
+         MNPGEL = MNELE + WUNDEL
+
+C        NOMBRE DE NOEUDS ELEMENTAIRES SUPPORT D'UNE VITESSE
+         IF( NUTYEL .EQ. 19 ) THEN
+C           TETRAEDRE BREZZI-FORTIN
+            NBNV = 5
+         ELSE
+C           TETRAEDRE TAYLOR HOOD
+            NBNV = 10
+         ENDIF
+
+C        LA BOUCLE SUR LES ELEMENTS FINIS DE CE TYPE NUTYEL
+C        ==================================================
+         DO 240 NEF = 1, NBELEM
+
+C           LES NBPGEF POINTS DE L'ELEMENT FINI NUELEM
+            CALL EFPOGE( MNELE, NEF, NBPGEF, NOPTEF )
+
+            IF( NUTYEL .EQ. 19 ) THEN
+C              TETRAEDRE BREZZI-FORTIN
+C              AJOUT DU BARYCENTRE DE L'EF
+               NOPTEF(5) = NBSOMT + NEF
+            ENDIF
+
+C           NBNSOM SOMMETS PLACES EN PREMIER DANS LES NO DE POINTS
+C           RECHERCHE DE LA COORDONNEE NOAXE MIN MAX DES SOMMETS DE L'EF
+C           POUR SAVOIR SI LA COORDONNEE DU PLAN EST ENTRE CES VALEURS
+            IF( NOAXE .LE. 3 ) THEN
+C
+C              PLAN A COORDONNEE NOAXE=Constante
+               CMIN = XYZPOI( NOAXE, NOPTEF(1) )
+               CMAX = CMIN
+               DO 215 NS = 2,NBPGEF
+C                 LE NO DU POINT NS DE L'EF
+                  C = XYZPOI( NOAXE, NOPTEF( NS ) )
+                  IF( C .LT. CMIN ) CMIN = C
+                  IF( C .GT. CMAX ) CMAX = C
+ 215           CONTINUE
+
+            ELSE
+
+C              PLAN DEFINI PAR LE VECTEUR NORMAL
+C              COORDONNEE SELON LA DIRECTION NORMALE PAR PRODUIT SCALAIRE
+               CMIN = PROSCR( XYZPOI(1,NOPTEF(1)), VNORMAL, 3 )
+               CMAX = CMIN
+               DO 225 NS = 2,NBPGEF
+C                 LE NO DU POINT NS DE L'EF
+                  NOST = NOPTEF( NS )
+                  C = PROSCR( XYZPOI( 1, NOST ), VNORMAL, 3 )
+                  IF( C .LT. CMIN ) CMIN = C
+                  IF( C .GT. CMAX ) CMAX = C
+ 225           CONTINUE
+
+            ENDIF
+
+            IF( COPLAN .LT. CMIN .OR. COPLAN .GT. CMAX ) GOTO 240
+
+C           L'EF NEF A UNE INTERSECTION AVEC LE PLAN NOAXE
+C           LISTAGE DES VECTEURS VITESSES
+            CALL VEVITE( NCAS0,  NCAS1,  NCAS,
+     %                   CMVITE, vitx,   vity, vitz,
+     %                   NBPOI,  XYZPOI, NBNV, NOPTEF,
+     %                   NBFLEC, MXFLEC, XYZDFL, CMMXFL,
+     %                   NBAREF, MXAREF, MCN(MNAREF), IERR )
+            IF( IERR .NE. 0 ) THEN
+               IF( LANGAG .EQ. 0 ) THEN
+                  IF( IERR .EQ. 1 ) THEN
+                  WRITE(IMPRIM,*)'trvi3dplef: AUGMENTER MXFLEC=',MXFLEC
+                  ELSE
+                  WRITE(IMPRIM,*)'trvi3dplef: AUGMENTER MXAREF=',MXAREF
+                  ENDIF
+               ELSE
+                  IF( IERR .EQ. 1 ) THEN
+                  WRITE(IMPRIM,*)'trvi3dplef: AUGMENT MXFLEC=',MXFLEC
+                  ELSE
+                  WRITE(IMPRIM,*)'trvi3dplef: AUGMENT MXAREF=',MXAREF
+                  ENDIF
+               ENDIF
+               GOTO 300
+            ENDIF
+
+ 240     CONTINUE
+
+ 250  CONTINUE
+C
+C     RESERVATION DES TABLEAUX NO BARYCENTRES POUR LE TRI
+ 300  IF( MNBARY .GT. 0 ) CALL TNMCDS( 'REEL',  MXBARY, MNBARY )
+      IF( MNNOBA .GT. 0 ) CALL TNMCDS( 'ENTIER',MXBARY, MNNOBA )
+      MXBARY = NBARFR + NBFLEC + NBAREF + 4
+      CALL TNMCDC( 'ENTIER', MXBARY, MNNOBA )
+      CALL TNMCDC( 'REEL',   MXBARY, MNBARY )
+C
+C     LES ARETES DE LA FRONTIERE SONT EN PREMIER
+      MNBA = MNBAFR
+      DO 305 NF = 0, NBARFR-1
+C        COTE Z AXONOMETRIQUE DANS LA DIRECTION DE VISEE
+         CALL XYZAXO( RMCN(MNBA), XYZ )
+         RMCN(MNBARY+NF) = XYZ(3)
+C        NO>0 DE L'ARETE DANS LAREFR
+         MCN(MNNOBA+NF) = MCN(MNNBFR+NF)
+         MNBA = MNBA + 3
+ 305  CONTINUE
+C
+C     LES FLECHES DES EF SECTIONNES SONT AJOUTEES
+      DO 310 NF = 0, NBFLEC-1
+C        COTE Z AXONOMETRIQUE DANS LA DIRECTION DE VISEE
+         CALL XYZAXO( XYZDFL(1,NF+1), XYZ )
+         RMCN(MNBARY+NBARFR+NF) = XYZ(3)
+C        NO<POUR SAVOIR QUE C'EST UNE FLECHE
+         MCN(MNNOBA+NBARFR+NF) = -(1+NF)
+ 310  CONTINUE
+      NBBARY = NBARFR + NBFLEC
+C
+C     LES ARETES DES EF SECTIONNES SONT AJOUTEES
+      MNBA = MNAREF
+      DO 315 NF = 0, NBAREF-1
+C        LE BARYCENTRE DE L'ARETE
+         NS1 = MCN(MNBA)
+         NS2 = MCN(MNBA+1)
+         XYZ(1) = ( XYZPOI( 1, NS1 ) + XYZPOI( 1, NS2 ) ) * 0.5
+         XYZ(2) = ( XYZPOI( 2, NS1 ) + XYZPOI( 2, NS2 ) ) * 0.5
+         XYZ(3) = ( XYZPOI( 3, NS1 ) + XYZPOI( 3, NS2 ) ) * 0.5
+C        COTE Z AXONOMETRIQUE DANS LA DIRECTION DE VISEE
+         CALL XYZAXO( XYZ, XYZ )
+         RMCN(MNBARY+NBBARY+NF) = XYZ(3)
+C        NO<POUR SAVOIR QUE C'EST UNE FLECHE
+         MCN(MNNOBA+NBBARY+NF) = -(1+NF+NBFLEC)
+         MNBA = MNBA + 2
+ 315  CONTINUE
+      NBBARY = NBBARY + NBAREF
+C
+C     LES 4 ARETES DU RECTANGLE DU PLAN DE SECTION
+      NF0 = 4
+      DO 320 NF = 1, 4
+C        COTE Z AXONOMETRIQUE DANS LA DIRECTION DE VISEE
+         XYZ0(1) = (XYZPLAN(1,NF0) + XYZPLAN(1,NF)) * 0.5
+         XYZ0(2) = (XYZPLAN(2,NF0) + XYZPLAN(2,NF)) * 0.5
+         XYZ0(3) = (XYZPLAN(3,NF0) + XYZPLAN(3,NF)) * 0.5
+         CALL XYZAXO( XYZ0, XYZ )
+         RMCN(MNBARY+NBBARY+NF-1) = XYZ(3)
+C        NO>NBFLEC POUR SAVOIR QUE C'EST UNE ARETE DU RECTANGLE DU PLAN
+         MCN(MNNOBA+NBBARY+NF-1) = -(NBFLEC+NBAREF + NF)
+         NF0 = NF
+ 320  CONTINUE
+C
+C     NOMBRE TOTAL DE TRACES A TRIER
+      NBBARY = NBBARY + 4
+C
+C     LE TRI PAR TAS DE CETTE DISTANCE
+C     LA FACE LA PLUS PROCHE EST LA PREMIERE
+      CALL TRITRP( NBBARY, RMCN(MNBARY), MCN(MNNOBA) )
+
+C     LA MEMOIRE PIXELS EST EFFACEE
+      CALL EFFACEMEMPX
+
+C     TRACE EFFECTIF DES AXES, ARETES FRONTALIERES ET DES FLECHES
+C     ===========================================================
+      CALL TRFLEFSE2( NBCOOR, NBPOI,  XYZPOI,
+     %                MOARFR, MXARFR, MCN(MNAFOB+WAREFR),
+     %                NBBARY, MCN(MNNOBA),
+     %                NBFLEC, XYZDFL, CMMXFL,
+     %                NBAREF, MCN(MNAREF), XYZPLAN )
+
+      IF( MNBARY .GT. 0 ) CALL TNMCDS( 'REEL',  MXBARY, MNBARY )
+      IF( MNNOBA .GT. 0 ) CALL TNMCDS( 'ENTIER',MXBARY, MNNOBA )
+C
+C     LE TRACE DU TITRE FINAL
+C     =======================
+      KNOM = 'OBJET: ' // KNOMOB
+      I    = NUDCNB( KNOM )
+      CALL XVCOULEUR( NCNOIR )
+      CALL XVTEXTE( KNOM(1:I), I, 50, 30 )
+
+C     TEMPS DE CALCUL DU VECTEUR NCAS
+      TEMPS = TIMES( NCAS )
+      WRITE( KNOM(1:14), '(G14.6)' ) TEMPS
+      IF( LANGAG .EQ. 0 ) THEN
+         KNOM = 'CAS      VITESSES dans un PLAN de SECTION au TEMPS='
+     %       // KNOM(1:14) // '               CM par UNITE de VITESSE'
+C        CMVITE : NOMBRE DE CM PAR UNITE DE VITESSE
+         WRITE( KNOM(67:81), '(G15.7)' ) CMVITE
+      ELSE
+         KNOM = 'CASE     VELOCITIES in a PLANE SECTION at TIME='
+     %       // KNOM(1:14) // '               CM per VELOCITY UNIT'
+C        CMVITE : NOMBRE DE CM PAR UNITE DE VITESSE
+         WRITE( KNOM(63:77), '(G15.7)' ) CMVITE
+      ENDIF
+      WRITE( KNOM(5:8), '(I4)' ) NCAS
+
+C     TRACE DANS LA FENETRE
+      CALL TRFINS( KNOM )
+
+C     RETOUR POUR UNE NOUVELLE VISEE
+      GOTO 200
+
+C     SORTIE DU TRACE DES PLANS DE SECTION
+C     ====================================
+ 9000 IF( MNBARY .GT. 0 ) CALL TNMCDS( 'REEL',  MXBARY,   MNBARY )
+      IF( MNNOBA .GT. 0 ) CALL TNMCDS( 'ENTIER',MXBARY,   MNNOBA )
+      IF( MNBAFR .GT. 0 ) CALL TNMCDS( 'REEL',  NBARFR*3, MNBAFR )
+      IF( MNNBFR .GT. 0 ) CALL TNMCDS( 'ENTIER',NBARFR,   MNNBFR )
+      IF( MNAREF .GT. 0 ) CALL TNMCDS( 'ENTIER',MXAREF*2, MNAREF )
+      IF( IALXYZDFL .EQ. 0 ) THEN
+         DEALLOCATE( XYZDFL )
+         IALXYZDFL = 1
+      ENDIF
+
+      RETURN
+      END

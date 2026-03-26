@@ -1,0 +1,137 @@
+{ ===================================================================== }
+{ MEFISTO Software     : January 25, 2023 version                       }
+{ USER's  Name         : Alain Perronnet                                }
+{ Project Name         : tubo2d  Classic V=0 at t=0  tAB=10->15  tCD=20 }
+{ Date                 : 2023/01/25   16h 18m 18s                       }
+{ ===================================================================== }
+
+DefVar  RhoAir;         RhoAir=1.2922;          { kg/m3 Wet Air Mass Density at sea level}
+DefVar  HeatMassCpAir;  HeatMassCpAir=1005;     { Air Heat Mass Capacity J/K/kg }
+DefVar  HeatConducAir;  HeatConducAir=0.0262;   { Air Heat Conductivity W/m/K }
+
+DefVar  RhoWater;         RhoWater=1000;        { kg/m3 Water Mass Density }
+DefVar  HeatMassCpWater;  HeatMassCpWater=4185; { Water Heat Mass Capacity J/K/kg at 20C }
+DefVar  HeatConducWater;  HeatConducWater=0.6;  { Water Heat Conductivity W/m/K }
+
+DefVar  RhoClassic;         RhoClassic=1;          { kg/m3 Classic Mass Density }
+DefVar  HeatMassCpClassic;  HeatMassCpClassic=1;   { Classic Heat Mass Capacity J/K/kg }
+DefVar  HeatConducClassic;  HeatConducClassic=1;   { Classic Heat Conductivity W/m/K }
+
+DefVar  TempAB;  TempAB=10;   { Celsius Degree Temperature on edge AB }
+DefVar  TempCD;  TempCD=20;   { Celsius Degree Temperature on edge CD }
+
+{ Initial Temperature is Y-linear from TempAB degrees on AB to TempCD degrees on CD }
+DefFunc InitTemperature(t,x,y,z,ntyplsv,nuplsv);
+ InitTemperature = ( (ymax-y) * TempAB + (y-ymin) * TempCD ) / (ymax-ymin);
+EndFunc;
+
+{ Temperature on AB depends of TIME t }
+DefFunc TemperatureAB(t,x,y,z,ntyplsv,nuplsv,temper0);
+  if t<=5 then
+    TemperatureAB = TempAB + t;
+  else
+    TemperatureAB = 15;
+  endif
+EndFunc;
+
+
+2; { HEAT TRANSFER INPUT DATA -------------------------------------- }
+{ SURFACE: ABCD }
+ 1;             { Rho MASS Density }
+ 1;             { Constant MASS density }
+ RhoClassic;    { DMASSE 'Value of the density of MASS' reel ; }
+
+ 7;             { Cp MASSIC HEAT CAPACITY Density }
+ 1;             { constant massic heat }
+ HeatMassCpClassic; { CHAMAS 'value of the massic heat' reel ; }
+
+ 2;             { [A] HEAT CONDUCTIVITY }
+ 3;             { 1D or 2D HOMOGENEOUS ISOTROPIC material }
+ HeatConducClassic; { CONDUC 'constant material conductivity' reel ; }
+
+ 8;               { INITIAL TEMPERATURE ............. }
+-1;               { INITIAL TEMPERATURE FUNCTION }
+ InitTemperature; { Name of the INITIAL TEMPERATURE FUNCTION }
+@;
+
+ { LINE: AB }
+ 3;              { CONTACT Fixation of TEMPERATURE }
+ -1;             { FIXED temperature FUNCTION }
+ TemperatureAB;  { TEMPERATURE }
+@;
+
+ { LINE: BC }
+ { Heat FLUX=0 }
+ @;
+
+ { LINE: CD }
+ 3;           { CONTACT Fixation of TEMPERATURE }
+ 1;           { constant fixed temperature }
+ TempCD;      { TEMPERATURE }
+@;
+
+ { LINE: DA }
+ { Heat FLUX=0 }
+@
+
+ { POINT: A }
+ 3;              { CONTACT Fixation of TEMPERATURE }
+ -1;             { fixed temperature FUNCTION }
+ TemperatureAB;  { TEMPERATURE }
+@;
+
+ { POINT: B }
+ 3;              { CONTACT Fixation of TEMPERATURE }
+ -1;             { fixed temperature FUNCTION }
+ TemperatureAB;  { TEMPERATURE }
+@;
+
+ { POINT: C }
+ 3;              { CONTACT Fixation of TEMPERATURE }
+ 1;              { fixed temperature CONSTANT }
+ TempCD;         { TEMPERATURE }
+@;
+
+ { POINT: D }
+ 3;              { CONTACT Fixation of TEMPERATURE }
+ 1;              { fixed temperature CONSTANT }
+ TempCD;         { TEMPERATURE }
+@;
+
+ { POINT: CDMIDDLE }
+@;
+@;
+
+
+20;    { PRECISION DATA  to STOP the CONJUGATE GRADIENT ITERATIONS }
+ 1e-3; { EPSILON   VALUE to STOP the CONJUGATE GRADIENT ITERATIONS }
+@;
+
+
+DefVar InitTime,        FinalTime;
+       InitTime=0.0;    FinalTime=10;
+DefVar StepTime,        StoreStepTime;
+       StepTime=0.1;
+       StoreStepTime=StepTime; { all computed vectors are stored }
+
+ 4; { UNSTEADY HEAT TRANSFER solver ----------------------------------- }
+ 1;  { Rho C, A, V, CT, g INDEPENDENT of t & TEMPERATURE, SOURCE, CONTACT depends t ONLY}
+
+   InitTime;  { INITIAL TIME }
+
+   { OBJECT ABCD: HOW COMPUTE the INITIAL TEMPERATURE }
+   {  2 : 'INITIAL TEMPERATURE already EXISTS, case STEADY, PRECENDLY COMPUTED'
+      1 : 'Constant INITIAL TEMPERATURE'
+     -1 : 'Function INITIAL TEMPERATURE' }
+     -1;            { INITIAL TEMPERATURE FUNCTION }
+   InitTemperature; { INITIAL TEMPERATURE FUNCTION NAME }
+
+   FinalTime; { FINAL TIME }
+   StepTime;  { CONSTANT STEP of TIME (seconds) }
+  (FinalTime-InitTime)/StoreStepTime;  { NUMBER of STORED SOLUTION VECTORS }
+
+   1; { CHOLESKY or CROUT with SKYLINE MATRIX }
+   1; { 1/2 <= THETA METHOD <=1 +STABLE }
+@;
+
+CLOSE;

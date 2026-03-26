@@ -1,0 +1,6 @@
+The number of control points of B-Spline LINE must be
+strictly greater than the degree of B-Spline.
+
+If the B-Spline is closed, the final point is implicitly
+the first and has not to be given and counted in the
+point number.

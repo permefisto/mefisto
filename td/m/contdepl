@@ -1,0 +1,8 @@
+variable CONTDEPL 'Choix du Trace' entier
+ (  0 : 'NUMERO DE LA SOLUTION A TRACER'
+ ,  1 : 'CONTRAINTES'
+ ,  2 : 'DEPLACEMENTS'
+ ,  3 : 'CRITERE de VON MISES'
+ ,  4 : 'CRITERE de TRESCA'
+ ,  6 : 'MOUVEMENT de la FREQUENCE PROPRE'
+ ,  8 : 'EN 2D ERREUR SI DEPLACEMENT_EXACT()' ) ;

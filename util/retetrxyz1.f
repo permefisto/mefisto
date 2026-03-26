@@ -1,0 +1,161 @@
+      SUBROUTINE RETETRXYZ1( XYZP1,  MNNPEF, MNXYZP,
+     %                       MOFACE, MXFACE, MNLFAC,
+     %                       NEF, CB1, CB2, CB3, CB4, IERR )
+C+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+C BUT:  RECHERCHE EXHAUSTIVE DU TETRAEDRE NEF CONTENANT LE POINT XYZP1
+C ----  PAR UN CHEMIN A TRAVERS LES FACES DES TETRAEDRES ET
+C       A PARTIR DU TETRAEDRE NEF
+C
+C ENTREES:
+C --------
+C XP0,YP0: COORDONNEES DU POINT INITIAL DU SEGMENT DE DROITE
+C XP1,YP1: COORDONNEES DU POINT FINAL   DU SEGMENT DE DROITE
+C MNNPEF : ADRESSE MCN DES TABLEAUX ELEMENTS DE CETTE TOPOLOGIE
+C MNXYZP : ADRESSE MCN DU TABLEAU POINTS GEOMETRIQUES DE L'OBJET
+C MOFACE : LE NOMBRE D'ENTIERS PAR FACE
+C MXFACE : LA MAJORATION DU NOMBRE D'FACES
+C MNLFAC : ADRESSE MCN DU 1-ER MOT DU TABLEAU LFACE
+C NEF    : >0 NUMERO DE L'EF DE DEPART POUR TROUVER L'EF CONTENANT XYZP1
+C
+C SORTIES:
+C --------
+C NEF    : >0 NUMERO DE L'EF CONTENANT XYZP1 SI IERR=0
+C          =0 SI PARTICULE SORTANT DU MAILLAGE XYZP1 EST EXTERIEUR
+C CB1,CB2,CB3,CB4: COORDONNEES BARYCENTRIQUES DE XYZP1 DANS LE TETRAEDRE NEF
+C IERR   : =0 PAS D'ERREUR, NEF>0 EST LE NUMERO DE L'EF CONTENANT XYZP1
+C                           NEF=0 SI PAS D'EF CONTENANT XYZP1
+C          =1 FACE NON RETROUVEE POUR TRAVERSER LE TETRAEDRE
+C          =2 TETRAEDRE D'AIRE <=0
+C+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+C AUTEUR : ALAIN PERRONNET LJLL UPMC & St PIERRE du PERRAY NOVEMBRE 2010
+C23456---------------------------------------------------------------012
+      DOUBLE PRECISION  EPSILON
+ccc      PARAMETER       ( EPSILON=1D-12 )  21/11/2020
+      PARAMETER       ( EPSILON=1D-5 )
+      include"./incl/langue.inc"
+      include"./incl/a___npef.inc"
+      include"./incl/a___xyzpoint.inc"
+      include"./incl/nctyef.inc"
+      include"./incl/pp.inc"
+      COMMON            MCN(MOTMCN)
+      REAL              RMCN(1)
+      EQUIVALENCE      (MCN(1),RMCN(1))
+C
+      REAL              XYZP1(3)
+      DOUBLE PRECISION  VOLTER
+      DOUBLE PRECISION  CB1,CB2,CB3,CB4, D
+      INTEGER           NOSOTE(4), NOSOTR(3)
+      INTRINSIC         SQRT
+      INTEGER           NOSFTE(3,4)
+      DATA              NOSFTE/ 1,3,2,  2,3,4,  3,1,4,  4,1,2 /
+C
+C     L'ADRESSE MCN DU DEBUT DU TABLEAU NPEF DE CE TYPE D'EF
+      NTYEF  = 1
+      MNELE  = MCN( MNNPEF -1 + NTYEF )
+      LIBREF = 0
+C
+C     LE NOMBRE D'ELEMENTS FINIS
+      NBELEM = MCN( MNELE + WBELEM )
+C
+C     LE NO DES NOEUDS DU TETRAEDRE NEF
+ 10   MNN = MNELE + WUNDEL -1 + NEF
+      DO J=1,4
+         NOSOTE(J) = MCN(MNN)
+         MNN = MNN + NBELEM
+      ENDDO
+C
+C     LES 4 SOMMETS SONT EN TETE DES NOEUDS DE L'EF
+      MNP  = MNXYZP + WYZPOI -3
+      MNS1 = MNP + 3 * NOSOTE( 1 )
+      MNS2 = MNP + 3 * NOSOTE( 2 )
+      MNS3 = MNP + 3 * NOSOTE( 3 )
+      MNS4 = MNP + 3 * NOSOTE( 4 )
+C
+C     LE VOLUME DU TETRAEDRE P1 P2 P3 P4
+      D = VOLTER( RMCN(MNS1), RMCN(MNS2), RMCN(MNS3), RMCN(MNS4) )
+      IF( D .LE. 0D0 ) THEN
+         IF( LANGAG .EQ. 0 ) THEN
+            PRINT*,'retetrxyz1: TETRAEDRE',NEF,'de VOLUME',D,'<=0 !'
+         PRINT*,'de Sommets',(NOSOTE(ll),ll=1,4),' MODIFIER le MAILLAGE'
+         ELSE
+          PRINT*,'retetrxyz1: TETRAHEDRON',NEF,'with a VOLUME',D,'<=0 !'
+            PRINT*,'of VERTICES',(NOSOTE(ll),ll=1,4),' MODIFY the MESH'
+         ENDIF
+         IERR = 2
+         GOTO 9000
+      ENDIF
+C
+C     LES 4 COORDONNEES BARYCENTRIQUES DU POINT XYZP1 DANS LE TETRAEDRE NEF
+      CB1 = VOLTER( XYZP1, RMCN(MNS2), RMCN(MNS3), RMCN(MNS4) ) / D
+      CB2 = VOLTER( XYZP1, RMCN(MNS3), RMCN(MNS1), RMCN(MNS4) ) / D
+      CB3 = VOLTER( XYZP1, RMCN(MNS1), RMCN(MNS2), RMCN(MNS4) ) / D
+      CB4 = VOLTER( XYZP1, RMCN(MNS1), RMCN(MNS3), RMCN(MNS2) ) / D
+      IF( CB1 .GE. -EPSILON .AND. CB1 .LE. 1D0 .AND.
+     %    CB2 .GE. -EPSILON .AND. CB2 .LE. 1D0 .AND.
+     %    CB3 .GE. -EPSILON .AND. CB3 .LE. 1D0 .AND.
+     %    CB4 .GE. -EPSILON .AND. CB4 .LE. 1D0 ) THEN
+C
+C        LE POINT XYZP1 EST DANS LE TETRAEDRE NEF OU SUR UNE DE SES 3 FACES
+C        -----------------------------------------------------------------
+         IERR = 0
+         GOTO 9000
+C
+      ENDIF
+C
+C     LE POINT XYZP1 EST EXTERIEUR AU TETRAEDRE NEF
+C     PARCOURS PAR LES FACES DE NEF POUR TROUVER LE TETRAEDRE CONTENANT XYZP1
+C     -----------------------------------------------------------------------
+C     RECHERCHE DE LA FACE DU TETRAEDRE QUI REGARDE LE POINT XYZP1
+      MNXYZ = MNXYZP + WYZPOI
+      CALL VDFAVR( XYZP1, NOSOTE, RMCN(MNXYZ), NOFMAX )
+C     AVEC LES NO SOMMETS DES FACES/ 1,3,2,  2,3,4,  3,1,4,  4,1,2 /
+      NOSOTR(1) = NOSOTE( NOSFTE(1,NOFMAX) )
+      NOSOTR(2) = NOSOTE( NOSFTE(2,NOFMAX) )
+      NOSOTR(3) = NOSOTE( NOSFTE(3,NOFMAX) )
+C
+C     RECHERCHE DU TETRAEDRE DE L'AUTRE COTE DE LA FACE NOSOTR
+      CALL TRIENT( 3, NOSOTR )
+      CALL HACHAG( 3, NOSOTR, MOFACE, MXFACE, MCN(MNLFAC), 5,
+     %             LIBREF, NOFA )
+      IF( NOFA .LE. 0 ) THEN
+         IF( LANGAG .EQ. 0 ) THEN
+            PRINT*,'retetrxyz1: FACE PERDUE de SOMMETS',NOSOTR
+         ELSE
+            PRINT*,'retetrxyz1: LOST FACE of VERTICES ',NOSOTR
+         ENDIF
+         IERR = 1
+         GOTO 9000
+      ENDIF
+C
+C     CETTE FACE EST ELLE FRONTALIERE?
+C     ADRESSE DE LA FACE INTERNE NOFA DANS LFACES
+      MNF = MNLFAC + MOFACE * (NOFA-1) - 1
+C     LE CODAGE DU NUMERO DE TYPE D'EF POUR LE NO D'EF DANS LFACES
+      NUCYEF = NCTYEF * NTYEF
+      NEF1 = ABS( MCN( MNF + 6 ) )
+      IF( NEF1 .GT. NUCYEF ) NEF1 = NEF1 - NUCYEF
+      NEF2 = ABS( MCN( MNF + 7 ) )
+      IF( NEF2 .GT. NUCYEF ) NEF2 = NEF2 - NUCYEF
+C
+C     L'EF DE L'AUTRE COTE DE LA FACE
+      IF( NEF1 .EQ. NEF ) THEN
+         NEF = NEF2
+      ELSE
+         NEF = NEF1
+      ENDIF
+C
+      IF( NEF .LE. 0 ) THEN
+C
+C        PAS DE TETRAEDRE ADJACENT => LA PARTICULE SORT DU MAILLAGE
+C        ----------------------------------------------------------
+         NEF  = 0
+         IERR = 0
+         GOTO 9000
+C
+      ENDIF
+C
+C     PASSAGE A L'EF NEF
+      GOTO 10
+C
+ 9000 RETURN
+      END

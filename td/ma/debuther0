@@ -1,0 +1,30 @@
+variable DebuTHER 'PB with -div(A grad*) OPERATOR' entier
+(1  : 'OBJECT NAME to treat',
+ 2  : 'HEAT TRANSFER INPUT DATA', 
+ 3  : 'STEADY HEAT TRANSFER solver',
+ 4  : 'UNSTEADY HEAT TRANSFER solver',
+ 5  : '2D WAVE solver',
+ 6  : 'EIGENVALUE & VECTORS solver',
+ 7  : 'DRAWING of EIGENVALUE & VECTORS',
+ 8  : 'DRAWING of TEMPERATURES and FLUX',
+ 9  : 'DRAWING of a WAVE',
+ 10 : 'DRAWING of PLSVO meshes',
+ 11 : 'DRAWING of ISO-SURFACES f(x,y,z)=Ctes',
+ 13 : 'ENERGY of SOLUTIONS',
+ 18 : 'L1 NORM of SOLUTIONS**EXPONENT',
+ 20 : 'PRECISION to INVERSE A x = b',
+ 39 : 'BACKGROUND COLOR',
+ 71 : 'TOOLS on TMS',
+ 72 : 'TOOLS on FILES of the MS',
+ 73 : 'TOOLS on I/O units',
+ 74 : 'DELETE TMS of PLSVO',
+ 97 : 'MEFISTO VERSION NAME',
+ 99 : 'SAVE DATA and QUIT' ) ;
+
+
+
+ 12 : 'H2+ Curves Energies(DistanceNeutrons)',
+ 14 : 'KE/PE of HYDROGEN ATOM',
+ 15 : 'ERRORS on a 3CUBE',
+ 16 : 'ERRORS on a 6CUBE',
+ 17 : 'ERRORS on EIGENVALUES on a 6CUBE',

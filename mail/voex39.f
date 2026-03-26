@@ -1,0 +1,241 @@
+        SUBROUTINE VOEX39( NTLXVO, LADEFI,
+     %                     NTNSVF, MNNSVF, NTSOVF, MNSOVF, IERR )
+C+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+C BUT :    GENERER LES 2**3=8 SOUS EF DES TETRAEDRES PENTAEDRES HEXAEDRES
+C -----    ET EN 6 SOUS-PYRAMIDES ET 4 TETRAEDRES LES PYRAMIDES
+C          DU MAILLAGE D'UN VOLUME
+C
+C ENTREES:
+C --------
+C NTLXVO : NUMERO DU TABLEAU TS DU VOLUME DES EF A DECOUPER
+C LADEFI : TABLEAU DE DEFINITION DU VOLUME PARTITIONNE
+C          CF '~td/d/a_volume__definition'
+C
+C SORTIES:
+C --------
+C NTNSVF : NUMERO      DU TMS 'NSEF' DES NUMEROS DES TETRAEDRES
+C MNNSVF : ADRESSE MCN DU TMS 'NSEF' DES NUMEROS DES TETRAEDRES
+C          CF '~td/d/a___nsef'
+C NTSOVF : NUMERO      DU TMS 'XYZSOMMET' DU VOLUME
+C MNSOVF : ADRESSE MCN DU TMS 'XYZSOMMET' DU VOLUME
+C          CF '~td/d/a___xyzsommet'
+C IERR   : 0 SI PAS D'ERREUR
+C        > 0 SINON
+C+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+C AUTEUR : PERRONNET ALAIN Laboratoire J-L. LIONS UPMC PARIS   Mars 2007
+C.......................................................................
+      IMPLICIT INTEGER (W)
+      COMMON / UNITES / LECTEU, IMPRIM, INTERA, NUNITE(29)
+      include"./incl/langue.inc"
+      include"./incl/gsmenu.inc"
+      include"./incl/ntmnlt.inc"
+      include"./incl/a___xyzsommet.inc"
+      include"./incl/a___nsef.inc"
+      include"./incl/a_volume__definition.inc"
+      include"./incl/a___face.inc"
+      include"./incl/pp.inc"
+      COMMON            MCN(MOTMCN)
+      REAL              RMCN(1)
+      EQUIVALENCE      (MCN(1),RMCN(1))
+      INTEGER           LADEFI(0:*)
+      INTEGER           NOSOEF(8)
+C
+      IERR   = 0
+      MNSOFI = 0
+      MNSTVF = 0
+      MNUEFI = 0
+C
+C     LE NUMERO DU VOLUME INITIAL
+      NUVOIN = LADEFI( WUVO8E )
+C
+C     OUVERTURE DU VOLUME
+      CALL LXNLOU( NTVOLU, NUVOIN, NTLXVL, MNLXVL )
+      IF( NTLXVL .LE. 0 ) THEN
+         NBLGRC(NRERR) = 1
+         IF( LANGAG .EQ. 0 ) THEN
+            KERR(1) = 'VOLUME INEXISTANT'
+         ELSE
+            KERR(1) = 'UNKNOWN VOLUME'
+         ENDIF
+         CALL LEREUR
+         IERR = 1
+         RETURN
+      ENDIF
+C
+C     TRANSFORMATION DU MAILLAGE STRUCTURE OU NON EN NON STRUCTURE
+C     ============================================================
+C     LES SOMMETS COPIE DES SOMMETS DU MAILLAGE INITIAL
+      CALL LXTSOU( NTLXVL, 'XYZSOMMET', NTSOVI, MNSOVI )
+      IF( NTSOVI .LE. 0 ) THEN
+         NBLGRC(NRERR) = 1
+         IF( LANGAG .EQ. 0 ) THEN
+            KERR(1) = 'VOLUME SANS SOMMETS'
+         ELSE
+            KERR(1) = 'VOLUME WITHOUT VERTICES'
+         ENDIF
+         CALL LEREUR
+         IERR = 4
+         RETURN
+      ENDIF
+C
+C     LE TABLEAU 'NSEF'
+      CALL LXTSOU( NTLXVL, 'NSEF', NTNSVI, MNNSVI )
+      IF( NTNSVI .LE. 0 ) THEN
+         NBLGRC(NRERR) = 1
+         IF( LANGAG .EQ. 0 ) THEN
+            KERR(1) = 'VOLUME SANS NO DES SOMMETS DES EF'
+         ELSE
+            KERR(1) = 'VOLUME WITHOUT FINITE ELEMENT VERTEX NUMBERS'
+         ENDIF
+         CALL LEREUR
+         IERR = 3
+         RETURN
+      ENDIF
+C
+C     LES CARACTERISTIQUES DES EF DE CE MAILLAGE INITIAL
+      CALL NSEFPA( MCN(MNNSVI),
+     %             NUTYMA, NBSOEL, NBSOEF, NBTGEF,
+     %             LDAPEF, LDNGEF, LDTGEF, NBEFVI,
+     %             NX    , NY    , NZ    ,
+     %             IERR   )
+C     NUTYMA : 'NUMERO DE TYPE DU MAILLAGE'    ENTIER
+C              0 : 'NON STRUCTURE'      , 2 : 'SEGMENT    STRUCTURE',
+C              3 : 'TRIANGLE  STRUCTURE', 4 : 'QUADRANGLE STRUCTURE',
+C              5 : 'TETRAEDRE STRUCTURE', 6 : 'PENTAEDRE  STRUCTURE',
+C              7 : 'HEXAEDRE  STRUCTURE'
+C     NBSOEL : NOMBRE DE SOMMETS DES EF
+C              0 SI MAILLAGE NON STRUCTURE
+C     NBSOEF : NOMBRE DE SOMMETS DE STOCKAGE DES EF
+C              ( TETRAEDRE NBSOEL=4  NBSOEF=8 )
+C     NBEFVI : NOMBRE DE EF DU MAILLAGE INITIAL
+C     NX, NY, NZ : LE NOMBRE D'ARETES DANS LES DIRECTION X Y Z
+C                CF LE TMS ~td/d/a___nsef
+C
+      MXEFVF = 0
+      NBPYRA = 0
+      IF( NUTYMA .GE. 1 .AND. NUTYMA .LE. 4 ) THEN
+         NBLGRC(NRERR) = 1
+         IF( LANGAG .EQ. 0 ) THEN
+            KERR(1) = 'OBJET IMPOSSIBLE A SUBDIVISER EN 8 SOUS EF'
+         ELSE
+            KERR(1) = 'IMPOSSIBLE TO SUBDIVIDE into 8 SUB-FE'
+         ENDIF
+         CALL LEREUR
+         IERR = 2
+         RETURN
+C
+      ELSE IF( NUTYMA .EQ. 0 ) THEN
+C        MAILLAGE NON STRUCTURE
+         MNUEFI = MNNSVI + WUSOEF
+         DO 90 NUELEM = 1, NBEFVI
+C           LE NUMERO DES 8 SOMMETS DE L'ELEMENT NUELEM
+            CALL NSEFNS( NUELEM, NUTYMA, NBSOEF, NBTGEF,
+     %                   LDAPEF, LDNGEF, LDTGEF,
+     %                   MNNSVI, NX, NY, NZ,
+     %                   NCOGEL, NUGEEF, NUEFTG, NOSOEF, IERR )
+            IF( NOSOEF(5).GT.0 .AND. NOSOEF(6).EQ.0 ) THEN
+C              UNE PYRAMIDE DE PLUS
+               NBPYRA = NBPYRA + 1
+            ENDIF
+            IF( IERR .NE. 0 ) RETURN
+ 90      CONTINUE
+C        VERIFICATION DU VOLUME POSITIF DES TETRAEDRES PENTAEDRES ET HEXAEDRES
+         CALL VOLPLUS( MNSOVI, MNNSVI )
+C
+      ELSE IF (NUTYMA.GE.5) THEN
+C        MAILLAGE STRUCTURE ici LE VOLUME DES EF EST SUPPOSE>0
+         MXEFVF = 8*NBEFVI
+         CALL TNMCDC( 'ENTIER', MXEFVF, MNUEFI )
+         MN = MNUEFI
+         DO 100 NUELEM = 1, NBEFVI
+C           LE NUMERO DES 8 SOMMETS DE L'ELEMENT NUELEM
+            CALL NSEFNS( NUELEM, NUTYMA, NBSOEF, NBTGEF,
+     %                   LDAPEF, LDNGEF, LDTGEF,
+     %                   MNNSVI, NX, NY, NZ,
+     %                   NCOGEL, NUGEEF, NUEFTG, MCN(MN), IERR )
+            MN = MN + 8
+            IF( IERR .NE. 0 ) RETURN
+ 100     CONTINUE
+      ENDIF
+C
+C     LES NUMEROS DES SOMMETS DES SOUS-EF DE CE VOLUME
+C     MAXIMUM D'ARETES DU VOLUME INITIAL
+      NBSOVI = MCN(MNSOVI+WNBSOM)
+      MXARVI = NBSOVI + NBEFVI*2 + 1024
+      NBEFVF = 8 * (NBEFVI-NBPYRA) + 10*NBPYRA
+      MOTS   = WUSOEF +  8 * NBEFVF
+      CALL LXTNDC( NTLXVO, 'NSEF', 'ENTIER', MOTS )
+      CALL LXTSOU( NTLXVO, 'NSEF',  NTNSVF , MNNSVF )
+C     LES PREMIERES VARIABLES DU TABLEAU 'NSEF'
+C     VARIABLE NUTYOB 'NUMERO DE TYPE DE L''OBJET
+      MCN( MNNSVF + WUTYOB ) = 4
+C     LE TYPE INCONNU DE FERMETURE DU MAILLAGE
+      MCN( MNNSVF + WUTFMA ) = -1
+C     VARIABLE NBSOEF 'NOMBRE DE SOMMETS PAR EF
+      MCN( MNNSVF + WBSOEF ) = 8
+C     PAS DE TANGENTES STOCKEES
+      MCN( MNNSVF + WBTGEF ) = 0
+C     VARIABLE NBEFOB 'NOMBRE DE EF DE L''OBJET
+      MCN( MNNSVF + WBEFOB ) = NBEFVF
+C     PAS DE TANGENTES STOCKEES
+      MCN( MNNSVF + WBEFTG ) = 0
+      MCN( MNNSVF + WBEFAP ) = 0
+C     VARIABLE NUTYMA 'NUMERO DE TYPE DU MAILLAGE
+      MCN( MNNSVF + WUTYMA ) = 0
+C     LA DATE DE CREATION
+      CALL ECDATE( MCN(MNNSVF) )
+C     LE NUMERO DU TABLEAU DESCRIPTEUR
+      MCN( MNNSVF + MOTVAR(6) ) = NONMTD( '~>>>NSEF' )
+C
+C     TABLEAU AUXILIAIRE DES XYZ DES SOMMETS DU MAILLAGE FINAL
+C     AVANT IDENTIFICATION DES MILIEUX DES ARETES
+      MXSOVF = NBSOVI + 19 * NBEFVI
+      CALL TNMCDC( 'REEL', 3*MXSOVF, MNSTVF )
+C
+C     DECOUPAGE DES EF 3D EN 8 OU 10 SOUS EF 3D
+      CALL EF8SEF( NBSOVI, MCN(MNSOVI+WYZSOM),
+     %             NBEFVI, MCN(MNUEFI),
+     %             MXSOVF, NBSOVF, MCN(MNSTVF),
+     %             NBEFVF, MCN(MNNSVF+WUSOEF), IERR )
+      IF( IERR .GT. 0 ) THEN
+         NBLGRC(NRERR) = 1
+         IF( LANGAG .EQ. 0 ) THEN
+            KERR(1) = 'VOEX39: MXSOVF SOUS-ESTIME'
+         ELSE
+            KERR(1) = 'VOEX39: MXSOVF UNDER-ESTIMATED'
+         ENDIF
+         CALL LEREUR
+         IERR = 5
+         GOTO 9000
+      ENDIF
+C
+C     IDENTIFICATION DES MILIEUX DES ARETES
+      CALL TNMCDC( 'REEL', 3*NBSOVF, MNSOFI )
+      CALL IDSTMA( 8, NBEFVF, MCN(MNNSVF+WUSOEF),
+     %             NBSOVF, MCN(MNSTVF),
+     %             NBSOFI, MCN(MNSOFI) )
+C
+C     CONSTRUCTION DU TMS XYZSOMMET
+C     LES SOMMETS COPIE DES SOMMETS DU MAILLAGE INITIAL
+      MOTS = WYZSOM + 3 * NBSOFI
+      CALL LXTNDC( NTLXVO, 'XYZSOMMET', 'ENTIER', MOTS )
+      CALL LXTSOU( NTLXVO, 'XYZSOMMET',  NTSOVF, MNSOVF )
+      MCN(MNSOVF+WNBSOM) = NBSOFI
+      MCN(MNSOVF+WNBTGS) = 0
+      MCN(MNSOVF+WBCOOR) = 3
+      CALL TRTATA( MCN(MNSOFI), MCN(MNSOVF+WYZSOM), 3 * NBSOFI )
+C     LA DATE DE CREATION
+      CALL ECDATE( MCN(MNSOVF) )
+C     LE NUMERO DU TABLEAU DESCRIPTEUR
+      MCN( MNSOVF + MOTVAR(6) ) = NONMTD( '~>>>XYZSOMMET' )
+C
+C     FIN DU TRAITEMENT
+ 9000 IF ( NUTYMA .GE. 5 ) THEN
+C        MAILLAGE INITIAL STRUCTURE
+         IF( MNUEFI .GT. 0 ) CALL TNMCDS( 'ENTIER', MXEFVF, MNUEFI )
+      ENDIF
+      IF( MNSOFI .GT. 0 ) CALL TNMCDS( 'REEL', 3*NBSOVF, MNSOFI )
+      IF( MNSTVF .GT. 0 ) CALL TNMCDS( 'REEL', 3*MXSOVF, MNSTVF )
+C
+      RETURN
+      END

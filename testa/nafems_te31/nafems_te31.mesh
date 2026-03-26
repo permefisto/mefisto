@@ -1,0 +1,42 @@
+{==========================================================}
+{  MEEFISTO  VERSION August 2006   PROJECT: nafems_te31    }
+{  TEST 31 NAFEMS CANTILEVER SQUARE MEMBRANE               }
+{  CONSTRUCTION of the MEMBRANE MESH                       }
+{  QUADRANGLE of DEGREE 2   QUAD 2Q2C                      }
+{==========================================================}
+
+DefVar nbax,nbay;
+nbax=4;
+nbay=4;
+
+1; 1;     { POINTS }
+   S1; I; 1; 0;  0; 0;
+   S2; I; 1;10;  0; 0;
+   S3; I; 1;10; 10; 0;
+   S4; I; 1; 0; 10; 0;     
+@;
+2;        { LINES }
+   S1S2; I; 2; nbax; 1; S1; S2;
+   S2S3; I; 2; nbay; 1; S2; S3;
+   S3S4; I; 2; nbax; 1; S3; S4;
+   S4S1; I; 2; nbay; 1; S4; S1;  
+@;
+3;         { SURFACES }
+   MEMBRANE; I; 1; S1S2; S2S3; S3S4; S4S1; 1;
+@;  
+
+5; { OBJECT}
+   MEMBRANE; { OBJET NAME }
+       0; { classic 2D ou 3D }
+       2; { number of Points Liges Surfaces Volumes of the object }
+       SURFACE; MEMBRANE;
+       LINE;    S4S1;
+@;
+
+7; { INTERPOLATION of the OBJECT }
+   MEMBRANE; 4;  {LAGRANGE of DEGREE 2}
+@;
+
+10; 5; 1; 90; { Drawing of the OBJECT }
+
+CLOSE;

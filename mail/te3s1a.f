@@ -1,0 +1,56 @@
+      SUBROUTINE TE3S1A( PTXYZD, NOSOTE, NFMIN )
+C+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+C BUT :    L'UNE DES 4 FACES DU TETRAEDRE NOSOTE EST ELLE DE SURFACE
+C -----    TRES FAIBLE PAR RAPPORT AUX 3 AUTRES?
+C          I.E. LE TETRAEDRE DE SOMMETS NOSOTE A T IL UN DE SES SOMMETS
+C          A L'INTERIEUR PROCHE ou SUR UNE DE SES ARETES?
+C          C-A-D 3 SOMMETS SUR UNE ARETE?
+
+C ENTREES:
+C --------
+C PTXYZD : TABLEAU DES COORDONNEES DES POINTS
+C          PAR POINT : X  Y  Z DISTANCE_SOUHAITEE
+C NOSOTE : NUMERO PTXYZD DES 4 SOMMETS DU TETRAEDRE
+
+C SORTIE :
+C --------
+C NFMIN  : >0 NUMERO 1 A 4 DE LA FACE DU TETRAEDRE AVEC SES 3 SOMMETS
+C             SUR UNE ARETE
+C          =0 SI PAS DE TELLE FACE
+C+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+C AUTEUR : ALAIN PERRONNET                St PIERRE du PERRAY  Mars 2018
+C2345X7..............................................................012
+      INTEGER           NOSOTE(4)
+      DOUBLE PRECISION  PTXYZD(4,*)
+      DOUBLE PRECISION  ARMIN, ARMAX, SURFTR(4), VOLUTE
+      DOUBLE PRECISION  ST, SFMIN
+
+C     VOLUME ET QUALITE DU TETRAEDRE
+      CALL QUATETD( PTXYZD( 1, NOSOTE(1) ), PTXYZD( 1, NOSOTE(2) ),
+     %              PTXYZD( 1, NOSOTE(3) ), PTXYZD( 1, NOSOTE(4) ),
+     %              ARMIN, ARMAX, SURFTR, VOLUTE, QUALTE )
+
+C     SOMME DES 4 SURFACES
+      ST = SURFTR(1) + SURFTR(2) + SURFTR(3) + SURFTR(4)
+
+C     RECHERCHE DE LA FACE DE SURFACE MINIMALE
+      SFMIN = 1D100
+      NFMIN = 0
+      DO NF=1,4
+         IF( SURFTR(NF) .LT. SFMIN ) THEN
+            SFMIN = SURFTR(NF)
+            NFMIN = NF
+         ENDIF
+      ENDDO
+
+ccc      PRINT*,'te3s1a: le TETRAEDRE',NOSOTE,' avec 4 FACES de SURFACE:',
+ccc     %        SURFTR
+
+ccc      IF( SFMIN .GT. ST * 0.025D0 ) THEN
+      IF( SFMIN .GT. ST * 0.05D0 ) THEN
+C        FACE MINIMALE DE SURFACE PAS ASSEZ FAIBLE
+         NFMIN = 0
+      ENDIF
+
+      RETURN
+      END

@@ -1,0 +1,295 @@
+      SUBROUTINE TRFETO2( PTXYZD, NOTETR, N1FEOC, NFETOI,
+     %                    NBTRCF, NOTRCF, LEFACO, NO0FAR )
+C+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+C BUT :    TRACE DES FACES TRIANGULAIRES SIMPLES D'UNE ETOILE
+C -----    VERSION 1 ou 2 DU TABLEAU NFETOI
+C          ET DES TRIANGLES DU CF
+C ENTREES:
+C --------
+C PTXYZD : PAR POINT : X  Y  Z  DISTANCE_SOUHAITEE
+C NOTETR : LISTE DES TETRAEDRES
+C          SOMMET1,    SOMMET2,    SOMMET3,    SOMMET4,
+C          TETRAEDRE1, TETRAEDRE2, TETRAEDRE3, TETRAEDRE4
+C          DE L'AUTRE COTE DE LA FACE
+C          1: 123      2: 234      3: 341      4: 412
+
+C N1FEOC : POINTEUR SUR LA PREMIERE FACE DE L'ETOILE
+C          CHAINAGE SUIVANT DANS NFETOI(5,*)
+
+C NFETOI : VERSION 1
+C          1: NUMERO DU TETRAEDRE DANS NOTETR
+C          2: NUMERO LOCAL AU TETRAEDRE DE LA FACE DE L'ETOILE
+C             UN SIGNE NEGATIF INDIQUE UN TRAITEMENT EFFECTUE
+C          3  NON UTILISE ICI
+C          4: NUMERO DE CETTE FACE DANS LEFACO, 0 SI PAS DANS LEFACO
+C          5: CHAINAGE SUIVANT DES FACES OCCUPEES ET VIDES
+
+C          EN VERSION 2 (NFETOI(3,.)>0)
+C          1: NUMERO NOTETR DU TETRAEDRE AU DELA DE LA FACE
+C             =0 SI INCONNU
+C          2: NUMERO PTXYZD DU 1-ER SOMMET DE LA FACE
+C          3: NUMERO PTXYZD DU 2-ME SOMMET DE LA FACE
+C          4: NUMERO PTXYZD DU 3-ME SOMMET DE LA FACE
+C             S1S2xS1S3 EST LA NORMALE DIRIGEE VERS L'INTERIEUR DE
+C             L'ETOILE
+C          5: CHAINAGE SUIVANT DES FACES OCCUPEES ET VIDES
+
+C NBTRCF : NOMBRE DE TRIANGLES DU TABLEAU NOTRCF
+C          C-A-D DU POLYGONE ENCORE DIT ENSUITE ETOILE
+C NOTRCF : TABLEAU DU NUMERO DANS LEFACO DES TRIANGLES DE L'ETOILE
+C LEFACO : FACE DU CONTOUR OU INTERFACES ENTRE VOLUMES
+C          IL CONTIENT DANS CET ORDRE
+C          NUMERO (DANS PTXYZD) DU SOMMET 1, SOMMET 2, SOMMET 3
+C          NUMERO (DANS NUVOPA 0 SINON) DU VOLUME1 , VOLUME2 DE LA FACE
+C          NUMERO (DANS LEFACO) DE LA FACE ADJACENTE PAR L'ARETE 1 2 3
+C NO0FAR : NUMERO DES 3 SOMMETS DE LA FACE AJOUTEE AU CF
+C          NORMALE VERS L'INTERIEUR DU TETRAEDRE LA CONTENANT
+C+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+C AUTEUR : ALAIN PERRONNET LJLL UPMC ET ST PIERRE DU PERRAY Octobre 2014
+C MODIF  : ALAIN PERRONNET LJLL UPMC ET ST PIERRE DU PERRAY Juin    2017
+C2345X7..............................................................012
+      PARAMETER         (MXITEM=8192)
+      include"./incl/trvari.inc"
+      include"./incl/mecoit.inc"
+      include"./incl/xyzext.inc"
+C
+      COMMON / TRTETR / STOPTE, TRACTE
+      LOGICAL           STOPTE, TRACTE
+C     STOPTE = FAUX ==> PAS D'ARRET APRES LE TRACE DE CHAQUE TETRAEDRE
+C              VRAI ==> DEMANDE D'UN CARACTERE POUR REDEMARRER
+C     TRACTE = FAUX ==> PAS DE TRACE DES TETRAEDRES
+C              VRAI ==> TRACE DES TETRAEDRES DE L'ETOILE
+C
+      CHARACTER*80      KTITRE
+
+      DOUBLE PRECISION  PTXYZD(4,*), VECNOR(3), D
+
+      REAL              XYZBAR(3,MXITEM), DISTOE(MXITEM),
+     %                  XYZB(3), XYZ(3), R
+
+      INTEGER           NOTETR(8,*), LEFACO(1:11,0:*), NO0FAR(3,*),
+     %                  NOTRCF(NBTRCF), NFETOI(5,*),
+     %                  NOSTTR(3,MXITEM), ITEMTR(MXITEM), NOSOTR(3)
+
+      INTEGER           NOSOFATE(3,4)
+      DATA              NOSOFATE / 1,2,3,  2,4,3,  3,4,1,  4,2,1 /
+C     => LA NORMALE A LA FACE EST ORIENTEE VERS L'INTERIEUR DU TETRAEDRE
+
+C
+      IF( .NOT. TRACTE ) RETURN
+
+C     CADRE COOEXT RESTREINT AUX FACES A TRACER
+      DO L=1,3
+C        LE MINIMUM
+         COOEXT(L,1) =  1E25
+C        LE MAXIMUM
+         COOEXT(L,2) = -1E25
+      ENDDO
+
+      NBITEM = 0
+      NF1    = N1FEOC
+ 2    IF( NF1 .GT. 0 ) THEN
+
+C        COORDONNEES DU BARYCENTRE DE LA FACE NBITEM
+         IF( NBITEM .GE. MXITEM ) GOTO 4
+         NBITEM = NBITEM + 1
+         DO L=1,3
+            XYZBAR(L,NBITEM) = 0
+         ENDDO
+
+         DO K=1,3
+C           NUMERO DU SOMMET K DE LA FACE NBITEM DE NFETOI
+            IF( NFETOI(3,NF1) .EQ. 0 ) THEN
+C              NFETOI VERSION 1
+C              NUMERO NOTETR DU TETRAEDRE DE LA FACE SIMPLE
+               NTE = NFETOI( 1, NF1 )
+C              NUMERO DE LA FACE SIMPLE DANS LE TETRAEDRE NTE SI VERSION 1
+               NFT = NFETOI( 2, NF1 )
+               NS  = NOTETR( NOSOFATE(K,NFT), NTE )
+            ELSE
+C              NFETOI VERSION 2
+               NS = ABS( NFETOI(1+K,NF1) )
+            ENDIF
+            NOSTTR(K,NBITEM) = NS
+
+            DO L=1,3
+               XYZ(L) = REAL( PTXYZD(L,NS) )
+C              LE MINIMUM
+               COOEXT(L,1) = MIN( COOEXT(L,1), XYZ(L) )
+C              LE MAXIMUM
+               COOEXT(L,2) = MAX( COOEXT(L,2), XYZ(L) )
+C              LE BARYCENTRE DE LA FACE
+               XYZBAR(L,NBITEM) = XYZBAR(L,NBITEM) + XYZ(L)
+            ENDDO
+         ENDDO
+         DO L=1,3
+            XYZBAR(L,NBITEM) = XYZBAR(L,NBITEM) / 3
+         ENDDO
+
+C        LA FACE SUIVANTE
+         NF1 = NFETOI( 5, NF1 )
+         GOTO 2
+
+      ENDIF
+
+C     LE BARYCENTRE DES FACES TRIANGULAIRES DU CF
+ 4    NBITEM0 = NBITEM
+      DO K = 1, NBTRCF
+
+         IF( NBITEM .GE. MXITEM ) GOTO 6
+         NBITEM = NBITEM + 1
+         DO L=1,3
+            XYZBAR(L,NBITEM) = 0
+         ENDDO
+
+C        NUMERO DE LA FACE K DU CF
+         NF = NOTRCF( K )
+         DO L=1,3
+
+            IF( NF .GT. 0 ) THEN
+C              SOMMET L DU TRIANGLE NF DE LEFACO
+               NS = LEFACO( L, NF )
+               NOSTTR(L,NBITEM) = NS
+            ELSE
+C              SOMMET L DU TRIANGLE NF DE NO0FAR
+               NS = NO0FAR( L, -NF )
+               NOSTTR(L,NBITEM) = -NS
+            ENDIF
+
+            DO M=1,3
+C              LE BARYCENTRE DU TRIANGLE NBITEM
+               R = REAL( PTXYZD(M,NS) )
+               XYZBAR(M,NBITEM) = XYZBAR(M,NBITEM) + R
+C              LE MINIMUM
+               COOEXT(M,1) = MIN( COOEXT(M,1), R )
+C              LE MAXIMUM
+               COOEXT(M,2) = MAX( COOEXT(M,2), R )
+            ENDDO
+         ENDDO
+         DO L=1,3
+            XYZBAR(L,NBITEM) = XYZBAR(L,NBITEM) / 3
+         ENDDO
+
+      ENDDO
+
+ 6    IF( NBITEM .GE. MXITEM ) THEN
+         PRINT*,'trfeto2: AUGMENTER MXITEM=',MXITEM
+      ENDIF
+
+      AXOLAR = 0
+      DO L=1,3
+         AXOPTV(L) = ( COOEXT(L,1) + COOEXT(L,2) ) * 0.5
+         AXOEIL(L) = COOEXT(L,2)
+         AXOLAR = MAX( AXOLAR, COOEXT(L,2) - COOEXT(L,1) )
+      ENDDO
+      AXOLAR = AXOLAR * 0.5
+      AXOHAU = AXOLAR * 0.75
+C     PAS DE PLAN ARRIERE ET AVANT
+      AXOARR = 0
+      AXOAVA = 0
+      CALL AXONOMETRIE( AXOPTV, AXOEIL, AXOLAR, AXOHAU, AXOARR, AXOAVA )
+
+      DISMOY = AXOLAR/30
+
+C     TRACE EN MODE 3 BOUTONS POUR DEPLACEMENT ROTATIONS ZOOM
+      PREDU0  = PREDUF
+      PREDUF  = 12.0
+      LORBITE = 1
+
+      IF( LORBITE .EQ. 0 ) GOTO 20
+C
+C     INITIALISATION DE L'ORBITE
+C     ==========================
+      CALL ORBITE0( NOTYEV )
+      GOTO 20
+C
+C     TRACE SELON L'ORBITE OU ZOOM OU TRANSLATION ACTIFS
+C     ==================================================
+ 10   CALL ORBITE1( NOTYEV )
+      IF( NOTYEV .EQ. 0 ) GOTO 9000
+C
+C     TRACE DES AXES 3D
+ 20   CALL TRAXE3
+C
+C     CALCUL DE LA DISTANCE A L'OEIL DU BARYCENTRE DES NBITEM FACES
+      DO K = 1, NBITEM
+C        AXONOMETRIE DU BARYCENTRE
+         CALL XYZAXO( XYZBAR(1,K), XYZB )
+C        DISTANCE A L'OEIL
+         DISTOE( K ) = -XYZB(3)
+C        IDENTITE INITIALE POUR LE NUMERO DE FACE DANS NOSTTR
+         ITEMTR( K ) = K
+      ENDDO
+
+C     LE TRI CROISSANT SELON LA DISTANCE (COTE Z ) A L'OEIL
+      CALL TRITRP( NBITEM, DISTOE, ITEMTR )
+C
+C     LE TRACE DES TRIANGLES DU CF ET DE SON ETOILE
+      DO K = NBITEM, 1, -1
+
+C        NUMERO DE LA FACE LA PLUS ELOIGNEE NON TRACEE
+         NF = ITEMTR( K )
+         IF( NF .LE. NBITEM0 ) THEN
+
+C           TRIANGLE FACE SIMPLE DE L'ETOILE
+            NCF = NCGRIC
+            NCA = NCGRIS
+         ELSE
+C           TRIANGLE DU CF
+            NCF = NCROUG
+            NCA = NCORAN
+         ENDIF
+
+         IF( NOSTTR(1,NF) .LT. 0 ) THEN
+C           FACE NO0FAR: RECTIFICATION DU SIGNE
+            NOSOTR(1) = ABS( NOSTTR(1,NF) )
+            NOSOTR(2) = ABS( NOSTTR(2,NF) )
+            NOSOTR(3) = ABS( NOSTTR(3,NF) )
+            NCF = NCROSE
+            NCA = NCORAN
+         ELSE
+            NOSOTR(1) = NOSTTR(1,NF)
+            NOSOTR(2) = NOSTTR(2,NF)
+            NOSOTR(3) = NOSTTR(3,NF)
+         ENDIF
+C        TRACE DE LA FACE NF
+         CALL TRFATR( NCF, NCA, NOSOTR, PTXYZD )
+
+C        TRACE DE LA NORMALE A LA FACE EN SON BARYCENTRE
+         CALL VECNOR3D( PTXYZD(1,NOSOTR(1)),
+     %                  PTXYZD(1,NOSOTR(2)),
+     %                  PTXYZD(1,NOSOTR(3)), VECNOR )
+
+C        NORME DU VECTEUR NORMAL
+         D = SQRT( VECNOR(1)**2 + VECNOR(2)**2 + VECNOR(3)**2 )
+         DO L=1,3
+            XYZ(L) = XYZBAR(L,NF) + REAL( VECNOR(L) / D * DISMOY )
+         ENDDO
+C        TRACE DU VECTEUR NORMAL
+         CALL SYMBOLE3D( NCMAGE, XYZBAR(1,NF), '*' )
+         CALL TRAIT3D(   NCMAGE, XYZBAR(1,NF), XYZ )
+
+         DO L=1,3
+            NS = NOSOTR(L)
+            XYZ(1) = REAL( PTXYZD(1,NS) )
+            XYZ(2) = REAL( PTXYZD(2,NS) )
+            XYZ(3) = REAL( PTXYZD(3,NS) )
+            CALL ENTIER3D( NCNOIR, XYZ, NS )
+         ENDDO
+
+      ENDDO
+
+C     TITRE ET TRACE EFFECTIF
+      KTITRE='      FACES SIMPLES DE L''ETOILE et       TRIANGLES du CF'
+      WRITE(KTITRE(1:5)  ,'(I5)') NBITEM0
+      WRITE(KTITRE(36:40),'(I5)') NBTRCF
+      CALL TRFINS( KTITRE )
+C
+C     REPRISE DE L'ORBITE
+C     ===================
+      IF( LORBITE .NE. 0 ) GOTO 10
+
+ 9000 PREDUF = PREDU0
+
+      RETURN
+      END

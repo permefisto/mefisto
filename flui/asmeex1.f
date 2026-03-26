@@ -1,0 +1,39 @@
+      SUBROUTINE ASMEEX1( NDIM, NBNOEF, NONOEF, BE, NBNOVI, BG )
+C ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+C BUT :    ASSEMBLAGE D'UN VECTEUR ELEMENTAIRE DANS LE VECTEUR GLOBAL
+C -----
+C
+C ENTREES:
+C --------
+C NDIM   : NOMBRE DE COLONNES DES VECTEURS
+C NBNOEF : NOMBRE DE DL (4 TRIANGLE BF, 5 TETRAEDRE BF, ...)
+C NONOEF : NUMERO GLOBAL DES NBNOEF NOEUDS DE L'EF
+C BE     : VECTEUR ELEMENTAIRE
+C NBNOVI : NOMBRE DE DL D'UNE COMPOSANTE DU VECTEUR BG
+C
+C SORTIES:
+C --------
+C BG     : NDIM COMPOSANTES MODIFIEES DU VECTEUR GLOBAL
+C+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+C AUTEUR: ALAIN PERRONNET LJLL UPMC & St Pierre du Perray  Decembre 2010
+C23456---------------------------------------------------------------012
+C$ USE OMP_LIB
+      DOUBLE PRECISION  BE(NBNOEF,NDIM), BG(NBNOVI,NDIM), S
+      INTEGER           NONOEF(NBNOEF)
+C
+      DO I=1,NBNOEF
+C
+C        NUMERO DU I-EME NOEUD DE L'ELEMENT FINI
+         NS = NONOEF(I)
+C
+C        ASSEMBLAGE DU COEFFICIENT ELEMENTAIRE DANS LE COEFFICIENT GLOBAL
+         DO K=1,NDIM
+            S = BE( I, K )
+!$OMP ATOMIC
+            BG( NS, K ) = BG( NS, K ) + S
+         ENDDO
+C
+      ENDDO
+C
+      RETURN
+      END

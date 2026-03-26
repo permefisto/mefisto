@@ -1,0 +1,5 @@
+variable VITETYPE 'TYPE de TRACE de VITESSES' entier
+( 1 : 'Trace des VITESSES des EF SECTIONNES par un PLAN'
+, 2 : 'Trace de toutes les FLECHES des VITESSES'
+, 3 : 'Intervalle de la NORME d''une VITESSE a tracer'
+, 4 : 'Trace des VITESSES de NORME dans l''INTERVALLE' ) ;

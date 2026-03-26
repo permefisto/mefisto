@@ -1,0 +1,141 @@
+      SUBROUTINE VXVYVZPR1( NDIM,  NUTYEL, NDDL,
+     %                      NTDL,  NBVECT, VXYZPN, NUNOSO,
+     %                      NBNOVI, VX, VY, VZ,    NBNOPR, PR )
+C+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+C BUT :    DECOUPER LES NBVECT VECTEURS VITESSE+PRESSION EN 4 TABLEAUX
+C -----    INDEPENDANTS VITESSE en X, en Y, en Z et PRESSION
+C          EN TOUS LES NOEUDS DU MAILLAGE POUR LE TRIANGLE ou TETRAEDRE
+C          DE TAYLOR HOOD ou BREZZI-FORTIN
+C
+C ENTREES:
+C --------
+C NDIM   : DIMENSION DE L'ESPACE DE L'OBJET (2 OU 3)
+C NUTYEL : NO DU TYPE D'EF
+C NBELEM : NOMBRE DES EF
+C NBNOEL : NOMBRE DE NOEUD d'UN EF
+C NDDL   : NDDL(I)=NO DU DERNIER DL DU NOEUD VITESSE I NDDL(0)=0
+C NTDL   : NOMBRE TOTAL DE DL (VITESSES+PRESSIONS)
+C NBVECT : NOMBRE TOTAL DE VECTEURS VITESSE+PRESSION
+C VXYZPN : TABLEAU VITESSEPRESSION SOLUTION CONNUE PAR DL DE CHACUN DES NOEUDS
+C NUNOSO : NUMERO DE SOMMET DE CHAQUE NOEUD, 0 SI NON SOMMET CAS TAYLOR-HOOD
+C NBNOVI : NOMBRE DE NOEUDS SUPPORT DE LA VITESSE
+C         (POUR TAYLOR HOOD CE SONT LES SOMMETS ET MILIEUX DES ARETES)
+C         (POUR BREZZI FORTIN CE SONT LES SOMMETS ET BARYCENTRES DES EF
+C          ET IMPLICITEMENT LES SOMMETS SONT NUMEROTES DE 1 A NBSOM=NBNOPR
+C          LES NOEUDS BARYCENTRE SONT NUMEROTES NBNOPR+NO EF)
+C NBNOPR : NOMBRE DE NOEUDS SUPPORT DE LA PRESSION = NOMBRE DE SOMMETS
+C
+C SORTIES:
+C --------
+C VX     : LA VITESSE EN X EN CHAQUE NOEUD VITESSE ET NBVECT FOIS
+C VY     : LA VITESSE EN Y EN CHAQUE NOEUD VITESSE ET NBVECT FOIS
+C VZ     : LA VITESSE EN Z EN CHAQUE NOEUD VITESSE ET NBVECT FOIS
+C PR     : LA PRESSION     EN CHAQUE NOEUD DU MAILLAGE ET NBVECT FOIS
+C          ATTENTION:  PR A UNE VALEUR
+C          POUR TAYLOR HOOD   AUX SOMMETS ET MILIEUX DES ARETES DES EF
+C          POUR BREZZI FORTIN AUX SOMMETS DES EF
+C+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+C AUTEUR : ALAIN PERRONNET LJLL UPMC St PIERRE DU PERRAY  Septembre 2012
+C MODIFS : ALAIN PERRONNET LJLL UPMC St PIERRE DU PERRAY  Avril     2013
+C23456---------------------------------------------------------------012
+C$    USE OMP_LIB
+      IMPLICIT NONE
+      include"./incl/threads.inc"
+      INTEGER           NDIM, NUTYEL, NTDL, NBVECT, NBNOVI, NBNOPR
+      INTEGER           NDDL(0:NBNOVI)
+      INTEGER           NUNOSO(NBNOVI)
+      DOUBLE PRECISION  VXYZPN(NTDL,NBVECT)
+      DOUBLE PRECISION  VX(NBNOVI,NBVECT),
+     %                  VY(NBNOVI,NBVECT),
+     %                  VZ(NBNOVI,NBVECT)
+      DOUBLE PRECISION  PR(NBNOPR,NBVECT)
+      INTEGER           NDIM1, I, NODGLI, NDLP, K
+C
+C     PARTAGE DES VITESSES EN VX, VY, VZ et de la PRESSION AUX SOMMETS
+      NDIM1 = NDIM + 1
+C
+      IF( NUTYEL .EQ. 15 .OR. NUTYEL .EQ. 20 ) THEN
+C
+C        TAYLOR-HOOD
+C        ===========
+C///////////////////////////////////////////////////////////////////////
+C$OMP    PARALLEL PRIVATE( I, NODGLI, NDLP, K )
+C$OMP    DO SCHEDULE( STATIC, NBNOVI/NBTHREADS )
+         DO I = 1, NBNOVI
+C
+C           LE NUMERO DU DL AVANT LE NOEUD I
+            NODGLI = NDDL(I-1)
+C
+C           LE NOMBRE DE DL DU NOEUD I
+            NDLP = NDDL(I) - NODGLI
+C
+            DO K=1,NBVECT
+C
+C              COMPOSANTE 1 DE LA VITESSE
+               VX( I, K ) = VXYZPN( NODGLI+1, K )
+C
+C              COMPOSANTE 2 DE LA VITESSE
+               VY( I, K ) = VXYZPN( NODGLI+2, K )
+C
+               IF( NDIM .EQ. 3 ) THEN
+C                 COMPOSANTE 3 DE LA VITESSE
+                  VZ( I, K ) = VXYZPN( NODGLI+3, K )
+               ENDIF
+C
+               IF( NDLP .EQ. NDIM1 ) THEN
+C                 LA PRESSION EN CE NOEUD=SOMMET
+                  PR( NUNOSO(I), K ) = VXYZPN( NODGLI+NDIM1, K )
+               ENDIF
+            ENDDO
+C
+         ENDDO
+C$OMP    END DO
+C$OMP    END PARALLEL
+C///////////////////////////////////////////////////////////////////////
+C
+      ELSE IF( NUTYEL .EQ. 13 .OR. NUTYEL .EQ. 19 ) THEN
+C
+C        EF TRIANGLE ou TETRAEDRE BREZZI-FORTIN
+C        --------------------------------------
+C        NBNOVI = SOMMETS + NOEUDS BARYCENTRE DE CHAQUE EF EN VITESSE
+C        ATTENTION: IMPLICITEMENT LES SOMMETS SONT NUMEROTES DE 1 A NBNOPR
+C                   LES AUTRES NOEUDS BARYCENTRE SONT NUMEROTES NBNOPR+NO EF
+C///////////////////////////////////////////////////////////////////////
+C$OMP    PARALLEL PRIVATE( I, NODGLI, NDLP, K )
+C$OMP    DO SCHEDULE( STATIC, NBNOVI/NBTHREADS )
+         DO I = 1, NBNOVI
+C
+C           LE NUMERO DU DL AVANT LE NOEUD I
+            NODGLI = NDDL(I-1)
+C
+C           LE NOMBRE DE DL PRESSION AU NOEUD I
+            NDLP = NDDL(I) - NODGLI - NDIM
+C
+            DO K=1,NBVECT
+C
+C              COMPOSANTE 1 DE LA VITESSE
+               VX( I, K ) = VXYZPN( NODGLI+1, K )
+C
+C              COMPOSANTE 2 DE LA VITESSE
+               VY( I, K ) = VXYZPN( NODGLI+2, K )
+C
+               IF( NDIM .EQ. 3 ) THEN
+C                 COMPOSANTE 3 DE LA VITESSE
+                  VZ( I, K ) = VXYZPN( NODGLI+3, K )
+               ENDIF
+C
+               IF( NDLP .GT. 0 ) THEN
+C                 LA PRESSION EN CE NOEUD=SOMMET DE NO AVANT LES BARYCENTRES
+                  PR( I, K ) = VXYZPN( NODGLI+NDIM1, K )
+               ENDIF
+C
+            ENDDO
+         ENDDO
+C$OMP    END DO
+C$OMP    END PARALLEL
+C///////////////////////////////////////////////////////////////////////
+C
+      ENDIF
+C
+      RETURN
+      END

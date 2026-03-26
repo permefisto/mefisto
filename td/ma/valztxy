@@ -1,0 +1,10 @@
+variable VALZTXY 'SOLUTION drawned from Z' entier
+( 1 : 'DRAWING of SOLUTION from Z'
+, 2 : 'DRAWING or NOT of FACE EDGES'
+, 3 : 'REDUCTION % of FACES'
+, 4 : 'DRAWING or NOT of FACES'
+, 5 : 'COLOR of MESH''s EDGES'
+, 6 : 'TYPE of LINES of  MESH''s EDGES'
+, 7 : 'COLOR of EDGES for Z-SOLUTION'
+, 8 : 'TYPE of LINES of EDGES for Z-SOLUTION'
+,90 : 'DRAWING of SOLUTION from Z') ;

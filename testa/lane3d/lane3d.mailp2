@@ -1,0 +1,184 @@
+{ ==================================================================== }
+{ Logiciel MEFISTO     : Version March 2009                            }
+{ Nom de l'Utilisateur : Alain PERRONNET                               }
+{ Nom du Projet        : lane with u**p                                }
+{ Date                 : 25/3/2009                                     }
+{ ==================================================================== }
+defvar eps; eps=1e-5;
+defvar yl, yr, yi;  {ordonnae of the center of the spheres}
+defvar rl, rr, ri;  {radius of the spheres}
+defvar rt;          {radius of the tube}
+defvar zi;          {cote of the center of the inside sphere}
+
+rt=0.2;
+yl=-1; rl=0.5;
+yr= 2; rr=1;
+yi=yr; zi=0.5; ri=0.2;
+
+defvar y3,y4;  {ordonnae of the points intersection of the sphere and tube}
+y3 = yl + sqrt( rl**2 - rt**2 );
+y4 = yr - sqrt( rr**2 - rt**2 );
+
+DefVar yt,lt2; yt=(y3+y4)/2; lt2=(y4-y3)/2;
+DefVar rle,rre,rte; rle=rl+eps; rre=rr+eps; rte=rt+eps;
+
+DefVar rxz,ryl,ryr;
+
+{POINTS}
+1;  { POINTS vertices of the object }
+ 1; { TYPING of VALUES }
+ p1;{ NAME of the POINT }
+ i; { NAME of TRANSFORMATION }
+ 1; { X Y Z coordinates }
+ 0;     { VALUE of X }
+ yl-rl; { VALUE of Y }
+ 0;     { VALUE of Z }
+ p2; i; 1; rl; yl; 0;
+ p3; i; 1; rt; y3; 0;
+
+ p4; i; 1; rt; y4; 0;
+ p5; i; 1; rr; yr; 0;
+ p6; i; 1; 0; yr+rr; 0;
+ p7; i; 1; 0; yi;  zi;
+
+csl; I; 1; 0; yl;        0;   {center of the left sphere}
+mit; I; 1; 0; (yl+yr)/2; 0;   {center of the tube between the 2 spheres }
+csr; I; 1; 0; yr;        0;   {center of the right sphere}
+@;
+
+2;   { LINES edges of the object }
+ cl; { NAME of the LINE }
+ i;  { NAME of TRANSFORMATION }
+ 3;  { arc of circle passing by 3 points of R**3 }
+ 20; { NBARLI 'number of edges of the line' entier ; }
+ 1;  { RAIGEO 'geometrical ratio between the vertices' reel ; }
+ p1; { NAME of POINT }
+ p3; { NAME of POINT }
+ p2; { NAME of POINT }
+
+ ltube;
+ i;  { NAME of TRANSFORMATION }
+ 2;  { straight line }
+ 20; { NBARLI 'number of edges of the line' entier ; }
+ 1;  { RAIGEO 'geometric ratio between the sub-edges' reel ; }
+ p3; p4; { NAME of POINTS }
+
+ cr;
+  i; { NAME of TRANSFORMATION }
+  3; { arc of circle passing by 3 points of R**3 }
+ 30; { NBARLI 'number of edges of the line' entier ; }
+  1; { RAIGEO 'geometrical ratio between the vertices' reel ; }
+ p4; p6; p5; { NAME of POINTS }
+
+ bl; { Boundary line }
+ i;  { NAME of TRANSFORMATION }
+ 51; { union of several lines }
+ 3;  { NBLIUN number of lines of the union }
+ cl; ltube; cr;
+@;
+
+3;  { SURFACES faces of the object }
+ bs;     { boundary surface }
+  i;     { NAME of TRANSFORMATION }
+ 15;     { rotation of a line around an axis }
+ bl;     { NAME of LINE }
+ p1; p6; { NAME of the POINTS of the axis }
+ 36;     { NBANAS number of angles of rotation around the axis}
+ 0;      { constant angles }
+ 360;    { ANMXAS 'total angle (degrees) of rotations' reel ; }
+
+ tbs;    { triangulated boundary surface}
+ i;      { NAME of TRANSFORMATION }
+ 31;     { triangulation of a quadrangulation }
+ bs;     { NAME of SURFACE }
+ 1;      { create an edge S1 S3 }
+
+isp;     { inside sphere}
+ i;      { NAME of TRANSFORMATION }
+ 18;     { 1/1 of the surface of a SPHERE }
+ 180;    { NBTRSP 'number of triangles (20*n**2)' entier ; }
+ ri;     { RAYOSP 'rayon of the sphere' reel ; }
+ p7;     { NAME of POINT }
+@;
+
+10;     { DRAWING of PLSVO meshes }
+ 3; 3;  { A SURFACE }
+ tbs;   { NAME of the SURFACE? }
+ 90;    { EXECUTE the DRAWING }
+ @;
+ 3; 3;  { The SURFACE }
+ isp;   { NAME of the SURFACE? }
+ 90;    { EXECUTE the DRAWING }
+@;
+@;
+
+DefFunc Taille_Ideale(x,y,z);
+  rxz=x**2+z**2;
+  ryl=sqrt((y-yl)**2+rxz);
+  ryr=sqrt((y-yr)**2+rxz);
+  rxz=sqrt(rxz);
+  if ryl<=rle or ryr<=rre or (rxz<=rte and y>y3 and y<y4) then
+    Taille_Ideale=abs(0.12*rxz + 0.04*(rt-rxz))/rt;
+  else
+    Taille_Ideale=0.32;
+  endif;
+EndFunc;
+
+
+4;
+ { VOLUMES materials of the object }
+ v8;       { NAME of the VOLUME or ESCAPE? }
+ i;        { NAME of TRANSFORMATION }
+ 8;        { 1 closed volume for the option 9 }
+ 2;        { NBSF1V number of closed surfaces around the volume }
+ tbs; isp; { NAME of SURFACES }
+
+ v19;
+  i;     { NAME of TRANSFORMATION }
+  9;     { tetrahedrization of volumes of type 8 }
+ 300000; { MXSOVO max number of vertices of the tetrahedrization }
+ 0.2;    { ARETGR max lenght of edges of the regular grid }
+ 5;      { ANEN2P max (degrees) angle of coplanearity }
+ 3;      { NBPTIV number of internal points future vertices }
+ 1;      { NBVOPA number of type 8 volumes of the partition }
+ v8;     { NAME of VOLUME }
+ csl;   mit;  csr; { NUPTIV(1..NBPTIV) }
+ 0.03; 0.03; 0.03;{ DISSOV(1..NBPTIV) wished distance up to next vertices }
+
+ va;     { NAME of the VOLUME  }
+ i;      { NAME of TRANSFORMATION }
+ 30;     { improve a tetrahedrization }
+ v19;    { NAME of VOLUME }
+ 0.3;    { QUTEMN max quality to be improved }
+ 5;      { ANTE2P max degrees of coplanearity }
+ 12;     { NBITAT number of improvment iterations }
+ @;
+
+3;
+va.sf; i;
+   37; {extracted surface from faces of a volume}
+  va;  {name of the volume to extract a surface}
+  DefFunc fr(x,y,z); fr=1; EndFunc;
+   fr; {name of  the criterion function}
+    1; {type of faces to be extracted => boundary faces}
+@;
+@;
+
+5;  { OBJECTS parts of the object }
+obj;{ NAME of the OBJECT or ESCAPE? }
+ 0; { 2D or 3D classic }
+ 4; { NBDOBJ number of Points Lines Surfaces Volumes Objects of the object}
+    { POINT or LINE or SURFACE or VOLUME or OBJECT? }
+   volume;  va;
+   surface; va.sf;
+   point;   csl;
+   point;   csr;
+ @;
+
+7; { INTERPOLATION nodes of the mesh }
+ obj;  { NAME of the OBJECT to be INTERPOLATED }
+ 4;    { LAGRANGE of DEGRE 2 }
+ @;
+ @;
+
+CLOSE;

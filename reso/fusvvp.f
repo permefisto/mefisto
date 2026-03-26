@@ -1,0 +1,138 @@
+      SUBROUTINE FUSVVP( NBCOMP, EIGMIN, EIGMAX,
+     +                   NC0,    NBV0, VA0, VE0,
+     +                   NC1,    NBV1, VA1, VE1 )
+C ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+C BUT :    FUSION DES TABLEAUX VA0 ET VA1 SELON LES VALEURS CROISSANTES
+C -----    COMPRISES ENTRE EIGMIN EIGMAX DANS VA1
+C          VE0 ET VE1 FUSIONNENT DANS VE0 SELON VA0 ET VA1
+C
+C ENTREES:
+C --------
+C NBCOMP : NOMBRE DE COMPOSANTES DE CHACUN DES VECTEURS PROPRES
+C EIGMIN : VALEUR MINIMALE ADMISE
+C EIGMAX : VALEUR MAXIMALE ADMISE
+C NC0    : NOMBRE (>0) DECLARE DE VALEURS ET VECTEURS DANS VA0 ET VE0
+C
+C MODIFIES:
+C ---------
+C NBV0   : NOMBRE DE VALEURS ET VECTEURS PROPRES DE VA0 ET VE0
+C          NOMBRE DE VALEURS DE VA1 FINALES COMPRISES
+C          ENTRE EIGMIN ET EIGMAX APRES FUSION
+C VA0    : TABLEAU DES NC0 VALEURS PROPRES FUSIONNEES
+C VE0    : TABLEAU(NC0,NBCOMP) DES VECTEURS PROPRES FUSIONNES
+C
+C ENTREES:
+C --------
+C NC1    : NOMBRE DECLARE DE VALEURS PROPRES   DANS VA1 ET VE1
+C NBV1   : NOMBRE DE VALEURS ET VECTEURS PROPRES DE VA1 ET VE1
+C VA1    : TABLEAU DES NC1 VALEURS PROPRES A FUSIONNER DANS VA1
+C VE1    : TABLEAU (NC1,NBCOMP) DES VECTEURS PROPRES ASSOCIES A VA1
+C+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+C AUTEUR: ALAIN PERRONNET      ANALYSE NUMERIQUE UPMC PARIS    AOUT 1998
+C MODIFS: ALAIN PERRONNET      TEXAS A & M UNIVERSITY       JUILLET 2003
+C23456---------------------------------------------------------------012
+      include"./incl/langue.inc"
+      COMMON/ UNITES /  LECTEU,IMPRIM,NUNITE(30)
+      DOUBLE PRECISION  VA0(NC0), VE0(NC0,NBCOMP),
+     +                  VA1(NC1), VE1(NC1,NBCOMP)
+      DOUBLE PRECISION  EIGMIN,EIGMAX, E0,E1,EMIN
+C
+      IF( LANGAG .EQ. 0 ) THEN
+         WRITE(IMPRIM,10000) NBV0,(I,VA0(I),I=1,NBV0)
+         WRITE(IMPRIM,10001) NBV1,(I,VA1(I),I=1,NBV1)
+      ELSE
+         WRITE(IMPRIM,20000) NBV0,(I,VA0(I),I=1,NBV0)
+         WRITE(IMPRIM,20001) NBV1,(I,VA1(I),I=1,NBV1)
+      ENDIF
+10000 FORMAT('FUSVVP:',i5,' VALEURS PROPRES AVANT FUSION:'/
+     %5(I5,' :',G15.7))
+20000 FORMAT('FUSVVP:',i5,' EIGENVALUES BEFORE FUSION:'/
+     %5(I5,' :',G15.7))
+10001 FORMAT('FUSVVP:',i5,' VALEURS PROPRES A FUSIONNER :'/
+     %5(I5,' :',G15.7))
+20001 FORMAT('FUSVVP:',i5,' EIGENVALUES to MERGE     :'/
+     %5(I5,' :',G15.7))
+C
+      DO 30 I=1,NBV0
+C
+C        EXISTE T IL UNE VALEUR VA1(J) PLUS PETITE QUE VA0(I)
+C        COMPRISE ENTRE EIGMIN ET EIGMAX
+         N    = 0
+         E0   = VA0(I)
+         EMIN = E0
+C
+C        DANS LE TABLEAU VA1
+         DO 10 J=1,NBV1
+            E1 = VA1(J)
+            IF( E1 .LT. EMIN ) THEN
+               IF( EIGMIN .LE. E1 .AND. E1 .LE. EIGMAX ) THEN
+                  EMIN = E1
+                  N    = J
+               ENDIF
+            ENDIF
+ 10      CONTINUE
+C
+         IF( N .GT. 0 ) THEN
+C           PERMUTATION DU VECTEUR VA0(I) ET VA1(N)
+            VA0(I) = EMIN
+            VA1(N) = E0
+            DO 20 J=1,NBCOMP
+               E1       = VE0(I,J)
+               VE0(I,J) = VE1(N,J)
+               VE1(N,J) = E1
+ 20         CONTINUE
+         ENDIF
+C
+ 30   CONTINUE
+C
+C     APRES PERMUTATION LES VALEURS PROPRES STOCKEES DANS VA1 SONT
+C     ELLES ENCORE DES SOLUTIONS? SI OUI, IL FAUT LES AJOUTER A VA0
+      DO 60 I=1,NBV1
+ 35      E0 = VA1(I)
+         IF( EIGMIN .LE. E0 .AND. E0 .LE. EIGMAX ) THEN
+            EMIN = E0
+            N    = I
+C
+C           IL EXISTE UNE VALEUR A AJOUTER. RECHERCHE DU MIN
+            DO 40 J=I+1,NBV1
+               E1 = VA1(J)
+               IF( E1 .LT. EMIN ) THEN
+                  IF( EIGMIN .LE. E1 .AND. E1 .LE. EIGMAX ) THEN
+                     EMIN = E1
+                     N    = J
+                  ENDIF
+               ENDIF
+ 40         CONTINUE
+C
+C           AJOUT DE VA1(N) A VA0
+            IF( NBV0+1 .GT. NC0 ) THEN
+               IF( LANGAG .EQ. 0 ) THEN
+                  WRITE(IMPRIM,10040) NC0
+               ELSE
+                  WRITE(IMPRIM,20040) NC0
+               ENDIF
+10040 FORMAT('ANOMALIE: FUSION AVEC PLUS DE',I4,' VALEURS PROPRES')
+20040 FORMAT('ANOMALY: FUSION with MORE EIGENVALUES than',I4)
+               GOTO 100
+            ENDIF
+            NBV0 = NBV0 + 1
+            VA0(NBV0) = EMIN
+            DO 50 J=1,NBCOMP
+               VE0(NBV0,J) = VE1(N,J)
+ 50         CONTINUE
+C           POUR NE PLUS LA PRENDRE UNE VALEUR TRES GRANDE EST IMPOSEE
+            VA1(N) = 1D111
+            GOTO 35
+         ENDIF
+ 60   CONTINUE
+C
+ 100  IF( LANGAG .EQ. 0 ) THEN
+         WRITE(IMPRIM,10100) NBV0,(I,VA0(I),I=1,NBV0)
+      ELSE
+         WRITE(IMPRIM,20100) NBV0,(I,VA0(I),I=1,NBV0)
+      ENDIF
+10100 FORMAT('FUSVVP:',I5,' VALEURS PROPRES APRES FUSION:'/
+     %5(I5,' :',G15.7))
+20100 FORMAT('FUSVVP:',i5,' EIGENVALUES AFTER  FUSION:'/
+     %5(I5,' :',G15.7))
+      END

@@ -1,0 +1,236 @@
+      SUBROUTINE CYCOSLDA( NMSFEX, RAYOCI, RAYOCS, XYZB, XYZH,
+     %                     MXSOM,  NBSOM,  XYZSOM,
+     %                     MXEF,   NBEF,   NSEF,
+     %                     NOMLIG, NUMLIG, IERR )
+C+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+C BUT:     GENERER LE MAILLAGE DE LA SURFACE LATERALE D'UN CYLINDRE
+C -----    OU D'UN TRONC DE CONE AVEC LA LONGUEUR PAR DEFAUT DES ARETES
+C          EXTRAIRE LE MAILLAGE DES 2 CERCLES INFERIEUR et SUPERIEUR
+C
+C ENTREES:
+C --------
+C NMSFEX : NOM DE LA SURFACE DU CYLINDRE ou CONE
+C RAYOBI : RAYON DU CERCLE INFERIEUR
+C RAYOCS : RAYON DU CERCLE SUPERIEUR
+C XYZB   : XYZ DU CENTRE DU CERCLE INFERIEUR
+C XYZH   : XYZ DU CENTRE DU CERCLE SUPERIEUR
+C MXSOM  : NOMBRE MAXIMAL DE SOMMETS DECLARES DANS XYZSOM
+C MXEF   : NOMBRE MAXIMAL DE EF DECLARES DANS NSEF
+C
+C SORTIES:
+C --------
+C NBSOM  : NOMBRE DE SOMMETS INITIALISES DANS XYZSOM
+C NBEF   : NOMBRE D'EF INITIALISES DANS XYZSOM DE LA SURFACE LATERALE
+C XYZSOM : TABLEAU DES COORDONNEES DES NBSOM SOMMETS DE LA TRIANGULATION
+C NSEF   : TABLEAU DU NUMERO DES 4 SOMMETS DES NBEF EF DU MAILLAGE
+C NOMLIG : NOM    DE LA LIGNE DES 2 CERCLES INFERIEUR et SUPERIEUR
+C NUMLIG : NUMERO DE LA LIGNE DES 2 CERCLES INFERIEUR et SUPERIEUR
+C IERR   : =0 SI PAS D'ERREUR
+C          >0 SINON
+C          =5 SI PAS ASSEZ DE SOMMETS RESERVES DANS XYZSOM
+C+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+C AUTEUR : ALAIN PERRONNET LJLL UPMC & St Pierre du Perray Novembre 2011
+C2345X7..............................................................012
+      include"./incl/ntmnlt.inc"
+      include"./incl/a_ligne__definition.inc"
+      include"./incl/darete.inc"
+C
+C     LE SUPER-TABLEAU OU TOUS LES TMC ET TMS OUVERTS SONT STOCKES
+C     ICI LE TABLEAU DMCN REEL DOUBLE PRECISION N'EST PAS UTILE
+      include"./incl/pp.inc"
+      COMMON            MCN(MOTMCN)
+      REAL             RMCN(1)
+      DOUBLE PRECISION DMCN(1)
+      EQUIVALENCE   ( MCN(1), RMCN(1), DMCN(1) )
+C
+      REAL              XYZSOM(3,MXSOM), XYZB(3), XYZH(3)
+      INTEGER           NSEF(4,MXEF)
+C
+      CHARACTER*1       KNBRE
+      CHARACTER*24      NMSFEX, NOMLIG(2)
+      INTEGER           NUMLIG(2)
+      REAL              XYZ3PI(3,3), XYZ3PF(3,3), XYZ(3)
+      DOUBLE PRECISION  DMATRI(3,4), PI, ANGLE, ANGLMX, R
+      INTRINSIC         SQRT
+C
+C     LE VECTEUR AXE DU CYLINDRE
+      X = XYZH(1) - XYZB(1)
+      Y = XYZH(2) - XYZB(2)
+      Z = XYZH(3) - XYZB(3)
+C
+C     LONGUEUR DE L'AXE DU CYLINDRE
+      H = SQRT( X*X + Y*Y + Z*Z )
+C
+C     CONSTRUIRE LA MATRICE DE TRANSFORMATION DES COORDONNEES POUR
+C     PASSER D'UN REPERE DEFINI PAR 3 POINTS INITIAUX NON ALIGNES
+C                               A   3 POINTS FINAUX   NON ALIGNES
+C     ============================================================
+C     LE REPERE INITIAL
+      XYZ3PI(1,1) = 0.
+      XYZ3PI(2,1) = 0.
+      XYZ3PI(3,1) = 0.
+C
+      XYZ3PI(1,2) = H
+      XYZ3PI(2,2) = 0.
+      XYZ3PI(3,2) = 0.
+C
+      XYZ3PI(1,3) = 0.
+      XYZ3PI(2,3) = H
+      XYZ3PI(3,3) = 0.
+C
+C     LE REPERE FINAL
+      XYZ3PF(1,1) = XYZB(1)
+      XYZ3PF(2,1) = XYZB(2)
+      XYZ3PF(3,1) = XYZB(3)
+C
+      IF( SQRT(X*X + Y*Y)/H .LE. 1E-3 ) THEN
+C
+C        AXES X et Y
+         XYZ3PF(1,2) = XYZB(1) + H
+         XYZ3PF(2,2) = XYZB(2)
+         XYZ3PF(3,2) = XYZB(3)
+C
+         XYZ3PF(1,3) = XYZB(1)
+         XYZ3PF(2,3) = XYZB(2) + H
+         XYZ3PF(3,3) = XYZB(3)
+C
+      ELSE
+C
+C        RECHERCHE DE 2 DIRECTIONS ORTHOGONALES A L'AXE DU CYLINDRE
+         XYZ3PF(1,2) = XYZB(1) - Y
+         XYZ3PF(2,2) = XYZB(2) + X
+         XYZ3PF(3,2) = XYZB(3)
+C
+         XYZ3PF(1,3) = XYZB(1) - X * Z / H
+         XYZ3PF(2,3) = XYZB(2) - Y * Z / H
+         XYZ3PF(3,3) = XYZB(3) + (X * X + Y * Y) / H
+C
+      ENDIF
+C
+C     CONSTRUCTION DE LA MATRICE DE TRANSFORMATION QUI ENVOIE
+C     LES 3 POINTS INITIAUX SUR LES 3 POINTS FINAUX
+      CALL TR3P3P( XYZ3PI, XYZ3PF, DMATRI, IERR )
+      IF( IERR .NE. 0 ) GOTO 9999
+C
+C     ===========================================================
+C     QUADRANGULATION DE LA SURFACE LATERALE DU CYLINDRE ou CONE
+C     CALCUL DES XYZ DES SOMMETS DES EF DANS LE REPERE PROPRE
+C     LA LONGUEUR DARETE>0 PAR DEFAUT DES ARETES EST ICI UTILISEE
+C     ===========================================================
+      PI = ATAN(1.D0) * 4.D0
+      R  = H / DARETE
+C     NOMBRE D'ARETES SUR L'AXE
+      NBARAX = NINT( R )
+      IF( NBARAX .LE. 0 ) NBARAX=1
+C     NOMBRE D'ARETES SUR LES CERCLES
+      NBARCE = NINT( PI * 2D0 * MAX( RAYOCI, RAYOCS ) / DARETE )
+C
+C     CALCUL DES COORDONNEES DES (1+NBARCE)*(1+NBARAX) SOMMETS
+C     DE LA SURFACE LATERALE DU CYLINDRE OU CONE
+C     --------------------------------------------------------
+      ANGLMX = 2D0 * PI / NBARCE
+      NBSOM  = 0
+      DO J=0,NBARAX
+C
+C        RAYON SUR LA TRANCHE J DE L'AXE
+         R = ( RAYOCI * (NBARAX-J) + RAYOCS * J ) / NBARAX
+C
+C        HAUTEUR Z DE LA TRANCHE J DE L'AXE
+         HA = J * H / NBARAX
+C
+         DO I=1,NBARCE
+C
+C           XYZ DANS LE REPERE PROPRE DU CONE D'AXE Z
+            ANGLE  = (I-1) * ANGLMX
+            XYZ(1) = REAL( R * COS( ANGLE ) )
+            XYZ(2) = REAL( R * SIN( ANGLE ) )
+            XYZ(3) = REAL( HA )
+C
+C           LE SOMMET APRES TRANSFORMATION
+C           PASSAGE DU REPERE PROPRE DU CYLINDRE AU REPERE GENERAL
+            NBSOM = NBSOM + 1
+            CALL ISOMVA( DMATRI, XYZ, XYZSOM(1,NBSOM) )
+C
+         ENDDO
+C
+      ENDDO
+C
+C     NUMEROTATION DES SOMMETS DES QUADRANGLES DE LA SURFACE LATERALE
+C     ---------------------------------------------------------------
+      NBEF = 0
+      DO J=1,NBARAX
+         DO I=1,NBARCE
+            NBEF = NBEF + 1
+            NSEF(1,NBEF) = I   + (J-1) * NBARCE
+            NSEF(2,NBEF) = I+1 + (J-1) * NBARCE
+            NSEF(3,NBEF) = I+1 +  J    * NBARCE
+            NSEF(4,NBEF) = I   +  J    * NBARCE
+         ENDDO
+         NSEF(2,NBEF) = 1 + (J-1) * NBARCE
+         NSEF(3,NBEF) = 1 +  J    * NBARCE
+      ENDDO
+      print *,'FIN SURFACE LATERALE: NBSOM=',NBSOM,' NBEF=',NBEF
+C
+C
+C     ====================================
+C     LES 2 CERCLES INFERIEUR ET SUPERIEUR
+C     ====================================
+C     LE NOM GENERIQUE DU CERCLE EST CELUI DE LA SURFACE DU CYLINDRE ou CONE
+      NDXYZ0 = 0
+      DO NULG = 1, 2
+         NOMLIG(NULG) = NMSFEX
+         N = NUDCNB( NOMLIG(NULG) )
+         WRITE(KNBRE,'(I1)') NULG
+         N = MIN(N,21)
+         NOMLIG(NULG) = NOMLIG(NULG)(1:N) // '_L' // KNBRE
+C
+C        SI CETTE LIGNE EXISTE, ELLE EST DETRUITE
+         CALL LXLXOU( NTLIGN, NOMLIG(NULG), NT1LG, MN1LG )
+         IF( MN1LG .GT. 0 ) CALL LXTSDS( NTLIGN, NOMLIG(NULG) )
+C
+C        CONSTRUCTION DE LA LIGNE COMME LIGNE FERMEE POUR SUEX09
+         CALL LXLXDC( NTLIGN, NOMLIG(NULG), 24, 8 )
+         CALL LXLXOU( NTLIGN, NOMLIG(NULG), NT1LG, MN1LG )
+C        NUMERO DE LA LIGNE DANS LE LX DES LIGNES
+         CALL NUOBNM( 'LIGNE', NOMLIG(NULG), NUMLIG(NULG) )
+C
+C        LA LIGNE A UN TMS DEFINITION DE LIGNE DE TYPE 7
+         CALL LXTNDC( NT1LG, 'DEFINITION', 'MOTS', WYZPLI+NBARCE*3+3 )
+         CALL LXTSOU( NT1LG, 'DEFINITION', NT1LDE, MN1LDE )
+C        TRANSFORMATION (I pour IDENTITE)
+         MCN( MN1LDE + WTYTRL ) = 1
+C        TYPE DE LA LIGNE
+         MCN( MN1LDE + WUTYLI ) = 7
+C        NOMBRE DE SOMMETS DE LA LIGNE
+         MCN( MN1LDE + WBPOLI ) = NBARCE+1
+C        LES NBARCE XYZ DES SOMMETS DE LA LIGNE
+         MNX = MN1LDE + WYZPLI - 1
+         DO K = 1, NBARCE
+            DO I=1,3
+               RMCN(MNX+I) = XYZSOM(I,NDXYZ0+K)
+            ENDDO
+            MNX = MNX + 3
+         ENDDO
+C        LE DERNIER POINT EST LE PREMIER
+         DO I=1,3
+            RMCN(MNX+I) = XYZSOM(I,NDXYZ0+1)
+         ENDDO
+C
+C        AJOUT DU NUMERO DU TABLEAU DESCRIPTEUR
+         MCN( MN1LDE + MOTVAR(6) ) = NONMTD( '~>LIGNE>>DEFINITION' )
+C        AJOUT DE LA DATE
+         CALL ECDATE( MCN(MN1LDE) )
+C
+C        CONSTRUCTION DE LA LIGNE DE TYPE 7
+         CALL LIEX07( NT1LG,  MCN(MN1LDE), RMCN(MN1LDE),
+     %                NTARLI, MNARLI, NTSOLI, MNSOLI, IERR )
+         IF( IERR .NE. 0 ) GOTO 9999
+C
+C        PASSAGE AU CERCLE SUIVANT
+C        DECALAGE DES SOMMETS POUR ATTEINDRE LE CERCLE SUPERIEUR
+         NDXYZ0 = NBARCE * NBARAX
+C
+      ENDDO
+C
+ 9999 RETURN
+      END

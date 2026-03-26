@@ -1,0 +1,52 @@
+{ ==================================================================== }
+{ MEFISTO Software     : February 7-th, 2011 Version                   }
+{ USER's Name          : ap                                            }
+{ Project Name         : vvpt2d                                        }
+{ Date                 :  7/02/11   13h 45m 11s                        }
+{ ==================================================================== }
+ readf vvpt2d.sspace;
+ { SURFACE: CARRES }
+ { LIGNE: CARREL }
+
+{##############################################################################}
+{DETECTED ERROR: VERIFY THE LAST INPUT DATA                                    }
+{ERROR: OBJECT CARRE                                                           }
+{TEMPERATURE VECTORS ARE NOT COMPUTED                                          }
+{##############################################################################}
+
+
+{##############################################################################}
+{DETECTED ERROR: VERIFY THE LAST INPUT DATA                                    }
+{INCORRECT DATA READ ON THIS FILE                                              }
+{RECTIFY the FILE and SAVE IT                                                  }
+{THUS, Type again                                                              }
+{readf File_Name ;                                                             }
+{UNKNOWN NAME: 11                                                              }
+{MUST be CHOSEN AMONG:                                                         }
+{CARRE                                                                         }
+{##############################################################################}
+
+ @;
+ @;
+ @;
+ @;
+ @;
+ @;
+ @;
+ @;
+ 8;
+ { DRAWING of TEMPERATURES and FLUX }
+
+{##############################################################################}
+{DETECTED ERROR: VERIFY THE LAST INPUT DATA                                    }
+{ERROR: OBJECT CARRE                                                           }
+{TEMPERATURE VECTORS ARE NOT COMPUTED                                          }
+{##############################################################################}
+
+ @;
+ @;
+ @;
+ @;
+ @;
+ 99;
+ { SAVE DATA and QUIT }

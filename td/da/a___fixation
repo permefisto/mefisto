@@ -1,0 +1,15 @@
+deftms ~>>>FIXATION 'Fixed displacements'
+variable muet DATE 'date of creation of the TMS' reel2 ;
+variable muet NUTD 'number of the descriptor array TD' entier ; 
+variable LTFIXA    'type of fixed displacement' entier 
+( 1 : 'constant fixed displacement'
+,-1 : 'function fixed displacement'
+, 0 : 'delete this fixed displacement' ) ;
+variable NBCOFI 'number of fixed components of the displacement' entier ;
+tableau NUCOFI(1..NBCOFI)
+   'number of each component of fixed displacement' entier ;
+cas LTFIXA 
+ 1 : tableau  FIXAT(1..NBCOFI) 'value of fixed displacement components' reel ;
+-1 : variable NFFIXA 'name of the fixed displacement function' ^~>FONCTION ;
+fincas ;
+fintms ;

@@ -1,0 +1,162 @@
+      SUBROUTINE TRFAPEPT( NBFAPE, NOFAPE, MXFACO, LEFACO,
+     %                     NOSOM1, NOSOM2, PTXYZD )
+C+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+C BUT :    TRACE DES ARETES DES FACES FRONTIERE et INTERFACE
+C -----    DU TABLEAU LEFACO avec LES FACES PERDUES et
+C          DES POINTS NOSOM1 A NOSOM2
+
+C ENTREES:
+C --------
+C MXFACO : NOMBRE MAXIMAL DECLARABLE DE FACES DU CONTOUR
+C LEFACO : FACE DU CONTOUR OU INTERFACES ENTRE VOLUMES
+C          IL CONTIENT DANS CET ORDRE
+C          NUMERO (DANS PTXYZD) DU SOMMET 1, SOMMET 2, SOMMET 3
+C          NUMERO (DANS NUVOPA 0 SINON) DU VOLUME1 , VOLUME2 DE LA FACE
+C          NUMERO (DANS LEFACO) DE LA FACE ADJACENTE PAR L'ARETE 1 2 3
+C
+C          ATTENTION: UNE ARETE PEUT APPARTENIR A PLUS DE 2 FACES
+C          => CHAINAGE CIRCULAIRE DE CES FACES DANS LEFACO
+C          LEFACO(9,*)  -> FACE SUIVANTE (*=0:VIDE, *<>0:NON VIDE)
+C          HACHAGE AVEC LA SOMME DES 3 SOMMETS MODULO MXFACO
+C          LF = MOD( NOSOFA(1)+NOSOFA(2)+NOSOFA(3) , MXFACO ) + 1
+C          NF = LEFACO( 10, LF ) LE NUMERO DE LA 1-ERE FACE DANS LEFACO
+C          SI LA FACE NE CONVIENT PAS. PASSAGE A LA SUIVANTE
+C          NF  = LEFACO( 9, NF )  ...
+C          LEFACO(11,.) = NO NOTETR D'UN TETRAEDRE AYANT CETTE FACE, 0 SINON
+C NOSOM1 : NO PTXYZD DU PREMIER SOMMET A TRACER
+C NOSOM2 : NO PTXYZD DU DERNIER SOMMET A TRACER
+C PTXYZD : PAR POINT : X  Y  Z  DISTANCE_SOUHAITEE
+
+C SORTIES:
+C --------
+C NBFAPE : NOMBRE DE FACES PERDUES DE LEFACO
+C NOFAPE : NUMERO DES NBFAPE FACES PERDUES
+C+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+C AUTEUR : ALAIN PERRONNET Saint Pierre du Perray           Janvier 2020
+C2345X7..............................................................012
+      include"./incl/trvari.inc"
+      include"./incl/mecoit.inc"
+      include"./incl/xyzext.inc"
+
+      COMMON / TRTETR / STOPTE, TRACTE
+      LOGICAL           STOPTE, TRACTE
+C     STOPTE = FAUX ==> PAS D'ARRET APRES LE TRACE DE CHAQUE TETRAEDRE
+C              VRAI ==> DEMANDE D'UN CARACTERE POUR REDEMARRER
+C     TRACTE = FAUX ==> PAS DE TRACE DES TETRAEDRES
+C              VRAI ==> TRACE DES TETRAEDRES DE L'ETOILE
+C
+      DOUBLE PRECISION  PTXYZD(4,*)
+      INTEGER           LEFACO(1:11,0:MXFACO), NOFAPE(NBFAPE)
+      REAL              XYZ(3)
+      CHARACTER*80      KTITRE
+
+      IF( .NOT. TRACTE ) RETURN
+
+C     MINIMUM ET MAXIMUM DES COORDONNEES DES FACES PERDUES
+C     ====================================================
+      R = RINFO( 'GRAND' )
+      DO L=1,3
+         COOEXT(L,1) =  R
+         COOEXT(L,2) = -R
+      ENDDO
+
+      NBFAPE = 0
+      DO N = 1, MXFACO
+         IF( LEFACO(1,N) .GT. 0 ) THEN
+            DO K=1,3
+               NS = LEFACO(K,N)
+               DO L=1,3
+                  R = REAL( PTXYZD(L,NS) )
+                  IF( R .LT. COOEXT(L,1) )  COOEXT(L,1)=R
+                  IF( R .GT. COOEXT(L,2) )  COOEXT(L,2)=R
+               ENDDO
+            ENDDO
+            IF( LEFACO(11,N) .LE. 0 ) THEN
+               NBFAPE = NBFAPE + 1
+               NOFAPE( NBFAPE ) = N
+            ENDIF
+         ENDIF
+      ENDDO
+
+      DO NS = NOSOM1, NOSOM2
+         DO L=1,3
+            R = REAL( PTXYZD(L,NS) )
+            IF( R .LT. COOEXT(L,1) )  COOEXT(L,1)=R
+            IF( R .GT. COOEXT(L,2) )  COOEXT(L,2)=R
+         ENDDO
+      ENDDO
+
+      CALL VISEE0
+
+C     TRACE EN MODE 3 BOUTONS POUR DEPLACEMENT ROTATIONS ZOOM
+      NORBITE = 0
+      LORBITE = 1
+C     TRACE EN MODE 3 BOUTONS POUR DEPLACEMENT ROTATIONS ZOOM
+      PREDU0  = PREDUF
+      PREDUF  = 20.0
+
+      IF( LORBITE .EQ. 0 ) GOTO 20
+
+C     INITIALISATION DE L'ORBITE
+C     ==========================
+      CALL ORBITE0( NOTYEV )
+      GOTO 20
+
+C     TRACE SELON L'ORBITE OU ZOOM OU TRANSLATION ACTIFS
+C     ==================================================
+ 10   CALL ORBITE1( NOTYEV )
+      IF( NOTYEV .EQ. 0 ) GOTO 9000
+C
+C     TRACE DES AXES 3D
+ 20   CALL TRAXE3
+C
+C     LE TRACE DES 3 ARETES DES FACES TRIANGULAIRES DU TABLEAU LEFACO
+      DO NF=1,MXFACO
+         IF( LEFACO(1,NF) .GT. 0 ) THEN
+            CALL TRARTR( NCNOIR, LEFACO(1,NF), PTXYZD )
+         ENDIF
+      ENDDO
+
+C     LE TRACE DES FACES TRIANGULAIRES PERDUES DU TABLEAU LEFACO
+      DO N=1, NBFAPE
+
+         NF = ABS( NOFAPE(N) )
+         CALL TRFATR( NCROUG, NCBLEU, LEFACO(1,NF), PTXYZD )
+
+C        TRACE DU NUMERO DES 3 SOMMETS DE LA FACE NF
+         DO K=1,3
+            NS = LEFACO(K,NF)
+            XYZ(1) = REAL( PTXYZD(1,NS) )
+            XYZ(2) = REAL( PTXYZD(2,NS) )
+            XYZ(3) = REAL( PTXYZD(3,NS) )
+            CALL ENTIER3D( NCGRIS, XYZ, NS )
+         ENDDO
+
+      ENDDO
+
+C     LE TRACE DES SOMMETS NOSOM1 A NOSOM2 DE PTXYZD
+      DO NS = NOSOM1, NOSOM2
+         XYZ(1) = REAL( PTXYZD(1,NS) )
+         XYZ(2) = REAL( PTXYZD(2,NS) )
+         XYZ(3) = REAL( PTXYZD(3,NS) )
+         CALL SYMBOLE3D( NCTURQ, XYZ, '*' )
+         CALL ENTIER3D(  NCVERT, XYZ, NS )
+      ENDDO
+
+C     TITRE ET TRACE EFFECTIF
+      KTITRE='         FACES PERDUES de LEFACO et SOMMETS          a 
+     %        '
+      WRITE(KTITRE(1:8),  '(I8)') NBFAPE
+      WRITE(KTITRE(45:52),'(I8)') NOSOM1
+      WRITE(KTITRE(56:63),'(I8)') NOSOM2
+      CALL TRFINS( KTITRE )
+
+C     REPRISE DE L'ORBITE
+C     ===================
+      IF( LORBITE .NE. 0 ) GOTO 10
+
+C     REDUCTION DES FACES REMISE A SA VALEUR PRECEDENTE
+ 9000 PREDUF = PREDU0
+
+      RETURN
+      END

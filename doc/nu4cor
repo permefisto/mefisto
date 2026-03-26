@@ -1,0 +1,16 @@
+The QUADRANGLE, eventually deformed, is defined from
+the 4 lines which define its 4 edges.
+
+ATTENTION: The 4 lines must be given with a consecutive order or not
+           --------L3---------
+           |                 |  
+          L4                 L2
+           |                 |
+           --------L1---------    
+ATTENTION:   
+The number of sub-quadrangles will be equal to the product M x N where
+M is the number of edges of the line 1 equal to the number of edges of the line 3
+N is the number of edges of the line 2 equal to the number of edges of the line 4
+
+Example: S1; I; 1; L1; L2; L3; L4;
+Define a quadrangulation of contour the edges of lines L1 L2 L3 L4 

@@ -1,0 +1,50 @@
+#!/bin/bash
+# Fichier lignec      Alain PERRONNET  le 29 septembre 2004
+#
+# Calcul du nombre de lignes                  dans Mefisto
+# Calcul du nombre de lignes     commentaires dans Mefisto
+# Calcul du nombre de lignes non commentaires dans Mefisto
+# set -x
+echo
+echo Calcul du nombre de lignes des sous-programmes fortran de Mefisto
+echo ====================================================================================
+nblt=0   #le nombre total de lignes des fichiers *.f
+nblct=0  #le nombre total de lignes commentaires des fichiers .f
+for i in `ls $MEFISTO`
+do
+  if test -d $MEFISTO/$i
+  then
+    echo librairie $MEFISTO/$i
+    cd $MEFISTO/$i
+    nbl=0      #le nombre de lignes des fichiers *.f de la librairie $i
+    nblc=0     #le nombre de lignes commentaires des fichiers *.f de la librairie $i
+#
+    for j in `ls *.f`
+    do
+      nl=0                 #le nombre de lignes du fichier $j
+      nlc=0                #le nombre de lignes commentaires du fichier $j
+      set `wc $j` ; nl=$1
+                           #grep -i ^C $j | set `wc` ; nlc=$1    se bloque dans `wc`
+      grep -i ^C $j >fileC
+      set `wc fileC` ; nlc=$1
+      nbl=$(($nbl + $nl))
+      nblc=$(($nblc + $nlc))
+      echo $nl lignes dont $nlc lignes commentaires dans le fichier $j
+    done
+#
+    nblt=$(($nblt + $nbl))
+    nblct=$(($nblct + $nblc))
+    echo
+    echo Total pour la librairie $i : $nbl lignes dont $nblc lignes commentaires
+    echo --------------------------------------------------------------------------------
+    rm fileC 2>/dev/null
+  fi
+done
+
+echo
+echo ======================================================================================
+echo Au total $nblt lignes Fortran des fichiers.f dans les librairies Mefisto
+echo Au total $nblct lignes Commentaires des fichiers.f dans les librairies Mefisto
+echo Au total `expr $nblt - $nblct` lignes instructions Fortran des fichiers.f dans les librairies Mefisto
+echo ======================================================================================
+

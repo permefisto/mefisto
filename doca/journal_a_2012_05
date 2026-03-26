@@ -1,0 +1,81 @@
+--------------------------------------------------------------
+NEWS of MEFISTO software     English Version        April 2012
+--------------------------------------------------------------
+MESHER:
+- Option 0 the default value of the length of edges of the mesh
+  value used if the function edge_length(x,y,z) is not given
+- Option 20 of extruded lines from the vertices of a polygon
+- Option 19 of surfaces: a TRIANGULER by adding of
+  the barycentre of triangles with same data input as 9;
+- Option 20 triangulation of EXTRUDED SURFACES of a PLANE POLYGON
+- Option 21 triangulation of the CLOSED SURFACE of a BOX
+- Option 22 triangulation of the CLOSED SURFACE of a CONE
+- Option 23 triangulation of the CLOSED SURFACE of a TORUS
+- Option 26 of 2D or 3D surfaces: a MODIFIER of a mesh of
+  triangles or quadrangles by mouse clicks
+- Option 38 of surfaces to show into a rectangle defined by
+  2 clicks the triangles or quadrangles to extract
+- Option 39 subdivide any triangle or quadrangle of the
+  initial mesh into 4 sub elements of same type
+- Option 40 Surface1-Surface2 gives the finite element of
+  Surface1 which are not in Surface2
+  (Every FE of Surface2 must be in Surface1)
+- Volume 19 a TETRAHEDRIZER by adding of the barycentre
+  of triangles with same data input as volume 9;
+- Volume 16 a generator of pentahedra or hexahedra from the
+  triangles or quadrangles of a surface by displacement along
+  the normal vector at every vertex
+- Volume 39 subdivide any tetrahedron into 8 sub-tetra
+  any pentahedron into 8 sub-penta, any hexahedron into 8
+  sub-hexa and pyramida into 6 sub-pyra and 4 sub-tetra
+- Volume 48 imposes the 3 coordinates of the given point to
+  the nearest vertex of the mesh
+- Volume 51 an union of volumes into one multi-material volume
+- Volume 53 a multi-material volume, union of volumes, is cut
+  as many separated mono-material volumes
+- Volume 54 a multi-material volume, union of volumes, becomes
+  only one mono-material volume
+- 1d OBJECT as several interval (1 per material) with 
+  2 boundary POINTS, extremities of the object, support of
+  future boundary conditions
+HEATER:
+- Option 12 2D or 3D computation of non zero solutions u of
+           -Laplacian u + a1 u + a2 u**2 + a3 u**3 = 0  a3<0
+ Attention: gives 4 data games
+ game 1: CONDUCTIVITY = 1 in front of -LAPLACIAN u
+ game 1: u INITIAL (Example: 1 on a PLSV, 0 else)
+ game 2: a1;  game 3: a2; game 4: a3;
+ game 1: IMPOSED BOUNDARY CONDITION CONTACT=0
+         FLUXES are computed with a conductivity=1
+ game 2 3 4: NO BOUNDARY CONDITION to give
+- Computation of integral of solution**expo on the object
+- Computation of steady or not heat transfer on 1d object
+  with graphics of temperature, gradient, flux and error
+- Display of gradients at quadrature formula points
+- Display of fluxes at interface points between FE
+- Drawing of the solutions at all steps of time
+ELASTICER:
+- Visualization of eigenmodes movements
+FLUIDER:
+- Solution of the steady or unsteady STOKES problem,
+  unsteady NAVIER-STOKES problem for an incompressible
+  2D or 3D fluid by Taylor-Hood or Brezzi-Fortin finite
+  elements with a skyline storage and CROUT factorization.
+- Solution of unsteady NAVIER-STOKES problem by fractional
+  steps by skyline Cholesky factorization or conjugate gradient
+  => lower size of used memory
+- Drawing of particles moving in a flow
+- Drawing of the 2d stream function
+- Drawing of the velocity norm inside the flow
+- Drawing of the pressure on some surfaces of the fluid
+- Drawing of the solutions at all steps of time
+- A User's Manual of Mefisto-FLUIDER is loadable
+NLSER:
+- Solution of the NON-LINEAR SCHRODINGER Equation
+  i dU(t)/dt -Alfa Laplacian U(t) + N(t,|U|) U(t) = F(t,X)
+  Cf the documentation of the initial menu debunlse.
+--------------------------------------------------------------
+If you have a problem contact Alain PERRONNET
+E-mail  : perronnet@ann.jussieu.fr
+Internet: http://www.ann.jussieu.fr/~perronnet
+--------------------------------------------------------------

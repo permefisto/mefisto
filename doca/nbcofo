@@ -1,0 +1,6 @@
+NBCOFO is the number of force components to be valued.
+It is not necessary to give a zero component value.
+This positive value is 1 or 2 in 2d; 1 or 2 or 3 in 3d.
+After, it will be necessary to give the number of each
+component.
+Attention to the unity of values.

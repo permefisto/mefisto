@@ -1,0 +1,6 @@
+Le nombre d'aretes NBACTE doit etre strictement positif.
+Le tetraedre de sommets (0,0,0) (NBACTE,0,0) (0,NBACTE,0) (0,0,NBACTE)
+est decoupe en NBACTE**3 tetraedres reguliers mais non tous egaux.
+
+Exemple: TETRAEDRE12; I; 12; 5;
+Definit 5*5*5=125 tetraedres

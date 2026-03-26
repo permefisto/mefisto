@@ -1,0 +1,63 @@
+#!/bin/bash
+ echo     
+ echo ======================================================================= 
+ echo Compilation Edition de liens du test du mode PIXEL de la librairie xvue
+ echo =======================================================================  
+#     Alain Perronnet   Version LINUX    Fevrier 1999
+
+# le repertoire de travail
+cd $MEFISTO
+
+rm  xvue/xvuelc.o
+
+gcc -c xvue/xvuelc.c -o xvue/xvuelc.o
+
+ if test -f xvue/xvuelc.o
+ then 
+   chmod 755 xvue/xvuelc.o
+   echo "xvue/xvuelc.o est PRET a l'emploi" 
+ else
+   echo "xvue/xvuelc.o est INCORRECT"
+   exit
+ fi
+
+echo
+#
+# le nom du module executable
+ nompp=xvue/xvtest1
+ echo construction du module $nompp
+ rm $nompp 
+
+#
+# compilation des sous-programmes Fortran
+ gfortran -m64 -fPIC -O -I. -c xvue/xvouvrir.f
+ gfortran -m64 -fPIC -O -I. -c xvue/xvinit.f
+ gfortran -m64 -fPIC -O -I. -c xvue/palcde.f
+ gfortran -m64 -fPIC -O -I. -c xvue/coutip.f
+ gfortran -m64 -fPIC -O -I. -c xvue/codtei.f
+ gfortran -m64 -fPIC -O -I. -c xvue/tiprvb.f
+ gfortran -m64 -fPIC -O -I. -c xvue/chargefonte.f
+ gfortran -m64 -fPIC -O -I. -c xvue/choixfonte.f
+
+#
+# compilation du programme principal et edition des liens avec X et sans Motif
+gfortran -m64 -fPIC -O -I. ./prpr/xvtest1.f  ./*.o  ./xvue/xvuelc.o \
+     -lgfortran -L/usr/X11R6/lib64 -lXt -lX11 -o $nompp
+echo Construction de $nompp
+#
+# destruction des fichiers .o inutiles
+ rm *.o
+#
+# bilan final
+ if test -f $nompp
+ then 
+   ls -l $nompp
+   echo
+   echo "$nompp est correct et va etre execute"
+   $MEFISTO/$nompp
+ else
+   echo "$MEFISTO/$nompp est INCORRECT"
+ fi   
+#
+# destruction du fichier
+ rm $nompp

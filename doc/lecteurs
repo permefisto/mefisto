@@ -1,0 +1,4 @@
+3 types of input unit:
+1: The KEYBOARD to type;
+2: A FILE to read at its start;
+3: An OPENED FILE abandoned by the typing of QUITTER or QUIT.

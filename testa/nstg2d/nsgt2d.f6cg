@@ -1,0 +1,133 @@
+{ ===================================================================== }
+{ MEFISTO Software  : January 24, 2022 Version                          }
+{ USER's  Name      : Alain Perronnet                                   }
+{ Project Name      : nsgt_2d Navier-Stokes TAYLOR-GREEN vortex solution}
+{ Date              : January 24, 2022                                  }
+{ ===================================================================== }
+
+DefVar roWater; roWater=1000;{ kg/m3 MASS Density of WATER  cf wikipedia }
+DefVar mu; mu=1.002e-3;  { at 20C Pa.s=Kg/(m s) WATER DYNAMIC VISCOSITY  }
+DefVar nu; nu=mu/roWater;{ m2/s WATER KINEMATIC VISCOSITY}
+
+{The Taylor-Green Vortex Solution 2d Cf. wikipedia}
+{The exact-solutions: }
+DefFunc F(t); F=exp(- 2 * nu * t);  EndFunc;
+DefFunc XVelocity(t,x,y); XVelocity= sin(x)*cos(y)*F(t); EndFunc;
+DefFunc YVelocity(t,x,y); YVelocity=-cos(x)*sin(y)*F(t); EndFunc;
+DefFunc Pressure (t,x,y); 
+   Pressure=roWater*(cos(2*x)+cos(2*y))*(F(t)**2)/4;
+EndFunc;
+
+DefFunc Exact_Velocity(t,x,y,z,nocomp);
+if nocomp=1 then
+   Exact_Velocity=XVelocity(t,x,y);
+else
+   Exact_Velocity=YVelocity(t,x,y);
+EndIf;
+EndFunc;
+
+DefFunc Exact_Pressure(t,x,y,z);
+  Exact_Pressure=Pressure(t,x,y);
+EndFunc;
+
+{ The boundary conditions }
+DefFunc FixVelocity(t,x,y,z,ntyob,numob,nocomp);
+if nocomp=1 then
+   FixVelocity=XVelocity(t,x,y);
+else
+   FixVelocity=YVelocity(t,x,y);
+EndIf;
+EndFunc;
+
+DefFunc FixPressure(t,x,y,z,ntyob,numob);
+  FixPressure=Pressure(t,x,y);
+EndFunc;
+
+{ The initial conditions }
+DefFunc InitVelocity(t,x,y,z,ntyob,numob,nocomp);
+if nocomp=1 then
+   InitVelocity=XVelocity(t,x,y);
+else
+   InitVelocity=YVelocity(t,x,y);
+EndIf;
+EndFunc;
+
+DefFunc InitPressure(t,x,y,z,ntyob,numob);
+  InitPressure=Pressure(t,x,y);
+EndFunc;
+
+
+2;  { FLUID INPUT DATA }
+
+ { SURFACE: ABCDT }{ The Fluid Characteristics =======================}
+ 1;       { Rot MASS Density of FLUID }
+ 1;       { Mass Constant }
+ roWater; { DMASSE Value of the constant mass density }
+
+ 2;  { mu FLUID DYNAMIC VISCOSITY }
+ 1;  { Constant Viscosity }
+ mu; { mu VISCOS WATER VISCOSITY in Pa.s  cf wikipedia }
+     { The dynamic viscosity mu of water is 8.90 × 10**-4 Pa·s at about 25 °C
+       As a function of temperature T(K): mu(Pa·s) = A × 10**(B/(T-C))
+       where A=2.414 × 10**-5 Pa·s; B = 247.8 K; and C = 140 K.
+       and nu = mu/roWater  m2/s  the WATER KINEMATIC VISCOSITY }
+
+ 3;   { FOmega INTERIOR FORCES }
+ 0;   { Delete Force Data }
+
+ 8;   { GRADIENT PRESSURE Coefficient }
+ 1;   { Constant Pressure Coefficient }
+ 1.0; { Pressure Coefficient Value of fluid }
+
+ 4;    { INITIAL VELOCITIES ==========================================}
+-1;    { Initial Velocity Function }
+ 2;    { NBCOVI Number of Initial Velocity Components at a node }
+ 1; 2; { NUCOBV(1..NBCOVI) nb of each component of the initial velocity}
+ InitVelocity; { NAME of the Initial Velocity FUNCTION m/s }
+
+ 5;    { INITIAL PRESSURE ============================================}
+ -1;   { INITIAL PRESSURE FUNCTION }
+ InitPressure; { VAPRE0 Initial Pressure Function Name }
+ @;
+
+ { LINE : ABCD } { The Boundary Conditions ===========================}
+ 2; { Fixation of the VELOCITY }
+-1; { Fixed Velocity FUNCTION }
+ 2; { NBCOBV number of components of the fixed Velocity }
+ 1; 2; { NUCOBV(1..NBCOBV) nb of each component of the fixed velocity}
+ FixVelocity;
+
+ 3; { BLOCKING-UP the IMPOSED PRESSURE }
+-1; { Fixed Pressure FUNCTION }
+ FixPressure; {Name of Pressure Function }
+ @;
+@;
+@;
+
+
+20;    { PRECISION DATA  to STOP the CONJUGATE GRADIENT ITERATIONS }
+ 1e-3; { EPSILON   VALUE to STOP the CONJUGATE GRADIENT ITERATIONS }
+@;
+
+DefVar InitTime,        FinalTime;
+       InitTime=0.0;    FinalTime=1.0;
+
+DefVar StepTime,        StoreStepTime;
+       StepTime=0.005;
+       StoreStepTime=2*StepTime; {1/2 computed vectors are stored on files}
+
+
+8; {=== FRACTIONAL UNSTEADY NAVIER-STOKES SOLVER ============}
+
+   2;   { CONDENSED MATRIX CONJUGATE GRADIENT + FACTORIZATION LEVEL }
+     1; { FACTORIZATION LEVEL VALUE (0 or 1 or 2) of L D tL }
+
+   InitTime;  { SECOND INITIAL TIME }
+   FinalTime; { SECOND FINAL   TIME }
+   StepTime;  { CONSTANT STEP of TIME (seconds) }
+   (FinalTime-InitTime)/StoreStepTime;  { NUMBER of STORED SOLUTION VECTORS }
+
+   1;  { TIME INITIALIZATION from INITIAL VELOCITY-PRESSURE DATA on VSLP }
+@;
+@;
+CLOSE;

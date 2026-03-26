@@ -1,0 +1,18 @@
+variable DebuELAS 'ELASTICITE d''un OBJET' entier
+(1  : 'NOM de l''OBJET a traiter',
+ 2  : 'ENTREE DONNEES PROBLEME ELASTICITE', 
+ 3  : 'ELASTICITE STATIONNAIRE',
+ 4  : 'ELASTICITE INSTATIONNAIRE d2/dt2',
+ 6  : 'CALCUL des MODES PROPRES',
+ 7  : 'DESSIN des MODES PROPRES',
+ 8  : 'DESSIN des Deformees Contraintes',
+ 10 : 'TRACE du MAILLAGE des PLSVO',
+ 20 : 'PRECISION pour INVERSER A x = b',
+ 38 : 'LARGEUR HAUTEUR PIXELS de la FENETRE',
+ 39 : 'COULEUR du FOND de la FENETRE',
+ 71 : 'SUIVI TMS AFFICHAGE MODIFICATION',
+ 72 : 'SUIVI FICHIERS de la MS',
+ 73 : 'GESTION unites lecture affichage',
+ 74 : 'TUER des TMS PLSVO',
+ 97 : 'Nom de la version de Mefisto',
+ 99 : 'SAUVEGARDE donnees FIN TRAITEMENT' ) ;

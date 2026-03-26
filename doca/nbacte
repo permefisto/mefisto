@@ -1,0 +1,10 @@
+The number of edges NBACTE must be >0.
+
+The tetrahedron of vertices 
+(0,0,0) (NBACTE,0,0) (0,NBACTE,0) (0,0,NBACTE)
+is subdivided into NBACTE**3 quasi regular 
+tetrahedra but not all equals.
+
+Example: 
+TETRAHEDRON12; I; 12; 5;
+Define 5*5*5=125 tetrahedra.

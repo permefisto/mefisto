@@ -1,0 +1,135 @@
+      SUBROUTINE TETR1F( NOSOTR, N1TETS, NOTETR,
+     %                   NBTE1F, MXTE1F, NOTE1F, IERR )
+C+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+C BUT :    LISTER DANS NOTE1F LE NUMERO NOTETR DES NBTE1F TETRAEDRES
+C -----    DE FACE COMMUNE DE SOMMETS NOSOTR(1:3)
+
+C ENTREES:
+C --------
+C NOSOTR : NUMERO DES 3 SOMMETS DE LA FACE COMMUNE A TOUS LES TETRAEDRES
+C N1TETS : N1TETS(I) NUMERO D'UN TETRAEDRE AYANT POUR SOMMET I
+C NOTETR : LISTE DES TETRAEDRES
+C          SOMMET1,    SOMMET2,    SOMMET3,    SOMMET4,
+C          TETRAEDRE1, TETRAEDRE2, TETRAEDRE3, TETRAEDRE4
+C          DE L'AUTRE COTE DE LA FACE DE NUMEROTATION
+C          1: 123      2: 234      3: 341      4: 412
+C MXTE1F : NOMBRE D'ENTIERS DU TABLEAU NOTE1F
+
+C SORTIES:
+C ---------
+C NBTE1F : NOMBRE DE TETRAEDRES DE FACE NOSOTR(1:3)        SI IERR=0
+C NOTE1F : NO DES NBTE1F TETRAEDRES DE SOMMETS NOSOTR(1:3) SI IERR=0
+C IERR   : = 0 PAS D'ERREUR
+C          = 1 SI AUCUN TETRAEDRE DE SOMMET NOSOTR(1)
+C          = 2 SI SATURATION DU TABLEAU NOTE1F
+C+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+C AUTEUR : ALAIN PERRONNET LJLL UPMC  & VEULETTES SUR MER   Janvier 2017
+C....................................................................012
+      INTEGER   NOSOTR(3),   NOSOTR1(3), NBTELF(3),
+     %          NOTETR(8,*), N1TETS(*),  NOTE1F(MXTE1F)
+
+      IERR   = 0
+
+      DO N = 1, 3
+         NS1 = NOSOTR( N )
+         IF( N1TETS( NS1 ) .LE. 0 ) THEN
+C           PAS DE TETRAEDRE DE SOMMET NS1
+            IERR = 1
+            NBTE1F = 0
+            GOTO 9999
+         ENDIF
+      ENDDO
+
+C     POUR REDUIRE LES RECHERCHES LE SOMMET DE PLUS PETIT NUMERO EST
+C     UTILISE EN PREMIER
+      CALL TRI3NO( NOSOTR, NOSOTR1 )
+
+      DO 100 NS1 = 1, 3
+
+         NBTE1F = 0
+         NBTELF( NS1 ) = 0
+
+C        LES NBTE TETRAEDRES DE SOMMET NOSOTR1( NS1 ) SONT AJOUTES A NOTE1F
+         CALL TETR1S( NOSOTR1(NS1), N1TETS, NOTETR,
+     %                NBTE,         MXTE1F, NOTE1F, IERR )
+
+         IF( IERR .NE. 0 ) THEN
+            NBTE1F = 0
+            RETURN
+         ENDIF
+
+C        PARMI CES TETRAEDRES RETIRER CEUX QUI N'ONT PAS
+C        LES 2 AUTRES SOMMETS DE LA FACE NOSOTR1
+         IF( NS1 .EQ. 3 ) THEN
+            NS2 = 1
+         ELSE
+            NS2 = NS1+1
+         ENDIF
+
+         IF( NS2 .EQ. 3 ) THEN
+            NS3 = 1
+         ELSE
+            NS3 = NS2+1
+         ENDIF
+
+         DO 50 N = 1, NBTE
+
+C           LE TETRAEDRE N DE SOMMET NOSOTR1(NS1)
+            NTE = NOTE1F( N )
+
+C           LE TETRAEDRE NTE A T IL LE SOMMET NOSOTR1(NS2)?
+            DO K = 1, 4
+               IF( NOTETR(K,NTE) .EQ. NOSOTR1(NS2) ) GOTO 10
+            ENDDO
+C           TETRAEDRE SANS LE SOMMET NOSOTR1(NS2)
+            GOTO 50
+
+C           LE TETRAEDRE NTE A T IL LE SOMMET NOSOTR1(NS3)?
+ 10         DO K = 1, 4
+               IF( NOTETR(K,NTE) .EQ. NOSOTR1(NS3) ) GOTO 20
+            ENDDO
+C           TETRAEDRE SANS LE SOMMET NOSOTR1(NS3)
+            GOTO 50
+
+C           TETRAEDRE DE SOMMETS NOSOTR1(1:3)
+C           AJOUT DU TETRAEDRE A CEUX INITIAUX S'IL N'EST PAS DEJA STOCKE
+ 20         DO K = 1, NBTE1F
+               IF( NTE .EQ. NOTE1F(K) ) GOTO 50
+            ENDDO
+
+C           UN TETRAEDRE AVEC LA FACE DE PLUS
+            NBTE1F = NBTE1F + 1
+            NOTE1F( NBTE1F ) = NTE
+
+ 50      ENDDO
+
+C        SORTIE AVEC LE PREMIER RESULTAT POSITIF
+C        ---------------------------------------
+         IF( NBTE1F .GT. 0 ) GOTO 9999
+
+C        SINON NOMBRE DE TETRAEDRES DE FACE NOSOTR POUR UNE RECHERCHE 
+C        DES TETRAEDRES A PARTIR DE NOSOTR1(NS1+1)
+         NBTELF( NS1 ) = NBTE1F
+
+ 100  ENDDO
+
+      IF( NBTELF(1).EQ.NBTELF(2) .AND. NBTELF(1).EQ.NBTELF(3) ) THEN
+C        NBTE1F EST LE NOMBRE CORRECT ET NOTE1F CONTIENT LA LISTE
+C        DES TETRAEDRES DE FACE NOSOTR
+         GOTO 9999
+      ENDIF
+
+      PRINT*
+      PRINT*,'tetr1f: BIZARRE NBTELF=',NBTELF,
+     %       ' Nombre de TETRAEDRES de FACE',NOSOTR,' NON EGAL'
+      PRINT*,'tetr1f: RETOURNE le RESULTAT POUR LE 3-EME SOMMET',
+     %        NOSOTR1(NS3)
+      PRINT*
+
+ccc      PRINT *,'tetr1f: +',NBTE1F,' TETRAEDRES DE SOMMETS',NOSOTR1
+ccc      DO K = 1, NBTE1F
+ccc         PRINT *,'TETRA',K,NOTE1F(K),': ST',(NOTETR(N,NOTE1F(K)),N=1,4)
+ccc      ENDDO
+
+ 9999 RETURN
+      END

@@ -1,0 +1,5 @@
+variable VITETYPE 'TYPE of VELOCITY ARROW DRAWINGS' entier
+( 1 : 'Drawing of VELOCITIY ARROWS in FE CUT by a PLANE'
+, 2 : 'Drawing of all VELOCITY ARROWS'
+, 3 : 'VELOCITY MAGNITUDE Min-Max INTERVAL to draw'
+, 4 : 'Drawing of VELOCITY ARROWS of MAGNITUDE in the INTERVAL' ) ;

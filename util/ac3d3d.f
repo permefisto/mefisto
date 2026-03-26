@@ -1,0 +1,38 @@
+      SUBROUTINE AC3D3D( ORIREP, REPERE, XYZN, XYZA )
+C+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+C BUT :   CALCUL DES COORDONNEES GLOBALES A PARTIR DES COORDONNEES
+C -----   D'UN POINT DANS UN AUTRE REPERE DEFINI PAR LES 3 VECTEURS
+C         UNITAIRES DE SES AXES ORTHONORMES REPERE
+C
+C        (XA)   (X ORIREP)   (          ) ( XN )
+C        (YA) = (Y ORIREP) + (  REPERE  ) ( YN )
+C        (ZA)   (Z ORIREP)   (          ) ( ZN )
+C
+C     XA , YA , ZA = XYZA COORDONNEES DANS LE REPERE GLOBAL 3D
+C     XN , YN , ZN = XYZN COORDONNEES DANS LE REPERE NOUVEAU
+C
+C ENTREES:
+C --------
+C ORIREP : LE POINT ORIGINE DU SYSTEME D'AXES DU PLAN
+C REPERE : LA MATRICE DE PASSAGE DEFINIE CI DESSUS
+C          REPERE(I,J) = COORDONNEE I DU VECTEUR UNITAIRE J DANS
+C          LE REPERE GLOBAL
+C XYZN   : LES 3 COORDONNEES DU POINT DANS LE NOUVEAU SYSTEME D'AXES
+C
+C SORTIE :
+C --------
+C XYZA   : LES 3 COORDONNEES DU POINT DANS LE SYSTEME D'AXES 3D ANCIEN
+C+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+C AUTEUR : PERRONNET ALAIN UPMC ANALYSE NUMERIQUE PARIS    DECEMBRE 1997
+C2345X7..............................................................012
+      DOUBLE PRECISION  ORIREP(3), REPERE(3,3), XYZA(3), XYZN(3)
+C
+C     MULTIPLICATION PAR LA MATRICE REPERE
+      DO 10 I=1,3
+         XYZA( I ) = ORIREP( I )
+     %             + REPERE(I,1) * XYZN(1)
+     %             + REPERE(I,2) * XYZN(2)
+     %             + REPERE(I,3) * XYZN(3)
+ 10   CONTINUE
+      RETURN
+      END

@@ -1,0 +1,15 @@
+deftms ~>>>DEPLACTINIT 'Deplacement Initial aux Noeuds'
+variable muet DATE   'date de creation du tableau'   reel2  ;
+variable muet NUTD   'numero du tableau descripteur' entier ; 
+variable      LTDEP0 'Type Deplacement Initial' entier
+( 1 : 'Deplacement Initial constant'
+, 2 : 'Deplacement Initial deja stocke'
+, 3 : 'Deplacement a t0-dt et t0 stockes'
+,-1 : 'Fonction Deplacement Initial'
+, 0 : 'Deplacement Initial a supprimer' ) ;
+cas LTDEP0
+1 : variable NBDEP0 'Nombre composantes Deplacement en un noeud' entier;
+    tableau  VADEP0(1..NBDEP0) 'Valeur des composantes du Deplacement' reel;
+-1: variable NFDEP0 'Nom fonction Deplacement Initial' ^~>FONCTION ;
+fincas ;   
+fintms ;

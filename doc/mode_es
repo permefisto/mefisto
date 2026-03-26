@@ -1,0 +1,8 @@
+3 modes of INTERACTIVITY are possibles :
+0: NO DRAWINGS, NO KEYBOARD, NO MOUSE
+1:    DRAWINGS, NO KEYBOARD, NO MOUSE
+3:    DRAWINGS,    KEYBOARD,    MOUSE  (default value)
+
+The KEYBOARD permits INPUT by typing of CHARACTERS.
+The MOUSE permits INPUT by clicking mouse buttoms
+when the pointer is near a PLSV.

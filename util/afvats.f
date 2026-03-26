@@ -1,0 +1,131 @@
+      SUBROUTINE AFVATS( KNOMVA , NOTYPE , MNTMS , LDTMS )
+C+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+C BUT : AFFICHER LA VARIABLE DE TYPE NOTYPE D'ADRESSE MNTMS DANS MCN
+C ----- ET DE DECALAGE LDTMS
+C
+C ENTREES :
+C ---------
+C KNOMVA  : NOM DE LA VARIABLE DE VALEUR A AFFICHER
+C NOTYPE  : NUMERO DU TYPE DE LA VARIABLE
+C           LOGIQUE  => 1 CARACTERE=> 2  ENTIER/2 => 3 ENTIER   => 4
+C           REEL     => 5 REEL2    => 6  REEL4    => 7 COMPLEXE => 8
+C           COMPLEXE2=> 9 MOTS     => 10 ^LEXIQUE =>11 XYZ      =>12
+C           TMS      =>21
+C MNTMS   : ADRESSE MCN DU TABLEAU TMS CONTENANT LA VARIABLE
+C           0 SI LA VARIABLE N'EXISTE PAS
+C LDTMS   : DECALAGE DANS LE TMS POUR ATTEINDRE LE PREMIER MOT DE
+C           LA VARIABLE
+C+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+C AUTEUR : ALAIN PERRONNET ANALYSE NUMERIQUE UPMC PARIS SEPTEMBRE 1988
+C23456---------------------------------------------------------------012
+      include"./incl/td.inc"
+      include"./incl/gsmenu.inc"
+      include"./incl/msvaau.inc"
+      COMMON /UNITES/LECTEU,IMPRIM,INTERA,NFDOCU,NFFRAP,NOAFTS,NUNIT(26)
+      include"./incl/pp.inc"
+      COMMON            MCN(MOTMCN)
+      REAL              RMCN(1)
+      EQUIVALENCE      (RMCN(1),MCN(1))
+      CHARACTER*(*)     KNOMVA
+      CHARACTER*4       CHARX
+      DOUBLE PRECISION  D
+      INTEGER           ID(2)
+      EQUIVALENCE      (ID(1) , D )
+C
+C     AFFICHAGE FORCE
+      NOAFTS = 1
+C
+C     VERIFICATION DE NOTYPE
+      NOTYP = NOTYPE
+      IF( NOTYP .EQ. 21 ) THEN
+C        NUMERO DU TMS . VALEUR ENTIERE
+         NOTYP = 4
+      ELSE IF( NOTYP .LE. 0 .OR. NOTYP .GT. NBTYPV ) THEN
+         NBLGRC(NRERR) = 1
+         WRITE(KERR(2)(1:4),'(I4)') NOTYP
+         KERR(1) = 'AFVATS:TYPE'// KERR(2)(1:4) //' INCORRECT'
+         CALL LEREUR
+         GOTO 9999
+      ENDIF
+C
+C     VERIFICATION DE L'ADRESSE
+      IF( MNTMS .LE. 0 ) THEN
+         NBLGRC(NRERR) = 1
+         WRITE(KERR(2)(1:12),'(I12)') MNTMS
+         KERR(1) = 'AFVATS: ADRESSE INCORRECTE MNTMS'//KERR(2)(1:12)
+         CALL LEREUR
+         GOTO 9999
+      ENDIF
+C
+C     AFFICHAGE DU NOM DE LA VARIABLE
+      MN = LEN( KNOMVA )
+      L  = INDEX( KNOMVA , ' ' )
+      IF( L .LE. 0 ) THEN
+         L = MN
+      ELSE
+         L = L - 1
+      ENDIF
+      IF( LCLIGN+L .GT. NCLIGN ) CALL AFLIGN
+      KLIGNE(LCLIGN+1:LCLIGN+L) = KNOMVA(1:L)
+      LCLIGN = LCLIGN + L
+C
+C     LA VALEUR EST PRECEDEE DE =
+      CALL AFCAR( '=' )
+C
+C     L'ADRESSE DANS MCN DU DEBUT DE LA VARIABLE
+      MN = MNTMS + LDTMS
+C
+C     AFFICHAGE SELON LE TYPE . ICI MOT = ENTIER !
+      GOTO( 9000 ,   20 , 9000 ,  40 , 50 , 60 , 9000 , 9000 ,
+     %      9000 ,   40 ,   40 , 120 ) , NOTYP
+C
+C     4 CARACTERES
+ 20   IF( LCLIGN+5 .GT. NCLIGN ) CALL AFLIGN
+      KLIGNE(LCLIGN+1:NCLIGN)= ' ' // CHARX( MCN(MN) )
+      LCLIGN = LCLIGN + 5
+      GOTO 500
+C
+C     ENTIER
+ 40   IF( LCLIGN+12 .GT. NCLIGN ) CALL AFLIGN
+      WRITE( KLIGNE(LCLIGN+1:NCLIGN) , '(1X,I11)' ) MCN(MN)
+      LCLIGN = LCLIGN + 12
+      GOTO 500
+C
+C     REEL
+ 50   IF( LCLIGN+16 .GT. NCLIGN ) CALL AFLIGN
+      WRITE( KLIGNE(LCLIGN+1:NCLIGN) , '(1X,G15.7)' ) RMCN(MN)
+      LCLIGN = LCLIGN + 16
+      GOTO 500
+C
+C     REEL2
+ 60   IF( LCLIGN+26 .GT. NCLIGN ) CALL AFLIGN
+C     LE DOUBLE PRECISION EST COPIE DANS D  VIA L'EQUIVALENCE  SUR ID
+      ID(1) = MCN( MN )
+      ID(2) = MCN( MN + 1 )
+      WRITE( KLIGNE(LCLIGN+1:NCLIGN) , '(1X,G25.17)' ) D
+      LCLIGN = LCLIGN + 26
+      GOTO 500
+C
+C     XYZ
+ 120  IF( LCLIGN+48 .GT. NCLIGN ) CALL AFLIGN
+      WRITE( KLIGNE(LCLIGN+1:NCLIGN) , '(1X,3G15.7)' )
+     %       RMCN(MN),RMCN(MN+1),RMCN(MN+2)
+      LCLIGN = LCLIGN + 48
+C
+C     AFFICHAGE DE LA LIGNE
+CCC 500  CALL AFLIGN
+ 500  NBLGRC(NRERR) = 1
+      KERR(1) = KLIGNE
+      CALL LERESU
+      LCLIGN = 0
+      GOTO 9999
+C
+C     ERREUR
+ 9000 NBLGRC(NRERR) = 1
+      WRITE(KERR(2)(1:4),'(I4)') NOTYP
+      KERR(1) = 'AFVATS:TYPE'// KERR(2)(1:4) //' NON AFFICHABLE'
+      CALL LEREUR
+C
+C     RETOUR A L'AFFICHAGE NON FORCE
+ 9999 NOAFTS = 0
+      END

@@ -1,0 +1,4 @@
+variable TYPTRAIT 'TRACE des TRAITS' entier
+( 0 : 'TRAIT CONTINU'
+, 1 : 'TIRETS SIMPLES'
+, 2 : 'TIRETS DOUBLES' ) ;

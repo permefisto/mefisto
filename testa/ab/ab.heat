@@ -1,0 +1,118 @@
+{ ==================================================================== }
+{ MEFISTO Software     : Version Version October 31-th 2009            }
+{ USER's  Name         : Alain Perronnet                               }
+{ Project Name         : 1dwall  Test Mefisto for 1-dimension FE       }
+{                        Steady Heat Transfer Data                     }
+{ Date                 : 6/11/2009                                     }
+{ ==================================================================== }
+@;
+DefVar a;     a=8;       {HEAT CONDUCTIVITY}
+DefVar Speed; Speed=7.;  {Speed in front of du/dx Heat}
+DefVar c;     c=6.;      {coefficient in front of u Heat}
+
+DefVar TemperA;  TemperA=1.0;   {Temperature at point A}
+DefVar TranCoef; TranCoef=a;    {Heat transfer coefficient with AIR}
+
+DefFunc Exact_Temperature( t, x, y, z );
+   Exact_Temperature = ( 3 * x + 2 ) * x + 1;
+EndFunc;
+
+DefFunc fomega(t, x,y,z, ntyl, noline, temper );
+   fomega = -a*6 + Speed*(6*x+2) + c*((3*x+2)*x+1);
+EndFunc;
+
+{Dirichlet condition}
+DefFunc contact(t, x,y,z, ntyp, nopoint, temper );
+  contact = Exact_Temperature( t, x, y, z );
+EndFunc;
+
+DefFunc fgamma(t, x,y,z, ntyp, nopoint, temper );
+   fgamma = TranCoef * ( (3*x+8)*x+3 ) ;
+{Heat transfer coefficient with AIR* temperature fluide}
+EndFunc;
+
+
+2; { DATA for the STEADY HEAT PROBLEM }
+
+ { LINE: AB }
+   2; { density HEAT CONDUCTIVITY }
+     3;  { HOMOGENOUS ISOTROPIC material }
+     a ; { CONDUC constant value of the material conductivity }
+
+  5; {'Vf Coefficient of GradTEMPERATURE'}
+   1; {'constant Velocity of fluid'}
+   1; { variable NBVIFL 'number of Velocity Components (1 or 2 or 3)'}
+   Speed; { tableau  VAVIFL(1..NBVIFL) 'Velocity of fluid' reel}
+
+  6; {'CT Coefficient of TEMPERATURE'}
+   1; {'constant coefficient of temperature'}
+   c; { variable COEFTE 'value of temperature coefficient'  reel}
+
+  4; { 'FOmega INTERNAL HEAT SOURCE'}
+  -1; {function source}
+  fomega; {'name of the function source' ^~>FONCTION}
+   @;
+
+ { POINT: A  at  LEFT }
+   3; { CONTACT imposed temperature  Dirichlet condition }
+     1; { contact constant }
+     TemperA; { imposed temperature at this point }
+   @;
+
+ { POINT: B at RIGHT }
+   1; { g heat transfer coefficient with the interior air}
+   1; { constant }
+   TranCoef; { ECHANG heat coefficient coefficient }
+
+   2; {Source = g * Temperature of fluid at E}
+   -1; {function source}
+    fgamma; {'name of the function source' ^~>FONCTION}
+   @;
+
+
+3; { SOLUTION of the STEADY LINEAR HEAT PROBLEM }
+   1; { Independent Coefficients of the TEMPERATURE }
+   1; { Solution by factorization CHOLESKY on skyline storage }
+@;
+
+CLOSE;
+
+
+
+
+
+
+
+  5; {'Vf Coefficient of GradTEMPERATURE'}
+   1; {'constant Velocity of fluid'}
+   1; { variable NBVIFL 'number of Velocity Components (1 or 2 or 3)'}
+   7; { tableau  VAVIFL(1..NBVIFL) 'Velocity of fluid' reel}
+
+  6; {'CT Coefficient of TEMPERATURE'}
+   1; {'constant coefficient of temperature'}
+   6; { variable COEFTE 'value of temperature coefficient'  reel}
+
+
+
+
+
+
+ { POINT: E at RIGHT }
+   1; { g heat transfer coefficient with the interior air}
+   1; { constant }
+   TranCoef; { ECHANG heat coefficient coefficient }
+
+   2; {Source = g * Temperature of fluid at E}
+   -1; {function source}
+    fgamma; {'name of the function source' ^~>FONCTION}
+
+   1; { g heat transfer coefficient with the interior air}
+   0; {Delete g}
+
+   2; {Source = g * Temperature of fluid at E}
+    0; {Delete source}
+
+   3; { CONTACT imposed temperature  Dirichlet condition }
+  -1; {function contact}
+  contact; {name of the function contact}
+   @;

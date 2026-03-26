@@ -1,0 +1,174 @@
+{ ================================================================= }
+{ Logiciel MEFISTO     : Version 21 Octobre 2022                    }
+{ Nom de l'Utilisateur : Alain Perronnet                            }
+{ Nom du Projet        : tubo2d                                     }
+{ Date                 : 2022/10/21 18h 00m                         }
+{ ================================================================= }
+ 1;  { NOM de l OBJET a traiter }
+ tubo2d;
+
+{ The Fluid Characteristics ================================================= }
+DefVar CoGrPr;  CoGrPr=1.;    { Coefficient du Gradient de Pression CoGrPr
+                                 dans l'equation de STOKES incompressible }
+
+DefVar  RhoAir; RhoAir=1.2;    { kg/m3 Wet Air Mass Density at sea level}
+DefVar  MuAir;  MuAir=18.5E-6; { kg/(m.s) or Pa.s Air Dynamic Viscosity=18.5 10-6}
+DefVar  NuAir;  NuAir=MuAir/RhoAir; { m2/s Air Kinematic Viscosity=15.6 10-6 a 20 C}
+
+DefVar RhoWater; RhoWater=1000;    { kg/m3 MASS Density of WATER  cf wikipedia}
+DefVar MuWater;  MuWater=1.002e-3; { Pa.s=kg/(m s) at 20C WATER DYNAMIC VISCOSITY}
+DefVar NuWater;  NuWater=MuWater/RhoWater; { m2/s WATER KINEMATIC VISCOSITY }
+
+DefVar RhoClassic; RhoClassic=1;                   {kg/m3    CLASSIC MASS      DENSITY }
+DefVar MuClassic;  MuClassic=1;                    {kg/(m s) CLASSIC DYNAMIC   VISCOSITY}
+DefVar NuClassic;  NuClassic=MuClassic/RhoClassic; {m2/s     CLASSIC KINEMATIC VISCOSITY}
+
+
+ 2; { ENTREE des DONNEES du FLUIDE ================================ }
+ { SURFACE: ABCD }
+ 1;        { Rot Densite de Masse }
+ 1;        { Masse Constante }
+ RhoWater; { DMASSE Valeur de la Densite de Masse Constante de l'EAU }
+ 
+ 2;        { Mhu la VISCOSITE DYNAMIQUE du FLUIDE }
+ 1;        { Viscosite constante }
+ MuWater;  { VISCOS 'Viscosite du Fluide' reel ; }
+ 
+ 8;        { CoGrPr PRESSURE GRADIENT Coefficient in Navier-Stokes Equations }
+ 1;        { Constant Pressure Coefficient }
+ CoGrPr;   { Pressure Gradient Coefficient Value }
+ @;
+
+ { LIGNE: AB }
+ 2; { BLocage de la VITESSE imposee }
+ 1; { vitesse fixee constante }
+ 2; { NBCOBV 'nombre composantes vitesse fixee' entier ; }
+ 1; 2; { NUCOBV(1..NBCOBV) 'no composantes de la vitesse fixee' entier ; }
+ 0; 0; { BLVITE(1..NBCOBV) }
+ @;
+
+DefFonc parabole(t,x,y,z,ntyplsv,nuplsv,nocomp);
+  si nocomp=1
+  alors
+    parabole = (t+1.0)*(y-ymin)*(ymax-y)/(2*(ymax-ymin));
+  sinon
+    parabole=0;
+  finsi;
+FinFonc;
+
+ { LIGNE: BC }
+ 2; { BLocage de la VITESSE imposee }
+-1; { vitesse fixee par une fonction }
+ 2; { NBCOBV 'nombre composantes vitesse fixee' entier ; }
+ 1; 2; { NUCOBV(1..NBCOBV) 'no composantes de la vitesse fixee' entier ; }
+ parabole; {le nom de la fonction BLVITESSE}
+ @;
+
+ { LIGNE: CD }
+ 2; { Blocage de la VITESSE imposee }
+ 1; { vitesse fixee constante }
+ 2; { NBCOBV 'nombre composantes vitesse fixee' entier ; }
+ 1; 2; { NUCOBV(1..NBCOBV) 'no composantes de la vitesse fixee' entier ; }
+ 0; 0; { BLVITE(1..NBCOBV) }
+ @;
+
+ { LIGNE: DA }
+ 2; { BLocage de la VITESSE imposee }
+-1; { vitesse fixee par une fonction }
+ 2; { NBCOBV 'nombre composantes vitesse fixee' entier ; }
+ 1; 2; { NUCOBV(1..NBCOBV) 'no composantes de la vitesse fixee' entier ; }
+ parabole; {le nom de la fonction BLVITESSE}
+ @;
+
+ { POINT: A }
+ 2; { Blocage de la VITESSE imposee }
+ 1; { vitesse fixee constante }
+ 2; { NBCOBV 'nombre composantes vitesse fixee' entier ; }
+ 1; 2; { NUCOBV(1..NBCOBV) 'no composantes de la vitesse fixee' entier ; }
+ 0; 0; { BLVITE(1..NBCOBV) }
+ @;
+
+ { POINT: B }
+ 2; { Blocage de la VITESSE imposee }
+ 1; { vitesse fixee constante }
+ 2; { NBCOBV 'nombre composantes vitesse fixee' entier ; }
+ 1; 2; { NUCOBV(1..NBCOBV) 'no composantes de la vitesse fixee' entier ; }
+ 0; 0; { BLVITE(1..NBCOBV) }
+ @;
+
+ { POINT: C }
+ 2; { Blocage de la VITESSE imposee }
+ 1; { vitesse fixee constante }
+ 2; { NBCOBV 'nombre composantes vitesse fixee' entier ; }
+ 1; 2; { NUCOBV(1..NBCOBV) 'no composantes de la vitesse fixee' entier ; }
+ 0; 0; { BLVITE(1..NBCOBV) }
+ @;
+
+ { POINT: D }
+ 2; { Blocage de la VITESSE imposee }
+ 1; { vitesse fixee constante }
+ 2; { NBCOBV 'nombre composantes vitesse fixee' entier ; }
+ 1; 2; { NUCOBV(1..NBCOBV) 'no composantes de la vitesse fixee' entier ; }
+ 0; 0; { BLVITE(1..NBCOBV) }
+ @;
+
+ { POINT: BCMILIEU }
+ 3; { Fixation de la PRESSION }
+ 1; { constante PRESSION }
+ 0; { BLPRES Valeur de la PRESSION }
+ @;
+@;
+
+
+5;  { RESOUDRE le PROBLEME de STOKES STATIONNAIRE a T=0 =================}
+ 1;    { FACTORISATION CROUT avec stockage PROFIL }
+@;
+
+10; { DESSINER des VITESSES et PRESSIONS a T=0 ==========================}
+ 1; { Numeros INITIAL et FINAL des VECTEURS SOLUTIONS a TRACER }
+ 1; { Numero de la SOLUTION INITIALE? }
+ 1; { Numero de la SOLUTION FINALE? }
+ 2; { Traces de la VITESSE sous FORME de FLECHES }
+ 90;{ TRACE des FLECHES de la VITESSE }
+ 90;{ SUITE du TRACE }
+ @;
+ @;
+ @;
+
+6;  { RESOUDRE le PROBLEME de STOKES INSTATIONNAIRE a T>0 ===============}
+ 1;    { FACTORISATION CROUT avec stockage PROFIL }
+ 0;    { TEMPS INITIAL }
+ 5.0;  { TEMPS FINAL }
+ 0.01; { PAS de TEMPS }
+ 50;   { Nombre de Vecteurs Solutions a AJOUTER }
+@;
+@;
+
+10;  { DESSINER des VITESSES et PRESSIONS =========================}
+ 1;   { Numeros INITIAL et FINAL des VECTEURS SOLUTIONS a TRACER }
+ 5;   { Numero de la SOLUTION INITIALE }
+ 10;  { Numero de la SOLUTION FINALE }
+ 1;   { Traces de la PRESSION }
+ 1;   { COURBES ISO-PRESSIONS }
+ 2;   { ISO REGULIERES entre MIN et MAX }
+ 75;  { Activer TRANSLATION ZOOM }
+ 90;  { SUITE du TRACE }
+ @;
+ @;
+
+ 2;   { SURFACES COULEURS ISO-PRESSIONS }
+ 1;   { Trace des ZONES de COULEURS }
+ 90;  { SUITE du TRACE }
+ @;
+ @;
+
+ 9;   { En 2D SURFACE(X,Y,PRESSION(X,Y)) }
+ 90;  { TRACE de la SOLUTION en Z }
+ 90;  { SUITE du TRACE }
+@;
+@;
+@;
+@;
+
+
+FERMER;

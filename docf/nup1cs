@@ -1,0 +1,24 @@
+Donner le NOM d'un POINT parmi les 6 POINTS de la surface CONGE
+dans l'ordre: une extremite, le sommet de l'angle, l'extremite finale
+pour les 2 lignes courbes du conge
+
+                              P4--------------- .      *P5
+                                                   .
+                                                     .
+                        /              /              .
+              EPAISSEUR/              /                |
+                      /              /               /|
+                                                       |
+                                                   /  P6
+                P1--------------- .      *P2      /   /
+                                      .          /   /
+                                        .       /   /
+                                               /   /
+                                         .        /
+                                         |       /
+                                         |  
+                                         |
+                                         P3
+
+Example: P1; P2; P3;  P4; P5; P6;
+La demande ne cessera qu'avec l'entree d'un nom de POINT EXISTANT

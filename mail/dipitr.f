@@ -1,0 +1,63 @@
+      SUBROUTINE DIPITR( NBCOOR, NBPOIN, XYZPOI, NBTRFF, NSTRFF, XYZVQ2,
+     %                   DITRFF, NUTRFF )
+C ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+C BUT :    ETABLIR LE TABLEAU DES DISTANCES DU BARYCENTRE DES TRIANGLES
+C -----    CALCULER LA COTE AXONOMETRIQUE DES BARYCENTRES DE CES FACES
+C ENTREES:
+C --------
+C NBCOOR : NOMBRE DE COORDONNEES D'UN POINT OU NOEUD (3 ou 6)
+C NBPOIN : NOMBRE DE POINTS=NOEUDS=DL DU MAILLAGE
+C XYZPOI : XYZ DES NBPOIN DU MAILLAGE
+C NBTRFF : NOMBRE DE TRIANGLES A TRACER
+C NSTRFF : NUMEROS DES 3 SOMMETS DES NBTRFF TRIANGLES
+C          SI >NBPOIN ALORS A RECHERCHER DANS XYZVQ2
+C          SINON  A CHERCHER DANS XYZPOI
+C XYZVQ2 : XYZ ET TEMPERATURE DES FACES Q2
+C
+C SORTIES:
+C --------
+C DITRFF : COTE AXONOMETRIQUE DU BARYCENTRE DES NBTRFF TRIANGLES
+C NUTRFF : NUTRFF(I)=I POUR PREPARER LE TRI CROISSANT
+C ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+C AUTEUR : PERRONNET ALAIN ANALYSE NUMERIQUE UPMC PARIS    NOVEMBRE 1994
+C ...................................................................012
+      INTEGER        NSTRFF(3,NBTRFF), NUTRFF(NBTRFF)
+      REAL           XYZPOI(NBCOOR,NBPOIN), XYZVQ2(4,*), DITRFF(NBTRFF)
+      REAL           XYZ(3)
+C
+C     BOUCLE SUR LES TRIANGLES
+      DO 100 N=1,NBTRFF
+C
+C        L'IDENTITE
+         NUTRFF(N) = N
+C
+C        LES COORDONNEES DU BARYCENTRE DE CE TRIANGLE
+         XYZ(1) = 0.0
+         XYZ(2) = 0.0
+         XYZ(3) = 0.0
+C
+         DO 30 I=1,3
+C
+C           LE NUMERO DU SOMMET DU TRIANGLE N
+            NS = NSTRFF(I,N)
+            IF( NS .LE. NBPOIN ) THEN
+               DO 10 J=1,3
+                  XYZ(J) = XYZ(J) + XYZPOI(J,NS)
+ 10            CONTINUE
+            ELSE
+               NS = NS - NBPOIN
+               DO 20 J=1,3
+                  XYZ(J) = XYZ(J) + XYZVQ2(J,NS)
+ 20            CONTINUE
+            ENDIF
+ 30      CONTINUE
+C
+         XYZ(1) = XYZ(1) / 3
+         XYZ(2) = XYZ(2) / 3
+         XYZ(3) = XYZ(3) / 3
+C
+C        COTE Z AXONOMETRIQUE DANS LA DIRECTION DE VISEE
+         CALL XYZAXO( XYZ, XYZ )
+         DITRFF(N) = XYZ(3)
+ 100  CONTINUE
+      END

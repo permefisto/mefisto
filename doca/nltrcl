@@ -1,0 +1,19 @@
+From the INITIAL LINE is associated an orthonormal reference system E0
+defined by the first vertex P01 P02 P03 of lines L1 L2 L3
+.P01 is the origin
+.P01-P02 define the first  vector E1
+.P01-P03 define the second vector E2, thus
+ E3 = E1 PRODUIT VECTORIEL E2
+ E2 = E3 PRODUIT VECTORIEL E1
+Norm(E1)=Norm(E2)=Norm(E3)=1
+
+The CONSTANT EDGE NUMBER of LINES L1 L2 L3 define the displacement number
+
+For every displacement i, an orthonormal reference system Ei is defined
+in a same way.
+The DISPLACEMENT of the GENERIC LINE is the MAPPING from E0 to Ei
+
+The vertices from 2 consecutive lines are joined to define quadrangles.
+
+Example: S14.1; I; 14; LIGNE_INITIALE; 1; L1; L2; L3;
+        {the 3 lines of vertices define the reference system}

@@ -1,0 +1,12 @@
+HEXAEDRISATION d'un CUBE ou d'une SPHERE
+UN NOYAU est decoupe en CUBSPN**3 cubes de taille d'aretes
+CUBSPL/CUBSPN ou CUBSPL est la largeur de ce noyau.
+CUBSPD est la largeur totale du noyau et des couches
+homothetiques formees a partir de la frontiere du noyau.
+Si l'option SPHERE est demandee, les sommets sont projetes
+sur les spheres cocentriques de rayon multiples de
+CUBSPL/CUBSPN, puis en progression geometriques pour
+passer de ce rayon au dernier, compte tenu du nombre de
+couches homothetiques demandees.
+
+DONNER CUBSPC>0 LE NOMBRE DE COUCHES HOMOTHETIQUES au DELA du NOYAU

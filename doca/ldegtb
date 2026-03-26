@@ -1,0 +1,8 @@
+The polynomial degree must be strictly positive and
+strictly lower than the number of check points or 
+interpolation points defined in this direction.
+
+It is IMPOSSIBLE to define a polynomial of degree 4
+with less than 5 points.
+
+To evitate oscillations, choose small degrees.

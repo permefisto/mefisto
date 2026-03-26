@@ -1,0 +1,9 @@
+deftms ~>>>XYZNOEUD 'Les 3 coordonnees des noeuds d''un OBJET'
+ variable muet DATE        'Date de creation du tableau'   reel2  ;
+ variable muet NUTD        'Numero du tableau descripteur' entier ; 
+ variable      NBNOE       'Nombre de noeuds'              entier ;
+ variable      NBTGN       'Nombre de tangentes'           entier ;
+ variable      NBCOON      'Nombre coordonnees d''un noeud' entier ;
+ tableau  XYZNOE(1..NBNOE) 'X Y Z de chaque noeud'         xyz    ;
+ tableau  XYZTGN(1..NBTGN) 'X Y Z de chaque tangente'      xyz    ;
+fintms ;

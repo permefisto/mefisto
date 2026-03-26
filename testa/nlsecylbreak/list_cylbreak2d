@@ -1,0 +1,1257 @@
+ap:/home/ap/mefisto/testa/cylbreak2d-bash-> INITIER
+
+===============================================================
+       MEFISTO: INIT a PROJECT on 64bits LINUX PC
+===============================================================
+
+Present state of PC memory
+             total       used       free     shared    buffers     cached
+Mem:       8158840    4941400    3217440          0     341548    1227260
+-/+ buffers/cache:    3372592    4786248
+Swap:      7937020          0    7937020
+
+Free spaces on disks
+Sys. de fichiers  1K-blocs   Utilisé Disponible Uti% Monté sur
+/dev/sda6        266348352 249454848    3363752  99% /
+udev               4067352         4    4067348   1% /dev
+tmpfs              1631768       948    1630820   1% /run
+none                  5120         0       5120   0% /run/lock
+none               4079420       140    4079280   1% /run/shm
+
+Present Mefisto load modules
+total 58992
+-rwxr-xr-x 1 ap ap  8688190 déc.  21 16:38 ppelas
+-rwxr-xr-x 1 ap ap 10383045 déc.  21 16:40 ppeol
+-rwxr-xr-x 1 ap ap 10383118 déc.  21 16:39 ppflui
+-rwxr-xr-x 1 ap ap   400834 déc.  21 16:37 ppinit
+-rwxr-xr-x 1 ap ap  8227429 déc.  21 16:38 ppmail
+-rwxr-xr-x 1 ap ap  9527840 déc.  21 18:31 ppnlse
+-rwxr-xr-x 1 ap ap  1451466 déc.  21 16:40 pppoba
+-rwxr-xr-x 1 ap ap 10186885 déc.  21 16:38 ppther
+-rwxr-xr-x 1 ap ap  1142784 déc.  21 16:40 pxyz
+
+Present projects in MEFISTOX=/home/ap/mefistox
+total 108
+drwxrwxr-x 2 ap ap 4096 oct.  11 10:50 bec
+drwxr-xr-x 2 ap ap 4096 sept.  8  2011 cylbreak2d
+drwxrwxr-x 2 ap ap 4096 déc.  22 05:40 cyli
+drwxrwxr-x 2 ap ap 4096 déc.  22 05:40 cylsi
+drwxr-xr-x 2 ap ap 4096 déc.  22 05:40 eol16th
+drwxrwxr-x 2 ap ap 4096 oct.   8 20:41 eolnsbf
+drwxrwxr-x 2 ap ap 4096 oct.   8 19:06 eolnsth
+drwxrwxr-x 2 ap ap 4096 déc.  22 05:40 gpcube
+drwxrwxr-x 2 ap ap 4096 déc.  22 05:40 gpei
+drwxrwxr-x 2 ap ap 4096 déc.  21 12:27 gpesi0cr
+drwxrwxr-x 2 ap ap 4096 nov.  15 19:19 gpesi0gc
+drwxrwxr-x 2 ap ap 4096 nov.  17 07:08 gpesi1cr
+drwxrwxr-x 2 ap ap 4096 déc.  22 05:40 gpesi1gc
+drwxrwxr-x 2 ap ap 4096 nov.  28 20:10 gpesi2cr
+drwxrwxr-x 2 ap ap 4096 nov.  18 16:33 gpesi2gc
+drwxrwxr-x 2 ap ap 4096 déc.  22 05:40 gpesi2gcp2
+drwxrwxr-x 2 ap ap 4096 déc.  21 13:59 gpesicr
+drwxrwxr-x 2 ap ap 4096 déc.  23 13:27 gpesigc
+drwxr-xr-x 2 ap ap 4096 mai    2  2013 maison
+drwxrwxr-x 2 ap ap 4096 déc.  18 11:40 nlsgpeim
+drwxrwxr-x 2 ap ap 4096 déc.  18 11:37 nlsgpesi
+drwxr-xr-x 2 ap ap 4096 juil. 20  2012 opl3
+-rwxr-xr-x 1 ap ap 3659 mai   15  2012 opl3.tgz
+drwxr-xr-x 2 ap ap 4096 oct.   8 18:41 rol2dbfcg
+drwxr-xr-x 2 ap ap 4096 oct.   8 18:40 rol2dthcg
+drwxr-xr-x 2 ap ap 4096 oct.   9 15:27 rol3dbfcg
+drwxr-xr-x 2 ap ap 4096 oct.   9 19:31 rol3dthcg
+
+MEFISTO INITIER: Project (low case) name ?
+cylbreak2d
+Files ms1* and frappe.* are deleted
+
+Execution MEFISTO INITIER in directory /home/ap/mefistox/cylbreak2d
+ Mefisto speaks ENGLISH
+
+ WORKING DIRECTORY NAME :
+/home/ap/mefistox/cylbreak2d
+
+ Mefisto-INITIER: ARGUMENT NUMBER=           1
+ Mefisto-INITIER: ARGUMENT           0  = /home/ap/mefisto/pp/ppinit                                                                                                      
+ Nombre des arguments de la commande Mefisto=           0
+ Mefisto: Argument           0 =/home/ap/mefisto/pp/ppinit                                                                                                      
+ Mefisto speaks ENGLISH
+
+---------------------------------------------------------
+| MM   MM  EEEEEE  FFFFFF  IIII  SSSSSS  TTTTTT OOOOOOO |
+| MMM MMM  EE      FF       II   SS        TT   OO   OO |
+| MM M MM  EEEEE   FFFF     II   SSSSSS    TT   OO   OO |  FAIT L'EF !
+| MM   MM  EE      FF       II       SS    TT   OO   OO |
+| MM   MM  EEEEEE  FF      IIII  SSSSSS    TT   OOOOOOO | december 21, 2013 Version
+---------------------------------------------------------
+
+Project (low case) name?
+cylbreak2d
+ DATE         : 13/12/23   13H 38M 34S 
+ AUTHOR       : ap                      
+ PROJECT      : cylbreak2d                                                              
+
+INPUT DATA of MEFISTO in ENGLISH LANGUAGE
+Type ? to obtain the DOCUMENTATION
+Type @ to ESCAPE a MENU or INPUT DATA
+
+PRECISION EPZERO =  0.1000000E-05
+PRECISION EPSXYZ =  0.1000000E-03
+
+SUPER-ARRAY MCN WITH  1532000000 WORDS of MEMORY
+
+SECONDARY MEMORY DECLARATION WITH 1 SUPER-FILE AND   5 NUMERICAL FILES
+================================================================================
+ MSDC: Nom du Super Fichier=ms10
+ MOTRECL=         512
+ REFIMS Array: DIRECTORY of MS Files
+
+ FILE MS=        1 NAME=ms11                                            
+ FILE NUMBER                                 :       11
+ PAGE NUMBER                                 :    16384
+ WORDS BY PAGE                               :      128
+ ADRESS MCG of BUFFER                        :        0
+ NO PAGE in BUFFER                           :        0
+ FIRST PAGE NUMBER in SF of RED1FI           :        4
+ FIRST FREE PAGE NUMBER of FILE              :        1
+
+ FILE MS=        2 NAME=ms12                                            
+ FILE NUMBER                                 :       12
+ PAGE NUMBER                                 :    16384
+ WORDS BY PAGE                               :     1024
+ ADRESS MCG of BUFFER                        :        0
+ NO PAGE in BUFFER                           :        0
+ FIRST PAGE NUMBER in SF of RED1FI           :      132
+ FIRST FREE PAGE NUMBER of FILE              :        1
+
+ FILE MS=        3 NAME=ms13                                            
+ FILE NUMBER                                 :       13
+ PAGE NUMBER                                 :    16384
+ WORDS BY PAGE                               :     8192
+ ADRESS MCG of BUFFER                        :        0
+ NO PAGE in BUFFER                           :        0
+ FIRST PAGE NUMBER in SF of RED1FI           :      260
+ FIRST FREE PAGE NUMBER of FILE              :        1
+
+ FILE MS=        4 NAME=ms14                                            
+ FILE NUMBER                                 :       14
+ PAGE NUMBER                                 :    16384
+ WORDS BY PAGE                               :    32768
+ ADRESS MCG of BUFFER                        :        0
+ NO PAGE in BUFFER                           :        0
+ FIRST PAGE NUMBER in SF of RED1FI           :      388
+ FIRST FREE PAGE NUMBER of FILE              :        1
+
+ FILE MS=        5 NAME=ms15                                            
+ FILE NUMBER                                 :       15
+ PAGE NUMBER                                 :    32768
+ WORDS BY PAGE                               :   131072
+ ADRESS MCG of BUFFER                        :        0
+ NO PAGE in BUFFER                           :        0
+ FIRST PAGE NUMBER in SF of RED1FI           :      516
+ FIRST FREE PAGE NUMBER of FILE              :        1
+
+ END of INITIER
+
+Present content of directory /home/ap/mefistox/cylbreak2d
+cylbreak2d.impl  cylbreak2d.mesh0p1  cylbreak2d.meshp1  cylbreak2d.meshp2  ms10  ms11  ms12  ms13  ms14  ms15
+
+ap:/home/ap/mefisto/testa/cylbreak2d-bash-> 
+ap:/home/ap/mefisto/testa/cylbreak2d-bash-> 
+ap:/home/ap/mefisto/testa/cylbreak2d-bash-> MESHER
+Arguments Number=0
+arg0=/home/ap/mefisto/bin/MESHER
+arg1=
+MESHER data file NAME=
+
+===============================================================
+     MEFISTO-MESHER: MESH an OBJECT under LINUX 64 bits
+===============================================================
+Project (low case) name ?
+cylbreak2d
+
+OMP_NUMBER_THREADS=6
+
+Execution MEFISTO MESHER in directory /home/ap/mefistox/cylbreak2d on 6 threads
+ Mefisto speaks ENGLISH
+ WORKING DIRECTORY NAME :
+/home/ap/mefistox/cylbreak2d
+ Mefisto-MESHER: ARGUMENT NUMBER=           1
+ Mefisto-MAILLER: ARGUMENT           0  = /home/ap/mefisto/pp/ppmail                                                                                                      
+ Nombre des arguments de la commande Mefisto=           0
+ Mefisto: Argument           0 =/home/ap/mefisto/pp/ppmail                                                                                                      
+ Mefisto-MESHER: NO MESHER DATA FILE
+ Mefisto-MESHER: X11 INTERACTIVE EXECUTION
+ Mefisto speaks ENGLISH
+
+---------------------------------------------------------
+| MM   MM  EEEEEE  FFFFFF  IIII  SSSSSS  TTTTTT OOOOOOO |
+| MMM MMM  EE      FF       II   SS        TT   OO   OO |
+| MM M MM  EEEEE   FFFF     II   SSSSSS    TT   OO   OO |  FAIT L'EF !
+| MM   MM  EE      FF       II       SS    TT   OO   OO |
+| MM   MM  EEEEEE  FF      IIII  SSSSSS    TT   OOOOOOO | december 21, 2013 Version
+---------------------------------------------------------
+
+ DATE         : 13/12/23   13H 39M 00S 
+ AUTHOR       : ap                      
+ PROJECT      : cylbreak2d                                                              
+
+INPUT DATA of MEFISTO in ENGLISH LANGUAGE
+Type ? to obtain the DOCUMENTATION
+Type @ to ESCAPE a MENU or INPUT DATA
+
+PRECISION EPZERO =  0.1000000E-05
+PRECISION EPSXYZ =  0.1000000E-03
+
+xvmmecran: screen xmm=361 ymm= 200
+ Screen PIXELS     WIDTH=1920  HEIGHT=1080
+ Screen MM         WIDTH= 361  HEIGHT= 200
+ Class TrueColor
+ TrueColor: Mefisto with 256 colors
+ Visual->map_entries = 256
+ Used  colors number = 256
+ Color Planes Depth  = 24
+ Available X11-Fonts number = 512
+ Window PIXELS     WIDTH=1812  HEIGHT= 980
+ Window MM         WIDTH= 341  HEIGHT= 184
+ X-CONVERSION MM=>PIXELS =   5.3185596    
+ Y-CONVERSION MM=>PIXELS =   5.4000001    
+ RESERVED COLORS from    0 to   15
+ ALLOWED  COLORS from   16 to  255
+ RECOVERY of          512  X11-CHARACTER FONTS
+
+xvinit: Chosen Font for a PIXEL HIGH=  1  X11 Font Number=428  Font Name=5x7
+xvinit: Chosen Font for a PIXEL HIGH=  2  X11 Font Number=428  Font Name=5x7
+xvinit: Chosen Font for a PIXEL HIGH=  3  X11 Font Number=428  Font Name=5x7
+xvinit: Chosen Font for a PIXEL HIGH=  4  X11 Font Number=428  Font Name=5x7
+xvinit: Chosen Font for a PIXEL HIGH=  5  X11 Font Number=428  Font Name=5x7
+xvinit: Chosen Font for a PIXEL HIGH=  6  X11 Font Number=428  Font Name=5x7
+xvinit: Chosen Font for a PIXEL HIGH=  7  X11 Font Number=428  Font Name=5x7
+xvinit: Chosen Font for a PIXEL HIGH=  8  X11 Font Number=429  Font Name=5x8
+xvinit: Chosen Font for a PIXEL HIGH=  9  X11 Font Number=430  Font Name=6x9
+xvinit: Chosen Font for a PIXEL HIGH= 10  X11 Font Number=431  Font Name=6x10
+xvinit: Chosen Font for a PIXEL HIGH= 11  X11 Font Number=432  Font Name=6x12
+xvinit: Chosen Font for a PIXEL HIGH= 12  X11 Font Number=432  Font Name=6x12
+xvinit: Chosen Font for a PIXEL HIGH= 13  X11 Font Number=433  Font Name=6x13
+xvinit: Chosen Font for a PIXEL HIGH= 14  X11 Font Number=439  Font Name=7x14
+xvinit: Chosen Font for a PIXEL HIGH= 15  X11 Font Number=446  Font Name=9x15
+xvinit: Chosen Font for a PIXEL HIGH= 16  X11 Font Number=443  Font Name=8x16
+xvinit: Chosen Font for a PIXEL HIGH= 17  X11 Font Number=443  Font Name=8x16
+xvinit: Chosen Font for a PIXEL HIGH= 18  X11 Font Number=443  Font Name=8x16
+xvinit: Chosen Font for a PIXEL HIGH= 19  X11 Font Number=448  Font Name=10x20
+xvinit: Chosen Font for a PIXEL HIGH= 20  X11 Font Number=448  Font Name=10x20
+xvinit: Chosen Font for a PIXEL HIGH= 21  X11 Font Number=448  Font Name=10x20
+xvinit: Chosen Font for a PIXEL HIGH= 22  X11 Font Number=448  Font Name=10x20
+xvinit: Chosen Font for a PIXEL HIGH= 23  X11 Font Number=449  Font Name=12x24
+xvinit: Chosen Font for a PIXEL HIGH= 24  X11 Font Number=449  Font Name=12x24
+xvinit: Chosen Font for a PIXEL HIGH= 25  X11 Font Number=449  Font Name=12x24
+xvinit: Chosen Font for a PIXEL HIGH= 26  X11 Font Number=449  Font Name=12x24
+xvinit: Chosen Font for a PIXEL HIGH= 27  X11 Font Number=449  Font Name=12x24
+xvinit: Chosen Font for a PIXEL HIGH= 28  X11 Font Number=449  Font Name=12x24
+xvinit: Chosen Font for a PIXEL HIGH= 29  X11 Font Number=449  Font Name=12x24
+xvinit: Chosen Font for a PIXEL HIGH= 30  X11 Font Number=449  Font Name=12x24
+xvinit: Chosen Font for a PIXEL HIGH= 31  X11 Font Number=449  Font Name=12x24
+xvinit: Chosen Font for a PIXEL HIGH= 32  X11 Font Number=449  Font Name=12x24
+xvchargefonte   charge la fonte 432
+xvchargefonte decharge la fonte 432
+xvchargefonte   charge la fonte 448
+Typed data are written on file frappe.001                  
+xvchargefonte decharge la fonte 448
+xvchargefonte   charge la fonte 443
+xvchargefonte decharge la fonte 443
+xvchargefonte   charge la fonte 432
+SUPER-ARRAY MCN WITH  1532000000 WORDS of MEMORY
+
+xvchargefonte decharge la fonte 432
+xvchargefonte   charge la fonte 448
+xvchargefonte decharge la fonte 448
+xvchargefonte   charge la fonte 432
+ Keyboard:readf cylbreak2d.meshp2;                                                                        
+
+ DATA INPUT is REDIRECTED on the FILE                                                            
+ cylbreak2d.meshp2                                                                               
+
+ Read File  2:{ ======================================================================= }                     
+ Read File  2:{ Software MEFISTO     : 2011 August 4, Version                           }                     
+ Read File  2:{ USER's  Name         : Alain Perronnet                                  }                     
+ Read File  2:{ Project Name         : cylbreak2d Unsteady NLSE on a square [-12,12]**2 }                     
+ Read File  2:{                        Mesh Data                                        }                     
+ Read File  2:{ Date                 : 2011/08/04                                       }                     
+ Read File  2:{ ======================================================================= }                     
+ Read File  2:DefVar a, b, eps;                                                                               
+ LU: ADDED VARIABLE A                                                                            
+ LU: ADDED VARIABLE B                                                                            
+ LU: ADDED VARIABLE EPS                                                                          
+ Read File  2: a=12;                                                                                          
+ Read File  2: b=12;                                                                                          
+ Read File  2: eps=0.0001;                                                                                    
+ Read File  2:DefVar nbea, nbeb;                                                                              
+ LU: ADDED VARIABLE NBEA                                                                         
+ LU: ADDED VARIABLE NBEB                                                                         
+ Read File  2: nbea=64; nbeb=64; {Numbers of edges on lines}                                                  
+ Read File  2:DefFunc Edge_Length(x,y,z);                                                                     
+ Read File  2:   Edge_Length=2*(a+b)/(nbea+nbeb);                                                             
+ Read File  2:   If abs(y) < b/12 then                                                                        
+ Read File  2:      Edge_Length = Edge_Length * (0.1+y*y);                                                    
+ Read File  2:   EndIf                                                                                        
+ Read File  2:EndFunc;                                                                                        
+ LU: ADDITION OF THE FUNCTION EDGE_LENGTH                                                        
+ Read File  2:1;  { POINTS vertices of the object }                                                           
+ Read File  2: 1; { TYPING of VALUES }                                                                        
+ Read File  2: A; { NAME of the POINT or ESCAPE? }                                                            
+
+------------------------ CREATION of TMS ~>POINT>A>DEFINITION  ------------------------
+ Read File  2: i; { NAME of TRANSFORMATION }                                                                  
+ Read File  2: 1; { X Y Z COORDINATES }                                                                       
+ Read File  2: -a; -b; 0; { COORPO 'X Y Z of a point' xyz ; }                                                 
+
+ CONTENTS of TMS ~>POINT>A>DEFINITION                                                            
+ tms : ~>POINT>>DEFINITION 'Definition of a POINT'                                              
+ NTYTRP 'transformation (I for IDENTITY)' =                                                     
+ ( 1 : I )                                                                                      
+ NUTYPO 'point type number' = 1 'X Y Z COORDINATES'                                             
+ COORPO 'X Y Z of a point'                                                                      
+ XYZ 1 : -12.00000     -12.00000      0.000000    
+
+
+MAJEXT: COORD1 MIN=  -12.00000     MAX=   1.000000    
+MAJEXT: COORD2 MIN=  -12.00000     MAX=  0.6000000    
+MAJEXT: COORD3 MIN=   0.000000     MAX=   0.000000    
+xvchargefonte decharge la fonte 432
+xvchargefonte   charge la fonte 448
+xvchargefonte decharge la fonte 448
+xvchargefonte   charge la fonte 432
+ Read File  2: { NAME of the POINT or ESCAPE? }                                                               
+ Read File  2: B; i; 1; a;-b; 0;                                                                              
+
+------------------------ CREATION of TMS ~>POINT>B>DEFINITION  ------------------------
+
+ CONTENTS of TMS ~>POINT>B>DEFINITION                                                            
+ tms : ~>POINT>>DEFINITION 'Definition of a POINT'                                              
+ NTYTRP 'transformation (I for IDENTITY)' =                                                     
+ ( 1 : I )                                                                                      
+ NUTYPO 'point type number' = 1 'X Y Z COORDINATES'                                             
+ COORPO 'X Y Z of a point'                                                                      
+ XYZ 1 :  12.00000     -12.00000      0.000000    
+
+
+MAJEXT: COORD1 MIN=  -12.00000     MAX=   12.00000    
+MAJEXT: COORD2 MIN=  -12.00000     MAX=  0.6000000    
+MAJEXT: COORD3 MIN=   0.000000     MAX=   0.000000    
+xvchargefonte decharge la fonte 432
+xvchargefonte   charge la fonte 448
+xvchargefonte decharge la fonte 448
+xvchargefonte   charge la fonte 432
+ Read File  2: C; i; 1; a; b; 0;                                                                              
+
+------------------------ CREATION of TMS ~>POINT>C>DEFINITION  ------------------------
+
+ CONTENTS of TMS ~>POINT>C>DEFINITION                                                            
+ tms : ~>POINT>>DEFINITION 'Definition of a POINT'                                              
+ NTYTRP 'transformation (I for IDENTITY)' =                                                     
+ ( 1 : I )                                                                                      
+ NUTYPO 'point type number' = 1 'X Y Z COORDINATES'                                             
+ COORPO 'X Y Z of a point'                                                                      
+ XYZ 1 :  12.00000      12.00000      0.000000    
+
+
+MAJEXT: COORD1 MIN=  -12.00000     MAX=   12.00000    
+MAJEXT: COORD2 MIN=  -12.00000     MAX=   12.00000    
+MAJEXT: COORD3 MIN=   0.000000     MAX=   0.000000    
+xvchargefonte decharge la fonte 432
+xvchargefonte   charge la fonte 448
+xvchargefonte decharge la fonte 448
+xvchargefonte   charge la fonte 432
+ Read File  2: D; i; 1;-a; b; 0;                                                                              
+
+------------------------ CREATION of TMS ~>POINT>D>DEFINITION  ------------------------
+
+ CONTENTS of TMS ~>POINT>D>DEFINITION                                                            
+ tms : ~>POINT>>DEFINITION 'Definition of a POINT'                                              
+ NTYTRP 'transformation (I for IDENTITY)' =                                                     
+ ( 1 : I )                                                                                      
+ NUTYPO 'point type number' = 1 'X Y Z COORDINATES'                                             
+ COORPO 'X Y Z of a point'                                                                      
+ XYZ 1 : -12.00000      12.00000      0.000000    
+
+xvchargefonte decharge la fonte 432
+xvchargefonte   charge la fonte 448
+xvchargefonte decharge la fonte 448
+xvchargefonte   charge la fonte 432
+ Read File  2: { NAME of the POINT or ESCAPE? }                                                               
+ Read File  2: @;                                                                                             
+xvchargefonte decharge la fonte 432
+xvchargefonte   charge la fonte 448
+xvchargefonte decharge la fonte 448
+xvchargefonte   charge la fonte 432
+ Read File  2:2;  { LINES edges of the object }                                                               
+ Read File  2:    { NAME of the LINE or ESCAPE? }                                                             
+ Read File  2: AB;                                                                                            
+
+------------------------ CREATION of TMS ~>LIGNE>AB>DEFINITION  ------------------------
+ Read File  2:  i;   { NAME of TRANSFORMATION }                                                               
+ Read File  2:  2;   { STRAIGHT LINE }                                                                        
+ Read File  2: nbea; { NBARLI 'number of edges of the line' entier ; }                                        
+ Read File  2: 1.0;  { RAIGEO 'geometrical ratio between the edges' reel ; }                                  
+ Read File  2:  a;   { NAME of POINT }                                                                        
+ Read File  2:  b;   { NAME of POINT }                                                                        
+
+ CONTENTS of TMS ~>LIGNE>AB>DEFINITION                                                           
+ tms : ~>LIGNE>>DEFINITION 'Definition of a LINE'                                               
+ NTYTRL 'transformation (I for IDENTITY)' =                                                     
+ ( 1 : I )                                                                                      
+ NUTYLI 'type of line' = 2 'STRAIGHT LINE'                                                      
+ NBARLI 'number of edges of the line' = 64                                                      
+ RAIGEO 'geometrical ratio between the edges' = 1.000000                                        
+ NUPTIN 'initial point' s name of the line' =                                                   
+ ( 1 : A )                                                                                      
+ NUPTFI 'final point' name of the line' =                                                       
+ ( 1 : B )                                                                                      
+ LINE AB of TYPE  2 :      65 VT,      0 TG,     64 FE,      0 FE with TG
+ Read File  2: BC; i; 2; nbeb; 1.0; b; c;                                                                     
+
+------------------------ CREATION of TMS ~>LIGNE>BC>DEFINITION  ------------------------
+
+ CONTENTS of TMS ~>LIGNE>BC>DEFINITION                                                           
+ tms : ~>LIGNE>>DEFINITION 'Definition of a LINE'                                               
+ NTYTRL 'transformation (I for IDENTITY)' =                                                     
+ ( 1 : I )                                                                                      
+ NUTYLI 'type of line' = 2 'STRAIGHT LINE'                                                      
+ NBARLI 'number of edges of the line' = 64                                                      
+ RAIGEO 'geometrical ratio between the edges' = 1.000000                                        
+ NUPTIN 'initial point' s name of the line' =                                                   
+ ( 1 : B )                                                                                      
+ NUPTFI 'final point' name of the line' =                                                       
+ ( 1 : C )                                                                                      
+ LINE BC of TYPE  2 :      84 VT,      0 TG,     83 FE,      0 FE with TG
+ Read File  2: CD; i; 2; nbea; 1.0; d; c;                                                                     
+
+------------------------ CREATION of TMS ~>LIGNE>CD>DEFINITION  ------------------------
+
+ CONTENTS of TMS ~>LIGNE>CD>DEFINITION                                                           
+ tms : ~>LIGNE>>DEFINITION 'Definition of a LINE'                                               
+ NTYTRL 'transformation (I for IDENTITY)' =                                                     
+ ( 1 : I )                                                                                      
+ NUTYLI 'type of line' = 2 'STRAIGHT LINE'                                                      
+ NBARLI 'number of edges of the line' = 64                                                      
+ RAIGEO 'geometrical ratio between the edges' = 1.000000                                        
+ NUPTIN 'initial point' s name of the line' =                                                   
+ ( 1 : D )                                                                                      
+ NUPTFI 'final point' name of the line' =                                                       
+ ( 1 : C )                                                                                      
+ LINE CD of TYPE  2 :      65 VT,      0 TG,     64 FE,      0 FE with TG
+ Read File  2: DA; i; 2; nbeb; 1.0; a; d;                                                                     
+
+------------------------ CREATION of TMS ~>LIGNE>DA>DEFINITION  ------------------------
+
+ CONTENTS of TMS ~>LIGNE>DA>DEFINITION                                                           
+ tms : ~>LIGNE>>DEFINITION 'Definition of a LINE'                                               
+ NTYTRL 'transformation (I for IDENTITY)' =                                                     
+ ( 1 : I )                                                                                      
+ NUTYLI 'type of line' = 2 'STRAIGHT LINE'                                                      
+ NBARLI 'number of edges of the line' = 64                                                      
+ RAIGEO 'geometrical ratio between the edges' = 1.000000                                        
+ NUPTIN 'initial point' s name of the line' =                                                   
+ ( 1 : A )                                                                                      
+ NUPTFI 'final point' name of the line' =                                                       
+ ( 1 : D )                                                                                      
+ LINE DA of TYPE  2 :      84 VT,      0 TG,     83 FE,      0 FE with TG
+ Read File  2: BOUNDARY; i; 51; 4; AB; BC; CD; DA;                                                            
+
+------------------------ CREATION of TMS ~>LIGNE>BOUNDARY>DEFINITION  ------------------------
+
+ CONTENTS of TMS ~>LIGNE>BOUNDARY>DEFINITION                                                     
+ tms : ~>LIGNE>>DEFINITION 'Definition of a LINE'                                               
+ NTYTRL 'transformation (I for IDENTITY)' =                                                     
+ ( 1 : I )                                                                                      
+ NUTYLI 'type of line' = 51 'UNION OF SEVERAL LINES'                                            
+ NBLIUN 'number of lines of the union' = 4                                                      
+ NULIUN ( 1  ..  4 ) 'names of the lines of the union' =                                        
+ ( 1 : AB )                                                                                     
+ ( 2 : BC )                                                                                     
+ ( 3 : CD )                                                                                     
+ ( 4 : DA )                                                                                     
+ UNION LINE       AB                       with     65 VT      0 TG     64 FE      0 FE with TG
+ UNION LINE       BC                       with     84 VT      0 TG     83 FE      0 FE with TG
+ UNION LINE       CD                       with     65 VT      0 TG     64 FE      0 FE with TG
+ UNION LINE       DA                       with     84 VT      0 TG     83 FE      0 FE with TG
+ BEFORE IDENTIFICATION VERTEX  NUMBER=    298
+ BEFORE IDENTIFICATION TANGENT NUMBER=      0
+ AFTER  IDENTIFICATION VERTEX  NUMBER=    294
+ AFTER  IDENTIFICATION TANGENT NUMBER=      0
+ LINE BOUNDARY of TYPE 51 :     294 VT,      0 TG,    294 FE,      0 FE with TG
+ Read File  2:@;                                                                                              
+ Read File  2:3;   { SURFACES faces of the object }                                                           
+ Read File  2: SQUAREQ; { NAME of the SURFACE or ESCAPE? }                                                    
+
+------------------------ CREATION of TMS ~>SURFACE>SQUAREQ>DEFINITION  ------------------------
+ Read File  2: i;  { NAME of TRANSFORMATION }                                                                 
+ Read File  2: 1;  { TRANSFINITE QUADRANGLE }                                                                 
+ Read File  2: AB; { NAME of LINE }                                                                           
+ Read File  2: BC; { NAME of LINE }                                                                           
+ Read File  2: CD; { NAME of LINE }                                                                           
+ Read File  2: DA; { NAME of LINE }                                                                           
+ Read File  2: 1;  { regular mesh }                                                                           
+
+ CONTENTS of TMS ~>SURFACE>SQUAREQ>DEFINITION                                                    
+ tms : ~>SURFACE>>DEFINITION 'Definition of a SURFACE'                                          
+ NTYTRS 'transformation (I for IDENTITY)' =                                                     
+ ( 1 : I )                                                                                      
+ NUTYSU 'type of the surface' = 1 'TRANSFINITE QUADRANGLE'                                      
+ NU4COT ( 1  ..  4 ) 'NAMES of the 4 lines' =                                                   
+ ( 1 : AB )                                                                                     
+ ( 2 : BC )                                                                                     
+ ( 3 : CD )                                                                                     
+ ( 4 : DA )                                                                                     
+ LAGHER 'type of mesh' = 1 'regular mesh'                                                       
+ TRIANGULATION    WITH FONCTION TAILLE_IDEALE(X,Y,Z)
+
+ DECLARED MAXIMUM VERTICES NUMBER=   26678
+ TRIANGULATION of REGULAR TRIANGLE QUADTREE in a PLANE of R3
+ NUMBER of VERTICES(=EDGES) ON BOUNDARY         294
+ LENGTH MINIMUM of BOUNDARY EDGES  3.75137329E-02
+ LENGTH MAXIMUM of BOUNDARY EDGES  0.51395416    
+ WISHED LENGTH MAXIMUM of INTERNAL EDGES  0.51395416    
+ NUMBER of INTERNAL IMPOSED POINTS           0
+
+ TIME for INPUT COHERENCE                                  :       0.01 SECONDS
+ TIME to ADD QUADTREE of REGULAR TRIANGLES                 :       0.01 SECONDS
+ TIME ADAPTATION  and HOMOGENEIZATION of QUADTREE          :       0.15 SECONDS
+ TIME TRIANGULATION of REGULAR TRIANGLES                   :       0.03 SECONDS
+ TETRMA: QUALITY AVERAGE= 0.946 MINIMUM= 0.000 for   45602 TRIANGLES
+ SWAPPING DIAGONAL NUMBER =         516
+ TIME DELAUNAY SWAPPING INTERNAL DIAGONALS                 :       0.03 SECONDS
+ TETRMA: QUALITY AVERAGE= 0.947 MINIMUM= 0.015 for   45602 TRIANGLES
+ RECOVERING of    125 LOST EDGES of the BOUNDARY
+ TIME RECUPERATION of LOST EDGES of the BOUNDARY           :       0.01 SECONDS
+ TETRMA: QUALITY AVERAGE= 0.946 MINIMUM= 0.094 for   45602 TRIANGLES
+ TIME SUPPRESSION of EXTERNAL TRIANGLES                    :       0.02 SECONDS
+ TETRMA: QUALITY AVERAGE= 0.952 MINIMUM= 0.094 for   40074 TRIANGLES
+ TESUSP: RETRAIT DE           0  SOMMETS DE TE TROP PROCHES DE LA FRONTIERE
+ TEAMQST: ITERATION 1:      4 DELETED VERTICES      2 ADDED BARYCENTRES    269 VISITED VERTICES
+ TEAMQST: ITERATION 2:      2 DELETED VERTICES    583 ADDED BARYCENTRES   6183 VISITED VERTICES
+ TEAMQST: ITERATION 3:     36 DELETED VERTICES    694 ADDED BARYCENTRES   6293 VISITED VERTICES
+ TEAMQST: ITERATION 4:      0 DELETED VERTICES    500 ADDED BARYCENTRES   6333 VISITED VERTICES
+ TEAMQST: ITERATION 5:      4 DELETED VERTICES    298 ADDED BARYCENTRES   6393 VISITED VERTICES
+ TEAMQST: ITERATION 6:     22 DELETED VERTICES     47 ADDED BARYCENTRES   6416 VISITED VERTICES
+ TEAMQS: ITERATION 1:    172 VERTICES of 4Tr    550 VERTICES of 5Tr+5Tr
+ TEAMQS: ITERATION 2:      0 VERTICES of 4Tr      4 VERTICES of 5Tr+5Tr
+ TEAMQS: ITERATION 3:      0 VERTICES of 4Tr      0 VERTICES of 5Tr+5Tr
+ TEAMQS: ITERATION 4:      0 VERTICES of 4Tr      0 VERTICES of 5Tr+5Tr
+ TEAMQS: ITERATION 5:      0 VERTICES of 4Tr      0 VERTICES of 5Tr+5Tr
+ TEAMQS: ITERATION 6:      0 VERTICES of 4Tr      0 VERTICES of 5Tr+5Tr
+ TIME IMPROVEMENT of TRIANGULATION QUALITY                 :       1.54 SECONDS
+ TETRMA: QUALITY AVERAGE= 0.938 MINIMUM= 0.598 for   42726 TRIANGLES
+ TIME TOTAL of TRIANGULATION                               :       1.82 SECONDS
+ SURFACE SQUAREQ of TYPE  1 :   21511 VT,      0 TG,  42726 FE,      0 FE with TG
+
+ QUALITY of the MESH : SURFACE SQUAREQ                     
+ ---------------------
+ NUMBER of VERTICES        =   21511
+ NUMBER of TANGENTS        =       0
+ NUMBER of FINITE ELEMENTS =   42726
+ NUMBER of FE WITH TANGENTS=       0
+ AVERAGE QUALITY of FE     =   0.938    
+ MINIMUM QUALITY of FE     =   0.598     for the FE    11872
+ ECART TYPE / 1  of FE     =   0.932E-01
+ NUMBER of TRIANGLES  =   42726
+ 0.900=< QUALITY <1.000 : 37350 FE  87 % : *******************************************
+ 0.800=< QUALITY <0.900 :  4185 FE  10 % : *****
+ 0.700=< QUALITY <0.800 :  1167 FE   3 % : *
+ 0.600=< QUALITY <0.700 :    24 FE   0 % : .
+ COORD1 MIN=  -12.00000     MAX=   12.00000    
+ COORD2 MIN=  -12.00000     MAX=   12.00000    
+ COORD3 MIN=   0.000000     MAX=   0.000000    
+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+
+ NUMBER of EDGES in 1 FACE =         294
+ NUMBER of EDGES in 2 FACES=       63942
+ NUMBER of EDGES in 3 FACES=           0
+ SQUAREQ is NOT a CLOSED SURFACE of R**3  ..............................
+
+xvchargefonte decharge la fonte 432
+xvchargefonte   charge la fonte 448
+xvchargefonte decharge la fonte 448
+xvchargefonte   charge la fonte 432
+ Read File  2: SQUARE; i; 31; { TRIANGULATION OF A QUADRANGULATION }                                          
+
+------------------------ CREATION of TMS ~>SURFACE>SQUARE>DEFINITION  ------------------------
+ Read File  2: SQUAREQ; { quadrangulation surface name }                                                      
+ Read File  2: 1;       { create an edge S1 S3 }                                                              
+
+ CONTENTS of TMS ~>SURFACE>SQUARE>DEFINITION                                                     
+ tms : ~>SURFACE>>DEFINITION 'Definition of a SURFACE'                                          
+ NTYTRS 'transformation (I for IDENTITY)' =                                                     
+ ( 1 : I )                                                                                      
+ NUTYSU 'type of the surface' = 31 'TRIANGULATION OF A QUADRANGULATION'                         
+ NUSUQU 'quadrangulation surface NAME' =                                                        
+ ( 1 : SQUAREQ )                                                                                
+ NDECOU 'type of partition of quadrangles' = 1 'Create an edge S1 S3'                           
+ SURFACE SQUARE of TYPE 31 :   21511 VT,      0 TG,  42726 FE,      0 FE with TG
+
+ QUALITY of the MESH : SURFACE SQUARE                      
+ ---------------------
+ NUMBER of VERTICES        =   21511
+ NUMBER of TANGENTS        =       0
+ NUMBER of FINITE ELEMENTS =   42726
+ NUMBER of FE WITH TANGENTS=       0
+ AVERAGE QUALITY of FE     =   0.938    
+ MINIMUM QUALITY of FE     =   0.598     for the FE    11872
+ ECART TYPE / 1  of FE     =   0.932E-01
+ NUMBER of TRIANGLES  =   42726
+ 0.900=< QUALITY <1.000 : 37350 FE  87 % : *******************************************
+ 0.800=< QUALITY <0.900 :  4185 FE  10 % : *****
+ 0.700=< QUALITY <0.800 :  1167 FE   3 % : *
+ 0.600=< QUALITY <0.700 :    24 FE   0 % : .
+ COORD1 MIN=  -12.00000     MAX=   12.00000    
+ COORD2 MIN=  -12.00000     MAX=   12.00000    
+ COORD3 MIN=   0.000000     MAX=   0.000000    
+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+
+ NUMBER of EDGES in 1 FACE =         294
+ NUMBER of EDGES in 2 FACES=       63942
+ NUMBER of EDGES in 3 FACES=           0
+ SQUARE is NOT a CLOSED SURFACE of R**3  ..............................
+
+xvchargefonte decharge la fonte 432
+xvchargefonte   charge la fonte 448
+xvchargefonte decharge la fonte 448
+xvchargefonte   charge la fonte 432
+ Read File  2:@;                                                                                              
+ Read File  2:5;  { OBJECTS parts of the object }                                                             
+ Read File  2: SQUARE; { NAME of the OBJECT or ESCAPE? }                                                      
+
+------------------------ CREATION of TMS ~>OBJET>SQUARE>DEFINITION  ------------------------
+ Read File  2: 0; { 2D or 3D classic }                                                                        
+ Read File  2: 2; { NBDOBJ number of Points Lines Surfaces Volumes Objects of the object }                    
+ Read File  2: S; SQUARE;   {POINT or LINE or SURFACE or VOLUME or OBJECT}                                    
+ Read File  2: L; BOUNDARY;                                                                                   
+
+ CONTENTS of TMS ~>OBJET>SQUARE>DEFINITION                                                       
+ tms : ~>OBJET>>DEFINITION 'Definition of an OBJECT'                                            
+ SDOUNO 'type of the treatment' = 0 '1D or 2D or 3D classic'                                    
+ NBDOBJ 'number of Points Lines Surfaces Volumes Objects of the object' = 2                     
+ NTYOBJ ( 1  ..  2 ) 'name of type PLSVO & PLSVO' s name' =                                     
+ ( 1 : SURFACE  SQUARE )                                                                        
+ ( 2 : LINE  BOUNDARY )                                                                         
+ SURFACE SQUARE of TYPE 31 :   21511 VT,      0 TG,  42726 FE,      0 FE with TG
+
+ QUALITY of the MESH : SURFACE SQUARE                      
+ ---------------------
+ NUMBER of VERTICES        =   21511
+ NUMBER of TANGENTS        =       0
+ NUMBER of FINITE ELEMENTS =   42726
+ NUMBER of FE WITH TANGENTS=       0
+ AVERAGE QUALITY of FE     =   0.938    
+ MINIMUM QUALITY of FE     =   0.598     for the FE    11872
+ ECART TYPE / 1  of FE     =   0.932E-01
+ NUMBER of TRIANGLES  =   42726
+ 0.900=< QUALITY <1.000 : 37350 FE  87 % : *******************************************
+ 0.800=< QUALITY <0.900 :  4185 FE  10 % : *****
+ 0.700=< QUALITY <0.800 :  1167 FE   3 % : *
+ 0.600=< QUALITY <0.700 :    24 FE   0 % : .
+ COORD1 MIN=  -12.00000     MAX=   12.00000    
+ COORD2 MIN=  -12.00000     MAX=   12.00000    
+ COORD3 MIN=   0.000000     MAX=   0.000000    
+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+
+ NUMBER of EDGES in 1 FACE =         294
+ NUMBER of EDGES in 2 FACES=       63942
+ NUMBER of EDGES in 3 FACES=           0
+ SQUARE is NOT a CLOSED SURFACE of R**3  ..............................
+
+xvchargefonte decharge la fonte 432
+xvchargefonte   charge la fonte 448
+xvchargefonte decharge la fonte 448
+xvchargefonte   charge la fonte 432
+ LINE BOUNDARY of TYPE 51 :     294 VT,      0 TG,    294 FE,      0 FE with TG
+ END of DEFINITION of OBJECT: SQUARE                  
+====================================================================================================
+
+ Read File  2:@;                                                                                              
+ Read File  2:7; { INTERPOLATION nodes of the mesh }                                                          
+ Read File  2: SQUARE; { NAME of the OBJECT to be INTERPOLATED? }                                             
+
+ CREATION TMS: ~>OBJET>SQUARE>TOPOLOGIE
+ ===============================================================================
+ NUMBER of VERTICES              0
+ NUMBER of SEGMENTS            294
+ NUMBER of TRIANGLES         42726
+ NUMBER of QUADRANGLES           0
+ NUMBER of TETRAHEDRA            0
+ NUMBER of PYRAMIDS              0
+ NUMBER of PENTAHEDRA            0
+ NUMBER of HEXAHEDRA             0
+ NUMBER of 6-CUBES               0
+ Read File  2: 4; { LAGRANGE of DEGREE 2 }                                                                    
+ THE LINE    BOUNDARY                 IS FOUND
+ END of CREATION of TMS: NPEF"2P2C    
+ NEIGHBORS NUMBER MAXIMUM of a NODE=          27
+ NEIGHBORS NUMBER AVERAGE of a NODE=          10
+ NEIGHBORS TOTAL  NUMBER  of  NODES=      898128
+
+ RENUMBERING of   85747 NODES by the GIBBS METHOD
+ INITIAL BAND WIDTH :        85659   INITIAL SKYLINE :   4993567655.0000000    
+ FINAL   BAND WIDTH :         1858   FINAL   SKYLINE :   83418471.000000000    
+
+ NUMBER of VERTICES     =       21511
+ NUMBER of NODES        =       85747
+ NUMBER of VERTEX-POINTS=           0
+ NUMBER of SEGMENTS     =         294
+ NUMBER of TRIANGLES    =       42726
+ NUMBER of QUADRANGLES  =           0
+ NUMBER of TETRAHEDRA   =           0
+ NUMBER of PYRAMIDS     =           0
+ NUMBER of PENTAHEDRA   =           0
+ NUMBER of HEXAHEDRA    =           0
+ NUMBER of 6-CUBES      =           0
+ CREATION END of TMS: ~>OBJET>SQUARE>TOPOLOGIE                                                   
+
+ SURFACE SQUARE of TYPE 31 :   21511 VT,      0 TG,  42726 FE,      0 FE with TG
+
+ QUALITY of the MESH : SURFACE SQUARE                      
+ ---------------------
+ NUMBER of VERTICES        =   21511
+ NUMBER of TANGENTS        =       0
+ NUMBER of FINITE ELEMENTS =   42726
+ NUMBER of FE WITH TANGENTS=       0
+ AVERAGE QUALITY of FE     =   0.938    
+ MINIMUM QUALITY of FE     =   0.598     for the FE    11872
+ ECART TYPE / 1  of FE     =   0.932E-01
+ NUMBER of TRIANGLES  =   42726
+ 0.900=< QUALITY <1.000 : 37350 FE  87 % : *******************************************
+ 0.800=< QUALITY <0.900 :  4185 FE  10 % : *****
+ 0.700=< QUALITY <0.800 :  1167 FE   3 % : *
+ 0.600=< QUALITY <0.700 :    24 FE   0 % : .
+ COORD1 MIN=  -12.00000     MAX=   12.00000    
+ COORD2 MIN=  -12.00000     MAX=   12.00000    
+ COORD3 MIN=   0.000000     MAX=   0.000000    
+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+
+ NUMBER of EDGES in 1 FACE =         294
+ NUMBER of EDGES in 2 FACES=       63942
+ NUMBER of EDGES in 3 FACES=           0
+ SQUARE is NOT a CLOSED SURFACE of R**3  ..............................
+
+xvchargefonte decharge la fonte 432
+xvchargefonte   charge la fonte 448
+xvchargefonte decharge la fonte 448
+xvchargefonte   charge la fonte 432
+ LINE BOUNDARY of TYPE 51 :     294 VT,      0 TG,    294 FE,      0 FE with TG
+----------------------------------------------------------------------------------------------------
+
+xvchargefonte decharge la fonte 432
+xvchargefonte   charge la fonte 448
+xvchargefonte decharge la fonte 448
+xvchargefonte   charge la fonte 432
+ Read File  2:@;                                                                                              
+ Read File  2:10; { DRAWING of PLSVO meshes }                                                                 
+ Read File  2: 5; { OBJECT }                                                                                  
+ Read File  2: 3; { ONE OBJECT }                                                                              
+ Read File  2: SQUARE; { NAME of the OBJECT? }                                                                
+ Read File  2: 90; { Continue the DRAWING }                                                                   
+ SURFACE SQUARE of TYPE 31 :   21511 VT,      0 TG,  42726 FE,      0 FE with TG
+
+ QUALITY of the MESH : SURFACE SQUARE                      
+ ---------------------
+ NUMBER of VERTICES        =   21511
+ NUMBER of TANGENTS        =       0
+ NUMBER of FINITE ELEMENTS =   42726
+ NUMBER of FE WITH TANGENTS=       0
+ AVERAGE QUALITY of FE     =   0.938    
+ MINIMUM QUALITY of FE     =   0.598     for the FE    11872
+ ECART TYPE / 1  of FE     =   0.932E-01
+ NUMBER of TRIANGLES  =   42726
+ 0.900=< QUALITY <1.000 : 37350 FE  87 % : *******************************************
+ 0.800=< QUALITY <0.900 :  4185 FE  10 % : *****
+ 0.700=< QUALITY <0.800 :  1167 FE   3 % : *
+ 0.600=< QUALITY <0.700 :    24 FE   0 % : .
+ COORD1 MIN=  -12.00000     MAX=   12.00000    
+ COORD2 MIN=  -12.00000     MAX=   12.00000    
+ COORD3 MIN=   0.000000     MAX=   0.000000    
+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+
+ NUMBER of EDGES in 1 FACE =         294
+ NUMBER of EDGES in 2 FACES=       63942
+ NUMBER of EDGES in 3 FACES=           0
+ SQUARE is NOT a CLOSED SURFACE of R**3  ..............................
+
+xvchargefonte decharge la fonte 432
+xvchargefonte   charge la fonte 448
+xvchargefonte decharge la fonte 448
+xvchargefonte   charge la fonte 432
+ LINE BOUNDARY of TYPE 51 :     294 VT,      0 TG,    294 FE,      0 FE with TG
+----------------------------------------------------------------------------------------------------
+
+xvchargefonte decharge la fonte 432
+xvchargefonte   charge la fonte 448
+xvchargefonte decharge la fonte 448
+xvchargefonte   charge la fonte 432
+xvchargefonte decharge la fonte 432
+xvchargefonte   charge la fonte 448
+xvchargefonte decharge la fonte 448
+xvchargefonte   charge la fonte 432
+ Read File  2: 90; { Continue the DRAWING }                                                                   
+ SURFACE SQUARE of TYPE 31 :   21511 VT,      0 TG,  42726 FE,      0 FE with TG
+
+ QUALITY of the MESH : SURFACE SQUARE                      
+ ---------------------
+ NUMBER of VERTICES        =   21511
+ NUMBER of TANGENTS        =       0
+ NUMBER of FINITE ELEMENTS =   42726
+ NUMBER of FE WITH TANGENTS=       0
+ AVERAGE QUALITY of FE     =   0.938    
+ MINIMUM QUALITY of FE     =   0.598     for the FE    11872
+ ECART TYPE / 1  of FE     =   0.932E-01
+ NUMBER of TRIANGLES  =   42726
+ 0.900=< QUALITY <1.000 : 37350 FE  87 % : *******************************************
+ 0.800=< QUALITY <0.900 :  4185 FE  10 % : *****
+ 0.700=< QUALITY <0.800 :  1167 FE   3 % : *
+ 0.600=< QUALITY <0.700 :    24 FE   0 % : .
+ COORD1 MIN=  -12.00000     MAX=   12.00000    
+ COORD2 MIN=  -12.00000     MAX=   12.00000    
+ COORD3 MIN=   0.000000     MAX=   0.000000    
+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+
+ NUMBER of EDGES in 1 FACE =         294
+ NUMBER of EDGES in 2 FACES=       63942
+ NUMBER of EDGES in 3 FACES=           0
+ SQUARE is NOT a CLOSED SURFACE of R**3  ..............................
+
+xvchargefonte decharge la fonte 432
+xvchargefonte   charge la fonte 448
+xvchargefonte decharge la fonte 448
+xvchargefonte   charge la fonte 432
+ LINE BOUNDARY of TYPE 51 :     294 VT,      0 TG,    294 FE,      0 FE with TG
+----------------------------------------------------------------------------------------------------
+
+xvchargefonte decharge la fonte 432
+xvchargefonte   charge la fonte 448
+xvchargefonte decharge la fonte 448
+xvchargefonte   charge la fonte 432
+xvchargefonte decharge la fonte 432
+xvchargefonte   charge la fonte 448
+xvchargefonte decharge la fonte 448
+xvchargefonte   charge la fonte 432
+ Read File  2:CLOSE;                                                                                          
+ END of READING an INPUT FILE                                                                    
+ To CONTINUE TYPE @ or ESCAPE                                                                    
+ Keyboard:@;                                                                                              
+ Type of @ => ESCAPE of READING                                                                  
+ Keyboard:@;                                                                                              
+ Type of @ => ESCAPE of READING                                                                  
+ Keyboard:@;                                                                                              
+ Type of @ => ESCAPE of READING                                                                  
+ Keyboard:@;                                                                                              
+ Type of @ => ESCAPE of READING                                                                  
+ Keyboard:          99;                                                                                   
+ OK, All DATA are SAVING on DISK FILES ...                                                       
+
+STOP : CORRECT END of MEFISTO EXECUTION
+
+real    0m20.353s
+user    0m3.748s
+sys     0m0.176s
+ap:/home/ap/mefisto/testa/cylbreak2d-bash-> NLSER
+Arguments Number=0
+arg0=/home/ap/mefisto/bin/NLSER
+arg1=
+NLSER data file NAME=
+
+===========================================================================
+MEFISTO-NLSER: Solver of NONLINEAR SCHRODINGER EQUATION under LINUX 64 bits
+===========================================================================
+Project (low case) name ?
+cylbreak2d
+
+OMP_NUMBER_THREADS=6
+
+Execution MEFISTO NLSER in the directory /home/ap/mefistox/cylbreak2d
+ Mefisto speaks ENGLISH
+ WORKING DIRECTORY NAME :
+/home/ap/mefistox/cylbreak2d
+ Mefisto-NLSER: ARGUMENT NUMBER=           1
+ Mefisto-NLSER: ARGUMENT           0  = /home/ap/mefisto/pp/ppnlse                                                                                                      
+ Nombre des arguments de la commande Mefisto=           0
+ Mefisto: Argument           0 =/home/ap/mefisto/pp/ppnlse                                                                                                      
+ Mefisto-NLSER in INTERACTIVE EXECUTION
+ Mefisto speaks ENGLISH
+
+---------------------------------------------------------
+| MM   MM  EEEEEE  FFFFFF  IIII  SSSSSS  TTTTTT OOOOOOO |
+| MMM MMM  EE      FF       II   SS        TT   OO   OO |
+| MM M MM  EEEEE   FFFF     II   SSSSSS    TT   OO   OO |  FAIT L'EF !
+| MM   MM  EE      FF       II       SS    TT   OO   OO |
+| MM   MM  EEEEEE  FF      IIII  SSSSSS    TT   OOOOOOO | december 21, 2013 Version
+---------------------------------------------------------
+
+ DATE         : 13/12/23   13H 39M 27S 
+ AUTHOR       : ap                      
+ PROJECT      : cylbreak2d                                                              
+
+INPUT DATA of MEFISTO in ENGLISH LANGUAGE
+Type ? to obtain the DOCUMENTATION
+Type @ to ESCAPE a MENU or INPUT DATA
+
+PRECISION EPZERO =  0.1000000E-05
+PRECISION EPSXYZ =  0.1000000E-03
+
+xvmmecran: screen xmm=361 ymm= 200
+ Screen PIXELS     WIDTH=1920  HEIGHT=1080
+ Screen MM         WIDTH= 361  HEIGHT= 200
+ Class TrueColor
+ TrueColor: Mefisto with 256 colors
+ Visual->map_entries = 256
+ Used  colors number = 256
+ Color Planes Depth  = 24
+ Available X11-Fonts number = 512
+ Window PIXELS     WIDTH=1812  HEIGHT= 980
+ Window MM         WIDTH= 341  HEIGHT= 184
+ X-CONVERSION MM=>PIXELS =   5.3185596    
+ Y-CONVERSION MM=>PIXELS =   5.4000001    
+ RESERVED COLORS from    0 to   15
+ ALLOWED  COLORS from   16 to  255
+ RECOVERY of          512  X11-CHARACTER FONTS
+
+xvinit: Chosen Font for a PIXEL HIGH=  1  X11 Font Number=428  Font Name=5x7
+xvinit: Chosen Font for a PIXEL HIGH=  2  X11 Font Number=428  Font Name=5x7
+xvinit: Chosen Font for a PIXEL HIGH=  3  X11 Font Number=428  Font Name=5x7
+xvinit: Chosen Font for a PIXEL HIGH=  4  X11 Font Number=428  Font Name=5x7
+xvinit: Chosen Font for a PIXEL HIGH=  5  X11 Font Number=428  Font Name=5x7
+xvinit: Chosen Font for a PIXEL HIGH=  6  X11 Font Number=428  Font Name=5x7
+xvinit: Chosen Font for a PIXEL HIGH=  7  X11 Font Number=428  Font Name=5x7
+xvinit: Chosen Font for a PIXEL HIGH=  8  X11 Font Number=429  Font Name=5x8
+xvinit: Chosen Font for a PIXEL HIGH=  9  X11 Font Number=430  Font Name=6x9
+xvinit: Chosen Font for a PIXEL HIGH= 10  X11 Font Number=431  Font Name=6x10
+xvinit: Chosen Font for a PIXEL HIGH= 11  X11 Font Number=432  Font Name=6x12
+xvinit: Chosen Font for a PIXEL HIGH= 12  X11 Font Number=432  Font Name=6x12
+xvinit: Chosen Font for a PIXEL HIGH= 13  X11 Font Number=433  Font Name=6x13
+xvinit: Chosen Font for a PIXEL HIGH= 14  X11 Font Number=439  Font Name=7x14
+xvinit: Chosen Font for a PIXEL HIGH= 15  X11 Font Number=446  Font Name=9x15
+xvinit: Chosen Font for a PIXEL HIGH= 16  X11 Font Number=443  Font Name=8x16
+xvinit: Chosen Font for a PIXEL HIGH= 17  X11 Font Number=443  Font Name=8x16
+xvinit: Chosen Font for a PIXEL HIGH= 18  X11 Font Number=443  Font Name=8x16
+xvinit: Chosen Font for a PIXEL HIGH= 19  X11 Font Number=448  Font Name=10x20
+xvinit: Chosen Font for a PIXEL HIGH= 20  X11 Font Number=448  Font Name=10x20
+xvinit: Chosen Font for a PIXEL HIGH= 21  X11 Font Number=448  Font Name=10x20
+xvinit: Chosen Font for a PIXEL HIGH= 22  X11 Font Number=448  Font Name=10x20
+xvinit: Chosen Font for a PIXEL HIGH= 23  X11 Font Number=449  Font Name=12x24
+xvinit: Chosen Font for a PIXEL HIGH= 24  X11 Font Number=449  Font Name=12x24
+xvinit: Chosen Font for a PIXEL HIGH= 25  X11 Font Number=449  Font Name=12x24
+xvinit: Chosen Font for a PIXEL HIGH= 26  X11 Font Number=449  Font Name=12x24
+xvinit: Chosen Font for a PIXEL HIGH= 27  X11 Font Number=449  Font Name=12x24
+xvinit: Chosen Font for a PIXEL HIGH= 28  X11 Font Number=449  Font Name=12x24
+xvinit: Chosen Font for a PIXEL HIGH= 29  X11 Font Number=449  Font Name=12x24
+xvinit: Chosen Font for a PIXEL HIGH= 30  X11 Font Number=449  Font Name=12x24
+xvinit: Chosen Font for a PIXEL HIGH= 31  X11 Font Number=449  Font Name=12x24
+xvinit: Chosen Font for a PIXEL HIGH= 32  X11 Font Number=449  Font Name=12x24
+Typed data are written on file frappe.002                  
+SUPER-ARRAY MCN WITH  1532000000 WORDS of MEMORY
+
+MAJEXT: COORD1 MIN=  -12.00000     MAX=   12.00000    
+MAJEXT: COORD2 MIN=  -12.00000     MAX=   12.00000    
+MAJEXT: COORD3 MIN=   0.000000     MAX=   0.000000    
+ SURFACE SQUARE of TYPE 31 :   21511 VT,      0 TG,  42726 FE,      0 FE with TG
+
+ QUALITY of the MESH : SURFACE SQUARE                      
+ ---------------------
+ NUMBER of VERTICES        =   21511
+ NUMBER of TANGENTS        =       0
+ NUMBER of FINITE ELEMENTS =   42726
+ NUMBER of FE WITH TANGENTS=       0
+ AVERAGE QUALITY of FE     =   0.938    
+ MINIMUM QUALITY of FE     =   0.598     for the FE    11872
+ ECART TYPE / 1  of FE     =   0.932E-01
+ NUMBER of TRIANGLES  =   42726
+ 0.900=< QUALITY <1.000 : 37350 FE  87 % : *******************************************
+ 0.800=< QUALITY <0.900 :  4185 FE  10 % : *****
+ 0.700=< QUALITY <0.800 :  1167 FE   3 % : *
+ 0.600=< QUALITY <0.700 :    24 FE   0 % : .
+ COORD1 MIN=  -12.00000     MAX=   12.00000    
+ COORD2 MIN=  -12.00000     MAX=   12.00000    
+ COORD3 MIN=   0.000000     MAX=   0.000000    
+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+
+ NUMBER of EDGES in 1 FACE =         294
+ NUMBER of EDGES in 2 FACES=       63942
+ NUMBER of EDGES in 3 FACES=           0
+ SQUARE is NOT a CLOSED SURFACE of R**3  ..............................
+
+ LINE BOUNDARY of TYPE 51 :     294 VT,      0 TG,    294 FE,      0 FE with TG
+----------------------------------------------------------------------------------------------------
+
+ Keyboard:readf cylbreak2d.impl;                                                                          
+
+ DATA INPUT is REDIRECTED on the FILE                                                            
+ cylbreak2d.impl                                                                                 
+
+ Read File  2:{ ======================================================================== }                    
+ Read File  2:{ Software MEFISTO  : 2011 August 4, Version                               }                    
+ Read File  2:{ USER's  Name      : Alain Perronnet                                      }                    
+ Read File  2:{ Project Name      : cylbreak2d the Unsteady NLSE on a square [-12,12]**2 }                    
+ Read File  2:{ IMPLICIT Method on  idu(t,X)/dt -Alfa Laplacian u(t,X) +Beta u(t,X)**3=0 }                    
+ Read File  2:{                     Data of semi-implicit scheme to solve NLSE problem   }                    
+ Read File  2:{ Date              : 2011/08/04                                           }                    
+ Read File  2:{ ======================================================================== }                    
+ Read File  2:DefVar Pis3;  Pis3  = atan(1) * 4 / 3;                                                          
+ LU: ADDED VARIABLE PIS3                                                                         
+ Read File  2:DefVar Mass;  Mass  = 1.0;                                                                      
+ LU: ADDED VARIABLE MASS                                                                         
+ Read File  2:DefVar Alfa;  Alfa  =-1.0;                                                                      
+ LU: ADDED VARIABLE ALFA                                                                         
+ Read File  2:DefVar Beta;  Beta  = 1.0;                                                                      
+ LU: ADDED VARIABLE BETA                                                                         
+ Read File  2:DefFunc NLSECoef(t,x,y,z,ntyobj,nuobj,WaveR,WaveI);                                             
+ Read File  2:  NLSECoef = Beta * ( WaveR**2 + WaveI**2 );                                                    
+ Read File  2:EndFunc;                                                                                        
+ LU: ADDITION OF THE FUNCTION NLSECOEF                                                           
+ Read File  2:{ The initial conditions of the Wave }                                                          
+ Read File  2:DefFunc InitWave(t,x,y,z,ntyob,nuobjt,partnb);                                                  
+ Read File  2:  If partnb=1 then                                                                              
+ Read File  2:    InitWave = exp(-y*y/16) * (1+ 0.001*sin(Pis3*x)); {Real Part}                               
+ Read File  2:  else                                                                                          
+ Read File  2:    InitWave = 0;  {Imaginary Part}                                                             
+ Read File  2:  EndIf;                                                                                        
+ Read File  2:EndFunc;                                                                                        
+ LU: ADDITION OF THE FUNCTION INITWAVE                                                           
+ Read File  2:{DATA for the Non Linear Schrodinger Equations}                                                 
+ Read File  2:2; { HEAT INPUT DATA }                                                                          
+
+ ********************************************************************************
+ READING of NLSE INPUT DATA of the OBJECT SQUARE                  
+ ********************************************************************************
+ SURFACE SQUARE of TYPE 31 :   21511 VT,      0 TG,  42726 FE,      0 FE with TG
+
+ QUALITY of the MESH : SURFACE SQUARE                      
+ ---------------------
+ NUMBER of VERTICES        =   21511
+ NUMBER of TANGENTS        =       0
+ NUMBER of FINITE ELEMENTS =   42726
+ NUMBER of FE WITH TANGENTS=       0
+ AVERAGE QUALITY of FE     =   0.938    
+ MINIMUM QUALITY of FE     =   0.598     for the FE    11872
+ ECART TYPE / 1  of FE     =   0.932E-01
+ NUMBER of TRIANGLES  =   42726
+ 0.900=< QUALITY <1.000 : 37350 FE  87 % : *******************************************
+ 0.800=< QUALITY <0.900 :  4185 FE  10 % : *****
+ 0.700=< QUALITY <0.800 :  1167 FE   3 % : *
+ 0.600=< QUALITY <0.700 :    24 FE   0 % : .
+ COORD1 MIN=  -12.00000     MAX=   12.00000    
+ COORD2 MIN=  -12.00000     MAX=   12.00000    
+ COORD3 MIN=   0.000000     MAX=   0.000000    
+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+
+ NUMBER of EDGES in 1 FACE =         294
+ NUMBER of EDGES in 2 FACES=       63942
+ NUMBER of EDGES in 3 FACES=           0
+ SQUARE is NOT a CLOSED SURFACE of R**3  ..............................
+
+ LINE BOUNDARY of TYPE 51 :     294 VT,      0 TG,    294 FE,      0 FE with TG
+----------------------------------------------------------------------------------------------------
+
+ PROVENANCE DU PROBLEME ELASTICITE THERMIQUE NLSE ou FLUIDE: NLSE
+
+ SURFACE: SQUARE
+
+ ATTENTION: INPUT DATA GAME Number=1                                                             
+ Read File  2:  {Surface SQUARE}                                                                              
+ Read File  2:  1;    { Mass density }                                                                        
+
+------------------------ CREATION of TMS ~>SURFACE>SQUARE>MASSE  ------------------------
+ Read File  2:  1;    { Mass density is a Constant }                                                          
+ Read File  2:  Mass; { Mass density Value }                                                                  
+
+ CONTENTS of TMS ~>SURFACE>SQUARE>MASSE
+ tms : ~>>>MASSE 'Density of MASS'                                                              
+ LTDMAS 'Type of the MASS density' = 1 'Constant MASS density'                                  
+ DMASSE 'Value of the density of MASS' = 1.000000                                               
+ Read File  2:  2;    { Alfa heat conductivity Coefficient of Laplacians }                                    
+
+------------------------ CREATION of TMS ~>SURFACE>SQUARE>CONDUCTIVITE  ------------------------
+ Read File  2:  3;    { 2D material Homogenous isotropic constant conductivity }                              
+ Read File  2:  Alfa; { Constant Coefficient of Laplacians }                                                  
+
+ CONTENTS of TMS ~>SURFACE>SQUARE>CONDUCTIVITE
+ tms : ~>>>CONDUCTIVITE 'Conductivity of a SV'                                                  
+ LTCOND 'type of conductivity' = 3 '1D or 2D HOMOGENEOUS ISOTROPIC material'                    
+ CONDUC 'constant material conductivity' = -1.000000                                            
+ Read File  2:  6;    { NLSE Coefficient of U: Beta * ( WaveR**2 + WaveI**2 ) }                               
+
+------------------------ CREATION of TMS ~>SURFACE>SQUARE>COEFNLSE  ------------------------
+ Read File  2:  -1;        { Function }                                                                       
+ Read File  2:   NLSECoef; { Function Name }                                                                  
+
+ CONTENTS of TMS ~>SURFACE>SQUARE>COEFNLSE
+ tms : ~>>>COEFNLSE 'Coefficient ahead NonLinear Term'                                          
+ LTNLSE 'Type of Coefficient of NLSE' = -1 'function coefficient of NLSE'                       
+ NFNLSE 'Function NAME of NLSE coefficient' =                                                   
+ ( 1 : NLSECOEF )                                                                               
+ Read File  2: @;                                                                                             
+
+ LIGNE: BOUNDARY
+
+ ATTENTION: INPUT DATA GAME Number=1                                                             
+ Read File  2: {Line BOUNDARY}                                                                                
+ Read File  2:@;                                                                                              
+ Read File  2:5; {Algo1: IMPLICIT idu(t,X)/dt -Alfa Laplacian u(t,X) +Beta u(t,X)**3=0 }                      
+
+ *****************************************************************************************
+ SOLUTION  i du(t,X)/dt -Alfa LAPLACIEN u(t,X) +Beta u(t,X)**3 =  0  on the object SQUARE                  
+ *****************************************************************************************
+
+DATA of NONLINEAR SCHRODINGER EQUATION of the OBJECT SQUARE                  
+
+ Read File  2:  0;       { Initial TIME }                                                                     
+
+------------------------ CREATION of TMS ~>OBJET>SQUARE>ONDEINIT  ------------------------
+ Read File  2: -1;       { Real & Imaginary Part of INITIAL Wave FUNCTION of SQUARE }                         
+ Read File  2: InitWave; { NAME of the Initial Wave FUNCTION on the object }                                  
+
+ CONTENTS of TMS ~>OBJET>SQUARE>ONDEINIT                                                         
+ tms : ~>>>ONDEINIT 'INITIAL WAVE'                                                              
+ LTOND0 'type of INITIAL Wave' = -1 'FUNCTION INITIAL Wave'                                     
+ NFOND0 'NAME of INITIAL Wave FUNCTION' =                                                       
+ ( 1 : INITWAVE )                                                                               
+ Read File  2:  5;       { Final TIME }                                                                       
+ Read File  2:  0.001;   { Step of TIME }                                                                     
+ Read File  2:  200;     { Number of Wave Vectors to Store }                                                  
+
+ CONTENTS of TMS ~>SURFACE>SQUARE>MASSE                                                          
+ tms : ~>>>MASSE 'Density of MASS'                                                              
+ LTDMAS 'Type of the MASS density' = 1 'Constant MASS density'                                  
+ DMASSE 'Value of the density of MASS' = 1.000000                                               
+
+ CONTENTS of TMS ~>SURFACE>SQUARE>CONDUCTIVITE                                                   
+ tms : ~>>>CONDUCTIVITE 'Conductivity of a SV'                                                  
+ LTCOND 'type of conductivity' = 3 '1D or 2D HOMOGENEOUS ISOTROPIC material'                    
+ CONDUC 'constant material conductivity' = -1.000000                                            
+
+ CONTENTS of TMS ~>SURFACE>SQUARE>COEFNLSE                                                       
+ tms : ~>>>COEFNLSE 'Coefficient ahead NonLinear Term'                                          
+ LTNLSE 'Type of Coefficient of NLSE' = -1 'function coefficient of NLSE'                       
+ NFNLSE 'Function NAME of NLSE coefficient' =                                                   
+ ( 1 : NLSECOEF )                                                                               
+
+ SPACE DIMENSION (2 or 3)     =           2
+ NUMBER of NODES              =       85747
+ NUMBER of DoF per NODE       =           2
+ NUMBER of DEGREES of FREEDOM =      171494
+ INITIAL TIME of the STUDY    =   0.00000    
+ FINAL   TIME of the STUDY    =   5.00000    
+ CONSTANT STEP VALUE of TIME  =  0.100000E-02
+
+ The    68 WORDS of the ARRAY 1P25 are RESTORED in MCN
+ The   526 WORDS of the ARRAY 2P25 are RESTORED in MCN
+ The   330 WORDS of the ARRAY 3F25 are RESTORED in MCN
+ Read File  2:  1;       { Skyline Crout Factorization A=L D tL }                                             
+ DIRECT COMPUTATION by CROUT FACTORIZATION
+ SKYLINE MATRIX STORAGE =      667347776 MEMORY WORDS
+
+At TIME    0.00000     CASE     1 WAVE Value at      10 NODES
+DoF   42873: X=  -5.4203     Y= -0.54270     Z=   0.0000 : WAVE=  0.982320     + i    0.00000    
+DoF   42874: X=  -5.3861     Y= -0.55146     Z=   0.0000 : WAVE=  0.981761     + i    0.00000    
+DoF   42875: X=  -5.2983     Y= -0.56126     Z=   0.0000 : WAVE=  0.981161     + i    0.00000    
+DoF   42876: X=  -5.3407     Y= -0.55431     Z=   0.0000 : WAVE=  0.981604     + i    0.00000    
+DoF   42877: X=  -1.7973     Y= -0.89656E-01 Z=   0.0000 : WAVE=  0.998546     + i    0.00000    
+DoF   42878: X=  -1.7905     Y= -0.78507E-01 Z=   0.0000 : WAVE=  0.998661     + i    0.00000    
+DoF   42879: X=  -1.7772     Y= -0.78927E-01 Z=   0.0000 : WAVE=  0.998653     + i    0.00000    
+DoF   42880: X=  -1.7499     Y= -0.79562E-01 Z=   0.0000 : WAVE=  0.998639     + i    0.00000    
+DoF   42881: X=  -1.7634     Y= -0.79795E-01 Z=   0.0000 : WAVE=  0.998640     + i    0.00000    
+DoF   42882: X=  -1.7345     Y= -0.77777E-01 Z=   0.0000 : WAVE=  0.998652     + i    0.00000    
+At TIME   0.00000     VECTOR"WAVE NUMBER =    1 MAX |WAVE(Node)| =   1.00100    
+Wave Real Part MINIMUM COMPUTED =  0.123286E-03 at NODE     552 : X=  -7.5000     Y=   12.000     Z=   0.0000    
+Wave Real Part MAXIMUM COMPUTED =   1.00100     at NODE   67541 : X=   7.5000     Y=  0.26037E-02 Z=   0.0000    
+Wave Imag Part MINIMUM COMPUTED =   0.00000     at NODE       1 : X=  -11.813     Y=   12.000     Z=   0.0000    
+Wave Imag Part MAXIMUM COMPUTED =   0.00000     at NODE       1 : X=  -11.813     Y=   12.000     Z=   0.0000    
+ At INITIAL TIME   0.00000     STORAGE of      171494 DoF in COLUMN    1 of TMS VECTEUR"ONDENLSE    
+
+At TIME    0.00000     CASE     1 WAVE Value at       5 NODES
+DoF   42873: X=  -5.4203     Y= -0.54270     Z=   0.0000 : WAVE=  0.982320     + i    0.00000    
+DoF   42874: X=  -5.3861     Y= -0.55146     Z=   0.0000 : WAVE=  0.981761     + i    0.00000    
+DoF   42875: X=  -5.2983     Y= -0.56126     Z=   0.0000 : WAVE=  0.981161     + i    0.00000    
+DoF   42876: X=  -5.3407     Y= -0.55431     Z=   0.0000 : WAVE=  0.981604     + i    0.00000    
+DoF   42877: X=  -1.7973     Y= -0.89656E-01 Z=   0.0000 : WAVE=  0.998546     + i    0.00000    
+At TIME   0.00000     VECTOR"WAVE NUMBER =    1 MAX |WAVE(Node)| =   1.00100    
+Wave Real Part MINIMUM COMPUTED =  0.123286E-03 at NODE     552 : X=  -7.5000     Y=   12.000     Z=   0.0000    
+Wave Real Part MAXIMUM COMPUTED =   1.00100     at NODE   67541 : X=   7.5000     Y=  0.26037E-02 Z=   0.0000    
+Wave Imag Part MINIMUM COMPUTED =   0.00000     at NODE       1 : X=  -11.813     Y=   12.000     Z=   0.0000    
+Wave Imag Part MAXIMUM COMPUTED =   0.00000     at NODE       1 : X=  -11.813     Y=   12.000     Z=   0.0000    
+ Max |Wave(t=   0.0000000     ,NODE)|=   1.0009995758690535     
+ONE SKYLINE MATRIX of      333588141 DOUBLE REALS with an HALF WIDTH AVERAGE=     1945
+
+ ALLOCATION DEMAND  of   333588141  DOUBLE PRECISION of [KG] MATRIX
+ ALLOCATION CORRECT of   333588141  DOUBLE PRECISION of [KG] MATRIX
+
+Construction of the GLOBAL MATRIX [KG]
+DLFXLI: NUMBER of DEGREES of FREEDOM=  171494  FIXED =       0  NOT FIXED =  171494
+Crout Factorization 0 : [KG]=[L] [D] t[L]
+
+At TIME  0.100000E-02 TIME STEP=  0.1000000E-02 ITER m=  1  ITER Nb=         0  -> COMPUTATION of the COMPLEX WAVE
+********************************************************************************************************************************************
+At TIME   0.100000E-02 CASE     1 WAVE Value at       5 NODES
+DoF   42873: X=  -5.4203     Y= -0.54270     Z=   0.0000 : WAVE=   1.54245     + i    2.21305    
+DoF   42874: X=  -5.3861     Y= -0.55146     Z=   0.0000 : WAVE=   1.95715     + i    2.29710    
+DoF   42875: X=  -5.2983     Y= -0.56126     Z=   0.0000 : WAVE=   1.31101     + i   0.737057    
+DoF   42876: X=  -5.3407     Y= -0.55431     Z=   0.0000 : WAVE=   1.76824     + i    1.47517    
+DoF   42877: X=  -1.7973     Y= -0.89656E-01 Z=   0.0000 : WAVE=   6.73525     + i    1.33446    
+At TIME  0.100000E-02 VECTOR"WAVE NUMBER =    1 MAX |WAVE(Node)| =   106.984    
+Wave Real Part MINIMUM COMPUTED =  -5.41281     at NODE   37852 : X= -0.52070     Y=  0.66253E-01 Z=   0.0000    
+Wave Real Part MAXIMUM COMPUTED =   106.960     at NODE   44446 : X= -0.44897     Y= -0.32055E-01 Z=   0.0000    
+Wave Imag Part MINIMUM COMPUTED =  -29.8439     at NODE   43886 : X= -0.77850E-01 Y= -0.20306E-01 Z=   0.0000    
+Wave Imag Part MAXIMUM COMPUTED =   34.5670     at NODE   45625 : X=   1.4648     Y=  0.36013E-01 Z=   0.0000    
+At TIME  0.100000E-02 ITER m=  1  Max|Um+1(N)|    =   106.984       Max|Um+1(N)-Um(N)|     =   105.984      Max|Um+1-Um|/Max|Um+1|    =  0.990658    
+                                  Sum|Um+1|/NodeNb=   4.40225       Sum||Um+1|-|Um||/NodeNb=   4.36216      Sum||Um+1|-|Um||/Sum|Um+1|=  0.990894    
+
+At TIME  0.100000E-02 TIME STEP=  0.1000000E-02 ITER m=  2  ITER Nb=         1  -> COMPUTATION of the COMPLEX WAVE
+********************************************************************************************************************************************
+At TIME   0.100000E-02 CASE     1 WAVE Value at       5 NODES
+DoF   42873: X=  -5.4203     Y= -0.54270     Z=   0.0000 : WAVE=   5.20681     + i  -0.756017    
+DoF   42874: X=  -5.3861     Y= -0.55146     Z=   0.0000 : WAVE=   5.35842     + i  -0.718411    
+DoF   42875: X=  -5.2983     Y= -0.56126     Z=   0.0000 : WAVE=  -1.04548     + i    4.60016    
+DoF   42876: X=  -5.3407     Y= -0.55431     Z=   0.0000 : WAVE=   3.43221     + i   -1.44124    
+DoF   42877: X=  -1.7973     Y= -0.89656E-01 Z=   0.0000 : WAVE=  0.604778E-01 + i    4.71103    
+At TIME  0.100000E-02 VECTOR"WAVE NUMBER =    1 MAX |WAVE(Node)| =   37918.1    
+Wave Real Part MINIMUM COMPUTED =  -33464.2     at NODE   43619 : X= -0.44260     Y= -0.20528E-01 Z=   0.0000    
+Wave Real Part MAXIMUM COMPUTED =   2879.99     at NODE   48290 : X= -0.47194     Y= -0.12096     Z=   0.0000    
+Wave Imag Part MINIMUM COMPUTED =  -18986.4     at NODE   44446 : X= -0.44897     Y= -0.32055E-01 Z=   0.0000    
+Wave Imag Part MAXIMUM COMPUTED =   1454.63     at NODE   43661 : X=  -3.8266     Y= -0.33010     Z=   0.0000    
+At TIME  0.100000E-02 ITER m=  2  Max|Um+1(N)|    =   37918.1       Max|Um+1(N)-Um(N)|     =   37812.4      Max|Um+1-Um|/Max|Um+1|    =  0.997212    
+                                  Sum|Um+1|/NodeNb=   140.548       Sum||Um+1|-|Um||/NodeNb=   136.240      Sum||Um+1|-|Um||/Sum|Um+1|=  0.969351    
+
+****************************************************************************************************
+DETECTION of WAVE EXPLOSION at TIME  0.100000E-02
+****************************************************************************************************
+At TIME  0.100000E-02 STORAGE of the WAVE    2 of   171494 DEGREES of FREEDOM
+NLSEIMPL: Storage of VECTEUR"TESTM_ERREUR of        2 (Testm, Max|U|, Time)
+
+NLSEIMPL: SKYLINE MATRIX STORAGE=      667347776 MEMORY WORDS
+
+CPU of VECTOR VG DECLARATION  =        0.04 CPU SECONDS
+CPU of MATRIX KG CONSTRUCTION =        4.66 CPU SECONDS
+CPU of MATRIX KG FACTORIZATION=     4051.57 CPU SECONDS
+CPU of TIME+FIX PT ITERATIONS =       23.82 CPU SECONDS
+CPU TOTAL SOLUTION COMPUTATION=     4080.69 CPU SECONDS
+
+ Read File  2:@;                                                                                              
+ Read File  2:CLOSE;                                                                                          
+ END of READING an INPUT FILE                                                                    
+ To CONTINUE TYPE @ or ESCAPE                                                                    
+ Keyboard:@;                                                                                              
+ Type of @ => ESCAPE of READING                                                                  
+ Keyboard:@;                                                                                              
+ Type of @ => ESCAPE of READING                                                                  
+ Keyboard:@;                                                                                              
+ Type of @ => ESCAPE of READING                                                                  
+ Keyboard:@;                                                                                              
+ Type of @ => ESCAPE of READING                                                                  
+ Keyboard:          99;                                                                                   
+ OK, All DATA are SAVING on DISK FILES ...                                                       
+
+STOP : CORRECT END of MEFISTO EXECUTION
+
+ap:/home/ap/mefisto/testa/cylbreak2d-bash-> ll
+total 16
+-rwxr-xr-x 1 ap ap 1990 août  21  2011 cylbreak2d.impl
+-rwxr-xr-x 1 ap ap 2512 août   5  2011 cylbreak2d.mesh0p1
+-rwxr-xr-x 1 ap ap 2512 août   4  2011 cylbreak2d.meshp1
+-rwxr-xr-x 1 ap ap 2512 août   4  2011 cylbreak2d.meshp2
+ap:/home/ap/mefisto/testa/cylbreak2d-bash->

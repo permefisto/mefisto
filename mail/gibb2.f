@@ -1,0 +1,67 @@
+      SUBROUTINE GIBB2( NBNOE,  NVOI, MUNE,
+     &                  MAXDEG, NDEG, MAXLBD, MAXPRF )
+C ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+C BUT :   CONSTRUIRE LE TABLEAU NDEG DEFINI PAR :
+C -----   (NDEG(I)=DEGRE DU NOEUD I
+C         (LE NB DES NOEUDS ADJACENTS DE I AVEC I)
+C
+C     ENTREES :
+C     ---------
+C     NBNOE  : NOMBRE TOTAL DE NBNOEUDS
+C     NVOI   : TABLEAU DES VOISINS DE CHAQUE NBNOEUD
+C     MUNE   : TABLEAU DES POINTEURS ASSOCIES AU TABLEAU PRECEDENT
+C
+C     SORTIE :
+C     --------
+C     NDEG   : TABLEAU DES DEGRES DE CHAQUE NOEUD
+C     MAXLBD : PLUS GRANDE LARGEUR DE BANDE
+C     MAXPRF : PROFIL NON SYMETRIQUE DE LA MATRICE ASSOCIEE A LA NUMEROTATION
+C     MAXDEG : DEGRE MAXIMUM
+C ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+C PROGRAMMEUR :   BARGACH MOHAMED LAN189 PARIS    OCTOBRE  1989
+C MODIFICATIONS : DEFAIX THIERRY                  DECEMBRE 1989
+C23456---------------------------------------------------------------012
+      DIMENSION         MUNE(0:NBNOE), NVOI(*), NDEG(NBNOE)
+      DOUBLE PRECISION  MAXPRF
+C
+      MAXLBD = 0
+      MAXPRF = 0D0
+      MAXDEG = 0
+C
+C     BOUCLE SUR LES NOEUDS
+C     =====================
+      MU1 = 1
+      DO 40 I=1,NBNOE
+         MU2 = MUNE(I)
+C
+C        DEFINITION DU DEGRE DU NOEUD I AVEC I COMPRIS
+         NDEG(I) = MU2 - MU1 + 1
+C
+C        ON DETERMINE MAXDEG
+         IF( NDEG(I) .GT. MAXDEG ) THEN
+             MAXDEG = NDEG(I)
+         ENDIF
+C
+         NMIN = I
+         NMAX = I
+         DO 20 J = MU1, MU2
+C           ON CHERCHE PARMI LES VOISINS CELUI DE PLUS PETIT NUMERO
+            NMIN = MIN( NMIN, NVOI(J) )
+C           ON CHERCHE PARMI LES VOISINS CELUI DE PLUS GRAND NUMERO
+            NMAX = MAX( NMAX, NVOI(J) )
+   20    CONTINUE
+C
+C        DETERMINATION DE LA LARGEUR DE BANDE ET DU PROFIL NON SYMETRIQUE
+         IRW    = NMAX - NMIN + 1
+         MAXPRF = MAXPRF + IRW
+         IF( IRW .GT. MAXLBD ) THEN
+             MAXLBD = IRW
+         ENDIF
+C
+C        NOEUD SUIVANT
+         MU1 = MU2 + 1
+C
+   40 CONTINUE
+C
+      RETURN
+      END

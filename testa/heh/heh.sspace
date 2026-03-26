@@ -1,0 +1,49 @@
+{ ==================================================================== }
+{ Logiciel MEFISTO     : Version July 2007                             }
+{ Name of the User     : Alain Perronnet                               }
+{ Name of the Project  : vp21                                          }
+{ Date                 : 15/10/2003                                    }
+{ Heure                : 15h 00m 23s                                   }
+{ NEUMANN condition on the boundary                                    }
+{ ==================================================================== }
+DefVar Za, Zb;
+Za=2;  Zb=1;
+
+2;  { INPUT DATA of the MATERIALS and BOUNDARY CONDITIONS }
+
+{ VOLUME: SPHERE }
+ 1;   { Rot volumic mass density }
+ 1;   { Mass constant }
+ 1;   { DMASSE 'Density of MASS' reel ; }
+
+ 2;   { [A] HEAT TENSOR CONDUCTIVITY }
+ 1;   { 3D MATERIAL Homogeneous Isotropic }
+ 1/2; { Conductivity }
+
+ 6;   { CT Coefficient in front of TEMPERATURE }
+ -1;  { Function Coefficient of Temperature }
+ deffunc gama(t, x,y,z, no_type_object, material, temper);
+ defvar g1, g2;
+ g1=sqrt((x+a)**2+y*y+z*z);
+ g2=sqrt((x-a)**2+y*y+z*z);
+ gama=(Za*Zb)/(2*a)-Za/g1-Zb/g2;
+ endfunc;
+ gama; { DANS LE LEXIQUE ~>FONCTION }
+@;
+
+{ SURFACE: SURFSPHERE }
+ 2; { SOURCE FIXED }
+ 1; { SOURCE constant }
+ 0; { VALUE of the CONSTANT }
+ @;
+
+6; {computation of lowest eigenvalues Omega**2}
+  1; {sub-space method}
+-1.02; {inferior limit of eigenvalues}
+ 1.52; {superior limit of eigenvalues}
+@;
+
+8; {Drawing of the eigenvectors}
+ 2; 2; 100; 90; 90;
+
+close;

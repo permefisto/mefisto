@@ -1,0 +1,6 @@
+variable TYP_OBJT 'Types d''objets'   entier 
+ ( 1  : 'POINT'
+ , 2  : 'LIGNE'
+ , 3  : 'SURFACE'
+ , 4  : 'VOLUME'
+ , 5  : 'OBJET' );

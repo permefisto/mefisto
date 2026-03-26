@@ -1,0 +1,1800 @@
+      SUBROUTINE THESTA( KNOMOB, IERR )
+C+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+C BUT :    CALCULER LES TEMPERATURES ET FLUX DANS UN DOMAINE
+C -----    1D OU 2D OU 3D OU AXISYMETRIQUE OU 6D-CUBE
+C          EN THERMIQUE STATIONNAIRE LINEAIRE OU NON
+C
+C          COMPUTATION of TEMPERATURES of an OBJECT
+C          1D or 2D or 3D or AXISYMMETRIC or a 6D-CUBE
+C          FOR A STEADY, LINEAR OR NOT, HEAT TRANSFER PROBLEM
+C
+C ENTREE :
+C --------
+C KNOMOB : NOM DE L'OBJET DE THERMIQUE STATIONNAIRE A TRAITER
+C          OBJECT NAME TO TREAT
+C
+C SORTIE :
+C --------
+C IERR   : 0 SI PAS D'ERREUR D'EXECUTION, NON NUL SINON
+C          0 IF NO ERROR, NOT NULL ELSE
+C+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+C MODIFS : ALAIN PERRONNET ANALYSE NUMERIQUE UPMC & TAMU    JUILLET 2000
+C MODIFS : ALAIN PERRONNET ANALYSE NUMERIQUE UPMC & TAMU    JUILLET 2003
+C MODIFS : ALAIN PERRONNET LJLL UPMC PARIS & St PIERRE PERRAY  JUIN 2009
+C23456---------------------------------------------------------------012
+      DOUBLE PRECISION   EPSITE
+      PARAMETER         (MXTYEL=7)
+      PARAMETER         (MOPAGE=512)
+      PARAMETER         (ITERMX=150)
+      PARAMETER         (EPSITE=1D-3)
+CCC      PARAMETER         (EPSITE=1.5D-3)
+CCC      PARAMETER         (REDUCT=1D0)
+      include"./incl/langue.inc"
+      include"./incl/gsmenu.inc"
+      include"./incl/ntmnlt.inc"
+      include"./incl/donthe.inc"
+      include"./incl/donele.inc"
+      include"./incl/a_objet__topologie.inc"
+      include"./incl/a_objet__definition.inc"
+      include"./incl/a_objet__erreurth.inc"
+      include"./incl/a___arete.inc"
+      include"./incl/a___xyzsommet.inc"
+      include"./incl/a___xyznoeud.inc"
+      include"./incl/a___xyzpoint.inc"
+      include"./incl/a___npef.inc"
+      include"./incl/a___conductivite.inc"
+      include"./incl/a___source.inc"
+      include"./incl/a___dilatation.inc"
+      include"./incl/a___contact.inc"
+      include"./incl/a___vecteur.inc"
+      include"./incl/a___profil.inc"
+      include"./incl/a___morse.inc"
+      include"./incl/a___fluxpt.inc"
+      include"./incl/a___dtemperature.inc"
+      include"./incl/msvaau.inc"
+      include"./incl/ponoel.inc"
+      include"./incl/ctemps.inc"
+      include"./incl/cthet.inc"
+      include"./incl/cnonlin.inc"
+C
+      COMMON / UNITES / LECTEU, IMPRIM, INTERA, NUNITE(29)
+      include"./incl/pp.inc"
+      COMMON            MCN(MOTMCN)
+      REAL              RMCN(1)
+      DOUBLE PRECISION  DMCN(1)
+      EQUIVALENCE      (MCN(1), RMCN(1), DMCN(1))
+C
+      EXTERNAL          ETTAEL
+      DOUBLE PRECISION  PENALI
+      DOUBLE PRECISION  RELMIN, D2PI
+      DOUBLE PRECISION  DINFO, DCPU, DFABG, DFACT, DTEMP, DMAT
+      DOUBLE PRECISION  TECMOY, TECMIN, TECMAX, TEXMIN, TEXMAX
+      DOUBLE PRECISION  NORMDF, NORMUM, NORMAX, NORMXP, MINNEG, DIFE,
+     %                  NORH1U, NORH10, RESIDU, RESID0, NORMRE
+      DOUBLE PRECISION  VALUN0, FACECH, ENERGI, ENERG0, PROSCD
+      DOUBLE PRECISION  DEXPOS
+      INTEGER           NUMIOB(4), NUMAOB(4), MNDOEL(4), MXDOEL(4)
+      DOUBLE PRECISION, allocatable, dimension(:) :: KG
+      INTEGER           IERKGALLOC
+      INTRINSIC         ALLOCATED
+      CHARACTER*(*)     KNOMOB
+      CHARACTER*80      KNOM
+      LOGICAL           COMP
+      DATA              RELMIN/-1D28/
+C     TABLEAU NON UTILISE (VITESSE D'UN FLUIDE NON ICI CALCULE)
+      DOUBLE PRECISION  VITEGt(5,3)
+C
+      IF( LANGAG .EQ. 0 ) THEN
+         WRITE(IMPRIM,10000) KNOMOB
+      ELSE
+         WRITE(IMPRIM,20000) KNOMOB
+      ENDIF
+10000 FORMAT(/1X,80('*')/
+     %' RESOLUTION THERMIQUE STATIONNAIRE DE L''OBJET ',A/1X,80('*'))
+20000 FORMAT(/1X,80('*')/
+     %' STEADY HEAT TRANSFER of the OBJECT ',A/1X,80('*'))
+C
+C     QUELQUES INITIALISATIONS
+C     ========================
+C     A PRIORI CONDITION DE DIRICHLET NON PENALISEE
+C     A PRIORI NOT PENALIZED DIRICHLET CONDITION
+      PENALI = 0D0
+C     L'INSTANT DU CALCUL
+      TEMPS  = 0.0
+      MNTIME = 0
+C
+      DCPU   = DINFO( 'DELTA CPU' )
+      DFABG  = 0D0
+      DFACT  = 0D0
+      DTEMP  = 0D0
+      IERR   = 0
+      D2PI   = ATAN( 1D0 ) * 8D0
+C     LE NOMBRE DE MOTS D'UNE VARIABLE REEL2
+C     WORD NUMBER OF A DOUBLE PRECISION
+      MOREE2 = MOTVAR(6)
+C
+C     PROTECTION DES ADRESSES POUR EVITER DES PROBLEMES LORS
+C     DE LA DESTRUCTION DES TABLEAUX
+C     PROTECTION OF ADRESSES OF TMC AND TMS ARRAYS
+      NBDLMXEF = 0
+      NBJEUX = 1
+      MNNPEF = 0
+      MNTPOB = 0
+      MNTAUX = 0
+      MNTAEL = 0
+      MNTHER = 0
+      MNNODL = 0
+      MNX    = 0
+      MNROWS = 0
+      IERKGALLOC = 1
+      MNLPLI = 0
+      MNLPCO = 0
+      MNLPLC = 0
+      MNLPCC = 0
+      MNLPLU = 0
+      MNAGC  = 0
+      NBRFNX = 0
+      MONFNX = 0
+      MNNFNX = 0
+      MOVFNX = 0
+      MNVFNX = 0
+      NBRDLX = 0
+      MONDLX = 0
+      MNNDLX = 0
+      MNVDLX = 0
+      MNAUX  = 0
+      MNFLPT = 0
+      MNFLTO = 0
+      MNERTH = 0
+      MNUG0  = 0
+      MNUG1  = 0
+      MNVG   = 0
+      MNFG   = 0
+      MNRG   = 0
+      MNTHET = 0
+      MNTHDL = 0
+      DO 5 I=1,4
+         MNDOEL(I) = 0
+         MXDOEL(I) = 0
+ 5    CONTINUE
+      NBTYEL = 0
+      MOAUX  = 0
+      MOTAEL = 0
+      NBDLMX = 0
+      NTDL   = 0
+      MOFLTO = 0
+      MOFLPT = 0
+      MNFOME = 0
+      MNFGAM = 0
+      MOTSGC = 0
+      LOLPCC = 0
+      TEMPEL = 0D0
+      NBCOOR = 0
+      ISTAB  = 0
+C
+C     VERIFICATION DU NOM_DE_L'OBJET et AFFICHAGE
+C     VERIFICATION of the OBJECT NAME and DISPLAY
+C     ===========================================
+C     RECHERCHE DU NOM DE L'OBJET DANS LE LEXIQUE DES OBJETS
+C     FIND the OBJECT NAME in the LEXICON of OBJECTS
+      CALL LXLXOU( NTOBJE, KNOMOB, NTLXOB, MNLXOB )
+C     S'IL N'EXISTE PAS RETOUR A LA DEMANDE DU NOM DE L'OBJET
+      IF( NTLXOB .LE. 0 ) THEN
+         NBLGRC(NRERR) = 1
+         IF( LANGAG .EQ. 0 ) THEN
+            KERR(1) = 'ERREUR: OBJET INCONNU ' // KNOMOB
+         ELSE
+            KERR(1) = 'ERROR: UNKNOWN OBJECT ' // KNOMOB
+         ENDIF
+         CALL LEREUR
+         CALL LXIM( NTOBJE )
+         IERR = 1
+         RETURN
+      ENDIF
+C
+C     RECHERCHE DU TABLEAU DEFINITION DE L'OBJET
+C     FIND the TMS DEFINITION of the OBJECT
+      CALL LXTSOU( NTLXOB, 'DEFINITION', NTDFOB, MNDFOB )
+C
+C     S'IL N'EXISTE PAS RETOUR A LA DEMANDE DU NOM DE L'OBJET
+C     IF IT DOES NOT EXIST, RETURN TO ASK THE OBJECT NAME
+      IF( NTDFOB .LE. 0 ) THEN
+         NBLGRC(NRERR) = 2
+         IF( LANGAG .EQ. 0 ) THEN
+            KERR(1) = 'ERREUR: OBJET ' // KNOMOB
+            KERR(2) = 'SANS DEFINITION => A REDEFINIR'
+         ELSE
+            KERR(1) = 'ERROR: OBJECT ' // KNOMOB
+            KERR(2) = 'WITHOUT DEFINITION => DEFINE AGAIN'
+         ENDIF
+         CALL LEREUR
+         RETURN
+      ENDIF
+C
+C     RECHERCHE DU TABLEAU TOPOLOGIE DE L'OBJET
+C     FIND the TMS TOPOLOGIE of the OBJECT
+      CALL LXTSOU( NTLXOB, 'TOPOLOGIE', NTTOPO, MNTOPO )
+C
+C     S'IL N'EXISTE PAS D'INTERPOLATION ALORS
+C          RETOUR A LA DEMANDE DU NOM DE L'OBJET
+      IF( NTTOPO .LE. 0 ) THEN
+         NBLGRC(NRERR) = 3
+         IF( LANGAG .EQ. 0 ) THEN
+            KERR(1) = 'ERREUR: OBJET ' // KNOMOB
+            KERR(2) = 'OBJET SANS INTERPOLATION'
+            KERR(3) = 'RE-EXECUTER MAILLER POUR LE FAIRE'
+         ELSE
+            KERR(1) = 'ERROR: OBJECT ' // KNOMOB
+            KERR(2) = 'OBJECT WITHOUT INTERPOLATION'
+            KERR(3) = 'EXECUTE AGAIN MAILLER TO DO IT'
+         ENDIF
+         CALL LEREUR
+         RETURN
+      ENDIF
+C
+C     L'ANCIEN HISTORIQUE EST EFFACE
+C     PREVIOUS HISTORIC is CANCELLED
+      CALL RECTEF( NRHIST )
+      NBLGRC(NRHIST) = 1
+      IF( LANGAG .EQ. 0 ) THEN
+         KHIST(1) = 'OBJET: ' // KNOMOB
+      ELSE
+         KHIST(1) = 'OBJECT: ' // KNOMOB
+      ENDIF
+      CALL LHISTO
+C
+C     PROBLEME A COEFFICIENTS INDEPENDANTS OU NON DE LA TEMPERATURE?
+C     TYPE of PROBLEM COEFFICIENTS (DEPENDENT or NOT of the SOLUTION)?
+C     ================================================================
+      CALL LIMTCL( 'resothst', TESTNL )
+      IF( TESTNL .LE. 0 ) RETURN
+C     TESTNL=1: Coefficients INDEPENDANTS de la TEMPERATURE
+C     TESTNL=2: Coefficients   DEPENDANTS de la TEMPERATURE
+C     TESTNL=3: Probleme NON LINEAIRE de LANE-EMDEN
+C
+cccC  TESTNL=3: PB de CHEN & ZHOU avec DIVISION par U(N0)
+cccC  TESTNL=4: PB de CHEN & ZHOU avec DIVISION par MAX|U(X)|
+cccC  TESTNL=6  NLSE Non Linear SCHRODINGER Equations
+C
+      TESTNL = TESTNL - 1
+      IF( TESTNL .GE. 2 ) THEN
+C
+C        SPECIAL STUDY
+C        EXPOSANT p DU TERME NON LINEAIRE U**p EN FAIT |U|**(p-1) * U
+C        |U| EST NECESSAIRE POUR CALCULER ** avec UN REEL p-1
+C        ------------------------------------------------------------
+ 6       CALL INVITE( 131 )
+         NCVALS = 0
+         CALL LIRRDP( NCVALS, DEXPOS )
+         IF( NCVALS .LT. 0 ) RETURN
+         IF( DEXPOS .LE. 0.D0 ) GOTO 6
+         IF( LANGAG .EQ. 0 ) THEN
+            WRITE(IMPRIM,10005) DEXPOS-1
+         ELSE
+            WRITE(IMPRIM,20005) DEXPOS-1
+         ENDIF
+10005 FORMAT(' TRAITEMENT DU TERME NON LINEAIRE |U|**',G15.6,'*U')
+20005 FORMAT(' TREATMENT of NONLINEAR TERM |U|**',G15.6,'*U')
+      ELSE
+         DEXPOS = 0.D0
+      ENDIF
+C
+C     L'OBJET EST-IL STRUCTURE CLASSIQUE, SOUS-DOMAINES OU JOINTS?
+C     STRUCTURE of THE OBJECT: CLASSIC, SUB-DOMAIN or MORTAR
+C     ------------------------------------------------------------
+      NDOUNO = MCN(MNDFOB+WDOUNO)
+C
+      IF ( NDOUNO .EQ. 1 ) THEN
+C
+C        RESOLUTION PAR LA METHODE DES SOUS-DOMAINES en 2D
+C        SOLUTION by a 2D SUB-DOMAIN METHOD
+C        =================================================
+         IF( LANGAG .EQ. 0 ) THEN
+            WRITE(IMPRIM,10006) KNOMOB
+         ELSE
+            WRITE(IMPRIM,20006) KNOMOB
+         ENDIF
+10006 FORMAT(/,1X,80('=')/,
+     %' THERMIQUE STATIONNAIRE PAR SOUS-DOMAINES DE L''OBJET ',A,/,
+     %1X,80('='))
+20006 FORMAT(/,1X,80('=')/,
+     %' STEADY HEAT TRANSFER by SUB-DOMAINS of the OBJECT',A,/,
+     %1X,80('='))
+         CALL SDTHER( KNOMOB, IERR )
+         GOTO 9000
+C
+      ELSE IF ( NDOUNO .EQ. 2 ) THEN
+C
+C        RESOLUTION PAR LA METHODE DES JOINTS en 2D
+C        SOLUTION by a 2D MORTAR METHOD
+C        ==========================================
+         IF( LANGAG .EQ. 0 ) THEN
+            WRITE(IMPRIM,10007) KNOMOB
+         ELSE
+            WRITE(IMPRIM,20007) KNOMOB
+         ENDIF
+10007 FORMAT(/,1X,80('=')/,
+     %' THERMIQUE STATIONNAIRE PAR JOINTS DE L''OBJET ',A,/,
+     %1X,80('='))
+20007 FORMAT(/,1X,80('=')/,
+     %' STEADY HEAT TRANSFER by MORTAR of the OBJECT',A,/,
+     %1X,80('='))
+         CALL JOTHER( KNOMOB, IERR )
+         GOTO 9000
+C
+      ENDIF
+C
+C     SINON : RESOLUTION CLASSIQUE
+C     ELSE  : CLASSIC SOLUTION
+C     ============================
+C     CHOISIR LA METHODE DE RESOLUTION DU SYSTEME LINEAIRE
+C     CHOOSE THE METHOD to SOLVE THE LINEAR SYSTEM
+C     ====================================================
+ 10   CALL LIMTCL( 'methreso', NORESO )
+      IF( NORESO .LE. 0 ) GO TO 9999
+C     NORESO=1 POUR FACTORISATION DE CHOLESKY        SUR MATRICE PROFIL
+C            2 POUR GRADIENT CONJUGUE PRECONDITIONNE SUR MATRICE MORSE
+C            3 POUR UN MULTI-PROCESSOR COMPUTER avec PETSc
+C
+      IF( NORESO .EQ. 2 ) THEN
+C
+C        LECTURE DU NIVEAU DE FACTORISATION INCOMPLETE=0,1,2
+C        READING of the NUMBER LEVEL for INCOMPLETE CHOLESKY FACTORIZATION
+         CALL INVITE( 36 )
+         NIVMAX = 10
+         NIVEAU = 0
+         NCVALS = 4
+         CALL LIRENT( NCVALS, NIVEAU )
+         IF( NCVALS .LT. 0 ) GOTO 9999
+C
+      ELSE IF( NORESO .GE. 4 ) THEN
+
+         NBLGRC(NRERR) = 1
+         IF( LANGAG .EQ. 0 ) THEN
+            KERR(1) = 'ERREUR: METHODE DE RESOLUTION NON PROGRAMMEE'
+         ELSE
+            KERR(1) = 'ERROR: SOLVER METHOD NOT PROGRAMMED'
+         ENDIF
+         CALL LEREUR
+         IF( INTERA .GE. 3 ) GOTO 10
+         CALL ARRET( 100 )
+
+      ENDIF
+C
+C     RECHERCHE DES TABLEAUX XYZSOMMET XYZNOEUD XYZPOINT NPEF" DE l'OBJET
+C     FIND THE TMS XYZSOMMET XYZNOEUD XYZPOINT NPEF"xxxx  of the OBJECT
+C     Cf $MEFISTO/td/da/a___xyznoeud   a___npef
+C     ===================================================================
+      CALL MIMAOB( NBJEUX, NTLXOB, MXDOTH, NTTOPO, MNTOPO,
+     %             NTXYZP, MNXYZP, NTXYZN, MNXYZN,
+     %             MXTYEL, NBTYEL, MTNPEF, MNNPEF,
+     %             NUMIOB, NUMAOB,
+     %             NDPGST, NBOBIN, MNOBIN, NBOBCL, MNOBCL,
+     %             MXDOEL, MNDOEL, IERR )
+      IF( IERR .NE. 0 ) GOTO 9999
+C     ICI NUMIOB CONTIENT LES 4 NUMEROS MINIMA DES PLSV
+C         NUMAOB          LES 4 NUMEROS MAXIMA DES PLSV
+C     MNDOEL LES 4 ADRESSES MCN DES TABLEAUX MIN MAX DES PLSV
+C     MNDOEL THE 4 ADRESSES MCN of THE MIN MAX ARRAY MCN ADDRESSES OF PLSV
+C     TABLEAUX DECRIVANT LA THERMIQUE DE L'OBJET COMPLET
+C
+C     NOMBRE (3 ou 6) DES COORDONNEES DES NOEUDS
+      NBCOOR = MCN( MNXYZN + WBCOON )
+C
+C     NOMBRE DE NOEUDS DU MAILLAGE DE L'OBJET
+      NBNOEU = MCN(MNXYZN+WNBNOE)
+C
+C     NOMBRE TOTAL DE DEGRES DE LIBERTE THERMIQUES
+C     UNE TEMPERATURE PAR NOEUD DU MAILLAGE
+      NTDL = NBNOEU
+C
+C     NOMBRE DE POINTS DU MAILLAGE DE L'OBJET
+      NBPOI = MCN( MNXYZP + WNBPOI )
+C
+C     NDIM LA DIMENSION 1 OU 2 OU 3 OU 6 DE L'ESPACE DES COORDONNEES
+      CALL DIMCOO( NBPOI, MCN(MNXYZP+WYZPOI), NDIM )
+C
+C     PARTICULARITE DES 6-CUBES (3Q1C NON A TRAITER EN THERMIQUE)
+      IF( NBCOOR .EQ. 6 ) THEN
+         NBTYEL = 1
+         NDIM   = NBCOOR
+      ENDIF
+C
+      IF( LANGAG .EQ. 0 ) THEN
+         WRITE(IMPRIM,10012) NDIM,NBPOI,NBNOEU,NBNOEU
+      ELSE
+         WRITE(IMPRIM,20012) NDIM,NBPOI,NBNOEU,NBNOEU
+       ENDIF
+10012 FORMAT(/
+     %' DIMENSION 1 ou 2 ou 3 ou 6 de l''ESPACE =',I15/
+     %' NOMBRE de POINTS                        =',I15/
+     %' NOMBRE de NOEUDS                        =',I15/
+     %' NOMBRE de DEGRES de LIBERTE             =',I15/)
+20012 FORMAT(/
+     %' DIMENSION 1 or 2 or 3 or 6 of the SPACE =',I15/
+     %' NUMBER of POINTS                        =',I15/
+     %' NUMBER of NODES                         =',I15/
+     %' NUMBER of DEGREES of FREEDOM            =',I15/)
+C
+C     RETROUVER LES ADRESSES MCN DES DONNEES THERMIQUES
+C     DES   SV "OBJETS INTERNES"    DE L'OBJET
+C     DES PLS  "OBJETS AUX LIMITES" DE L'OBJET
+C     RETRIEVE THE THERMIC DATA of SURFACES or VOLUMES
+C              THE BOUNDARY CONDITIONS on POINTS LINES (SURFACES)
+C     ===========================================================
+      CALL THEDON( NUMIOB, NBOBIN, MNOBIN, NBOBCL, MNOBCL,
+     %             NBJEUX, MNDOEL,
+     %             IEMAST, IECHMA, IECOND, IEDILA, IEVIFL, IECOET,
+     %             IESOIN, IECONT, IEECHA, IESOCL, IESOPO,
+     %             IETEIN, IEVIIN, IEVIANT,IECOBO,
+     %             IERR )
+      IF( IECOND .NE. NBOBIN ) THEN
+          NBLGRC(NRERR) = 3
+          IF( LANGAG .EQ. 0 ) THEN
+             IF( NDIM .EQ. 1 ) THEN
+                KERR(1) = 'UNE LIGNE SANS CONDUCTIVITE'
+                KERR(3) = 'DONNER UNE CONDUCTIVITE A CETTE LIGNE'
+             ELSE IF( NDIM .EQ. 2 ) THEN
+                KERR(1) = 'UNE SURFACE SANS CONDUCTIVITE'
+                KERR(3) = 'DONNER UNE CONDUCTIVITE A CETTE SURFACE'
+             ELSE
+                KERR(1) = 'UN VOLUME SANS CONDUCTIVITE'
+                KERR(3) = 'DONNER UNE CONDUCTIVITE A CE VOLUME'
+             ENDIF
+             KERR(2) = '=> PROBLEME THERMIQUE SANS SOLUTION'
+             KERR(3) = 'DONNER UNE CONDUCTIVITE A CETTE SURFACE'
+          ELSE
+             IF( NDIM .EQ. 1 ) THEN
+                KERR(1) = 'A LINE WITHOUT CONDUCTIVITY'
+                KERR(3) = 'GIVE A CONDUCTIVITY at this LINE'
+             ELSE IF( NDIM .EQ. 2 ) THEN
+                KERR(1) = 'A SURFACE WITHOUT CONDUCTIVITY'
+                KERR(3) = 'GIVE A CONDUCTIVITY at this SURFACE'
+             ELSE
+                KERR(1) = 'A VOLUME WITHOUT CONDUCTIVITY'
+                KERR(3) = 'GIVE A CONDUCTIVITY at this VOLUME'
+             ENDIF
+             KERR(2) = '=> HEAT PROBLEM WITHOUT SOLUTION'
+          ENDIF
+          CALL LEREUR
+          IERR = 11
+      ENDIF
+      IF( IEECHA+IECONT+IECOET .EQ. 0 ) THEN
+          NBLGRC(NRERR) = 3
+          IF( LANGAG .EQ. 0 ) THEN
+             KERR(1) = 'PAS de CONDITION de FOURIER ou DIRICHLET'
+             KERR(2) = 'ET PAS de COEFFICIENT DEVANT la TEMPERATURE'
+             KERR(3) = '=> PROBLEME THERMIQUE SANS SOLUTION'
+          ELSE
+             KERR(1) = 'NO FOURIER or DIRICHLET CONDITION'
+             KERR(2) = 'AND NO COEFFICIENT BEFORE of TEMPERATURE'
+             KERR(3) = '=> HEAT PROBLEM WITHOUT SOLUTION'
+          ENDIF
+          CALL LEREUR
+          IERR = 12
+      ENDIF
+      IF( IERR .NE. 0 ) GOTO 9999
+C
+C     RECUPERATION DES TABLEAUX POBA NECESSAIRES A LA
+C     CONSTRUCTION DES TABLEAUX ELEMENTAIRES
+C     RETRIEVE the ARRAYS of BASIS POLYNOMIAL VALUES at
+C     NUMERICAL FORMULA POINTS
+C     =================================================
+      CALL TAPOBA( NBTYEL, MNNPEF, ETTAEL,
+     %             MNTPOB, NBDLMX, MOAUX, NBTTEF, NOAXIS, I, IERR )
+      IF( IERR .NE. 0 ) GOTO 9999
+C
+C     ADRESSAGE DES TABLEAUX AUXILIAIRES ET ELEMENTAIRES
+C     RESERVATION OF AUXILIARY TMC ARRAYS
+C     ===================================================
+C     LES TABLEAUX AUXILIAIRES POUR LES ELEMENTS FINIS
+      MNTAUX = 0
+      CALL TNMCDC( 'REEL2', MOAUX, MNTAUX )
+C
+C     LA MATRICE ELEMENTAIRE ET LE SECOND MEMBRE
+      MOTAEL = NBDLMX * (NBDLMX+1) / 2 + NBDLMX
+      MNTAEL = 0
+      CALL TNMCDC( 'REEL2', MOTAEL, MNTAEL )
+      MNTHER = 0
+      CALL TNMCDC( 'REEL2', 128, MNTHER )
+C
+C     LE TABLEAU DU NUMERO DES DEGRES DE LIBERTE D'UN ELEMENT FINI
+      MNNODL = 0
+      CALL TNMCDC( 'ENTIER', NBDLMX, MNNODL )
+C
+C     LE TABLEAU DES NBCOOR COORDONNEES DES NBDLMX POINTS DE L'EF MAXIMAL
+      MNX    = 0
+      CALL TNMCDC( 'REEL', NBDLMX*NBCOOR, MNX )
+C
+C     CONSTRUCTION DES POINTEURS COEFFICIENTS DIAGONAUX DE LA MATRICE PROFIL OU
+C     CONSTRUCTION OF POINTERS FOR THE SKYLINE OR CONDENSED STORAGE OF THE MATRI
+C     ==========================================================================
+      NBRDKG = 0
+      NCODKG = 1
+      MNLPLI = 0
+      MNLPCO = 0
+      IF ( NORESO .EQ. 1 ) THEN
+C
+         WRITE(IMPRIM,*)
+         IF( LANGAG .EQ. 0 ) THEN
+            WRITE(IMPRIM,10015)
+         ELSE
+            WRITE(IMPRIM,20015)
+         ENDIF
+10015    FORMAT(' RESOLUTION DIRECTE PAR FACTORISATION DE CHOLESKY')
+20015    FORMAT(' DIRECT SOLUTION BY CHOLESKY FACTORIZATION')
+C
+C        STOCKAGE PROFIL ET FACTORISATION DE CHOLESKY
+C        --------------------------------------------
+C        CALCUL DU PROFIL DE LA MATRICE
+C        (LA MATRICE PROFIL EST ICI SYMETRIQUE)
+         CALL TNMCDC( 'ENTIER', NTDL+1, MNLPLI )
+         CALL PRPRMC( MNTOPO  , MCN(MNNPEF), MNXYZN,
+     %                1       , NCODKG,
+     %                MCN(MNLPLI), IERR )
+         IF( IERR .NE. 0 ) GOTO 9999
+C
+C        DECLARATION INITIALISATION DE LA MATRICE PROFIL SYMETRIQUE
+         NBRDKG = MCN( MNLPLI + NTDL )
+         IF( LANGAG .EQ. 0 ) THEN
+            WRITE(IMPRIM,10016) NTDL+MOREE2*NBRDKG
+         ELSE
+            WRITE(IMPRIM,20016) NTDL+MOREE2*NBRDKG
+         ENDIF
+10016    FORMAT(' STOCKAGE MATRICE PROFIL',I15,' MOTS MEMOIRE' )
+20016    FORMAT(' SKYLINE MATRIX STORAGE =',I15,' MEMORY WORDS' )
+C
+      ELSE IF( NORESO .EQ. 2 ) THEN
+C
+C        POINTEURS DU STOCKAGE MORSE POUR METHODE DU GRADIENT CONJUGUE
+C        -------------------------------------------------------------
+         IF( LANGAG .EQ. 0 ) THEN
+            WRITE(IMPRIM,10018)
+         ELSE
+            WRITE(IMPRIM,20018)
+         ENDIF
+10018    FORMAT(' RESOLUTION ITERATIVE PAR GRADIENT CONJUGUE PRECONDITIO
+     %NNE')
+20018    FORMAT(' ITERATIVE SOLUTION BY PRECONDITIONED CONJUGATE GRADIEN
+     %T')
+C
+C        CALCUL DU SQUELETTE DE LA MATRICE (LA MATRICE EST ICI SYMETRIQUE)
+         CALL PRGCMC( MNTOPO, MCN(MNNPEF), MNXYZN, 1, NCODKG,
+     %                MNLPLI, MNLPCO, IERR )
+         IF( IERR .NE. 0 ) GOTO 9999
+C
+C        DECLARATION INITIALISATION DE LA MATRICE MORSE SYMETRIQUE
+         NBRDKG = MCN(MNLPLI+NTDL)
+         IF( LANGAG .EQ. 0 ) THEN
+            WRITE(IMPRIM,10020) NTDL+NBRDKG*(1+MOREE2)
+         ELSE
+            WRITE(IMPRIM,20020) NTDL+NBRDKG*(1+MOREE2)
+         ENDIF
+10020    FORMAT(' STOCKAGE MATRICE MORSE =',I15,' MOTS MEMOIRE' )
+20020    FORMAT(' MATRIX CONDENSED STORAGE =',I15,' MEMORY WORDS' )
+C
+      ELSE IF( NORESO .EQ. 3 ) THEN
+C
+C        MULTI-PROCESSORS SOLVER of A x = b FROM A CONDENSED MATRIX A
+C        ------------------------------------------------------------
+         IF( LANGAG .EQ. 0 ) THEN
+            WRITE(IMPRIM,10023)
+         ELSE
+            WRITE(IMPRIM,20023)
+         ENDIF
+10023    FORMAT(' RESOLUTION sur un  MULTI-PROCESSEURS')
+20023    FORMAT(' SOLUTION on MULTI-PROCESSOR COMPUTER')
+C
+C        CALCUL DU SQUELETTE DE LA MATRICE (LA MATRICE EST ICI SYMETRIQUE)
+         NIVEAU = 0
+         CALL PRGCMC( MNTOPO, MCN(MNNPEF), MNXYZN, 1, NCODKG,
+     %                MNLPLI, MNLPCO, IERR )
+         IF( IERR .NE. 0 ) GOTO 9999
+C
+C        NOMBRE DE COEFFICIENTS DE LA MATRICE MORSE SYMETRIQUE
+         NBRDKG = MCN(MNLPLI+NTDL)
+C
+      ENDIF
+C
+C     DECLARATION DE LA MATRICE GLOBALE KG PROFIL  OU MORSE
+C     DECLARATION OF THE GLOBAL MATRIX  KG SKYLINE OR CONDENSED
+C     =========================================================
+      DMAT = NBRDKG
+      IF( NBRDKG .LE. 0 ) THEN
+C         PLACE MEMOIRE INSUFFISANTE
+          NBLGRC(NRERR) = 3
+          WRITE(KERR(MXLGER-1)(1:25),'(G25.0)') DMAT
+          IF( LANGAG .EQ. 0 ) THEN
+             KERR(1) ='ERREUR: PLACE MEMOIRE INSUFFISANTE'
+             KERR(2) = KERR(MXLGER-1)(1:25) //
+     %               ' MOTS NECESSAIRES pour [M] [K] [R]'
+             KERR(3) = 'REDUIRE le MAILLAGE'
+          ELSE
+             KERR(1) ='ERROR: NOT ENOUGH MEMORY'
+             KERR(2) = KERR(MXLGER-1)(1:25) //
+     %               ' NECESSARY WORDS to store [M] [K] [R]'
+             KERR(3) ='REDUCE the MESH'
+          ENDIF
+          CALL LEREUR
+          IF( INTERA .LE. 1 ) CALL ARRET( 100 )
+          GOTO 9999
+      ENDIF
+C
+      IF( LANGAG .EQ. 0 ) THEN
+         WRITE(IMPRIM,10290) NBRDKG, NBRDKG/NTDL
+      ELSE
+         WRITE(IMPRIM,20290) NBRDKG, NBRDKG/NTDL
+      ENDIF
+10290 FORMAT(' 1 MATRICE PROFIL DE',I15,' REELS DOUBLE PRECISION'/
+     %' 1/2 LARGEUR DE BANDE MOYENNE =',I9)
+20290 FORMAT(' 1 SKYLINE MATRIX of   ',I15,' DOUBLE REALS'/
+     %' HALF WIDTH AVERAGE=',I9)
+C
+C     ALLOCATION DYNAMIQUE EN FORTRAN 90 DE LA MATRICE KG
+      WRITE(IMPRIM,*) 'ALLOCATION DEMAND  of',NBRDKG,
+     %                ' DOUBLE PRECISION of [KG] MATRIX'
+      ALLOCATE ( KG(1:NBRDKG), STAT=IERKGALLOC )
+      IF( IERKGALLOC .NE. 0 ) THEN
+       WRITE(IMPRIM,*)'ALLOCATION ERROR   of',NBRDKG,
+     %                ' DOUBLE PRECISION of [KG] MATRIX'
+         IERR = IERKGALLOC
+         GOTO 9999
+      ENDIF
+      WRITE(IMPRIM,*) 'ALLOCATION CORRECT of',NBRDKG,
+     %                ' DOUBLE PRECISION of [KG] MATRIX'
+      WRITE(IMPRIM,*)
+C
+C     SI TERME DE TRANSPORT ( VITESSE * GRADIENT TEMPERATURE )
+C        ATTENTION: LA MATRICE N'EST ALORS PLUS SYMETRIQUE!!!...
+C        ACTUELLEMENT CE TERME EST SOUSTRAIT DU SECOND MEMBRE + POINT FIXE
+C     OU BIEN LES COEFFICIENTS DE A OU b DEPENDENT DE LA TEMPERATURE => POINT FI
+C     ALORS PENALISATION DE LA CONDITION DE DIRICHLET PAR FOURIER AVEC
+C           ECHANGE=PENALI=1/EPSILON ET SOURCE=TEMPERATURE FIXEE/EPSILON
+C     ==========================================================================
+C     LE NOMBRE D'ITERATIONS DU POINT FIXE POUR LE TERME DE TRANSPORT
+      ITERPF = 0
+C
+C     UN VECTEUR GLOBAL SUPPLEMENTAIRE EST NECESSAIRE
+      CALL TNMCDC( 'REEL2', NTDL, MNUG0 )
+C     TOUTES LES VALEURS SONT MISES A ZERO
+      CALL AZEROD( NTDL, MCN(MNUG0) )
+ccc
+cccC     TOUTES LES VALEURS SONT MISES A 1D0
+ccc      CALL CONSTD( 1D0, NTDL, MCN(MNUG0) )
+C
+C     L'ADRESSE DE LA TEMPERATURE A L'ITERATION 0 DU POINT FIXE
+      MNTHET = MNUG0
+C
+      IF( IEVIFL .GT. 0 ) THEN
+C
+C        DECLARATION POUR LE TERME DE TRANSPORT (VITESSEFLUIDE * GRADIENT TEMPER
+C
+C        ECHANGE=PENALI=1/EPSILON ET SOURCE=TEMPERATURE FIXEE/EPSILON
+         PENALI = 1D20
+C
+      ELSE IF( TESTNL .GT. 0 ) THEN
+C
+C        ECHANGE=PENALI=1/EPSILON ET SOURCE=TEMPERATURE FIXEE/EPSILON
+         PENALI = 1D20
+C
+C        DECLARATION DU VECTEUR TEMPERATURE LOCALE SUR UN ELEMENT FINI
+         CALL NLDATADC( NBDLMX )
+C
+C        EXISTE T IL UN VECTEUR INITIAL POUR LE PB NON LINEAIRE?
+C        U0 EST LE VECTEUR GLOBAL DES TEMPERATURES INITIALES
+         CALL TEMINI( KNOMOB, NTLXOB, MOREE2, NTDL, TEMPS, IETEIN,
+     %                NBTYEL, MNNPEF, NDPGST,
+     %                MNXYZN, NUMIOB, MNDOEL,
+     %                NTVEC0, MNVEC0, NBTEM0, MNUG0, IERR )
+         IF( IERR .NE. 0 ) GOTO 9999
+C
+      ENDIF
+cccc
+ccc      WRITE(IMPRIM,*)
+ccc      WRITE(IMPRIM,*) 'essai pour voir si penali pose pb cas CHEN ZHOU'
+ccc      PENALI = 0D0
+cccc
+      IF( LANGAG .EQ. 0 ) THEN
+         WRITE(IMPRIM,10030) PENALI
+      ELSE
+         WRITE(IMPRIM,20030) PENALI
+      ENDIF
+10030 FORMAT(' PENALISATION DES TEMPERATURES FIXEES =',G15.6/)
+20030 FORMAT(' PENALISATION of FIXED TEMPERATURES =',G15.6/)
+C
+C     ADRESSAGE INITIALISATION DU VECTEUR"TEMPERATURE SUR LE MAILLAGE TOTAL
+C     =====================================================================
+      CALL LXTSOU( NTLXOB, 'VECTEUR"TEMPERATURE', NTVECT, MNVECT )
+      IF( NTVECT .GT. 0 ) THEN
+C        LE VECTEUR EST DETRUIT POUR ETRE REDECLARE
+         CALL LXTSDS( NTLXOB, 'VECTEUR"TEMPERATURE' )
+      ENDIF
+      L = WECTEU + NTDL * MOREE2
+      CALL LXTNDC( NTLXOB, 'VECTEUR"TEMPERATURE', 'MOTS', L )
+      CALL LXTSOU( NTLXOB, 'VECTEUR"TEMPERATURE', NTVECT, MNVECT )
+      MNUG1 = MNVECT + WECTEU
+      IF( TESTNL .EQ. 2 ) THEN
+C        DECLARATION D'UN VECTEUR POUR LE CALCUL DE L'ENERGIE
+         CALL TNMCDC( 'REEL2', NTDL, MNVG )
+C        DECLARATION D'UN VECTEUR SAUVEGARDE DU SECOND MEMBRE F(U**P)
+         CALL TNMCDC( 'REEL2', NTDL, MNFG )
+C        DECLARATION D'UN VECTEUR POUR LE CALCUL DU RESIDU
+         CALL TNMCDC( 'REEL2', NTDL, MNRG )
+      ENDIF
+C
+C     LE NOMBRE DE POINTS D'INTEGRATION PAR ARETE OU LE FLUX EST CALCULE EN 2D
+      NBPTAF = 0
+C
+C     LA GENERATION DES TABLEAUX ELEMENTAIRES ET DU SYSTEME LINEAIRE
+C     LA MATRICE DE CONDUCTIVITE EST STOCKEE SOUS FORME PROFIL OU GC
+C     ==============================================================
+C     PAS DE CALCUL DE LA MATRICE DE CAPACITE CALORIFIQUE
+      IEMG   = 0
+      NCODMG = 0
+      MNMG   = 0
+      ENERG0 = 0D0
+      NORH10 = 0D0
+      RESID0 = 0D0
+C
+C     ************************************************************************
+C                   BOUCLE D'ITERATIONS DU POINT FIXE
+C                      POINT FIXED LOOP ITERATIONS
+C     ************************************************************************
+C     INITIALISATION A ZERO DU VECTEUR GLOBAL U0 (SECOND MEMBRE PUIS SOLUTION)
+ 50   IEBG = 1
+C
+      IF( ITERPF .EQ. 0 .OR. TESTNL .GT. 0 ) THEN
+C        CALCUL DE LA MATRICE DE CONDUCTIVITE
+         IEKG = 1
+         IF( ITERPF .GT. 0 .AND. TESTNL .GE. 2 ) THEN
+C           METHODE DE CHEN & ZHOU AVEC U**P AU SECOND MEMBRE (PB LANE-EMDEN)
+C           LA MATRICE KG EST INDEPENDANTE DE UG
+            IEKG = 0
+         ENDIF
+      ELSE
+C        PAS DE CALCUL DE LA MATRICE DE CONDUCTIVITE
+         IEKG = 0
+      ENDIF
+C
+C     CONSTRUCTION DE LA MATRICE [KG] ET DU SECOND MEMBRE {BG}
+C     CONSTRUCTION of the CONDUCTIVITY MATRIX and SECOND MEMBER
+C     =========================================================
+      WRITE(IMPRIM,*)
+      IF( TESTNL .EQ. 2 ) THEN
+         WRITE(IMPRIM,*)
+         WRITE(IMPRIM,*) 'Scaling iteration',ITERPF
+      ENDIF
+      CALL THEMKB( NBJEUX, IEMG,   IEKG,   IEBG,   PENALI,
+     &             D2PI,   NDIM,   NTDL,   VITEGt,
+     &             NBTYEL, MNNPEF, NDPGST,
+     &             MNTPOB, MXPOBA, MNTAUX,
+     &             MNXYZP, NUMIOB, NUMAOB, MNDOEL,
+     &             MNTHER, MNTAEL, MNX,    MNNODL,
+     &             NORESO, MNLPLI, MNLPCO,
+     &             0,      MCN(1), NBRDKG, KG,    MNUG1,
+     &             NCODMG, NCODKG, NBPTAF, IERR )
+      IF( IERR .NE. 0 ) GOTO 9999
+C
+cccC     =====================================================================
+cccC     POUR Cheng Yi Ke of TAIWAN
+ccc      IF( NORESO .EQ. 1 ) THEN
+cccC        PUT ON an ASCII FILE of NAME FILENAME the SKYLINE SYMMETRIC MATRIX
+ccc         CALL FILESKYLINE( 'SkylineKG',NTDL,MCN(MNLPLI),KG,IERR )
+cccC        PUT ON an ASCII FILE of NAME FILENAME NBVECT GLOBAL VECTORS
+ccc         CALL FILEVECTOR( 'VectorBG', NTDL, 1, MCN(MNUG1), IERR )
+ccc      ENDIF
+cccC     =====================================================================
+C
+C     CONSTRUCTION DES TABLEAUX DU NUMERO ET VALEUR DES
+C     TEMPERATURES FIXEES (CONDITIONS DE DIRICHLET)
+C     LIST of FIXED DEGREES of FREEDOM by BOUNDARY CONDITIONS
+C     =======================================================
+      NBRDLX = 0
+      IF( PENALI .EQ. 0D0 .AND. ITERPF .EQ. 0 ) THEN
+C        ATTENTION: RECONSTRUIRE CETTE LISTE A TOUTES LES ITERATIONS
+C                   SI LA CONDITION DE DIRICHLET CHANGE DE SUPPORT
+C                   POUR CELA SUPPRIMER LA CLAUSE ITERPF .EQ. 0
+C
+C        ATTENTION: BUILD AGAIN AT EACH ITERATION IF THE DIRICHLET
+C                   BOUNDARY CONDITION CHANGES of PLACE
+C                   TO DO IT SUPPRESS THE STATEMENT  ITERPF .EQ. 0
+C
+C        CONDITION DE DIRICHLET NON PENALISEE
+         IF( IECONT .GT. 0 .OR. NDIM .EQ. 6 ) THEN
+C           CONSTRUCTION DE LA LISTE DES TEMPERATURES FIXEES
+            CALL THDLFX( 1,      NTDL,   NDIM,
+     %                   NBTYEL, MNNPEF, NDPGST,
+     %                   MNXYZN, NUMIOB, MNDOEL, RELMIN,
+     %                   NBRDLX, MONDLX, MNNDLX, MNVDLX, IERR )
+         ENDIF
+      ENDIF
+C
+      IF( ITERPF .EQ. 0 .AND. TESTNL .GE. 2 ) THEN
+C
+C        METHODE de CHEN & ZHOU (PB de LANE-EMDEN)
+C        PRISE EN COMPTE DES CONDITIONS AUX LIMITES SUR UG0
+         CALL BLDLX0( NTDL, 1, NBRDLX, MCN(MNNDLX), MCN(MNVDLX),
+     %                MCN(MNUG0) )
+C
+C        RECHERCHE DU NUMERO DU NOEUD N0 OU UG0 EST MAXIMAL
+         NORMAX = -1D0
+         MN     = (MNUG0-1)/2
+         DO 55 I=1,NTDL
+            NORMUM = ABS( DMCN(MN+I) )
+            IF( NORMAX .LT. NORMUM ) THEN
+               NOEMAX = I
+               NORMAX = NORMUM
+            ENDIF
+ 55      CONTINUE
+         MN = MNXYZN + WYZNOE + 3*NOEMAX - 4
+         IF( LANGAG .EQ. 0 ) THEN
+            WRITE(IMPRIM,10055) NOEMAX,NORMAX,(RMCN(MN+I),I=1,3)
+         ELSE
+            WRITE(IMPRIM,20055) NOEMAX,NORMAX,(RMCN(MN+I),I=1,3)
+         ENDIF
+10055 FORMAT(' NOEUD N0=',I8,' DU MAX|U(N)|=',G15.6,
+     %' XYZN0=(',2(G15.6,','),G15.6,' )')
+20055 FORMAT(' NODE NUMBER=',I8,' of MAX|U(N)|=',G15.6,
+     %' XYZN0=(',2(G15.6,','),G15.6,' )')
+C
+      ENDIF
+C
+C     CONSTRUCTION NO ET VALEUR DES SOURCES PONCTUELLES
+C     CONSTRUCTION of NUMBER and VALUE of SOURCES at POINTS
+C     =====================================================
+      IF( IESOPO .GT. 0 .AND. NDIM .GT. 1 ) THEN
+C        DES SOURCES PONCTUELLES EXISTENT EN DIM>1
+         CALL THSNFX( NTDL,   NBTYEL, MNNPEF, NDPGST,
+     %                MNXYZN, NUMIOB, MNDOEL, RELMIN,
+     %                NBRFNX, MONFNX, MNNFNX, MOVFNX, MNVFNX )
+C
+C        ASSEMBLAGE DES SOURCES PONCTUELLES
+         CALL ASFONO( NTDL, 1, NBRFNX, MCN(MNNFNX), MCN(MNVFNX), RELMIN,
+     %                MCN(MNUG1) )
+      ELSE
+C        PAS DE SOURCE PONCTUELLE
+         NBRFNX = 0
+      ENDIF
+C
+C     CALCUL DE LA RESULTANTE TOTALE DES SOURCES AVANT C.L.
+C     BEFORE BOUNDARY CONDITIONS COMPUTATION of the SUM of SOURCES
+C     ============================================================
+      IF( PENALI .EQ. 0D0 ) THEN
+         MN = 0
+         CALL TNMCDC( 'REEL2', NDIM, MN )
+         CALL RESFOR( NBNOEU,1,NTDL,1,MCN(MNUG1),'SOURCE',MCN(MN) )
+         CALL TNMCDS( 'REEL2', NDIM, MN )
+      ENDIF
+C
+C     SAUVEGARDE EVENTUELLE DU VECTEUR GLOBAL SECOND MEMBRE
+C     SAVE the SECOND MEMBER GLOBAL VECTOR
+C     =====================================================
+      IF( TESTNL .EQ. 2 ) THEN
+         CALL TRTATD( MCN(MNUG1), MCN(MNFG), NTDL )
+      ENDIF
+C
+C     LE TEMPS CALCUL DE LA FORMATION DU SYSTEME LINEAIRE
+      DFABG = DINFO( 'DELTA CPU' )
+C
+      IF( NORESO .EQ. 1 ) THEN
+C
+C        =========================================================
+C        FACTORISATION DE CHOLESKY SUR MATRICE PROFIL
+C        CHOLESKY FACTORIZATION WITH SKYLINE STORAGE of the MATRIX
+C        =========================================================
+         IF( IEKG .EQ. 1 ) THEN
+C
+C           PRISE EN COMPTE DES CONDITIONS AUX LIMITES DES DL FIXES SUR A ET U0
+            CALL BLDLPC(NTDL,1,NBRDLX,MCN(MNNDLX),MCN(MNVDLX),NCODKG,
+     &                  MCN(MNLPLI),KG,MCN(MNUG1))
+C
+C           FACTORISATION DE CHOLESKY
+            NBLGRC(NRERR) = 1
+            IF( LANGAG .EQ. 0 ) THEN
+               KERR(1) = 'FACTORISATION DE CHOLESKY. PATIENCE...'
+            ELSE
+               KERR(1) = 'CHOLESKY FACTORIZATION. WAIT PATIENTLY...'
+            ENDIF
+            CALL LERESU
+            CALL CHOLPR( NTDL, NCODKG, MCN(MNLPLI), KG,
+     %                   KG, IERR)
+C           LE TEMPS CALCUL DE LA FACTORISATION DU SYSTEME LINEAIRE
+            DFACT = DINFO( 'DELTA CPU' )
+            IF( IERR .NE. 0 ) THEN
+C              MATRICE NON INVERSIBLE
+               NBLGRC(NRERR) = 2
+               IF( LANGAG .EQ. 0 ) THEN
+                  KERR(1) = 'ERREUR: MATRICE NON INVERSIBLE'
+                  KERR(2) = 'REVOYEZ LES CONDITIONS AUX LIMITES'
+               ELSE
+                  KERR(1) = 'ERROR: NON INVERSIBLE MATRIX'
+                  KERR(2) = 'SEE AGAIN BOUNDARY CONDITIONS'
+               ENDIF
+               CALL LEREUR
+               IF( INTERA .LE. 1 ) CALL ARRET( 100 )
+               IERR = 7
+               GOTO 9999
+            ENDIF
+C
+         ELSE IF( PENALI .EQ. 0D0 .AND. IECONT .GT. 0 .AND.
+     &            TESTNL .EQ. 2 ) THEN
+C
+C           METHODE de CHEN & ZHOU essai pour voir si PENALI=1E20 influe
+C           PB de LANE-EMDEN             REPONSE: NON MEME RESULTAT!
+C           PRISE EN COMPTE DES CONDITIONS AUX LIMITES SUR UG1
+            CALL BLDLX0( NTDL, 1, NBRDLX, MCN(MNNDLX), MCN(MNVDLX),
+     %                   MCN(MNUG1) )
+         ENDIF
+C
+C        DESCENTE REMONTEE DE LA MATRICE PROFIL FACTORISEE
+C        =================================================
+         WRITE(IMPRIM,*)
+         NBLGRC(NRERR) = 1
+         IF( LANGAG .EQ. 0 ) THEN
+            KERR(1) = 'DESCENTE REMONTEE DE LA MATRICE FACTORISEE'
+         ELSE
+            KERR(1) = 'SOLUTION by L (Lt x) = b'
+         ENDIF
+         CALL LERESU
+         CALL DRCHPR( NTDL,NCODKG,MCN(MNLPLI),KG,MCN(MNUG1),2,
+     %                MCN(MNUG1) )
+         NBLGRC(NRERR) = 1
+         IF( LANGAG .EQ. 0 ) THEN
+            KERR(1) = 'FIN DESCENTE REMONTEE DE LA MATRICE FACTORISEE'
+         ELSE
+            KERR(1) = 'END of SOLUTION by L Lt x = b'
+         ENDIF
+         CALL LERESU
+C
+      ELSE IF( NORESO .EQ. 2 ) THEN
+C
+C        ==================================================================
+C        NORESO=2 GRADIENT CONJUGUE AVEC PRECONDITIONNEMENT => MATRICE MORSE
+C        INCOMPLETE FACTORIZATION PRECONDITIONEMENT FOR CONJUGATE GRADIENT
+C        ==================================================================
+C
+C        PRISE EN COMPTE DES TEMPERATURES IMPOSEES (DIRICHLET NON PENALISEE)
+C        TAKE IN ACCOUNT THE IMPOSED TEMPERATURES  (DIRICHLET NOT PENALISED)
+C        ===================================================================
+         IF( IEKG .EQ. 1 ) THEN
+            CALL BLDLGC(NTDL,1,NBRDLX,MCN(MNNDLX),MCN(MNVDLX),NCODKG,
+     &                  MCN(MNLPLI),MCN(MNLPCO),KG,MCN(MNUG1))
+C
+         ELSE IF( PENALI .EQ. 0D0 .AND. IECONT .GT. 0 .AND.
+     &            TESTNL .EQ. 2 ) THEN
+C           METHODE de CHEN & ZHOU essai pour voir si PENALI=1E20 influe
+C           PB de LANE-EMDEN             REPONSE: NON MEME RESULTAT!
+C           PRISE EN COMPTE DES CONDITIONS AUX LIMITES SUR UG1
+            CALL BLDLX0( NTDL, 1, NBRDLX, MCN(MNNDLX), MCN(MNVDLX),
+     %                   MCN(MNUG1) )
+         ENDIF
+C
+         IF( ITERPF .GT. 0 ) GOTO 90
+C        ATTENTION: LA MATRICE DE PRECONDITIONNEMENT EST CALCULEE A L'ITERATION
+C        ET N'EST PAS MODIFIEE AU COURS DES ITERATIONS DE POINT FIXE
+C        POUR LE CAS TESTNL=1 (KG DEPEND DE UM) CE POURRAIT ETRE UNE ACCELERATIO
+C        DE RECALCULER CE PRECONDITIONNEMENT LORSQUE UM A BEAUCOUP CHANGE
+C        POUR LE PB DE CHEN & ZHOU LA MATRICE KG EST INDEPENDANTE DE UG
+C
+C        CALCUL DU SQUELETTE DE LA MATRICE DE PRECONDITIONNEMENT POUR GC
+C        ===============================================================
+C        CALCUL DES POINTEURS DE LA MATRICE DE PRECONDITIONNEMENT
+C        (FACTORISATION INCOMPLETE DE A SUIVANT LE NIVEAU)
+ 80      IERR   = 0
+         MNLPLC = 0
+         MNLPCC = 0
+         MNLPLU = 0
+         CALL CALPNT( NTDL,   NIVEAU, NCODKG, MNLPLI, MNLPCO,
+     %                MNLPLC, MNLPCC, MNLPLU, COMP,   IERR  )
+C        VERIFICATION DU SQUELETTE DE LA MATRICE DE PRECONDITIONNEMENT
+         IF( IERR .NE. 0 ) THEN
+            WRITE(KERR(MXLGER)(1:8),'(I8)') NIVEAU
+            NBLGRC(NRERR) = 2
+            IF( LANGAG .EQ. 0 ) THEN
+               KERR(1)='PROBLEME lors de la FACTORISATION de NIVEAU '
+     %               // KERR(MXLGER)(1:8)
+               KERR(2) = 'ABANDON de la METHODE du GRADIENT CONJUGUE'
+            ELSE
+               KERR(1)='PROBLEM of INCOMPLETE FACTORIZATION of LEVEL '
+     %               // KERR(MXLGER)(1:8)
+               KERR(2) = 'EXIT of the CONJUGATE GRADIENT METHOD'
+            ENDIF
+            CALL LEREUR
+            GOTO 9999
+         ENDIF
+C
+C        DECLARATION INITIALISATION DE LA MATRICE MORSE DE CONDITIONNEMENT
+C        =================================================================
+         LOLPCC = MCN(MNLPLC+NTDL)
+         MNAGC  = 0
+         CALL TNMCDC( 'REEL2', LOLPCC, MNAGC )
+         CALL AZEROD( LOLPCC, MCN(MNAGC) )
+C
+C        CONSTRUCTION EFFECTIVE DE LA MATRICE DE PRECONDITIONNEMENT PAR
+C        PAR FACTORISATION INCOMPLETE DE CHOLESKY AVEC NIVEAU
+C        ==============================================================
+         NBLGRC(NRERR) = 1
+         WRITE(KERR(2)(1:2),'(I2)') NIVEAU
+         IF( LANGAG .EQ. 0 ) THEN
+            KERR(1) = 'FACTORISATION INCOMPLETE DE NIVEAU' //
+     &                 KERR(2)(1:2)
+         ELSE
+            KERR(1) = 'INCOMPLETE CHOLESKY FACTORIZATION of LEVEL' //
+     &                 KERR(2)(1:2)
+         ENDIF
+         CALL LERESU
+         CALL INCHGC( NTDL,
+     &                MCN(MNLPLI),MCN(MNLPCO),KG,
+     &                MCN(MNLPLC),MCN(MNLPCC),MCN(MNAGC), IERR )
+C
+C        VERIFICATION DE LA STABILITE DE LA FACTORISATION INCOMPLETE
+C        QUI DEFINIT LA MATRICE DE PRECONDITIONNEMENT DU GRADIENT CONJUGUE
+C        =================================================================
+         IF( IERR .EQ. 1 ) THEN
+C           AU MOINS UN PIVOT<=0 LE PIVOT QUI PRECEDE EST PRIS A SA PLACE
+            ISTAB = 1
+            IERR  = 0
+         ELSE IF( IERR .EQ. 2 ) THEN
+C           LE NOMBRE DE PIVOTS INCORRECTS<=0 EST DEPASSE
+C           FACTORISATION EST DECLAREE INSTABLE
+            IF( COMP ) GO TO 9999
+            IF( NIVEAU .LT. NIVMAX ) THEN
+C              TENTATIVE D'AUGMENTER LE NIVEAU DE FACTORISATION INCOMPLETE
+               NIVEAU = NIVEAU + 1
+               CALL TNMCDS( 'ENTIER', NTDL+1, MNLPLC )
+               CALL TNMCDS( 'ENTIER', LOLPCC, MNLPCC )
+               CALL TNMCDS( 'REEL2',  LOLPCC, MNAGC  )
+               GO TO 80
+            ELSE
+C              LA FACTORISATION EST VRAIMENT TRES INSTABLE
+C              PLUS DE NIVMAX NIVEAUX DEPASSE => ABANDON DU GC
+               WRITE(KERR(MXLGER)(1:8),'(I8)') NIVEAU
+               NBLGRC(NRERR) = 2
+               IF( LANGAG .EQ. 0 ) THEN
+                  KERR(1) = 'FACTORISATION INSTABLE AU NIVEAU '
+     %                    // KERR(MXLGER)(1:8)
+                  KERR(2) = 'ABANDON DE LA METHODE DU GRADIENT CONJUGUE'
+               ELSE
+                  KERR(1)='UNSTABLE INCOMPLETE FACTORIZATION at LEVEL '
+     %               // KERR(MXLGER)(1:8)
+                  KERR(2) = 'EXIT of the CONJUGATE GRADIENT METHOD'
+               ENDIF
+               CALL LEREUR
+C              DESTRUCTION DES TABLEAUX DES MATRICES DU GC
+               IERR = 8
+               GOTO 9999
+            ENDIF
+         ENDIF
+C
+C        LE TEMPS CALCUL DE LA FACTORISATION INCOMPLETE
+         DFACT = DINFO( 'DELTA CPU' )
+C
+         IF( LANGAG .EQ. 0 ) THEN
+            WRITE(IMPRIM,10021) NTDL+LOLPCC*(1+MOREE2)
+         ELSE
+            WRITE(IMPRIM,20021) NTDL+LOLPCC*(1+MOREE2)
+         ENDIF
+10021 FORMAT(' PRECONDITIONNEMENT MATRICE MORSE =',I15,' MOTS MEMOIRE' )
+20021 FORMAT(' PRECONDITIONED MORSE MATRIX =',I15,' MEMORY WORDS' )
+C
+C        RESOLUTION DU SYSTEME PAR GRADIENT CONJUGUE PRECONDITIONNE
+C        ==========================================================
+C        LE PREMIER TABLEAU AUXILIAIRE DE GCPRCH
+ 90      LOAUX = NTDL * 3
+         CALL TNMCDC( 'REEL2', LOAUX, MNAUX )
+C        REPARTITION INTERNE EN SOUS-TABLEAUX
+         MNAUX1 = MNAUX  + NTDL * MOREE2
+         MNAUX2 = MNAUX1 + NTDL * MOREE2
+C
+C        STABILISATION DU GC PAR RE-ORTHOGONALISATION DES DIRECTIONS
+         IF( ISTAB .EQ. 0 ) THEN
+             NBDIR = 1
+         ELSE
+             NBDIR = 10
+         ENDIF
+C        LE SECOND TABLEAU AUXILIAIRE DE GCPRCH
+         LODIR = (NTDL+1) * NBDIR * 2
+         MNBDIR = 0
+         CALL TNMCDC( 'REEL2', LODIR, MNBDIR )
+C        MISE A ZERO DE CE TABLEAU
+         CALL AZEROD( LODIR, MCN(MNBDIR) )
+C        REPARTITION INTERNE EN SOUS-TABLEAUX
+         MNDIR  = MNBDIR
+         MNADIR = MNBDIR + NTDL * NBDIR * MOREE2
+         MNDAD  = MNADIR + NTDL * NBDIR * MOREE2
+         MNBET  = MNDAD  + NBDIR * MOREE2
+C
+         MOTSGC = MAX( MOTSGC, MOREE2*(LOAUX+LODIR) )
+         IF( ITERPF .EQ. 0 ) THEN
+            IF( LANGAG .EQ. 0 ) THEN
+               WRITE(IMPRIM,*)'TABLEAUX AUXILIAIRES DU GC =',
+     %                         MOTSGC,' MOTS MEMOIRE'
+            ELSE
+               WRITE(IMPRIM,*)'AUXILIARY ARRAYS of CG =',
+     %                         MOTSGC,' MEMORY WORDS'
+            ENDIF
+         ENDIF
+ccc
+ccc         NBLGRC(NRERR) = 1
+ccc         IF( LANGAG .EQ. 0 ) THEN
+ccc            KERR(1) = 'DEBUT DES ITERATIONS DU GRADIENT CONJUGUE'
+ccc         ELSE
+ccc            KERR(1) = 'START of CONJUGATE GRADIENT ITERATIONS'
+ccc         ENDIF
+ccc         CALL LERESU
+ccc
+c        affichage de la matrice morse pour comparer avec PETSC
+ccc         call afmorse( ntdl, ntdl, MCN(MNLPLI), MCN(MNLPCO), KG )
+C
+         CALL GCPRCH( NTDL,        1,           NBDIR,
+     %                MCN(MNLPLI), MCN(MNLPCO), KG,         MCN(MNUG1),
+     %                MCN(MNLPLC), MCN(MNLPCC), MCN(MNAGC),
+     %                MCN(MNUG0),  MCN(MNAUX),  MCN(MNAUX1),
+     %                MCN(MNAUX2), MCN(MNDIR),  MCN(MNADIR),
+     %                MCN(MNDAD),  MCN(MNBET),  MCN(MNUG1),  IERR )
+ccc
+ccc         NBLGRC(NRERR) = 1
+ccc         IF( LANGAG .EQ. 0 ) THEN
+ccc            KERR(1) = 'FIN DES ITERATIONS DU GRADIENT CONJUGUE'
+ccc         ELSE
+ccc            KERR(1) = 'END of CONJUGATE GRADIENT ITERATIONS'
+ccc         ENDIF
+ccc         CALL LERESU
+C
+C        DESTRUCTION DES TABLEAUX AUXILIAIRES DU GC
+         CALL TNMCDS( 'REEL2', LOAUX, MNAUX )
+         CALL TNMCDS( 'REEL2', LODIR, MNBDIR )
+C
+C        VERIFICATION DE LA CONVERGENCE DU GC
+         IF( IERR .NE. 0 ) THEN
+C           IL N'Y A PAS EU CONVERGENCE DU GC
+            IF( NIVEAU .LT. NIVMAX ) THEN
+C              TENTATIVE D'AUGMENTER LE NIVEAU DE FACTORISATION INCOMPLETE
+               NIVEAU = NIVEAU + 1
+               CALL TNMCDS( 'ENTIER', NTDL+1, MNLPLC )
+               CALL TNMCDS( 'ENTIER', LOLPCC, MNLPCC )
+               CALL TNMCDS( 'REEL2',  LOLPCC, MNAGC  )
+               GOTO 80
+            ELSE
+C              LA METHODE DU GC NE CONVERGE PAS => ABANDON DES CALCULS
+               WRITE(KERR(MXLGER)(1:8),'(I8)') NIVEAU
+               NBLGRC(NRERR) = 3
+               IF( LANGAG .EQ. 0 ) THEN
+                  KERR(1)='NON CONVERGENCE du GC au NIVEAU '
+     &                  // KERR(MXLGER)(1:8)
+                  KERR(2)='ABANDON de la METHODE du GRADIENT CONJUGUE'
+                 KERR(3)='=> ESSAYER METHODE de CHOLESKY MATRICE PROFIL'
+               ELSE
+                  KERR(1) = 'NO CONVERGENCE of CG at LEVEL '
+     &                    // KERR(MXLGER)(1:8)
+                  KERR(2) = 'EXIT of the CONJUGATE GRADIENT METHOD'
+                  KERR(3) = '=> TRY direct CHOLESKY SKYLINE METHOD'
+               ENDIF
+               IERR = 9
+               GOTO 9999
+            ENDIF
+         ENDIF
+C
+      ELSE IF( NORESO .GE. 3 ) THEN
+C
+C        ==================================================================
+C        NORESO>=3 MULTI-PROCESSORS SOLVER of A x = b FROM A MORSE MATRIX A
+C        ==================================================================
+C
+         print *, 'Call MULTPROC  IEKG=',IEKG,' -----------------------'
+C        PRISE EN COMPTE DES TEMPERATURES IMPOSEES (DIRICHLET NON PENALISEE)
+C        TAKE IN ACCOUNT THE IMPOSED TEMPERATURES  (DIRICHLET NOT PENALISED)
+         IF( IEKG .EQ. 1 ) THEN
+            CALL BLDLGC(NTDL,1,NBRDLX,MCN(MNNDLX),MCN(MNVDLX),NCODKG,
+     &                  MCN(MNLPLI),MCN(MNLPCO),KG,MCN(MNUG1))
+C
+         ELSE IF( PENALI .EQ. 0D0 .AND. IECONT .GT. 0 .AND.
+     &            TESTNL .EQ. 2 ) THEN
+C           METHODE de CHEN & ZHOU essai pour voir si PENALI=1E20 influe
+C           PB de LANE-EMDEN             REPONSE: NON MEME RESULTAT!
+C           PRISE EN COMPTE DES CONDITIONS AUX LIMITES SUR UG1
+            CALL BLDLX0( NTDL, 1, NBRDLX, MCN(MNNDLX), MCN(MNVDLX),
+     %                   MCN(MNUG1) )
+         ENDIF
+C
+         print *,'MULTPROC  Matrice morse avant rows'
+         call AFMORSE( NTDL, NTDL, MCN(MNLPLI), MCN(MNLPCO), KG )
+C
+C        TABLEAU AVEC LE NO DE LIGNE DE CHAQUE COEFFICIENT DE A
+C        FOURNITURE DE (I,J,AIJ) DE TOUS LES NON ZEROS COEFFICIENTS DE A
+         CALL TNMCDC( 'ENTIER', NBRDKG, MNROWS )
+         DO 27 I = 1, NTDL
+            DO 26 K = MCN(MNLPLI-1+I)+1, MCN(MNLPLI+I)
+               MCN( MNROWS - 1 + K ) = I
+ 26         CONTINUE
+ 27      CONTINUE
+C
+         IF( LANGAG .EQ. 0 ) THEN
+            WRITE(IMPRIM,10020) NTDL+NBRDKG*(2+MOREE2)
+         ELSE
+            WRITE(IMPRIM,20020) NTDL+NBRDKG*(2+MOREE2)
+         ENDIF
+C
+         MNUG3 = 0
+         CALL TNMCDC( 'REEL2', NTDL, MNUG3 )
+         CALL TRTATA( MCN(MNUG1), MCN(MNUG3), MOREE2*NTDL )
+         CALL MULTPROC( NTDL, NBRDKG,
+     %                  MCN(MNROWS), MCN(MNLPCO), KG, MCN(MNUG3),
+     %                  MCN(MNUG1),  IERR )
+         CALL TNMCDS( 'REEL2', NTDL, MNUG3 )
+         CALL TNMCDS( 'ENTIER', NBRDKG, MNROWS )
+         print *, 'Exit MULTPROC  IERR=', IERR,' ----------------------'
+C
+      ENDIF
+C
+C     ==========================================================================
+C     L'EVENTUELLE BOUCLE DE POINT FIXE DU TERME DE TRANSPORT OU PB NON LINEAIRE
+C     Y A T IL CONVERGENCE DU POINT FIXE?
+C     HAS THE FIXED POINT METHOD CONVERGED?
+C     ==========================================================================
+      IF( IEVIFL .GT. 0 .OR. TESTNL .GT. 0 ) THEN
+C
+C        CALCUL DE || Un - Un-1 || et ||Un||
+         MN0 = ( MNUG0 - 1 ) / 2
+         MN  = ( MNUG1 - 1 ) / 2
+         NORMDF = 0D0
+         NORMUM = 0D0
+         NORMAX =-1D0
+         NORMXP =-1D0
+C
+         IF( TESTNL .LE. 1 ) THEN
+            DO 1500 I=1,NTDL
+               NORMDF = NORMDF + ( DMCN(MN+I) - DMCN(MN0+I) ) ** 2
+               NORMUM = NORMUM +   DMCN(MN+I) ** 2
+               NORMXP = MAX( NORMXP, ABS( DMCN(MN+I) ) )
+ 1500       CONTINUE
+            NORMUM = SQRT( NORMUM / NTDL )
+            NORMDF = SQRT( NORMDF / NTDL )
+            IF( NORMUM .LE. 0D0 ) THEN
+               NORMRE = NORMDF
+            ELSE
+               NORMRE = NORMDF/NORMUM
+            ENDIF
+            IF( LANGAG .EQ. 0 ) THEN
+               WRITE(IMPRIM,11500) ITERPF+1, NORMXP,
+     %                             NORMUM, NORMDF, NORMRE
+            ELSE
+               WRITE(IMPRIM,21500) ITERPF+1, NORMXP,
+     %                             NORMUM, NORMDF, NORMRE
+            ENDIF
+11500       FORMAT(' ITERATION POINT FIXE',I3,' MAX|U(N)|=',G12.4,
+     %             ' ||Un||=',G12.4,' ||Un-Un-1||=',G12.4,
+     %            '  ||Un-Un-1||/||Un||=',G12.4/)
+21500       FORMAT(' FIX POINT ITERATION',I3,' MAX|U(N)|=',G12.4,
+     %             ' ||Un||=',G12.4,' ||Un-Un-1||=',G12.4,
+     %            '  ||Un-Un-1||/||Un||=',G12.4/)
+C
+         ELSEIF( TESTNL .EQ. 2 ) THEN
+cccC
+cccc          c'etait une mauvaise idee car ca diverge tres vite...
+cccC           ATTENTION: A ETE AJOUTE APRES LES TESTS A TAMU SAUF THER3D1B
+cccC           PERMET DE CAPTER UN MAXIMUM QUI GLISSE VERS UN AUTRE
+cccC           SI L'ANCIEN MAX INITIAL VA VERS U(N0)=0 CA RALENTIT LA CONVERGENC
+ccc            IF( ITERPF .EQ. 15 .OR. ITERPF .EQ. 25 ) THEN
+cccC              REPOSITIONNEMENT DU NOEUD NOEMAX AU MAXIMUM ACTUEL
+ccc               NORMXP = -1D0
+ccc               DO 1511 I=1,NTDL
+ccc                 IF( NORMXP .LT. ABS( DMCN(MN+I) ) ) THEN
+cccc                     NORMXP = ABS( DMCN(MN+I) )
+ccc                     NOEMAX = I
+ccc                  ENDIF
+ccc 1511          CONTINUE
+ccc               NORMXP = -1D0
+ccc            ENDIF
+C
+C           METHODE de CHEN & ZHOU sur le PB de LANE-EMDEN:
+C           MISE A L'ECHELLE A PARTIR DE LA VALEUR AU POINT NOEMAX
+C           ------------------------------------------------------
+            VALUN0 = DMCN(MN+NOEMAX)
+            MINNEG = 0D0
+            NOEMIN = 0
+            MNXYMX = 0
+            NORMXP =-1D0
+            DO 1520 I=1,NTDL
+C *****        ATTENTION SCALING POUR LE PB DE CHEN & ZHOU   ************
+               DMCN(MN+I) = DMCN(MN+I) / VALUN0
+C              PROJECTION A ZERO DES VALEURS NEGATIVES
+               IF( DMCN(MN+I) .LT. 0D0 ) THEN
+                  IF( DMCN(MN+I) .LT. MINNEG ) THEN
+                     MINNEG = DMCN(MN+I)
+                     NOEMIN = I
+                  ENDIF
+                  DMCN(MN+I)=0D0
+               ENDIF
+cccc
+cccc              essai de stabilisation => Dirichlet sur la petite boule + 1/2
+ccc               MNnn = MNXYZN + WYZNOE + 3*I - 2
+ccc               if( RMCN(MNnn) .GT. 0 ) DMCN(MN+I)=0D0
+cccc
+C              LES NORMES
+               NORMDF = NORMDF + ( DMCN(MN+I) - DMCN(MN0+I) ) ** 2
+               NORMUM = NORMUM +   DMCN(MN+I) ** 2
+               IF( NORMXP .LT. ABS( DMCN(MN+I) ) ) THEN
+                  NORMXP = ABS( DMCN(MN+I) )
+                  MNXYMX = I
+               ENDIF
+ 1520       CONTINUE
+            NORMUM = SQRT( NORMUM / NTDL )
+            NORMDF = SQRT( NORMDF / NTDL )
+C
+C           CALCUL DE L'ENERGIE DU VECTEUR SOLUTION
+C           LE FACTEUR D'ECHELLE
+            IF( DEXPOS .EQ. 1.D0 ) THEN
+               FACECH = 1D0
+            ELSE IF( DEXPOS .EQ. 2.D0 ) THEN
+               FACECH = 1D0 / ABS(VALUN0)
+            ELSE
+               FACECH =( 1D0 / ABS(VALUN0) ) ** (1D0/(DEXPOS-1D0))
+            ENDIF
+            IF( LANGAG .EQ. 0 ) THEN
+               WRITE(IMPRIM,11517) ITERPF+1, VALUN0, FACECH
+            ELSE
+               WRITE(IMPRIM,21517) ITERPF+1, VALUN0, FACECH
+            ENDIF
+11517       FORMAT(' ITERATION POINT FIXE',I4,' UN0=',G15.6,
+     %     ' FACTEUR D''ECHELLE=(1/U)**(1/(P-1))=',G15.6)
+21517       FORMAT(' FIX POINT ITERATION',I4,' UN0=',G15.6,
+     %     ' SCALE FACTOR=(1/U)**(1/(P-1))=',G15.6)
+C
+            IF( NOEMIN .NE. 0 ) THEN
+               MNNN = MNXYZN + WYZNOE + 3*NOEMIN - 3
+               IF( LANGAG .EQ. 0 ) THEN
+                  WRITE(IMPRIM,11518) MINNEG*FACECH,
+     %                  RMCN(MNNN), RMCN(MNNN+1), RMCN(MNNN+2)
+               ELSE
+                  WRITE(IMPRIM,21518) MINNEG*FACECH,
+     %                  RMCN(MNNN), RMCN(MNNN+1), RMCN(MNNN+2)
+               ENDIF
+11518          FORMAT(' MIN U(N) =',G15.6,'<0 au NOEUD XYZ=(',
+     %                  G15.6,',',G15.6,',',G15.6,' )')
+21518          FORMAT(' MIN U(N) =',G15.6,'<0 at NODE XYZ=(',
+     %                  G15.6,',',G15.6,',',G15.6,' )')
+            ENDIF
+C
+C           1. V <= [A] U
+            IF( NORESO .EQ. 1 ) THEN
+               CALL MAPRVE( 0, 1D0, NTDL,
+     %                      NCODKG, MCN(MNLPLI), KG,
+     %                      MCN(MNUG1),  MCN(MNVG) )
+            ELSE IF ( NORESO .GE. 2 ) THEN
+               CALL MAGCVE( 0, 1D0, NTDL,
+     %                      NCODKG, MCN(MNLPLI), MCN(MNLPCO), KG,
+     %                      MCN(MNUG1),  MCN(MNVG) )
+            ENDIF
+C
+C           2. SEMI-NORME H1 DE Un+1 <= FACECH  SQRT( t{U} {V} )
+            NORH1U = FACECH * SQRT( PROSCD(MCN(MNUG1),MCN(MNVG),NTDL) )
+C
+C           3. CALCUL DU MAX NODAL DU VECTEUR RESIDU EN UN POINT POUR IMPRESSION
+C           {R} <= FACECH*{V} - FACECH**p {F(U**P)}  ajout TAMU 10/7/2003
+            CALL CL2VED ( NTDL, FACECH,    MCN(MNVG),
+     %                  -(FACECH**DEXPOS), MCN(MNFG),
+     %                    MCN(MNRG) )
+            RESIDU = -1D0
+            MNR    = ( MNRG - 1 ) / 2
+            DO 1522 I=1,NTDL
+               IF( ABS(DMCN(MNR+I)) .GT. RESIDU )
+     %             RESIDU = ABS(DMCN(MNR+I))
+ 1522       CONTINUE
+C
+C           4. {V} <= FACECH**2/2 {V} - FACECH**(p+1)/(p+1) {F(U**P)}
+            CALL CL2VED ( NTDL, FACECH**2/2D0,                MCN(MNVG),
+     %                  -(FACECH**(DEXPOS+1D0))/(DEXPOS+1D0), MCN(MNFG),
+     %                    MCN(MNVG) )
+C
+C           5. ENERGIE=J(U) <= t{U} . {V}
+            ENERGI = PROSCD( MCN(MNUG1), MCN(MNVG), NTDL )
+C
+C           LES IMPRESSIONS
+            MNXYMX = MNXYZN + WYZNOE + 3*MNXYMX - 3
+            IF( LANGAG .EQ. 0 ) THEN
+               WRITE(IMPRIM,11519) NORMXP*FACECH,(RMCN(MNXYMX+I),I=0,2)
+               WRITE(IMPRIM,11520) NORMUM*FACECH, NORMDF/NORMUM,
+     %                             NORH1U,ABS((NORH1U-NORH10)/NORH1U),
+     %                             ENERGI,ABS((ENERGI-ENERG0)/ENERGI),
+     %                             RESID0,RESIDU
+            ELSE
+               WRITE(IMPRIM,21519) NORMXP*FACECH,(RMCN(MNXYMX+I),I=0,2)
+               WRITE(IMPRIM,21520) NORMUM*FACECH, NORMDF/NORMUM,
+     %                             NORH1U,ABS((NORH1U-NORH10)/NORH1U),
+     %                             ENERGI,ABS((ENERGI-ENERG0)/ENERGI),
+     %                             RESID0,RESIDU
+            ENDIF
+11519       FORMAT(' MAX|U(N)|=',G15.6,'   au NOEUD XYZ=(',
+     %               G15.6,',',G15.6,',',G15.6,' )')
+21519       FORMAT(' MAX|U(N)|=',G15.6,'   at NODE XYZ=(',
+     %               G15.6,',',G15.6,',',G15.6,' )')
+C
+11520       FORMAT(' ||Un||   =',G15.6,'   ||Un-Un-1||/||Un||=',G15.6/
+     %             ' | Un |H1 =',G15.6,'   | Hn-Hn-1 |/| Hn |=',G15.6/
+     %             ' J=ENERGIE=',G15.6,'   ||En-En-1||/||En||=',G15.6/
+     %             ' |RESIDU0|=',G15.6,'   Max |RESIDU Un(P)|=',G15.6)
+21520       FORMAT(' ||Un||   =',G15.6,'   ||Un-Un-1||/||Un||=',G15.6/
+     %             ' | Un |H1 =',G15.6,'   | Hn-Hn-1 |/| Hn |=',G15.6/
+     %             ' J=ENERGY =',G15.6,'   ||En-En-1||/||En||=',G15.6/
+     %             ' |RESIDU0|=',G15.6,'   Max |RESIDU Un(P)|=',G15.6)
+C
+C           TEST CONVERGENCE MAX( ||Un-Un-1||/||Un||, | Hn-Hn-1 |/| Hn |, ||En-E
+            DIFE = ABS( (ENERGI-ENERG0) / ENERGI )
+            IF( DIFE .GT. NORMDF/NORMUM ) THEN
+C              LE TEST DE CONVERGENCE SE FAIT AVEC ||En-En-1||/||En||
+C              C-A-D LA VALEUR DE L'ENERGIE DE LA SOLUTION
+               NORMDF = ABS( ENERGI-ENERG0 )
+               NORMUM = ABS( ENERGI )
+            ENDIF
+            DIFE = ABS( (NORH1U-NORH10) / NORH1U )
+            IF( DIFE .GT. NORMDF/NORMUM ) THEN
+C              LE TEST DE CONVERGENCE SE FAIT AVEC ||Hn-Hn-1||/||Hn||
+C              C-A-D LA SEMI NORME H1 DE Un
+               NORMDF = ABS( NORH1U-NORH10 )
+               NORMUM = ABS( NORH1U )
+            ENDIF
+            ENERG0 = ENERGI
+            NORH10 = NORH1U
+            RESID0 = RESIDU
+C
+         ELSEIF( TESTNL .EQ. 3 ) THEN
+C
+C           METHODE ABANDONNEE!
+C           METHODE de CHEN & ZHOU MISE A L'ECHELLE  PAR |MAX U|
+            DO 1530 I=1,NTDL
+C *****        ATTENTION SCALING POUR LE PB DE CHEN & ZHOU   ************
+               NORMAX = MAX( NORMAX, ABS( DMCN(MN+I) ) )
+ 1530       CONTINUE
+C
+            DO 1532 I=1,NTDL
+C *****        ATTENTION SCALING POUR LE PB DE CHEN & ZHOU   ************
+               DMCN(MN+I) = DMCN(MN+I) / NORMAX
+               NORMDF = NORMDF + ( DMCN(MN+I) - DMCN(MN0+I) ) ** 2
+               NORMUM = NORMUM +   DMCN(MN+I) ** 2
+ 1532       CONTINUE
+            NORMUM = SQRT( NORMUM / NTDL )
+            NORMDF = SQRT( NORMDF / NTDL )
+            IF( LANGAG .EQ. 0 ) THEN
+               WRITE(IMPRIM,11532) ITERPF+1, NORMAX, NORMUM, NORMDF,
+     %                             NORMDF/NORMUM
+            ELSE
+               WRITE(IMPRIM,21532) ITERPF+1, NORMAX, NORMUM, NORMDF,
+     %                             NORMDF/NORMUM
+            ENDIF
+11532       FORMAT(' ITERATION POINT FIXE',I3,' MAX|U(N)|=',G15.6,
+     %             ' ||Un||=',G15.6,' ||Un-Un-1||=',G15.6,
+     %            '  ||Un-Un-1||/||Un||=',G12.4)
+21532       FORMAT(' FIX POINT ITERATION',I3,' MAX|U(N)|=',G15.6,
+     %             ' ||Un||=',G15.6,' ||Un-Un-1||=',G15.6,
+     %            '  ||Un-Un-1||/||Un||=',G12.4)
+C
+         ENDIF
+C
+         IF( TESTNL .EQ. 2 ) THEN
+            WRITE(IMPRIM,22000) NORMUM, NORMDF,
+     %                          NORMDF/NORMUM, EPSITE
+22000       FORMAT(' Norm UM  =',G15.6,
+     %            '   Norm DIFF=',G15.6,
+     %            '  NormDIFF/NormUM=',G15.6,
+     %            '  EpsIter=',G15.6)
+         ENDIF
+C
+ccc         print *,'Test iter:',normdf,epsite,ievifl,iterpf,testnl
+ccc     %          ,NORMDF,NORMUM
+C
+         IF( NORMDF .GT. EPSITE * NORMUM .OR.
+     %     (IEVIFL.GT.0 .AND. ITERPF .LE. 1) ) THEN
+CCC     %    .OR.  (TESTNL.EQ.3 .AND. ITERPF .LT. 10) )THEN
+C
+C           CONTROLE DE LA DIVERGENCE OU CONVERGENCE LENTE
+            IF( NORMUM .GT. 1D100 ) THEN
+               NBLGRC(NRERR) = 3
+               IF( LANGAG .EQ. 0 ) THEN
+                  KERR(1) = 'ERREUR: DIVERGENCE DE LA NORME DE U APRES'
+                  WRITE(KERR(5)(1:6),'(I6)') ITERPF+1
+                  KERR(2) = KERR(5)(1:6) // ' ITERATIONS'
+                  KERR(3) = 'SAUVEGARDE DE LA TEMPERATURE U ACTUELLE'
+               ELSE
+                  KERR(1) = 'ERROR: DIVERGENCE of NORM(U) after'
+                  WRITE(KERR(5)(1:6),'(I6)') ITERPF+1
+                  KERR(2) = KERR(5)(1:6) // ' ITERATIONS'
+                  KERR(3) = 'ACTUAL TEMPERATURE U is SAVED'
+               ENDIF
+               CALL LEREUR
+               IERR = 27
+               GOTO 9991
+            ENDIF
+C
+            IF( ITERPF .GE. ITERMX ) THEN
+               NBLGRC(NRERR) = 5
+               IF( LANGAG .EQ. 0 ) THEN
+                  KERR(1) = 'ERREUR: POINT FIXE NON ATTEINT APRES'
+                  WRITE(KERR(5)(1:6),'(I6)') ITERPF+1
+                  KERR(2) = KERR(5)(1:6) // ' ITERATIONS'
+                  KERR(3) = 'VITESSE du FLUIDE TROP GRANDE A REDUIRE?'
+                  KERR(4) = 'OU PROBLEME TROP FORTEMENT NON LINEAIRE?'
+                  KERR(5) = 'SAUVEGARDE DU VECTEUR SOLUTION ACTUEL'
+               ELSE
+                  KERR(1) = 'ERROR: FIX POINT NOT CONVERGED after'
+                  WRITE(KERR(5)(1:6),'(I6)') ITERPF+1
+                  KERR(2) = KERR(5)(1:6) // ' ITERATIONS'
+                  KERR(3) = 'FLUID SPEED TOO GREAT to REDUCE?'
+                  KERR(4) = 'or TOO GREAT NO LINEARITY?'
+                  KERR(5) = 'ACTUAL TEMPERATURE U is SAVED'
+                ENDIF
+               CALL LEREUR
+               IERR = 28
+               GOTO 9991
+            ENDIF
+C
+            IF( ITERPF .GE. 24 .AND. NORMDF/NORMUM .GT. 0.9D0 ) THEN
+               NBLGRC(NRERR) = 5
+               IF( LANGAG .EQ. 0 ) THEN
+                  KERR(1) = 'ERREUR: DIVERGENCE EN COURS... APRES'
+                  WRITE(KERR(5)(1:6),'(I6)') ITERPF+1
+                  KERR(2) = KERR(5)(1:6) // ' ITERATIONS'
+                  KERR(3) = 'VITESSE du FLUIDE TROP GRANDE a REDUIRE?'
+                  KERR(4) = 'OU PROBLEME TROP FORTEMENT NON LINEAIRE?'
+                  KERR(5) = 'SAUVEGARDE DU VECTEUR SOLUTION ACTUEL'
+               ELSE
+                  KERR(1) = 'ERROR: DIVERGENCING... after'
+                  WRITE(KERR(5)(1:6),'(I6)') ITERPF+1
+                  KERR(2) = KERR(5)(1:6) // ' ITERATIONS'
+                  KERR(3) = 'FLUID SPEED TOO GREAT to REDUCE?'
+                  KERR(4) = 'or TOO GREAT NO LINEARITY?'
+                  KERR(5) = 'ACTUAL TEMPERATURE U is SAVED'
+               ENDIF
+               CALL LEREUR
+               IERR = 29
+               GOTO 9991
+            ENDIF
+C
+C           LA TEMPERATURE DE L'ITERATION ITERPF EST MISE A JOUR
+C           AVEC LA TEMPERATURE QUI VIENT D'ETRE CALCULEE
+            CALL TRTATD( MCN(MNUG1), MCN(MNUG0), NTDL )
+C
+C           UNE NOUVELLE ITERATION DE POINT FIXE A FAIRE
+            ITERPF = ITERPF + 1
+            GOTO 50
+         ENDIF
+C
+C        CONVERGENCE DES ITERATIONS DE POINT FIXE
+         WRITE(IMPRIM,*)
+         IF( LANGAG .EQ. 0 ) THEN
+            IF( TESTNL .NE. 2 ) THEN
+               WRITE(IMPRIM,*) 'Au TEMPS ',TEMPS,': CONVERGENCE apres ',
+     %                          ITERPF+1,' ITERATIONS DE POINT FIXE'
+            ELSE
+               WRITE(IMPRIM,*) 'Au TEMPS ',TEMPS,': CONVERGENCE apres ',
+     %                          ITERPF+1,' ITERATIONS DE MISE A ECHELLE'
+            ENDIF
+         ELSE
+            IF( TESTNL .NE. 2 ) THEN
+               WRITE(IMPRIM,*) 'At TIME ',TEMPS,': CONVERGENCE after ',
+     %                          ITERPF+1,' FIX POINT ITERATIONS'
+            ELSE
+               WRITE(IMPRIM,*) 'At TIME ',TEMPS,': CONVERGENCE after ',
+     %                          ITERPF+1,' SCALING ITERATIONS'
+            ENDIF
+         ENDIF
+C
+      ENDIF
+C
+C     ICI CONVERGENCE: LA TEMPERATURE EST CALCULEE DANS MNUG1
+C
+C     MISE A JOUR DU TMS 'VECTEUR"TEMPERATURE'
+C     ========================================
+ 9991 MCN( MNVECT + WBCOVE ) = NTDL
+      MCN( MNVECT + WBVECT ) = 1
+      MCN( MNVECT + WBCPIN ) = 0
+C     LA DATE
+      CALL ECDATE( MCN(MNVECT) )
+C     LE NUMERO DU TABLEAU DESCRIPTEUR
+      MCN( MNVECT + MOREE2 ) = NONMTD( '~>>>VECTEUR' )
+C
+C     MISE A L'ECHELLE FINALE DE LA SOLUTION DU PB DE CHEN & ZHOU (LANE-EMDEN)
+C     ------------------------------------------------------------------------
+      IF( TESTNL .EQ. 2 ) THEN
+         IF( DEXPOS .NE. 1D0 ) THEN
+            MN = ( MNVECT + WECTEU - 1 ) / 2
+C           LE FACTEUR D'ECHELLE
+            IF( DEXPOS .EQ. 2D0 ) THEN
+               FACECH =  1D0 / ABS(VALUN0)
+            ELSE
+               FACECH =( 1D0 / ABS(VALUN0) ) ** (1.0D0/(DEXPOS-1D0))
+            ENDIF
+            IF( LANGAG .EQ. 0 ) THEN
+         WRITE(IMPRIM,*) 'FACTEUR D''ECHELLE = (1/U)**(1/(P-1))=',FACECH
+            ELSE
+               WRITE(IMPRIM,*) 'SCALE FACTOR = (1/U)**(1/(P-1))=',FACECH
+            ENDIF
+            DO 9902 I=1,NTDL
+C **********   ATTENTION SCALING POUR LE PB DE CHEN & ZHOU   ************
+               DMCN(MN+I) = DMCN(MN+I) * FACECH
+ 9902       CONTINUE
+         ENDIF
+      ENDIF
+C
+C     AFFICHAGE DES TEMPERATURES CALCULEES
+C     DISPLAY of COMPUTED TEMPERATURES
+C     ====================================
+      CALL AFTEMP( 10,  1, MNXYZN, NTDL,   1,      MCN(MNUG1),
+     %             TECMOY, TECMIN, NOTMIN, TECMAX, NOTMAX,
+     %             NOFOTI, TEXMIN, TEXMAX )
+
+C     DESTRUCTION DES TABLEAUX INUTILES MATRICE ET POINTEURS
+C     ======================================================
+      IF( IERKGALLOC .EQ. 0 ) THEN
+         DEALLOCATE( KG )
+         IERKGALLOC = 1
+      ENDIF
+      IF( MNLPLI .GT. 0 ) CALL TNMCDS( 'ENTIER', NTDL+1, MNLPLI )
+      IF( NORESO .EQ. 2 .OR. NORESO .EQ. 3 ) THEN
+         IF( MNLPCO .GT. 0 ) CALL TNMCDS( 'ENTIER', NBRDKG, MNLPCO )
+         IF( MNLPLC .GT. 0 ) CALL TNMCDS( 'ENTIER', NTDL+1, MNLPLC )
+         IF( MNLPCC .GT. 0 ) CALL TNMCDS( 'ENTIER', LOLPCC, MNLPCC )
+         IF( MNAGC  .GT. 0 ) CALL TNMCDS( 'REEL2',  LOLPCC, MNAGC  )
+      ENDIF
+C
+C     COUT CALCUL DES TEMPERATURES
+C     ============================
+      DTEMP = DINFO( 'DELTA CPU' )
+C
+C***************************************************************************
+C***************************************************************************
+C     CALCUL DES FLUX SUR CHAQUE FRONTIERE DES EF (2D=>LIGNES, 3D=>SURFACES)
+C     CALCUL DES FLUX SUR CHAQUE LIGNE DE L'OBJET
+C     CALCUL DE L'ESTIMATEUR D'ERREUR A PARTIR DU RESIDU PUR
+C
+C     COMPUTATION of FLUXES through the BOUNDARIES
+C***************************************************************************
+C***************************************************************************
+      IF( NBCOOR .EQ. 6 ) GOTO 9999
+C
+C     RESERVATION DES TABLEAUX FOMEGA(NDSM) ET FGAMMA(NDSM,NBPTAF)
+      NDSM = 1
+      CALL TNMCDC( 'REEL2', NDSM*(1+NBPTAF), MNFOME )
+      MNFGAM = MNFOME + MOREE2
+C
+      CALL THFLER( KNOMOB, NTLXOB, MNTOPO, NOAXIS, D2PI,
+     &             NDIM,   MOREE2, NBPTAF, NDSM,   NTDL,
+     &             NBTYEL, MNNPEF, NDPGST, MNTPOB, MXPOBA, NBTTEF,
+     &             MNTAUX, MNXYZP, NUMIOB, NUMAOB, MNDOEL,
+     &             MNTHER, MNFOME, MNFGAM, MOTAEL, MNTAEL, MNX,
+     &             MNUG1,   KNOM )
+      CALL TNMCDS( 'REEL2', NDSM * (1+NBPTAF), MNFOME )
+      GOTO 9999
+C
+C     DESTRUCTION DES TABLEAUX DEVENUS INUTILES
+C     =========================================
+ 9999 IF( MNLPLI .GT. 0 ) CALL TNMCDS( 'ENTIER', NTDL+1, MNLPLI )
+      IF( MNLPCO .GT. 0 ) CALL TNMCDS( 'ENTIER', NBRDKG, MNLPCO )
+      IF( MNLPLC .GT. 0 ) CALL TNMCDS( 'ENTIER', NTDL+1, MNLPLC )
+      IF( MNLPCC .GT. 0 ) CALL TNMCDS( 'ENTIER', LOLPCC, MNLPCC )
+      IF( MNAGC  .GT. 0 ) CALL TNMCDS( 'REEL2',  LOLPCC, MNAGC  )
+      IF( IERKGALLOC .EQ. 0 ) THEN
+         DEALLOCATE( KG )
+         IERKGALLOC = 1
+      ENDIF
+      IF( MNNPEF .GT. 0 ) CALL TNMCDS( 'ENTIER', 2*MXTYEL, MNNPEF )
+      DO 10010 I=1,4
+         IF( MNDOEL(I) .GT. 0 .AND. MXDOEL(I) .GT. 0 ) THEN
+            CALL TNMCDS( 'ENTIER', MXDOEL(I), MNDOEL(I) )
+         ENDIF
+10010 CONTINUE
+      IF( MNTPOB .GT. 0 ) CALL TNMCDS( 'ENTIER', NBTYEL*MXPOBA,
+     %                                  MNTPOB )
+      IF( MNTAUX .GT. 0 ) CALL TNMCDS( 'REEL2',  MOAUX,    MNTAUX )
+      IF( MNTAEL .GT. 0 ) CALL TNMCDS( 'REEL2',  MOTAEL,   MNTAEL )
+      IF( MNTHER .GT. 0 ) CALL TNMCDS( 'REEL2',  128,      MNTHER )
+      IF( MNNODL .GT. 0 ) CALL TNMCDS( 'ENTIER', NBDLMX,   MNNODL )
+      IF( MNX    .GT. 0 ) CALL TNMCDS( 'REEL' ,  NBDLMX*NBCOOR, MNX )
+      IF( MNNFNX .GT. 0 ) CALL TNMCDS( 'ENTIER', MONFNX,   MNNFNX )
+      IF( MNVFNX .GT. 0 ) CALL TNMCDS( 'REEL2',  MOVFNX,   MNVFNX )
+      IF( MNNDLX .GT. 0 ) CALL TNMCDS( 'ENTIER', MONDLX,   MNNDLX )
+      IF( MNVDLX .GT. 0 ) CALL TNMCDS( 'REEL2',  MONDLX,   MNVDLX )
+      IF( MNUG0  .GT. 0 ) CALL TNMCDS( 'REEL2',  NTDL,     MNUG0  )
+      IF( MNVG   .GT. 0 ) CALL TNMCDS( 'REEL2',  NTDL,     MNVG   )
+      IF( MNFG   .GT. 0 ) CALL TNMCDS( 'REEL2',  NTDL,     MNFG   )
+      IF( MNTHDL .GT. 0 ) CALL NLDATADS
+C
+C     GESTION DES ERREURS DETECTEES
+C     MANAGEMENT of DETECTED ERRORS
+C     =============================
+      IF( IERR .EQ. 7 ) THEN
+C        RETOUR SI MATRICE NON INVERSIBLE
+         CALL LXTSOU( NTLXOB, 'VECTEUR"TEMPERATURE', NTVECT, MNVECT )
+         IF( NTVECT .GT. 0 ) THEN
+C           LE VECTEUR EST DETRUIT CAR INCORRECT
+            CALL LXTSDS( NTLXOB, 'VECTEUR"TEMPERATURE' )
+         ENDIF
+         IERR = 0
+         RETURN
+      ELSE IF( IERR .EQ. 8 ) THEN
+C        RETOUR SI FACTORISATION INCOMPLETE INSTABLE ET TRAVAIL INTERACTIF
+         IERR = 0
+         GOTO 10
+      ELSE IF( IERR .EQ. 9 ) THEN
+C        RETOUR SI NON CONVERGENCE DU G.C. ET TRAVAIL INTERACTIF
+         IERR = 0
+         GOTO 10
+      ELSE IF( IERR .NE. 0 ) THEN
+         RETURN
+      ENDIF
+C
+C     BILAN SUR LES TEMPS CALCUL
+C     DISPLAY the CPU TIMES
+ 9000 DCPU = DINFO( 'DELTA CPU' )
+      IF( LANGAG .EQ. 0 ) THEN
+         WRITE(IMPRIM,19001) DFABG,DFACT,DTEMP,DCPU,
+     %                       DFABG+DFACT+DTEMP+DCPU
+      ELSE
+         WRITE(IMPRIM,29001) DFABG,DFACT,DTEMP,DCPU,
+     %                       DFABG+DFACT+DTEMP+DCPU
+      ENDIF
+19001 FORMAT(/
+     % ' TEMPS FORMATION     DE LA MATRICE =',F12.2,' SECONDES CPU'/
+     % ' TEMPS FACTORISATION DE LA MATRICE =',F12.2,' SECONDES CPU'/
+     % ' TEMPS CALCUL DES TEMPERATURES     =',F12.2,' SECONDES CPU'/
+     % ' TEMPS CALCUL DES FLUX DE CHALEUR  =',F12.2,' SECONDES CPU'/
+     % ' TEMPS TOTAL  DE  LA RESOLUTION    =',F12.2,' SECONDES CPU'/)
+29001 FORMAT(/
+     % ' MATRIX FORMATION        TIME =',F12.2,' CPU SECONDS'/
+     % ' FACTORIZATION MATRIX    TIME =',F12.2,' CPU SECONDS'/
+     % ' COMPUTATION TEMPERATURE TIME =',F12.2,' CPU SECONDS'/
+     % ' COMPUTATION HEAT FLUX   TIME =',F12.2,' CPU SECONDS'/
+     % ' SOLUTION TOTAL          TIME =',F12.2,' CPU SECONDS'/)
+C
+C     BILAN SUR LA PLACE MEMOIRE CENTRALE OCCUPEE PAR LA MATRICE
+C     DISPLAY the NUMBER of MEMORY WORDS
+      IF( NORESO .EQ. 1 ) THEN
+C
+C        CHOLESKY PROFIL
+         IF( LANGAG .EQ. 0 ) THEN
+            WRITE(IMPRIM,10016) NTDL+MOREE2*NBRDKG
+         ELSE
+            WRITE(IMPRIM,20016) NTDL+MOREE2*NBRDKG
+         ENDIF
+         WRITE(IMPRIM,*)
+C
+      ELSE IF( NORESO .EQ. 2 ) THEN
+C
+C        GRADIENT CONJUGUE MORSE
+         IF( LANGAG .EQ. 0 ) THEN
+            WRITE(IMPRIM,19002) NIVEAU, NTDL+NBRDKG*(1+MOREE2),
+     %                          NTDL+LOLPCC*(1+MOREE2),MOTSGC,
+     %            NTDL+NBRDKG*(1+MOREE2)+NTDL+LOLPCC*(1+MOREE2)+MOTSGC
+         ELSE
+            WRITE(IMPRIM,29002) NIVEAU, NTDL+NBRDKG*(1+MOREE2),
+     %                          NTDL+LOLPCC*(1+MOREE2),MOTSGC,
+     %            NTDL+NBRDKG*(1+MOREE2)+NTDL+LOLPCC*(1+MOREE2)+MOTSGC
+         ENDIF
+19002    FORMAT(' FACTORISATION INCOMPLETE de NIVEAU ',I2/
+     %          ' MATRICE MORSE GC ',         T30,I15,' MOTS MEMOIRE'/
+     %          ' MATRICE PRECONDITIONNEMENT',T30,I15,' MOTS MEMOIRE'/
+     %          ' TABLEAUX SUPPLEMENTAIRES',  T30,I15,' MOTS MEMOIRE'/
+     %          ' AU TOTAL le GC NECESSITE',  T30,I15,' MOTS MEMOIRE'/)
+29002    FORMAT(' INCOMPLETE FACTORIZATION of LEVEL ',I2/
+     %          ' CG MORSE MATRIX  ',         T30,I15,' MEMORY WORDS'/
+     %          ' PRECONDITIONED MATRIX',     T30,I15,' MEMORY WORDS'/
+     %          ' CG AUXILIARY ARRAYS',       T30,I15,' MEMORY WORDS'/
+     %          ' TOTAL: The CG REQUIRES',    T30,I15,' MEMORY WORDS'/)
+C
+      ELSE IF( NORESO .EQ. 3 ) THEN
+C
+C        MULTI-PROCESSOR METHOD
+         IF( LANGAG .EQ. 0 ) THEN
+            WRITE(IMPRIM,19003) NTDL+NBRDKG*(1+MOREE2)
+         ELSE
+            WRITE(IMPRIM,29003) NIVEAU, NTDL+NBRDKG*(1+MOREE2),
+     %            NTDL+NBRDKG*(1+MOREE2)+NTDL+LOLPCC*(1+MOREE2)+MOTSGC
+         ENDIF
+19003    FORMAT(' AX=b RESOLU sur un MULTI-PROCESSEURS'/
+     %          ' MATRICE MORSE de ',I15,' MOTS MEMOIRE'/)
+29003    FORMAT(' AX=b SOLVED on a MULTI-PROCESSORS'/
+     %          ' CONDENSED MATRIX of ',I15,' MEMORY WORDS'/)
+      ENDIF
+C
+      RETURN
+      END

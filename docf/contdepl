@@ -1,0 +1,11 @@
+Les CONTRAINTES sont tracees avec des fleches representant
+-les directions principales 
+-les compressions ( fleches rentrantes )
+-les extensions   ( fleches sortantes  )
+-l'intensite des contraintes principales proportionnelle
+ a la longueur des fleches.
+
+Les DEPLACEMENTS sont visualises en deplacant les noeuds
+du maillage de leur position initiale a celle translatee
+du vecteur deplacement multiplie par un facteur important
+afin de mieux voir la deformation de l'objet.

@@ -1,0 +1,12 @@
+deftms ~>>>MASSE   'Densite de MASSE du SV'
+variable muet DATE 'date de creation du tableau'   reel2  ;
+variable muet NUTD 'numero du tableau descripteur' entier ; 
+variable    LTDMAS 'Type de la densite de MASSE'   entier 
+(  1 : 'Masse constante'
+, -1 : 'fonction Masse'
+,  0 : 'Masse a supprimer'  ) ; 
+cas LTDMAS
+ 1 : variable DMASSE 'Densite de MASSE' reel   ; 
+-1 : variable NFDMAS 'Nom fonction Densite de MASSE' ^~>FONCTION ;
+fincas ;   
+fintms ;

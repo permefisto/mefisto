@@ -1,0 +1,82 @@
+ { ==================================================== }
+ { MEFISTO Version Octobre 1999   PROJET: Test THEILC   }
+ { Utilisateur: perronnet         Date:   7/2/98        }
+ { ==================================================== }
+1;
+ { POINTS sommets de l objet }
+ 1; { FRAPPE des valeurs }
+ A; I; 1; 0; 0; 0;
+ { DANS LE LEXIQUE ~>TRANSFO }
+ { coordonnees x y z }
+ { COORPO '3 coordonnees cartesiennes du point' xyz ; }
+ B; I; 1; 1; 0; 0;
+ { DANS LE LEXIQUE ~>TRANSFO }
+ { coordonnees x y z }
+ { COORPO '3 coordonnees cartesiennes du point' xyz ; }
+ C; I; 1; 1; 1; 0;
+ { DANS LE LEXIQUE ~>TRANSFO }
+ { coordonnees x y z }
+ { COORPO '3 coordonnees cartesiennes du point' xyz ; }
+ D; I; 1; 0; 1; 0;
+ { DANS LE LEXIQUE ~>TRANSFO }
+ { coordonnees x y z }
+ { COORPO '3 coordonnees cartesiennes du point' xyz ; }
+@;
+
+2;  { LIGNES aretes de l objet }
+ AB; I; 2; 5; 1.0; A; B;
+ { DANS LE LEXIQUE ~>TRANSFO }
+ { segment de droite }
+ { NBARLI 'nombre d''aretes de la ligne' entier ; }
+ { RAIGEO 'raison geometrique espacant les sommets' reel ; }
+ { DANS LE LEXIQUE ~>POINT }
+ { DANS LE LEXIQUE ~>POINT }
+ BC; I; 2; 5; 1.0; B; C;
+ { DANS LE LEXIQUE ~>TRANSFO }
+ { segment de droite }
+ { NBARLI 'nombre d''aretes de la ligne' entier ; }
+ { RAIGEO 'raison geometrique espacant les sommets' reel ; }
+ { DANS LE LEXIQUE ~>POINT }
+ { DANS LE LEXIQUE ~>POINT }
+ CD; I; 2; 5; 1.0; C; D;
+ { DANS LE LEXIQUE ~>TRANSFO }
+ { segment de droite }
+ { NBARLI 'nombre d''aretes de la ligne' entier ; }
+ { RAIGEO 'raison geometrique espacant les sommets' reel ; }
+ { DANS LE LEXIQUE ~>POINT }
+ { DANS LE LEXIQUE ~>POINT }
+ AD; I; 2; 5; 1.0; A; D;
+ { DANS LE LEXIQUE ~>TRANSFO }
+ { segment de droite }
+ { NBARLI 'nombre d''aretes de la ligne' entier ; }
+ { RAIGEO 'raison geometrique espacant les sommets' reel ; }
+ { DANS LE LEXIQUE ~>POINT }
+ { DANS LE LEXIQUE ~>POINT }
+@;
+
+3; { SURFACES faces de l objet }
+ CARRE; I; { DANS LE LEXIQUE ~>TRANSFO}
+        1; { quadrangle ALGEBRIQUE structure ou non }
+        AB; BC; CD; AD; { DANS LE LEXIQUE ~>LIGNE }
+        2;  { maillage irregulier }
+ CARRET; I; { DANS LE LEXIQUE ~>TRANSFO}
+        31; {triangulation d'une quadrangulation}
+     CARRE;
+         1; {Diagonale 1-3}
+@;
+
+5; { OBJETS parties de l OBJET }
+   CARRE;  0; { classique }
+   5; { NBDOBJ 'nombre des points lignes surfaces volumes objets }
+    S; CARRET; 
+    L; AD;  L; CD;  L; BC;  L; AB;
+   { NTYOBJ(1..NBDOBJ) 'nom du type PLSVO et nom du PLSVO' typeobjet}
+@;
+7; { INTERPOLATION definition NOEUDS du maillage }
+   CARRE;
+   {3;   LAGRANGE de DEGRE 1 }
+    4; { LAGRANGE de DEGRE 2 }
+@;
+@;
+10; 5; 90; {TRACE DES OBJETS}
+FERMER;

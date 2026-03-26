@@ -1,0 +1,116 @@
+SOLVER of an ELASTICITY PROBLEM:
+
+1: OBJECT NAME to treat:
+   First, the NAME of the object must be given.
+   This object has to be meshed and interpolated.
+
+2: ELASTICITY INPUT DATA: 
+   The data input for the elasticity problem are:
+  -The MASS density, the YOUNG ELASTICITY tensor and the internal
+   forces have to be given at level of each material:
+   volume in 3D, surface in 2D
+  -The IMPOSED DISPLACEMENT (DIRICHLET condition) named here
+   FIXATION, the boundary FORCES named FORCE (NEUMANN condition)
+   have to be given on every component of the boundary.
+
+   Remark: @ permits the abandon of the data input of a component
+           of the object.
+
+   EXAMPLE :
+                         L3
+       P4 *----------------------------------* P3
+          |                                  |
+          |                                  |    
+          |                                  |
+          |                                  |
+          |                                  |
+       L4 |              S                   | L2
+          |                                  |
+          |                                  |
+          |                                  |
+          |                                  |    
+          |                                  |
+          |                                  |
+       P1 *----------------------------------* P2
+                         L1
+
+          
+   ELASTICITY CHARACTERISTICS for the STEADY problem:
+
+   on S  : ELASTICITY TENSOR and eventually INTERNAL FORCES
+   * means one of the 4 characters 1 or 2 or 3 or 4
+   on L* : FIXATION (imposed displacement) or
+           exterior FORCEs on the boundary L*
+   on P* : FIXATION if the point P* is also on one L* which
+           supports exterior FORCES
+
+   if L4 and L2 are subjected to exterior FORCES and FIXATIONS for L3
+   it is necessary to define P3 and P4 in terms of FIXATION
+   in order to imposed a DIRICHLET condition at these points.
+
+   REMEMBER that at least a FIXATION at 3 points not on a same 
+   straigth line IS NECESSARY to obtain a PROBLEM INVERSIBLE MATRIX!
+
+   If the object OB is defined by : 
+   surface S  line L2  line L3  line L4  point P3  point P4 
+   then, by default, the exterior forces on L1 are imposed null.
+
+3: SOLVER of the LINEAR STEADY ELASTICITY PROBLEM
+   The data are given. The solver can be executed.
+   Choose between a direct method by Cholesky factorization
+   or an iterative method by a preconditioned conjugate gradient.
+
+4: DYNAMIC ELASTICITY solver d2/dt2:
+   SOLVER of the LINEAR UNSTEADY ELASTICITY PROBLEM
+   The data are given. The solver can be executed.
+   The TIME INTEGRATION is done with a NEWMARK scheme which is
+   unconditionnaly stable.
+
+6: EIGENVALUE & VECTORS solver
+   The smaller eigenvalues for the elasticity operator
+   may be computed by 2 methods: SUB-SPACE or INVERSE ITERATIONS.
+
+8: DRAWING of DISPLACEMENT & STRESS
+   After the displacement computations, the amplified deformed object
+   and with arrows the main stresses may be drawn.
+
+10: DRAWING of PLSVO meshes
+    To memorize the different meshes and recover the components
+    of an object.
+
+The other options are used to manage the project:
+
+20: PRECISION to INVERSE A x = b
+    to give the value of convergence iteration test for 
+    Cholesky factorization or conjugate gradient.
+
+39: BACKGROUND COLOR of the WINDOW
+To change the color of the Mefisto window
+
+71: TOOLS on TMS
+With this option, it is possible to
+- DISPLAY a TMS (Tableau Memoire Secondaire = Array on Disk)
+- INPUT the values of a TMS
+- DISPLAY the VALUE of a TMS variable
+- IMPOSE  the VALUE of a TMS variable
+- CHANGE  a NAME in a directory
+
+72: TOOLS on FILES of the MS
+To add a new file to the MS if it is saturated...
+
+73: TOOLS on I/O units
+The option 3 (default value) permits the interaction User-Mefisto
+
+74: DELETE TMS of PLSVO
+It is possible to DESTROY a  TMS ou un PLSVO or the function 
+TAILLE_IDEALE(x,y,z) ... But no recovering is possible!
+Don not use this option.
+
+99: SAVE DATA and QUIT
+This option is OBLIGATORY to recover the computed TMS of this
+execution during a future execution of MAILLER, THERMICER, ...
+ELSE, ALL DATA ARE LOST!...
+
+In this wrong case, see the files FRAPPE.* of the project
+which permits to compute again all executions...
+But, it is not recommended!...

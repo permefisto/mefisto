@@ -1,0 +1,115 @@
+{ ==================================================================== }
+{ Software MEFISTO     : March 2007 Version                            }
+{ USER's Name          : Alain Perronnet                               }
+{ Project Name         : option (european put option)                  }
+{ Date                 : 2/04/2007   12h 00m 00s                       }
+{ ==================================================================== }
+DefVar L; L=200;
+DefVar nbedge; nbedge=50;
+
+ 1; { POINTS vertices of the object }
+ 1; { TYPING of VALUES }
+ A; { NAME of the POINT or ESCAPE? }
+ I; 1; 0; 0; 0;
+ { in LEXICON ~>TRANSFO }
+ { X Y Z COORDINATES }
+ { COORPO 'X Y Z of a point' xyz ; }
+
+ B; I; 1; L; 0; 0;
+ { in LEXICON ~>TRANSFO }
+ { X Y Z COORDINATES }
+ { COORPO 'X Y Z of a point' xyz ; }
+ { NAME of the POINT or ESCAPE? }
+
+ C; I; 1; L; L; 0;
+ { in LEXICON ~>TRANSFO }
+ { X Y Z COORDINATES }
+ { COORPO 'X Y Z of a point' xyz ; }
+ { NAME of the POINT or ESCAPE? }
+
+ D; I; 1; 0; L; 0;
+ { in LEXICON ~>TRANSFO }
+ { X Y Z COORDINATES }
+ { COORPO 'X Y Z of a point' xyz ; }
+ { NAME of the POINT or ESCAPE? }
+ @;
+
+2; { LINES edges of the object }
+ AB;     { NAME of the LINE or ESCAPE? }
+ I;      { in LEXICON ~>TRANSFO }
+ 2;      { STRAIGHT LINE }
+ nbedge; { NBARLI 'number of edges of the line' entier ; }
+ 1;      { RAIGEO 'geometrical ratio between the edges' reel ; }
+ A;      { NAME of POINT }
+ B;      { NAME of POINT }
+
+ { NAME of the LINE or ESCAPE? }
+ BC; I; 2; nbedge; 1; B; C;
+ { in LEXICON ~>TRANSFO }
+ { STRAIGHT LINE }
+ { NBARLI 'number of edges of the line' entier ; }
+ { RAIGEO 'geometrical ratio between the edges' reel ; }
+ { in LEXICON ~>POINT }
+ { in LEXICON ~>POINT }
+
+ { NAME of the LINE or ESCAPE? }
+ CD; I; 2; nbedge; 1; C; D;
+ { in LEXICON ~>TRANSFO }
+ { STRAIGHT LINE }
+ { NBARLI 'number of edges of the line' entier ; }
+ { RAIGEO 'geometrical ratio between the edges' reel ; }
+ { in LEXICON ~>POINT }
+ { in LEXICON ~>POINT }
+
+ { NAME of the LINE or ESCAPE? }
+ DA; I; 2; nbedge; 1; D; A;
+ { in LEXICON ~>TRANSFO }
+ { STRAIGHT LINE }
+ { NBARLI 'number of edges of the line' entier ; }
+ { RAIGEO 'geometrical ratio between the edges' reel ; }
+ { in LEXICON ~>POINT }
+ { in LEXICON ~>POINT }
+ { NAME of the LINE or ESCAPE? }
+ @;
+
+3; { SURFACES faces of the object }
+ ABCDQ;{ NAME of the SURFACE or ESCAPE? }
+ I;    { in LEXICON ~>TRANSFO }
+ 1;    { TRANSFINITE QUADRANGLE }
+ AB;   { NAME of LINE }
+ BC;   { NAME of LINE }
+ CD;   { NAME of LINE }
+ DA;   { NAME of LINE }
+ 1;    { regular mesh }
+
+ ABCD; { NAME of the SURFACE or ESCAPE? }
+ I;    { in LEXICON ~>TRANSFO }
+ 31;   {TRIANGULATION OF A QUADRANGULATION}
+ ABCDQ;{QUANDRANGULATION NAME}
+ 1;    {create an edge S1 S3}
+@;
+
+5;  { OBJECTS parts of the object }
+ ABCD; { NAME of the OBJECT or ESCAPE? }
+ 0;    { 2D or 3D classic }
+ 6;    { NBDOBJ 'number of Points Lines Surfaces Volumes Objects of the object' }
+ S;    { POINT or LINE or SURFACE or VOLUME or OBJECT? }
+ ABCD; { NAME of SURFACE }
+ L; BC;{ POINT or LINE or SURFACE or VOLUME or OBJECT? }
+ L; CD;{ POINT or LINE or SURFACE or VOLUME or OBJECT? }
+ P; B; { POINT or LINE or SURFACE or VOLUME or OBJECT? }
+ P; C; { POINT or LINE or SURFACE or VOLUME or OBJECT? }
+ P; D; { POINT or LINE or SURFACE or VOLUME or OBJECT? } 
+ @;
+
+ 7; { INTERPOLATION nodes of the mesh }
+ ABCD; { NAME of the OBJECT to be INTERPOLATED? }
+ 3;    { LAGRANGE of DEGREE 1 }
+ @;
+
+10; { DRAWING of PLSVO meshes }
+ 5; { OBJECT }
+ 1; { ALL OBJECTS 1 by 1 }
+ 90;{ Continue the DRAWING }
+
+FERMER;

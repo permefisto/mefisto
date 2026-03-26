@@ -1,0 +1,225 @@
+{=========================================================}
+{ MEFISTO Version  Octobre 1999  PROJET: Test RAB         }
+{ Utilisateur: Perronnet Alain   Date:   22/5/99          }
+{ La resolution thermique instationnaire fichier rab.ther }
+{=========================================================}
+DefVar Pi; Pi=atan(1) * 4;
+DefVar pisa,pisb;   pisa = PI / a;   pisb = Pi / b;
+
+DefVar t0; t0=1;
+
+DefVar DeltaT; DeltaT=0.1;
+
+{La densite volumique et la capacite calorifique}
+DefVar Rot, C, RotC; Rot=2; C=3; RotC= Rot * C;
+
+{La conductivite}
+DefVar k; k=1.3;
+
+{LE Coefficient de la temperature}
+DefVar CoefTemp; CoefTemp=0.5;
+
+{Le coefficient d'echange sur BC}
+DefVar g; g=1.5;
+
+{La vitesse du fluide}
+defvar V1,V2;  V1=1/10; V2=1/10;
+
+DefVar a2; a2=a*a;
+
+{Pour afficher les erreurs}
+deffonc temperature_exacte(t,x,y,z);
+  temperature_exacte = (t+t0) * x*(a-x)/a2 * sin(Pisb*y) + 1.0;
+finfonc;
+
+{Pour definir la temperature au bord du pb stationnaire t=0}
+deffonc temperature(t,x,y,z,nutyob,nuobj,temper);
+  temperature=temperature_exacte(t,x,y,z);
+finfonc;
+
+deffonc dttemperature(t,x,y);
+  dttemperature = x*(a-x)/a2 * sin(Pisb*y);
+finfonc;
+
+deffonc dxtemperature(t,x,y);
+  dxtemperature = (t+t0) * (a-2*x)/a2 * sin(Pisb*y);
+finfonc;
+deffonc ddxtemperature(t,x,y);
+  ddxtemperature = - (t+t0) * 2/a2 * sin(Pisb*y);
+finfonc;
+
+deffonc dytemperature(t,x,y);
+  dytemperature = (t+t0) * x*(a-x)/a2 * Pisb * cos(Pisb*y);
+finfonc;
+deffonc ddytemperature(t,x,y);
+  ddytemperature = - (t+t0) * x*(a-x)/a2 * Pisb**2 * sin(Pisb*y);
+finfonc;
+
+deffonc NeumannDC(t,x,y,z,nutyob,nuobj,temper);
+  NeumannDC = k * dytemperature(t,x,y);
+finfonc;
+
+deffonc FourierBC(t,x,y,z,nutyob,nuobj,temper);
+  FourierBC=k*dxtemperature(t,x,y)+g*temperature(t,x,y,z,nutyob,nuobj,temper);
+finfonc;
+
+{ ====================  PB STATIONNAIRE ================================}
+
+{Source = - k * Laplacien temperature
+          + V . gradient temperature
+          + CoefTemp * temperature }
+
+ deffonc Source(t,x,y,z,nutyob,nuobjt,temper);
+    defvar t1,x1,y1;
+    t1 = t + t0;
+    x1 = x*(a-x);
+    y1 = y*(b-y);
+    Source = - k * ( ddxtemperature(t,x,y) + ddytemperature(t,x,y) )
+           +  V1 *  dxtemperature(t,x,y) + V2 * dytemperature(t,x,y)
+           +  CoefTemp * temperature_exacte(t,x,y,z);
+ finfonc;
+
+1; { NOM de l OBJET a traiter ensuite }
+ RECTANGLE;
+
+2; { ENTREE des DONNEES du PROBLEME de THERMIQUE STATIONNAIRE }
+
+ { SURFACE: RECTANGLE }
+   2; { densite de CONDUCTIVITE THERMIQUE }
+     3; { materiau 2D homogene isotrope }
+     k; { CONDUC  conductivite du materiau }
+
+   4;   { densite SOURCE de CHALEUR }
+    -1; { fonction utilisateur }
+     Source; { DANS LE LEXIQUE ~>FONCTION }
+
+   5; { VITESSE du FLUIDE}
+     1; {type de la vitesse du fluide: constante }
+     2; {nombre des composantes de la vitesse }
+     V1; V2; {vecteur vitesse du fluide}
+
+   6; { CT le coefficient devant la TEMPERATURE }
+     1;        {type du coefficient constant }
+     CoefTemp; { coefficient de la temperature }
+   @;
+
+ { LIGNE: AB }
+   3; { CONTACT temperature imposee }
+     -1; { fonction utilisateur }
+      temperature; { DANS LE LEXIQUE ~>FONCTION }
+   @;
+
+ { LIGNE: BC }
+  1; { ECHANGE coefficient d''echange avec le fluide a la paroi }
+      1; {constante}
+      g; {ECHANG coefficient d'echange   reel; }
+  2; { source de chaleur ou flux impose a la frontiere}
+     -1; { fonction utilisateur }
+      FourierBC; { DANS LE LEXIQUE ~>FONCTION }
+   @;
+
+ { LIGNE: CD }
+   2; { source de chaleur ou flux impose a la frontiere}
+     -1; { fonction utilisateur }
+      NeumannDC; { DANS LE LEXIQUE ~>FONCTION }
+   @;
+
+ { LIGNE: AD }
+   3; { CONTACT temperature imposee }
+     -1; { fonction utilisateur }
+      temperature; { DANS LE LEXIQUE ~>FONCTION }
+   @;
+
+ { POINT: A }
+   3; { CONTACT temperature imposee }
+     -1; { fonction utilisateur }
+      temperature; { DANS LE LEXIQUE ~>FONCTION }
+   @;
+
+ { POINT: B }
+   3; { CONTACT temperature imposee }
+     -1; { fonction utilisateur }
+      temperature; { DANS LE LEXIQUE ~>FONCTION }
+   @;
+
+ { POINT: D }
+   3; { CONTACT temperature imposee }
+     -1; { fonction utilisateur }
+      temperature; { DANS LE LEXIQUE ~>FONCTION }
+   @;
+
+3; { RESOLUTION du pb THERMIQUE LINEAIRE STATIONNAIRE }
+   1; { Coefficients INDEPENDANTS de la TEMPERATURE }
+   1; { Resolution par CHOLESKY avec stockage PROFIL de la MATRICE }
+@;
+
+{ ====================  PB INSTATIONNAIRE ==================================}
+
+{Source = RotC dtemperature/dt
+        - k * Laplacien temperature
+        + V . gradient temperature
+        + CoefTemp * temperature }
+
+deffonc Source(t,x,y,z,nutyob,nuobjt,temper);
+    Source = RotC * dttemperature(t,x,y)
+           - k * ( ddxtemperature(t,x,y) + ddytemperature(t,x,y) )
+           + V1 *  dxtemperature(t,x,y) + V2 * dytemperature(t,x,y)
+           + CoefTemp * temperature_exacte(t,x,y,z);
+finfonc;
+
+2; { ENTREE des DONNEES du PROBLEME de THERMIQUE   }
+   { Seule la densite de MASSE et CHALEUR MASSIQUE }
+   { viennent s'ajouter du probleme stationnaire   }
+   { MAIS la fonction SOURCE a ete modifiee        }
+   { et sa nouvelle version est prise en compte    }
+
+ { SURFACE: RECTANGLE }
+   1;     { densite de MASSE }
+     1;   { constante }
+   Rot;   {  densite de MASSE }
+   7;     { CHALEUR MASSIQUE }
+     1;   { constante }
+     C;   { CHALEUR MASSIQUE }
+   @;
+ { LIGNE: AB }
+   @;
+ { LIGNE: BC }
+   @;
+ { LIGNE: CD }
+   @;
+ { LIGNE: AD }
+   @;
+ { POINT: A }
+   @;
+ { POINT: B }
+   @;
+ { POINT: D }
+   @;
+
+4;  { RESOUDRE le pb THERMIQUE INSTATIONNAIRE }
+DefVar nbpas; nbpas=10; { le nombre de PAS de TEMPS est une variable }
+
+      1;       { [M] [K] g INDEPENDANTS du TEMPS et de la TEMPERATURE }
+    0.0;       { le temps initial de l'etude thermique }
+      2;       { la temperature initiale = VECTEUR"TEMPERATURE deja calcule }
+nbpas*DeltaT;  { le temps final de l'etude thermique }
+ DeltaT;       { le pas de temps constant du calcul }
+ nbpas;        { le nombre de vecteurs temperatures a stocker en plus }
+      1;       { la resolution par CHOLESKY et matrice PROFIL }
+      1;       { la valeur de theta de la methode a 1 pas }
+@;
+
+4; { RESOUDRE le pb THERMIQUE INSTATIONNAIRE  nbpas pas de temps en + }
+      1;       { [M] [K] g INDEPENDANTS du TEMPS et de la TEMPERATURE }
+nbpas*DeltaT;  { le temps initial de l'etude thermique }
+      2;       { la temperature initiale = VECTEUR"TEMPERATURE deja calcule }
+2*nbpas*DeltaT;{ le temps final de l'etude thermique }
+ DeltaT;       { le pas de temps constant du calcul }
+ nbpas;        { le nombre de vecteurs temperatures a stocker en plus }
+  2;  1;       { la resolution par GC et matrice MORSE de niveau 1 }
+      1;       { la valeur de theta de la methode a 1 pas }
+@;
+
+8; {TRACE DE L'ERREUR}
+ 2; 8; 1; 90;
+FERMER;

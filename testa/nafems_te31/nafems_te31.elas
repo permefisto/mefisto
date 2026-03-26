@@ -1,0 +1,48 @@
+{TEST 31 NAFEMS CANTILEVER SQUARE MEMBRANE}
+
+{fichier TEST CALCUL DES MODES PROPRES EN ELASTICITE}
+{Le maillage en quadrangles de degre 2     QUAD 2Q2C}
+
+{Le 8 septembre 1998                 Alain PERRONNET}
+
+1; CARRE;
+
+2;
+
+ {surface CARRE}
+  1; {densite volumique de masse}
+  1; 8000;  {kg/m**3}
+
+  2; {Young et Poisson}
+ {3; 200e9; N/m**2  0.3; en CONTRAINTES  PLANES}
+  4; 200e9;  {N/m**2}   0.3;  {en DEFORMATIONS PLANES}
+ @;
+
+ {ligne S4S1}
+ 2; {fixation}
+  1; {constante}
+  2; {composantes}
+  1; 2; {no de la composante des deplacements a fixer}
+  0; 0; {valeur fixee}
+ @;
+@;
+
+DefVar DeuxPi; DeuxPi=atan(1)*8;
+
+6; {calcul des modes propres  Omega**2}
+ {0; coefficient TETA de translation des valeurs propres}
+  1; {methode des sous-espaces}
+(DeuxPi*0  )**2; {borne inferieure des valeurs propres a calculer}
+(DeuxPi*300)**2; {borne superieure des valeurs propres a calculer}
+@;
+
+7; {trace de la deformee amplifiee 100 fois}
+  2; 2; 100; 90; 90;
+
+FERMER;
+
+{Pour obtenir les resultats Nafems a partir des valeurs propres
+affichees (omega**2), il faut calculer la frequence par la formule
+   frequence = sqrt( Valeur Propre calculee ) / ( 2 Pi )
+}
+

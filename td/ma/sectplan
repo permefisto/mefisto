@@ -1,0 +1,17 @@
+variable SECTPLAN 'PLANES of CUTTING' entier
+( 1  : 'X=Constant'
+, 2  : 'Y=Constant'
+, 3  : 'Z=Constant'
+, 4  : 'a PLANE to DEFINE'
+, 5  : 'COLOR of Boundary EDGES'
+, 6  : 'DRAWING TYPE of Boundary EDGES'
+, 7  : 'COLOR of EDGES in the PLANES'
+, 8  : 'DRAWING TYPE of EDGES in the PLANES'
+, 11 : 'NUMBER of PLANES'  
+, 12 : 'Regular DISTANCE between MIN-MAX'
+, 13 : 'COORDINATE MIN & MAX of PLANES'
+, 14 : 'COORDINATE of each PLANE'
+, 19 : 'REDUCTION % of FACES'
+, 20 : 'Minimum Maximum Solution THRESHOLD'
+, 80 : 'INITIATE AGAIN the data of PLANES'
+, 90 : 'EXECUTION of the DRAWING' ) ;

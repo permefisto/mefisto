@@ -1,0 +1,6 @@
+variable IMPORTER 'a PLSVO MESH' entier
+( 1 : 'A File xyznsef.plsv.name',
+  2 : 'An OBJECT from the NEF software',
+  3 : 'A file.obj (lower case)',
+  4 : 'LS-Dyna NameSurf.xyzlsd NameSurf.nselsd' ) ;
+

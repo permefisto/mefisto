@@ -1,0 +1,4 @@
+variable MODIFOBJ 'Modifier definition un OBJET' entier
+( 1 : 'SUPPRIMER cet OBJET',
+  2 : 'AJOUTER un PLSV',
+  3 : 'RETIRER un PLSV' ) ;

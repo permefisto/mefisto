@@ -1,0 +1,20 @@
+Ce premier rayon doit etre un nombre reel positif, raisonnable
+par rapport aux 2 segments qui sont tangents au cercle.
+
+                              P4--------------- .      *P5
+                                                   .
+                                                   / .
+                        /              /         /    .
+             EPAISSEUR /              /         /      |
+                      /              /      RAYON2     |
+                                                       |
+                                                    /  P6
+                P1--------------- .      *P2      
+                                      .           /   /
+                                        .       /
+                                    /         /     /
+                                  /      .        /
+                                /        |      /
+                             RAYON1      |  
+                                         |
+                                         P3

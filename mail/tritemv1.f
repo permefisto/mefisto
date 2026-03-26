@@ -1,0 +1,637 @@
+      SUBROUTINE TRITEMV1( MNXYZS, MNNSEF,
+     %                     L1ARET,  L2ARET, LARETE,
+     %                     NBAR1F,  NAR1F,  NBAR2F, NAR2F, NBAR3F,NAR3F,
+     %                     NBAR2SF, NAR2SF, NBAR2FCOL, NAR2FCOL,
+     %                     MXITDI,  MNITDI, MXITAN, MNITAN )
+C ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+C BUT : CONSTRUIRE LES ITEMS VISIBLES SOMMETS ARETES FACES de la SURFACE
+C ----- TRACER LES FACES+ARETES VISIBLES D'UNE SURFACE MAILLEE C0 OU C1
+C       SELON LA TECHNIQUE DU PEINTRE ET
+C       LES COULEURS SELON LA VALEUR DE LCRITR (cf incl/mecoit.inc)
+C       LCRITR=-2 => ARC EN CIEL SELON LA VALEUR DE Z
+C                    SANS CALCUL DE ZMIN ET ZMAX POUR LA COULEUR
+C             =-1 => ARC EN CIEL SELON LA VALEUR DE Z
+C                    AVEC CALCUL DE ZMIN ET ZMAX POUR LA COULEUR
+C             = 0 => ELOIGNEMENT ET DIRECTION DE VISEE
+C             =+1 => QUALITE GEOMETRIQUE DES ELEMENTS FINIS
+C        VARIANTE de t31fco.f avec les ITEMS SOMMETS et FACES VISIBLES
+
+C ENTREES:
+C --------
+C KNMSURF: NOM DE LA SURFACE A TRACER
+C NUSURF : NUMERO DE LA SURFACE DANS SON LEXIQUE
+C MNXYZS : ADRESSE MCN DU TABLEAU 'XYZSOMMET'  COORDONNEES DES SOMMETS
+C MNNSEF : ADRESSE MCN DU TABLEAU 'NSEF'       NO DES SOMMETS DES EF
+
+C L1ARET : NOMBRE DE MOTS PAR ARET DU TABLEAU LARETE
+C L2ARET : NOMBRE DE QTANGLES DU TABLEAU LARETE
+C LARETE : TABLEAU DES ARETES DES FACES DU MAILLAGE
+C          LARETE(1,I)= NO DU 1-ER  SOMMET DE L'ARETE
+C          LARETE(2,I)= NO DU 2-EME SOMMET > 1-ER  SOMMET
+C          LARETE(3,I)= CHAINAGE HACHAGE SUR L'ARETE SUIVANTE
+C          LARETE(4:L1ARET,I)= NO NOSTQT DU QTANGLE
+C                              CONTENANT L'ARETE
+C          SI UNE ARETE APPARTIENT A PLUS DE L1ARET-3 FACES QTANGLES, 
+C          LE DERNIER NUMERO DE FACE EST RENDU NEGATIF POUR INDIQUER
+C          QUE LA LISTE DES FACES DE L'ARETE EST INCOMPLETE
+
+C NBAR1F : NOMBRE D'ARETES APPARTENANT A UNE SEULE FACE
+C NAR1F  : NUMERO LARETE DES NBAR1F ARETES SIMPLES
+C NBAR2F : NOMBRE D'ARETES APPARTENANT A 2 FACES
+C NAR2F  : NUMERO LARETE DES NBAR2F ARETES DANS 2 FACES
+C NBAR3F : NOMBRE D'ARETES APPARTENANT A AU MOINS 3 FACES
+C NAR3F  : NUMERO LARETE DES NBAR3F ARETES TRIPLES
+C NBAR2SF: NOMBRE D'ARETES DE NO LARETE DE RAPPORT FAIBLE DES SURFACES
+C NAR2SF : NUMERO LARETE DES ARETES DE RAPPORT FAIBLE DES SURFACES
+C NBAR2FCOL:NOMBRE D'ARETES DE NO LARETE DES COUPLES DE TRIANGLES COLLES
+C NAR2FCOL: NUMERO LARETE DES ARETES DE COUPLES DE TRIANGLES COLLES
+
+C MODIFIES:
+C ---------
+C LES ITEMS SOMMETS et FACES VISIBLES dans la FENETRE GRAPHIQUE
+C MXITDI : NOMBRE MAXIMAL D'ITEMS VISIBLES DU TABLEAU MNITDI
+C          (NBEFOB le NOMBRE de FACES MAIS VALEUR VARIABLE...)
+C MNITDI : ADRESSE MCN DU TABLEAU DES DISTANCES DU BARYCENTRE
+C          DES ITEMS A L'OEIL
+C MXITAN : NOMBRE MAXIMAL D'ITEMS VISIBLES DU TABLEAU MNITAN
+C MNITAN : ADRESSE MCN DU TABLEAU DU NUMERO ANCIEN DES ITEMS APRES
+C          LEUR TRI CROISSANT SELON LA DISTANCE A L'OEIL
+C ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+C AUTEUR: PERRONNET ALAIN Saint PIERRE du PERRAY              Avril 2020
+C2345X...............................................................012
+      include"./incl/langue.inc"
+      include"./incl/gsmenu.inc"
+      include"./incl/xyzext.inc"
+      include"./incl/trvari.inc"
+      include"./incl/mecoit.inc"
+      include"./incl/a___xyzsommet.inc"
+      include"./incl/a___nsef.inc"
+
+C     DECLARATION DU SUPER-TABLEAU NUMERIQUE MCN
+      include"./incl/pp.inc"
+      COMMON            MCN(MOTMCN)
+      REAL              RMCN(1)
+      EQUIVALENCE      (MCN(1),RMCN(1))
+
+C     LES PARAMETRES
+ccc      CHARACTER*(*)     KNMSURF
+      INTEGER           LARETE(L1ARET,L2ARET),
+     %                  NAR1F(NBAR1F), NAR2F(NBAR2F), NAR3F(NBAR3F),
+     %                  NAR2SF(NBAR2SF), NAR2FCOL(NBAR2FCOL)
+
+C     LES VARIABLES LOCALES
+      INTEGER           NOSOEL(1:64), NBITEMV(0:7)
+      REAL              XYZA(3), BARY(3), BARYAXO(3)
+
+      IF( MNNSEF .LE. 0 .OR. MNXYZS .LE. 0 ) GOTO 9999
+
+C     INITIALISATION DE LA DIRECTION DE VISEE PTV-OEIL NORMALISEE A 1
+C     ---------------------------------------------------------------
+ 5    DO K = 1, 3
+         DIREVI(K) = AXOEIL(K) - AXOPTV(K)
+      ENDDO
+
+      DPTVOEIL = SQRT( DIREVI(1)**2 + DIREVI(2)**2 + DIREVI(3)**2 )
+ccc      PRINT*,'tritemv1: PTV =',(AXOPTV(K),K=1,3)
+ccc      PRINT*,'tritemv1: OEIL=',(AXOEIL(K),K=1,3)
+ccc      PRINT*,'tritemv1: Distance PTV-OEIL=',DPTVOEIL,
+ccc     %       'Direction PtVu->Oeil:',(DIREVI(K),K=1,3)
+
+      CALL NORMER( 3, DIREVI, IERR )
+      IF( IERR .NE. 0 ) THEN
+
+C        VISEE INCORRECTE. DEFINITION D'UNE NOUVELLE VISEE
+C        RECHERCHE DE LA PLUS GRANDE ARETE DE L'HEXAEDRE ENGLOBANT
+         D = MAX( COOEXT(1,2)-COOEXT(1,1), 
+     %            COOEXT(2,2)-COOEXT(2,1), 
+     %            COOEXT(3,2)-COOEXT(3,1) )
+         IF( D .LE. 0 ) THEN
+C           LA SURFACE EST REDUITE A UN POINT
+            NBLGRC(NRERR) = 1
+            IF( LANGAG .EQ. 0 ) THEN
+            KERR(1)='POINT VU et OEIL sont IDENTIQUES. VISEE IMPOSSIBLE'
+            ELSE
+              KERR(1)='TARGET POINT and EYE are SAME. IMPOSSIBLE VIEW'
+            ENDIF
+ccc            CALL LEREUR
+            CALL SANSDBL( KERR(1), NBC )
+            PRINT*,KERR(1)(1:NBC)
+            GOTO 9999
+         ENDIF
+C        NOUVELLE POSITION DE L'OEIL
+         D = D / 10
+         DO K=1,3
+            AXOEIL( K ) = AXOEIL( K ) + D
+         ENDDO
+         GOTO 5
+
+      ENDIF
+
+C     LES PARAMETRES DES NO SOMMET DES EF DU MAILLAGE
+C     -----------------------------------------------
+      CALL NSEFPA( MCN(MNNSEF),
+     %             NUTYMA, NBSOEL, NBSOEF, NBTGEF,
+     %             LDAPEF, LDNGEF, LDTGEF, NBEFOB,
+     %             NX,     NY,     NZ,
+     %             IERR   )
+      IF( IERR .NE. 0 ) GOTO 9999
+
+C     LE NOMBRE DE SOMMETS DU MAILLAGE
+      NBSOM = MCN( MNXYZS + WNBSOM )
+
+C     ADRESSE-3 DE LA 1-ERE COORDONNEE DU 1-ER SOMMET DU TMS XYZSOMMET
+      MNXYZST = MNXYZS + WYZSOM
+
+C     ADRESSE-3 DE LA 1-ERE COORDONNEE DE LA 1-ERE TANGENTE de XYZSOMMET
+      MNTG = MNXYZST + 3 * NBSOM - 3
+
+C     =================================================================
+C     CONSTRUCTION DES TABLEAUX DES ITEMS SOMMET ARETE FACE VISIBLES
+C     =================================================================
+
+C     CONSTRUIRE LES TABLEAUX DES DISTANCES A L'OEIL ET
+C     NUMERO DES ITEMS VISIBLES FACES TRIEES SELON LEUR ELOIGNEMENT
+C     A L'OEIL DE VISEE et la DIRECTION de VISEE
+C     -----------------------------------------------------------------
+      MXITDI1=NBSOM +NBAR1F +NBAR2F +NBAR3F +NBAR2SF +NBAR2FCOL+2*NBEFOB
+      IF( MXITDI .LT. MXITDI1 ) THEN
+         CALL TNMCAU( 'REEL', MXITDI, MXITDI1, 0, MNITDI )
+         MXITDI = MXITDI1
+      ENDIF
+
+C     NOMBRE TOTAL D'ITEMS VISIBLES
+      NBITEMV( 0 ) = 0
+      NBITEMT = 0
+
+C     CONSTRUCTION DES ITEMS SOMMETS VISIBLES DANS LA FENETRE GRAPHIQUE
+C     -----------------------------------------------------------------
+C     MISE A ZERO DU NOMBRE DES ITEMS SOMMETS VISIBLES
+      MCN( MNITST + 2 ) = 0
+
+      MNSTS = MNXYZST - 3
+      DO NS = 1, NBSOM
+
+C        COORDONNEES ECRAN (NX,NY) DU SOMMET NS DE XYZSOM
+         MNSTS = MNSTS + 3
+         CALL XYZAXO( RMCN(MNSTS), XYZA )
+         NX = NUPXEX( XYZA(1) )
+         NY = NUPXEY( XYZA(2) )
+
+         IF( NX .GE. 0 .AND. NX .LE. LAPXFE   .AND.
+     %       NY .GE. 0 .AND. NY .LE. LHPXFE ) THEN
+
+C           L'ITEM SOMMET est VISIBLE et MIS DANS LE TABLEAU MNITST
+C           -------------------------------------------------------
+            IF( MCN(MNITST+2) .GE. MCN(MNITST+1) ) THEN
+C              TABLEAU TROP PETIT:LA TAILLE DU TABLEAU EST AUGMENTEE
+               CALL ITEMAU( MNITST )
+            ENDIF
+C           LE NOMBRE D'ITEMS SOMMET EST AUGMENTE DE 1
+            MCN(MNITST+2) = MCN(MNITST+2) + 1
+
+C           L'ADRESSE MCN DE L'ITEM SOMMET MCN(MNITST+2)
+            MNI = MNITST + MCN(MNITST) * MCN(MNITST+2)
+
+C           LES 3 COORDONNEES DE CET ITEM ( du SOMMET NS )
+            RMCN( MNI     ) = RMCN( MNSTS     )
+            RMCN( MNI + 1 ) = RMCN( MNSTS + 1 )
+            RMCN( MNI + 2 ) = RMCN( MNSTS + 2 )
+C           NUMERO DE SOMMET DANS LE MAILLAGE XYZSOM
+            MCN( MNI + 3 ) = NS
+
+C           STOCKAGE DE LA DISTANCE A L'OEIL DU SOMMET
+            IF( NBITEMT .GE. MXITDI ) THEN
+C              AUGMENTATION DE LA TAILLE DES 2 TABLEAUX ITDI et ITAN
+               MXITDI1 = ( MXITDI * 3 ) / 2
+               CALL TNMCAU( 'REEL', MXITDI, MXITDI1, NBITEMT, MNITDI )
+               MXITDI  = MXITDI1
+            ENDIF
+            RMCN( MNITDI + NBITEMT ) = DPTVOEIL - XYZA(3)
+            NBITEMT = NBITEMT + 1
+
+         ENDIF
+
+      ENDDO
+
+C     NOMBRE TOTAL D'ITEMS VISIBLES: LES ITEMS SOMMETS VISIBLES
+      NBITEMV( 1 ) = NBITEMT
+
+
+C     CONSTRUCTION DES ITEMS ARETES 1F SIMPLES VISIBLES DANS LA FENETRE
+C     -----------------------------------------------------------------
+C     MISE A ZERO DU NOMBRE DES ITEMS ARETES VISIBLES
+      MCN( MNITAR + 2 ) = 0
+      NBITEMAR = 0
+      MNSTS = MNXYZST - 4
+
+      DO NA = 1, NBAR1F
+
+C        TRACE DE L'ARETE SIMPLE NA
+C        --------------------------
+C        NUMERO DANS LARETE DE LA NA-EME ARETE 1F
+         NAR = NAR1F( NA )
+
+C        LE NUMERO DES 2 SOMMETS DE L'ARETE NAR
+         NS1 = LARETE(1,NAR)
+         NS2 = LARETE(2,NAR)
+
+C        XYZ du BARYCENTRE DE L'ARETE NS1-NS2
+         MNS1 = MNSTS + 3 * NS1
+         MNS2 = MNSTS + 3 * NS2
+         DO K=1,3
+            BARY(K) = ( RMCN(MNS1+K) + RMCN(MNS2+K) ) / 2
+         ENDDO
+
+C        LA DIRECTION DE VISEE PTV-OEIL: DIREVI est SUPPOSEE INITIALISEE
+C        COORDONNEES AXONOMETRIQUES DU BARYCENTRE DE L'ARETE 1F
+         CALL XYZAXO( BARY, BARYAXO )
+         NX = NUPXEX( BARYAXO(1) )
+         NY = NUPXEY( BARYAXO(2) )
+
+         IF( NX .GE. 0 .AND. NX .LE. LAPXFE   .AND.
+     %       NY .GE. 0 .AND. NY .LE. LHPXFE ) THEN
+
+C           L'ITEM ARETE 1F est VISIBLE et MIS DANS LE TABLEAU MNITAR
+C           ---------------------------------------------------------
+            IF( MCN(MNITAR+2) .GE. MCN(MNITAR+1) ) THEN
+C              TABLEAU TROP PETIT:LA TAILLE DU TABLEAU EST AUGMENTEE
+               CALL ITEMAU( MNITAR )
+            ENDIF
+C           LE NOMBRE D'ITEMS ARETE 1F EST AUGMENTE DE 1
+            MCN(MNITAR+2) = MCN(MNITAR+2) + 1
+
+C           L'ADRESSE MCN DE L'ITEM ARETE 1F
+            MNI = MNITAR + MCN(MNITAR) * MCN(MNITAR+2)
+C           LES COORDONNEES DE CET ITEM (BARYCENTRE DE L'ARETE)
+            RMCN( MNI     ) = BARY( 1 )
+            RMCN( MNI + 1 ) = BARY( 2 )
+            RMCN( MNI + 2 ) = BARY( 3 )
+C           NUMERO D'ARETE DANS LE TABLEAU LARETE DES ARETES
+             MCN( MNI + 3 ) = NAR
+
+C           STOCKAGE DE LA DISTANCE A L'OEIL DU BARYCENTRE DE L'ARETE
+            IF( NBITEMT .GE. MXITDI ) THEN
+C              AUGMENTATION DE LA TAILLE DES 2 TABLEAUX ITDI et ITAN
+               MXITDI1 = ( MXITDI * 3 ) / 2
+               CALL TNMCAU( 'REEL', MXITDI, MXITDI1, NBITEMT, MNITDI )
+               MXITDI  = MXITDI1
+            ENDIF
+            RMCN( MNITDI + NBITEMT ) = DPTVOEIL - BARYAXO(3)
+            NBITEMT = NBITEMT + 1
+
+         ENDIF
+
+      ENDDO
+
+C     NOMBRE TOTAL D'ITEMS VISIBLES:  SOMMETS + ARETES 1F
+      NBITEMV( 2 ) = NBITEMT
+
+
+C     CONSTRUCTION DES ITEMS ARETES 2F VISIBLES DANS LA FENETRE
+C     ---------------------------------------------------------
+      DO NA = 1, NBAR2F
+
+C        TRACE DE L'ARETE DOUBLE NA
+C        --------------------------
+C        NUMERO DANS LARETE DE LA NA-EME ARETE 2F
+         NAR = NAR2F( NA )
+
+C        LE NUMERO DES 2 SOMMETS DE L'ARETE NAR
+         NS1 = LARETE(1,NAR)
+         NS2 = LARETE(2,NAR)
+
+C        XYZ du BARYCENTRE DE L'ARETE NS1-NS2
+         MNS1 = MNSTS + 3 * NS1
+         MNS2 = MNSTS + 3 * NS2
+         DO K=1,3
+            BARY(K) = ( RMCN(MNS1+K) + RMCN(MNS2+K) ) / 2
+         ENDDO
+
+C        LA DIRECTION DE VISEE PTV-OEIL: DIREVI est SUPPOSEE INITIALISEE
+C        COORDONNEES AXONOMETRIQUES DU BARYCENTRE DE L'ARETE 2F
+         CALL XYZAXO( BARY, BARYAXO )
+         NX = NUPXEX( BARYAXO(1) )
+         NY = NUPXEY( BARYAXO(2) )
+
+         IF( NX .GE. 0 .AND. NX .LE. LAPXFE   .AND.
+     %       NY .GE. 0 .AND. NY .LE. LHPXFE ) THEN
+
+C           L'ITEM ARETE 2F est VISIBLE et MIS DANS LE TABLEAU MNITAR
+C           ---------------------------------------------------------
+            IF( MCN(MNITAR+2) .GE. MCN(MNITAR+1) ) THEN
+C              TABLEAU TROP PETIT:LA TAILLE DU TABLEAU EST AUGMENTEE
+               CALL ITEMAU( MNITAR )
+            ENDIF
+C           LE NOMBRE D'ITEMS ARETE 2F EST AUGMENTE DE 1
+            MCN(MNITAR+2) = MCN(MNITAR+2) + 1
+
+C           L'ADRESSE MCN DE L'ITEM ARETE 2F
+            MNI = MNITAR + MCN(MNITAR) * MCN(MNITAR+2)
+C           LES COORDONNEES DE CET ITEM (BARYCENTRE DE L'ARETE)
+            RMCN( MNI     ) = BARY( 1 )
+            RMCN( MNI + 1 ) = BARY( 2 )
+            RMCN( MNI + 2 ) = BARY( 3 )
+C           NUMERO D'ARETE DANS LE TABLEAU LARETE DES ARETES
+             MCN( MNI + 3 ) = NAR
+
+C           STOCKAGE DE LA DISTANCE A L'OEIL DU BARYCENTRE DE L'ARETE
+            IF( NBITEMT .GE. MXITDI ) THEN
+C              AUGMENTATION DE LA TAILLE DES 2 TABLEAUX ITDI et ITAN
+               MXITDI1 = ( MXITDI * 3 ) / 2
+               CALL TNMCAU( 'REEL', MXITDI, MXITDI1, NBITEMT, MNITDI )
+               MXITDI = MXITDI1
+            ENDIF
+            RMCN( MNITDI + NBITEMT ) = DPTVOEIL - BARYAXO(3)
+            NBITEMT = NBITEMT + 1
+
+         ENDIF
+
+      ENDDO
+
+C     NOMBRE TOTAL D'ITEMS VISIBLES:  SOMMETS + ARETES 1F + ARETES 2F
+      NBITEMV( 3 ) = NBITEMT
+
+
+C     CONSTRUCTION DES ITEMS ARETES 3F VISIBLES DANS LA FENETRE
+C     ---------------------------------------------------------
+      DO NA = 1, NBAR3F
+
+C        TRACE DE L'ARETE SIMPLE NA
+C        --------------------------
+C        NUMERO DANS LARETE DE LA NA-EME ARETE 3F
+         NAR = NAR3F( NA )
+
+C        LE NUMERO DES 2 SOMMETS DE L'ARETE NAR
+         NS1 = LARETE(1,NAR)
+         NS2 = LARETE(2,NAR)
+
+C        XYZ du BARYCENTRE DE L'ARETE NS1-NS2
+         MNS1 = MNSTS + 3 * NS1
+         MNS2 = MNSTS + 3 * NS2
+         DO K=1,3
+            BARY(K) = ( RMCN(MNS1+K) + RMCN(MNS2+K) ) / 2
+         ENDDO
+
+C        LA DIRECTION DE VISEE PTV-OEIL: DIREVI est SUPPOSEE INITIALISEE
+C        COORDONNEES AXONOMETRIQUES DU BARYCENTRE DE L'ARETE 3F
+         CALL XYZAXO( BARY, BARYAXO )
+         NX = NUPXEX( BARYAXO(1) )
+         NY = NUPXEY( BARYAXO(2) )
+
+         IF( NX .GE. 0 .AND. NX .LE. LAPXFE   .AND.
+     %       NY .GE. 0 .AND. NY .LE. LHPXFE ) THEN
+
+C           L'ITEM ARETE 3F est VISIBLE et MIS DANS LE TABLEAU MNITAR
+C           ---------------------------------------------------------
+            IF( MCN(MNITAR+2) .GE. MCN(MNITAR+1) ) THEN
+C              TABLEAU TROP PETIT:LA TAILLE DU TABLEAU EST AUGMENTEE
+               CALL ITEMAU( MNITAR )
+            ENDIF
+C           LE NOMBRE D'ITEMS ARETE 3F EST AUGMENTE DE 1
+            MCN(MNITAR+2) = MCN(MNITAR+2) + 1
+
+C           L'ADRESSE MCN DE L'ITEM ARETE 3F
+            MNI = MNITAR + MCN(MNITAR) * MCN(MNITAR+2)
+C           LES COORDONNEES DE CET ITEM (BARYCENTRE DE L'ARETE)
+            RMCN( MNI     ) = BARY( 1 )
+            RMCN( MNI + 1 ) = BARY( 2 )
+            RMCN( MNI + 2 ) = BARY( 3 )
+C           NUMERO D'ARETE DANS LE TABLEAU LARETE DES ARETES
+             MCN( MNI + 3 ) = NAR
+
+C           STOCKAGE DE LA DISTANCE A L'OEIL DU BARYCENTRE DE L'ARETE
+            IF( NBITEMT .GE. MXITDI ) THEN
+C              AUGMENTATION DE LA TAILLE DES 2 TABLEAUX ITDI et ITAN
+               MXITDI1 = ( MXITDI * 3 ) / 2
+               CALL TNMCAU( 'REEL', MXITDI, MXITDI1, NBITEMT, MNITDI )
+               MXITDI = MXITDI1
+            ENDIF
+            RMCN( MNITDI + NBITEMT ) = DPTVOEIL - BARYAXO(3)
+            NBITEMT = NBITEMT + 1
+
+         ENDIF
+
+      ENDDO
+
+C     NOMBRE TOTAL D'ITEMS VISIBLES:  SOMMETS + ARETES 1F +2F +3F
+      NBITEMV( 4 ) = NBITEMT
+
+
+C     CONSTRUCTION DES ITEMS ARETES 2SF VISIBLES DANS LA FENETRE
+C     ----------------------------------------------------------
+      DO NA = 1, NBAR2SF
+
+C        TRACE DE L'ARETE SIMPLE NA
+C        --------------------------
+C        NUMERO DANS LARETE DE LA NA-EME ARETE 2SF
+         NAR = NAR2SF( NA )
+
+C        LE NUMERO DES 2 SOMMETS DE L'ARETE NAR
+         NS1 = LARETE(1,NAR)
+         NS2 = LARETE(2,NAR)
+
+C        XYZ du BARYCENTRE DE L'ARETE NS1-NS2
+         MNS1 = MNSTS + 3 * NS1
+         MNS2 = MNSTS + 3 * NS2
+         DO K=1,3
+            BARY(K) = ( RMCN(MNS1+K) + RMCN(MNS2+K) ) / 2
+         ENDDO
+
+C        LA DIRECTION DE VISEE PTV-OEIL: DIREVI est SUPPOSEE INITIALISEE
+C        COORDONNEES AXONOMETRIQUES DU BARYCENTRE DE L'ARETE 2SF
+         CALL XYZAXO( BARY, BARYAXO )
+         NX = NUPXEX( BARYAXO(1) )
+         NY = NUPXEY( BARYAXO(2) )
+
+         IF( NX .GE. 0 .AND. NX .LE. LAPXFE   .AND.
+     %       NY .GE. 0 .AND. NY .LE. LHPXFE ) THEN
+
+C           L'ITEM ARETE 2SF est VISIBLE et MIS DANS LE TABLEAU MNITAR
+C           ----------------------------------------------------------
+            IF( MCN(MNITAR+2) .GE. MCN(MNITAR+1) ) THEN
+C              TABLEAU TROP PETIT:LA TAILLE DU TABLEAU EST AUGMENTEE
+               CALL ITEMAU( MNITAR )
+            ENDIF
+C           LE NOMBRE D'ITEMS ARETE 2SF EST AUGMENTE DE 1
+            MCN(MNITAR+2) = MCN(MNITAR+2) + 1
+
+C           L'ADRESSE MCN DE L'ITEM ARETE 2SF
+            MNI = MNITAR + MCN(MNITAR) * MCN(MNITAR+2)
+C           LES COORDONNEES DE CET ITEM (BARYCENTRE DE L'ARETE)
+            RMCN( MNI     ) = BARY( 1 )
+            RMCN( MNI + 1 ) = BARY( 2 )
+            RMCN( MNI + 2 ) = BARY( 3 )
+C           NUMERO D'ARETE DANS LE TABLEAU LARETE DES ARETES
+             MCN( MNI + 3 ) = NAR
+
+C           STOCKAGE DE LA DISTANCE A L'OEIL DU BARYCENTRE DE L'ARETE
+            IF( NBITEMT .GE. MXITDI ) THEN
+C              AUGMENTATION DE LA TAILLE DES 2 TABLEAUX ITDI et ITAN
+               MXITDI1 = ( MXITDI * 3 ) / 2
+               CALL TNMCAU( 'REEL', MXITDI, MXITDI1, NBITEMT, MNITDI )
+               MXITDI  = MXITDI1
+            ENDIF
+            RMCN( MNITDI + NBITEMT ) = DPTVOEIL - BARYAXO(3)
+            NBITEMT = NBITEMT + 1
+
+         ENDIF
+
+      ENDDO
+
+C     NOMBRE TOTAL D'ITEMS VISIBLES: SOMMETS + ARETES 1F + 3F + ARETES 2SF
+      NBITEMV( 5 ) = NBITEMT
+
+
+C     CONSTRUCTION DES ITEMS ARETES 2FCOL SIMPLES VISIBLES DANS LA FENETRE
+C     --------------------------------------------------------------------
+      DO NA = 1, NBAR2FCOL
+
+C        TRACE DE L'ARETE SIMPLE NA
+C        --------------------------
+C        NUMERO DANS LARETE DE LA NA-EME ARETE 2FCOL
+         NAR = NAR2FCOL( NA )
+
+C        LE NUMERO DES 2 SOMMETS DE L'ARETE NAR
+         NS1 = LARETE(1,NAR)
+         NS2 = LARETE(2,NAR)
+
+C        XYZ du BARYCENTRE DE L'ARETE NS1-NS2
+         MNS1 = MNSTS + 3 * NS1
+         MNS2 = MNSTS + 3 * NS2
+         DO K=1,3
+            BARY(K) = ( RMCN(MNS1+K) + RMCN(MNS2+K) ) / 2
+         ENDDO
+
+C        LA DIRECTION DE VISEE PTV-OEIL: DIREVI est SUPPOSEE INITIALISEE
+C        COORDONNEES AXONOMETRIQUES DU BARYCENTRE DE L'ARETE 2FCOL
+         CALL XYZAXO( BARY, BARYAXO )
+         NX = NUPXEX( BARYAXO(1) )
+         NY = NUPXEY( BARYAXO(2) )
+
+         IF( NX .GE. 0 .AND. NX .LE. LAPXFE   .AND.
+     %       NY .GE. 0 .AND. NY .LE. LHPXFE ) THEN
+
+C           L'ITEM ARETE 2FCOL est VISIBLE et MIS DANS LE TABLEAU MNITAR
+C           ---------------------------------------------------------
+            IF( MCN(MNITAR+2) .GE. MCN(MNITAR+1) ) THEN
+C              TABLEAU TROP PETIT:LA TAILLE DU TABLEAU EST AUGMENTEE
+               CALL ITEMAU( MNITAR )
+            ENDIF
+C           LE NOMBRE D'ITEMS ARETE 2FCOL EST AUGMENTE DE 1
+            MCN(MNITAR+2) = MCN(MNITAR+2) + 1
+
+C           L'ADRESSE MCN DE L'ITEM ARETE 2FCOL
+            MNI = MNITAR + MCN(MNITAR) * MCN(MNITAR+2)
+C           LES COORDONNEES DE CET ITEM (BARYCENTRE DE L'ARETE)
+            RMCN( MNI     ) = BARY( 1 )
+            RMCN( MNI + 1 ) = BARY( 2 )
+            RMCN( MNI + 2 ) = BARY( 3 )
+C           NUMERO D'ARETE DANS LE TABLEAU LARETE DES ARETES
+             MCN( MNI + 3 ) = NAR
+
+C           STOCKAGE DE LA DISTANCE A L'OEIL DU BARYCENTRE DE L'ARETE
+            IF( NBITEMT .GE. MXITDI ) THEN
+C              AUGMENTATION DE LA TAILLE DES 2 TABLEAUX ITDI et ITAN
+               MXITDI1 = ( MXITDI * 3 ) / 2
+               CALL TNMCAU( 'REEL', MXITDI, MXITDI1, NBITEMT, MNITDI )
+               MXITDI = MXITDI1
+            ENDIF
+            RMCN( MNITDI + NBITEMT ) = DPTVOEIL - BARYAXO(3)
+            NBITEMT = NBITEMT + 1
+
+         ENDIF
+
+      ENDDO
+
+C     NOMBRE TOTAL D'ITEMS VISIBLES:  SOMMETS +ARETES 1F +2F +3F +2SF +2FCOL 
+      NBITEMV( 6 ) = NBITEMT
+
+
+C     CONSTRUCTION DES ITEMS FACES VISIBLES DANS LA FENETRE GRAPHIQUE
+C     ---------------------------------------------------------------
+C     MISE A ZERO DU NOMBRE DES ITEMS FACES VISIBLES
+      MCN( MNITFA + 2 ) = 0
+
+      MNSOEF = MNNSEF + WUSOEF
+      DO 30 NOFACE = 1, NBEFOB
+
+C        LE NUMERO DES NBSOEF SOMMETS DE L'EF NOFACE
+         CALL NSEFNS( NOFACE, NUTYMA, NBSOEF, NBTGEF,
+     %                LDAPEF, LDNGEF, LDTGEF,
+     %                MNNSEF, NX, NY, NZ,
+     %                NCOGEL, NUGEEF, NUEFTG, NOSOEL, IERR )
+
+         IF( NOSOEL(1) .LE. 0 ) THEN
+C           la FACE NOFACE est INACTIVE
+            GOTO 30
+         ENDIF
+
+C        XYZ du BARYCENTRE DE LA FACE NOFACE
+         CALL BARYFACE( NOFACE, MCN(MNSOEF), RMCN(MNXYZST), BARY )
+
+C        COORDONNEES AXONOMETRIQUES DU BARYCENTRE DE LA FACE NOFACE
+         CALL XYZAXO( BARY, BARYAXO )
+
+C        COORDONNEES PIXELS ECRAN DU BARYCENTRE
+         NX = NUPXEX( BARYAXO(1) )
+         NY = NUPXEY( BARYAXO(2) )
+
+         IF( NX .GE. 0 .AND. NX .LE. LAPXFE   .AND.
+     %       NY .GE. 0 .AND. NY .LE. LHPXFE ) THEN
+
+C           L'ITEM FACE est VISIBLE et MIS DANS LE TABLEAU MNITFA
+C           -----------------------------------------------------
+            IF( MCN(MNITFA+2) .GE. MCN(MNITFA+1) ) THEN
+C              TABLEAU TROP PETIT: LA TAILLE DU TABLEAU EST AUGMENTEE
+               CALL ITEMAU( MNITFA )
+            ENDIF
+
+C           LE NOMBRE D'ITEMS FACE EST AUGMENTE DE 1
+            MCN(MNITFA+2) = MCN(MNITFA+2) + 1
+
+C           L'ADRESSE MCN DE L'ITEM FACE VISIBLE
+            MNI = MNITFA + MCN(MNITFA) * MCN(MNITFA+2)
+C           LES 3 COORDONNEES DE CET ITEM (BARYCENTRE DE LA FACE)
+            RMCN( MNI     ) = BARY( 1 )
+            RMCN( MNI + 1 ) = BARY( 2 )
+            RMCN( MNI + 2 ) = BARY( 3 )
+C           NUMERO DE FACE DANS LE TABLEAU NOSOEF DU MAILLAGE
+            MCN( MNI + 3 ) = NOFACE
+
+C           LA DIRECTION DE VISEE PTV-OEIL: DIREVI est SUPPOSEE INITIALISEE
+C           CALCUL DISTANCE DU BARYCENTRE DES FACES A L'OEIL selon DIREVI
+C           STOCKAGE DE LA DISTANCE A L'OEIL DU BARYCENTRE DE LA FACE
+            IF( NBITEMT .GE. MXITDI ) THEN
+C              AUGMENTATION DE LA TAILLE DES 2 TABLEAUX ITDI et ITAN
+               MXITDI1 = ( MXITDI * 3 ) / 2
+               CALL TNMCAU( 'REEL', MXITDI, MXITDI1, NBITEMT, MNITDI )
+               MXITDI = MXITDI1
+            ENDIF
+            RMCN( MNITDI + NBITEMT ) = DPTVOEIL - BARYAXO(3)
+            NBITEMT = NBITEMT + 1
+
+         ENDIF
+
+ 30   ENDDO
+
+
+C     NOMBRE TOTAL MAXIMAL D'ITEMS VISIBLES:
+C     SOMMETS + ARETES (1F + 2F +3F +2SF +2FCOL) + FACES
+      NBITEMV( 7 ) = NBITEMT
+      IF( NBITEMT .LE. 0 ) GOTO 9999
+
+
+C     TRACER EN 3D LES ITEMS VISIBLES SELON L'ALGORITHME DU PEINTRE
+C     DANS LA MEMOIRE PIXELS DE LA FENETRE GRAPHIQUE, NON SUR L'ECRAN
+C     ===============================================================
+      CALL TRITEMV2( MNXYZS,  MNNSEF,
+     %               L1ARET,  L2ARET,   LARETE,  NBITEMV,
+ccc     %               MCN(MNITST), MCN(MNITST+2), MCN(MNITST),
+     %               MCN(MNITAR), MCN(MNITAR+2), MCN(MNITAR),
+     %               MCN(MNITFA), MCN(MNITFA+2), MCN(MNITFA),
+     %               MXITDI, RMCN(MNITDI), MXITAN, MNITAN )
+
+C     IL RESTE A METTRE SUR L'ECRAN LE TRACE PAR UN CALL TRFINS( TITRE )
+
+ 9999 RETURN
+      END

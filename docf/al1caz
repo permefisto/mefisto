@@ -1,0 +1,11 @@
+La ligne intersection des cylindres d'axe Z et d'axe X ou Y
+est precisee par la longitude de son point initial et final
+La longitude est l'angle (Ox,OM), en degres,
+souvent note TETA en coordonnees cylindriques
+   0 =< TETA =< 360 degres 
+                  
+Al1caz est la longitude finale qui doit avoir ete precedee de 
+Al0caz     la longitude initiale  
+
+EXEMPLE:  0;  90;   designe le secteur X>0 Y>0
+         90; 180;   designe le secteur X<0 Y>0 ...

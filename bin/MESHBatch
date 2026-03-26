@@ -1,0 +1,60 @@
+#!/bin/bash
+#  execution du MAILLEUR de Mefisto par MAILLER ou MESHER
+#  AVEC (=>Batch) ou SANS (=>Interactif) Nom du fichier
+#  des donnees du Mailleur
+
+#  Alain Perronnet  Fevrier 2013  Version LINUX 64 bits
+
+if test -f $MEFISTO/td/m/anglais
+then
+  LANGAGE=1
+  LANGUE=ANGLAISE
+  echo "Arguments Number=$#"
+  echo "arg0=$0"
+  echo "arg1=$1"
+  echo "MESHER data file NAME=$*"
+  echo
+  echo '==============================================================='
+  echo '     MEFISTO-MESHER: MESH an OBJECT under LINUX 64 bits'
+  echo '==============================================================='
+  echo 'Project (low case) name' \?
+else
+  LANGAGE=0
+  LANGUE=FRANCAISE
+  echo "Nombre Arguments=$#"
+  echo "arg0=$0"
+  echo "arg1=$1"
+  echo "Nom du Fichier des Donnees de MAILLER=$*"
+  echo
+  echo '==============================================================='
+  echo '     MEFISTO-MAILLEUR: MAILLER un OBJET sur sous LINUX 64 bits'
+  echo '==============================================================='
+  echo 'nom (en minuscules) du projet' \?
+fi
+read nomproj
+
+direxec=$MEFISTOX/$nomproj
+echo
+if [ $LANGAGE = 0 ]
+then
+  echo "Execution MEFISTO MAILLER dans le repertoire $direxec"
+else
+  echo "Execution MEFISTO MESHER in directory $direxec"
+fi
+
+if test -d $direxec
+then
+  cd  $direxec 
+  time $MEFISTO/pp/ppmail $*
+else  
+  if [ $LANGAGE = 0 ]
+  then
+    echo Commande INITIER non prealablement executee
+    echo "avec ce nom de projet $nomproj"
+    echo Executer INITIER
+  else
+    echo Command INITIER NOT EXECUTED BEFORE
+    echo "with this project name $nomproj"
+    echo Execute INITIER
+  fi
+fi

@@ -1,0 +1,20 @@
+cd
+cd public_html
+echo '================== Debut syncroweb ========================='
+echo 'Transfert web:compteur*.dat  dans public_html'
+scp -p web-sas:compteur*.dat .
+echo
+echo 'Transfert web:Mf[bs]*IPlist.2010  dans public_html'
+scp -p web-sas:Mf[bs]*IPlist.2010 .
+echo
+echo 'Transfert web:MfbinairCompte/*  dans public_html'
+scp -pr web-sas:MfbinairCompte .
+echo
+echo 'Transfert web:MfsourceCompte/*  dans public_html'
+scp -pr web-sas:MfsourceCompte .
+echo
+echo Debut de synchronisation avec web
+cd
+rsync -avR --delete --protocol=29 public_html/ -e ssh web-sas:
+echo Fin de synchronisation avec web
+echo '================== Fin syncroweb ==========================='

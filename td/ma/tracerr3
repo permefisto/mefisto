@@ -1,0 +1,7 @@
+variable TRACERR3 'Drawings of 3d NODE ERRORS' entier
+ (  1 :  'ISO-ERRORS SURFACES'
+ ,  2 :  'COLORED ZONES of ISO-ERRORS'
+ ,  3 :  'ZONES by CUTTING PLANES X or Y or Z=CT'
+ ,  4 :  'PROFILES by CUTTING PLANES X or Y or Z=CT'
+ ,  5 :  'ALONG A LINE DEFINED BY 2 POINTS'
+ ,  6 :  'Curve ERROR(Time)' ) ;

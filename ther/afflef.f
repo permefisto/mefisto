@@ -1,0 +1,144 @@
+      SUBROUTINE AFFLEF( KNOMOB, NTLXOB,  NCAS0, NCAS1, MODECO )
+C+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+C BUT :    AFFICHAGE DES FLUX NORMAUX DE CHALEUR AUX POINTS
+C -----    DES INTERFACES DES EF D'UN OBJET 1D 2D 3D ou 6D
+C ENTREES:
+C --------
+C KNOMOB : NOM DE L'OBJET
+C NTLXOB : NO LEXIQUE DE L'OBJET
+C NCAS0  : NUMERO DU PREMIER JEU DE SOLUTION A AFFICHER
+C NCAS1  : NUMERO DU DERNIER JEU DE SOLUTION A AFFICHER
+C MODECO : MODE DE TRACE DES VECTEURS DU TMS D'ADRESSE MNDEPL
+C          =1 ou 5 CE SONT DES TEMPERATURES
+C          =2      CE SONT DES VALEURS PROPRES
+C+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+C AUTEUR : ALAIN PERRONNET TIMS NTU TAIPEI TAIWAN           Octobre 2009
+C MODIFS : ALAIN PERRONNET LJLL UPMC & St PIERRE du PERRAY Novembre 2010
+C23456...............................................................012
+      PARAMETER     (MXTYEL=7)
+      include"./incl/langue.inc"
+      include"./incl/donthe.inc"
+      include"./incl/a_objet__topologie.inc"
+      include"./incl/a___npef.inc"
+      include"./incl/a___fluxpt.inc"
+      include"./incl/ctemps.inc"
+      include"./incl/gsmenu.inc"
+C
+      COMMON / UNITES / LECTEU, IMPRIM, NUNITE(30)
+      include"./incl/pp.inc"
+      COMMON             MCN(MOTMCN)
+      REAL              RMCN(1)
+      EQUIVALENCE      (RMCN(1),MCN(1))
+      CHARACTER*(*)     KNOMOB
+      CHARACTER*80      KNOM
+      CHARACTER*4       NOMELE(2)
+      INTEGER           NUMIOB(4), NUMAOB(4), MNDOEL(4), MXDOEL(4)
+C
+      IERR   = 0
+      MOREE2 = MOTVAR(6)
+      WRITE(IMPRIM,*)
+      IF( LANGAG .EQ. 0 ) THEN
+         WRITE(IMPRIM,*) 'OBJET: ' // KNOMOB
+         IF( MODECO .NE. 2 ) THEN
+            WRITE(IMPRIM,*) 'CAS',NCAS,
+     %     'Le FLUX NORMAL de CHALEUR au TEMPS', TEMPS
+         ELSE
+            WRITE(IMPRIM,*)
+     %     'La VALEUR PROPRE',NCAS,'=',TEMPS,' : ses FLUX'
+        ENDIF
+      ELSE
+         WRITE(IMPRIM,*) 'OBJECT: ' // KNOMOB
+         IF( MODECO .NE. 2 ) THEN
+            WRITE(IMPRIM,*) 'CAS',NCAS,
+     %     'The NORMAL FLUX of HEAT at TIME', TEMPS
+         ELSE
+             WRITE(IMPRIM,*)
+     %     'The EIGENVALUE',NCAS,'=',TEMPS,' : its FLUX'
+         ENDIF
+      ENDIF
+C
+C     RECHERCHE DES TABLEAUX XYZSOMMET XYZNOEUD XYZPOINT NPEF" DE l'OBJET
+C     FIND TMS XYZSOMMET XYZNOEUD XYZPOINT NPEF"xxxx  of the OBJECT
+C     ===================================================================
+      CALL MIMAOB( 1,      NTLXOB, MXDOTH, NTTOPO, MNTOPO,
+     %             NTXYZP, MNXYZP, NTXYZN, MNXYZN,
+     %             MXTYEL, NBTYEL, MTNPEF, MNNPEF,
+     %             NUMIOB, NUMAOB,
+     %             NDPGST, NBOBIN, MNOBIN, NBOBCL, MNOBCL,
+     %             MXDOEL, MNDOEL, IERR )
+C     ICI NUMIOB CONTIENT LES 4 NUMEROS MINIMA DES OBJETS
+C         NUMAOB          LES 4 NUMEROS MAXIMA DES OBJETS
+C     MNDOEL LES 4 ADRESSES MCN DES TABLEAUX DES ADRESSES DES
+C     TABLEAUX DECRIVANT LA THERMIQUE DE L'OBJET COMPLET
+C     NTTOPO : NUMERO      DU TMS 'TOPOLOGIE' DE L'OBJET
+C     MNTOPO : ADRESSE MCN DU TMS 'TOPOLOGIE' DE L'OBJET
+C     NTXYZP : NUMERO      DU TMS 'XYZPOINT'  DE L'OBJET
+C     MNXYZP : ADRESSE MCN DU TMS 'XYZPOINT'  DE L'OBJET
+C     NTXYZN : NUMERO      DU TMS 'XYZNOEUD'  DE L'OBJET
+C     MNXYZN : ADRESSE MCN DU TMS 'XYZNOEUD'  DE L'OBJET
+C     NBTYEL : NOMBRE DE TYPES D'ELEMENTS FINIS DU MAILLAGE
+C     MTNPEF : ADRESSE MCN DU TABLEAU TMC(NBTYEL) DU NUMERO        DES TMS 'NPEF
+C     MNNPEF : ADRESSE MCN DU TABLEAU TMC(NBTYEL) DE L'ADRESSE MCN DES TMS 'NPEF
+      IF( IERR .NE. 0 ) GOTO 9000
+C
+C     NDPGST : CODE TRAITEMENT DES XYZ DES SOMMETS POINTS NOEUDS DU MAILLAGE
+C              0 : NOEUDS=POINTS=SOMMETS
+C              1 : NOEUDS=POINTS#SOMMETS
+C              2 : NOEUDS#POINTS=SOMMETS
+C              3 : NOEUDS#POINTS#SOMMETS
+      NDPGST = MCN( MNTOPO + WDPGST )
+C
+C     BOUCLE SUR LES DIFFERENTS TYPES D'ELEMENTS FINIS DU MAILLAGE
+C     ============================================================
+      DO 30 I = 0, NBTYEL-1
+C
+C        L'ADRESSE MCN DU DEBUT DU TABLEAU NPEF"TYPE_EF
+         MNELE = MCN( MNNPEF + I )
+C
+C        LE NOM DU TABLEAU FLUX ASSOCIE
+         NUTYEL = MCN( MNELE + WUTYEL )
+C
+C        LES CARACTERISTIQUES DE L'ELEMENT FINI
+         CALL ELNUNM( NUTYEL, NOMELE )
+         CALL ELTYCA( NUTYEL )
+C
+C        LE NOMBRE D'EF DE CE TYPE D'EF
+         NBELEM = MCN(MNELE + WBELEM )
+C
+C        L'ADRESSE MCN DU TABLEAU 'NPEF' POUR CE TYPE D'EF
+         MNPGEL = MNELE + WUNDEL
+         IF( NDPGST .GE. 2 ) THEN
+            MNPGEL = MNPGEL + NBELEM * MCN(MNELE+WBNDEL)
+         ENDIF
+C
+C        OUVERTURE DU TABLEAU
+         KNOM = 'FLUXPT"' // NOMELE(2)
+         CALL LXTSOU( NTLXOB, KNOM, NTFLUX, MNFLUX )
+         IF( NTFLUX .LE. 0 ) THEN
+            L = NUDCNB( KNOM )
+            NBLGRC(NRERR) = 1
+            IF( LANGAG .EQ. 0 ) THEN
+               KERR(1) = 'OBJET SANS TMS ' // KNOM(1:L)
+            ELSE
+               KERR(1) = 'OBJECT WITHOUT TMS ' // KNOM(1:L)
+            ENDIF
+            CALL LEREUR
+            GOTO 30
+         ENDIF
+C
+C        LES DIFFERENTS TABLEAUX ET VARIABLES DE 'FLUX'
+C        AFIN DE BENEFICIER DES INDICES FORTRAN EN CLAIR
+         NBCAFX = MCN( MNFLUX + WBCAFX )
+         NDIMFX = MCN( MNFLUX + WDIMFX )
+         ndimco = 3
+         NBELFX = MCN( MNFLUX + WBELFX )
+         NBPNFX = MCN( MNFLUX + WBPNFX )
+         MNCOPN = MNFLUX + WLUXNP + MOREE2*NBPNFX*NBELFX*NBCAFX
+         CALL AFFL123( NOMELE, NBELFX, NBPNFX, ndimco, NDIMFX,
+     %           NBCAFX, NCAS0, NCAS1, MCN(MNCOPN), MCN(MNFLUX+WLUXNP) )
+C
+ 30   CONTINUE
+C
+ 9000 IF( MNNPEF .GT. 0 ) CALL TNMCDS( 'ENTIER', 2*MXTYEL, MNNPEF )
+      RETURN
+      END

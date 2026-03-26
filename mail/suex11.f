@@ -1,0 +1,114 @@
+        SUBROUTINE SUEX11( NTLXSU , LADEFI ,
+     %                     NTFASU , MNFASU , NTSOFA , MNSOFA , IERR )
+C+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+C BUT :    GENERER LE MAILLAGE D'UN RECTANGLE FORME DE CARRES UNITES
+C -----    AYANT NBINQX ARETES EN X ET NBINQY ARETES EN Y
+C
+C ENTREES:
+C --------
+C NTLXSU : NUMERO DU TABLEAU TS DU LEXIQUE DU QUADRANGLE
+C LADEFI : TABLEAU DE DEFINITION DE LA SURFACE PARTITIONNEE
+C          CF ~/td/d/a_surface__definition
+C
+C SORTIES:
+C --------
+C NTFASU : NUMERO      DU TMS 'NSEF' DES NUMEROS DES FACES
+C MNFASU : ADRESSE MCN DU TMS 'NSEF' DES NUMEROS DES FACES
+C NTSOFA : NUMERO      DU TMS 'XYZSOMMET' DE LA SURFACE
+C MNSOFA : ADRESSE MCN DU TMS 'XYZSOMMET' DE LA SURFACE
+C IERR   : 0 SI PAS D'ERREUR
+C        > 0 SINON
+C+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+C AUTEUR : A.PERRONNET LABORATOIRE ANALYSE NUMERIQUE PARIS     MARS 1989
+C23456...............................................................012
+      IMPLICIT INTEGER (W)
+      include"./incl/gsmenu.inc"
+      include"./incl/ntmnlt.inc"
+      include"./incl/a___xyzsommet.inc"
+      include"./incl/a___nsef.inc"
+      include"./incl/a_surface__definition.inc"
+C
+      COMMON / UNITES / LECTEU , IMPRIM , INTERA , NUNITE(29)
+      COMMON            MCN (1)
+      REAL              RMCN(1)
+      EQUIVALENCE      (MCN(1),RMCN(1))
+      INTEGER           LADEFI(0:*)
+C
+      IERR = 0
+C
+C     NOMBRE D'ARETES EN X ET EN Y
+C     ============================
+      NBINQX = LADEFI(WBINQX)
+      NBINQY = LADEFI(WBINQY)
+      IF( NBINQX .LE. 0 ) THEN
+         NBLGRC(NRERR) = 1
+         WRITE(KERR(MXLGER)(1:10),'(I10)') NBINQX
+         KERR(1) =  ' NOMBRE D''ARETES EN X INCORRECT ='
+     %              // KERR(MXLGER)(1:10)
+         CALL LEREUR
+         IERR = 1
+         RETURN
+      ELSE IF( NBINQY .LE. 0 ) THEN
+         NBLGRC(NRERR) = 1
+         WRITE(KERR(MXLGER)(1:10),'(I10)') NBINQY
+         KERR(1) =  ' NOMBRE D''ARETES EN Y INCORRECT ='
+     %              // KERR(MXLGER)(1:10)
+         CALL LEREUR
+         IERR = 1
+         RETURN
+      ENDIF
+C
+C     GENERATION DES SOMMETS
+C     ======================
+C     CONSTRUCTION DU TABLEAU 'XYZSOMMET' DE CETTE SURFACE
+      NBSOM = ( NBINQX + 1 ) * ( NBINQY + 1 )
+      CALL LXTNDC( NTLXSU , 'XYZSOMMET' , 'MOTS' ,  WYZSOM + 3 * NBSOM )
+      CALL LXTSOU( NTLXSU , 'XYZSOMMET' ,  NTSOFA , MNSOFA )
+C     LE NOMBRE DE SOMMETS
+      MCN( MNSOFA + WNBSOM) = NBSOM
+C     CALCUL DES COORDONNEES DES SOMMETS DU RECTANGLE
+      MN = MNSOFA + WYZSOM
+      DO 20 J=0,NBINQY,1
+         DO 10 I=0,NBINQX,1
+            RMCN( MN     ) = I
+            RMCN( MN + 1 ) = J
+            RMCN( MN + 2 ) = 0.
+            MN  = MN + 3
+ 10      CONTINUE
+ 20   CONTINUE
+C     LA DATE DE CREATION
+      CALL ECDATE( MCN(MNSOFA) )
+C     LE NUMERO DU TABLEAU DESCRIPTEUR
+      MCN( MNSOFA + WNBTGS ) = 0
+      MCN( MNSOFA + WBCOOR ) = 3
+      MCN( MNSOFA + MOTVAR(6) ) = NONMTD( '~>>>XYZSOMMET' )
+C
+C     GENERATION DES NSEF
+C     ===================
+C     CONSTRUCTION DU TABLEAU 'NSEF' DE CETTE SURFACE
+      CALL LXTNDC( NTLXSU , 'NSEF' , 'ENTIER', WBARYQ+1 )
+      CALL LXTSOU( NTLXSU , 'NSEF' ,  NTFASU , MNFASU )
+C     MISE A JOUR DU TABLEAU 'NSEF' DE CETTE SURFACE
+C     TYPE DE L'OBJET : SURFACE
+      MCN( MNFASU + WUTYOB ) = 3
+C     NUMERO DU TYPE DU MAILLAGE : QUADRANGLE STRUCTURE
+      MCN( MNFASU + WUTYMA ) = 4
+C     NBARXQ NOMBRE D'ARETES EN X
+      MCN( MNFASU + WBARXQ ) = NBINQX
+C     NBARYQ NOMBRE D'ARETES EN Y
+      MCN( MNFASU + WBARYQ ) = NBINQY
+C     LE TYPE NON-FERME DE FERMETURE DU MAILLAGE
+      MCN( MNFASU + WUTFMA ) = 0
+C     LE NOMBRE DE SOMMETS PAR FACE
+      MCN ( MNFASU + WBSOEF ) = 4
+C     LE NOMBRE DE TANGENTES STOCKEES PAR EF : SURFACE C0
+      MCN ( MNFASU + WBTGEF ) = 0
+      MCN ( MNFASU + WBEFAP ) = 0
+      MCN ( MNFASU + WBEFTG ) = 0
+C     LE NOMBRE D'EF DE LA SURFACE
+      MCN ( MNFASU + WBEFOB ) = NBINQX * NBINQY
+C     LA DATE DE CREATION
+      CALL ECDATE( MCN(MNFASU) )
+C     LE NUMERO DU TABLEAU DESCRIPTEUR
+      MCN( MNFASU + MOTVAR(6) ) = NONMTD( '~>>>NSEF' )
+      END

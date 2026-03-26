@@ -1,0 +1,78 @@
+      SUBROUTINE COS2TR( P1TR1, P2TR1, P3TR1,  P1TR2, P2TR2, P3TR2,
+     %                   COS2TRIA, IERR1, IERR2 )
+C+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+C BUT :    CALCULER LE COSINUS DE L'ANGLE DES NORMALES AUX 2 TRIANGLES
+C -----    DE R**3 DEFINIS PAR LES COORDONNEES DE LEURS 3 SOMMETS
+
+C ENTREES:
+C --------
+C P1TR1,P2TR1,P3TR1 : 3 COORDONNEES DES 3 SOMMETS DU TRIANGLE 1
+C P1TR2,P2TR2,P3TR2 : 3 COORDONNEES DES 3 SOMMETS DU TRIANGLE 2
+
+C SORTIES:
+C --------
+C COS2TRIA : COSINUS DE L'ANGLE DES NORMALES COMPRIS ENTRE -1. et 1.
+C            =777. SI IERR1 ou IERR2 est NON NUL
+C            ( 0.95     <=> 18.2  DEGRES )
+C            ( 0.96     <=> 16.3  DEGRES )
+C            ( 0.97     <=> 14.1  DEGRES )
+C            ( 0.98     <=> 11.5  DEGRES )
+C            ( 0.99     <=>  8.11 DEGRES )
+C            ( 0.9962   <=>  5    DEGRES )
+C            ( 0.99756  <=>  4    DEGRES )
+C            ( 0.99863  <=>  3    DEGRES )
+C            ( 0.999    <=>  2.56 DEGRES )
+C            ( 0.9999   <=>  0.8  DEGRES )
+C IERR1    : =0 SI VECTEUR NORMAL AU TRIANGLE 1 CORRECTEMENT CALCULE
+C            =2 SI TRIANGLE1 REDUIT A UNE ARETE
+C IERR2    : =0 SI VECTEUR NORMAL AU TRIANGLE 2 CORRECTEMENT CALCULE
+C            =2 SI TRIANGLE2 REDUIT A UNE ARETE
+C+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+C AUTEUR: ALAIN PERRONNET LABORATOIRE ANALYSE NUMERIQUE PARIS JANVIER 88
+C....................................................................012
+      REAL    P1TR1(3), P2TR1(3), P3TR1(3),
+     %        P1TR2(3), P2TR2(3), P3TR2(3), COS2TRIA
+      REAL    VN1(3),   VN2(3),   PROSCR
+
+C     LE VECTEUR NORMAL UNITAIRE AU PREMIER TRIANGLE
+      CALL NORFA3( P1TR1, P2TR1, P3TR1, VN1, IERR1 )
+
+C     LE VECTEUR NORMAL UNITAIRE AU SECOND TRIANGLE
+      CALL NORFA3( P1TR2, P2TR2, P3TR2, VN2, IERR2 )
+
+      IF( IERR2 .NE. 0 ) GOTO 9000
+      IF( IERR1 .NE. 0 ) GOTO 9000
+
+C     LE PRODUIT SCALAIRE DES 2 NORMALES C-A-D LE COSINUS DE L'ANGLE
+      COS2TRIA = PROSCR( VN1, VN2, 3 )
+
+C     TRAITEMENT DES ERREURS D'ARRONDIS
+      IF( COS2TRIA .LT. -1.0 ) COS2TRIA = -1.0
+      IF( COS2TRIA .GT.  1.0 ) COS2TRIA =  1.0
+
+      GOTO 9999
+
+
+C     TRIANGLE INCORRECT
+ 9000 IF( IERR1 .NE. 0 ) THEN
+         PRINT *,'cos2tr: LE TRIANGLE 1 EST INCORRECT: IERR1=',IERR1,
+     %           ' -> COS2TRIA = 777.0 !'
+         PRINT*,'SOMMET 1:', P1TR1
+         PRINT*,'SOMMET 2:', P2TR1
+         PRINT*,'SOMMET 3:', P3TR1
+      ENDIF
+
+      IF( IERR2 .NE. 0 ) THEN
+         PRINT *,'cos2tr: LE TRIANGLE 2 EST INCORRECT: IERR2=',IERR2,
+     %           ' => COS2TRIA=777.0 !'
+         PRINT*,'SOMMET 1:', P1TR2
+         PRINT*,'SOMMET 2:', P2TR2
+         PRINT*,'SOMMET 3:', P3TR2
+      ENDIF
+
+C     POURQUOI PAS?  EN FAIT, POUR ATTIRER L'ATTENTION...
+      COS2TRIA = 777.0
+
+
+ 9999 RETURN
+      END

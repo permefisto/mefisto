@@ -1,0 +1,5 @@
+A geometrical ratio on the heights of value 1 gives
+edges of equal lengths.
+
+A 0<ratio<1 => small edges at the superior part
+A   ratio>1 => small edges at the inferior part

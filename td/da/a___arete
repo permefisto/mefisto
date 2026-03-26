@@ -1,0 +1,28 @@
+deftms ~>>>ARETE 'edges of a mesh treated by hashing i.e. the position of the
+edge is the sum of its vertex numbers or a chaining to the next edge'
+variable muet DATE 'date of creation of the TMS'   reel2  ;
+variable muet NUTD 'number of the descriptor array TD' entier ; 
+variable MOARET 'number of integers for each edge'  entier ;
+variable MXARET 'max number of edges'             entier ; 
+variable NBARFB 'total number of boundary edges'  entier ;
+variable L1ARFB 'number first boundary edge NOT on a line' entier ;
+variable NBARIN 'total number of interface edges'          entier ;
+variable L1ARIN 'number of the first interface edge NOT on a line' entier ; 
+variable NBARTG 'number of edges with tangent vectors'     entier ;
+variable NUMILF 'min number of the lines of the surface' entier ;
+variable NUMXLF 'max number of the lines of the surface' entier ;
+tableau L1LGFR(NUMILF..NUMXLF) 'number of the first edge of a boundary line'
+        entier ;
+tableau LARETE(1..MOARET,1..MXARET)
+'st1,st2,link,fe1,fe2,internal or boundary edge next number tg edge' entier ;
+tableau NUTGAR(1..2,1..NBARTG) 'numbers of the 2 tangents of the edges' entier ;
+fintms ;
+
+
+For memory :
+
+If NUMXLF=0 
+then NO array L1LGFR     case of a mesh with only the NSEF TMS
+Else case of an object mesh with TOPOLOGIE + NPEF"... TMS
+
+If NBARTG=0 Then NO array NUTGAR

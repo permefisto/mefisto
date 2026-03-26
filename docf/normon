@@ -1,0 +1,5 @@
+Si le VECTEUR NORMAL a une FACE est DIRIGEE vers
+l'OEIL, la FACE est EXTRAITE selon la valeur OUI
+de NORMON.
+Une reponse NON entraine que la FACE est EXTRAITE
+SANS TENIR COMPTE de la DIRECTION de la NORMALE.

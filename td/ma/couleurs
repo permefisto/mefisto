@@ -1,0 +1,5 @@
+variable COULEURS 'Color names' entier  
+( 0: 'black' ,      1: 'red' ,     2: 'green',       3: 'blue'
+, 4: 'cyan' ,       5: 'yellow' ,  6: 'magenta' ,    7: 'white'
+, 8: 'dark_gray',   9: 'gray',    10: 'light_gray', 11: 'beige'
+,12: 'orange',     13: 'salmon',  14: 'pink',       15: 'turquoise' ) ; 

@@ -1,0 +1,30 @@
+The order of 6 parameters of the USER's function 
+REFERENCE TEMPERATURE for the INITIAL TEMPERATURE
+at time TEMPS, at point X,Y,Z, 
+for the PLSVO of type number NO_TYPE_OBJECT
+(1:POINT, 2:LINE, 3:SURFACE, 4:VOLUME, 5:OBJECT )
+the directory number NO_OBJECT
+must be
+
+TEMPE0( TEMPS, X, Y, Z, NO_TYPE_OBJET, NO_OBJET ) 
+
+and be programmed with respect to LU grammar
+(cf documentation and examples of the debut menu)
+
+All these parameters will be initialized during its call.
+These parameters can be used or not, but have to be present
+in the definition of the INITIAL TEMPERATURE
+ 
+EXAMPLE:
+deffunc init_temperature( t, x, y, z, no_type_objet, material ) ;
+if    material=nuobjt( 'volume' , 'steel' )
+then init_temperature=0.0;
+else if   material=nuobjt( 'volume' , 'copper' )
+     then init_temperature=10.0 ;
+     else init_temperature= 5.0 ;
+     endif;  
+endif;
+endfunc; 
+
+Remark: the LU function nuobjt( p1, p2 ) gives the
+number of the PLSVO of type p1 with the name p2.

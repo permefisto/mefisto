@@ -1,0 +1,92 @@
+deftms ~>TRANSFO>>DEFINITION  
+   'definition d''une transformation mathematique'
+ variable muet DATE   'date de creation du tableau'   reel2 ;
+ variable muet NUTD   'numero du tableau descripteur' entier ;
+ variable NUTYTR 'numero du type de la transformation'    entier 
+      ( 1  : 'identite de R3 -> R3'
+      , 3  : 'isometrie de R3 -> R3'
+      , 4  : 'projection dans R3'
+      , 6  : 'F:R3->R3 definie par 3 fonctions (Fi)'
+      , 7  : 'F:R3->R3 12 fonctions (Fi et [dFi/dxj])' ) ;
+ cas NUTYTR
+ 3 : variable NUTYIS 'numero du type de l''isometrie' entier
+      ( 0: 'translation definie par un vecteur de R3'
+      , 1: 'translation+rotation+dilatation definies par 2 points et 7 reels'
+      , 2: 'translation+rotation+dilatation definies par 4 images de 4 points' 
+      , 3: 'translation+rotation definies par 3 images de 3 points' 
+      , 4: 'symetrie par rapport a un plan defini par 3 points'
+      , 5: 'symetrie par rapport a une droite definie par 2 points'
+      , 6: 'symetrie par rapport a un point'
+      , 7: 'dilatation en X Y Z' ) ;
+  cas NUTYIS  
+    0: tableau  TRAVEC(1..3) 'les 3 composantes du vecteur translation' reel ;
+    1: variable NUP1AX 'nom du 1-er  point de l''axe de rotation' ^~>POINT ;
+       variable NUP2AX 'nom du 2-eme point de l''axe de rotation' ^~>POINT ;
+       variable ANGLE  'angle en degres de la rotation autour de l''axe' reel ;
+       variable TRANSX 'abscisse du vecteur translation' reel ;
+       variable TRANSY 'ordonnee du vecteur translation' reel ;
+       variable TRANSZ 'cote     du vecteur translation' reel ;  
+       variable DILATX 'coefficient de dilatation selon oX' reel ;
+       variable DILATY 'coefficient de dilatation selon oY' reel ;
+       variable DILATZ 'coefficient de dilatation selon oZ' reel ;
+    2: variable NUAVP1 'nom du point 1 avant l''isometrie' ^~>POINT ;
+       variable NUAVP2 'nom du point 2 avant l''isometrie' ^~>POINT ;
+       variable NUAVP3 'nom du point 3 avant l''isometrie' ^~>POINT ;
+       variable NUAVP4 'nom du point 4 avant l''isometrie' ^~>POINT ;
+       variable NUAPP1 'nom du point 1 apres l''isometrie' ^~>POINT ;
+       variable NUAPP2 'nom du point 2 apres l''isometrie' ^~>POINT ;
+       variable NUAPP3 'nom du point 3 apres l''isometrie' ^~>POINT ;
+       variable NUAPP4 'nom du point 4 apres l''isometrie' ^~>POINT ; 
+    3: variable NUP1AV 'nom du point 1 avant l''isometrie' ^~>POINT ;
+       variable NUP2AV 'nom du point 2 avant l''isometrie' ^~>POINT ;
+       variable NUP3AV 'nom du point 3 avant l''isometrie' ^~>POINT ;
+       variable NUP1AP 'nom du point 1 apres l''isometrie' ^~>POINT ;
+       variable NUP2AP 'nom du point 2 apres l''isometrie' ^~>POINT ;
+       variable NUP3AP 'nom du point 3 apres l''isometrie' ^~>POINT ;
+    4: variable NUP1PL 'nom du point 1 du plan' ^~>POINT ;
+       variable NUP2PL 'nom du point 2 du plan' ^~>POINT ;
+       variable NUP3PL 'nom du point 3 du plan' ^~>POINT ; 
+    5: variable NUP1DR 'nom du point 1 de la droite' ^~>POINT ;
+       variable NUP2DR 'nom du point 2 de la droite' ^~>POINT ; 
+    6: variable NUP1SY 'nom du point de symetrie' ^~>POINT ;
+    7: variable DILA7X 'coefficient de dilatation selon oX' reel ;
+       variable DILA7Y 'coefficient de dilatation selon oY' reel ;
+       variable DILA7Z 'coefficient de dilatation selon oZ' reel ;
+  fincas ;
+ 4 : variable NUFONC 'nom de la fonction F(u,v,w)=0'  ^~>FONCTION ;
+     variable NUTYPR 
+      'numero du type de la projection sur la surface F(u,v,w)=0'  entier
+      ( 1 : 'projection selon +oX'   
+      ,-1 : 'projection selon -oX'
+      , 2 : 'projection selon +oY' 
+      ,-2 : 'projection selon -oY'
+      , 3 : 'projection selon +oZ' 
+      ,-3 : 'projection selon -oZ'
+      , 4 : 'projection selon le centre et le point a projeter' 
+      , 5 : 'projection orthogonale au   plan   defini  par 3 points'
+      , 6 : 'projection orthogonale a la droite definie par 2 points' ) ;
+  cas NUTYPR
+     4 : variable NUPTCP 'nom du point centre de projection'    ^~>POINT ;
+     5 : variable NUPLP1 'nom du point 1 de definition du plan' ^~>POINT ;
+         variable NUPLP2 'nom du point 2 de definition du plan' ^~>POINT ;
+         variable NUPLP3 'nom du point 3 de definition du plan' ^~>POINT ; 
+     6 : variable NUDRP1 'nom du point 1 de definition de la droite' ^~>POINT ;
+         variable NUDRP2 'nom du point 2 de definition de la droite' ^~>POINT ;
+  fincas ;
+ 6 : variable NUFONX 'nom fonction ABSCISSE X=F1(u,v,w)' ^~>FONCTION ;
+     variable NUFONY 'nom fonction ORDONNEE Y=F2(u,v,w)' ^~>FONCTION ;
+     variable NUFONZ 'nom fonction COTE     Z=F3(u,v,w)' ^~>FONCTION ;
+ 7 : variable NUFONX 'nom fonction ABSCISSE X=F1(u,v,w)' ^~>FONCTION ;
+     variable NUFONY 'nom fonction ORDONNEE Y=F2(u,v,w)' ^~>FONCTION ;
+     variable NUFONZ 'nom fonction COTE     Z=F3(u,v,w)' ^~>FONCTION ;
+     variable NUDF1U 'nom fonction dF1/du(u,v,w)' ^~>FONCTION ;
+     variable NUDF1V 'nom fonction dF1/dv(u,v,w)' ^~>FONCTION ;
+     variable NUDF1W 'nom fonction dF1/dw(u,v,w)' ^~>FONCTION ;
+     variable NUDF2U 'nom fonction dF2/du(u,v,w)' ^~>FONCTION ;
+     variable NUDF2V 'nom fonction dF2/dv(u,v,w)' ^~>FONCTION ;
+     variable NUDF2W 'nom fonction dF2/dw(u,v,w)' ^~>FONCTION ;
+     variable NUDF3U 'nom fonction dF3/du(u,v,w)' ^~>FONCTION ;
+     variable NUDF3V 'nom fonction dF3/dv(u,v,w)' ^~>FONCTION ;
+     variable NUDF3W 'nom fonction dF3/dw(u,v,w)' ^~>FONCTION ;
+fincas ;
+fintms ;

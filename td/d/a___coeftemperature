@@ -1,0 +1,12 @@
+deftms ~>>>COEFTEMPERATURE 'Coefficient de la Temperature'
+variable muet DATE   'date de creation du tableau'   reel2  ;
+variable muet NUTD   'numero du tableau descripteur' entier ; 
+variable      LTCOET 'Type du Coefficient de la Temperature' entier 
+(  1 : 'Coefficient de la Temperature constant'
+, -1 : 'fonction Coefficient de la Temperature'
+,  0 : 'Coefficient de la Temperature a supprimer' ) ;
+cas LTCOET
+ 1 : variable  COEFTE 'Coefficient de la Temperature'  reel ; 
+-1 : variable  NFCOET 'Nom fonction Coefficient de la Temperature' ^~>FONCTION ;
+fincas ;   
+fintms ;

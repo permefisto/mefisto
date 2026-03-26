@@ -1,0 +1,55 @@
+      SUBROUTINE AMQTR3( ANGL2P, NBSOM, XYZSOM, NBTRIA,
+     %                   NOTRIA, NB2DIA )
+C+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+C BUT :    RETRIANGULATION POUR ECHANGER LA DIAGONALE DE 2 TRIANGLES
+C -----    AYANT UNE ARETE COMMUNE
+C
+C ENTREES:
+C --------
+C ANGL2P : ANGLE MAXIMAL EN RADIANS ENTRE LES PLANS DE 2 TRIANGLES
+C          POUR LES CONSIDERER COPLANAIRES
+C NBSOM  : NOMBRE DE SOMMETS DE LA TRIANGULATION
+C XYZSOM : X Y Z LES 3 COORDONNEES DES SOMMETS DE LA TRIANGULATION
+C NBTRIA : NOMBRE DE TRIANGLES DE LA TRIANGULATION
+C
+C MODIFIES :
+C ----------
+C NOTRIA : LISTE CHAINEE DES TRIANGLES
+C                 ------- ------- ------- -------- -------- --------
+C  PAR TRIANGLE : SOMMET1 SOMMET2 SOMMET3 TR_VOIS1 TR_VOIS2 TR_VOIS3
+C                 ------- ------- ------- -------- -------- --------
+C                 SOMMET    EST LE NUMERO DU SOMMET
+C                 TR_VOIS i EST LE NUMERO DANS NOTRIA DU TRIANGLE
+C                                  ADJACENT PAR L'ARETE i
+C
+C SORTIES:
+C --------
+C NB2DIA : NOMBRE DE CHANGEMENTS DE DIAGONALE DE 2 TRIANGLES ADJACENTS
+C+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+C AUTEUR : ALAIN PERRONNET  ANALYSE NUMERIQUE PARIS UPMC    OCTOBRE 1993
+C....................................................................012
+      REAL      XYZSOM(3,NBSOM)
+      INTEGER   NOTRIA(6,NBTRIA)
+C
+C     COSINUS DE L'ANGLE ENTRE LES 2 PLANS
+      COSMAX = COS( ANGL2P )
+C
+C     NOMBRE DE CHANGEMENTS DE LA DIAGONALE
+      NB2DIA = 0
+      DO NT1=1,NBTRIA
+C
+C        PARCOURS DES 3 ARETES DU TRIANGLE NT1
+         DO I=1,3
+C           ECHANGE EVENTUEL DE LA DIAGONALE ARETE I DE NT1
+C           AVEC LE TRIANGLE OPPOSE S'IL EXISTE
+            CALL EC2DIA( COSMAX, NT1, I, NOTRIA, NBSOM, XYZSOM,
+     %                   NT2 )
+            IF( NT2 .GT. 0 ) THEN
+               NB2DIA = NB2DIA + 1
+            ENDIF
+         ENDDO
+
+      ENDDO
+
+      RETURN
+      END

@@ -1,0 +1,8 @@
+La ligne precedente est translatee d'un VECTEUR non nul a 
+preciser pour chacune des tranches
+
+Exemple: S14.5; I; 14; LIGNE_INITIALE; 5; 2; {tranches}  1; 2; 3;
+{les 3 composantes de la 1-ere translation relative a la ligne initiale}
+1; 2; 5;
+{les 3 composantes de la 2-eme translation relative a la ligne precedente}
+{les translations s'ajoutent}

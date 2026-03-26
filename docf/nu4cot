@@ -1,0 +1,20 @@
+Le QUADRANGLE, eventuellement deforme,est defini a partir 
+de 4 lignes definissant son contour. 
+Chacune des 4 lignes peut etre une ligne union de lignes.
+ATTENTION: 
+Les 4 COTES sont donnes, de preference, selon l'ordre ci-dessous
+
+           --------L3---------
+           |                 |  
+          L4                 L2
+           |                 |
+           --------L1---------    
+ATTENTION:   
+Le nombre de quadrangles est determine par le nombre des aretes
+des LIGNES, si bien que
+Le NOMBRE des ARETES des LIGNES 1 et 3 doit etre le meme
+Le NOMBRE des ARETES des LIGNES 2 et 4 doit etre le meme 
+
+Exemple: S1; I; 1; L1; L2; L3; L4;
+         Definit une quadrangulation de contour les aretes
+         des lignes L1 L2 L3 L4 

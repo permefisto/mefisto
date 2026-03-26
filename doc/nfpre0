@@ -1,0 +1,38 @@
+NFPRE0 is the name of the user's initial pressure function
+             
+This user's function compute the value of the initial pressure
+
+- at time t, 
+
+- at point X,Y,Z;
+
+- for the object of type number NuTypePLS : (3:SURFACE, 2:LINE, 1:POINT)
+
+- with the number in this directory NuPLS of this PLS
+
+In fact, the function nuobjt( TypeName of PLSVO, Name PLSVO ) gives the number of the PLSVO in the
+directory from its name;
+
+must have all the parameters in this order:
+
+InitialPressure( t, X,Y,Z, NuTypePLS, NuPLS ) 
+
+All these parameters are initialized at the function call during the execution.
+They may be used or not, in the body of the function to compute the value of a force components.
+          
+EXAMPLE : 
+ 2; 4;  { initial pressure }
+ -1;    { InitialPressure function }
+ DefFunc InitialPressure( t, x,y,z, NuTypePLS, boundary );
+ InitialPressure=0;
+ if  boundary=nuobjt( 'line' , 'wall' )
+ then 
+   InitialPressure=1.45;
+ else
+   if  boundary=nuobjt( 'surface' , 'sphere' )
+   then 
+     InitialPressure=-1.75;
+   endif;   
+ endif;
+ EndFunc;
+ initialpressure;      { Do not FORGET to give the name of the function! }

@@ -1,0 +1,4 @@
+NUCOVI is the array of each number of the NBCOVI initial
+velocity components to be valued, with values either 1 2 in 2d,
+or 1 2 3 in 3d.
+1 represents the X-velocity,  2 Y and  3 Z.

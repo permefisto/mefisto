@@ -1,0 +1,65 @@
+#!/bin/bash
+ echo     
+ echo ==========================================================================
+ echo Compilation Edition de liens du test du mode OBJET 2D de la librairie xvue
+ echo ==========================================================================  
+#     Alain Perronnet   Version LINUX   Juin 1997
+#
+# le repertoire de travail
+ cd $MEFISTO
+#
+# le nom du module executable
+ nompp=xvue/xvtest2
+ echo construction du module $nompp
+ rm $nompp 
+#
+# compilation de xvuelc.c 
+ if test -f xvue/xvuelc.o
+ then
+   echo "xvue/xvuelc.c NON recompile"
+ else 
+   echo "compilation de xvuelc.c"
+   ccxvue
+ fi 
+#
+# compilation des sous-programmes Fortran
+ gfortran -m64 -fPIC -O -I. -c xvue/xvouvrir.f
+ gfortran -m64 -fPIC -O -I. -c xvue/xvinit.f
+ gfortran -m64 -fPIC -O -I. -c xvue/palcde.f 
+ gfortran -m64 -fPIC -O -I. -c xvue/coutip.f 
+ gfortran -m64 -fPIC -O -I. -c xvue/codtei.f 
+ gfortran -m64 -fPIC -O -I. -c xvue/tiprvb.f 
+ gfortran -m64 -fPIC -O -I. -c xvue/face2d.f
+ gfortran -m64 -fPIC -O -I. -c xvue/nupxex.f 
+ gfortran -m64 -fPIC -O -I. -c xvue/nupxey.f 
+ gfortran -m64 -fPIC -O -I. -c xvue/reel2d.f 
+ gfortran -m64 -fPIC -O -I. -c xvue/entier2d.f 
+ gfortran -m64 -fPIC -O -I. -c xvue/texte2d.f 
+ gfortran -m64 -fPIC -O -I. -c xvue/symbole2d.f 
+ gfortran -m64 -fPIC -O -I. -c xvue/isofenetre.f 
+ gfortran -m64 -fPIC -O -I. -c xvue/trait2d.f 
+ gfortran -m64 -fPIC -O -I. -c xvue/nudcnb.f
+ gfortran -m64 -fPIC -O -I. -c xvue/fenetre.f
+ gfortran -m64 -fPIC -O -I. -c xvue/chargefonte.f 
+ gfortran -m64 -fPIC -O -I. -c xvue/choixfonte.f
+#
+# compilation et edition de liens
+ gfortran -m64 -fPIC -O -I. prpr/xvtest2.f *.o xvue/xvuelc.o \
+    -lgfortran -L/usr/X11R6/lib64 -lXt -lX11 -o $nompp
+#
+# destruction des fichiers .o inutiles
+ rm *.o
+#
+# bilan final
+ if test -f $nompp
+ then 
+   ls -l $nompp
+   echo "$nompp est correct et va etre execute"
+   $nompp
+ else
+   echo "$nompp est INCORRECT"
+ fi 
+#
+# destruction du fichier
+ rm $nompp
+

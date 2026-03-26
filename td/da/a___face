@@ -1,0 +1,28 @@
+deftms ~>>>FACE 'faces of a 3D mesh treated by hashing i.e. 
+the position of a face is the sum of its vertex numbers if this place is free
+else the position is obtained by a chaining on the next face
+and boundary faces are also chained'
+variable muet DATE 'date of creation of the TMS'   reel2  ;
+variable muet NUTD 'number of the descriptor array TD' entier ; 
+variable MOFACE 'number of integers stored for each face(>=8)' entier ;
+variable MXFACE 'max number of faces'                entier ;        
+variable L1FAFR 'number of the first boundary face'  entier ; 
+variable NBFAFR 'number of boundary faces'           entier ;
+variable L1FA2M 'number of the first interface face' entier ; 
+variable NBFA2M 'number of interface faces'          entier ;
+variable NBFATG 'number of faces with tangents'      entier ;
+tableau  LFACES(1..MOFACE,1..MXFACE)
+'4 vertices,link,fe1,fe2 or next boundary face, face with tangents' entier ;
+tableau  NUTGFA(1..8,1..NBFATG) 'numbers of tangents of faces' entier ;
+fintms ;
+         
+
+For memory :
+NBFATG=0 signifies that the tangents array does not exist
+NBSTFA=0 signifies that the coordinates array does not exist
+
+For a SURFACE or a VOLUME, MOFACE>=8 (no type of the FE).
+For an OBJECT (and NOT for a PLSV), the subroutine hachob adds 
+at position 9 of LFACES the type (1 to NBTYEL) of the last FE
+of the object containing the face 
+=> the face interpolation is fixed and MOFACE>=9 for an OBJECT

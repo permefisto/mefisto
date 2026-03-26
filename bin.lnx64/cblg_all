@@ -1,0 +1,70 @@
+#!/bin/bash
+#
+#  COMPILATION EDITION DE LIENS ARCHIVAGE DE 
+#  TOUTES LES BIBLIOTHEQUES ET PROGRAMMES MEFISTO
+#  Alain Perronnet  LINUX 32bits          Septembre 2009
+echo
+#
+if test -f $MEFISTO/td/m/anglais
+then
+ LANGAGE=1
+ LANGUE=ANGLAISE
+ echo Compilation, Archive LINUX 32bits of all LIBRARIES of $MEFISTO
+else
+ LANGAGE=0
+ LANGUE=FRANCAISE
+ echo Compilation, Archivage LINUX 32bits de toutes les LIBRAIRIES $MEFISTO
+fi
+
+# Compilation C de xvuelc.c
+$MEFISTO/bin/ccgxvue
+
+#  regeneration des parametres des TMS de MEFISTO 
+#  A eviter lors d'une installation 
+#  car les fichiers INCLUDE disparaissent et sp non compiles
+#  $MEFISTO/bin/cbpara 
+#
+#  compilation bind et librairie des sp fortran .f de
+#  toutes les librairies FORTRAN de MEFISTO 
+echo elas | $MEFISTO/bin/cblg_tous_f
+echo flui | $MEFISTO/bin/cblg_tous_f
+echo mail | $MEFISTO/bin/cblg_tous_f
+echo reso | $MEFISTO/bin/cblg_tous_f
+echo ther | $MEFISTO/bin/cblg_tous_f
+echo util | $MEFISTO/bin/cblg_tous_f
+echo xvue | $MEFISTO/bin/cblg_tous_f
+if [ $LANGAGE = 0 ]
+then
+  echo TOUTES les LIBRAIRIES de MEFISTO ont ete compilees avec -g
+else
+  echo All MEFISTO LIBRAIRIES has been compiled with the -g option
+fi
+
+rm $MEFISTO/td/d/*~
+rm $MEFISTO/td/m/*~
+rm $MEFISTO/td/g/*~
+rm $MEFISTO/doc/*~
+rm $MEFISTO/incl/*~
+rm $MEFISTO/texd/*~ 
+rm $MEFISTO/bin/*~
+rm $MEFISTO/*~
+rm $MEFISTO/*.o
+
+$MEFISTO/bin/cbinit
+$MEFISTO/bin/cbmail 
+$MEFISTO/bin/cbelas
+$MEFISTO/bin/cbther
+$MEFISTO/bin/cbflui
+$MEFISTO/bin/cbpoba
+rm $MEFISTO/pp/pppoba
+
+#
+echo Le repertoire $MEFISTO/pp :
+ls -l $MEFISTO/pp
+#
+if [ $LANGAGE = 0 ]
+then
+  echo TOUS les MODULES EXECUTABLES avec debogueur de $MEFISTO sous LINUX 32bits sont crees 
+else
+  echo All LOAD MODULES with debugger of MEFISTO have been created under  LINUX 32bits
+fi

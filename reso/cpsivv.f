@@ -1,0 +1,70 @@
+      SUBROUTINE CPSIVV( NBROOT, NTDL,   NBDLIB, NODLIB,
+     %                   NBDLFX, VADLFX, VECPCA, VECTPR )
+C+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+C BUT :    COPIER LES VECTEURS PROPRES VECPCA(NBDLIB,NBROOT) CALCULES
+C -----    DANS LE TABLEAU VECTPR(NTDL,NBROOT) EN AJOUTANT LES NBDLFX DL
+C          FIXES DE VALEURS DANS VADLFX(NBDLFX)
+C
+C ENTREES:
+C --------
+C NBROOT : NOMBRE DE VECTEURS DEMANDES
+C NTDL   : NOMBRE DE COMPOSANTES DE CHAQUE VECTEUR VECTPR APRES AJOUT
+C NBDLIB : NOMBRE DE COMPOSANTES DE CHAQUE VECTEUR VECPCA AVANT AJOUT
+C
+C NODLIB : NODLIB(I) = NUMERO DE 1 A NBDLIB DU DL I (I de 1 A NTDL) LIBRE
+C                    -(INDICE DANS NODLFX) SI LE DL I EST BLOQUE
+C          0  SI PAS DE DL BLOQUES
+C NBDLFX : NOMBRE DE DL FIXES
+C VADLFX : TABLEAU DES VALEURS DES DEGRES DE LIBERTE FIXES
+C VECPCA : TABLEAU(NBDLIB,NBROOT) DES VECTEURS PROPRES CALCULES
+C
+C SORTIES:
+C --------
+C VECTPR : LES COMPOSANTES(NTDL,NBROOT) DES VECTEURS PROPRES
+C          APRES AJOUT DES DEGRES DE LIBERTE BLOQUES A VADLFX
+C+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+C AUTEUR: ALAIN PERRONNET      ANALYSE NUMERIQUE UPMC PARIS    AOUT 1998
+C23456---------------------------------------------------------------012
+      DOUBLE PRECISION  VECPCA(NBDLIB,NBROOT), VECTPR(NTDL,NBROOT),
+     %                  VADLFX(NBDLFX)
+      INTEGER           NODLIB(NTDL)
+C
+      IF( NBDLFX . EQ. 0 ) THEN
+C
+C        PAS DE DEGRE DE LIBERTE FIXE NBDLIB=NTDL : COPIE SIMPLE
+         DO N = 1, NBDLIB
+            DO I = 1, NBROOT
+               VECTPR( N, I ) = VECPCA( N, I )
+            ENDDO
+         ENDDO
+C
+      ELSE
+C
+         DO N = 1, NTDL
+C
+C           STATUT DU DL N DE 1 A NTDL?
+            NUDL = NODLIB( N )
+C
+            IF( NUDL .GE. 0 ) THEN
+C
+C              DL LIBRE
+               DO I=1,NBROOT
+                  VECTPR( N, I ) = VECPCA( NUDL, I )
+               ENDDO
+C
+            ELSE
+C
+C              DL FIXE  -NUDL EST LE NUMERO DE DL DANS LES FIXES
+               NUDL = - NUDL
+               DO I = 1, NBROOT
+                  VECTPR( N, I ) = VADLFX( NUDL )
+               ENDDO
+C
+            ENDIF
+C
+         ENDDO
+C
+      ENDIF
+C
+      RETURN
+      END

@@ -1,0 +1,158 @@
+{ ================================================================ }
+{ MEFISTO software : Version June 2007                             }
+{ USER name        : Alain Perronnet                               }
+{ PROJECT name     : demoa = demo anglaise                         }
+{ DATE             : 14/9/2006                                     }
+{ ================================================================ }
+@;
+@;
+@;
+
+DefVar r1,r2,r3,r4;  {the radii}
+ r1=0.02; r2=0.05; r3=0.06; r4=0.025;
+
+defvar zb,zc,ze,zd;  {the Z cote}
+ zb=0.05; zc=0.08; ze=0.16; zd=(zc+ze)/2;
+
+defvar rac2; rac2=1/sqrt(2);  {Constant sqrt(2)/2}
+
+19; { min MAX of XYZ of PLSVO to define the DOMAIN }
+ 0; r3;          { X MINIMUM and MAXIMUM }
+ 0; r3;          { Y MINIMUM and MAXIMUM }
+ -0.01; ze+0.05; { Z MINIMUM and MAXIMUM }
+
+1; 1;{ POINTS of the OBJECT }
+ { POINT NAME or ABANDON? }
+ a0; { POINT NAME or ABANDON? }
+  i; { in LEXIQUE ~>TRANSFO }
+  1; { coordinates x y z }  0;      0;       0;
+
+ x;  i; 1; r3*1.5; 0;       0;  {to define the AXIS}
+ y;  i; 1; 0;      r3*1.5;  0;
+ z;  i; 1; 0;      0;       ze*1.06;
+
+ ax1; i; 1; r1; 0; 0;
+ ax2; i; 1; r2; 0; 0;
+ ay1; i; 1; 0; r1; 0;
+ ay2; i; 1; 0; r2; 0;
+ am1; i; 1; r1*rac2; r1*rac2; 0;
+ am2; i; 1; r2*rac2; r2*rac2; 0;
+
+ bx1; i; 1; r1; 0; zb;
+ { in LEXICON ~>TRANSFO }
+ { coordinates x y z }
+ { COORPO '3 coordinates of point' xyz ; }
+ { POINT NAME or ABANDON? }
+ bx2; i; 1; r2; 0; zb;
+ { in LEXICON ~>TRANSFO }
+ { coordinates x y z }
+ { COORPO '3 coordinates of point' xyz ; }
+ { POINT NAME or ABANDON? }
+ bx3; i; 1; r3; 0; zb;
+ { in LEXICON ~>TRANSFO }
+ { coordinates x y z }
+ { COORPO '3 coordinates of point' xyz ; }
+ { POINT NAME or ABANDON? }
+ by1; i; 1; 0; r1; zb;
+ { in LEXICON ~>TRANSFO }
+ { coordinates x y z }
+ { COORPO '3 coordinates of point' xyz ; }
+ { POINT NAME or ABANDON? }
+ by2; i; 1; 0; r2; zb;
+ { in LEXICON ~>TRANSFO }
+ { coordinates x y z }
+ { COORPO '3 coordinates of point' xyz ; }
+ { POINT NAME or ABANDON? }
+ by3; i; 1; 0; r3; zb;
+ { in LEXICON ~>TRANSFO }
+ { coordinates x y z }
+ { COORPO '3 coordinates of point' xyz ; }
+ { POINT NAME or ABANDON? }
+ bm1; i; 1; r1*rac2; r1*rac2; zb;
+ bm2; i; 1; r2*rac2; r2*rac2; zb;
+ bm3; i; 1; r3*rac2; r3*rac2; zb;
+
+ cx1; i; 1; r1; 0; zc;
+ { in LEXICON ~>TRANSFO }
+ { coordinates x y z }
+ { COORPO '3 coordinates of point' xyz ; }
+ { POINT NAME or ABANDON? }
+ cx3; i; 1; r3; 0; zc;
+ { in LEXICON ~>TRANSFO }
+ { coordinates x y z }
+ { COORPO '3 coordinates of point' xyz ; }
+ { POINT NAME or ABANDON? }
+ cy1; i; 1; 0; r1; zc;
+ { in LEXICON ~>TRANSFO }
+ { coordinates x y z }
+ { COORPO '3 coordinates of point' xyz ; }
+ { POINT NAME or ABANDON? }
+ cy3; i; 1; 0; r3; zc;
+ { in LEXICON ~>TRANSFO }
+ { coordinates x y z }
+ { COORPO '3 coordinates of point' xyz ; }
+ { POINT NAME or ABANDON? }
+ cm1; i; 1; r1*rac2; r1*rac2; zc;
+ cm3; i; 1; r3*rac2; r3*rac2; zc;
+
+ defvar yp; yp=r1+0.01;
+ cpd; i; 1; 0; yp; zc;
+ { in LEXICON ~>TRANSFO }
+ { coordinates x y z }
+ { COORPO '3 coordinates of point' xyz ; }
+ { POINT NAME or ABANDON? }
+
+ defvar alfa,beta; alfa=asin(yp/r3); beta=atan(1)*2-alfa;
+ cpg;   i; 1; r3*cos(alfa);        r3*sin(alfa);        zc;
+ cmpg;  i; 1; r3*cos(alfa/2);      r3*sin(alfa/2);      zc;
+ epg;   i; 1; r3*cos(alfa);        r3*sin(alfa);        ze;
+
+ { in LEXICON ~>TRANSFO }
+ { coordinates x y z }
+ { COORPO '3 coordinates of point' xyz ; }
+ { POINT NAME or ABANDON? }
+ epd; i; 1; 0; yp; ze;
+ { in LEXICON ~>TRANSFO }
+ { coordinates x y z }
+ { COORPO '3 coordinates of point' xyz ; }
+ { POINT NAME or ABANDON? }
+ ey3; i; 1; 0; r3; ze;
+ { in LEXICON ~>TRANSFO }
+ { coordinates x y z }
+ { COORPO '3 coordinates of point' xyz ; }
+ { POINT NAME or ABANDON? }
+
+ em3; i; 1; r3*rac2; r3*rac2; ze;
+
+ dyp; i; 1; 0; yp; zd;
+ { in LEXICON ~>TRANSFO }
+ { coordinates x y z }
+ { COORPO '3 coordinates of point' xyz ; }
+ { POINT NAME or ABANDON? }
+ dy3; i; 1; 0; r3; zd;
+ { in LEXICON ~>TRANSFO }
+ { coordinates x y z }
+ { COORPO '3 coordinates of point' xyz ; }
+ { POINT NAME or ABANDON? }
+ dm3; i; 1; r4; r3; zd;
+
+ cdy3; i; 1; 0; r3; zd-r4;
+ dey3; i; 1; 0; r3; zd+r4;
+ cdyp; i; 1; 0; yp; zd-r4;
+ deyp; i; 1; 0; yp; zd+r4;
+ dmp;  i; 1; r4; yp; zd;
+ @;
+@;
+
+2; {LINES to show the AXES}
+ a0x;  i; 2; 100; 1; a0; x;
+ a0y;  i; 2; 100; 1; a0; y;
+ a0z;  i; 2; 100; 1; a0; z;
+@;
+@;
+
+10;    {drawings}
+ 1; 1; {All points}
+@;
+
+close;

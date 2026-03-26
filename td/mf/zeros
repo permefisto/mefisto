@@ -1,0 +1,4 @@
+variable ZEROS 'PRECISION pour IDENTIFIER des POINTS' entier
+ ( 1  : 'Autour d un POINT NON ORIGINE'
+ , 2  : 'Autour de l''ORIGINE'
+ , 3  : 'Retour aux VALEURS INITIALES' ) ;

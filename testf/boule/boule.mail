@@ -1,0 +1,92 @@
+{ ==================================================== }
+{ MEFISTO  Version 10 mai 2008      PROJET : boule     }
+{ Utilisateur: Alain Perronnet      Date   : 10/5/2008 }
+{ ==================================================== }
+@; @; @; @;
+
+DefVar pi,na,r,arete; 
+pi = atan(1)*4;
+r  = 1;
+na = 7; 
+arete = pi / 3 * r / na * 1.4;
+
+DefFonc Taille_Ideale( x, y, z )
+Si x*x+y*y+z*z>r*r/4
+Alors Taille_Ideale=arete;
+Sinon Taille_Ideale=arete*0.5;
+FinSi;
+FinFonc;
+
+1;  { POINTS principaux de l objet }
+1;  { FRAPPE des valeurs }
+ centre;  i; 1;  { coordonnees x y z }
+ 0;  0;  0;  { COORPO '3 coordonnees cartesiennes du point' xyz ; }
+@;  
+        
+
+3;        { SURFACES contours de l objet ==================================== }
+ boule_s;  i;  { DANS LE LEXIQUE ~>TRANSFO }
+ 18;      { 1/1 de la surface d une boule }
+ 20*na**2;{ NBTRSP 'nombre approximatif de triangles a generer' entier ; }
+ r;       { RAYOSP 'rayon de la boule' reel ; }
+ centre;  { DANS LE LEXIQUE ~>POINT }
+@;                                                     
+
+4;        { VOLUMES parties de l objet ====================================== }  
+ boule_v8;  i;  { DANS LE LEXIQUE ~>TRANSFO }
+ 8;        { un volume ferme d un volume partitionne }
+ 1;        { NBSF1V 'nombre de surfaces fermees contour du volume' entier ; }
+ boule_s;  { DANS LE LEXIQUE ~>SURFACE }
+
+ boule_v9;  i;  { DANS LE LEXIQUE ~>TRANSFO }
+ 9;        { le volume union de volumes fermes de type 8 }
+ 8000;     { MXSOVO 'nombre maximal de sommets du volume partition' }
+ arete;    { ARETGR 'longueur de l arete de la grille reguliere' } 
+ 3;        { ANTE2P 'degres du petit angle de coplanearite' reel; } 
+ 1;        { NBPTIV 'nombre de points internes fournis par l''utilisateur' }
+ 1;        { NBVOPA 'nombre de volumes de type 8 de la partition' entier ; }
+ boule_v8; { DANS LE LEXIQUE ~>VOLUME } 
+ centre;   { DANS LE LEXIQUE ~>POINT }
+ arete/4;  { distance souhaitee autour de ce point }  
+
+ boule_a9; i;  
+  30;      { amelioration d une tetredrisation }
+ boule_v9; { DANS LE LEXIQUE ~>VOLUME }
+ 0.3;      { QUTEMN 'qualite au dessous de laquelle ameliorer' reel; }
+ 3;        { ANTE2P 'degres du petit angle de coplanearite' reel; } 
+ 8;        { NBITAT 'nombre d'iterations pour ameliorer la tetraedrisation' }
+
+
+ boule_v18;  i;  { DANS LE LEXIQUE ~>TRANSFO }
+ 8;        { un volume ferme d un volume partitionne }
+ 1;        { NBSF1V 'nombre de surfaces fermees contour du volume' entier ; }
+ boule_s;  { DANS LE LEXIQUE ~>SURFACE }
+
+ boule_v19;  i;  { DANS LE LEXIQUE ~>TRANSFO }
+ 19;       { le volume union de volumes fermes de type 8 }
+ 8000;     { MXSOVO 'nombre maximal de sommets du volume partition' }
+ arete;    { ARETGR 'longueur de l arete de la grille reguliere' } 
+ 3;        { ANTE2P 'degres du petit angle de coplanearite' reel; } 
+ 1;        { NBPTIV 'nombre de points internes fournis par l''utilisateur' }
+ 1;        { NBVOPA 'nombre de volumes de type 8 de la partition' entier ; }
+ boule_v18;{ DANS LE LEXIQUE ~>VOLUME } 
+ centre;   { DANS LE LEXIQUE ~>POINT }
+ arete/4;  { distance souhaitee autour de ce point }  
+
+ boule_a19; i;  
+  30;       { amelioration d une tetredrisation }
+ boule_v19; { DANS LE LEXIQUE ~>VOLUME }
+ 0.3;       { QUTEMN 'qualite au dessous de laquelle ameliorer' reel; }
+ 3;         { ANTE2P 'degres du petit angle de coplanearite' reel; } 
+ 8;         { NBITAT 'nombre d'iterations pour ameliorer la tetraedrisation' }
+@;
+
+3;
+ boule_a19; i;   {extraction d'une surface d'un volume}
+ 37;
+ boule_a19;
+ deffonc f(x,y,z); f=1; finfonc; f;
+ 1;
+@;
+
+FERMER;

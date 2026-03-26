@@ -1,0 +1,11 @@
+3 modes d'INTERACTIVITE sont possibles :
+0:BATCH      PAS d' ECRAN GRAPHIQUE PAS de CLAVIER PAS de SOURIS
+1:INTERACTIF AVEC   ECRAN GRAPHIQUE PAS de CLAVIER PAS de SOURIS
+3:INTERACTIF AVEC   ECRAN GRAPHIQUE AVEC   CLAVIER AVEC   SOURIS
+
+L'ECRAN    permet les TRACES GRAPHIQUES
+Le CLAVIER permet la SAISIE par frappe de CARACTERES.
+La SOURIS  permet la SAISIE par clic sur une OPTION ou par
+PROXIMITE d'un PLSV.
+
+L'option 3 s'avere la plus pratique. (Valeur par defaut)

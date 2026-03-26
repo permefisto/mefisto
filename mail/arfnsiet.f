@@ -1,0 +1,109 @@
+      SUBROUTINE ARFNSIET( NS1,    NS2,  N1FEOC, NFETOI, NOTETR,
+     %                     NBFA12, NFA, NAF )
+C+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+C BUT :    RECHERCHER LES 2 FACES SIMPLES NFA(1:2) DE L'ETOILE NFETOI
+C -----    D'ARETE NS1-NS2
+
+C ENTREES:
+C --------
+C NS1 NS2: NO DES 2 SOMMETS DE L'ARETE A RECHERCHE DANS NFETOI
+C N1FEOC : POINTEUR SUR LA PREMIERE FACE DE L'ETOILE
+C          CHAINAGE SUIVANT DANS NFETOI(5,*)
+
+C NFETOI : EN ENTREE VERSION 1
+C          1: NUMERO DU TETRAEDRE DANS NOTETR
+C          2: NUMERO LOCAL AU TETRAEDRE DE LA FACE DE L'ETOILE
+C             UN SIGNE NEGATIF INDIQUE UN TRAITEMENT EFFECTUE
+C          3: NON UTILISE ICI
+C          4: NUMERO DANS LEFACO DE LA FACE, 0 SINON
+C          5: CHAINAGE SUIVANT DES FACES OCCUPEES ET VIDES
+C             =0 SI DERNIER DU CHAINAGE
+
+C          EN SORTIE VERSION 2
+C          1: > 0 NUMERO NOTETR DU TETRAEDRE AU DELA DE LA FACE
+C             = 0 PAS DE TETRAEDRE AU DELA DE LA FACE (FRONTIERE)
+C             =-1 TETRAEDRE OPPOSE INCONNU A RETROUVER (NON FRONTIERE)
+C          2: NUMERO PTXYZD DU 1-ER SOMMET DE LA FACE
+C          3: NUMERO PTXYZD DU 2-ME SOMMET DE LA FACE
+C          4: NUMERO PTXYZD DU 3-ME SOMMET DE LA FACE
+C             S1S2xS1S3 EST LA NORMALE DIRIGEE VERS L'INTERIEUR DE
+C             L'ETOILE
+C          5: CHAINAGE SUIVANT DES FACES OCCUPEES ET VIDES
+C NOTETR : LISTE DES TETRAEDRES
+C          SOMMET1,    SOMMET2,    SOMMET3,    SOMMET4,
+C          TETRAEDRE1, TETRAEDRE2, TETRAEDRE3, TETRAEDRE4
+C          DE L'AUTRE COTE DE LA FACE
+C          1: 123      2: 234      3: 341      4: 412
+
+C SORTIES:
+C --------
+C NBFA12 : NOMBRE DE FACES SIMPLES D'ARETE NS1-NS2
+C NFA    : NO DANS NFETOI DES 2 FACES D'ARETE SIMPLE NS1-NS2
+C          =0  SI PAS DE FACE
+C NAF    : NO DANS LA FACE NFA DE L'ARETE NS1-NS2
+C+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+C AUTEUR: ALAIN PERRONNET LJLL UPMC & St PIERRE du PERRAY  Decembre 2017
+C23456...............................................................012
+      INTEGER  NFETOI(5,*),   NOTETR(8,*), NFA(16), NAF(16)
+      INTEGER  NOSOFATE(3,4), NOSOTR(3)
+      DATA     NOSOFATE / 1,3,2,  2,3,4,  3,1,4,  4,1,2 /
+C     => LA NORMALE A LA FACE EST ORIENTEE VERS L'EXTERIEUR DU TETRAEDRE
+
+      NBFA12 = 0
+      NFA(1) = 0
+      NFA(2) = 0
+      NAF(1) = 0
+      NAF(2) = 0
+
+      NF = N1FEOC
+ 10   IF( NF .GT. 0 ) THEN
+
+C        LE NO DES 3 SOMMETS DE LA FACE SIMPLE NF
+         IF( NFETOI(3,NF) .EQ. 0 ) THEN
+C           NFETOI EN VERSION 1
+C           LE NO DU TETRAEDRE NTE INTERNE A L'ETOILE
+            NTE  = NFETOI(1,NF)
+C           LE NO NOFA LOCAL DE LA FACE
+            NOFA = ABS( NFETOI(2,NF) )
+            NOSOTR(1) = NOTETR( NOSOFATE(1,NOFA), NTE )
+            NOSOTR(2) = NOTETR( NOSOFATE(2,NOFA), NTE )
+            NOSOTR(3) = NOTETR( NOSOFATE(3,NOFA), NTE )
+         ELSE
+C           NFETOI EN VERSION 2
+            NOSOTR(1) = ABS( NFETOI(2,NF) )
+            NOSOTR(2) = NFETOI(3,NF)
+            NOSOTR(3) = NFETOI(4,NF)
+         ENDIF
+
+C        PARCOURS DES 3 ARETES DU TRIANGLE NOSOTR
+         NSA1 = NOSOTR(1)
+         DO NA=1,3
+
+C           NO DES 2 SOMMETS DE L'ARETE NA
+            IF( NA .EQ. 3 ) THEN
+               NA2 = 1
+            ELSE
+               NA2 = NA + 1
+            ENDIF
+            NSA2 = NOSOTR( NA2 )
+
+            IF( ( NSA1 .EQ. NS1 .AND. NSA2 .EQ. NS2 ) .OR.
+     %          ( NSA1 .EQ. NS2 .AND. NSA2 .EQ. NS1 ) ) THEN
+C              ARETE NS1-NS2 RETROUVEE DANS LA FACE NF DE NFETOI
+               NBFA12 = NBFA12 + 1
+               NFA( NBFA12 ) = NF
+               NAF( NBFA12 ) = NA
+            ENDIF
+
+            NSA1 = NSA2
+
+         ENDDO
+
+C        PASSAGE A LA FACE SUIVANTE
+         NF = NFETOI(5,NF)
+         GOTO 10
+
+      ENDIF
+
+      RETURN
+      END

@@ -1,0 +1,55 @@
+---------------------------------------------------------------
+MEFISTO software        English Version        December 2008
+---------------------------------------------------------------
+The menu of mesh drawings has been modified at level of
+Points, Lines, Surfaces, Volumes and Objects.
+NEWS:
+MAILLER
+- Option 16 of surfaces: a QUADRANGULER along
+  the normal vectors of a profile line
+- Option 19 of surfaces: a TRIANGULER by adding of
+  the barycentre of triangles with same data input as 9;
+- Option 26 of 2d surfaces: a MODIFIER of a plane mesh
+  by mouse clicks 
+- Option 33 of volumes: An HEXAHEDRISER of a
+  CUBE or a SPHERE
+- Option 4 of drawings of Volumes: Drawing of Finite
+  Element of a volume cut by a plane
+- Option 5 of drawings of Objects: Drawing of Finite
+  Element of an object cut by a plane
+- Option 16 of drawings of gradients, fluxes, stresses:
+  Drawing of arrows to represent gradients, fluxes or
+  stresses of Finite Elements of an object cut by a plane
+- Option 39 subdivide any triangle or quadrangle of the
+  initial mesh into 4 sub elements of same type
+- Addition of MULTI-MATERIALS VOLUMES (one materiau=one volume)
+  An union of several volumes is a MULTI-MATERIALS VOLUME.
+  A type 9 volume with several type 8 volumes is a 
+  MULTI-MATERIALS VOLUME.
+  The surfaces, interfaces between 2 materials are drawn.
+- Volume 15 by rotation of a meshed surface:
+  The restriction of no vertices of the boundary on the
+  axis has been deleted by creation of pyramids
+- Volume 19 a TETRAHEDRIZER by adding of the barycentre
+  of triangles with same data input as volume 9;
+- Volume 31 the tetrahedrization cuts the pyramida (from
+  volume 15), the pentahedra and the hexahedra.
+  If the volume is MULTI-MATERIALS, the materials which
+  constitute it, are tetrahedrized and their previous meshes
+  with pyramids, pentahedra, hexahedra are replaced.
+  This replacement permit the compatibility of triangles
+  on the interfaces, limits of 2 materials.
+- Volume 39 subdivide any tetrahedron into 8 sub-tetra
+  any pentahedron into 8 sub-penta, any hexahedron into 8
+  sub-hexa and pyramida into 6 sub-pyra and 4 sub-tetra
+ELASTICER:
+- Drawing of Von Mises or Tresca's plasticity criterion
+FLUIDER
+- Solution of the steady and unsteady STOKES problem for
+  an incompressible fluid by Taylor-Hood or Brezzi-Fortin
+  finite elements
+---------------------------------------------------------------
+If you have a problem contact Alain PERRONNET
+E-mail  : perronnet@ann.jussieu.fr
+Internet: http://www.ann.jussieu.fr/~perronnet
+---------------------------------------------------------------

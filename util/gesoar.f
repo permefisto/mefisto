@@ -1,0 +1,109 @@
+      SUBROUTINE GESOAR( XYZSOM, NBSOEF, NBARLI, NOSOAR, MOSOAR,
+     &                   L1SOAR, L2SOAR, MNSOAR, IERR )
+C ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+C BUT :    FORMER PAR HACHAGE LE TABLEAU POUR CHACUN DES SOMMETS
+C -----    DES ARETES DONT IL EST L'UNE DES 2 EXTREMITES
+C          LA LIGNE EST SUPPOSEE FERMEE (1 SOMMET DANS AU PLUS 2 ARETES )
+C ENTREES:
+C --------
+C XYZSOM : 3 COORDONNEES DES SOMMETS DU MAILLAGE
+C NBSOEF : NOMBRE DE SOMMETS ET TANGENTES PAR ARETE
+C         (2 SI PAS DE TG ET 4 AVEC TG)
+C NBARLI : NOMBRE D'ARETES DE LA LIGNE
+C NOSOAR : LES 2 NUMEROS DES SOMMETS DES NBARLI ARETES DE LA LIGNE
+C MOSOAR : NOMBRE DE MOTS EN PLUS PAR SOMMET
+C          0 SI PAS D'UN TEL STOCKAGE
+C MNSOAR : ADRESSE DANS M DU TABLEAU NSOAR DES ARETES DU MAILLAGE
+C          >0 DESTRUCTION DE L'ANCIEN TABLEAU AVEC LES ANCIENNES VALEURS
+C             L1SOAR L2SOAR QUI SONT MISES A JOUR ENSUITE
+C          =0 PAS DE DESTRUCTION
+C SORTIES:
+C --------
+C L1SOAR : NOMBRE DE MOTS PAR SOAR DU TABLEAU NSOAR
+C L2SOAR : NOMBRE DE ARETES DU TABLEAU NSOAR
+C MNSOAR : ADRESSE DANS M DU TABLEAU NSOAR DES ARETES DU MAILLAGE
+C          EN SORTIE NSOAR(1,I)= NO DU SOMMET DE L'ARETE
+C                    NSOAR(2,I)= CHAINAGE HACHAGE SUR LE SOMMET SUIVANT
+C                    NSOAR(3,I)= NUMERO DE L'ARETE DE SOMMET NSOAR(1,I)
+C                    NSOAR(4,I)= NUMERO DE L'EVENTUELLE SECONDE ARETE DE SOMMET
+C IERR   : =0 SI PAS DE PROBLEME
+C          >0 NOMBRE D'ARETES SUPERIEUR A 2 PARTAGEANT UN MEME SOMMET
+C          <0 SATURATION DU TABLEAU SOAR
+C ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+C AUTEUR : ALAIN PERRONNET ANALYSE NUMERIQUE PARIS UPMC    NOVEMBRE 1988
+C ......................................................................
+      include"./incl/gsmenu.inc"
+      COMMON / UNITES / LECTEU,IMPRIM,NUNITE(30)
+      include"./incl/pp.inc"
+      COMMON            MCN(MOTMCN)
+      INTEGER           NOSOAR(NBSOEF,NBARLI)
+      INTEGER           NS(1)
+      REAL              XYZSOM(3,*)
+
+      IERR = 0
+
+C     DESTRUCTION DE L'ANCIEN TABLEAU MNSOAR DES SOMMETS DES ARETES
+C     -------------------------------------------------------------
+      IF( MNSOAR .GT. 0 ) CALL TNMCDC( 'ENTIER', L1SOAR*L2SOAR, MNSOAR )
+
+C     CALCUL DU NOMBRE DES ARETES DE LA LIGNE
+C     ---------------------------------------
+      L1SOAR = 2 + MOSOAR
+      L2SOAR = NBARLI + 256
+C
+C     ADRESSAGE DU TABLEAU SOAR
+C     -------------------------
+      L      = L1SOAR * L2SOAR
+      MNSOAR = 0
+      CALL TNMCDC( 'ENTIER', L, MNSOAR )
+C
+C     LE TABLEAU DES ARETES EST INITIALISE A ZERO
+      CALL AZEROI( L, MCN(MNSOAR) )
+C
+C     LE 1-ER SOMMET LIBRE DERRIERE CEUX ADRESSES PAR LE MINIMUM
+      LIBREF = L2SOAR
+C
+C     FORMATION DU TABLEAU DU NUMERO DES ARETES DE CHAQUE SOMMET
+C     ==========================================================
+      DO 100 NL=1,NBARLI
+         DO 30 J=1,2
+            NS(1) = NOSOAR( J, NL )
+C
+C           ADJONCTION DE L'ARETE SI ELLE N'EXISTE PAS DEJA
+            CALL HACHAG( 1,NS,L1SOAR,L2SOAR,MCN(MNSOAR),2,
+     &                   LIBREF, NAR )
+C
+C           AJOUT DU NUMERO DE LA SOAR DE CETTE SOMMET
+C           NAR > 0 SI SOMMET RETROUVEE
+C           NAR < 0 SI SOMMET AJOUTEE
+            MN = MNSOAR + L1SOAR * ( ABS(NAR) - 1 )
+            IF( NAR .LT. 0 ) THEN
+C              LA 1-ERE ARETE DU SOMMET
+               MCN( MN + 2 ) = NL
+            ELSE IF( NAR .GT. 0 ) THEN
+C              LA 2-EME OU 3-EME OU ...
+               IF( MCN( MN + 3 ) .EQ. 0 ) THEN
+C                 LA 2-EME ARETE EST AJOUTEE
+                  MCN( MN + 3 ) = NL
+               ELSE
+C                 >2 ARETES POUR LE SOMMET MCN(MN)=NS(1)
+                  IERR = IERR + 1
+                  NOSO = MCN(MN)
+                  WRITE(IMPRIM,*) 'INFORMATION: LE SOMMET',NOSO,
+     %            ' PARTAGE LES ARETES', MCN(MN+2),ABS(MCN(MN+3)),NL
+                  MCN(MN+3) = -ABS(MCN(MN+3))
+                  WRITE(IMPRIM,*) 'INFORMATION: CE SOMMET',NOSO,
+     %            ' A POUR X=',XYZSOM(1,NOSO),' Y=',XYZSOM(2,NOSO),
+     %            ' Z=',XYZSOM(3,NOSO)
+               ENDIF
+            ELSE
+               NBLGRC(NRERR) = 1
+               KERR(1) = 'GESOAR:SATURATION DU TABLEAU SOAR'
+               CALL LEREUR
+               IERR = -1 000 000
+            ENDIF
+ 30      CONTINUE
+100   CONTINUE
+      IF( IERR .GT. 0 ) WRITE(IMPRIM,*) 'INFORMATION:',IERR,
+     %                ' SOMMETS PARTAGENT PLUS DE 2 ARETES'
+      END

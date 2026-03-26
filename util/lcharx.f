@@ -1,0 +1,29 @@
+      SUBROUTINE LCHARX( INOM , NBCANM )
+C+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+C BUT : LISTER LA CHAINE INOM DE NBCANM CARACTERES STOCKES
+C ----- DANS UN TABLEAU D ENTIERS AVEC NBCHMO CARACTERES PAR MOT=ENTIER
+C
+C PARAMETRES D'ENTREE :
+C ---------------------
+C     INOM   : TABLEAU D ENTIERS REPRESENTANT LES CARACTERES
+C     NBCANM : NOMBRE DE CARACTERES DU NOM A LISTER
+C+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+C PROGRAMMEUR : ALAIN PERRONNET ANALYSE NUMERIQUE PARIS   OCTOBRE 1984
+C.......................................................................
+      include"./incl/nbcamo.inc"
+      CHARACTER*160      KNOM
+      COMMON / MSKNOM /  KNOM
+      INTEGER            INOM(*)
+      COMMON / UNITES /  LECTEU,IMPRIM,NUNITE(30)
+C
+C     NOMBRE D'ENTIERS PAR NOM DE NBCANM CARACTERES
+      NBENNM = ( NBCANM - 1 ) / NBCAMO + 1
+C
+C     IMPRESSION APRES TRANSFORMATION
+C     NBENNM ENTIERS => NBENNM * NBCAMO CARACTERES
+      CALL ENTNOM( NBENNM , INOM , KNOM )
+      WRITE(IMPRIM,10000) KNOM(1:NBCAMO*NBENNM)
+10000 FORMAT(1X,A)
+C
+      RETURN
+      END

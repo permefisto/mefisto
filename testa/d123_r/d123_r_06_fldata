@@ -1,0 +1,268 @@
+{ =========================================================================== }
+{ MEFISTO Software     : December 2 2021 Version                              }
+{ USER's  Name         : Alain Perronnet                                      }
+{ Project Name         : Air around 3 Dennis: Input DATA FLOW  Velocity 0m/s  }
+{ Date                 : December 2 2021 17h 45                               }
+{ =========================================================================== }
+
+{ The Fluid Characteristics ================================================= }
+DefVar  Pi;      Pi=atan(1)*4;
+DefVar  CoGrPr;  CoGrPr=1.;       { PRESSURE GRADIENT Coefficient CoGrPr
+                                    in NAVIER-STOKES Equations }
+DefVar  g;       g=9.81;          { m/s2 Gravity Acceleration in Z-direction }
+DefVar  RhoAir;  RhoAir=1.2;      { kg/m3 Wet Air Mass Density at sea level  }
+DefVar  MuAir;   MuAir=18.5E-6;   { kg/(m.s) or Pa.s Air Dynamic Viscosity=18.5 10-6}
+DefVar  NuAir;   NuAir=MuAir/RhoAir; { m2/s Air Kinematic Viscosity=15.6 10-6 a 20 C}
+DefVar  PrISA;   PrISA=101325;    { Pa International Standard Atmosphere Pressure
+                                       at sea level}
+
+{
+DefVar  Re;      Re=54054;   { UNUSED Reynolds' number = Velocity  Length / NuAir}
+DefVar  MuAir;   MuAir=1/Re; { UNUSED kg/(m.s) or Pa.s Air Dynamic Viscosity }
+}
+
+DefVar Mouth1Surf, Mouth2Surf, Mouth3Surf;  {Surface of Mout 1 2 3 }
+Mouth1Surf=1.80148971E-4;
+Mouth2Surf=1.80150484E-4;
+Mouth3Surf=1.80149698E-4;
+
+DefVar Velo1; Velo1=Pi/Mouth1Surf * 1E-4; { m/second Inspiration-expiration Velocity }
+DefVar Velo2; Velo2=Pi/Mouth2Surf * 1E-4; { m/second Inspiration-expiration Velocity }
+DefVar Velo3; Velo3=Pi/Mouth3Surf * 1E-4; { m/second Inspiration-expiration Velocity }
+
+{ The Initial Conditions Functions ============================= }
+DefFunc InitVelocity(t,x,y,z,ntyob,numob,nocomp);
+  InitVelocity = 0;
+return;
+EndFunc;
+
+DefFunc InitPressure(t,x,y,z,ntyob,numob);
+  InitPressure=PrISA;
+EndFunc;
+
+{ The Boundary Conditions Functions ============================ }
+
+DefFunc Mouth1Velocity(t,x,y,z,ntyob,numob,nocomp);
+if nocomp=1 then
+   Mouth1Velocity = Velo1 * sin( Pi * t/2.5 );
+else
+   Mouth1Velocity = 0;
+EndIf;
+EndFunc;
+
+DefFunc Mouth2Velocity(t,x,y,z,ntyob,numob,nocomp);
+if nocomp=1 then
+   Mouth2Velocity = Velo2 * sin( Pi * (t/2.5 + 2./3) ) * cos( Pi*130/180 );
+else
+ if nocomp=2 then
+    Mouth2Velocity = Velo2 * sin( Pi * (t/2.5 + 2./3) ) * sin( Pi*130/180 );
+ else
+    Mouth2Velocity = 0;
+ endif;
+EndIf;
+EndFunc;
+
+
+DefFunc Mouth3Velocity(t,x,y,z,ntyob,numob,nocomp);
+if nocomp=1 then
+   Mouth3Velocity = Velo3 * sin( Pi * (t/2.5 + 4./3) ) * cos( Pi*110/180 );
+else
+ if nocomp=2 then
+    Mouth3Velocity = Velo3 * sin( Pi * (t/2.5 + 4./3) ) * sin( -Pi*110/180 );
+ else
+    Mouth3Velocity = 0;
+ endif;
+EndIf;
+EndFunc;
+
+
+
+{  ACTUAL OBJECT ................................................
+1; { OBJECT NAME to treat ======================================= }
+D123_r_th;
+}
+@;
+
+2;  { FLUID INPUT DATA }
+
+{ The Fluid Characteristics of d123_1m_te VOLUME of d123_1m_th OBJECT =======}
+ 1;       { RhoAir Air MASS Density }
+ 1;       { Mass Constant }
+ RhoAir;  { DMASSE Value of the constant mass density }
+
+ 2;       { Mu Air FLUID DYNAMIC VISCOSITY }
+ 1;       { Constant Viscosity }
+ MuAir;   { kg/(m.s) or Pa.s Air Dynamic Viscosity at 15C of Air }
+ 
+ 8;       { PRESSURE GRADIENT Coefficient CoGrPr in Navier-Stokes Equations }
+ 1;       { Constant Pressure Coefficient }
+ CoGrPr;  { Pressure Gradient Coefficient Value }
+
+ 3;       { FOmega INTERIOR FORCE of PESANTOR }
+ 1;       { CONSTANT FORCE }
+ 3;       { number of force components }
+ 1; 2; 3; { number of each force component }
+ 0; 0; -RhoAir * g; { -Z Pesantor FORCE=Values of 3 components }
+
+
+ 4;       { INITIAL VELOCITIES ==========================================}
+{
+-1;       { Initial Velocity Function }
+ 3;       { NBCOV0 Number of Initial Velocity Components at a node }
+ 1; 2; 3; { NUCOV0(1..NBCOV0) Number of Initial Velocity Components }
+ InitVelocity; { NAME of the Initial Velocity FUNCTION m/s }
+}
+ 1;       { CONSTANT INITIAL Velocity }
+ 3;       { NBCOVI 'Number of Initial Velocity Components at a node'}
+ 1; 2; 3; { NUCOVI(1..NBCOVI) 'Number of Initial Velocity Components'}
+ 0; 0; 0; { VACOVI(1..NBCOVI) 'Constant Initial Velocity'}
+
+
+ 5;       { INITIAL PRESSURE ============================================}
+{
+ -1;      { INITIAL PRESSURE FUNCTION }
+ InitPressure; { NFPRE0 Initial Pressure Function Name }
+}
+ 1;       { 'CONSTANT INITIAL PRESSURE' }
+ PrISA;   { VAPRE0 'Initial Pressure CONSTANT' }
+
+@;
+
+
+{ The Boundary Conditions ======================}
+ { SURFACE SInlet VELOCITY XYZ=0 }
+ 2; { Fixation of the VELOCITY }
+ 1; { Fixed Velocity CONSTANT }
+ 3; { NBCOBV number of components of the fixed Velocity }
+ 1; 2; 3;{ NUCOBV(1..NBCOBV) nb of each component of the fixed velocity}
+ 0; 0; 0;{ Fixed Velocity CONSTANT }
+ @;
+
+ { SURFACE SOutlet VELOCITY XYZ=0 }
+ 2; { Fixation of the VELOCITY }
+ 1; { Fixed Velocity CONSTANT }
+ 3; { NBCOBV number of components of the fixed Velocity }
+ 1; 2; 3;{ NUCOBV(1..NBCOBV) nb of each component of the fixed velocity}
+ 0; 0; 0;{ Fixed Velocity CONSTANT }
+ @;
+
+ { SURFACE SBottom Velocity Z=0 }
+ 2; { Fixation of the VELOCITY }
+ 1; { Fixed Velocity CONSTANT  }
+ 3; { NBCOBV number of components of the fixed Velocity }
+ 1; 2; 3; { NUCOBV(1..NBCOBV) nb of each component of the fixed velocity}
+ 0; 0; 0; { Fixed Velocity CONSTANT }
+ @;
+
+ { SURFACE SLeft Velocity Y=0   }
+ 2; { Fixation of the VELOCITY }
+ 1; { Fixed Velocity CONSTANT  }
+ 3; { NBCOBV number of components of the fixed Velocity }
+ 1; 2; 3; { NUCOBV(1..NBCOBV) nb of each component of the fixed velocity}
+ 0; 0; 0; { Fixed Velocity CONSTANT }
+ @;
+
+ { SURFACE SRight Velocity Y=0  }
+ 2; { Fixation of the VELOCITY }
+ 1; { Fixed Velocity CONSTANT  }
+ 3; { NBCOBV number of components of the fixed Velocity }
+ 1; 2; 3; { NUCOBV(1..NBCOBV) nb of each component of the fixed velocity}
+ 0; 0; 0; { Fixed Velocity CONSTANT }
+ @;
+
+ { SURFACE STop Velocity X=VX0 Z=0 }
+ 2; { Fixation of the VELOCITY }
+ 1; { Fixed Velocity CONSTANT  }
+ 3; { NBCOBV number of components of the fixed Velocity }
+ 1; 2; 3; { NUCOBV(1..NBCOBV) nb of each component of the fixed velocity}
+ 0; 0; 0; { Fixed Velocity CONSTANT }
+ @;
+
+
+ { SURFACE sdenis1 VELOCITY XYZ=0 }
+ 2; { Fixation of the VELOCITY }
+ 1; { Fixed Velocity CONSTANT }
+ 3; { NBCOBV number of components of the fixed Velocity }
+ 1; 2; 3;{ NUCOBV(1..NBCOBV) nb of each component of the fixed velocity}
+ 0; 0; 0;{ Fixed Velocity CONSTANT }
+ @;
+
+ { SURFACE mouth1 Velocity boundary condition }
+ 2; { Fixation of the VELOCITY }
+-1; { Fixed Velocity FUNCTION }
+ 3; { NBCOBV number of components of the fixed Velocity }
+ 1; 2; 3;{ NUCOBV(1..NBCOBV) nb of each component of the fixed velocity}
+ Mouth1Velocity;
+ @;
+
+ { SURFACE sdenis2 VELOCITY XYZ=0 }
+ 2; { Fixation of the VELOCITY }
+ 1; { Fixed Velocity CONSTANT }
+ 3; { NBCOBV number of components of the fixed Velocity }
+ 1; 2; 3;{ NUCOBV(1..NBCOBV) nb of each component of the fixed velocity}
+ 0; 0; 0;{ Fixed Velocity CONSTANT }
+ @;
+
+ { SURFACE mouth2 Velocity boundary condition }
+ 2; { Fixation of the VELOCITY }
+-1; { Fixed Velocity FUNCTION }
+ 3; { NBCOBV number of components of the fixed Velocity }
+ 1; 2; 3;{ NUCOBV(1..NBCOBV) nb of each component of the fixed velocity}
+ Mouth2Velocity;
+ @;
+
+ { SURFACE sdenis3 VELOCITY XYZ=0 }
+ 2; { Fixation of the VELOCITY }
+ 1; { Fixed Velocity CONSTANT }
+ 3; { NBCOBV number of components of the fixed Velocity }
+ 1; 2; 3;{ NUCOBV(1..NBCOBV) nb of each component of the fixed velocity}
+ 0; 0; 0;{ Fixed Velocity CONSTANT }
+ @;
+
+ { SURFACE mouth3 Velocity boundary condition }
+ 2; { Fixation of the VELOCITY }
+-1; { Fixed Velocity FUNCTION }
+ 3; { NBCOBV number of components of the fixed Velocity }
+ 1; 2; 3;{ NUCOBV(1..NBCOBV) nb of each component of the fixed velocity}
+ Mouth3Velocity;
+ @;
+
+ { LINE LMOUTH1 Velocity boundary condition }
+ 2; { Fixation of the VELOCITY }
+-1; { Fixed Velocity FUNCTION }
+ 3; { NBCOBV number of components of the fixed Velocity }
+ 1; 2; 3;{ NUCOBV(1..NBCOBV) nb of each component of the fixed velocity}
+ Mouth1Velocity;
+ @;
+
+ { LINE LMOUTH2 Velocity boundary condition }
+ 2; { Fixation of the VELOCITY }
+-1; { Fixed Velocity FUNCTION }
+ 3; { NBCOBV number of components of the fixed Velocity }
+ 1; 2; 3;{ NUCOBV(1..NBCOBV) nb of each component of the fixed velocity}
+ Mouth2Velocity;
+ @;
+
+ { LINE LMOUTH3 Velocity boundary condition }
+ 2; { Fixation of the VELOCITY }
+-1; { Fixed Velocity FUNCTION }
+ 3; { NBCOBV number of components of the fixed Velocity }
+ 1; 2; 3;{ NUCOBV(1..NBCOBV) nb of each component of the fixed velocity}
+ Mouth3Velocity;
+ @;
+
+{ POINT Pxyzmin=( xmin, ymin, zmin) }
+ 2; { Fixation of the VELOCITY XYZ=0 }
+ 1; { Fixed Velocity CONSTANT }
+ 3; { NBCOBV number of components of the fixed Velocity }
+ 1; 2; 3; { NUCOBV(1..NBCOBV) nb of each component of the fixed velocity}
+ 0; 0; 0;
+
+ 3; { BLOCKING-UP the IMPOSED PRESSURE=PrISA }
+ 1;     { Fixed Pressure CONSTANT }
+ PrISA; { Pressure Constant Value at LEVEL SEA }
+ @;
+@;
+@;
+
+CLOSE;

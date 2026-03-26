@@ -1,0 +1,24 @@
+Give the NAME of the 3 POINTS in the ORDER
+an extremity, the corner and the last extremity
+for each of the 2 curved edges => 6 POINTS
+
+                              P4--------------- .      *P5
+                                                   .
+                                                     .
+                        /              /              .
+              EPAISSEUR/              /                |
+                      /              /                 |
+                                                       |
+                                                    /  P6
+                P1--------------- .      *P2      
+                                      .           /   /
+                                        .       /
+                                              /     /
+                                         .        /
+                                         |      /
+                                         |  
+                                         |
+                                         P3
+
+Example: P1; P2; P3;  P4; P5; P6;
+The input stops only with the input of existing POINTS.

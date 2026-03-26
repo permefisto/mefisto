@@ -1,0 +1,17 @@
+A file is formed of pages. Each have a number of memory words.
+A small number of words permits a storage of small arrays (TMS)
+A great number of pages permits a storage of many  arrays (TMS)
+64  is the default value of page number.
+256 is the default value of memory words.
+
+EXAMPLE :
+1;      {File Page Number}
+256;    {pages}
+2;      {Word number of a page of a file}
+4096;   {memory words by page}
+3;      {Add a file to the MS}
+@;      {Return to DEBUT MENU}
+
+After type 99; to save the data and stop.
+
+Begin again the execution of Mefisto.

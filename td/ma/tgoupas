@@ -1,0 +1,3 @@
+variable TGouPAS 'WITHOUT or WITH the TANGENTS' entier
+ ( 0  : 'WITHOUT TANGENTS'
+ , 1  : 'WITH TANGENTS' ) ;

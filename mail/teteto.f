@@ -1,0 +1,557 @@
+      SUBROUTINE TETETO( NPt,  FORCERTE, QTEAME, MXSOMM, PTXYZD, NPSOFR,
+     %                   NOVOLU, IVOLTE, NVOLTE,
+     %                   MXTETR, N1TEVI, NOTETR, NUDTETR, N1TETS,
+     %                   MXETOI, N1FEOC, NFETOI, VOLET1,
+     %                   MXTEET, NBTEET, NOTEET,
+     %                   MXSTPE, NBSTPE, NOSTPE, IERR )
+C+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+C BUT :     TETRAEDRISATION DE L'ETOILE DES NBTEET TETRAEDRES NOTEET
+C -----     DU POINT NPt DU TABLEAU PTXYZD
+C           AJOUT DU POINT DANS LE CHAINAGE DU PAVAGE
+
+C ENTREES:
+C --------
+C NPt     : NUMERO DU POINT DE PTXYZD A TETRAEDRISER
+C FORCERTE: SI TRUE   FORCER LA CREATION DES TETRAEDRES DE QUALITE<QTEAME
+C           SI FALSE  NE PAS CREER       LES TETRAEDRES DE QUALITE<QTEAME
+C QTEAME  : QUALITE DES TETRAEDRES AU DESSOUS DE LAQUELLE UNE
+C           AMELIORATION DE LA QUALITE DES TETRAEDRES EST DEMANDEE
+C MXSOMM  : NOMBRE MAXIMAL DE SOMMETS PERMIS POUR LA TETRAEDRISATION
+C PTXYZD  : X Y Z DISTANCE SOUHAITEE DES POINTS
+C NPSOFR : NUMERO DE POSITION PAR RAPPORT A LA FRONTIERE DE CHAQUE POINT
+C          LE SIGNE DEVIENT NEGATIF SI LE SOMMET EST DEPLACE
+C          =  0 SI POINT AJOUTE NON SUR LA SURFACE DE L'OBJET
+C          =  1 SI LE POINT EST AJOUTE SUR UNE ARETE DE LA SURFACE
+C          =  2 SI LE POINT EST AJOUTE COMME BARYCENTRE SUR LA SURFACE
+C          =  1 000 000  + NUMERO DU  POINT INTERNE UTILISATEUR
+C          = (1 000 000) * (NO SURFACE + 1) + NUMERO DU SOMMET DANS
+C                    LA NUMEROTATION DES SOMMETS DE LA SURFACE
+C          = -1 SI LE POINT EST SOMMET RECONNU TROP PROCHE
+C          = -4 SI LE POINT EST SOMMET NON TROP PROCHE
+C          = -3 SI LE POINT EST SOMMET REFUSE DANS LA TETRAEDRISATION
+C          = -NPSOFR(I) SI POINT I DEPLACE SUR LA SURFACE
+C             DANS LEUR SURFACE FERMEE INITIALE OU NO DE POINT INTERNE
+C NOVOLU : NO DU VOLUME DES TETRAEDRES DE L'ETOILE DE NPt SI IVOLTE=1
+C IVOLTE : 0 PAS       DE TABLEAU NVOLTE A L'APPEL
+C          1 EXISTENCE DU TABLEAU NVOLTE A L'APPEL
+C NVOLTE : >0 NUMERO DU VOLUME DE 1 A NBVOPA DE CHAQUE TETRAEDRE
+C          -1 SI TETRAEDRE INACTIF ou SUPPRIME
+
+C MXTETR  : NOMBRE MAXIMAL DE TETRAEDRES DECLARABLES DANS NOTETR
+C MXETOI  : NOMBRE MAXIMAL DE TETRAEDRES DECLARABLES DANS NFETOI
+C MXTEET  : NOMBRE MAXIMAL DE TETRAEDRES DECLARABLES DANS NOTEET
+C MXSTPE  : NOMBRE MAXIMAL DE SOMMETS DES TETRAEDRES DE L'ETOILE NPt
+
+C ENTREES ET SORTIES :
+C --------------------
+C NBSOMM : NOMBRE DE SOMMETS ACTUELS DANS PTXYZD
+C N1TEVI : NUMERO DU 1 PREMIER TETRAEDRE VIDE DANS LE TABLEAU NOTETR
+C          LE CHAINAGE DES TETRAEDRES VIDES SE FAIT SUR NOTETR(5,.)
+C NOTETR : LISTE DES TETRAEDRES
+C          SOMMET1,    SOMMET2,    SOMMET3,    SOMMET4,
+C          TETRAEDRE1, TETRAEDRE2, TETRAEDRE3, TETRAEDRE4
+C          DE L'AUTRE COTE DE LA FACE
+C          1: 123      2: 234      3: 341      4: 412
+C NUDTETR: PLUS GRAND NUMERO DANS NOTETR DE TETRAEDRE OCCUPE
+C N1TETS : N1TETS(I) NUMERO D'UN TETRAEDRE AYANT POUR SOMMET I
+C N1FEVI : POINTEUR NFETOI DE LA 1-ERE FACE VIDE
+C N1FEOC : POINTEUR NFETOI DE LA 1-ERE FACE OCCUPEE
+C NFETOI : ENTIER (1:5,1:MXETOI)
+C NBTEET : NOMBRE    DE  TETRAEDRES DE L'ETOILE INITIALE PUIS FINALE
+C NOTEET : NO NOTETR DES TETRAEDRES DE L'ETOILE INITIALE PUIS FINALE
+C NBSTPE : NOMBRE DE SOMMETS PERDUS DANS LA TETRAEDRISATION DE L'ETOILE
+C          SOMMETS SUR LA FRONTIERE A RE-TETRAEDRISER ENSUITE!...
+C NOSTPE : NUMERO DES SOMMETS DE LA TETRAEDRISATION DE L'ETOILE
+C          PUIS DES SOMMETS PERDUS
+
+C TABLEAUX AUXILIAIRES :
+C ----------------------
+C MXETOI : NOMBRE MAXIMAL DE FACES OU TETRAEDRES DECLARABLES
+C          DANS LE TABLEAU NFETOI DE L' ETOILE
+
+C SORTIES:
+C --------
+C VOLET1 : VOLUME DE L'ETOILE ETOILE PAR LE POINT NPt
+C IERR   : 0 SI PAS D'ERREUR
+C          1 SATURATION DES SOMMETS
+C          3 SATURATION DES TETRAEDRES
+C          4 TETRAEDRE DEGENERE
+C          8 AUCUNE SPHERE CIRCONSCRITE AUX TETRAEDRES ACTUELS
+C            NE CONTIENT LE POINT COURANT
+C         10 AUCUN POINT DEPLACE DANS L'ETOILE NE CONVIENT
+C         11 ETOILE DU POINT NPt IMPOSSIBLE A FORMER
+C         12 0 TETRAEDRE CREE DANS NOTEET
+C         20 SATURATION DU TABLEAU NOSTPE
+C+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+C AUTEUR : ALAIN PERRONNET LJLL UPMC & ST PIERRE DU PERRAY      Mai 2008
+C MODIFS : ALAIN PERRONNET LJLL UPMC & VEULETTES SUR MER    Fevrier 2017
+C MODIFS : ALAIN PERRONNET LJLL UPMC & VEULETTES SUR MER   Novembre 2018
+C2345X7..............................................................012
+      PARAMETER        ( MXSTET=1024 )
+      include"./incl/gsmenu.inc"
+      include"./incl/trvari.inc"
+      COMMON / UNITES / LECTEU,IMPRIM,INTERA,NUNITE(29)
+      COMMON / TRTETR / STOPTE, TRACTE
+      LOGICAL           STOPTE, TRACTE
+      LOGICAL           TRACTE0
+      INTEGER           NOTETR(8,MXTETR),
+     %                  N1TETS(MXSOMM),
+     %                  NFETOI(5,MXETOI),
+     %                  NPSOFR(MXSOMM),
+     %                  NOTEET(MXTEET)
+      INTEGER           NVOLTE(MXTETR)
+      DOUBLE PRECISION  PTXYZD(1:4,1:MXSOMM)
+      DOUBLE PRECISION  VTE, VOLET0, VOLET1, VOLTET, VLTMOY, D,CENTRE(4)
+      CHARACTER*96      KTITRE
+      LOGICAL           FORCERTE
+      INTEGER           NOSTET(MXSTET),
+     %                  NOSTPE(MXSTPE)
+ccc      INTEGER           NOSOTR(3)
+      INTEGER           NOSOFATE(3,4),NS(4)
+      EQUIVALENCE      (NS(1),NS1),(NS(2),NS2),
+     %                 (NS(3),NS3),(NS(4),NS4)
+C     NO DES SOMMETS DES FACES POUR QUE VU DU SOMMET MANQUANT
+C     LES SOMMETS SOIENT VUS DANS LE SENS DIRECT
+      DATA              NOSOFATE/ 1,2,3, 2,4,3, 3,4,1, 4,2,1 /
+
+      TRACTE0 = TRACTE
+
+C     VOLET0=VOLUME DE L'ETOILE ET COMPRESSION NOTEET AVANT L'AJOUT DU POINT NPt
+C     ==========================================================================
+      NBSTET  = 0
+      NBTEET0 = 0
+      VOLET0  = 0D0
+      DO I=1,NBTEET
+
+C        LE NO DU TETRAEDRE NT INTERNE A L'ETOILE ET NO LOCAL DE LA FACE
+         NT = NOTEET( I )
+         IF( NT .GT. 0 ) THEN
+
+            VTE = VOLTET( PTXYZD(1,NOTETR(1,NT)),
+     %                    PTXYZD(1,NOTETR(2,NT)),
+     %                    PTXYZD(1,NOTETR(3,NT)),
+     %                    PTXYZD(1,NOTETR(4,NT)) )
+
+            VOLET0  = VOLET0 + VTE
+            NBTEET0 = NBTEET0 + 1
+            NOTEET( NBTEET0 ) = NT
+
+            IF( VTE .LE. 0D0 ) THEN
+               PRINT*,'teteto 0: NPt=',NPt,' Probleme VTE=',VTE,
+     %                ' NOTETR(',NT,')=',(NOTETR(K,NT),K=1,8)
+            ENDIF
+
+C           CONSTRUCTION DU NUMERO NOSTET DES SOMMETS DES TETRAEDRES
+C           INITIAUX DE L'ETOILE
+            DO 2 K=1,4
+
+               NST = NOTETR(K,NT)
+               DO L=1,NBSTET
+                  IF( NST .EQ. NOSTET(L) ) GOTO 2
+               ENDDO
+
+               IF( NBSTET .GE. MXSTET ) THEN
+                  PRINT*,'teteto 1: NPt=',NPt,' MXSTET=',MXSTET,
+     %                   ' TROP FAIBLE. A AUGMENTER'
+                  IERR = 20
+                  RETURN
+               ENDIF
+
+               NBSTET = NBSTET + 1
+               NOSTET( NBSTET ) = NST
+
+ 2          ENDDO
+
+         ENDIF
+      ENDDO
+
+      IF( NBTEET .NE. NBTEET0 ) THEN
+         PRINT*,'teteto 2: NPt=',NPt,' PROBLEME NBTEET=',NBTEET,
+     %          ' NBTEET0=',NBTEET0
+      ENDIF 
+      NBTEET = NBTEET0
+      VLTMOY = VOLET0 / NBTEET
+
+C     MODIFICATIONS DE NFETOI:
+C     VERSION 1                          => VERSION 2
+C     LE NO DE TETRAEDRE INTERNE ETOILE  => NO TETRAEDRE AU DELA DE LA FACE
+C     LE NO FACE LOCAL DANS LE TETRAEDRE => NO 1-ER SOMMET DE LA FACE
+C     LE NO INUTILISE 3                  => NO 2-ME SOMMET DE LA FACE
+C     LE NO INUTILISE 4                  => NO 3-ME SOMMET DE LA FACE
+
+C     VOLET1=VOLUME DE L'ETOILE APRES L'AJOUT DU POINT NPt
+C     ====================================================
+      VOLET1 = 0D0
+      NF1    = N1FEOC
+      NBFETO = 0
+
+C     BOUCLE SUR LES FACES
+ 50   IF( NF1 .GT. 0 ) THEN
+
+C        UNE FACE DE L'ETOILE EN PLUS
+         NBFETO = NBFETO + 1
+
+C        LE NO DU TETRAEDRE NT1 INTERNE A L'ETOILE ET NO LOCAL DE LA FACE
+         NT1 = NFETOI(1,NF1)
+         IF( NOTETR(1,NT1) .LE. 0 ) GOTO 60
+
+C        NO DE LA FACE DANS LE TETRAEDRE NT1
+         I1 = ABS( NFETOI(2,NF1) )
+
+C        LE NUMERO DU TETRAEDRE OPPOSE NTOP AU DELA DE LA FACE SIMPLE
+         NTOP = NOTETR( 4+I1, NT1 )
+
+C        LE TETRAEDRE OPPOSE NTOP A LA FACE SIMPLE
+         NFETOI(1,NF1) = NTOP
+
+C        NUMERO DES 3 SOMMETS DE LA FACE COMMUNE
+         NS1 = NOTETR( NOSOFATE(1,I1), NT1 )
+         NS2 = NOTETR( NOSOFATE(2,I1), NT1 )
+         NS3 = NOTETR( NOSOFATE(3,I1), NT1 )
+
+C        STOCKAGE DANS NFETOI(2:4,NF1)
+         NFETOI(2,NF1) = NS1
+         NFETOI(3,NF1) = NS2
+         NFETOI(4,NF1) = NS3
+
+C        VOLUME DU TETRAEDRE ETOILE PAR LE POINT NPt
+         VTE = VOLTET( PTXYZD(1,NS1), PTXYZD(1,NS2),
+     %                 PTXYZD(1,NS3), PTXYZD(1,NPt) )
+
+         IF( VTE .LE. 0D0 .AND. ABS(VTE) .GT. VLTMOY*1D-3 ) THEN
+C           AFFICHAGE DE L'ANOMALIE
+            PRINT *,'teteto 3: ANOMALIE TETRA',NS1,NS2,NS3,NPt,
+     %         ' de VOLUME=',VTE,'=<0 mais GRAND / Volume MOYEN=',VLTMOY
+         ENDIF
+
+C        VOLUME DE L'ETOILE
+         VOLET1 = VOLET1 + VTE
+
+C        PASSAGE A LA FACE SUIVANTE
+ 60      NF1 = NFETOI(5,NF1)
+         GOTO 50
+      ENDIF
+
+C     COMPARAISON DU VOLUME DE L'ETOILE AVANT ET APRES AJOUT DU POINT NPt
+C     -------------------------------------------------------------------
+ccc      IF( ABS(VOLET1-VOLET0) .GT. ABS(VOLET0)*1D-11 ) THEN   6/8/2014
+ccc      IF( ABS(VOLET1-VOLET0) .GT. ABS(VOLET0)*1D-10 ) THEN  14/8/2014
+ccc      IF( ABS(VOLET1-VOLET0) .GT. ABS(VOLET0)*1D-6  ) THEN   4/4/2016
+
+      IF( ABS(VOLET1-VOLET0) .GT. ABS(VOLET0)*1D-5 ) THEN
+         IF( .NOT. FORCERTE ) THEN
+            WRITE(IMPRIM,10060) NPt, VOLET0, VOLET1
+            IERR = 10
+            GOTO 9999
+         ENDIF
+      ENDIF
+10060 FORMAT(' teteto 4: AU POINT',I8,
+     %' VOLUME ETOILE AVANT',G25.16,' APRES',G25.16,' TROP DIFFERENTS')
+
+C     ===============================================================
+C     DESTRUCTION DES TETRAEDRES TABLEAU NOTEET ETOILANT LE POINT NPt
+C     ===============================================================
+      DO 90 I=1,NBTEET
+
+         NT = NOTEET( I )
+         IF( NT .LE. 0 ) GOTO 90
+         IF( NOTETR(1,NT) .LE. 0 ) GOTO 90
+
+         DO 80 J=1,4
+
+C           LE TETRAEDRE OPPOSE PAR LA FACE J DU TETRAEDRE NT
+            NTOP = NOTETR(4+J,NT)
+
+            IF( NTOP .GT. 0 ) THEN
+               IF( NOTETR(1,NTOP) .LE. 0 ) GOTO 80
+
+C              MISE A JOUR D'UN TETRAEDRE DES SOMMETS DE NT DETRUIT
+               DO K=1,3
+C                 LE NO DU SOMMET K DE LA FACE J DU TETRAEDRE NT
+                  NST = NOTETR( NOSOFATE(K,J), NT )
+                  IF( N1TETS( NST ) .EQ. NT ) THEN
+C                    NST N'EST PLUS UN SOMMET DE NT DETRUIT
+C                    NST APPARTIENT AU TETRAEDRE NTOP
+                     N1TETS( NST ) = NTOP 
+                  ENDIF
+               ENDDO
+
+C              LE TETRAEDRE NT DISPARAIT DES TETRAEDRES OPPOSES DE NTOP
+               DO K=1,4
+                  IF( NOTETR(4+K,NTOP) .EQ. NT ) THEN
+                      NOTETR(4+K,NTOP) = -1
+                      GOTO 80
+                  ENDIF
+               ENDDO
+C
+            ENDIF
+
+ 80      ENDDO
+
+C        NT DEVIENT LE PREMIER TETRAEDRE VIDE
+         NOTETR( 1, NT ) = 0
+         NOTETR( 5, NT ) = N1TEVI
+         N1TEVI = NT
+
+ 90   ENDDO
+
+C     ===============================================================
+C     DECLARATION DES TETRAEDRES ETOILANT LE POINT NPt
+C     ===============================================================
+      NBTEET = 0
+      NF2    = N1FEOC
+
+C     BOUCLE SUR LES FACES DE L'ETOILE
+ 100  IF( NF2 .GT. 0 ) THEN
+
+C        LA FACE NF2 ET LE POINT NPt FORMENT UN NOUVEAU TETRAEDRE
+C        REMPLISSAGE DU TETRAEDRE NT DE SOMMETS DE LA FACE NF2 + NPt
+C        -----------------------------------------------------------
+         NS(4) = NPt
+         NS1 = NFETOI(2,NF2)
+         NS2 = NFETOI(3,NF2)
+         NS3 = NFETOI(4,NF2)
+         VTE = VOLTET( PTXYZD(1,NS1), PTXYZD(1,NS2),
+     %                 PTXYZD(1,NS3), PTXYZD(1,NPt) )
+         IF( VTE .LE. 0D0 ) THEN
+            IF( .NOT. FORCERTE ) THEN
+C              ABANDON DE LA FACE
+               PRINT*,'teteto 5: TETRAEDRE',NS,' de VOLUME VTE=',VTE,
+     %                '?  ABANDON de la FACE',NF2,' de NFETOI'
+               GOTO 110
+            ENDIF
+         ENDIF
+
+C        AJOUT DU TETRAEDRE: FACE NF2 + POINT NPt
+         IF( N1TEVI .LE. 0 ) THEN
+C           SATURATION DES TETRAEDRES
+            NBLGRC(NRERR) = 2
+            KERR(1) ='teteto: SATURATION DES TETRAEDRES. Tableau NOTETR'
+            KERR(2) ='AUGMENTER LE NOMBRE MAXIMAL DE SOMMETS'
+            CALL LEREUR
+            IERR = 3
+            GOTO 9999
+         ENDIF
+
+C        LE TETRAEDRE A CREER NT EST LE PREMIER TETRAEDRE VIDE
+         NT = N1TEVI
+C        MISE A JOUR DU 1-ER TETRAEDRE VIDE
+         N1TEVI = NOTETR(5,N1TEVI)
+
+C        NUMERO MAX DES TETRAEDRES UTILISES DANS NOTETR
+         NUDTETR = MAX( NUDTETR, NT )
+
+         IF( IVOLTE .NE. 0 ) THEN
+C           NUMERO DE VOLUME DU TETRAEDRE NT
+            NVOLTE( NT ) = NOVOLU
+         ENDIF
+
+C        NS1 NS2 NS3 SOMMETS DE LA FACE DANS LE SENS DIRECT DU TETRAEDRE NT
+         NOTETR( 1, NT ) = NS1
+         NOTETR( 2, NT ) = NS2
+         NOTETR( 3, NT ) = NS3
+         NOTETR( 4, NT ) = NPt
+
+C        LE CHAINAGE DES TETRAEDRES ADJACENTS PAR LES FACES
+C        LE TETRAEDRE OPPOSE A LA FACE AU DELA DE LA FACE
+C        ATTENTION: IL PEUT NE PAS EXISTER DE TEL TETRAEDRE
+C        NTOP=0 POUR UNE FACE FRONTIERE SANS TETRAEDRE OPPOSE
+C            -1 POUR UN TETRAEDRE OPPOSE INCONNU
+         NTOP = NFETOI(1,NF2)
+
+cccC        LE TETRAEDRE NTOP EST IL ACTIF?
+ccc         IF( NTOP .GT. 0 ) THEN
+
+ccc            IF( NOTETR(1,NTOP) .LE. 0 ) THEN
+
+ccc               PRINT*,'teteto: NT=',NT,' NTOP=',NTOP,' a probleme'
+ccc               PRINT*,'teteto: NOTETR(',NTOP,')=',(NOTETR(K,NTOP),K=1,8)
+cccC              TETRAEDRE OPPOSE INCONNU
+ccc               NTOP=-1
+
+ccc            ELSE
+
+cccC              NO NFOP LOCAL AU TETRAEDRE NTOP DE LA FACE NS1 NS2 NS3
+ccc               CALL TRI3NO( NFETOI(2,NF2), NOSOTR )
+ccc               CALL NO1F1T( NOSOTR, NOTETR(1,NTOP), NFOP )
+ccc               IF( NFOP .LE. 0 ) THEN
+ccc                  WRITE(IMPRIM,*)'teteto: POINT',NPt,
+ccc     %            ' la FACE DE SOMMETS',NS1,NS2,NS3,
+ccc     %            ' NON DANS LE TETRAEDRE',
+ccc     %             NTOP,' de SOMMETS',(NOTETR(I,NTOP),I=1,4)
+ccc                   NTOP = -1
+ccc                ELSE
+cccC                  LE TETRAEDRE OPPOSE A NTOP EST NT
+ccc                   NOTETR( 4+NFOP, NTOP ) = NT
+ccc                ENDIF
+
+ccc            ENDIF
+ccc         ENDIF
+
+C        NTOP>0 POUR UN TETRAEDRE OPPOSE
+C            =0 POUR UNE FACE FRONTIERE
+C            -1 POUR UN TETRAEDRE OPPOSE INCONNU
+         NOTETR( 5, NT ) = NTOP
+         NOTETR( 6, NT ) = -1
+         NOTETR( 7, NT ) = -1
+         NOTETR( 8, NT ) = -1
+
+C        MISE A JOUR D'UN TETRAEDRE CONTENANT CHAQUE SOMMET
+C        TOUS LES TETRAEDRES ONT PU DISPARAITRE
+C        CAS DE L'ETOILE REDUITE AUX 2 TETRAEDRES INITIAUX
+         N1TETS( NS1 ) = NT
+         N1TETS( NS2 ) = NT
+         N1TETS( NS3 ) = NT
+         N1TETS( NPt ) = NT
+
+C        LES COORDONNEES DU CENTRE DE LA BOULE CIRCONSCRITE
+C        AU TETRAEDRE NT ET CARRE DE SON RAYON
+         CALL CEBOQU( 0.0, NOTETR(1,NT), PTXYZD, CENTRE, VTE, QTE )
+
+C        DISTANCE(NPt-CENTRE)**2 / RAYON**2
+         D = ( ( CENTRE(1) - PTXYZD(1,NPt) ) ** 2 +
+     %         ( CENTRE(2) - PTXYZD(2,NPt) ) ** 2 +
+     %         ( CENTRE(3) - PTXYZD(3,NPt) ) ** 2 ) / CENTRE(4)
+
+         IF( QTE .LT. QTEAME ) THEN
+            IF( FORCERTE ) THEN
+
+C              REPRISE de la TETRAEDRISATION du POINT NPt
+C              AFFICHAGE DU TETRAEDRE DEGENERE PLAT
+               WRITE(IMPRIM,*)'teteto 6: REPRISE de NPt',NPt,
+     %         ' ajout du TETRAEDRE',NT,': St',(NOTETR(MM,NT),MM=1,4),
+     %         ' de QUALITE=',QTE,' de VOLUME=',VTE,' D=',D,
+     %         ' NBTEET0=',NBTEET0
+
+C              VISUALISATION DU PROBLEME AVEC TETRAEDRE DEGENERE
+               TRACTE0= TRACTE
+               TRACTE = .TRUE.
+               KTITRE='teteto: POINT              TETRAEDRE MEDIOCRE de 
+     %REPRISE + DEBUT des TETRAEDRES INITIAUX'
+               WRITE(KTITRE(17:24),'(I8)') NPt
+               CALL TRACEETOILE( KTITRE, PTXYZD, NOTETR, NPt,
+     %                           NBTEET, NOTEET)
+               TRACTE = TRACTE0
+
+ccc            ELSE
+cccC              ANOMALIE de la TETRAEDRISATION du POINT NPt
+cccC              LE TETRAEDRE A FORMER DEVRAIT ETRE DE MEILLEURE QUALITE
+ccc               WRITE(IMPRIM,*)'teteto: ANOMALIE de NPt=',NPt,
+ccc     %         ' ajout du TETRAEDRE',NT,': St',(NOTETR(MM,NT),MM=1,4),
+ccc     %         ' de QUALITE=',QTE,' de VOLUME=',VTE,' D=',D,
+ccc     %         ' NBTEET0=',NBTEET0
+ccc               KTITRE='teteto: POINT              TETRAEDRE DEGENERE ANOMAL
+ccc     %IE + TETRAEDRES du DEBUT de L''ETOILE'
+cccC              VISUALISATION DU PROBLEME AVEC TETRAEDRE DEGENERE
+ccc               TRACTE0= TRACTE
+ccc               TRACTE = .TRUE.
+ccc               WRITE(KTITRE(17:24),'(I8)') NPt
+ccc               CALL TRACEETOILE(KTITRE, PTXYZD, NOTETR, NPt, NBTEET,NOTEET)
+ccc               TRACTE = TRACTE0
+
+            ENDIF
+         ENDIF
+
+C        AJOUT DE NT AUX TETRAEDRES DE L'ETOILE NOTEET
+         IF( NBTEET .GE. MXTEET ) THEN
+C           SATURATION DES TETRAEDRES DE L'ETOILE
+            NBLGRC(NRERR) = 2
+            KERR(1) = 'SATURATION DES TETRAEDRES DE L''ETOILE'
+            KERR(2) = 'AUGMENTER TAILLE DE NOTEET DANS teteto'
+            CALL LEREUR
+            IERR = 3
+            GOTO 9999
+         ENDIF
+         NBTEET = NBTEET + 1
+         NOTEET( NBTEET ) = NT
+
+C        PASSAGE A LA FACE SUIVANTE DE L'ETOILE
+ 110     NF2 = NFETOI(5,NF2)
+         GOTO 100
+
+      ENDIF
+
+ccc      IF( NPt .EQ. 18914 ) THEN
+cccC        VISUALISATION DES TETRAEDRES DE L'ETOILE DE NPt
+ccc         TRACTE0= TRACTE
+ccc         TRACTE = .TRUE.
+ccc         KTITRE='teteto: POINT             LES         TETRAEDRES DE SON
+ccc     % ETOILE'
+ccc         WRITE(KTITRE(15:22),'(I8)') NPt
+ccc         WRITE(KTITRE(31:38),'(I8)') NBTEET
+ccc         CALL SANSDBL( KTITRE, NBC )
+ccc         CALL TRACEETOILE( KTITRE(1:NBC), PTXYZD, NOTETR, NPt,
+ccc     %                     NBTEET, NOTEET)
+ccc         TRACTE = TRACTE0
+ccc      ENDIF
+
+
+C     COMPLETION DES TETRAEDRES OPPOSES CREES DANS L'ETOILE
+C     -----------------------------------------------------
+      CALL MJOPTE( NBTEET, NOTEET, N1TETS, NOTETR, NUDTETR,
+     %             N1TEVI, PTXYZD, NBFANR )
+
+C     RECHERCHE DE SOMMETS PERDUS DURANT LA TETRAEDRISATION DU POINT NPt
+      NBSTPE = 0
+      DO 120 L=1,NBSTET
+
+C        NUMERO L DES SOMMETS DES TETRAEDRES DE L'ETOILE
+         NST = NOSTET( L )
+
+C        PARCOURS DES SOMMETS DES NOUVEAUX TETRAEDRES DE L'ETOILE
+         DO I=1,NBTEET
+            NT = NOTEET( I )
+            DO K=1,4
+               IF( NST .EQ. NOTETR(K,NT) ) GOTO 120
+            ENDDO
+         ENDDO
+
+C        UN SOMMET PERDU DANS LA TETRAEDRISATION DE L'ETOILE DE NPt?
+         DO K=1,NBSTPE
+            IF( NST .EQ. NOSTPE(K) ) GOTO 120
+         ENDDO
+
+         IF( NPSOFR( NST ) .GT. 0 ) THEN
+
+C           NST EST SUR LA FRONTIERE ET DONC UN SOMMET PERDU DE PLUS
+            NBSTPE = NBSTPE + 1
+            NOSTPE( NBSTPE ) = NST
+
+C           LE SOMMET NST N'APPARTIENT PLUS A UN TETRAEDRE
+            N1TETS( NST ) = 0
+
+         ENDIF
+
+ 120  ENDDO
+
+      IF( NBSTPE .GT. 0 ) THEN
+
+         PRINT*,'teteto 8: NPt=',NPt,NBSTPE,' SOMMETS PERDUS dans la TET
+     %RAEDRISATION et A RE-TETRAEDRISER:',(NOSTET(L),L=1,NBSTPE)
+
+ccc         TRACTE0 = TRACTE
+ccc         TRACTE  = .TRUE.
+ccc         DO L=1,NBSTPE
+cccC           LE SOMMET PTXYZD RETIRE DE LA TETRAEDRISATION
+ccc            NST = NOSTPE(L)
+ccc      KTITRE='teteto: POINT          ETOILE AVEC LE SOMMET PERDU        
+ccc     %  A RE-TETRAEDRISER'
+ccc            WRITE(KTITRE(15:22),'(I8)') NPt
+ccc            WRITE(KTITRE(52:59),'(I8)') NST
+ccc          CALL TRACEETOILE( KTITRE, PTXYZD, NOTETR, NST, NBTEET,NOTEET )
+ccc          ENDDO
+ccc          TRACTE = TRACTE0
+
+      ENDIF
+
+C     TRACE FILAIRE DES ARETES DES TETRAEDRES DE L'ETOILE
+      KTITRE='teteto: POINT          ETOILE FINALE1 de              TETR
+     %AEDRES avant AMELIORATION'
+      WRITE(KTITRE(15:22),'(I8)') NPt
+      WRITE(KTITRE(42:49),'(I8)') NBTEET
+      CALL TRACEETOILE( KTITRE, PTXYZD, NOTETR, NPt, NBTEET, NOTEET )
+
+ 9999 TRACTE = .FALSE.
+
+      RETURN
+      END

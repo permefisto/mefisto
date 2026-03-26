@@ -1,0 +1,252 @@
+      SUBROUTINE TRFETOV1( KTITRE, NPt, N1FEOC, NFETOI, NOTETR, PTXYZD )
+C+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+C BUT :    TRACE DES FACES TRIANGULAIRES SIMPLES D'UNE ETOILE
+C -----    VERSION 1 DU TABLEAU NFETOI et D'UN POINT NPt de PTXYZD
+C ENTREES:
+C --------
+C KTITRE : TITRE A TRACER
+C NPt    : NUMERO PTXYZD DU POINT A VISUALISER
+C N1FEOC : POINTEUR SUR LA PREMIERE FACE DE L'ETOILE
+C          CHAINAGE SUIVANT DANS NFETOI(5,*)
+C NFETOI : VERSION 1
+C          1: NUMERO DU TETRAEDRE DANS NOTETR
+C          2: NUMERO LOCAL AU TETRAEDRE DE LA FACE DE L'ETOILE
+C             UN SIGNE NEGATIF INDIQUE UN TRAITEMENT EFFECTUE
+C          3  NON UTILISE ICI
+C          4: NUMERO DE CETTE FACE DANS LEFACO, 0 SI PAS DANS LEFACO
+C          5: CHAINAGE SUIVANT DES FACES OCCUPEES ET VIDES
+
+C          VERSION 2 (NFETOI(3,.)>0)
+C          1: NUMERO NOTETR DU TETRAEDRE AU DELA DE LA FACE
+C             =0 SI INCONNU
+C          2: NUMERO PTXYZD DU 1-ER SOMMET DE LA FACE
+C          3: NUMERO PTXYZD DU 2-ME SOMMET DE LA FACE
+C          4: NUMERO PTXYZD DU 3-ME SOMMET DE LA FACE
+C          5: CHAINAGE SUIVANT DES FACES OCCUPEES ET VIDES
+
+C NOTETR : LISTE DES TETRAEDRES
+C          SOMMET1,    SOMMET2,    SOMMET3,    SOMMET4,
+C          TETRAEDRE1, TETRAEDRE2, TETRAEDRE3, TETRAEDRE4
+C          DE L'AUTRE COTE DE LA FACE
+C          1: 123      2: 234      3: 341      4: 412
+C PTXYZD : PAR POINT : X  Y  Z  DISTANCE_SOUHAITEE
+C+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+C AUTEUR : ALAIN PERRONNET LJLL UPMC ET ST PIERRE DU PERRAY Janvier 2017
+C2345X7..............................................................012
+      PARAMETER        (MXITEM=16384)
+      include"./incl/trvari.inc"
+      include"./incl/mecoit.inc"
+      include"./incl/xyzext.inc"
+
+      COMMON / TRTETR / STOPTE, TRACTE
+      LOGICAL           STOPTE, TRACTE
+C     STOPTE = FAUX ==> PAS D'ARRET APRES LE TRACE DE CHAQUE TETRAEDRE
+C              VRAI ==> DEMANDE D'UN CARACTERE POUR REDEMARRER
+C     TRACTE = FAUX ==> PAS DE TRACE DES TETRAEDRES
+C              VRAI ==> TRACE DES TETRAEDRES DE L'ETOILE
+
+      CHARACTER*(*)     KTITRE
+      INTEGER           NFETOI(5,*), NOTETR(8,*)
+      REAL              XYZ(3)
+      DOUBLE PRECISION  PTXYZD(4,*), VECNOR(3), D
+
+C     LES SOMMETS SONT VUS A PARTIR DU BARYCENTRE DANS LE SENS DIRECT
+C     LE VECTEUR NORMAL TOURNE VERS L'INTERIEUR DE L'ETOILE
+      INTEGER           NOSOFATE(3,4)
+      DATA              NOSOFATE/ 1,2,3, 2,4,3, 3,4,1, 4,2,1 /
+
+      REAL              XYZBAR(3,MXITEM), DISTOE(MXITEM), XYZB(3)
+      INTEGER           NOSTTR(3,MXITEM), ITEMTR(MXITEM)
+C
+      IF( .NOT. TRACTE .OR. N1FEOC .LE. 0 ) RETURN
+
+C     CADRE COOEXT RESTREINT AUX FACES A TRACER
+      DO L=1,3
+C        LE MINIMUM
+         COOEXT(L,1) =  1E25
+C        LE MAXIMUM
+         COOEXT(L,2) = -1E25
+      ENDDO
+
+      NBITEM = 0
+      NF1 = N1FEOC
+ 5    IF( NF1 .GT. 0 ) THEN
+
+C        NUMERO NOTETR DU TETRAEDRE DE LA FACE SIMPLE
+         NTE = NFETOI(1,NF1)
+C        NUMERO DE LA FACE SIMPLE DANS LE TETRAEDRE NTE SI VERSION 1
+         NFT = ABS( NFETOI(2,NF1) )
+
+C        LE BARYCENTRE DE LA FACE NBITEM DES TETRAEDRES NOTETR
+         IF( NBITEM .GE. MXITEM ) THEN
+C           SATURATION DES TABLEAUX D'ITEMS
+            PRINT *,'trfetov1: SATURATION DES TABLEAUX d''ITEMS=> TRACE 
+     %INCOMPLET. AUGMENTER MXITEM=',MXITEM
+            GOTO 6
+         ENDIF
+
+         NBITEM = NBITEM + 1
+         DO L=1,3
+            XYZBAR(L,NBITEM) = 0
+         ENDDO
+
+         DO K=1,3
+C           SOMMET K DE LA FACE NF1
+            IF( NFETOI(3,NF1) .EQ. 0 ) THEN
+C              NFETOI VERSION 1
+               NS = NOTETR( NOSOFATE(K,NFT), NTE )
+            ELSE
+C              NFETOI VERSION 2
+               NS = NFETOI(1+K,NF1)
+            ENDIF
+            NOSTTR(K,NBITEM) = NS
+
+            DO L=1,3
+               XYZ(L) = REAL( PTXYZD(L,NS) )
+C              LE MINIMUM
+               COOEXT(L,1) = MIN( COOEXT(L,1), XYZ(L) )
+C              LE MAXIMUM
+               COOEXT(L,2) = MAX( COOEXT(L,2), XYZ(L) )
+C              LE BARYCENTRE DE LA FACE
+               XYZBAR(L,NBITEM) = XYZBAR(L,NBITEM) + XYZ(L)
+            ENDDO
+         ENDDO
+
+         DO L=1,3
+            XYZBAR(L,NBITEM) = XYZBAR(L,NBITEM) / 3
+         ENDDO
+ccc         print *,'trfetov1: FACE',NBITEM,':',(NOSTTR(L,NBITEM),L=1,3)
+
+C        LA FACE SUIVANTE
+         NF1 = NFETOI(5,NF1)
+         GOTO 5
+
+      ENDIF
+
+C     LE POINT NPt
+ 6    NBITEM0 = NBITEM
+      IF( NBITEM .GE. MXITEM ) GOTO 9
+      NBITEM  = NBITEM + 1
+      NOSTTR(1,NBITEM) = NPt
+      DO L=1,3
+         XYZ(L) = REAL( PTXYZD(L,NPt) )
+C        LE MINIMUM
+         COOEXT(L,1) = MIN( COOEXT(L,1), XYZ(L) )
+C        LE MAXIMUM
+         COOEXT(L,2) = MAX( COOEXT(L,2), XYZ(L) )
+C        LE POINT NPt
+         XYZBAR(L,NBITEM) = XYZ(L)
+      ENDDO
+
+ 9    IF( NBITEM .GE. MXITEM ) THEN
+         PRINT*,'trfetov1: AUGMENTER MXITEM=',MXITEM
+      ENDIF
+
+C     LA VISEE
+      AXOLAR = 0
+      DO L=1,3
+         AXOPTV(L) = ( COOEXT(L,1) + COOEXT(L,2) ) * 0.5
+         AXOEIL(L) = COOEXT(L,2)
+         AXOLAR = MAX( AXOLAR, COOEXT(L,2) - COOEXT(L,1) )
+      ENDDO
+      AXOLAR = AXOLAR * 0.5
+      AXOHAU = AXOLAR * 0.75
+C     PAS DE PLAN ARRIERE ET AVANT
+      AXOARR = 0
+      AXOAVA = 0
+      CALL AXONOMETRIE( AXOPTV, AXOEIL, AXOLAR, AXOHAU, AXOARR, AXOAVA )
+
+      DISMOY = AXOLAR/30
+C
+C     TRACE EN MODE 3 BOUTONS POUR DEPLACEMENT ROTATIONS ZOOM
+      PREDU0  = PREDUF
+      PREDUF  = 10.0
+      LORBITE = 1
+      IF( LORBITE .EQ. 0 ) GOTO 20
+C
+C     INITIALISATION DE L'ORBITE
+C     ==========================
+      CALL ORBITE0( NOTYEV )
+      GOTO 20
+C
+C     TRACE SELON L'ORBITE OU ZOOM OU TRANSLATION ACTIFS
+C     ==================================================
+ 10   CALL ORBITE1( NOTYEV )
+      IF( NOTYEV .EQ. 0 ) GOTO 9000
+C
+C     TRACE DES AXES 3D
+ 20   CALL TRAXE3
+C
+C     CALCUL DE LA DISTANCE A L'OEIL DU BARYCENTRE DES NBITEM FACES
+      DO K = 1, NBITEM
+C        AXONOMETRIE DU BARYCENTRE
+         CALL XYZAXO( XYZBAR(1,K), XYZB )
+C        DISTANCE A L'OEIL
+         DISTOE( K ) = -XYZB(3)
+C        IDENTITE INITIALE POUR LE NUMERO DE FACE DANS NOSTTR
+         ITEMTR( K ) = K
+      ENDDO
+
+C     LE TRI CROISSANT SELON LA DISTANCE (COTE Z ) A L'OEIL
+      CALL TRITRP( NBITEM, DISTOE, ITEMTR )
+C
+C     LE TRACE DES TRIANGLES DU CF ET DE SON ETOILE
+      DO K = NBITEM, 1, -1
+
+C        NUMERO DE LA FACE LA PLUS ELOIGNEE NON TRACEE
+         NF = ITEMTR( K )
+
+         IF( NF .LE. NBITEM0 ) THEN
+
+C           TRIANGLE SIMPLE DE LA FACE SIMPLE
+            NCF = NCGRIM
+            CALL TRFATR( NCF, NCNOIR, NOSTTR(1,NF), PTXYZD )
+
+C           TRACE DE LA NORMALE A LA FACE EN SON BARYCENTRE
+            CALL VECNOR3D( PTXYZD(1,NOSTTR(1,NF)),
+     %                     PTXYZD(1,NOSTTR(2,NF)),
+     %                     PTXYZD(1,NOSTTR(3,NF)), VECNOR )
+
+C           NORME DU VECTEUR NORMAL
+            D = SQRT( VECNOR(1)**2 + VECNOR(2)**2 + VECNOR(3)**2 )
+            DO L=1,3
+               XYZ(L) = XYZBAR(L,NF) + REAL( VECNOR(L) / D * DISMOY )
+            ENDDO
+
+C           TRACE DU VECTEUR NORMAL
+            CALL SYMBOLE3D( NCMAGE, XYZBAR(1,NF), '*' )
+            CALL TRAIT3D(   NCMAGE, XYZBAR(1,NF), XYZ )
+
+C           TRACE DES 3 NO DES SOMMETS DE LA FACE
+            DO L=1,3
+               NS = NOSTTR(L,NF)
+               XYZ(1) = REAL( PTXYZD(1,NS) )
+               XYZ(2) = REAL( PTXYZD(2,NS) )
+               XYZ(3) = REAL( PTXYZD(3,NS) )
+               CALL ENTIER3D( NCGRIS, XYZ, NS )
+            ENDDO
+
+         ELSE
+
+C           TRACE DU POINT NPt
+            XYZ(1) = REAL( PTXYZD(1,NPt) )
+            XYZ(2) = REAL( PTXYZD(2,NPt) )
+            XYZ(3) = REAL( PTXYZD(3,NPt) )
+            CALL SYMBOLE3D( NCROUG, XYZ, '+' )
+            CALL ENTIER3D(  NCROUG, XYZ, NPt )
+
+         ENDIF
+
+      ENDDO
+
+C     TITRE ET TRACE EFFECTIF
+      CALL TRFINS( KTITRE )
+C
+C     REPRISE DE L'ORBITE
+C     ===================
+      IF( LORBITE .NE. 0 ) GOTO 10
+
+ 9000 PREDUF = PREDU0
+
+      RETURN
+      END

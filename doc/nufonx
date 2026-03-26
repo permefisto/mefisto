@@ -1,0 +1,19 @@
+The USER function (of any name to choose)
+give a real value to the FINAL ABSCISSE of the POINT
+of initial coordinates x,y,z.
+
+This function has to have 3 parameters X Y Z in this order
+and be programmed with respect to LU grammar
+(cf documentation and examples of the debut menu)
+
+All these parameters will be initialized when the function is executed
+These parameters can be used or not, but have to be present
+in the definition of this function ABSCISSE.
+           
+EXAMPLE:
+deffunc ABSCISSE( x , y , z ) ; 
+   if    (1<=x) et (x<100)
+   then  ABSCISSE = log(x) ;
+   else  ABSCISSE = abs( x*y-z ) ;
+   endif;  
+endfunc; 

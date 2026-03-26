@@ -1,0 +1,601 @@
+     ---------------------------------------------------------
+     | MM   MM  EEEEEE  FFFFFF  IIII  SSSSSS  TTTTTT OOOOOOO |
+     | MMM MMM  EE      FF       II   SS        TT   OO   OO |
+     | MM M MM  EEEEE   FFFF     II   SSSSSS    TT   OO   OO |  FAIT L'EF !
+     | MM   MM  EE      FF       II       SS    TT   OO   OO |
+     | MM   MM  EEEEEE  FF      IIII  SSSSSS    TT   OOOOOOO |
+     ---------------------------------------------------------  
+
+UNE INTRODUCTION :
+==================
+Le LECTEUR qui decouvre MEFISTO doit lire l'ensemble de cette documentation.
+La decomposition de l'OBJET a mailler en POINTS, LIGNES, SURFACES, VOLUMES,
+OBJETS est expliquee dans les paragraphes suivants.
+Le mode d'emploi des MENUS est decrit au paragraphe LES MENUS.
+Le LECTEUR qui hesite sur la maniere d'entrer une donnee ou une fonction
+doit aller lire le paragraphe LES MENUS, LES ENTREES NUMERIQUES, la GRAMMAIRE
+du langage LU et surtout les EXEMPLES qui suivent. 
+Les MOTS CLES disponibles actuellement, a ce niveau de l'arbre des MENUS,
+sont un par un, decrits au dernier paragraphe.
+
+LES PRIMITIVES GEOMETRIQUES :
+============================= 
+Tout OBJET a MAILLER doit etre decompose en POINTS, LIGNES, SURFACES, VOLUMES,
+( en abrege PLSV ).
+Puis, ces PLSV sont regroupes pour former l'OBJET.
+
+Les extremites des uns sont decrits a l'aide des precedents :
+Les POINTS   sont definis a partir de leurs 3 coordonnees ou par transformation
+                  d'un autre POINT.
+Les LIGNES   sont souvent definies a partir de leurs extremites: des POINTS.
+Les SURFACES sont souvent definies a partir de leur contour forme de LIGNES.
+Les VOLUMES  sont souvent definis  a partir de leur contour forme de SURFACES.
+Les OBJETS   permettent de definir autant de parties que necessaire d'un OBJET.
+                                  
+Par definition, un PLSV est un POINT ou une LIGNE ou une SURFACE ou un VOLUME.
+Un PLSV ne peut etre un melange de POINTS, LIGNES, SURFACES, VOLUMES.
+Par contre, un PLSV peut etre une UNION de PLSV de meme type.
+Par exemple, une UNION de LIGNES   est une LIGNE
+             une UNION de SURFACES est une SURFACE ...
+
+Tout PLSV demande dans sa definition une TRANSFORMATION.
+Le plus souvent, cette TRANSFORMATION se reduit a l'IDENTITE notee I.
+Dans d'autres cas,la TRANSFORMATION permet la construction de PLSV COURBES ou
+DEFORMEES ou DEPLACEES ou SYMETRIQUES ou PROJETEES ... 
+
+Un OBJET est une UNION sans TRANSFORMATION de POINTS,LIGNES,SURFACES,VOLUMES et
+OBJETS. Le CALCUL NUMERIQUE est fait a partir d'un OBJET.  
+
+Tout PLSV ou OBJET est IDENTIFIE par un NOM de 24 caracteres au plus,
+choisi par l'USAGER. Tous les tableaux de donnees seront identifies a partir de
+ce NOM. 
+
+LES DONNEES PHYSIQUES :
+=======================
+La resolution du probleme thermique, d'elasticite,... necessite de la part de
+l'utilisateur l'entree de donnees (conductivite, module de Young,...). Cette
+entree peut etre faite sur l'OBJET ou chacune des PLSV qui le compose.
+La donnee sur le PLSV est prioritaire sur celle de l'OBJET. Elle peut etre
+vue comme une precision sur les donnees generales de l'objet.
+Un vocabulaire est associe aux donnees selon le type de probleme traite.
+Se reporter a la documentation du debut de ce type de probleme.
+
+L'ORDRE LOGIQUE DE CONSTRUCTION D'UN MAILLAGE ELEMENTS FINIS :
+==============================================================
+2 TYPES de MAILLAGES : STRUCTURES ou NON STRUCTURES.
+Dans les 2 cas, les 3 coordonnees des SOMMETS des elements sont stockes.
+Un maillage STRUCTURE est caracterise par quelques entiers qui suffisent
+a definir sa topologie : ligne de N points consecutifs,
+                         quadrangle de N1 aretes en "X" et N2 aretes en "Y",
+                         hexaedre de N1 aretes en "X", N2 aretes en "Y", N3...
+Un maillage non structure est decrit par la liste des numeros des sommets de
+chacun de ses elements.
+
+Les POINTS caracteristiques des PLSV geometriques sont reperes puis definis
+soit par la frappe des 3 coordonnees
+soit par la saisie 2D ou 3D faite avec la souris.
+
+Definir les LIGNES a partir des points extremites ou intermediaires, du choix
+d'un algorithme de maillage : droite, arc de cercle , B-spline , ...  et
+du nombre de points, sommets des aretes et d'un mode de repartition de ceux ci
+equidistants (raison=1) ou en progression geometrique (raison differente de 1).
+Ces lignes forment generalement le contour des surfaces.
+
+Definir les SURFACES a partir des points et lignes deja definis, du choix
+d'un algorithme de maillage, du nombre de sommets a generer, ...
+
+Definir les VOLUMES a partir des points, lignes et surfaces  deja definis,
+du choix d'un algorithme de maillage, du nombre de sommets a generer, ...
+
+Un PLSV peut aussi subir une TRANSFORMATION ( translation, rotation,
+dilatation, application mathematique de R3 dans R3, projection, symetries,...) 
+
+Ensuite, il faut definir l'interpolation des inconnues (temperature,
+deplacements,..) pour creer la topologie du maillage avec des noeuds et des
+points. A cette occasion, les noeuds seront renumerotes pour reduire la
+largeur de bande des matrices profils.   
+
+LES MENUS :
+===========
+Tout debut d'execution fait apparaitre un menu d'options.  
+
+2 possibilites sont offertes :
+1. deplacer la fleche a l'aide de la souris dans le rectangle de l'option
+   choisie et cliquer l'une des 3 touches. L'option est alors executee.
+2. taper sur le clavier le numero indique dans le rectangle, suivi de ; et
+   return. L'option est alors executee.
+Un calcul peut etre execute et un autre menu apparait. Et ainsi de suite ...
+
+Pour abandonner l'option,      taper @;  ou  cliquer dans ABANDON
+ATTENTION: La frappe de @; annihile l'analyse de toute la ligne de donn'ee
+c'est a dire des eventuelles donn'ees qui precedent!
+
+Pour obtenir la documentation, taper ?;  ou  cliquer dans DOCUMENTATION
+
+LES ENTREES NUMERIQUES :
+========================
+Ces entrees (entier, reel, reel2 (double precision), logique, caracteres,...)
+sont tapees sur le clavier et TERMINEES par ; return      
+
+La frappe de ? fournit la documentation se rapportant a cette valeur,
+puis, indique le type de la valeur et sa valeur actuelle s'il existe
+une valeur par defaut. Si cette valeur convient, taper = pour la valider. 
+Tout texte entre les caracteres {  }  sert de commentaire.
+{ commentaire } n'est pas pris en compte par le Langage Utilisateur nomme LU. 
+
+Ce langage permet sur le clavier l'entree a tout instant de
+- une valeur numerique :  3;  -2E-3;
+- une expression arithmetique a evaluer :  3.14159 * 2.71828 ;
+- une declaration de variables  : defvar pi,rayon, nb_aretes;
+- la valeur d'une variable      : rayon = 1; pi=atan(1) * 4;
+- la declaration d'une fonction : deffonc aire( r );
+                                  aire = pi * r ** 2 ;
+                                  finfonc;
+- l'evaluation d'une fonction   : aire( 10.345 );  aire( rayon/ 7);
+
+Pour plus de precisions, se reporter a la grammaire du langage LU et aux
+exemples fournis plus loin.
+                            
+ATTENTION: NE PAS OUBLIER de SAUVEGARDER les TABLEAUX en demandant
+FIN avec SAUVEGARDE ( code 99; du MENU initial nomme DEBUT )
+sinon TOUT EST PERDU !!!...
+De meme, CTRL C (sauf sous le debogueur) fait perdre tous ces tableaux.
+
+UNE REMARQUE SUR LA GESTION DES FICHIERS :
+==========================================
+Toutes les DONNEES de l'USAGER sont rangees dans une MEMOIRE SECONDAIRE (MS)
+formee de plusieurs FICHIERS en ACCES DIRECT sur DISQUES.
+Si la place vient a manquer, il est possible d'ajouter un nouveau fichier,
+faire une SAUVEGARDE et REDEMARRER, SORTIR apres SAUVEGARDE, CONSULTER les
+valeurs des TABLEAUX MEMOIRE SECONDAIRE (TMS), ... Faire le SUIVI de la MS. 
+
+LA GRAMMAIRE DU LANGAGE LU :
+============================
+Les VALEURS NUMERIQUES (entier, reel, reel double) ou CHAINES de CARACTERES
+doivent dans tous les modes etre fournies selon la GRAMMAIRE definie ci dessous:
+
+Le nombre de blancs entre les mots n'est pas significatif, excepte
+pour une <CHAINE DE CARACTERES>.
+
+<DONNEE> :=  | <MOT_CLE> ;
+             | <CHAINE DE CARACTERES> ; 
+             | defvar <IDENT_VAR>{,<IDENT_VAR>} ;
+             | <FONCTION_D> ; 
+             | <VALEUR_D>   ; 
+
+<MOT_CLE> := | { COMMENTAIRE }
+             | @        abandon de la lecture, remontee dans l'arborescence
+                        ATTENTION: La frappe de @; annihile l'analyse de TOUTE la
+                                   ligne de donnee c'est a dire des eventuelles
+                                   donnees qui precedent!
+             | ?        affiche la documentation de ce qui est a lire et
+                                eventuellement sa valeur actuelle
+             | =        garde   la valeur actuelle  
+             | QUITTER  le fichier actuel de lecture des donnees sans le fermer
+             | EXIT     le fichier actuel de lecture des donnees sans le fermer
+             | FERMER   quitter le fichier actuel de lecture des donnees et le fermer
+             | CLOSE    quitter le fichier actuel de lecture des donnees et le fermer
+             | LIREF  nom_de_fichier   nom dependant du site
+             | READF  nom_de_fichier   nom dependant du site
+
+<CHAINE DE CARACTERES> := | '<CARACTERE>{<CARACTERE>}'
+                          | '<CARACTERE>{''{<CARACTERE>}}'
+
+<FONCTION_D> :=  deffonc <IDENT_FONC>(<PARAM>{,<PARAM>});
+                {defvar  <NOM_VAR>{,<NOM_VAR>} ; }
+                {defetiq <ETIQ>{,<ETIQ>} ; }
+                {ETIQ :} <INSTRUCTION>
+               {{ETIQ :} <INSTRUCTION> }
+                {ETIQ :}  finfonc ;
+
+<INSTRUCTION> := | <IDENT_FONC> = <EXPR_D> ;
+                 | <NOM_VAR>    = <EXPR_D> ;
+                 | afficher <EXPR_D>{,<EXPR_D>} ;
+                 | si       <EXPR_LOGIQ> 
+                   alors    <INSTRUCTION>
+                  {sinon    <INSTRUCTION>}
+                   finsi ;
+                 | pour <NOM_VAR> = <EXPR_D>  a  <EXPR_D> ;
+                      <INSTRUCTION>
+                   finpour ;
+                 | repeter ;
+                      <INSTRUCTION>
+                   jusque  <EXPR_LOGIQ> ;
+                 | tantque <EXPR_LOGIQ> ;
+                      <INSTRUCTION>
+                   fintant ;
+                 | retour ;
+                 | aller <ETIQ> ;
+
+                 | display  <EXPR_D>{,<EXPR_D>} ;
+                 | if       <EXPR_LOGIQ> 
+                   then    <INSTRUCTION>
+                  {else    <INSTRUCTION>}
+                   endif ;
+                 | for <NOM_VAR> = <EXPR_D>  to  <EXPR_D> ;  the step is 1
+                      <INSTRUCTION>
+                   endfor ;
+                 | repeat ;
+                      <INSTRUCTION>
+                   until  <EXPR_LOGIQ> ;
+                 | while <EXPR_LOGIQ> ;
+                      <INSTRUCTION>
+                   endwhile ;
+                 | return ;
+                 | goto <ETIQ> ;
+
+<VALEUR_D>   := | <EXPR_D> 
+                | <IDENT_VAR> = <EXPR_D>  
+
+<EXPR_D>     := | (<EXPR_D>)
+                | <TERME>
+                | <TERME> + <EXPR_D>  
+                | <TERME> - <EXPR_D>  
+
+<TERME>      := | <FACTEUR>
+                | <FACTEUR> * <TERME>    
+                | <FACTEUR> / <TERME>    
+
+<FACTEUR>    := | <PUISSANCE>
+                | <PUISSANCE> ** <EXPR_D> 
+ 
+<PUISSANCE>  := | <EXPR_D>
+                | <VARIABLE>  
+
+<VARIABLE>   := | <CONSTANTE_D>
+                | <IDENT_VAR>
+                | <VARIABLE_TMS>
+                | <IDENT_FONC>(<EXPR_D>{,<EXPR_D>) 
+  
+Dans la definition deffonc d'une fonction,<VARIABLE> peut aussi etre
+un parametre <PARAM> de la fonction.
+
+<EXPR_LOGIQ> := | <EXPR_LOGI>  ox  <EXPR_LOGIQ>    ou exclusif      
+                | <EXPR_LOGIQ> ox  <EXPR_LOGI>   
+
+<EXPR_LOGI>  := | <EXPR_LOG>   ou  <EXPR_LOGIQ>    or inclusif
+                | <EXPR_LOGIQ> ou  <EXPR_LOG>  
+                | <EXPR_LOG>   or  <EXPR_LOGIQ>
+                | <EXPR_LOGIQ> or  <EXPR_LOG>
+
+<EXPR_LOG>   := | <EXPR_LO>    et  <EXPR_LOGIQ>  
+                | <EXPR_LOGIQ> et  <EXPR_LO>
+                | <EXPR_LO>    and <EXPR_LOGIQ>  
+                | <EXPR_LOGIQ> and <EXPR_LO>
+
+<EXPR_LO>    := | non <EXPR_L>  
+
+<EXPR_L>     := | <EXPR_D>  <=  <EXPR_D>
+                | <EXPR_D>  <   <EXPR_D>  
+                | <EXPR_D>  =   <EXPR_D>
+                | <EXPR_D>  <>  <EXPR_D>
+                | <EXPR_D>  >=  <EXPR_D>
+                | <EXPR_D>  >   <EXPR_D>
+
+<NOM_IDENT>  := <LETTRE>{<LETTRE OU CHIFFRE OU _ >}  
+<PARAM>      := <NOM_IDENT>     
+<IDENT_FONC> := <NOM_IDENT>     
+<NOM_VAR>    := <NOM_IDENT>     
+
+
+LES FONCTIONS UNAIRES   Elles suivent les regles FORTRAN 77 
+                        Appel du type: abs(x)
+     abs    VALEUR ABSOLUE
+     sqrt   RACINE CARREE
+     log    LOGARITHME NEPERIEN
+     log10  LOGARITHME DECIMAL
+     exp    EXPONENTIELLE
+     asin   ARC SINUS       -pi/2 < =  x < =  pi/2  radians
+     acos   ARC COSINUS        0  < =  x < =  pi    radians
+     atan   ARC TANGENTE    -pi/2 < =  x < =  pi/2  radians
+     sin    SINUS    angle en radians
+     cos    COSINUS  angle en radians
+     tan    TANGENTE angle en radians
+     sinh   SINUS    HYPERBOLIQUE
+     cosh   COSINUS  HYPERBOLIQUE
+     tanh   TANGENTE HYPERBOLIQUE
+     nint   PLUS PROCHE ENTIER
+                               
+
+LES FONCTIONS BINAIRES  Elles suivent les regles FORTRAN 77 
+                        Appel du type: min(x,y)
+
+     min    MINIMUM DE 2 REELS
+     max    MAXIMUM DE 2 REELS
+     mod    mod(i,j)  i modulo j
+     isign  isign(x1,x2)= + |x1| si x2 >= 0
+                          - |x1| si x2 <  0
+
+     nuobjt nuobjt( 'type_objet' , 'nom_objet' )
+                    'type_objet' = | 'point'
+                                   | 'ligne'
+                                   | 'surface'
+                                   | 'volume'
+                                   | 'objet'
+                                   | 'fonction'
+                                   | 'transfo'
+            retourne le numero dans le lexique de l'objet de 
+                               nom 'nom_objet'
+                     0 si non retrouve  
+
+QUELQUES EXEMPLES D'UTILISATION DU LANGAGE LU:
+==============================================
+ 3 ; 7e5 ;  -(3+4)/7;   { 3 expressions arithmetiques }
+
+defvar pi,R,circonference;
+pi=atan(1) * 4 ; R=1e3 ; circonference= 2 * pi * R ; 
+                                      
+deffonc g( no , x );
+si no=1 alors g=no ;
+        sinon g=x ;
+finsi; 
+finfonc; 
+g(1,2);
+g(2,3);
+
+deffonc k(n);        { un exemple a ne pas suivre! }
+defetiq e1,e2;
+aller e2;
+e1: k=n*n;
+retour;
+e2: aller e1;
+finfonc;   
+
+deffonc f(n);        { Exemple de boucle pour }
+   defvar i; 
+   f=1;
+   pour i=1 a n ;
+      f=f*i;
+   finpour;
+finfonc;
+f(5);
+
+deffunc fpur(n);     { en franglais }
+defvar i,j;
+fpur=0;
+for i=1 to n;
+  for j=1 to 3;
+     fpur=fpur+i+j;
+  endfor;
+finpour;
+display fpur;
+endfunc;
+fpur(2);
+
+deffonc fa(n);       { Exemple de tant que }
+   defvar i;
+   fa=1; i=0; 
+   tantque i<n ;
+      i=i+1 ;
+      fa=fa*i ;
+   fintant;
+finfonc; 
+fa(5);  
+
+deffunc ftantq(n);   { en franglais }
+defvar i,j;
+ftantq=0;
+i=0;
+tantque i<n;
+   i=i+1;
+   j=0;
+   while j<=3;
+      j=j+1;
+      ftantq=ftantq+i+j;
+   endwhile;
+fintant;
+display ftantq;
+return;
+endfunc;
+display ftantq(2);
+
+deffonc fac(n);      { Exemple de repeter ... jusque }
+   defvar i;
+   fac=1; i=0;
+   repeter
+      i=i+1; 
+      fac=fac*i;
+   jusque i=n;
+finfonc;
+fac(5); 
+        
+deffunc frep(n);     { en franglais }
+defvar i,j;
+frep=0; i=0;
+repeat;
+  i=i+1; j=0;
+  repeter ;
+    j=j+1;
+    frep=frep+i+j;
+  jusque j>4;
+until i>=n;
+endfunc;
+display frep(2);
+
+{Definition du module de YOUNG au point x,y,z de ce materiau}
+deffonc young( t, x , y , z , no_type_objet , materiau )
+si    materiau=nuobjt( 'volume' , 'acier' )
+alors young=1e11;
+sinon si    materiau=nuobjt( 'volume' , 'cuivre' )
+      alors young=5e10 ;
+      sinon young=0 ;
+      finsi;  
+finsi;
+finfonc; 
+young(1,0,0,4,3); 
+
+deffonc puiss2( n );     { Exemple d'affichage de valeurs }
+defvar i;
+pour i=1 a n;
+   afficher 2**i;
+finpour;
+finfonc;
+puiss2(16); 
+   
+deffonc h(n); h=n+n; finfonc; h(5);
+{ une fonction peut faire appel a une autre fonction }      
+deffonc k(n); k=h(h(n)) ; finfonc; k(5);
+
+deffonc maxi(x,y,z);       { Fonction max a 3 parametres }
+maxi=max(x,max(y,z));
+finfonc;
+
+deffonc maxim(x,y,z,t,u);  { Fonction max a 5 parametres }
+maxim=maxi(x,y,maxi(z,t,u));
+finfonc;
+maxim(1,2,3,4,5);
+
+deffonc maximum(x,y,z,t,u,v); { Variante a 6 parametres }
+maximum=max(maxi(x,y,maxi(z,t,u)),v);
+afficher maximum;
+finfonc;
+maximum(1,2,3,6,5,4); 
+
+{Fin des exemples d'utilisation du langage LU}
+  
+===================================================================  
+LES MOTS CLES DISPONIBLES A CE NIVEAU (DEBUT de l'ARBRE des MENUS):
+===================================================================
+ 0: LONGUEUR par DEFAUT des ARETES des maillages  
+ 1: POINTS    sommets   de l'objet
+ 2: LIGNES    aretes    de l'objet
+ 3: SURFACES  faces     de l'objet
+ 4: VOLUMES   materiaux de l'objet
+ 5: OBJETS    parties   de l'objet
+ 6: TRANSFORMATIONS mathematiques des PLSV
+Les 6 premiers permettent la definition des PLSVO et des TRANSFORMATIONS
+
+ 7: INTERPOLATION definition des NOEUDS du maillage 
+Vient ensuite la definition des ELEMENTS FINIS du point
+de vue de l'interpolation (Creation des NOEUDS non sommets, POINTS,
+POSITION des sommets, aretes, faces par rapport a la FRONTIERE,...
+
+10: TRACE du MAILLAGE des PLSV ou des OBJETS
+Le TRACE des PLSVO peut etre demande a tout moment
+
+11: RENOMMER la fonction TAILLE_IDEALE(x,y,z)
+La plupart des algorithmes de maillage emploient la fonction donnee par
+l'utilisateur de nom TAILLE_IDEALE(x,y,z) qui definit la taille maximale
+des aretes des elements finis. Il peut arriver que cette fonction apres 
+avoir ete utilisee ne soit plus adaptee pour les maillages suivants.
+Comme sa presence suffit pour son utilisation, il faut donc la masquer
+en changeant son nom.
+
+19: min MAX des XYZ des PLSVO ou COORDONNEES EXTREMES XYZ des PLSVO
+Afin d'\'eviter une remise \`a l'\'echelle des trac\'es apr\`es chaque entr\'ee
+de donn\'ee, il est conseill\'e de fournir la valeur minimale et maximale
+des 3 coordonn\'ees des points de l'objet \`a traiter.
+
+20: PRECISION  pour identifier des points
+Pour toute UNION de PLSV, les SOMMETS appartenant a 2 PLSV doivent
+etre identifies. 2 PRECISIONS ont ete definies:
+- une au voisinage de l'ORIGINE (reels allant au dela de 1e-20) 
+  ou un TEST ABSOLU est PERFORMANT
+- une au voisinage de tout point assez eloigne de l'ORIGINE
+  ou un TEST RELATIF redevient PERFORMANT 
+
+21: MISE A JOUR  ou NON automatique des maillages 
+Par defaut, si l'un des constituants de la definition d'un
+PLSV est modifie, le maillage n'est pas AUTOMATIQUEMENT RECALCULE
+En fait, en changeant la bascule, cette MISE A JOUR devient
+ACTIVE. ATTENTION toutefois, le COUT des tests est assez important
+et ralentit les calculs.
+
+39: COULEUR du FOND
+La couleur du fond de la fenetre peut etre chang'e
+
+71: SUIVI des TMS AFFICHAGE ou MODIFICATION ...
+Avec cette option, il est possible de 
+- AFFICHER un TMS (Tableau Memoire Secondaire)
+- ENTRER   les VALEURS d'un TMS
+- AFFICHER la VALEUR d'une variable d'un TMS
+- IMPOSER  la VALEUR d'une variable d'un TMS
+- CHANGER  un NOM dans un LEXIQUE
+
+72: SUIVI des FICHIERS de la Memoire Secondaire  
+Notamment il est possible d'AJOUTER un fichier a la MS
+si celle ci vient a etre saturee.
+
+73: GESTION des unites de lecture et affichages
+A ne pas utiliser sauf cas exceptionnel.
+Utiliser la valeur par defaut.
+Les ENTREES/SORTIES peuvent etre faites selon differentes options 
+1 a 3 : mode INTERACTIF         Il est   possible de dialoguer
+5     : mode BATCH ou AVEUGLE   Il est impossible de dialoguer 
+1: pas de trace graphique possible, pas de souris
+2:        trace graphique         , pas de souris 
+3:        trace graphique         , une    souris 
+Le CLAVIER permet la SAISIE par frappe de CARACTERES.
+La SOURIS  permet la SAISIE par clic sur une OPTION ou par
+PROXIMITE d'un PLSV.
+L'option 3 s'avere la plus pratique. (Valeur par defaut)
+L'option 2 permet de reutiliser le contenu de fichiers, alors
+injectables dans la fenetre d'entree.
+
+74: TUER des TMS PLSVO... mais A VOS RISQUES...
+Il est possible de DETRUIRE un TMS ou un PLSVO ou la fonction 
+TAILLE_IDEALE(x,y,z) ... Mais sans possibilite de les recuperer! 
+Alors, attention a ne pas d'etruire un tableau encore utile,
+sinon, gare aux resultats !... 
+
+89: Creation dans Mefisto d'un Objet maille avec le logiciel NEF.
+A partir de la donnee du nom NEF en majuscules de l'objet, 
+le fichier NOMOBJET.XyzNoEF issu de NEF et stocke dans le projet
+est lu et les volumes ou les surfaces, ... de l'objet sont crees.
+Faire un trace Mefisto de l'objet pour voir les PLSV qui ont ete retenus.
+La definition de l'objet peut ensuite etre modifiee par l'option 5; 
+Ne pas oublier ensuite de demander l'interpolation pour construire
+les noeuds (par exemple le milieu des aretes pour l'interpolation
+de Lagrange de degre 2)
+
+90: Creation du Fichier xyznsef des tms XYZSOMMET NSEF d'un PLSV 
+Traduits en caract\`eres, les valeurs XYZ des sommets
+et les numeros des sommets des EF sont ranges dans un fichier
+lisible a l'aide d'un editeur de textes.
+
+91: Fichier xyznpef d'un OBJET apre INTERPOLATION
+Traduits en caract\`eres, les valeurs XYZ des NOEUDS et POINTS
+et les numeros des NOEUDS des EF, du numero des POINTS des sommets
+des LIGNES des aretes, des SURFACES des faces
+et du VOLUME des EF sont ranges dans un fichier xyznpef.NomObjet
+lisible a l'aide d'un editeur de textes.
+
+92: Creation du FICHIER NEKTON d'un objet interpol'e
+Le maillage d'un objet, apres definition de son interpolation,
+(actuellement, obligatoirement LAGRANGE de degre 1), peut etre 
+stocke sur un fichier nomme NEKTON, ce qui constitue un
+interface pour le maillage avec le logiciel NEKTON.
+
+93: Fichiers FIDAP d'un OBJET
+Le maillage d'un objet, apres avoir definition de son
+interpolation, obligatoirement LAGRANGE de degre 1, peut etre 
+stocke sur un fichier, nomme de nom ricouef.
+2 fonctions utilisateur sont a fournir pour definir l'epaisseur
+superieure hp(x,y,z) et inferieure hm(x,y,z).
+Ainsi, un interface pour le maillage avec le logiciel FIDAP
+peut etre realise.
+
+Fichier FIDAP des CONDITIONS FRONTIERES
+Un fichier pour decrire la condition aux limites 'FIDAP'
+des noeuds d'une ligne ou d'une surface,...
+Une fonction utilisateur CF(x,y,z,t) est a fournir pour definir
+la valeur a associer au noeud de coordonnees x,y,z et a l'instant t
+Les sp ricouef et ricoucl peuvent servir
+de modeles pour realiser des interfaces vers des logiciels personnels.
+
+Fichier FIDAP des CONDITIONS INITIALES
+Un fichier pour decrire les conditions initiales 'FIDAP'
+des noeuds d'une ligne ou d'une surface,...
+Une fonction utilisateur CI(x,y,z,n) est a fournir pour definir
+la valeur n initiale parmi les nb valeurs a associer au noeud de 
+coordonnees x,y,z a l'instant zero.
+
+99: SAUVEGARDE des donnees et FIN du TRAITEMENT
+Cette OPTION EST OBLIGATOIRE pour recuperer les TMS calcules
+au cours de cette execution.
+Un ARRET sans passage par cette option peut etre CATASTROPHIQUE
+ensemble de TMS incoherent, redemarrage impossible, ...
+(Heureusement dans ces malheureux cas, il existe tout de meme
+les fichiers frappe.1 .2 , ... qui permettent de relancer
+toutes les executions.
+Mais ce n'est pas a recommander.

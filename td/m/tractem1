@@ -1,0 +1,5 @@
+variable TRACTEM1 'trace des TEMPERATURES 1d' entier
+ (  1 :  'Z=TEMPERATURE(t,x)'
+ ,  2 :  'Y=TEMPERATURE(t,x) avec ZONES de COULEURS'
+ ,  8 :  'ERREUR si TEMPERATURE_EXACTE(t,x,y,z)'
+ ,  9 :  'AFFICHAGE des TEMPERATURES' ) ;

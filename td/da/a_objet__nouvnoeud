@@ -1,0 +1,6 @@
+deftms ~>OBJET>>NOUVNOEUD 'new numbers of nodes after renumbering'
+variable muet DATE 'date of creation of the TMS'    reel2  ;
+variable muet NUTD 'number of the descriptor array' entier ; 
+variable      NBNONO       'number of renumbered nodes'  entier ;
+tableau  NONOEU(1..NBNONO) 'new number of nodes'  entier ;
+fintms ;

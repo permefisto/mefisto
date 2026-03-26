@@ -1,0 +1,5 @@
+variable TUER 'TMS et OBJETS a VOS RISQUES...' entier
+ ( 1  : 'Tuer un TMS'
+ , 2  : 'Tuer un PLSVO'
+ , 3  : 'Tuer Taille_Ideale(x,y,z)'
+ , 4  : 'Tuer Edge_Length(x,y,z)' ) ;

@@ -1,0 +1,76 @@
+      SUBROUTINE MAXVIT( NDIM,   NBNOVI, NBVECT, VX, VY, VZ,
+     %                   NOEMIN, NCAMIN, VITMIN,
+     %                   NOEMAX, NCAMAX, VITMAX, VITMOY )
+C+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+C BUT :    CALCULER LA NORME MIN MAX et MOYENNE DES NBVECT VECTEURS
+C -----    VITESSE AUX NBNOVI NOEUDS
+
+C ENTREES:
+C --------
+C NDIM   : DIMENSION DE L'ESPACE DE L'OBJET (2 OU 3)
+C NBPOIN : NOMBRE DE POINTS DU MAILLAGE DE L'OBJET
+C NBNOVI : NOMBRE DE NOEUDS SUPPORT DE LA VITESSE
+C NBVECT : NOMBRE TOTAL DE VECTEURS VITESSE PRESSION
+C VX     : LA VITESSE EN X EN CHAQUE NOEUD ET NBVECT FOIS
+C VY     : LA VITESSE EN Y EN CHAQUE NOEUD ET NBVECT FOIS
+C VZ     : LA VITESSE EN Z EN CHAQUE NOEUD ET NBVECT FOIS
+
+C SORTIES:
+C --------
+C NOEMIN : NUMERO DU NOEUD   DE LA NORME DE LA VITESSE MINIMALE
+C NCAMIN : NUMERO DU VECTEUR DE LA NORME DE LA VITESSE MINIMALE
+C VITMIN : NORME             DE LA VITESSE MINIMALE
+C NOEMAX : NUMERO DU NOEUD   DE LA NORME DE LA VITESSE MAXIMALE
+C NCAMAX : NUMERO DU VECTEUR DE LA NORME DE LA VITESSE MAXIMALE
+C VITMAX : NORME             DE LA VITESSE MAXIMALE
+C VITMOY : NORME MOYENNE DE LA VITESSE
+C+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+C AUTEUR : ALAIN PERRONNET ANALYSE NUMERIQUE  UPMC PARIS       JUIN 2007
+C.......................................................................
+      DOUBLE PRECISION  VX(NBNOVI,NBVECT)
+      DOUBLE PRECISION  VY(NBNOVI,NBVECT)
+      DOUBLE PRECISION  VZ(NBNOVI,NBVECT)
+      DOUBLE PRECISION  VITMIN, VITMAX, VITMOY, VITE
+      INTRINSIC         SQRT
+
+C     LA VITESSE MINIMALE ET MAXIMALE des NBVECT VECTEURS
+C     ---------------------------------------------------
+      NOEMIN = 1
+      NCAMIN = 1
+      NOEMAX = 1
+      NCAMAX = 1
+
+      VITMIN = VX(1,1)**2 + VY(1,1)**2
+      IF( NDIM .EQ. 3 ) VITMIN = VITMIN + VZ(1,1)**2
+      VITMIN = SQRT(VITMIN)
+      VITMAX = VITMIN
+      VITMOY = 0D0
+
+      DO K=1,NBVECT
+         DO I=1,NBNOVI
+
+C           LA NORME DE LA VITESSE AU NOEUD
+            VITE = VX(I,K)**2 +  VY(I,K)**2
+            IF( NDIM .EQ. 3 ) VITE = VITE + VZ(I,K)**2
+            VITE = SQRT(VITE)
+
+            VITMOY = VITMOY + VITE
+            IF( VITE .LT. VITMIN ) THEN
+               VITMIN = VITE
+               NOEMIN = I
+               NCAMIN = K
+            ELSE IF( VITE .GT. VITMAX ) THEN
+               VITMAX = VITE
+               NOEMAX = I
+               NCAMAX = K
+            ENDIF
+
+         ENDDO
+      ENDDO
+
+C     LA MOYENNE AUX NOEUDS DE LA NORME DE LA VITESSE
+C     -----------------------------------------------
+      VITMOY = VITMOY / (NBVECT*NBNOVI)
+
+      RETURN
+      END

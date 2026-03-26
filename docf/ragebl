@@ -1,0 +1,8 @@
+Les aretes de la ligne peuvent
+- etre de tailles egales ou presque egales ( RAIGEO=1)
+- former une suite de valeurs en PROGRESSION GEOMETRIQUE
+  de RAISON RAIGEO<>1
+Si RAIGEO>1, les aretes deviennent de plus en plus
+grandes a partir du 1-er sommet.
+Si 0<RAIGEO<1, les aretes sont de plus en plus petites.
+

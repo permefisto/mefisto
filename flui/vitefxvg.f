@@ -1,0 +1,47 @@
+      SUBROUTINE VITEFXVG( NBRDLX, NDLFX,  VITFIX, TGV,
+     %                     NDIM,   NBNOVI, VITG )
+C ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+C BUT :    PRISE EN COMPTE SUR LE VECTEUR GLOBAL DES COMPOSANTES
+C -----    DES VITESSES FIXEES
+C
+C ENTREES:
+C --------
+C NBRDLX : NOMBRE DE DL VITESSE FIXEES
+C          ERREUR SI NBRDLX=0 CAR PAS DE CONDITION AUX LIMITES!
+C NDLFX  : TABLEAU MC DES NUMEROS DES DL FIXES
+C VITFIX : TABLEAU MC DES VALEURS DES VITESSES FIXEES
+C TGV    : VALEUR MULTIPLICATIVE  DES VITESSES FIXEES
+C
+C NDIM   : NOMBRE DE COMPOSANTES DE LA VITESSE
+C NBNOVI : NOMBRE DE NOEUDS DE LA VITESSE DU MAILLAGE
+C
+C MODIFIE:
+C --------
+C VITG   : VALEUR DES COEFFICIENTS DU VECTEUR GLOBAL VITESSE
+C+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+C AUTEUR : ALAIN PERRONNET LJLL UPMC & St PIERRE du PERRAY Novembre 2010
+C23456---------------------------------------------------------------012
+      INTEGER           NDLFX(NBRDLX)
+      DOUBLE PRECISION  VITFIX(NBRDLX), TGV, VITG(NBNOVI*NDIM)
+C
+      DO K=1,NBRDLX
+C
+C        NUMERO DU DL FIXE DE 1 A NDIM*NBNOVI
+         NDL = NDLFX( K )
+C
+cccC        NUMERO DE LA COMPOSANTE DE LA VITESSE
+ccc         NUCOMP = 1
+ccc 10      IF( NDL .GT. NBNOVI ) THEN
+ccc            NUCOMP = NUCOMP + 1
+ccc            NDL = NDL - NBNOVI
+ccc            GOTO 10
+ccc         ENDIF
+C
+C        VALEUR FIXEE DE LA VITESSE
+ccc         VITG( NDL, NUCOMP ) = VITFIX(K) * TGV
+         VITG( NDL ) = VITFIX(K) * TGV
+C
+      ENDDO
+C
+      RETURN
+      END

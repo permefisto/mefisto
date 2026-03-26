@@ -1,0 +1,756 @@
+      SUBROUTINE SOUDOM( KNOMSD, NTLXOB, MNDFST, IERR )
+C ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+C BUT : STRUCTURER L'OBJET DE NOM KNOMSD EN SOUS-DOMAINES
+C------ C'EST-A-DIRE LIRE LE TABLEAU ~>OBJET>...>DEFINITION
+C       ET CREER LES TABLEAUX ~>OBJET>...>DEFINITION,
+C       PUIS ~>OBJET>...>TOPOLOGIE DE CHACUN DE SES SOUS-DOMAINES
+C
+C ENTREES :
+C ---------
+C KNOMSD : NOM DE L'OBJET A STRUCTURER
+C NTLXOB : NUMERO DU LEXIQUE DES OBJETS
+C MNDFST : ADRESSE MCN DU TABLEAU 'DEFINITION' DE CET OBJET
+C
+C SORTIES :
+C ---------
+C IERR   : 0 SI PAS D'ERREUR, NON NUL SINON
+C ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+C AUTEUR : PASCAL JOLY     ANALYSE NUMERIQUE UPMC PARIS    DECEMBRE 1989
+C....................................................................012
+      COMMON / UNITES / LECTEU, IMPRIM, INTERA, NUNITE(29)
+      include"./incl/gsmenu.inc"
+      include"./incl/a_objet__definition.inc"
+      include"./incl/a_volume__definition.inc"
+      include"./incl/a_surface__definition.inc"
+      include"./incl/a_ligne__definition.inc"
+      include"./incl/a_objet__topologie.inc"
+      include"./incl/a_objet__nouvnoeud.inc"
+      include"./incl/a___nsef.inc"
+      include"./incl/a___xyzsommet.inc"
+      include"./incl/a___xyznoeud.inc"
+      include"./incl/a___union.inc"
+      include"./incl/a___interface.inc"
+      include"./incl/ntmnlt.inc"
+      include"./incl/ponoel.inc"
+      include"./incl/trvari.inc"
+      include"./incl/pp.inc"
+      COMMON            MCN(MOTMCN)
+      REAL              RMCN(1)
+      EQUIVALENCE      (MCN(1),RMCN(1))
+      INTEGER           NBELEM(9), MOELEM(9), MNELEM(9), LIENEL(9),
+     %                  NUDREL(9), NTNPEF(9), NMNPEF(9)
+      INTEGER           NBELTG(9), MOELTG(9), MNELTG(9), NUELTG(9)
+      LOGICAL           AVANT
+      CHARACTER*10      NMTYOB,KNOMTY
+      CHARACTER*24      KNOM,KNOMOB,KNOMSD,KNOM_SD
+C
+      DATA              MOELEM/ 3, 4, 5, 6, 6, 8, 10, 0, 0 /
+      DATA              LIENEL/ 2, 3, 4, 5, 5, 7,  9, 0, 0 /
+C
+      IERR   = 0
+C
+C     STRUCTURATION DE L'OBJET
+C     ========================
+C
+      CALL AZEROI( 9, MNELEM )
+C     LE TABLEAU TOPOLOGIE EST RECHERCHE
+      CALL LXTSOU( NTLXOB, 'TOPOLOGIE', NTTOPO, MNTOPO )
+      IF( NTTOPO .GT. 0 ) THEN
+C        SI LA DEFINITION A ETE MODIFIEE ALORS DESTRUCTION
+C        DU TABLEAU TOPOLOGIE DE CET OBJET ET CALCUL
+         IF( AVANT( MCN(MNTOPO), MCN(MNDFST) ) ) THEN
+C           DESTRUCTION DES TABLEAUX NOEUDS POINTS ELEMENTS TOPOLOGIE
+            CALL DSNPET( NTLXOB )
+            NTTOPO = 0
+            MNTOPO = 0
+            NBLGRC(NRERR) = 2
+            KERR(1) = ' L''OBJET '//KNOMSD//' A ETE MODIFIE'
+            KERR(2) = ' SA TOPOLOGIE EST RECALCULEE'
+            CALL LERESU
+         ELSE
+            NBLGRC(NRERR) = 3
+            KERR(1) = ' L''OBJET '//KNOMSD//' N''A PAS ETE MODIFIE'
+            KERR(2) = ' SA TOPOLOGIE EXISTE DEJA'
+            KERR(3) = ' VOULEZ VOUS LA RECALCULER ?'
+            CALL LERESU
+            CALL LIMTCL( 'non_oui', N )
+            IF( N .EQ. 0 ) GOTO 100
+C           DESTRUCTION DES TABLEAUX NOEUDS POINTS ELEMENTS TOPOLOGIE
+            CALL DSNPET( NTLXOB )
+         ENDIF
+      ENDIF
+C
+C     LES OBJETS DE L'OBJET SONT EXPRIMES EN TERMES DE
+C     POINTS LIGNES SURFACES VOLUMES  EXCLUSIVEMENT
+C     C'EST A DIRE D'OBJETS 'PREMIERS'
+      MNOBPR  = 0
+      CALL OBJPRE( KNOMSD, NBOBPR, MOOBPR, MNOBPR,  IERR )
+      IF( IERR .NE. 0 ) GOTO 9990
+C     OUVERTURE DES TABLEAUX NSEF DE CES NBOBPR OBJETS
+      MNMNSO = 0
+      CALL TNMCDC( 'ENTIER', NBOBPR, MNMNSO )
+      NBOBPO  = 0
+      NBOBLI  = 0
+      NBOBSU  = 0
+      NBOBVO  = 0
+      NBOBOB  = 0
+      NDIM    = 2
+C     BOUCLE SUR LES NO SOMMET DE L'OBJET
+      DO 101 N = 0, NBOBPR-1
+C        LE NUMERO DU TYPE DE L'OBJET PREMIER
+         MNOB   = MNOBPR + N + N
+         NUTYOB = MCN( MNOB )
+C        LE NUMERO DE L'OBJET DANS CE TYPE
+         NUOBJE = MCN( MNOB + 1 )
+C        LE LEXIQUE DE CE TYPE D'OBJETS
+         NTLX = NTMN( NUTYOB )
+C        LE LEXIQUE DE CET OBJET
+         CALL LXNLOU( NTLX, NUOBJE, NTLXO, NT )
+C        LE TABLEAU NSEF DE CET OBJET EXISTE-T-IL ?
+         CALL LXTSOU( NTLXO, 'NSEF', NT, MCN(MNMNSO+N) )
+C        RECHERCHE DE LA DIMENSION DE L'ESPACE DES COORDONNEES
+         CALL LXTSOU( NTLXO, 'XYZSOMMET', NT, MNSO )
+         NBSOM = MCN(MNSO+WNBSOM)
+         CALL DIMCOO( NBSOM, MCN(MNSO+WYZSOM), NDIMO )
+         NDIM = MAX0(NDIM,NDIMO)
+         IF( NUTYOB .EQ. 1 ) THEN
+C           L'OBJET EST UN POINT
+            NBOBPO = NBOBPO + 1
+C           SON TABLEAU NSEF EST CREE
+C           AFIN DE RENDRE POINTS LIGNES, ... HOMOGENES
+C           LE NOMBRE DE SOMMETS DE CE POINT NBSOM
+            CALL LXTNDC( NTLXO, 'NSEF', 'MOTS', WBARNS+1 )
+            CALL LXTSOU( NTLXO, 'NSEF', NT, L )
+            MCN(MNMNSO+N) = L
+C           LE TYPE DE MAILLAGE : STRUCTURE
+            MCN( L + WUTYMA ) = 1
+C           LE NOMBRE DE NOEUDSOMMETS
+            MCN( L + WBARNS ) = NBSOM
+C           LE TYPE INCONNU DE FERMETURE DU MAILLAGE
+            MCN( L + WUTFMA ) = -1
+C           PAS DE TANGENTES STOCKEES
+            MCN( L + WBTGEF ) = 0
+            MCN( L + WBEFAP ) = 0
+            MCN( L + WBEFTG ) = 0
+C           LA DATE
+            CALL ECDATE( MCN(L) )
+C           LE NUMERO DU TABLEAU DESCRIPTEUR
+            MCN( L + MOTVAR(6) ) = NONMTD( '~>>>NSEF' )
+         ELSE  IF ( NT .EQ. 0 ) THEN
+C           LE NOM DE L'OBJET
+            KNOMTY = NMTYOB( NUTYOB )
+            CALL NMOBNU( KNOMTY, NUOBJE, KNOM )
+            NBLGRC(NRERR) = 2
+            KERR(1) = ' ERREUR : OBJET '// KNOM
+            KERR(2) = ' SANS NSEF'
+            CALL LEREUR
+            IERR = 1
+            GOTO 101
+         ELSE IF( NUTYOB .EQ. 2 ) THEN
+C           L'OBJET EST UNE LIGNE
+            NBOBLI = NBOBLI + 1
+         ELSE IF( NUTYOB .EQ. 3 ) THEN
+C           L'OBJET EST UNE SURFACE
+            NBOBSU = NBOBSU + 1
+         ELSE IF( NUTYOB .EQ. 4 ) THEN
+C           L'OBJET EST UN VOLUME
+            NBOBVO = NBOBVO + 1
+         ELSE IF( NUTYOB .EQ. 5 ) THEN
+C           L'OBJET EST UN OBJET
+            NBOBOB = NBOBOB + 1
+         ENDIF
+ 101  ENDDO
+      CALL TNMCDS( 'ENTIER', NBOBPR, MNMNSO )
+      IF (NDIM.EQ.2) THEN
+         NBLIMI = NBOBPO + NBOBLI
+         NBSODO = NBOBSU + NBOBOB
+      ELSE IF (NDIM.EQ.3) THEN
+         NBLIMI = NBOBPO + NBOBLI + NBOBSU
+         NBSODO = NBOBVO + NBOBOB
+      END IF
+      IF( IERR .NE. 0 ) GOTO 9990
+C
+C     CREATION DE L'OBJET SOUS-DOMAINES
+C     =================================
+C
+C     1) CREATION D'UN OBJET PAR SOUS-DOMAINE
+C     ---------------------------------------
+      NBLICR = 0
+      MNTYLI = 0
+      CALL TNMCDC( 'ENTIER', NBLIMI, MNTYLI )
+      MNNULI = 0
+      CALL TNMCDC( 'ENTIER', NBLIMI, MNNULI )
+      NBSDCR = 0
+      MNTYOB = 0
+      CALL TNMCDC( 'ENTIER', NBSODO, MNTYOB )
+      MNNUOB = 0
+      CALL TNMCDC( 'ENTIER', NBSODO, MNNUOB )
+      DO 201 N = 0, NBOBPR-1
+C        LE NUMERO DU TYPE DE L'OBJET PREMIER
+         MNOB   = MNOBPR + N + N
+         NUTYOB = MCN( MNOB )
+C        LE NUMERO DE L'OBJET PREMIER
+         NUOBJE = MCN( MNOB + 1 )
+C
+C        TRI DES OBJETS PREMIERS :
+C        RECHERCHE DES SOUS-DOMAINES
+C        LES SURFACES ET OBJETS EN DIMENSION 2
+C        LES VOLUMES  ET OBJETS EN DIMENSION 3
+C
+         IF ( NUTYOB .LE. NDIM ) THEN
+C           C'EST UN OBJET AUX LIMITES
+            NBLICR = NBLICR + 1
+            MCN(MNTYLI+NBLICR-1) = NUTYOB
+            MCN(MNNULI+NBLICR-1) = NUOBJE
+         ELSE
+C           C'EST UN SOUS-DOMAINE :
+C                  - SURFACE EN DIMENSION 2
+C                  - VOLUME  EN DIMENSION 3
+C           SON NOM
+            KNOMTY = NMTYOB( NUTYOB )
+            CALL NMOBNU( KNOMTY, NUOBJE, KNOM )
+C           LE LEXIQUE DE CE TYPE D'OBJETS
+            NTLX = NTMN( NUTYOB )
+C           LE LEXIQUE DE CET OBJET
+            CALL LXNLOU( NTLX, NUOBJE, NTLXO, NT )
+C           LE TABLEAU DEFINITION DE CET OBJET
+            CALL LXTSOU( NTLXO, 'DEFINITION', NT, MNDEFI )
+C           RECHERCHE DE SES OBJETS AUX LIMITES
+            CALL SOUSD2( NUTYOB, NUOBJE,
+     S                   MNLIOB, NBLIOB, IERR )
+C           LE NUMERO DU SOUS-DOMAINE CREE
+            NBSDCR = NBSDCR + 1
+C           LE NOM DE L'OBJET SOUS-DOMAINE CREE
+            I = INDEX( KNOM, ' ' )
+            KNOMOB = KNOM(1:I-1) // '_SD'
+ 150        CALL LXLXOU( NTOBJE, KNOMOB, NTLXOB, MNLXOB )
+C           S'IL N'EXISTE PAS IL EST CREE
+            IF( NTLXOB .LE. 0 ) THEN
+               CALL LXLXDC( NTOBJE, KNOMOB, 24, 8 )
+               GOTO 150
+            ENDIF
+C           LE NUMERO DE CET OBJET DANS LE LEXIQUE
+            CALL LXNMNO( NTOBJE, KNOMOB, NUOBSD, MNLXOB )
+C           STOCKAGE POUR LA DEFINITION DE L'OBJET FINAL
+C           LES SOUS-DOMAINES SONT DECLARES 'OBJET'
+            NUTYSD = 5
+            MCN(MNTYOB+NBSDCR-1) = NUTYSD
+            MCN(MNNUOB+NBSDCR-1) = NUOBSD
+C           LE NOMBRE DE COMPOSANTS DE L'OBJET SOUS-DOMAINES
+            NBCOOB = NBLIOB
+C           DECLARATION DE LA DEFINITION DE L'OBJET
+            LODFOB = WTYOBJ + NBCOOB * 2
+            CALL LXTNDC( NTLXOB, 'DEFINITION', 'MOTS', LODFOB )
+            CALL LXTSOU( NTLXOB, 'DEFINITION', NTDEFI, MNDFOB )
+C           REMPLISSAGE DU TABLEAU DEFINITION
+C           LE NOMBRE D'OBJETS
+            MCN(MNDFOB+WBDOBJ) = NBCOOB
+C           L'OBJET N'EST PAS STRUCTURE EN SOUS-DOMAINES
+            MCN(MNDFOB+WDOUNO) = 0
+C           LE TABLEAU DES OBJETS COMPOSANT L'OBJET
+            MN = MNDFOB + WTYOBJ
+C           LES OBJETS COMPOSANT LE SOUS-DOMAINE
+            DO 205 NC = 0, NBLIOB * 2 - 1
+               MCN(MN+NC) = MCN(MNLIOB+NC)
+205         ENDDO
+C           AJOUT DE LA DATE
+            CALL ECDATE( MCN(MNDFOB) )
+C           AJOUT DU NUMERO DU TABLEAU DESCRIPTEUR
+            MCN( MNDFOB + MOTVAR(6) ) = NONMTD( '~>OBJET>>DEFINITION' )
+C           DESTRUCTION DU TABLEAU DEVENU INUTILE
+            CALL TNMCDS( 'ENTIER', NBLIOB*2, MNLIOB )
+C           TRACE DE L'OBJET
+C           IF( INTERA .GE. 1 ) THEN
+C              SI CONSOLE INTERACTIVE GRAPHIQUE
+C              ALORS TRACE AUTOMATIQUE DE L'OBJET
+C              CALL VISEE0
+C              CALL T1OBJE( KNOMOB )
+C           ENDIF
+         ENDIF
+ 201  ENDDO
+C
+C     2) L'OBJET FINAL
+C     ----------------
+C     NOM_DE_L'OBJET
+      I     = INDEX( KNOMSD, ' ' )
+      KNOM_SD = KNOMSD(1:I-1) // '_SD'
+C     RECHERCHE DU NOM DE L'OBJET DANS LE LEXIQUE DES OBJETS
+      CALL LXLXOU( NTOBJE, KNOM_SD, NTLXSD, MNLXSD )
+C     S'IL N'EXISTE PAS IL EST CREE
+      IF( NTLXSD .LE. 0 ) THEN
+         CALL LXLXDC( NTOBJE, KNOM_SD, 24, 8 )
+         CALL LXLXOU( NTOBJE, KNOM_SD, NTLXSD, MNLXSD )
+      ENDIF
+C     DECLARATION DE LA DEFINITION DE L'OBJET
+      LODFSD = WTYOBJ + NBLIMI * 2 + NBSODO * 2
+      CALL LXTNDC( NTLXSD, 'DEFINITION', 'MOTS', LODFSD )
+      CALL LXTSOU( NTLXSD, 'DEFINITION', NTDEFI, MNDFSD )
+C     REMPLISSAGE DU TABLEAU DEFINITION
+      MCN(MNDFSD+WBDOBJ) = NBSODO + NBLIMI
+C     L'OBJET EST STRUCTURE EN SOUS-DOMAINES
+      MCN(MNDFSD+WDOUNO) = 1
+C     LE TABLEAU DES OBJETS COMPOSANT L'OBJET
+      MN = MNDFSD + WTYOBJ
+      DO 203 NO = 0, NBSODO - 1
+         MCN(MN  ) = MCN(MNTYOB+NO)
+         MCN(MN+1) = MCN(MNNUOB+NO)
+         MN = MN + 2
+ 203  ENDDO
+      DO 204 NO = 0, NBLIMI - 1
+         MCN(MN  ) = MCN(MNTYLI+NO)
+         MCN(MN+1) = MCN(MNNULI+NO)
+         MN = MN + 2
+ 204  ENDDO
+C     AJOUT DE LA DATE
+      CALL ECDATE( MCN(MNDFSD) )
+C     AJOUT DU NUMERO DU TABLEAU DESCRIPTEUR
+      MCN( MNDFSD + MOTVAR(6) ) = NONMTD( '~>OBJET>>DEFINITION' )
+C
+C     TRACE DE L'OBJET 'SOUS-DOMAINES'
+      IF( INTERA .GE. 1 ) THEN
+C        SI CONSOLE INTERACTIVE GRAPHIQUE
+C        ALORS TRACE AUTOMATIQUE DE L'OBJET
+         CALL VISEE0
+         CALL T1OBJE( KNOM_SD )
+      ENDIF
+C     DESTRUCTION DES TABLEAUX TEMPORAIRES
+      CALL TNMCDS( 'ENTIER', NBLIMI, MNTYLI )
+      CALL TNMCDS( 'ENTIER', NBLIMI, MNNULI )
+C
+C     LECTURE DU TYPE DE L'INTERPOLATION A EFFECTUER
+C     ==============================================
+      CALL LIMTCL( 'interpol', NOINTE )
+C
+C     FORMATION( DES TABLEAUX 'NPEF' PAR TYPE D'ELEMENTS NON
+C     PARTIE D'UN AUTRE ELEMENT, POUR CHACUN DES SOUS-DOMAINES
+C     ==========================================================
+      MN = MNDFSD + WTYOBJ
+      DO 301 NO = 1, NBSODO
+         NUTYOB = MCN(MN  )
+         NUOBJE = MCN(MN+1)
+         MN = MN + 2
+         KNOMTY = NMTYOB( NUTYOB )
+         CALL NMOBNU( KNOMTY, NUOBJE, KNOMOB )
+C        RECHERCHE DU NOM DE L'OBJET DANS LE LEXIQUE DES OBJETS
+         CALL LXLXOU( NTOBJE, KNOMOB, NTLXOB, MNLXOB )
+C        S'IL N'EXISTE PAS RETOUR A LA DEMANDE DU NOM DE L'OBJET
+         IF( NTLXOB .LE. 0 ) THEN
+            NBLGRC(NRERR) = 1
+            KERR(1) =  ' ERREUR : OBJET '//KNOMOB//' INCONNU '
+            CALL LEREUR
+            GOTO 9990
+         ENDIF
+C        RECHERCHE DU TABLEAU DEFINITION
+         CALL LXTSOU( NTLXOB, 'DEFINITION', NTDFOB, MNDFOB )
+C        LE TABLEAU TOPOLOGIE EST RECHERCHE
+         CALL LXTSOU( NTLXOB, 'TOPOLOGIE', NTTOOB, MNTOOB )
+         IF( NTTOOB .GT. 0 ) THEN
+C           SI LA DEFINITION A ETE MODIFIEE ALORS DESTRUCTION
+C           DU TABLEAU TOPOLOGIE DE CET OBJET ET CALCUL
+            IF( AVANT( MCN(MNTOOB), MCN(MNDFOB) ) ) THEN
+C              DESTRUCTION DES TABLEAUX NOEUDS POINTS ELEMENTS TOPOLOGIE
+               CALL DSNPET( NTLXOB )
+               NTTOOB = 0
+               MNTOOB = 0
+               NBLGRC(NRERR) = 2
+               KERR(1) = ' L''OBJET '//KNOMOB//' A ETE MODIFIE'
+               KERR(2) = ' SA TOPOLOGIE EST RECALCULEE'
+               CALL LERESU
+            ELSE
+               NBLGRC(NRERR) = 3
+               KERR(1) = ' L''OBJET '//KNOMOB//' N''A PAS ETE MODIFIE'
+               KERR(2) = ' SA TOPOLOGIE EXISTE DEJA'
+               KERR(3) = ' VOULEZ VOUS LA RECALCULER ?'
+               CALL LERESU
+               CALL LIMTCL( 'non_oui', N )
+               IF( N .EQ. 0 ) GOTO 100
+C              DESTRUCTION DES TABLEAUX NOEUDS POINTS ELEMENTS TOPOLOGIE
+               CALL DSNPET( NTLXOB )
+            ENDIF
+         ENDIF
+C        LES OBJETS DE L'OBJET SONT EXPRIMES EN TERMES DE
+C        POINTS LIGNES SURFACES VOLUMES  EXCLUSIVEMENT
+C        C'EST A DIRE D'OBJETS 'PREMIERS'
+         MNOBPR = 0
+         CALL OBJPRE( KNOMOB, NBOBPR, MOOBPR, MNOBPR,  IERR )
+         IF( IERR .NE. 0 ) GOTO 9990
+C        UNION DES TABLEAUX SOMMETS DES OBJETS PREMIERS DE L'OBJET
+         CALL NUOBNM( 'OBJET', KNOMOB, NUOBJE )
+         CALL UNIOBJ( NUOBJE, NBOBPR, MCN(MNOBPR),
+     %                NTSOMM, MNSOMM, NBSOM ,
+     %                NTUNIO, MNUNIO, IERR   )
+C        OUVERTURE DES TABLEAUX NSEF DE CES NBOBPR OBJETS
+         MNMNSO = 0
+         CALL TNMCDC( 'ENTIER', NBOBPR, MNMNSO )
+C        BOUCLE SUR LES NO SOMMET DES OBJETS PREMIERS
+         DO 302 N = 0, NBOBPR-1
+C           LE NUMERO DU TYPE DE L'OBJET PREMIER
+            MNOB   = MNOBPR + N + N
+            NUTYOB = MCN( MNOB )
+C           LE NUMERO DE L'OBJET DANS CE TYPE
+            NUOBJE = MCN( MNOB + 1 )
+C           LE LEXIQUE DE CE TYPE D'OBJETS
+            NTLX = NTMN( NUTYOB )
+C           LE LEXIQUE DE CET OBJET
+            CALL LXNLOU( NTLX, NUOBJE, NTLXO, NT )
+C           LE TABLEAU NSEF DE CET OBJET EXISTE-T-IL ?
+            CALL LXTSOU( NTLXO, 'NSEF', NT, MCN(MNMNSO+N) )
+            IF( NT .LE. 0 ) THEN
+               IF( NUTYOB .EQ. 1 ) THEN
+C                 L'OBJET EST UN POINT : SON TABLEAU NSEF EST CREE
+C                 AFIN DE RENDRE POINTS LIGNES, ... HOMOGENES
+                  CALL LXTSOU( NTLXO, 'XYZSOMMET', NT, L )
+C                 LE NOMBRE DE SOMMETS DE CE POINT
+                  J = MCN( L + WNBSOM )
+                  CALL LXTNDC( NTLXO, 'NSEF', 'MOTS', WBARNS+1)
+                  CALL LXTSOU( NTLXO, 'NSEF', NT, L )
+                  MCN(MNMNSO+N) = L
+C                 LE TYPE DE MAILLAGE : STRUCTURE
+                  MCN( L + WUTYMA ) = 1
+C                 LE NOMBRE DE NOEUDSOMMETS
+                  MCN( L + WBARNS ) = J
+C                 LE TYPE INCONNU DE FERMETURE DU MAILLAGE
+                  MCN( L + WUTFMA ) = -1
+C                 PAS DE TANGENTES STOCKEES
+                  MCN( L + WBTGEF ) = 0
+                  MCN( L + WBEFAP ) = 0
+                  MCN( L + WBEFTG ) = 0
+C                 LA DATE
+                  CALL ECDATE( MCN(L) )
+C                 LE NUMERO DU TABLEAU DESCRIPTEUR
+                  MCN( L + MOTVAR(6) ) = NONMTD( '~>>>NSEF' )
+               ELSE
+C                 LE NOM DE L'OBJET
+                  KNOMTY = NMTYOB( NUTYOB )
+                  CALL NMOBNU( KNOMTY, NUOBJE, KNOM )
+                  NBLGRC(NRERR) = 2
+                  KERR(1) = ' ERREUR : OBJET '// KNOM
+                  KERR(2) = ' SANS NSEF'
+                  CALL LEREUR
+                  IERR = 1
+                  GOTO 302
+               ENDIF
+            ENDIF
+ 302     ENDDO
+         IF( IERR .NE. 0 ) GOTO 9990
+C
+C        CALCUL DU NOMBRE DE NOEUDSOMMETS,ARETES,TRIANGLES,QUADRANGLES,
+C        TETRAEDRES,PENTAEDRES,HEXAEDRES
+C        ==============================================================
+         CALL DFTOP1( NBOBPR, MCN(MNMNSO), NBELEM, NBELTG, IERR )
+         IF( IERR .NE. 0 ) GOTO 9990
+C
+C        DECLARATION SANS INITIALISATION DES TABLEAUX DE HACHAGE
+C        NOEUDSOMMETS, SEGMENTS  , TRIANGLES, QUADRANGLES,
+C        TETRAEDRES  , PENTAEDRES, HEXAEDRES
+C        ========================================================
+         CALL AZEROI( 9, MNELEM )
+         CALL DFTOP2( MOELEM, NBELEM, MNELEM,
+     %                MOELTG, NBELTG, MNELTG )
+C
+C        HACHAGE DES NUMEROS DES POINTS,LIGNES,SURFACES,VOLUMES DE CHAQUE
+C        NOEUDSOMMET, ARETE, FACE, CUBE DE CES OBJETS PREMIERS
+C        ================================================================
+         MNDESO = MNUNIO + WDSCOU
+         MNNUSO = MNDESO + 1 + NBOBPR
+         MNDETG = MNNUSO + MCN(MNDESO+NBOBPR)
+         MNNUTG = MNDETG + 1 + NBOBPR
+         CALL DFTOP3( MOELEM, NBELEM, MNELEM,
+     %                MOELTG, NBELTG, MNELTG, NUELTG,
+     %                LIENEL, NUDREL,
+     %                NBOBPR, MCN(MNOBPR), MCN(MNMNSO),
+     %                MCN(MNDESO), MCN(MNNUSO),
+     %                MCN(MNDETG), MCN(MNNUTG),
+     %                NDIM, MCN(MNSOMM+WYZSOM),
+     %                IERR )
+C        LES TABLEAUX NUOBIN, NUOBCL
+         MNOBIN = 0
+         CALL TNMCDC( 'ENTIER', NBOBPR * 2, MNOBIN )
+         CALL AZEROI( NBOBPR * 2, MCN(MNOBIN) )
+         MNOBCL = MNOBIN + NBOBPR
+         CALL DFTOP4( NTLXOB, MOELEM, NBELEM, MNELEM,
+     %                MOELTG, NBELTG, MNELTG, NUELTG, LIENEL,
+     %                NOINTE, NBOBPR, MCN(MNOBPR), MCN(MNSOMM+WYZSOM),
+     %                NTNPEF, NMNPEF, MCN(MNOBIN), MCN(MNOBCL),
+     %                IERR   )
+         IF( IERR .NE. 0 ) GOTO 9990
+C
+C        LE NOMBRE DE TABLEAUX 'NPEF'
+         NBTYEL = 0
+         DO 303 I=1,9
+            IF( NTNPEF(I) .GT. 0 ) NBTYEL = NBTYEL + 1
+ 303     ENDDO
+C
+C        CALCUL DE NBOBIN NBOBCL
+         NBOBIN = 0
+         NBOBCL = 0
+         DO 304 I=0,NBOBPR-1
+            IF( MCN(MNOBIN+I) .GT. 0 ) NBOBIN = NBOBIN + 1
+            IF( MCN(MNOBCL+I) .GT. 0 ) NBOBCL = NBOBCL + 1
+            IF( MCN(MNOBIN+I) .GT. 0 .AND.
+     %          MCN(MNOBCL+I) .GT. 0 ) THEN
+                J      = MNOBPR + I + I
+                KNOMTY = NMTYOB( MCN(J) )
+                CALL NMOBNU( KNOMTY, MCN(J+1), KNOM )
+                NBLGRC(NRERR) = 2
+                KERR(1) =  ' ERREUR : OBJET ' // KNOM
+                KERR(2) =  ' A LA FOIS INTERNE ET AUX LIMITES'
+                CALL LEREUR
+                IERR = 1
+            ENDIF
+ 304     ENDDO
+C
+         IF( NBOBIN .LE. 0 ) THEN
+            NBLGRC(NRERR) = 2
+            KERR(1) = ' ERREUR : OBJET '// KNOMOB
+            KERR(2) = ' SANS OBJET INTERNE'
+            CALL LEREUR
+            IERR = 2
+         ENDIF
+C
+         IF( NBOBCL .LE. 0 ) THEN
+            NBLGRC(NRERR) = 2
+            KERR(1) = ' ATTENTION : OBJET '// KNOMOB
+            KERR(2) = ' SANS OBJET AUX LIMITES'
+            CALL LEREUR
+            IERR = 0
+         ENDIF
+         IF( IERR .GT. 0 ) GOTO 9990
+C
+C        FORMATION DU TABLEAU 'TOPOLOGIE'
+C        ================================
+         L = MOTVAR( NUMTYP('TYPEOBJET') )
+         J = WMTYEL + NBTYEL + (NBOBIN+NBOBCL) * L
+         CALL LXTNDC( NTLXOB, 'TOPOLOGIE', 'MOTS', J )
+         CALL LXTSOU( NTLXOB, 'TOPOLOGIE', NTTOPO, MNTOOB )
+C
+C        INITIALISATION DU TABLEAU TOPOLOGIE
+C        LE NOMBRE DES OBJETS INTERNES ET AUX LIMITES
+         MCN( MNTOOB + WBOBIN ) = NBOBIN
+         MCN( MNTOOB + WBOBCL ) = NBOBCL
+C        LE NOMBRE DE TYPE D'ELEMENTS FINIS
+         MCN( MNTOOB + WBTYEL ) = NBTYEL
+C        POUR L'INSTANT: NOEUDS = POINTS = SOMMETS
+         MCN( MNTOOB + WDPGST ) = 0
+C        LES NOMS DES TYPES D'ELEMENTS
+         J = MNTOOB + WMTYEL
+         DO 305 I=1,9
+            IF( NTNPEF(I) .GT. 0 ) THEN
+               MCN( J ) = NMNPEF( I )
+               J = J + 1
+            ENDIF
+ 305     ENDDO
+C
+         MNOBI = MNTOOB + WMTYEL + NBTYEL
+         MNOBC = MNOBI  + L * NBOBIN
+         DO 306 I=0,NBOBPR - 1
+C
+C           LE RECENSEMENT DES OBJETS INTERNES
+            IF( MCN(MNOBIN+I) .GT. 0 ) THEN
+C              LE TYPE DE L'OBJET
+               MCN( MNOBI  ) = MCN( MNOBPR+I+I)
+C              LE NUMERO DE L'OBJET
+               MCN( MNOBI+1) = MCN( MNOBPR+I+I+1)
+              MNOBI = MNOBI + L
+            ENDIF
+C
+C           LE RECENSEMENT DES OBJETS AUX LIMITES
+            IF( MCN(MNOBCL+I) .GT. 0 ) THEN
+C              LE TYPE DE L'OBJET
+               MCN( MNOBC  ) = MCN( MNOBPR+I+I)
+C              LE NUMERO DE L'OBJET
+               MCN( MNOBC+1) = MCN( MNOBPR+I+I+1)
+               MNOBC = MNOBC + L
+            ENDIF
+ 306     ENDDO
+C
+C        LA DATE
+         CALL ECDATE( MCN(MNTOOB) )
+C        LE NUMERO DU TABLEAU DESCRIPTEUR
+         MCN( MNTOOB + MOTVAR(6) ) = NONMTD( '~>OBJET>>TOPOLOGIE' )
+C
+C        DESTRUCTION DES TABLEAUX DEVENUS INUTILES
+         IF( MNOBPR .GT. 0 ) CALL TNMCDS( 'ENTIER', MOOBPR, MNOBPR )
+         IF( MNMNSO .GT. 0 ) CALL TNMCDS( 'ENTIER', NBOBPR, MNMNSO )
+         DO 307 I=1,9
+            IF( MNELEM(I) .GT. 0 ) THEN
+               CALL TNMCDS( 'ENTIER', MOELEM(I)*NBELEM(I), MNELEM(I) )
+            ENDIF
+ 307     ENDDO
+         IF( MNOBIN .GT. 0 ) CALL TNMCDS( 'ENTIER',NBOBPR*2,MNOBIN )
+C
+C        AJOUT DU NUMERO DES NOEUDS NON SOMMETS
+C        AJOUT DU NUMERO DES POINTS S'ILS SONT DIFFERENTS DES NOEUDS
+C        AJOUT DES TABLEAUX NOEUDS ET POINTS GEOMETRIQUES
+C        ===========================================================
+         IF( IERR .EQ. 0 ) THEN
+            CALL DFTOP5( NTLXOB, NDIM,   NOINTE,
+     %                   NBELEM, NTNPEF, NMNPEF,
+     %                   NBSOM , MNSOMM,
+     %                   NTNOEU, MNNOEU, NTPOGE, MNPOGE,
+     %                   NDPGST, IERR   )
+         ENDIF
+         IF( IERR .GT. 0 ) GOTO 9990
+C        MISE A JOUR DANS TOPOLOGIE DU CODE DE TRAITEMENT
+C        DES TABLEAUX NOEUDS POINTS GEOMETRIQUES SOMMETS
+         IF( NDPGST .GT. 0 ) THEN
+            MCN( MNTOOB + WDPGST ) = NDPGST
+         ENDIF
+C
+C        RENUMEROTATION DES NOEUDS DES ELEMENTS
+C        ======================================
+C        INITIALISATION,NUMEROS DE TMS ET DES ADRESSES MCN
+         CALL NDPGEL( NTLXOB, NTTOOB, MNTOOB,
+     &                NTPOGE, MNPOGE, NTNOEU, MNNOEU,
+     &                NBTYEL, NTELEM, MNELEM, IERR )
+         IF ( IERR.NE.0 ) GOTO 9990
+C        TABLEAU DES NOEUDS RENUMEROTES
+         CALL LXTSOU( NTLXOB, 'NOUVNOEUD', NTNONO, MNNONO )
+         IF( NTNONO .GT. 0 ) THEN
+C           LE TABLEAU EXISTANT EST DETRUIT
+            CALL LXTSDS( NTLXOB, 'NOUVNOEUD' )
+         ENDIF
+C        NOMBRE TOTAL DE NOEUDS :
+         NBNOE = MCN( MNNOEU + WNBNOE )
+         CALL LXTNDC( NTLXOB, 'NOUVNOEUD', 'MOTS', WONOEU+NBNOE+1 )
+         CALL LXTSOU( NTLXOB, 'NOUVNOEUD', NTNONO, MNNONO )
+         MNRENU = MNNONO + WONOEU
+C        CONSTRUCTION DE LA LISTE DES NOEUDS VOISINS
+         CALL LISVOI ( MNTOOB, MNELEM, MNNOEU,
+     &                 MNVOIS, MNMUNE, MXVOIS, IERR )
+         IF ( IERR.NE.0 ) GOTO 9990
+C        RENUMEROTATION SELON L'ALGORITHME DE GIBBS
+         CALL GIBBS ( NBNOE, MNMUNE, MCN(MNVOIS), MNRENU )
+C        SAUVEGARDE DE LA RENUMEROTATION
+         MCN( MNNONO + WBNONO ) = NBNOE
+C        LA DATE
+         CALL ECDATE( MCN(MNNONO) )
+C        LE NUMERO DU TABLEAU DESCRIPTEUR
+         MCN( MNNONO + MOTVAR(6) ) = NONMTD( '~>OBJET>>NOUVNOEUD' )
+C        MISE A JOUR DES NUMEROS DES NOEUDS AVEC LA RENUMEROTATION
+         CALL GIBBA( MNTOOB,MNELEM,MNRENU,IERR )
+         IF (IERR.EQ.0) THEN
+            CALL GIBBB( MNNOEU, MNRENU )
+         ENDIF
+C        DESTRUCTION DES TABLEAUX INUTILES
+         LVOIS = MCN(MNMUNE+NBNOE)
+         CALL TNMCDS ( 'ENTIER', LVOIS, MNVOIS )
+         CALL TNMCDS ( 'ENTIER', NBNOE+1, MNMUNE )
+C
+C        RENUMEROTATION DES ELEMENTS (PAR COULEURS)
+C        ==========================================
+C
+         NBEL = NBELEM(1) + NBELEM(2) + NBELEM(3) + NBELEM(4)
+     %        + NBELEM(5) + NBELEM(6) + NBELEM(7) + NBELEM(9)
+C        LE NOMBRE MAXIMUM DE COULEURS
+         NBCO = 16
+         CALL COLORE( NBEL, NBCO, MNTOOB, MNELEM,
+     %               MNNOEU, MNCOEL, MNLPCO, MNELCO, IERR )
+C        LES TABLEAUX RESULTATS SONT DETRUITS QUAND ON
+C        NE LES UTILISE PAS ( PHASE DE MISE AU POINT )
+         CALL TNMCDS( 'ENTIER' , NBCO+1, MNLPCO )
+         CALL TNMCDS( 'ENTIER' , NBEL  , MNELCO )
+         CALL TNMCDS( 'ENTIER' , NBEL  , MNCOEL )
+C
+ 301  ENDDO
+C
+C    RECHERCHE DES NOEUDS DE L'INTERFACE
+C    ===================================
+C
+      CALL TNMCDC( 'ENTIER', NBSODO, MNADNO )
+C     LES OBJETS INTERNES
+      NBTNOE = 0
+      DO 403 NO = 0, NBSODO - 1
+         NUTYOB = MCN(MNTYOB+NO)
+         NUOBJE = MCN(MNNUOB+NO)
+C        LE LEXIQUE DE CE TYPE D'OBJETS
+         NTLX   = NTMN( NUTYOB )
+C        LE LEXIQUE DE CET OBJET
+         CALL LXNLOU( NTLX, NUOBJE, NTLXOB, NT )
+C        RECHERCHE DU TABLEAU NOEUDS
+         CALL NDPGEL( NTLXOB, NTTOPO, MNTOPO,
+     %                NTPOGE, MNPOGE, NTNOEU, MNNOEU,
+     %                NBTYEL, NTELEM, MNELEM, IERR )
+         MCN(MNADNO+NO) = MNNOEU
+         NBNOEU = MCN(MNNOEU+WNBNOE)
+         NBTNOE  = NBTNOE + NBNOEU
+ 403  ENDDO
+      MNCOOR = 0
+      CALL TNMCDC ( 'REEL', NBTNOE * 3, MNCOOR )
+      MNINTE = 0
+      CALL TNMCDC ( 'ENTIER', NBTNOE*(NBSODO*3+1), MNINTE )
+      CALL AZEROI ( NBTNOE*(NBSODO*3+1), MCN(MNINTE) )
+      CALL SOUSD1 ( NBSODO, MCN(MNADNO), NBTNOE,
+     %              MCN(MNTYOB), MCN(MNNUOB),
+     %              NBNOIN, MCN(MNCOOR),
+     %              MXOBNO, MCN(MNINTE), IERR   )
+C
+C     DESTRUCTION DES TABLEAUX TEMPORAIRES
+      CALL TNMCDS( 'ENTIER', NBSODO, MNTYOB )
+      CALL TNMCDS( 'ENTIER', NBSODO, MNNUOB )
+      CALL TNMCDS( 'ENTIER', NBSODO, MNADNO )
+C
+C     CREATION DU TABLEAU 'INTERFACE'
+C     ===============================
+C
+C     DECLARATION DE L'INTERFACE
+      LOINOB = WBOBNO + NBNOIN * ( MXOBNO * 3 + 4 )
+      CALL LXTNDC( NTLXSD, 'INTERFACE', 'MOTS', LOINOB )
+      CALL LXTSOU( NTLXSD, 'INTERFACE', NTINTE, MNINOB )
+      CALL AZEROI( LOINOB, MCN(MNINOB) )
+C     REMPLISSAGE DU TABLEAU INTERFACE
+      MCN(MNINOB+WBNOIN) = NBNOIN
+      MCN(MNINOB+WXOBNO) = MXOBNO
+C     LE TABLEAU DU NOMBRE D'OBJETS CONTENANT UN NOEUD
+      MINO   = MNINOB + WBOBNO
+      MINOIN = MINO + NBNOIN
+      LONUNO = 0
+      DO 207 NO = 0, NBNOIN - 1
+         MINT  = MNINTE+NO
+         NBOBNO = MCN(MINT)
+C        LE NOMBRE D'OBJETS CONTENANT LE NOEUD
+         MCN(MINO+NO) = NBOBNO
+C        POUR CHAQUE OBJET SON TYPE, SON NUMERO, LE NUMERO DU NOEUD
+         DO NB = 1, NBOBNO
+            DO K  = 1, 3
+               MINT = MINT + NBTNOE
+               MCN(MINOIN) = MCN(MINT)
+               MINOIN = MINOIN + 1
+               ENDDO
+            ENDDO
+         LONUNO = LONUNO + 3 * NBOBNO
+ 207  ENDDO
+      MCN(MNINOB+WONUNO) = LONUNO
+C     LES COORDONNEES DES NOEUDS DE L'INTERFACE
+      MNCOIN = MINOIN
+      MNCOOB = MNCOOR
+      DO NO = 1, NBNOIN
+         DO K  = 0, 2
+            RMCN(MNCOIN+K) = RMCN(MNCOOB+K)
+         ENDDO
+         MNCOIN = MNCOIN + 3
+         MNCOOB = MNCOOB + 3
+      ENDDO
+
+C     AJOUT DE LA DATE
+      CALL ECDATE( MCN(MNINOB) )
+C     AJOUT DU NUMERO DU TABLEAU DESCRIPTEUR
+      MCN( MNINOB + MOTVAR(6) ) = NONMTD( '~>>>INTERFACE' )
+C
+C     DESTRUCTION DES TABLEAUX TEMPORAIRES
+      CALL TNMCDS ( 'REEL', NBTNOE * 3, MNCOOR )
+      CALL TNMCDS ( 'ENTIER', NBTNOE*(NBSODO*3+1), MNINTE )
+C
+C     FERMETURE DE L'OBJET
+      CALL LXLXFE( NTOBJE, KNOM_SD )
+      GOTO 100
+C
+C     ERREUR DETECTEE
+ 9990 IF( INTERA .LE. 1 ) THEN
+         CALL ARRET( 100 )
+      ELSE
+         IERR = 0
+         GO TO 100
+      ENDIF
+ 100  RETURN
+      END

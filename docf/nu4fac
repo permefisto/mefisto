@@ -1,0 +1,7 @@
+Le NOM des 4 TRIANGLES STRUCTURES qui forment
+les 4 faces du TETRAEDRE.
+Les TRIANGLES MAILLES doivent exister pour que
+leur nom soit accepte.
+Si N est le nombre constant de segments des
+cotes des triangles, alors, N x N x N sous-tetraedres
+seront crees pour recouvrir le TETRAEDRE.

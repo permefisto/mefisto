@@ -1,0 +1,212 @@
+      SUBROUTINE ERESTH( NBTYEL, MNELEM, MOARET, MXARET, LARETE,
+     %                   NOOBLA, NUMILI, NUMALI, LTDELI,
+     %                   NDSM  , NBTTEF,
+     %                   ERTHAF, ERTHEF, H1TEEF,
+     %                   ESERTH, H1TEMP, EEH1TH, IERR  )
+C+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+C BUT :    AJOUT DES CONTRIBUTIONS DES ARETES A L'ESTIMATEUR D'ERREUR
+C -----    SUR CHAQUE EF DU MAILLAGE
+C          CALCUL DES NORMES DE L'ESTIMATEUR D'ERREUR DES NDSM CAS
+C          CALCUL DE LA NORME H1 DE LA TEMPERATURE DES NDSM CAS
+C          CALCUL DU MAXIMUM DU RAPPORT ESTIMATEUR/NORME H1 TEMP SUR LES EF
+C          SUR LA TOTALITE DU MAILLAGE ET POUR LES NDSM CAS
+C
+C ENTREES :
+C ---------
+C NBTYEL : NOMBRE DE TYPES D'EF POUR CE MAILLAGE
+C MNELEM : ADRESSE MCN DES TABLEAUX NPEF"... DES TYPES D'EF
+C MOARET : NOMBRE D'ENTIERS PAR ARETE DU TABLEAU LARETES
+C MXARET : NOMBRE D'ARETES DECLAREES POUR LE HACHAGE ET LE TABLEAU ARETES
+C LARETE : TABLEAU DE HACHAGE DES ARETES DU MAILLAGE DE L'OBJET
+C          LARETE(1,I)= NO DU 1-ER  SOMMET DE L'ARETE
+C          LARETE(2,I)= NO DU 2-EME SOMMET > 1-ER  SOMMET
+C          LARETE(3,I)= CHAINAGE HACHAGE SUR ARETE SUIVANTE
+C          LARETE(4,I)= NUMERO DU 1-ER  TOUQ CONTENANT CETTE ARETE
+C                       >0 SI ARETE   DIRECTE DANS CE TOUQ
+C                       <0 SI ARETE INDIRECTE DANS CE TOUQ
+C          SI L'ARETE APPARTIENT A 2 TOUQ ALORS
+C          LARETE(5,I)= NUMERO DU 2-EME TOUQ CONTENANT CETTE ARETE
+C                       >0 SI ARETE   DIRECTE DANS CE TOUQ
+C                       <0 SI ARETE INDIRECTE DANS CE TOUQ
+C                       =0 SI ARETE APPARTENANT A UN SEUL TOUQ
+C          LARETE(6,I)= NUMERO DANS LARETE DE L'ARETE SUIVANTE
+C                       SOIT DANS LE CHAINAGE D'UNE LIGNE J ENTRE NUMILF ET NUMX
+C                       SOIT DANS LE CHAINAGE DES ARETES FRONTALIERES
+C                       0 SI C'EST LA DERNIERE
+C NBCOTE : NOMBRE DES ARETES DE L'EF
+C NOOBLA : NUMERO DES LIGNES DES ARETES DE L'EF
+C NUMILI : NUMERO MINIMAL DES OBJETS LIGNES
+C NUMALI : NUMERO MAXIMAL DES OBJETS LIGNES
+C
+C NDSM   : NOMBRE TOTAL DE CAS TRAITES
+C NBTTEF : NOMBRE TOTAL D'EF DU MAILLAGE DE L'OBJET
+C CPNFAF : 3 COORDONNEES DES POINTS D'INTEGRATION ET NORMALES SUR LES ARETES
+C SFLUAF : 2 FLUX NORMAUX EN LES POINTS D'INTEGRATION SUR LES ARETES
+C ERTHAF : ERREUR L2 A POSTERIORI SUR CHAQUE ARETE DES EF
+C ERTHEF : ERREUR L2 A POSTERIORI SUR CHAQUE EF
+C H1TEEF : NORME H1 DE LA TEMPERATURE SUR CHAQUE EF ET POUR CHAQUE CAS
+C
+C SORTIES :
+C ---------
+C ESERTH : ESTIMATEUR D'ERREUR SUR LE MAILLAGE TOTAL POUR CHAQUE CAS
+C H1TEMP : NORME H1 DE LA TEMPERATURE SUR LE MAILLAGE TOTAL POUR CHAQUE CAS
+C EEH1TH : MAX( ESTIMATEUR ERREUR 1 EF / NORME H1 TEMPERATURE SUR LE MAILLAGE)
+C IERR   : 0 SI PAS D'ERREUR, 1 SINON
+C+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+C AUTEUR : ALAIN PERRONNET ANALYSE NUMERIQUE UPMC PARIS         MAI 1995
+C23456---------------------------------------------------------------012
+      include"./incl/a_objet__topologie.inc"
+      include"./incl/a___npef.inc"
+      include"./incl/ponoel.inc"
+      include"./incl/donthe.inc"
+      COMMON / UNITES / LECTEU, IMPRIM, NUNITE(30)
+      include"./incl/pp.inc"
+      COMMON            MCN(MOTMCN)
+      INTEGER           LARETE(MOARET,MXARET)
+      DOUBLE PRECISION  ERTHAF(1:MXARET,1:NDSM),
+     %                  ERTHEF(1:NBTTEF,1:NDSM),
+     %                  H1TEEF(1:NBTTEF,1:NDSM),
+     %                  ESERTH(1:NDSM),
+     %                  H1TEMP(1:NDSM),
+     %                  EEH1TH(1:NDSM), E1
+      INTEGER           NOOBVC, NOOBSF(6), NOOBLA(12), NOOBPS(8)
+      INTEGER           LTDELI(1:MXDOTH,NUMILI:NUMALI)
+      INTEGER           NOSA(2), NONOEF(10)
+C
+C     MISE A ZERO DES ESTIMATEURS SUR TOUT LE MAILLAGE
+      DO 10 N=1,NDSM
+         ESERTH(N) = 0D0
+         H1TEMP(N) = 0D0
+         EEH1TH(N) = 0D0
+ 10   CONTINUE
+C
+      NUEF = 0
+      DO 100 NOTYEL=1,NBTYEL
+C
+C        L'ADRESSE DU TABLEAU ELEMENTS
+         MNELE  = MCN( MNELEM - 1 + NOTYEL )
+C        LE NUMERO DU TYPE DE L'ELEMENT FINI
+         NUTYEL = MCN( MNELE + WUTYEL )
+C
+C        LE NOMBRE D'ELEMENTS FINIS DE CE TYPE
+         NBELEM = MCN( MNELE + WBELEM )
+C
+CCC         IF( NUTYEL .LE. 4 ) THEN
+CCCC           EF AXISYMETRIQUE
+CCC            NOAXIS = 1
+CCC         ENDIF
+C
+C        LES CARACTERISTIQUES DE L'ELEMENT FINI
+         CALL ELTYCA( NUTYEL )
+C
+C        LA BOUCLE SUR LES ELEMENTS FINIS DE CE TYPE NUTYEL
+C        ==================================================
+         LIBREF = MXARET
+         DO 90 NUELEM = 1 , NBELEM
+C
+C           UN EF DE PLUS
+            NUEF = NUEF + 1
+C
+C           LES NOEUDS DE L'ELEMENT FINI NUELEM
+            CALL EFNOEU( MNELE , NUELEM , NBNDEL , NONOEF )
+C
+C           LE NUMERO DE VOLUME  DE L'EF
+C           LE NUMERO DE SURFACE DES FACES   DE L'EF
+C           LE NUMERO DE LIGNE   DES ARETES  DE L'EF
+C           LE NUMERO DE POINT   DES SOMMETS DE L'EF
+            CALL EFPLSV( MNELE  , NUELEM ,
+     %                   NOVCEL , NOSFEL , NOLAEL , NOPSEL ,
+     %                   NOOBVC , NOOBSF , NOOBLA , NOOBPS )
+C
+            DO 70 K=1,NARET
+C
+C              L'ARETE EST ELLE SUR UNE LIGNE UTILISATEUR?
+               NL = NOOBLA( K )
+C              L'ARETE A T ELLE SA TEMPERATURE IMPOSEE?
+               IF( NL .GT. 0 ) THEN
+                  IF( LTDELI(LPCONT,NL) .GT. 0 ) THEN
+C                    UN TABLEAU CONTACT EXISTE POUR CETTE LIGNE
+C                    LE FLUX SUR CETTE ARETE NE DOIT PAS ETRE CALCULE
+C                    POUR L'ESTIMATEUR D'ERREUR
+                     GOTO 70
+                  ENDIF
+               ENDIF
+C
+C              LE NUMERO DES SOMMETS DU COTE
+               NOSA(1) = K
+               IF( K .LT. NARET ) THEN
+                  NOSA(2) = K+1
+               ELSE
+                  NOSA(2) = 1
+               ENDIF
+C
+C              RECHERCHE DU NUMERO DE CETTE ARETE DANS LE TABLEAU LARETE
+               NOSA(1) = NONOEF( NOSA(1) )
+               NOSA(2) = NONOEF( NOSA(2) )
+               IF( NOSA(1) .GT. NOSA(2) ) THEN
+                  L       = NOSA(1)
+                  NOSA(1) = NOSA(2)
+                  NOSA(2) = L
+               ENDIF
+               CALL HACHAG( 2, NOSA, MOARET, MXARET, LARETE, 3,
+     &                      LIBREF, NOARE )
+               IF( NOARE .LE. 0 ) THEN
+C                 ARETE NON RETROUVEE
+                  WRITE(IMPRIM,*) 'ERESTH: ARETE ',NOSA(1),' ',NOSA(2),
+     %                       ' NON RETROUVEE DANS LES ARETES'
+                  IERR = 1
+                  RETURN
+               ENDIF
+C
+C              NOMBRE D'EF CONTENANT CETTE ARETE
+               IF( LARETE(5,NOARE) .NE. 0 ) THEN
+                  S = 0.5
+               ELSE IF( LARETE(4,NOARE) .NE. 0 ) THEN
+                  S = 1.0
+               ELSE
+C                 ARETE NON RETROUVEE
+                  WRITE(IMPRIM,*) 'ERESTH: ARETE ',NOSA(1),' ',NOSA(2),
+     %                            ' DANS AUCUN EF'
+                  IERR = 1
+                  RETURN
+               ENDIF
+C
+               DO 50 N=1,NDSM
+C                 CONTRIBUTION DE CETTE ARETE A L'ESTIMATEUR D'ERREUR SUR CET EF
+                  ERTHEF(NUEF,N) = ERTHEF(NUEF,N) + S * ERTHAF(NOARE,N)
+ 50            CONTINUE
+ 70         CONTINUE
+C
+            DO 80 N=1,NDSM
+C              CONTRIBUTION DE CET EF A L'ESTIMATEUR D'ERREUR SUR TOUT LE MAILLA
+               ESERTH(N) = ESERTH(N) + ERTHEF(NUEF,N)**2
+C              CONTRIBUTION DE CET EF A LA NORME H1 DE LA TEMPERATURE SUR LE MAI
+               H1TEMP(N) = H1TEMP(N) + H1TEEF(NUEF,N)**2
+CCCC              CONTRIBUTION DE CET EF A L'ESTIMATEUR D'ERREUR RELATIF SUR TOU
+CCC               EEH1TH(N) = MAX(EEH1TH(N), ERTHEF(NUEF,N)/H1TEEF(NUEF,N))
+CCC               EEH1TH(N) =EEH1TH(N) + (ERTHEF(NUEF,N)/H1TEEF(NUEF,N))**2
+ 80         CONTINUE
+C
+C           FIN DE L'EF NUEF
+ 90      CONTINUE
+100   CONTINUE
+C
+C     LA RACINE CARREE POUR OBTENIR LA NORME
+      DO 130 N=1,NDSM
+         ESERTH(N) = SQRT( ESERTH(N) )
+         H1TEMP(N) = SQRT( H1TEMP(N) )
+CCC         EEH1TH(N) = SQRT( EEH1TH(N) )
+ 130  CONTINUE
+C
+C     LE MAXIMUM DE L'ESTIMATEUR SUR UN EF / NORME H1 DE LA TEMPERATURE SUR LE M
+      DO 160 NUEF=1,NBTTEF
+         DO 150 N=1,NDSM
+            IF( ABS(H1TEMP(N)) .LE. 1D-28 ) THEN
+               E1 = 0D0
+            ELSE
+               E1 = ERTHEF(NUEF,N) / H1TEMP(N)
+            ENDIF
+            EEH1TH(N) = MAX( EEH1TH(N), E1 )
+ 150     CONTINUE
+ 160  CONTINUE
+      END

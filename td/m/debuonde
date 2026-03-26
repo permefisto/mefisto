@@ -1,0 +1,14 @@
+variable DebuONDE 'Equation des ONDES' entier
+(1  : 'NOM de l''OBJET a traiter',
+ 2  : 'ENTREE des DONNEES DES ONDES',
+ 3  : 'RESOUDRE ONDE STATIONNAIRE',
+ 6  : 'RESOUDRE L''EQUATION DES ONDES',
+ 8  : 'DESSIN des ONDES',
+ 10 : 'TRACE du MAILLAGE des PLSVO',
+ 20 : 'PRECISION pour IDENTIFIER POINTS',
+ 39 : 'COULEUR du FOND',
+ 71 : 'SUIVI TMS AFFICHAGE MODIFICATION',
+ 72 : 'SUIVI FICHIERS de la MS',
+ 73 : 'GESTION unites lecture affichage',
+ 74 : 'TUER des TMS PLSVO',
+ 99 : 'SAUVEGARDE donnees FIN TRAITEMENT' ) ;

@@ -1,0 +1,91 @@
+{ ====================================================================== }
+{ MEFISTO Software     : January 4, 2022 Version                         }
+{ USER's  Name         : Alain Perronnet                                 }
+{ Project Name         : Air around 3 Dennis: Particles D1->D23 drawings }
+{ Date                 : January 4, 2022  17h 18m                        }
+{ ====================================================================== }
+DefVar Pi,              DegRad; 
+       Pi=atan(1.) * 4; DegRad = Pi / 180; {Conversion degrees -> Radians}
+
+DefVar D1MOUTH_X,          D1MOUTH_Y,        D1MOUTH_Z;
+       D1MOUTH_X=0.1765;   D1MOUTH_Y=-0.026; D1MOUTH_Z=1.6135; { D1 Mouth XYZ }
+
+DefVar D2MOUTH_X; D2MOUTH_X=D1MOUTH_X + distance * cos(-20*DegRad);
+DefVar D2MOUTH_Y; D2MOUTH_Y=D1MOUTH_Y + distance * sin(-20*DegRad);
+DefVar D2MOUTH_Z; D2MOUTH_Z=D1MOUTH_Z;
+
+DefVar D3MOUTH_X; D3MOUTH_X=D1MOUTH_X + distance * cos(40*DegRad);
+DefVar D3MOUTH_Y; D3MOUTH_Y=D1MOUTH_Y + distance * sin(40*DegRad);
+DefVar D3MOUTH_Z; D3MOUTH_Z=D1MOUTH_Z;
+
+DefVar D123Bar_X; D123Bar_X = ( D1MOUTH_X + D2MOUTH_X + D3MOUTH_X ) / 3;
+DefVar D123Bar_Y; D123Bar_Y = ( D1MOUTH_Y + D2MOUTH_Y + D3MOUTH_Y ) / 3;
+DefVar D123Bar_Z; D123Bar_Z = ( D1MOUTH_Z + D2MOUTH_Z + D3MOUTH_Z ) / 3;
+
+DefVar RayBool; RayBool=50e-6;  { 50   Micro-meter Big    Droplet Radius }
+                                {  5   Micro-meter Medium Droplet Radius }
+                                {  0.5 Micro-meter small  Droplet Radius }
+
+DefVar Vnull;    Vnull=0.001;   { m/s Mouth Particle into the Respiration}
+DefVar Vexpired; Vexpired=0.67; { m/s Mouth Expiration Particle Velocity}
+DefVar Vcough;   Vcough  =4.00; { m/s Mouth Cough-jet Velocity}
+DefVar Vsneezed; Vsneezed=4.50; { m/s Mouth Sneezing Ejection Velocity}
+
+{
+DefFunc REGION(t,x,y,z);
+  REGION = (x-D123Bar_X)**2 + (y-D123Bar_Y)**2 <1.4**2 and z>0.05 and z<1.9;
+EndFunc;
+}
+
+{
+DefFunc REGION(t,x,y,z);
+  REGION = z>1.59 and z<1.63;
+EndFunc;
+}
+
+DefFunc REGION(t,x,y,z);
+  REGION = 1;  {true}
+EndFunc;
+
+10; { DRAWING of VELOCITIES or PRESSURES }
+
+ 3; { NUMBER of SURFACES to draw }
+    SDENIS1; SDENIS2; SDENIS3; { SURFACE NAMES }
+
+ 2; { INITIAL and FINAL TIME of VELOCITY+PRESSURE VECTORS to DRAW }
+   75; 80.0; { TIME of INITIAL and FINAL FILE }
+
+ 7; { DRAW the RUN of PARTICLES in the FLUID }
+  1; { Give LONGITUDES LATITUDES RADIUS TIME0 of PARTICLES to RUN }
+
+    1; { NUMBER of PARTICLES STARTING POINTS }
+       { INITIAL XYZ COORDINATES of PARTICLES }
+       D1MOUTH_X; D1MOUTH_Y; D1MOUTH_Z;
+
+    3; { Number of DROPLET RADIUS }
+    RayBool/25; RayBool/50; RayBool/100; { Droplet Radius Values }
+
+    1; { Number of PARTICLE VELOCITY MAGNITUDE }
+    Vnull; { PARTICLE VELOCITY MAGNITUDE Values }
+
+    8;   { LONGITUDE degrees Minimum of PARTICLES VELOCITY }
+   12;   { LONGITUDE degrees MAXIMUM of PARTICLES VELOCITY }
+    9;   { LONGITUDE SUBDIVISION NUMBER }
+
+   -2;   { LATITUDE degrees Minimum of PARTICLES VELOCITY }
+    2;   { LATITUDE degrees MAXIMUM of PARTICLES VELOCITY }
+    9;   { LATITUDE SUBDIVISION NUMBER }
+
+   75.0; { START TIME seconds of FIRST PARTICULE }
+   77.5; { START TIME seconds of LAST  PARTICULE }
+
+ 4;  { COMPUTE the RUN of GIVEN PARTICLES-DROPLETS COVID in AIR }
+ 5;  { Draw the already COMPUTED RUN of GIVEN PARTICLES }
+  27;    { Total SCENE from EXTREMAL XYZ }
+  30;    { View by LONGITUDE LATITUDE degrees data }
+  13; 6; { LONGITUDE LATITUDE degrees }
+  34;    { ZOOMING of the Drawing }
+  1.2;   { Factor of ZOOMING }
+  90;    { Continue the DRAWING }
+
+CLOSE;

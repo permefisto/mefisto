@@ -1,0 +1,14 @@
+{ ============================================================ }
+{ MEFISTO Version Juin 1999        PROJET: Test f(x,y,z)=Ctes  }
+{ Utilisateur: Alain Perronnet     Date:   15/6/99             }
+{ ============================================================ }
+1; ob;{ NOM de l OBJET a traiter }
+
+11;   { DESSIN ISO-SURFACES f(x,y,z)=Ctes }
+ DefFonc f(x,y,z);
+   f=((x-a/2)/a)**2+((y-b/2)/b)**2+((z-c/2)/c)**2-1;
+ FinFonc;
+  f;  { NOM DE LA FONCTION F(X,Y,Z) }
+  2;  { ISO REGULIERES entre MIN et MAX }
+ 90;  { EXECUTER le TRACE }
+FERMER;

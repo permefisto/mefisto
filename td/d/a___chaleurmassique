@@ -1,0 +1,12 @@
+deftms ~>>>CHALEURMASSIQUE 'Cp Capacite Thermique Massique J/K/kg d un PLSV'
+ variable muet DATE   'date de creation du tableau'   reel2  ;
+ variable muet NUTD   'numero du tableau descripteur' entier ; 
+ variable      LTCHMA 'type de la Capacite Thermique Massique'   entier 
+ ( 1 : 'Capacite Thermique Massique constante J/K/kg' ,
+  -1 : 'fonction Capacite Thermique Massique' ,
+   0 : 'Capacite Thermique Massique a supprimer'  ) ;
+cas LTCHMA
+ 1 : variable CHAMAS 'Capacite Thermique Massique J/K/kg'   reel   ; 
+-1 : variable NFCHMA 'nom fonction Capacite Thermique Massique' ^~>FONCTION ;
+fincas ;   
+fintms ;

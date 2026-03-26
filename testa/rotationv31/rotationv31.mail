@@ -1,0 +1,98 @@
+{ ============================================================ }
+{ Software MEFISTO     : 14 June 2008  Version                 }
+{ USER's Name          : Alain Perronnet                       }
+{ Project Name         : v31 tetra de pyramides ...            }
+{ Date                 : 14/06/2008  12h 59m                   }
+{ ============================================================ }
+1; 1;
+    AX1; i; 1; 0; 0; 0;
+    AX2; i; 1; 3; 0; 0;
+    PL1; i; 1; 3; 1; 0;
+    PL2; i; 1; 3; 0; 1;
+@;
+@;
+
+6; { TRANSFORMATIONS mathematiques }
+ { NOM TRANSFORMATION ou ABANDON? }
+ SymPlan;
+ 3;{ isometry R3 -> R3 }
+ 4;{ plane symetry }
+ AX2; PL1; PL2; { POINT NAME }
+ @;
+ @;
+
+3; { SURFACES faces of the object }
+ tr3qu3; { NAME of the SURFACE or ESCAPE? }
+ i; { NAME of TRANSFORMATION }
+ 10;{ INPUT DATA OF XYZSOMMET & NSEF TMS }
+ 12;{ NBSOM 'number of vertices' entier ; }
+ 0; { NBTGS 'number of tangents' entier ; }
+ 3; { NBCOOR 'number of vertex coordinates' entier ; }
+ 0; 0;   0; { XYZSOM(1..NBSOM) 'X Y Z of each vertex' xyz ; }
+ 1; 0;   0;
+ 2; 0;   0;
+ 3; 0.4; 0;
+ 0.5; 1; 0;
+ 1.5; 1; 0;
+ 2.5; 1; 0;
+ 3;   1; 0;
+ 1;   2; 0;
+ 2; 2.5; 0;
+ 3; 2.5; 0;
+ 3;   4; 0;
+ 3; { surface }
+ 0; { not-closed }
+ 4; { face }
+ 0; { 0 tg by FE }
+ 8; { NBEFOB 'number of PLSV''s FE' entier ; }
+ 0; { NBEFTG 'number of FE with tangents' entier ; }
+ 0; { NBEFAP 'number of FE with pointer on FE with TG' entier ; }
+ 0; { unstructured }
+ 1; 5; 2; 0;  { sens indirect pour tester }
+ 2; 6; 5; 0;
+ 2; 3; 7; 6;
+ 3; 4; 8; 7;
+ 5; 6; 9; 0;
+ 6; 9; 10; 7; { sens indirect pour tester }
+ 7; 8; 11; 10;
+10; 11; 12; 0;
+ { NUSOEF(1..NBSOEF,1..NBEFOB) 'numbers of vertices of FE' entier ; }
+ { LPEFTG(1..NBEFAP) 'number>0 of the FE with TG else 0' entier ; }
+ { NGEFTG(1..NBEFTG) 'geometric number of the FE with TG' entier }
+ { NUTGEF(1..NBTGEF,1..NBEFTG) '+-Nb of TG of the FE with TG' entier ; }
+ { NAME of the SURFACE or ESCAPE? }
+ @;
+@;
+
+4; { VOLUMES materials of the object }
+ v15;      { NAME of the VOLUME }
+ i;        { in LEXICON ~>TRANSFO }
+ 15;       { ROTATION OF SURFACE AROUND AXIS (0 VERTEX/AXIS) }
+ tr3qu3;   { NAME of SURFACE }
+ ax2; ax1; { NAME of POINT ou le contraire }
+ 6;        { NBANAV 'number of angles of rotation' entier ; }
+ 0;        { constant angles }
+ 270;      { ANMXAV 'total angle (degrees) of rotations' reel ; }
+
+ v15s; 
+ SymPlan;  { dans le LEXIQUE ~>TRANSFO }
+ 50;       { TRANSFORMATION D UN VOLUME EXISTANT }
+ v15;      { NOM de VOLUME }
+
+ union; 
+    i;     { NAME of TRANSFORMATION }
+   51;
+    2;
+ v15; v15s;
+
+ v31;   { NAME of the VOLUME or ESCAPE? }
+ i;     { NAME of TRANSFORMATION }
+ 31;    { TETRAHEDRIZATION OF A PYRA-PENTA-HEXAHEDRIZATION }
+ union; { NAME of VOLUME }
+@;
+
+10;   { DRAWING of PLSVO meshes }
+  4;  { VOLUME }
+  1;  { ALL VOLUMES }
+  90; { Continue the DRAWING }
+FERMER;

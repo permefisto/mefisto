@@ -1,0 +1,166 @@
+{ ==================================================================== }
+{ MEFISTO Software     : January 31, 2022 version                      }
+{ USER's Name          : Alain Perronnet                               }
+{ Project Name         : tube2d                                        }
+{ Date                 : 31/01/28   10h 54m 26s                        }
+{ ==================================================================== }
+
+2; { DATA INPUT of the FLUID ========================================= }
+
+DefFonc parabol(t,x,y,z,ntyplsv,nuplsv,nbcomp);
+  si nbcomp=1
+  alors
+    parabol = (y-ymin)*(ymax-y)/(2*(ymax-ymin));
+  sinon
+    parabol=0;
+  finsi;
+FinFonc;
+
+ { SURFACE: ABCD }
+ 1;    { Rot  The Mass Density }
+ 1;    { Mass Constant }
+ 1;    { DMASSE Value of the constant mass density of WATER }
+ 
+ 2;    { nu The FLUID VISCOSITY }
+ 1;    { Constant Viscosity }
+ 1;    { VISCOS FLUID VISCOSITY value }
+
+ 4 ;   { INITIAL VELOCITIES ..........}
+-1;    { velocity fixed by a function }
+ 2;    { NBCOBV number of components of the fixed velocity }
+ 1; 2; { NUCOBV(1..NBCOBV) nb of each component of the fixed velocity}
+ parabol; { Name of the function VELOCITY }
+
+ 5;    { INITIAL PRESSURE ...........}
+ 1;    { 'CONSTANT INITIAL PRESSURE' }
+ 0;    { 'Initial Pressure CONSTANT' }
+ @;
+
+ { LINE: AB }
+ 2; { Fixation of the VELOCITY }
+ 1; { constant fixed velocity }
+ 2; { NBCOBV number of components of the fixed velocity }
+ 1; 2; { NUCOBV(1..NBCOBV) nb of each component of the fixed velocity}
+ 0; 0; { BLVITE(1..NBCOBV) Value of the fixation }
+ @;
+
+ { LINE: BC }
+ 2; { Fixation of the VELOCITY }
+-1; { velocity fixed by a function }
+ 2; { NBCOBV number of components of the fixed velocity }
+ 1; 2; { NUCOBV(1..NBCOBV) nb of each component of the fixed velocity}
+ parabol;  {Name of the function VELOCITY}
+ @;
+
+ { LINE: CD }
+ 2; { Fixation of the VELOCITY }
+ 1; { constant fixed velocity }
+ 2; { NBCOBV number of components of the fixed velocity }
+ 1; 2; { NUCOBV(1..NBCOBV) nb of each component of the fixed velocity}
+ 0; 0; { BLVITE(1..NBCOBV) Value of the fixation }
+ @;
+
+ { LINE: DA }
+ 2; { Fixation of the VELOCITY }
+-1; { velocity fixed by a function }
+ 2; { NBCOBV number of components of the fixed velocity }
+ 1; 2; { NUCOBV(1..NBCOBV) nb of each component of the fixed velocity}
+ parabol; {Name of the function VELOCITY}
+ @;
+
+ { POINT: A }
+ 2; { Fixation of the VELOCITY }
+ 1; { constant fixed velocity }
+ 2; { NBCOBV number of components of the fixed velocity }
+ 1; 2; { NUCOBV(1..NBCOBV) nb of each component of the fixed velocity}
+ 0; 0; { BLVITE(1..NBCOBV) Value of the fixation }
+ @;
+
+ { POINT: B }
+ 2; { Fixation of the VELOCITY }
+ 1; { constant fixed velocity }
+ 2; { NBCOBV number of components of the fixed velocity }
+ 1; 2; { NUCOBV(1..NBCOBV) nb of each component of the fixed velocity}
+ 0; 0; { BLVITE(1..NBCOBV) Value of the fixation }
+ @;
+
+ { POINT: C }
+ 2; { Fixation of the VELOCITY }
+ 1; { constant fixed velocity }
+ 2; { NBCOBV number of components of the fixed velocity }
+ 1; 2; { NUCOBV(1..NBCOBV) nb of each component of the fixed velocity}
+ 0; 0; { BLVITE(1..NBCOBV) Value of the fixation }
+ @;
+
+ { POINT: D }
+ 2; { Fixation of the VELOCITY }
+ 1; { constant fixed velocity }
+ 2; { NBCOBV number of components of the fixed velocity }
+ 1; 2; { NUCOBV(1..NBCOBV) nb of each component of the fixed velocity}
+ 0; 0; { BLVITE(1..NBCOBV) Value of the fixation }
+ @;
+
+ { POINT: BCMIDDLE }
+ 3; { Fixation of the PRESSURE }
+ 1; { constant PRESSURE }
+ 0; { BLPRES Value of the PRESSURE }
+ @;
+@;
+
+5;  { STEADY FLUID SOLVER =======================================}
+ 1; { CROUT FACTORIZATION L D tL }
+@;
+
+6;  { UNSTEADY FLUID SOLVER =====================================}
+   1;   { CROUT FACTORIZATION L D tL }
+ 0.0;   { INITIAL TIME }
+ 1.0;   { FINAL   TIME }
+ 0.01;  { STEP of TIME }
+  10;   { NUMBER of ADDED SOLUTION VECTORS }
+@;
+@;
+
+10; { DRAWING of VELOCITIES PRESSURES ===========================}
+ 2; { INITIAL and FINAL TIME of SOLUTIONS VECTORS to DRAW }
+    { INITIAL TIME? } 0.0;
+    { FINAL TIME?   } 1.0;
+
+ 1; { The PRESSURE drawings }
+ 2; { ISO-PRESSURES COLOR ZONES }
+ 90;{ Drawing of ZONES of COLORS }
+ 90;{ Continue the DRAWING }
+ @;
+ @;
+ @;
+ @;
+
+
+6;  { UNSTEADY FLUID SOLVER =====================================}
+   1; { CROUT FACTORIZATION L D tL }
+ 1.0; { INITIAL TIME }
+ 2.0; { FINAL   TIME }
+ 0.01;{ STEP of TIME }
+  10; { NUMBER of ADDED SOLUTION VECTORS }
+@;
+@;
+
+10; { DRAWING of VELOCITIES PRESSURES ===========================}
+ 2; { INITIAL and FINAL TIME of SOLUTIONS VECTORS to DRAW }
+    { INITIAL TIME? } 0.0;
+    { FINAL TIME?   } 2.0;
+
+ 2; { The VELOCITY is drawn with ARROWS }
+ 90;{ DRAWING of VELOCITY ARROWS }
+ 90;{ Continue the DRAWING }
+ @;
+ @;
+
+ 9; { In 2D SURFACE(X,Y,PRESSURE(X,Y)) }
+ 90;{ DRAWING of SOLUTION from Z }
+ 90;{ Continue the DRAWING }
+ @;
+ @;
+ @;
+ @;
+
+CLOSE;

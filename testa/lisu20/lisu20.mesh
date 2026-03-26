@@ -1,0 +1,80 @@
+{ ==================================================================== }
+{ MEFISTO Software     : February 6-th 2010 Version                    }
+{ USER's Name          : alain                                         }
+{ Project Name         : mvlt                                          }
+{ Date                 :  6/02/2010   12h 29m 12s                      }
+{ ==================================================================== }
+ 1;
+ { POINTS vertices of the object }
+ 1;
+ { TYPING of VALUES }
+ { NAME of the POINT or ESCAPE? }
+ Orig; i; 1; 0; 0; 0;
+ { in LEXICON ~>TRANSFO }
+ { X Y Z COORDINATES }
+ { COORPO 'X Y Z of a point' xyz ; }
+ { NAME of the POINT or ESCAPE? }
+ x; i; 1; 1; 0; 0;
+ { in LEXICON ~>TRANSFO }
+ { X Y Z COORDINATES }
+ { COORPO 'X Y Z of a point' xyz ; }
+ { NAME of the POINT or ESCAPE? }
+ xm; i; 1; -1; 0; 0;
+ { in LEXICON ~>TRANSFO }
+ { X Y Z COORDINATES }
+ { COORPO 'X Y Z of a point' xyz ; }
+ { NAME of the POINT or ESCAPE? }
+ y; i; 1; 0; 1; 0;
+ { in LEXICON ~>TRANSFO }
+ { X Y Z COORDINATES }
+ { COORPO 'X Y Z of a point' xyz ; }
+ { NAME of the POINT or ESCAPE? }
+ z; i; 1; 0; 0; 1;
+ { in LEXICON ~>TRANSFO }
+ { X Y Z COORDINATES }
+ { COORPO 'X Y Z of a point' xyz ; }
+ { NAME of the POINT or ESCAPE? }
+ @;
+
+
+2;{ LINES edges of the object }
+ lf; { NAME of the LINE or ESCAPE? }
+ i;  { NAME of TRANSFORMATION }
+ 20; { EXTRUDED LINES of a POLYGON }
+ ORIG;  Y; { 'name of 2 points of translation vector }
+ 1;  { OUFEEX 'OPENED(0) or CLOSED(1) POLYGON' entier ; }
+ 3;  { NBPTEX 'number of point vertices of the polygon' entier; }
+ Orig; x; z;  { polygon point names }
+
+ lo; { NAME of the LINE or ESCAPE? }
+ i;  { NAME of TRANSFORMATION }
+ 20; { EXTRUDED LINES of a POLYGON }
+ ORIG;  Y; { 'name of 2 points of translation vector }
+ 0;  { OUFEEX 'OPENED(0) or CLOSED(1) POLYGON' entier ; }
+ 2;  { NBPTEX 'number>2 of point vertices of the polygon' entier; }
+ Orig; xm;  { polygon point names }
+ @;
+
+
+3;{ SURFACES of the object }
+ sf; { NAME of the LINE or ESCAPE? }
+ i;  { NAME of TRANSFORMATION }
+ 20; { EXTRUDED SURFACES of a POLYGON }
+ ORIG;  Y; { 'name of 2 points of translation vector }
+ 1;  { OUFEEX 'OPENED(0) or CLOSED(1) POLYGON' entier ; }
+ 3;  { NBPTEX 'number of point vertices of the polygon' entier; }
+ Orig; x; z;  { polygon point names }
+
+ so; { NAME of the LINE or ESCAPE? }
+ i;  { NAME of TRANSFORMATION }
+ 20; { EXTRUDED SURFACES of a POLYGON }
+ ORIG;  Y; { 'name of 2 points of translation vector }
+ 0;  { OUFEEX 'OPENED(0) or CLOSED(1) POLYGON' entier ; }
+ 2;  { NBPTEX 'number>2 of point vertices of the polygon' entier; }
+ Orig; xm;  { polygon point names }
+ @;
+
+10; 3; 1; 75; 90;  { Drawing of Surfaces }
+
+CLOSE;
+

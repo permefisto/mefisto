@@ -1,0 +1,147 @@
+{ =================================================================== }
+{ MEFISTO Software     : February 25, 2022 Version                    }
+{ USER's  Name         : Alain Perronnet                              }
+{ Project Name         : recyl Flow around a cylinder                 }
+{ Date                 : 2022/02/25                                   }
+{ =================================================================== }
+DefVar Rho;      Rho=1;
+DefVar Reynolds; Reynolds=3900;
+DefVar Vel0;     Vel0=1;
+DefFunc Parabol(t,x,y,z,ntyplsv,nuplsv,nbcomp);
+  if nbcomp=1
+  then
+    Parabol = Vel0 * (High-y)*(High+y)/(High*High);
+  else
+    Parabol=0;
+  endif;
+EndFunc;
+Display Rho, Reynolds, Vel0;
+
+
+2;  { FLUID INPUT DATA }
+
+ { SURFACE: RECYL }{ The Fluid Characteristics =======================}
+ 1;    { Rho MASS Density of FLUID }
+ 1;    { Mass Constant }
+ Rho;  { DMASSE Value of the constant mass density }
+
+ 2;    { FLUID DYNAMIC VISCOSITY }
+ 1;    { Constant Viscosity }
+ 1/Reynolds; { Constant Viscosity }
+
+ 8;    { PRESSURE Coefficient }
+ 1;    { PRESSURE Constant Coefficient }
+ 1;    { PRESSURE Constant Coefficient value }
+
+ 4;    { INITIAL VELOCITIES ==========================================}
+-1;    { Function Initial Velocity }
+ 2;    { NBCOV0 Number of Initial Velocity Components at a node }
+ 1; 2; { NUCOV0(1..NBCOV0) Number of Initial Velocity Components }
+ Parabol;  { NFVIF0 Name of the function INITIAL VELOCITY }
+
+ 5;    { INITIAL PRESSURE ============================================}
+ 1;    { CONSTANT INITIAL PRESSURE }
+ 0;    { Constant Initial Pressure Value }
+ @;
+
+ { LINE : AB } { The Boundary Conditions ===========================}
+ 2; { Fixation of the VELOCITY }
+ 1; { Constant Fixed Velocity }
+ 2; { NBCOBV number of components of the fixed Velocity }
+ 1;   2; { NUCOBV(1..NBCOBV) nb of each component of the fixed velocity}
+ 0.0; 0.0; {XY-Velocity }
+ @;
+
+ { LINE : BC } { The Boundary Conditions ===========================}
+ 2; { Fixation of the VELOCITY }
+-1; { velocity fixed by a function }
+ 2; { NBCOBV number of components of the fixed velocity }
+ 1; 2; { NUCOBV(1..NBCOBV) nb of each component of the fixed velocity}
+ Parabol;  {Name of the function VELOCITY}
+ @;
+
+ { LINE : CD } { The Boundary Conditions ===========================}
+ 2; { Fixation of the VELOCITY }
+ 1; { Constant Fixed Velocity }
+ 2; { NBCOBV number of components of the fixed Velocity }
+ 1;   2; { NUCOBV(1..NBCOBV) nb of each component of the fixed velocity}
+ 0.0; 0.0; {Y-Velocity }
+ @;
+
+ { LINE : DA } { The Boundary Conditions ===========================}
+ 2; { Fixation of the VELOCITY }
+-1; { velocity fixed by a function }
+ 2; { NBCOBV number of components of the fixed velocity }
+ 1; 2; { NUCOBV(1..NBCOBV) nb of each component of the fixed velocity}
+ Parabol;  {Name of the function VELOCITY}
+ @;
+
+ { LINE : CIRCLE } { The Boundary Conditions ===========================}
+ 2; { Fixation of the VELOCITY }
+ 1; { Constant Fixed Velocity }
+ 2; { NBCOBV number of components of the fixed Velocity }
+ 1;   2; { NUCOBV(1..NBCOBV) nb of each component of the fixed velocity}
+ 0.0; 0.0; {X and Y-Velocity }
+ @;
+
+ { POINT : D } { The Boundary Conditions ===========================}
+{
+ 3;   { BLOCKING-UP the IMPOSED PRESSURE }
+ 1;   { Fixed Pressure CONSTANT }
+ 0.0; { Pressure CONSTANT VALUE }
+}
+ @;
+
+20;    { PRECISION DATA  to STOP the CONJUGATE GRADIENT ITERATIONS }
+ 1e-6; { EPSILON   VALUE to STOP the CONJUGATE GRADIENT ITERATIONS }
+@;
+
+8; {=== FRACTIONAL UNSTEADY NAVIER-STOKES SOLVER Algorithm2 ============}
+   2;   { CONDENSED MATRIX CONJUGATE GRADIENT + FACTORIZATION LEVEL }
+     1; { FACTORIZATION LEVEL VALUE (0 or 1 or 2) }
+
+ 0.0;   { INITIAL TIME }
+ 150;   { FINAL   TIME }
+   1;   { STEP of TIME }
+  75;   { NUMBER of ADDED SOLUTION VECTORS }
+@;
+@;
+
+10; { DRAWING of VELOCITIES PRESSURES ...............................}
+ 2;  { INITIAL and FINAL TIME of SOLUTIONS VECTORS to DRAW }
+ 0;  { INITIAL TIME }
+150; { FINAL   TIME }
+
+ 7;  { COMPUTE and DRAW the RUN of PARTICLES in the FLUID }
+ 2;  { Give XYZ VelocityXYZ RADIUS TIME0 of PARTICLES to RUN }
+ 21; { NUMBER of PARTICLES (>0)? }
+
+ { VALUE of XYZ?  VXYZ?  BOOL RADIUS?  START TIME?}
+ DistCircle+Radius*1.2; 0;   0;   0; 0; 0;  0;  0.
+ DistCircle+Radius*1.2;-0.1; 0;   0; 0; 0;  0;  0.
+ DistCircle+Radius*1.2; 0.1; 0;   0; 0; 0;  0;  0.
+    0; -0.1;  0;   0; 0; 0;  0;  0.
+    0;  0.1;  0;   0; 0; 0;  0;  0.
+    0; -0.3;  0;   0; 0; 0;  0;  0.
+    0;  0.3;  0;   0; 0; 0;  0;  0.
+    0; -0.5;  0;   0; 0; 0;  0;  0.
+    0;  0.5;  0;   0; 0; 0;  0;  0.
+    0; -0.7;  0;   0; 0; 0;  0;  0.
+    0;  0.7;  0;   0; 0; 0;  0;  0.
+    0; -1.0;  0;   0; 0; 0;  0;  0.
+    0;  1.0;  0;   0; 0; 0;  0;  0.
+    0; -3.0;  0;   0; 0; 0;  0;  0.
+    0;  3.0;  0;   0; 0; 0;  0;  0.
+    0; -5.0;  0;   0; 0; 0;  0;  0.
+    0;  5.0;  0;   0; 0; 0;  0;  0.
+    0; -7.0;  0;   0; 0; 0;  0;  0.
+    0;  7.0;  0;   0; 0; 0;  0;  0.
+    0; -9.0;  0;   0; 0; 0;  0;  0.
+    0;  9.0;  0;   0; 0; 0;  0;  0.
+
+ 3;  { Compute the RUN of GIVEN PARTICLES }
+ 90; { Continue the DRAWING }
+ @;
+ @;
+ @;
+CLOSE;

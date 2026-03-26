@@ -1,0 +1,145 @@
+      SUBROUTINE DFVOLU
+C ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+C BUT : DEFINIR LES VOLUMES C-A-D
+C------ CREER ET LIRE LE TABLEAU ~>VOLUME>...>DEFINITION
+C       GENERER       LE TABLEAU ~>VOLUME>...>XYZSOMMET
+C       GENERER       LE TABLEAU ~>VOLUME>...>NSEF
+C       TRACER LES VOLUMES SI LA CONSOLE EST INTERACTIVE GRAPHIQUE
+C ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+C AUTEUR : ALAIN PERRONNET ANALYSE NUMERIQUE UPMC PARIS    NOVEMBRE 1988
+C....................................................................012
+      include"./incl/langue.inc"
+      include"./incl/gsmenu.inc"
+      include"./incl/a_volume__definition.inc"
+      include"./incl/ntmnlt.inc"
+      include"./incl/trvari.inc"
+      COMMON / UNITES / LECTEU, IMPRIM, INTERA, NUNITE(29)
+      include"./incl/pp.inc"
+      COMMON            MCN(MOTMCN)
+      REAL              RMCN(1)
+      EQUIVALENCE      (MCN(1),RMCN(1))
+C
+      CHARACTER*24      KNOMVO
+      CHARACTER*80      KNMTD,KNMTS
+C
+C     NOM_DU_VOLUME  LE CARACTERE @ POUR FINIR
+ 100  CALL INVITE( 61 )
+      NCVALS = 0
+      CALL LIRCAR( NCVALS, KNOMVO )
+      IF( NCVALS .EQ. -1 ) GOTO 9000
+C     TRACE DU NOM DU VOLUME
+      CALL RECTEF( NRHIST )
+      NBLGRC(NRHIST) = 1
+      KHIST(1) = 'VOLUME: ' // KNOMVO
+      CALL LHISTO
+      ILEXIS = 1
+C
+C     RECHERCHE DU NOM DU VOLUME DANS LE LEXIQUE DES VOLUMES
+ 150  IF( NTVOLU .LE. 0 ) GOTO 9000
+      CALL LXLXOU( NTVOLU, KNOMVO, NTLXVO, MNLXVO )
+C
+C     S'IL N'EXISTE PAS IL EST CREE
+      IF( NTLXVO .LE. 0 ) THEN
+         ILEXIS = 0
+         CALL LXLXDC( NTVOLU, KNOMVO, 24, 8 )
+         GOTO 150
+      ENDIF
+C
+C     MODIFICATION OU CREATION DE LA DEFINITION DU VOLUME
+C     ===================================================
+      KNMTD = '~>VOLUME>>DEFINITION'
+      I     = INDEX( KNOMVO, ' ' )
+      IF( I .EQ. 1 ) THEN
+         NBLGRC(NRERR) = 1
+         IF( LANGAG .EQ. 0 ) THEN
+            KERR(1) = 'NOM INCORRECT DE VOLUME: '//KNOMVO
+         ELSE
+            KERR(1) = 'INCORRECT NAME of VOLUME: '//KNOMVO
+         ENDIF
+         CALL LEREUR
+         GOTO 100
+      ELSE IF( I .EQ. 0 ) THEN
+         I = 25
+      ENDIF
+      KNMTS = '~>VOLUME>' // KNOMVO(1:I-1) // '>DEFINITION'
+      CALL MOTSTD( KNMTD, KNMTS, NRETOU )
+      IF( NRETOU .NE. 0 ) THEN
+C        DESTRUCTION SI LE VOLUME N'EXISTAIT PAS AVANT
+         IF( ILEXIS .EQ. 0 ) THEN
+            WRITE(IMPRIM,*) 'DESTRUCTION TMS:'//KNMTS
+            CALL LXLXDS( NTVOLU, KNOMVO )
+         ENDIF
+         GOTO 100
+      ENDIF
+C
+C     CREATION DU VOLUME SELON LE TABLEAU DEFINITION
+C     OUVERTURE DU TABLEAU  'DEFINITION'
+      CALL LXTSOU( NTLXVO, 'DEFINITION', NTDFVO, MNDFVO )
+      IF( NTDFVO .LE. 0 ) THEN
+C        TABLEAU 'DEFINITION' INEXISTANT
+         NBLGRC(NRERR) = 1
+         IF( LANGAG .EQ. 0 ) THEN
+            KERR(1) = 'VOLUME NON DEFINI: '//KNOMVO
+         ELSE
+            KERR(1) = 'VOLUME NOT DEFINED: '//KNOMVO
+         ENDIF
+         CALL LEREUR
+         GOTO 100
+      ENDIF
+C
+C     LA DATE DE CREATION DU TABLEAU 'XYZSOMMET' DOIT ETRE
+C     POSTERIEURE A CELLE DU TABLEAU 'DEFINITION'
+C     MISE A JOUR DANS LE CAS D'UNE DONNEE DIRECTE DES TABLEAUX
+C     'XYZSOMMET' ET 'NSEF'
+      NUTYVO = MCN( MNDFVO + WUTYVO )
+      IF( NUTYVO .EQ. 10 ) THEN
+         CALL LXTSOU( NTLXVO, 'XYZSOMMET', NTSOVO, MNSOVO )
+C        MISE A JOUR DE SA DATE DE CREATION
+         CALL ECDATE( MCN( MNSOVO ) )
+         CALL LXTSOU( NTLXVO, 'NSEF', NTNSEF, MNNSEF )
+C        MISE A JOUR DE SA DATE DE CREATION
+         CALL ECDATE( MCN( MNNSEF) )
+      ENDIF
+C
+C     LA GENERATION DU TABLEAU 'XYZSOMMET' DU VOLUME
+C                   DU TABLEAU 'NSEF'      DU VOLUME
+C     ----------------------------------------------
+      IF( NUTYVO .EQ. 8 ) GOTO 100
+C     UN VOLUME D'UN VOLUME PARTITIONNE N'EST PAS MAILLE
+C     INDEPENDAMMENT DE LA PARTITION
+C
+      IF( INTERA .LE. 0 ) THEN
+C        SI CONSOLE NON INTERACTIVE GRAPHIQUE
+C        ALORS GENERATION DES TABLEAUX 'NSEF' ET 'XYZSOMMET'
+         CALL MAILEX( 'VOLUME', KNOMVO,
+     %                 NTNSEF,  MNNSEF, NTSOVO, MNSOVO, IERR )
+         IF( IERR .NE. 0 ) THEN
+C           DESTRUCTION DU LEXIQUE DU VOLUME NON MAILLE
+            NBLGRC(NRERR) = 2
+            IF( LANGAG .EQ. 0 ) THEN
+               KERR(1) = 'ATTENTION LE VOLUME ' // KNOMVO
+               KERR(2) = 'EST DETRUIT SUITE A PB LORS DU MAILLAGE'
+            ELSE
+               KERR(1) = 'ATTENTION: the VOLUME ' // KNOMVO
+               KERR(2) = 'is DELETED from the PROBLEM SEEN BEFORE'
+            ENDIF
+            CALL LEREUR
+            CALL LXLXDS( NTVOLU, KNOMVO )
+         ENDIF
+      ELSE
+C        SI CONSOLE INTERACTIVE GRAPHIQUE ALORS
+C        AFFICHAGE DU TABLEAU DEFINITION
+C        GENERATION DES TABLEAUX 'NSEF' ET 'XYZSOMMET'
+C        LORS DU TRACE AUTOMATIQUE DU VOLUME
+C        LE NUMERO DU VOLUME
+         CALL AFTSTD( KNMTS )
+         CALL NUOBNM( 'VOLUME', KNOMVO, NUVOLU )
+         CALL T1MOBJ( 'VOLUME', KNOMVO, NUVOLU )
+      ENDIF
+      GOTO 100
+
+C     FIN DE DEFINITION DES VOLUMES
+ 9000 CALL RECTEF( NRHIST )
+
+      RETURN
+      END

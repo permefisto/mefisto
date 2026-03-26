@@ -1,0 +1,43 @@
+The Winslow method constructs a quadrangulation of a curved quadrangle.
+
+. One value fadi2d by edge of the curved quadrangle is associated.
+This value is the heigth of normal edges of nearest sub-quadrangles.
+
+. After a pure Winslow method, these values are used to improve,
+to control the orthogonality and lengths of the closed sub-quardrangles.
+
+. The value fadi2d in ]0,1]  define the quotient height/length of edges
+near the edges of the curved quadrangles:
+. For example a value=1.  gives "squares"
+.             a value=0.1 gives a sub-quadrangle ten times large than height.
+.
+.              d to compute = fadi2d * (d1+d2)/2
+
+.                       d ?                     
+.                       |                        
+.              --*------*-----*-- 
+.                   d1     d2
+.
+. By convention :
+.   a value=0.  => NO indication on lengths of edges
+.                  The angles will be improved with no other data.
+.   a value=-1  => Distances are conserved during the improvement of angles.
+.   a value=-2  => The distance d is the interpolation from d1 to d2
+.                  on the boundary of this edge
+.
+.       * interpolation function from d1 to d2
+.    d1 |         <--- d ? --->            *
+.       |               |                  | d2
+.       *---*----*------*-----*----*---*---*
+.
+. In all cases, the angles are improved.
+
+Example: S2; I; 2; L1; L2; L3; L4;  5; 0.1; 1; 2; 0;
+         Define a quadrangulation of contour the edges
+         of lines L1 L2 L3 L4 with quadrangles
+         5 iterations
+         10 times less height than wide near L1
+         squares around L2
+         2 times more height than wide near L3
+         and without amelioration of jength around L4
+         (but with amelioration of angles to 90 degrees)

@@ -1,0 +1,5 @@
+variable TRACAXES 'trace des AXES' entier  
+ (  0 : 'PAS de trace des AXES'
+ ,  1 : 'Trace avec PETIT REPERE'
+ ,  2 : 'Trace X //Y Z'
+ ,  3 : 'Trace X Y Z //X //Y' ) ;

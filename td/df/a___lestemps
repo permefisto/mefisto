@@ -1,0 +1,8 @@
+deftms ~>>>LESTEMPS 'TABLEAU des TEMPS'
+variable muet DATE  'date de creation du tableau'   reel2  ;
+variable muet NUTD  'numero du tableau descripteur' entier ;
+variable NBTEMP 'Nombre de temps'                   entier ;
+tableau  TEMPS(1..NBTEMP) 'Valeurs des TEMPS'       reel2 ;
+tableau  NMTEMP(1..12,1..NBTEMP )
+               '4*12 caracteres associes aux temps' entier ;
+fintms ;

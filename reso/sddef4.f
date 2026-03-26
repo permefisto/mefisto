@@ -1,0 +1,62 @@
+      SUBROUTINE SDDEF4( NTOBTR , NTOBRE , LISTE , LISTE0 , LLISTE )
+C+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+C BUT :    TRANSMISSION AU NIVEAU DU SOUS-DOMAINE DES DONNEES
+C -----    AUX LIMITES DANS LE CAS D'UNE RESOLUTION PAR SOUS-DOMAINES
+C
+C ENTREE :
+C --------
+C NTOBTR : NUMERO DU LEXIQUE DE L'OBJET QUI TRANSMET LES DONNEES RECHERCHEES
+C NTOBRE : NUMERO DU LEXIQUE DE L'OBJET QUI RECOIT LES DONNEES
+C LISTE  : LISTE DES MOTS CLES POUR LES C.L.
+C LISTE0 : ADRESSE DU DEBUT DES RECHERCHES
+C LLISTE : LONGUEUR DE LA LISTE DES MOTS CLES
+C
+C ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+C AUTEUR : PASCAL JOLY     ANALYSE NUMERIQUE UPMC PARIS     FEVRIER 1990
+C2345X7..............................................................012
+      COMMON / UNITES / LECTEU , IMPRIM , INTERA , NUNITE(29)
+      include"./incl/ntmnlt.inc"
+      include"./incl/pp.inc"
+      COMMON            MCN(MOTMCN)
+      CHARACTER*(*)     LISTE(1:LLISTE)
+      CHARACTER*16      KTYPE
+      CHARACTER*80      NOMTS
+C
+      DO 100 NLI = LISTE0 , LLISTE
+         NOMTS =  LISTE(NLI)
+         L = INDEX( NOMTS , ' ' )
+         IF( L .EQ. 1 ) THEN
+C           SI LE NOM EST BLANC, RIEN N'EST FAIT
+            GOTO 100
+         ELSE IF( L .GT. 0 ) THEN
+            L = L - 1
+         ELSE
+            L = LEN( NOMTS )
+         ENDIF
+C        RECHERCHE DU TABLEAU DE NOM NOMTS
+         CALL LXTSOU( NTOBTR , NOMTS(1:L) , NTTAB1 , MNTAB1 )
+C
+C        LES DONNEES EXISTENT-ELLES AU NIVEAU DE L'OBJET ?
+C
+         IF( NTTAB1 .GT. 0 ) THEN
+C
+C           OUI : COPIE DU TABLEAU AU NIVEAU DU SOUS-DOMAINE
+C           SA LONGUEUR
+            CALL TAMSTV( NTTAB1 , KTYPE , LTAB )
+C           CONSTRUCTION DU TABLEAU DE NOM NOMTS :
+            CALL LXTNDC( NTOBRE , NOMTS(1:L) , 'MOTS'  , LTAB )
+            CALL LXTSOU( NTOBRE , NOMTS(1:L) ,  NTTAB2 , MNTAB2 )
+C           COPIE DU TABLEAU1 DANS LE TABLEAU2
+            CALL TRTATA( MCN(MNTAB1) , MCN(MNTAB2) , LTAB )
+C           MISE A JOUR DE LA DATE
+            CALL ECDATE( MCN(MNTAB2) )
+C            WRITE (IMPRIM,1000) NOMTS(1:L)
+C 1000       FORMAT(' SDDEF4 : COPIE DE ',A10)
+C
+C           SINON : ON NE FAIT RIEN
+C
+         END IF
+ 100  CONTINUE
+C
+      RETURN
+      END

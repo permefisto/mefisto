@@ -1,0 +1,65 @@
+Les DEPLACEMENTS de la LIGNE GENERATRICE qui definissent
+la surface a quadranguler peuvent etre definis selon 6 options :
+
+0: a la ligne initiale est associe un repere orthonorme E0
+   defini par 3 points P01 P02 P03 
+   P01 est l'origine
+   P01-P02 definit le vecteur canonique E1
+   E1 PRODUIT VECTORIEL P01-P03 normalise definit E2
+   E3 = E1 PRODUIT VECTORIEL E2
+   A tout deplacement I sont associes 3 points qui definissent
+   de la meme maniere un repere EI.
+   La TRANSFORMATION de la ligne initiale est alors celle 
+   definie par le deplacement du repere E0 en le repere EI. 
+   Les sommets des aretes des lignes transformees sont relies 2 a 2.
+   Exemple: S14.0; I; 14; LIGNE_INITIALE; 0; 2; {nombre de tranches}
+         P01;P02;P03;  P11;P12;P13;   P21;P22;P23;
+        {les 3 points de definition des reperes}    
+
+1: 3 lignes definissent les transformations de la ligne 
+   Meme methode que precedemment, les 3 points de definition
+   etant les sommets des aretes des 3 lignes
+   Le premier sommet des 3 lignes definit P01 P02 P03, ...  
+   Exemple: S14.1; I; 14; LIGNE_INITIALE; 1; L1; L2; L3;
+        {les 3 lignes de sommets definissant les reperes} 
+
+2: lignes translatees d'une cote Z>0 constante (empilement)
+   La ligne precedente est translatee d'une cote Z constante. 
+   Exemple: S14.2; I; 14; LIGNE_INITIALE; 2; 3; {tranches}
+         6; {cote maximale a decouper en 3 tranches d'epaisseur Z=2} 
+
+3: lignes translatees d'une cote z>0 precisee pour chaque ligne 
+   La ligne initiale est translatee d'une cote Z variable
+   ATTENTION: Il s'agit de la cote ABSOLUE et non relative
+              a la ligne precedente  
+   Exemple: S14.3; I; 14; LIGNE_INITIALE; 3; 2; {tranches}
+         4; 7; {cote absolue de chacune des 2 tranches}    
+
+4: le  vecteur  translation  (x y z) valable pour toutes les tranches 
+   La ligne precedente est translatee d'un VECTEUR CONSTANT non nul 
+   Exemple: S14.4; I; 14; LIGNE_INITIALE; 4; 5; {tranches}
+   1; 2; 3; {les 3 composantes du vecteur constant de translation}  
+
+5: les vecteurs translations (x y z) definis un par tranche  
+   La ligne precedente est translatee d'un VECTEUR non nul 
+   Exemple: S14.5; I; 14; LIGNE_INITIALE; 5; 2; {tranches}  1; 2; 3;
+  {les 3 composantes de la 1-ere translation relative a la ligne initiale}
+   1; 2; 5;
+  {les 3 composantes de la 2-eme translation relative a la ligne precedente}
+  {les translations s'ajoutent}      
+
+6: 3 fonctions X Y Z(no_couche,x,y,z) transforment la ligne initiale
+   Les sommets de la ligne initiale subissent une transformation
+   de R3 dans R3 definie par 3 fonctions utilisateur. 
+   Par exemple: ABSCISSE(no_tranche,x,y,z)
+                ORDONNEE(no_tranche,x,y,z)
+                COTE    (no_tranche,x,y,z)
+   Tout sommet (x,y,z) de la ligne initiale devient le sommet
+   (ABSCISSE(no_tranche,x,y,z), ORDONNEE(no_tranche,x,y,z),
+    COTE    (no_tranche,x,y,z)) de la ligne de la tranche no_tranche
+  
+   Exemple: S14.6; I; 14; LIGNE_INITIALE; 6; 5; {tranches}
+   defvar r3; r3=2;   { transformation R3 -> R3 definie par 3 fonctions}
+   deffonc c3x(x,y,z); c3x=r3*sin(x/r3); finfonc;   c3x;
+   deffonc c3y(x,y,z); c3y=r3*cos(x/r3); finfonc;   c3y;
+   deffonc c3z(x,y,z); c3z=z;            finfonc;   c3z;

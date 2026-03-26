@@ -1,0 +1,37 @@
+#!/bin/bash
+#
+#           Alain PERRONNET  le 15 septembre 1997
+# set -x
+echo
+echo  Calcul du nombre d appels de subroutines FORTRAN dans Mefisto
+echo
+#nblt est le nombre total d'appels CALL des fichiers *.f
+nblt=0
+for i in `ls -1 $MEFISTO`
+do
+  if test -d  $MEFISTO/$i
+  then
+    echo librairie $MEFISTO/$i
+    cd $MEFISTO/$i
+    nbl=0      #le nombre de lignes d'appels CALL des fichiers *.f de la librairie $i
+#
+    for j in `ls -1 *.f`
+    do
+      nl=0                 #le nombre de lignes du fichier $j
+      set `grep -i CALL $j | wc` ; nl=$1
+      nbl=`expr $nbl + $nl`
+      echo $nl lignes avec un CALL dans le fichier $j
+    done
+#
+    nblt=`expr $nblt + $nbl`
+    echo
+    echo Total pour la librairie $i : $nbl lignes avec CALL
+    echo --------------------------------------------------------------------------------
+  fi
+done
+
+echo
+echo ====================================================================================
+echo Au total $nblt  lignes avec CALL dans les fichiers .f des librairies Mefisto
+echo ====================================================================================
+

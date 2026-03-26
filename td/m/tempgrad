@@ -1,0 +1,10 @@
+variable TEMPGRAD 'Traces ou affichages de la SOLUTION' entier  
+ (  1 : 'NUMERO du CAS des SOLUTIONS a tracer'
+ ,  2 : 'Trace des SOLUTIONS des EF'
+ ,  3 : 'Trace des GRADIENTS de SOLUTION'
+ ,  4 : 'Trace des FLUX NORMAUX de la SOLUTION'
+ ,  5 : 'Trace des ESTIMATEURS d''ERREUR en 2D'
+ ,  7 : 'Affichage des SOLUTIONS'
+ ,  8 : 'Affichage des GRADIENTS de la SOLUTION'
+ ,  9 : 'Affichage des FLUX aux INTERFACES des EF'
+ , 10 : 'Affichage des FLUX aux PLS de l''OBJET' ) ;

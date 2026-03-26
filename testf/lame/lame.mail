@@ -1,0 +1,58 @@
+{ =========================================================== }
+{              PROBLEME DE LA LAME DU TELESCOPE               }
+{                  DONNEES DU MAILLAGE                        }
+{ =========================================================== }      
+{ Definition des variables }
+ DefVar RAYONG, RAYONP, EPAISSEUR, NBLC, NBLF, NBEP;
+ RAYONG = 160.;
+ RAYONP = 75.;
+ EPAISSEUR = 20.;  
+ NBLC = 80;
+ NBLF = 80;
+ NBEP = 40;
+
+ 1;1; {POINTS}                                                                          
+  AXEB;  I; 1;   0.00000E+00;   0.000000E+00;   0.000000E+00;
+  AXEH;  I; 1;   0.00000E+00;      EPAISSEUR;   0.000000E+00;
+  BORDB; I; 1;        RAYONG;   0.000000E+00;   0.000000E+00;
+  BORDH; I; 1;        RAYONG;      EPAISSEUR;   0.000000E+00;
+  INTEB; I; 1;        RAYONP;   0.000000E+00;   0.000000E+00;
+  INTEH; I; 1;        RAYONP;      EPAISSEUR;   0.000000E+00;
+ @;      
+                       
+ 2; {LIGNES}    
+    CHAUDH; I;  2; NBLC; 1.0;  AXEH; INTEH;
+    CHAUDB; I;  2; NBLC; 1.0;  AXEB; INTEB;
+    FROIDH; I;  2; NBLF; 1.0; INTEH; BORDH;
+    FROIDB; I;  2; NBLF; 1.0; INTEB; BORDB;
+      BORD; I;  2;  NBEP; 1.0; BORDH; BORDB;
+       AXE; I;  2;  NBEP; 1.0;  AXEH;  AXEB;
+     INTER; I;  2;  NBEP; 1.0; INTEH; INTEB;
+   EXTERNE; I; 51;  2; CHAUDH; FROIDH;
+   INTERNE; I; 51;  2; CHAUDB; FROIDB;
+ @;       
+ 
+ 3; {SURFACES}                
+  CHAUD; I; 1; CHAUDH; CHAUDB;   AXE; INTER; 2;
+  FROID; I; 1; FROIDH; FROIDB; INTER;  BORD; 2;
+ @;
+
+ 5; {OBJETS}       
+  LAME;
+  0;                       
+  5;                                  
+  SURFACE; FROID;  { SOURCE THERMIQUE }
+  SURFACE; CHAUD;  { SOURCE THERMIQUE }
+  LIGNE;    BORD;  { FLUX THERMIQUE }
+  LIGNE; INTERNE;  { FLUX THERMIQUE }
+  LIGNE; EXTERNE;  { FLUX THERMIQUE }
+ @;             
+                     
+ 7; {INTERPOLATION}
+  LAME;
+  1; { AXISYMETRIQUE DEGRE 1}                      
+ @;
+
+10; 5; 90; {TRACE DE L'OBJET}
+FERMER;
+

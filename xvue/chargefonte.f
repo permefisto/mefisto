@@ -1,0 +1,48 @@
+      SUBROUTINE CHARGEFONTE( NUFONT )
+C+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+C BUT :    CHARGE LA FONTE NUFONT DE XVUE POUR LES TRACES
+C -----
+C ENTREE :
+C --------
+C NUFONT : NUMERO DE LA FONTE
+C+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+C AUTEUR : PERRONNET ALAIN ANALYSE NUMERIQUE UPMC  PARIS        MAI 1994
+C MODIFS : PERRONNET ALAIN LJLL UPMC & St PIERRE du PERRAY  OCTOBRE 2013
+C2345X7..............................................................012
+      COMMON / UNITES / LECTEU, IMPRIM, INTERA, NUNITE(29)
+      include"./incl/trvari.inc"
+      include"./incl/xvfontes.inc"
+      include"./incl/xyzext.inc"
+C
+      IF( INTERA .LE. 0 ) RETURN
+C
+C     SI C'EST DEJA LA FONTE CHARGEE ALORS PAS DE NOUVEAU CHARGEMENT
+      IF( NUFONT .EQ. NOFONT ) RETURN
+C
+      IF( NUFONT .LT. 0 .OR. NUFONT .GT. NBFONT ) THEN
+         WRITE(IMPRIM,*)'ERREUR CHARGEFONTE NUFONT=',NUFONT,' INCORRECT'
+         RETURN
+      ENDIF
+C
+C     LA FONTE DE CARACTERES CHOISIE
+      NOFONT0 = NOFONT
+      NOFONT  = NUFONT
+      NOPOCA  = NUFONT
+C
+C     NPLACA LARGEUR EN PIXELS DES CARACTERES DE CETTE FONTE
+C     NPHACA HAUTEUR EN PIXELS DES CARACTERES DE CETTE FONTE
+ccc      CALL XVCHARGEFONTE( NOPOCA, NMFONT(NOPOCA)(1:NBCAFO(NOPOCA)),
+ccc     %                    NPLACA, NPHACA )
+      CALL XVCHARGEFONTE( NOFONT0, NOPOCA, NPLACA, NPHACA )
+C
+cccC     AFFICHAGE DES CARACTERISTIQUES DE LA FONTE EFFECTIVEMENT CHARGEE
+ccc      WRITE(IMPRIM,*) 'chargefonte',NOPOCA,' de NOM ',
+ccc     %                 NMFONT(NOPOCA)(1:NBCAFO(NOPOCA)),' avec ',
+ccc     %                 NPLACA, ' PIXELS EN LARGEUR et ',
+ccc     %                 NPHACA, ' PIXELS EN HAUTEUR'
+C
+C     RALALH : RAPPORT EN MM ECRAN ENTRE LARGEUR / HAUTEUR D'UN CARACTERE
+      RALALH = FLOAT( NPLACA ) / FLOAT(NPHACA)
+C     
+      RETURN
+      END

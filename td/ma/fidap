@@ -1,0 +1,4 @@
+variable FIDAP 'Input Data for FIDAP' entier
+( 1 : 'FIDAP file of vertices XYZ of FE',
+  2 : 'FIDAP file of BOUNDARY Conditions',
+  3 : 'FIDAP file of INITIAL Conditions' ) ;

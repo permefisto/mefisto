@@ -1,0 +1,70 @@
+      SUBROUTINE QUMYMITR( NBGRTR, NOGRTR, M1TRIA, NOTRIA, XYZSOM,
+     %                     QUALMN, NBTRQI, QUAMOY, QUAMIN, NTRMIN )
+C+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+C BUT :    CALCUL DES QUALITES MOYENNE ET MINIMALE DU GROUPE DES
+C -----    NBGRTR TRIANGLES DU TABLEAU NOTRIA
+C ENTREES:
+C --------
+C NBGRTR : NOMBRE DE TRIANGLES DU TABLEAU NOGRTR
+C NOGRTR : NUMERO NOTRIA DES NBGRTR TRIANGLES
+C M1TRIA : NOMBRE DE MOTS POUR CHAQUE TRIANGLE NOTRIA
+C          =6 ALORS NOTRIA: NS1 NS2 NS3 + NTROP1 NTOP2 NTROP3
+C          =4 ALORS NOTRIA: NS1 NS2 NS3 + 0
+C NOTRIA : M1TRIA=6 NOTRIA: NS1 NS2 NS3 + NTROP1 NTOP2 NTROP3
+C                =4 NOTRIA: NS1 NS2 NS3 + 0
+C XYZSOM : X  Y  Z DES SOMMETS DU MAILLAGE
+C QUALMN : QUALITE AU DESSOUS DE LAQUELLE LA QUALITE D'UN TRIANGLE
+C          EST A COMPTER
+
+C SORTIES:
+C --------
+C NBTRQI : NOMBRE DE TRIANGLES DE QUALITE < QUALMN PARMI LES NBGR TRIANGLES
+C QTRMOY : QUALITE MOYENNE  DES NBTRIA TRIANGLES
+C QTRMIN : QUALITE MINIMALE DES NBTRIA TRIANGLES
+C NTRMIN : NUMERO NOTRIA DU TRIANGLE DE QUALITE MINIMUM
+C+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+C AUTEUR : ALAIN PERRONNET  Saint PIERRE du PERRAY             Mars 2020
+C2345X7..............................................................012
+      INTEGER   NOTRIA(M1TRIA,*), NOGRTR(NBGRTR)
+      REAL      XYZSOM(3,*)
+
+C     CALCUL DES QUALITES
+      NTRMIN = 0
+      QUAMIN = 2.
+      QUAMOY = 0.
+      NBTRQI = 0
+      NBTR   = 0
+
+      DO NT = 1,NBGRTR
+
+         NTR = NOGRTR( NT )
+
+         IF( NTR .GT. 0 .AND. NOTRIA(1,NTR) .GT. 0 ) THEN
+
+C           UN TRIANGLE ACTIF DE PLUS
+            NBTR = NBTR + 1
+
+C           QUALITE DU TRIANGLE NTR
+            CALL QUATRI( NOTRIA(1,NTR), XYZSOM, Q )
+            QUAMOY = QUAMOY + Q
+
+            IF( QUAMIN .GT. Q ) THEN
+               QUAMIN = Q
+               NTRMIN = NTR
+            ENDIF
+
+            IF( Q .LT. QUALMN ) THEN
+               NBTRQI = NBTRQI + 1
+            ENDIF
+
+         ENDIF
+
+      ENDDO
+      QUAMOY = QUAMOY / NBTR
+
+ccc      PRINT*,'qumymitr  : Les',NBGRTR,
+ccc     %       ' TRIANGLES ont une QUALITE MOYENNE=',QUAMOY,
+ccc     %       ' MINIMALE=',QUAMIN,' et',NBTRQI,' de QUALITE<',QUALMN
+
+      RETURN
+      END

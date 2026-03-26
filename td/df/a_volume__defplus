@@ -1,0 +1,21 @@
+ , 41 : 'destructurer un volume structure'
+ 41 : variable NUVOIN 'nom du volume initial'      ^~>VOLUME ;
+ 
+
+ , 7  : 'tetraedrisation frontale' 
+  7: variable LCTEFR 'code de generation (0 par defaut)' entier ;
+     variable NUSFFE 'nom surface fermee triangulee contour volume' ^~>SURFACE ;
+     variable EXSFOU 'existence ou non d''une surface ouverte interne' entier
+              ( 0 : 'pas de surface'
+              , 1 : 'existence d''une surface interne' ) ; 
+     cas EXSFOU
+      1 : variable NUSFOU 'nom de la surface ouverte interne' ^~>SURFACE ; 
+     fincas ;
+
+
+ , 17 : '1/8 sphere'
+ , 18 : 'sphere'
+ 17..18 :  variable NBARRS 'nombre d''aretes sur le rayon' entier ;
+       variable NBSASF 'nombre de sections angulaires' entier ;
+       variable RAYOSF 'rayon de la sphere' reel ;
+       variable NPCESF 'nom du point centre de la sphere' ^~>POINT ;

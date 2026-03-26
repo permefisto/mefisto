@@ -1,0 +1,84 @@
+      SUBROUTINE FAVRPT( XYZPt, NOTET1, NOTETR, PTXYZD, NOFMAX )
+C+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+C BUT :    CALCUL DE LA FACE DU TETRAEDRE NOTET1 PAR LAQUELLE IL FAUT
+C -----    SORTIR POUR SE RAPPROCHER DU POINT XYZPt
+
+C ENTREES:
+C --------
+C XYZPt  : LES 3 COORDONNEES DU POINT
+C NOTET1 : NUMERO NOTETR DU TETRAEDRE
+C NOTETR : LISTE DES TETRAEDRES
+C          SOMMET1,    SOMMET2,    SOMMET3,    SOMMET4,
+C          TETRAEDRE1, TETRAEDRE2, TETRAEDRE3, TETRAEDRE4
+C          DE L'AUTRE COTE DE LA FACE
+C          1: 123      2: 234      3: 341      4: 412
+C PTXYZD : X Y Z DISTANCE SOUHAITEE DES POINTS
+
+C SORTIE :
+C --------
+C NOFMAX : NUMERO DE 1 A 4 DE LA FACE DU TETRAEDRE QUI PERMET
+C          LA MEILLEURE PROGRESSION EN DIRECTION DU POINT XYZPt
+C          0 SI TOUTES LES FACES N'ONT PAS DE TETRAEDRES OPPOSES
+C+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+C AUTEUR : ALAIN PERRONNET LABORATOIRE ANALYSE NUMERIQUE PARIS Juin 1991
+C MODIFS : ALAIN PERRONNET LJLL UPMC PARIS & SAINT PIERRE du PERRAY 2016
+C MODIFS : ALAIN PERRONNET SAINT PIERRE du PERRAY          Decembre 2018
+C2345X7..............................................................012
+      INTEGER           NOTETR(1:8,*), NOSOFATE(1:3,1:4)
+      DOUBLE PRECISION  PTXYZD(1:4,1:*),XYZPt(3),COSA,COSMAX
+      DOUBLE PRECISION  X21,Y21,Z21,X31,Y31,Z31,XYZNOR(3),D,XG,YG,ZG
+      DATA              NOSOFATE/ 1,3,2,  2,3,4, 3,1,4, 4,1,2 /
+      INTRINSIC         SQRT
+
+      NOFMAX = 0
+      COSMAX = -1D100
+
+      DO NOFACE=1,4
+
+ccc  18/12/2018  IF( NOTETR( 4+NOFACE, NOTET1 ) .GT. 0 ) THEN
+
+C           LE VECTEUR NORMAL A LA FACE NOFACE (NON NORMALISE A 1)
+C           NUMERO DES SOMMETS DE LA FACE POUR OBTENIR LA NORMALE
+C           DIRIGEE VERS L'EXTERIEUR
+            NS1 = NOTETR( NOSOFATE( 1, NOFACE ), NOTET1 )
+            NS2 = NOTETR( NOSOFATE( 2, NOFACE ), NOTET1 )
+            NS3 = NOTETR( NOSOFATE( 3, NOFACE ), NOTET1 )
+
+C           LE BARYCENTRE DE LA FACE NOFACE
+            XG = XYZPt(1) -
+     %         ( PTXYZD(1,NS1) + PTXYZD(1,NS2) + PTXYZD(1,NS3) ) / 3D0
+            YG = XYZPt(2) -
+     %         ( PTXYZD(2,NS1) + PTXYZD(2,NS2) + PTXYZD(2,NS3) ) / 3D0
+            ZG = XYZPt(3) -
+     %         ( PTXYZD(3,NS1) + PTXYZD(3,NS2) + PTXYZD(3,NS3) ) / 3D0
+
+            X21 = PTXYZD(1,NS2) - PTXYZD(1,NS1)
+            Y21 = PTXYZD(2,NS2) - PTXYZD(2,NS1)
+            Z21 = PTXYZD(3,NS2) - PTXYZD(3,NS1)
+
+            X31 = PTXYZD(1,NS3) - PTXYZD(1,NS1)
+            Y31 = PTXYZD(2,NS3) - PTXYZD(2,NS1)
+            Z31 = PTXYZD(3,NS3) - PTXYZD(3,NS1)
+
+            XYZNOR(1) = Y21 * Z31 - Y31 * Z21
+            XYZNOR(2) = Z21 * X31 - Z31 * X21
+            XYZNOR(3) = X21 * Y31 - X31 * Y21
+            D = SQRT( (XYZNOR(1)**2 + XYZNOR(2)**2 + XYZNOR(3)**2)
+     %              * (XG*XG + YG*YG + ZG*ZG) )
+
+C           LE COSINUS DE L'ANGLE (NORMALE,XYZPt-BARYCENTRE)
+            COSA = (XG*XYZNOR(1) + YG*XYZNOR(2) + ZG*XYZNOR(3)) / D
+
+C           LE COSINUS MAXIMAL
+            IF( COSA .GT. COSMAX ) THEN
+C              LE NOUVEAU COSINUS MAXIMAL
+               COSMAX = COSA
+               NOFMAX = NOFACE
+            ENDIF
+
+ccc         ENDIF
+
+      ENDDO
+C
+      RETURN
+      END

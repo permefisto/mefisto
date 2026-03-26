@@ -1,0 +1,88 @@
+{====================================================}
+{MEFISTO Version  Mai 1998      PROJET: Test RAB     }
+{Utilisateur: Perronnet Alain   Date:   23/5/98      }
+{                                                    }
+{Le Maillage       fichier rab.mailq1                }
+{====================================================}
+DefVar a,b,eps;
+a=1;
+b=1;
+eps=0.0001;
+
+DefVar na,nb; na=5; nb=5; { Le nombre des aretes }
+
+1;
+ { POINTS sommets de l objet }
+ 1; { FRAPPE des valeurs }
+ A; I; 1; 0; 0; 0;
+ { DANS LE LEXIQUE ~>TRANSFO }
+ { coordonnees x y z }
+ { COORPO '3 coordonnees cartesiennes du point' xyz ; }
+ B; I; 1; a; 0; 0;
+ { DANS LE LEXIQUE ~>TRANSFO }
+ { coordonnees x y z }
+ { COORPO '3 coordonnees cartesiennes du point' xyz ; }
+ C; I; 1; a; b; 0;
+ { DANS LE LEXIQUE ~>TRANSFO }
+ { coordonnees x y z }
+ { COORPO '3 coordonnees cartesiennes du point' xyz ; }
+ D; I; 1; 0; b; 0;
+ { DANS LE LEXIQUE ~>TRANSFO }
+ { coordonnees x y z }
+ { COORPO '3 coordonnees cartesiennes du point' xyz ; }
+@;
+
+2;  { LIGNES aretes de l objet }
+ AB; I; 2; 2*na; 1.0; A; B;
+ { DANS LE LEXIQUE ~>TRANSFO }
+ { segment de droite }
+ { NBARLI 'nombre d''aretes de la ligne' entier ; }
+ { RAIGEO 'raison geometrique espacant les sommets' reel ; }
+ { DANS LE LEXIQUE ~>POINT }
+ { DANS LE LEXIQUE ~>POINT }
+ BC; I; 2; 2*nb; 1.0; B; C;
+ { DANS LE LEXIQUE ~>TRANSFO }
+ { segment de droite }
+ { NBARLI 'nombre d''aretes de la ligne' entier ; }
+ { RAIGEO 'raison geometrique espacant les sommets' reel ; }
+ { DANS LE LEXIQUE ~>POINT }
+ { DANS LE LEXIQUE ~>POINT }
+ CD; I; 2; 2*na; 1.0; C; D;
+ { DANS LE LEXIQUE ~>TRANSFO }
+ { segment de droite }
+ { NBARLI 'nombre d''aretes de la ligne' entier ; }
+ { RAIGEO 'raison geometrique espacant les sommets' reel ; }
+ { DANS LE LEXIQUE ~>POINT }
+ { DANS LE LEXIQUE ~>POINT }
+ AD; I; 2; 2*nb; 1.0; A; D;
+ { DANS LE LEXIQUE ~>TRANSFO }
+ { segment de droite }
+ { NBARLI 'nombre d''aretes de la ligne' entier ; }
+ { RAIGEO 'raison geometrique espacant les sommets' reel ; }
+ { DANS LE LEXIQUE ~>POINT }
+ { DANS LE LEXIQUE ~>POINT }
+@;
+
+3; { SURFACES faces de l objet }
+ RECTANGLE; I; { DANS LE LEXIQUE ~>TRANSFO}
+        1; { quadrangle ALGEBRIQUE structure ou non }
+        AB; BC; CD; AD; { DANS LE LEXIQUE ~>LIGNE }
+        2;  { maillage irregulier }
+@;
+
+5; { OBJETS parties de l OBJET }
+   RECTANGLE;  0; { classique }
+   8; { NBDOBJ 'nombre des points lignes surfaces volumes objets }
+    S; RECTANGLE; L; AB; L; BC; L; CD; L; AD; P; A; P; B; P; D;
+   { NTYOBJ(1..NBDOBJ) 'nom du type PLSVO et nom du PLSVO' typeobjet}
+@;
+7; { INTERPOLATION definition NOEUDS du maillage }
+   RECTANGLE;
+   3;  { LAGRANGE de DEGRE 1 }
+@;
+
+10; { TRACE du MAILLAGE des PLSVO }
+  5;{ Tous les OBJETS }
+ 90;{ EXECUTION du TRACE }
+@;
+FERMER;

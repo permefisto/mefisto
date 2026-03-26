@@ -1,0 +1,4 @@
+variable TRACOBJE 'Drawing of Objects' entier
+( 1: 'ALL OBJECTS 1 by 1'
+, 3: 'ONE OBJECT'
+, 5: 'ONE OBJECT INTERSECTED by 1 PLANE' );

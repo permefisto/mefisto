@@ -1,0 +1,76 @@
+{ ======================================================================== }
+{ Software MEFISTO : 2011 September 6, Version                             }
+{ USER's  Name     : Alain Perronnet                                       }
+{ Project Name     : Stability of Eigenvector for NLSE on a cube [-1,1]**3 }
+{                    -Alfa LAPLACIAN u +Beta u**2 u = E Mass u  => E,u     }
+{ Date             : 2011/09/06                                            }
+{ ======================================================================== }
+DefVar Mass; Mass= 1.0;
+DefVar Alfa; Alfa= 1.0;
+DefVar Beta; Beta= 1.0;
+
+DefFunc NLSTerm(t,x,y,z,ntyobj,nmobj,u);
+  NLSTerm = Beta * u**2 ;
+EndFunc;
+
+2;{ HEAT INPUT DATA }
+  {Volume CUBE}
+  1; {mass density}
+  1; Mass;
+
+  2; {Alfa heat conductivity}
+  3; Alfa;
+
+  6; {Coefficient NLSE: Beta |Phi|**2 as a FUNCTION}
+ -1; {Temperature Coefficient Function with 7 parameters}
+  NLSTerm;
+  @;
+
+  {Surface BOUNDARY  Homogeneous Dirichlet Condition }
+  3;    {Fixation}
+   1;   {Constant}
+   1;   {Number of fixed components}
+   1;   {Number of the fixed component}
+   0.0; {Value  of the fixed component} 
+  @;
+ @;
+
+3;   {COMPUTATION of EIGENVALUES and EIGENVECTORS of 
+       -Alfa LAPLACIAN u + Beta u**2 u = E u }
+     { 2;  Inverse Power Iterations}
+ 17; {WISHED Number of EIGENVALUES}
+@;
+
+
+{DATA CHANGEMENT FOR THE ENERGY COMPUTATIONS}
+2;   { HEAT INPUT DATA }
+ {Volume CUBE}
+  2; { heat conductivity or Alfa to 1/2 Integral grad u **2 dX }
+  3; 1/2;
+
+  6; {Beta The coefficient of temperature is suppressed }
+  0;
+ @;
+
+ {Surface BOUNDARY}
+ @;
+@;
+
+13; {ENERGY of SOLUTIONS}
+@;
+
+16; {L1 NORM of SOLUTIONS**EXPONENT}
+  4;   {EXPOSANT to obtain Integral u**exposant dX }
+@;
+
+6;  { DRAWING of EigenVectors of the WAVE }
+ 1; { CASE NUMBER of TEMPERATURES }
+ 1; { NUMBER of the CASE (=0 => ALL if possible)? }
+ 2; { Drawings of TEMPERATURES }
+ 1; { ISOTHERMAL SURFACES }
+ 2; { REGULAR ISO between MIN MAX }
+ 19;{ REDUCTION % of FACES }
+ 40;{ % of FACE REDUCTIONS (0 up to 100)? }
+ 75;{ Activate TRANSLATION ORBIT ZOOM }
+ 90;{ Continue the DRAWING }
+CLOSE;

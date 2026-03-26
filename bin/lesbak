@@ -1,0 +1,21 @@
+#!/bin/bash
+#  CHERCHE DANS MEFISTO apollo TOUS LES FICHIERS .bak
+   cd $mefistoa
+   ls -1 incl/*.bak
+   ls -1 elas/*.bak
+   ls -1 mail/*.bak
+   ls -1 reso/*.bak
+   ls -1 ther/*.bak
+   ls -1 util/*.bak
+   ls -1 xvue/*.bak 
+   echo
+   ls -1 td/d/*.bak
+   ls -1 td/m/*.bak
+   ls -1 td/g/*.bak
+   ls -1 doc/*.bak 
+   echo
+   ls -1 bin/*.bak
+   ls -1 texd/*.bak
+#
+  echo
+  echo tous les fichiers .bak ont ete listes

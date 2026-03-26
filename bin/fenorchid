@@ -1,0 +1,1 @@
+xterm -geometry 260x50+30+30 -j -cr red -bc -ls -sb -sl 600000 -name xterm -bg orchid -fg white -fn 7x14bold -fb 7x14bold -title "xterm orchidee" &

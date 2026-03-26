@@ -1,0 +1,30 @@
+      SUBROUTINE TRCHTA(CHAINE,MTAB,LTAB)
+C+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+C BUT :
+C     TRANSFERT D'UNE CHAINE DE CARACTERES DANS UN TABLEAU D'ENTIERS
+C     SI LA CHAINE EST TROP COURTE, ELLE EST COMPLETEE PAR DES BLANCS
+C     SI ELLE EST TROP LONGUE, ELLE EST TRONQUEE
+C
+C PARAMETRES D'ENTREE :
+C     CHAINE  : CHAINE DE CARACTERES
+C     LTAB    : NB DE MOTS DU TABLEAU MTAB (ATTENTION : 3E PARAMETRE)
+C
+C PARAMETRE DE SORTIE :
+C     MTAB    : TABLEAU D'ENTIERS
+C+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+C PROGRAMMEUR : PATRICK LAUG ; INRIA (3) 954 90 20 POSTE 3508
+C+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+      CHARACTER*(*) CHAINE
+      INTEGER MTAB(LTAB)
+C
+      DO 100 ITAB = 1,LTAB
+      ITAB4 = ITAB * 4
+      IF (ITAB4 .LE. LEN(CHAINE)) THEN
+         MTAB(ITAB) = ICHARX(CHAINE(ITAB4-3 : ITAB4))
+      ELSE IF (ITAB4-3 .LE. LEN(CHAINE)) THEN
+         MTAB(ITAB) = ICHARX(CHAINE(ITAB4-3 : LEN(CHAINE)))
+      ELSE
+         MTAB(ITAB) = ICHARX('    ')
+      END IF
+  100 CONTINUE
+      END

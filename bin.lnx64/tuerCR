@@ -1,0 +1,18 @@
+#
+#  Alain Perronnet    Juin 1997
+#  ATTENTION : A EXECUTER dans une FENETRE xterm
+#
+echo 
+echo Detruire le RETOUR CHARIOT de fin de ligne des fichiers
+echo =======================================================
+echo NOM du REPERTOIRE\?
+read REP
+echo =======================================================
+cd $REP
+for i in `ls -1`
+do
+vi $i <<Z
+:1,\$s/.$//g
+:wq
+Z
+done

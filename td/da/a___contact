@@ -1,0 +1,12 @@
+deftms ~>>>CONTACT 'imposed temperature'
+variable muet DATE 'date of creation of the TMS'   reel2  ;
+variable muet NUTD 'number of the descriptor array TD' entier ; 
+variable LTCONT    'type of imposed temperature'  entier  
+(  1 : 'constant imposed temperature'
+, -1 : 'function imposed temperature'
+,  0 : 'delete the imposed temperature'  ) ;
+cas LTCONT 
+  1 : variable CONTAC 'imposed temperature value' reel ;
+ -1 : variable NFCONT 'name of function imposed temperature' ^~>FONCTION ; 
+fincas ;
+fintms ;

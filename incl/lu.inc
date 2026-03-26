@@ -1,0 +1,273 @@
+C
+C     FICHIER ~/incl/lu.inc
+C
+      PARAMETER ( NBCALI=96, MXKLG= 256, L1NCOP=4, MXNCOP=512,
+     %            NBCAVA=24, MXDCTE=98304, MXVARU=1024, MXETIQ=128,
+     %            MXPACH=256, NBCACH=24,
+     %            MXVATS=128, NBCATS=80, NBCAET=24,
+     %            MXEXPD=96, LXEXPD=64, MXRACI=64 )
+C     ATTENTION MXRACI DOIT ETRE SUPERIEUR OU EGAL A LXEXPD
+C     NBC... DOIT ETRE UN MULTIPLE DE NBCAMO NOMBRE DE CARACTERES PAR MOT
+C
+      CHARACTER*(NBCALI) KLG(1:MXKLG)
+C     KLG   = LE BUFFER CARACTERES DU LANGAGE UTILISATEUR
+C
+      CHARACTER*(NBCAVA) KVARU(1:MXVARU)
+C     KVARU = LES NOMS DES VARIABLES UTILISATEUR
+C
+      CHARACTER*(NBCATS) KVATS(1:MXVATS)
+C     KVATS = LES NOMS DES VARIABLES TMS
+C
+      CHARACTER*(NBCAET) KETIQ(1:MXETIQ)
+C     KETIQ = LES NOMS DES ETIQUETTES DANS UNE FONCTION
+C
+      CHARACTER*(NBCACH) KPACH(1:MXPACH)
+C     KPACH = LES NOMS DES PARAMETRES CHAINES D'UNE FONCTION
+C
+      DOUBLE PRECISION DCTE(1:MXDCTE),DVARU(1:MXVARU)
+C     LES VALEURS DES CONSTANTES,VARIABLES UTILISATEUR ET TMS
+C
+      INTEGER    LSEXPD(1:2,1:MXEXPD)
+C     LE TABLEAU DES EXPRESSIONS RENCONTREES DE 1 A NBEXPD
+C     LSEXPD(1,.) = NO DANS NCOPER DE LA PREMIERE OPERATION DE L'EXPRESSION .
+C     LSEXPD(2,.) = NO DANS NCOPER DE LA DERNIERE OPERATION DE L'EXPRESSION .
+C
+      INTEGER    NCOPER(-1:L1NCOP,0:MXNCOP)
+C     NCOPER LES CODES DES OPERATIONS : SIGNIFICATION DES OPERATIONS
+C
+C     AVANT D'ARRIVER A L'ARBRE FINAL UN CHAINAGE AVANT ARRIERE EST CREE
+C     NCOPER(-1,.) = NOPAVA NO DANS NCOPER DE L'OPERATION PRECEDENTE
+C     NCOPER( 0,.) = NOPAPE NO DANS NCOPER DE L'OPERATION QUI SUIT
+C
+C     NCOPER( 1,.) = NO DE CODE DE L'OPERATION
+C
+C     DANS L'ARBRE GENERE LE CHAINAGE PERE (2) ET FILS (3,4) EST CREE
+C     NCOPER( 2,.) = NO DANS NCOPER DU PERE
+C                   -NO DANS LSRACI SI PAS DE PERE
+C     NCOPER( 3,.) = NO DANS NCOPER DE L'OPERANDE 1
+C     NCOPER( 4,.) = NO DANS NCOPER DE L'OPERANDE 2
+C
+C
+C        ( :  NCOPER(1,.) =  1
+C             NCOPER(2,.) = NPARAV NO NCOPER DE LA ( OU ) QUI PRECEDE
+C             NCOPER(3,.) = NPARAP NO NCOPER DE LA ( OU ) QUI SUIT
+C
+C        ) :  NCOPER(1,.) =  2
+C             NCOPER(2,.) = NPARAV NO NCOPER DE LA ( OU ) QUI PRECEDE
+C             NCOPER(3,.) = NPARAP NO NCOPER DE LA ( OU ) QUI SUIT
+C
+C        ( OU , OU ) SEPARATEURS DES PARAMETRES D'UNE FONCTION
+C        ( :  NCOPER(1,.) = 7
+C             NCOPER(2,.) = NPARAV NO NCOPER DE LA ( OU , OU ) QUI PRECEDE
+C             NCOPER(3,.) = NPARAP NO NCOPER DE LA ( OU , OU ) QUI SUIT
+C
+C        , :  NCOPER(1,.) = 8
+C             NCOPER(2,.) = NPARAV NO NCOPER DE LA ( OU , OU ) QUI PRECEDE
+C             NCOPER(3,.) = NPARAP NO NCOPER DE LA ( OU , OU ) QUI SUIT
+C
+C        ) :  NCOPER(1,.) = 9
+C             NCOPER(2,.) = NPARAV NO NCOPER DE LA ( OU ) QUI PRECEDE
+C             NCOPER(3,.) = NPARAP NO NCOPER DE LA ( OU ) QUI SUIT
+C
+C     LES ( , ) SONT CHAINEES ENTRE ELLES
+C
+C        CONSTANTE REELLE DOUBLE PRECISION :
+C             NCOPER(1,.) =  3
+C             NCOPER(2,.) =  NO DANS NCOPER DU PERE
+C                           -NO DANS LSRACI SI PAS DE PERE
+C             NCOPER(3,.) =  NOPACH NO DANS KPACH DE LA CONSTANTE REELLE
+C
+C        CONSTANTE CHAINE  PARAMETRE D'UNE FONCTION
+C            (SEUL ENDROIT PERMIS DANS UNE EXPRESSION ARITHMETIQUE)
+C             NCOPER(1,.) =  14
+C             NCOPER(2,.) =  NO DANS NCOPER DU PERE
+C             NCOPER(3,.) =  NOCTE NO DANS DCTE DE LA CONSTANTE CHAINE
+C
+C        VARIABLE_UTILISATEUR REELLE DOUBLE PRECISION :
+C             NCOPER(1,.) =  4
+C             NCOPER(2,.) =  NO DANS NCOPER DU PERE
+C                           -NO DANS LSRACI SI PAS DE PERE
+C             NCOPER(3,.) =  NOVARU NO DANS DVARU DE LA VARIABLE_UTILISATEUR
+C
+C        VARIABLE_TMS REELLE DOUBLE PRECISION :
+C             NCOPER(1,.) =  5
+C             NCOPER(2,.) =  NO DANS NCOPER DU PERE
+C                           -NO DANS LSRACI SI PAS DE PERE
+C             NCOPER(3,.) = NOVATS NO DANS DVATS DE LA VARIABLE_TMS
+C
+C        VARIABLE LOCALE DE LA FONCTION EN COURS :
+C             NCOPER(1,.) =  10 (PARAMETRE)  11 (NOM DE LA FONCTION)
+C                            12 (VARIABLE LOCALE)
+C                               EN EXECUTION LA VALEUR DE CES VARIABLES
+C                               EST STOCKEE DANS DCTE DANS CET ORDRE
+C             NCOPER(2,.) =  NO DANS NCOPER DU PERE
+C             NCOPER(3,.) =  NOPARA NO DANS LA LISTE DES VARIABLES LOCALES
+C                                 DE LA FONCTION
+C
+C        FONCTION UTILISATEUR :
+C             NCOPER(1,.) =  6 PUIS 300 + NUMERO FONCTION UTILISATEUR
+C                                       + 1000 * NOMBRE DE PARAMETRES
+C             NCOPER(3,.) =  NO DANS NCOPER DU 1-ER PARAMETRE
+C                            REMARQUE:LE CHAINAGE SE POURSUIT PARAMETRE
+C                                     APRES PARAMETRE PAR NCOPER(3,.)
+C                                     JUSQU'A TROUVER 0
+C
+C        ALLER :  NCOPER(1,.) = 13
+C                 NCOPER(2,.) = NO DANS NCOPER DU PERE
+C                 NCOPER(3,.) = NO DE L'ETIQUETTE PUIS DE L'OPERATION
+C                                   A EXECUTER ENSUITE
+C                 NCOPER(4,.) = 0
+C                 ATTENTION : 0 FILS DANS L'ARBRE CAR EXECUTION IMMEDIATE
+C
+C        FINFONC :   FIN DE FONCTION
+C               NCOPER(1,.) =  99
+C               NCOPER(2,.) =  0
+C               NCOPER(3,.) =  0
+C               NCOPER(4,.) =  0
+C
+C
+C     OPERATEUR UNAIRE  100 < CODE < 200
+C     ----------------------------------
+C     NCOPER( 2,.)  =  NO DANS NCOPER DU PERE
+C                     -NO DANS LSRACI SI PAS DE PERE
+C     NCOPER( 4,.)  =  NO DANS NCOPER DE L'OPERANDE
+C
+C        NON    NCOPER(1,.) = 101
+C         +     NCOPER(1,.) = 102
+C         -     NCOPER(1,.) = 103
+C        ABS    NCOPER(1,.) = 104     CF FORTRAN 77 IBM
+C        SQRT   NCOPER(1,.) = 105
+C        LOG    NCOPER(1,.) = 106
+C        LOG10  NCOPER(1,.) = 107
+C        EXP    NCOPER(1,.) = 108
+C        ASIN   NCOPER(1,.) = 109     -PI/2 < =  X < =  PI/2  RADIANS
+C        ACOS   NCOPER(1,.) = 110        0  < =  X < =  PI    RADIANS
+C        ATAN   NCOPER(1,.) = 111     -PI/2 < =  X < =  PI/2  RADIANS
+C        SIN    NCOPER(1,.) = 112
+C        COS    NCOPER(1,.) = 113
+C        TAN    NCOPER(1,.) = 114
+C        SINH   NCOPER(1,.) = 115
+C        COSH   NCOPER(1,.) = 116
+C        TANH   NCOPER(1,.) = 117
+C        NINT   NCOPER(1,.) = 118
+C        LLIGNE NCOPER(1,.) = 119    LLIGNE( 'NOM_LIGNE' ) RETOURNE LA
+C                                    LONGUEUR DES ARETES DE LA LIGNE
+C
+C        EN_REMONTANT_ALLER
+C               NCOPER(1,.) =  174
+C               NCOPER(2,.) = NO DANS NCOPER DU PERE
+C               NCOPER(3,.) = NO DANS NCOPER DE L'INSTRUCTION SUIVANTE
+C               NCOPER(4,.) = NO DANS NCOPER DE L'INSTRUCTION_A_EXECUTER
+C
+C        SI
+C               NCOPER(1,.) =  175
+C               NCOPER(2,.) = NO DANS NCOPER DU PERE
+C               NCOPER(3,.) = NO DANS NCOPER DE ALORS_SINON
+C               NCOPER(4,.) = NO DANS NCOPER DE L'EXPRESSION_LOGIQUE
+C
+C        ALORS_SINON
+C               NCOPER(1,.) =  176
+C               NCOPER(2,.) = NO DANS NCOPER DU PERE
+C               NCOPER(3,.) = NO DANS NCOPER DE SINON, 0 SI PAS DE SINON
+C               NCOPER(4,.) = NO DANS NCOPER DE ALORS
+C
+C         =   AFFECTATION
+C               NCOPER(1,.) =  177
+C               NCOPER(2,.) = NO DANS NCOPER DU PERE
+C               NCOPER(3,.) = NO DANS NCOPER DE LA VARIABLE
+C               NCOPER(4,.) = NO DANS NCOPER DE L'EXPRESSION_ARITHMETIQUE
+C
+C
+C     OPERATEUR BINAIRE  200 <= CODE < 300
+C     ------------------------------------
+C     NCOPER( 2,.) =  NO DANS NCOPER DU PERE
+C                    -NO DANS LSRACI SI PAS DE PERE
+C     NCOPER( 3,.) =  NO DANS NCOPER DE L'OPERANDE 1
+C     NCOPER( 4,.) =  NO DANS NCOPER DE L'OPERANDE 2
+C
+C         ENTRE_PARAMETRES
+C                NCOPER(1,.) = 200
+C         OX     NCOPER(1,.) = 201
+C         OU     NCOPER(1,.) = 202
+C         ET     NCOPER(1,.) = 203
+C         <      NCOPER(1,.) = 204     CF FORTRAN 77 IBM
+C         <=     NCOPER(1,.) = 205
+C          =     NCOPER(1,.) = 206
+C         <>     NCOPER(1,.) = 207
+C         >=     NCOPER(1,.) = 208
+C         >      NCOPER(1,.) = 209
+C         +      NCOPER(1,.) = 210
+C         -      NCOPER(1,.) = 211
+C         *      NCOPER(1,.) = 212
+C         /      NCOPER(1,.) = 213
+C         **     NCOPER(1,.) = 214
+C         MIN    NCOPER(1,.) = 215
+C         MAX    NCOPER(1,.) = 216
+C         MOD    NCOPER(1,.) = 217   MOD(N1,N2) <=> EN MATH A : N1 MOD N2
+C         ISIGN  NCOPER(1,.) = 218   ISIGN(X1,X2)=+ |X1| SI X2 >= 0
+C                                                 - |X1| SI X2 <  0
+C
+C         NUOBJT NCOPER(1,.) = 219   NUOBJT( 'TYPE_OBJET' , 'NOM_OBJET' )
+C                                   'TYPE_OBJET' = 'POINT'    'LIGNE'
+C                                                  'SURFACE'  'VOLUME'
+C                                                  'OBJET'
+C                                                  'FONCTION' 'TRANSFO'
+C                                => NUMERO DANS LE LEXIQUE DE CET OBJET
+C                                   0 SI NON RETROUVE 
+C                    
+C         DIST2P NCOPER(1,.) = 220  DIST2P( 'NOM_POINT_1' , 'NOM_POINT_2' )
+C                                => DISTANCE ENTRE LES 2 POINTS
+C                                   -1 SI l'UN DES POINTS N'EST PAS RETROUVE
+
+C
+C
+C     OPERATEUR N-AIRE  CODE  =  NO FONCTION UTILISATEUR + 300 +
+C                             + 1000 * NOMBRE DE PARAMETRES
+C     ----------------------------------------------------------
+C     ATTENTION : NO FONCTION UTILISATEUR  =0 => FONCTION AFFICHER PARAM{,PARAM}
+C     NCOPER( 2,.)  =  NO DANS NCOPER DU PERE
+C                     -NO DANS LSRACI SI PAS DE PERE
+C     NCOPER( 3,.)  =  NO DANS NCOPER DE L'OPERANDE 1
+C     NCOPER( 4,.)  =  NO DANS NCOPER DE L'ENTRE_PARAMETRES ~
+C     NCOPER( 3,~)  =  NO DANS NCOPER DU PARAMETRE
+C     NCOPER( 4,~)  =  NO DANS NCOPER DE L'ENTRE_PARAMETRES SUIVANT ...
+C                      IL Y A N-2 ENTRE_PARAMETRES POUR N PARAMETRES
+C     SI & DESIGNE  LE DERNIER ENTRE_PARAMETRES
+C     NCOPER( 3,&)  =  NO DANS NCOPER DU PARAMETRE N-1
+C     NCOPER( 4,&)  =  NO DANS NCOPER DU PARAMETRE N
+C
+C
+      INTEGER          NBPAOU(1:LXEXPD),
+     %                 NETAT (1:LXEXPD),
+     %                 NDERP2(1:LXEXPD),
+     %                 LSRACI(0:MXRACI)
+C     LA PILE DES EXPRESSIONS DE 1 A LHEXPD
+C     NBPAOU(.) = NOMBRE DE ( OUVRANTES NON FERMEES
+C     NDERP2(.) = NO OPERATION DE LA DERNIERE ( OU ) RENCONTREE DE L'EXPRESSION
+C     NETAT (.) = NO D'ETAT OU CODE DE LA DERNIERE OPERATION RENCONTREE
+C
+      INTEGER          LAPINF(1:LXEXPD)
+C     LA PILE DE L'OPERATION SUIVANTE DES FONCTIONS ACTIVES
+      INTEGER          LAPIOP(1:LXEXPD)
+C     LE NIVEAU DE L'EXPRESSION EN COURS
+      INTEGER          LNEXPD(0:MXRACI)
+C
+      INTEGER          LUIMPR
+C     LE PARAMETRE D'IMPRESSION DE LU:  0 LES INVITES ET ERREURS RENCONTREES
+C                                       1 LES RESULTATS EN PLUS
+C                                      10 EN CAS DE DEBOGUAGE
+C
+C     ATTENTION MXRACI DOIT ETRE SUPERIEUR OU EGAL A LXEXPD
+C     LAPIOP EN EQUIVALENCE AVEC NDERP2
+C     LAPINF EN EQUIVALENCE AVEC NBPAOU
+C     LNEXPD EN EQUIVALENCE AVEC LSRAI
+      EQUIVALENCE     (LAPIOP(1),NDERP2(1)),(LAPINF(1),NBPAOU(1)),
+     %                (LNEXPD(1),LSRACI(0))
+C
+      COMMON / KLANUT / KLG,KVARU,KVATS,KETIQ,KPACH
+      COMMON / ILANUT / DCTE,DVARU,
+     %                  NCOPER,LSEXPD,NBPAOU,NETAT,NDERP2,LSRACI,
+     %                  LHKLG,NBCTE,NBVARU,NBVAR0,NBVAR1,NBVATS,
+     %                  NBETIQ,NBPACH,NOPER,NBEXPD,
+     %                  NLPTV1,NCPTV1,NLPTV2,NCPTV2,NBCAR,LUIMPR,
+     %                  NBCTE0,NBCTE1

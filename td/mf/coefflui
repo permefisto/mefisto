@@ -1,0 +1,9 @@
+variable COEFFLUI 'Donnees des FLUIDES' entier
+( 1 : 'Rot Densite de MASSE'
+, 2 : 'nu VISCOSITE du FLUIDE'
+, 3 : 'FOmega FORCES INTERNES'
+, 4 : 'Vo VITESSES INITIALES'
+, 5 : 'Po PRESSIONS INITIALES'
+, 8 : 'Coefficient de la PRESSION'
+, 9 : 'VITESSE ANGULAIRE'
+,10 : 'Coefficient BOUSSINESQ' ) ;

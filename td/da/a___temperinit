@@ -1,0 +1,14 @@
+deftms ~>>>TEMPERINIT 'INITIAL TEMPERATURE at nodes'
+variable muet DATE 'date of creation of the TMS' reel2  ;
+variable muet NUTD 'number of the descriptor array TD' entier ; 
+variable    LTTEM0 'type of INITIAL TEMPERATURE' entier 
+ ( 2 : 'INITIAL TEMPERATURE already EXISTS'
+,  1 : 'Constant INITIAL TEMPERATURE'
+, -1 : 'Function INITIAL TEMPERATURE'
+,  0 : 'D
+elete the INITIAL TEMPERATURE' ) ;
+cas LTTEM0
+ 1 : variable VATEM0 'value of the INITIAL TEMPERATURE' reel ; 
+-1 : variable NFTEM0 'name of the function INITIAL TEMPERATURE' ^~>FONCTION ;
+fincas ;   
+fintms ;

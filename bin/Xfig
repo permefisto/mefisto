@@ -1,0 +1,2 @@
+#!/bin/bash
+xfig -metric -bg white -fg black $1 &

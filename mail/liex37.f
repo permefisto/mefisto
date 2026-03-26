@@ -1,0 +1,353 @@
+      SUBROUTINE LIEX37( NTLXLI, LADEFI,
+     %                   NTARLE, MNARLE, NTSOLE, MNSOLE, IERR )
+C+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+C BUT : EXTRAIRE UNE LIGNE D'UNE SURFACE A PARTIR D'UN CRITERE LOGIQUE
+C -----
+C
+C ENTREES:
+C --------
+C NTLXLI : NUMERO DU TABLEAU TS DU LEXIQUE DE LA LIGNE EXTRAITE
+C LADEFI : TABLEAU ENTIER DE DEFINITION DE LA LIGNE
+C          CF ~/td/d/a_ligne__definition
+C
+C SORTIES:
+C --------
+C NTARLE : NUMERO      DU TMS 'NSEF' DE LA LIGNE EXTRAITE
+C MNARLE : ADRESSE MCN DU TMS 'NSEF' DE LA LIGNE EXTRAITE
+C          CF ~/td/d/a___nsef
+C NTSOLE : NUMERO      DU TMS 'XYZSOMMET' DE LA LIGNE EXTRAITE
+C MNSOLE : ADRESSE MCN DU TMS 'XYZSOMMET' DE LA LIGNE EXTRAITE
+C IERR   : 0 SI PAS D'ERREUR
+C          1 SI SURFACE INITIALE INCONNU
+C          2 SI SURFACE INITIALE SANS NSEF
+C          3 SI SURFACE INITIALE SANS XYZSOMMET
+C          4 SI FONCTION INCONNUE
+C          5 SI TYPE INCONNU D'ARETES (FRONTALIERES,INTERNES,...)
+C          6 SI IMPOSSIBLE DE CREER LES ARETES DE LA SURFACE INITIALE
+C         10 SI AUCUNE ARETE EXTRAITE
+C+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+C AUTEUR : ALAIN PERRONNET ANALYSE NUMERIQUE UPMC PARIS   SEPTEMBRE 1996
+C2345X7..............................................................012
+      IMPLICIT           INTEGER(W)
+      include"./incl/gsmenu.inc"
+      include"./incl/a_ligne__definition.inc"
+      include"./incl/a___arete.inc"
+      include"./incl/a___xyzsommet.inc"
+      include"./incl/a___nsef.inc"
+      include"./incl/ntmnlt.inc"
+      COMMON / UNITES / LECTEU, IMPRIM, INTERA, NUNITE(29)
+      include"./incl/pp.inc"
+      COMMON            MCN(MOTMCN)
+      REAL              RMCN(1)
+      EQUIVALENCE      (MCN(1),RMCN(1))
+      INTEGER           LADEFI(0:*),NOSOEL(12)
+      DOUBLE PRECISION  DXYZ(3),DOUI
+      LOGICAL           OUI
+      CHARACTER*24      NMOBJT
+C
+C     LA SURFACE INITIALE
+C     ===================
+C     LE NOM DE CETTE SURFACE
+      NUSULE = LADEFI( WUSULE )
+C     LE TABLEAU LEXIQUE DE CETTE SURFACE
+      CALL LXNLOU( NTSURF, NUSULE, NTLXSF, MN )
+      IF( NTLXSF .LE. 0 ) THEN
+         NBLGRC(NRERR) = 1
+         KERR(1) = 'SURFACE INITIAL INCONNU'
+         CALL LEREUR
+         IERR = 1
+         RETURN
+      ENDIF
+      CALL NMOBNU( 'SURFACE', NUSULE, NMOBJT )
+C
+C     LE TABLEAU 'NSEF' DE CETTE SURFACE
+      CALL LXTSOU( NTLXSF, 'NSEF', NTFASF, MNARSF )
+      IF( NTFASF .LE. 0 ) THEN
+         NBLGRC(NRERR) = 1
+         KERR(1) = 'SURFACE SANS NSEF'
+         CALL LEREUR
+         IERR = 2
+         RETURN
+      ENDIF
+C
+C     LE TABLEAU 'XYZSOMMET' DE CETTE SURFACE
+      CALL LXTSOU( NTLXSF, 'XYZSOMMET', NTSOSF, MNSOSF )
+      IF( NTSOSF .LE. 0 ) THEN
+         NBLGRC(NRERR) = 1
+         KERR(1) = 'SURFACE SANS XYZSOMMET'
+         CALL LEREUR
+         IERR = 3
+         RETURN
+      ENDIF
+      NBSOSF = MCN( MNSOSF + WNBSOM )
+      NBTGS  = MCN( MNSOSF + WNBTGS )
+C
+C     LE NUMERO DE LA FONCTION
+      NUFOCL = LADEFI( WUFOCL )
+      IF( NUFOCL .LE. 0 ) THEN
+         NBLGRC(NRERR) = 1
+         KERR(1) = 'FONCTION CRITERE INCONNUE'
+         CALL LEREUR
+         IERR = 4
+         RETURN
+      ENDIF
+C
+C     LE TYPE DES ARETES A EXTRAIRE
+      NTYFLE = LADEFI( WTYFLE )
+C     1: ARETES FRONTALIERES
+C     2: ARETES INTERNES
+C     3: ARETES QUELCONQUES
+      IF( NTYFLE .LE. 0 .OR. NTYFLE .GT. 3 ) THEN
+         NBLGRC(NRERR) = 1
+         KERR(1) = 'TYPE INCONNU DE ARETES'
+         CALL LEREUR
+         IERR = 5
+         RETURN
+      ENDIF
+C
+C     LES PARAMETRES DES NO SOMMET DU MAILLAGE
+      CALL NSEFPA( MCN(MNARSF),
+     %             NUTYMA, NBSOEL, NBSOEF, NBTGEF,
+     %             LDAPEF, LDNGEF, LDTGEF, NBEFOB,
+     %             NX    , NY    , NZ    ,
+     %             IERR   )
+      IF( IERR .NE. 0 ) RETURN
+C
+C     LE NOMBRE DE ARETES, SOMMETS, ... DE LA LIGNE EXTRAITE
+      NBAREX = 0
+      NBSOEX = 0
+      MNOUIS = 0
+      MNAREX = 0
+      MNARIN = 0
+C
+C     RESERVATION DE LA PLACE NECESSAIRE AU TABLEAU CRITERE
+      MNOUIS = 0
+      CALL TNMCDC( 'ENTIER', NBSOSF, MNOUIS )
+      MNO = MNOUIS - 1
+C
+C     CALCUL DU CRITERE EN CHACUN DES SOMMETS DU MAILLAGE
+C     ===================================================
+      MNS  = MNSOSF + WYZSOM - 3
+      DO 10 N=1,NBSOSF
+C
+C        LES 3 COORDONNEES EN DOUBLE PRECISION DU SOMMET N
+         MN = MNS + 3 * N
+         DXYZ(1) = RMCN( MN   )
+         DXYZ(2) = RMCN( MN+1 )
+         DXYZ(3) = RMCN( MN+2 )
+C
+C        LE SOMMET N VERIFIE T IL LE CRITERE ?
+         CALL FONVAL( NUFOCL, 3, DXYZ, NCODEV, DOUI )
+         IF( NCODEV .EQ. 0 ) DOUI = 0
+C
+C        1 SI CRITERE VERIFIE, 0 SINON
+         I = NINT( DOUI )
+         MCN( MNO+N ) = I
+         IF( I .EQ. 1 ) NBSOEX = NBSOEX + 1
+ 10   CONTINUE
+C
+C     EXISTE T IL DES SOMMETS VERIFIANT LE CRITERE ?
+      IF( NBSOEX .LE. 0 ) THEN
+         NBLGRC(NRERR) = 1
+         KERR(1) = 'AUCUN SOMMET VERIFIE LE CRITERE'
+         CALL LEREUR
+         IERR = 10
+         GOTO 9999
+      ENDIF
+C
+C     GENERATION EVENTUELLE PAR HACHAGE DES ARETES DES FACES
+C     CHAINAGE DES ARETES FRONTALIERES EN POSITION 5
+C     AVEC UN LIEN POUR LES ARETES FRONTALIERES
+C     =====================================================
+      CALL HAARSU( MCN(MNSOSF+WYZSOM), NMOBJT, 4, NTARSU, MNARSU,
+     %             IERR )
+      IF( IERR .NE. 0 ) THEN
+         NBLGRC(NRERR) = 2
+         KERR(1) = 'SURFACE: ' // NMOBJT
+         KERR(2) = 'IMPOSSIBLE DE CREER SES ARETES'
+         CALL LEREUR
+         IERR    = 6
+         GOTO 9999
+      ENDIF
+C
+C     LE NOMBRE D'ENTIERS PAR ARETE
+      MOARET = MCN( MNARSU + WOARET )
+C     LA MAJORATION DU NOMBRE DE ARETES
+      MXARET = MCN( MNARSU + WXARET )
+C     LE NOMBRE DE ARETES FRONTALIERES
+      NBARFB = MCN( MNARSU + WBARFB )
+C     NUMERO MINIMAL DES LIGNES DE LA SURFACE
+      NUMILF = MCN( MNARSU + WUMILF )
+C     NUMERO MAXIMAL DES LIGNES DE LA SURFACE
+      NUMXLF = MCN( MNARSU + WUMXLF )
+C     LE NUMERO DE LA PREMIERE ARETE FRONTALIERE
+      L1ARFB = MCN( MNARSU + W1ARFB )
+C     ADRESSE DANS MCN POUR ATTEINDRE LES ARETES
+      MNA0   = MNARSU + W1LGFR - MOARET - 1
+      IF( NUMXLF .GT. 0 ) THEN
+C        LE TABLEAU L1LGFR EXISTE : DECALAGE
+         MNA0 = MNA0 + NUMXLF - NUMILF + 1
+      ENDIF
+C
+C     RESERVATION DE LA PLACE NECESSAIRE AU TABLEAU TEMPORAIRE
+C     DES NUMEROS DES 2 SOMMETS   DES ARETES EXTRAITES
+C     DES NUMEROS DES 2 TANGENTES DES ARETES EXTRAITES
+C     DU  NUMERO  DU  CODE GEOMETRIQUE DES ARETES EXTRAITES
+C     CE DERNIER EST FORCE A ZERO CAR NON CALCULABLE DANS LA PLUPART DES CAS
+      MXAREX = MXARET * 5
+      CALL TNMCDC( 'ENTIER', MXAREX, MNAREX )
+      MNARE = MNAREX - 1
+      MNAVT = MNARE + MXARET * 2
+      MNAVG = MNAVT + MXARET * 2
+C
+C     RECENSEMENT DES ARETES A TRAITER
+C     ================================
+      MNARI1 = 0
+      IF( NTYFLE .EQ. 1 .OR. NTYFLE .EQ. 2 ) THEN
+         CALL TNMCDC( 'ENTIER', MXARET, MNARIN )
+         MNARI1 = MNARIN - 1
+         DO 20 N=1,MXARET
+C           ARETE INTERNE => NUMERO >0
+            MCN(MNARI1+N) = N
+ 20      CONTINUE
+C        MISE A ZERO DES ARETES NON A TRAITER
+C        LA PREMIERE ARETE FRONTALIERE
+         NF = L1ARFB
+         DO 30 N = NBARFB, 1, -1
+C           ARETE FRONTIERE => NUMERO <0
+            MCN(MNARI1+NF) = -NF
+C           L'ARETE FRONTALIERE SUIVANTE
+            NF = MCN( MNA0 + MOARET * NF + 6 )
+ 30      CONTINUE
+C
+C        ICI MCN(MNARI1+N) >0 SI ARETE INTERNE OU NON INITIALISEE
+C                          <0 SI ARETE FRONTALIERE
+C
+      ENDIF
+C
+C     LA BOUCLE SUR LES ARETES DES ELEMENTS FINIS DE LA SURFACE
+C     =========================================================
+      DO 90  N = 1, MXARET
+C
+C        ADRESSE MCN DU TABLEAU DE L'ARETE
+         MNF = MNA0 + MOARET * N
+C
+C        L'ARETE EST-ELLE INITIALISEE ?
+         IF( MCN( MNF+1 ) .EQ. 0 ) GOTO 90
+C
+C        OUI LES ARETES A EXTRAIRE SONT ELLES QUELCONQUES ?
+         IF( NTYFLE .EQ. 3 ) GOTO 40
+C
+C        TYPE DE L'ARETE N : INTERNE OU FRONTALIERE ?
+         NTY = MCN( MNARI1+N )
+         IF( NTY .GT. 0 .AND. NTYFLE .EQ. 2 ) GOTO 40
+         IF( NTY .LT. 0 .AND. NTYFLE .EQ. 1 ) GOTO 40
+         GOTO 90
+C
+C        L'ARETE N EXISTE ET A TRAITER
+C        -----------------------------
+ 40      OUI  = .TRUE.
+         DO 45 J=1,2
+C           LE NUMERO DU SOMMET J DE L'ARETE
+            NSOM = MCN( MNF+J )
+C           LE SOMMET VERIFIE T IL LE CRITERE ?
+            OUI = OUI .AND. ( MCN(MNO+NSOM) .EQ. 1 )
+ 45      CONTINUE
+C
+         IF( OUI ) THEN
+C
+C           L'ARETE VERIFIE LE CRITERE
+            NBAREX = NBAREX + 1
+C
+C           LES NUMEROS DES SOMMETS SONT STOCKES
+            NS1A = MCN( MNF+1 )
+            MCN( MNARE + 1 ) = NS1A
+            NS2A = MCN( MNF+2 )
+            MCN( MNARE + 2 ) = NS2A
+            MNARE = MNARE + 2
+C
+C           OPTION PAR DEFAUT DE TANGENTES
+            NTG1 = 0
+            NTG2 = 0
+            IF( NBTGEF .GT. 0 ) THEN
+C
+C              RECHERCHE DES EVENTUELLES TANGENTES
+C              LE NUMERO DU PREMIER EF CONTENANT L'ARETE
+               NEF = ABS( MCN( MNF+4 ) )
+C              LE NUMERO DES NBSOEF SOMMETS DE L'EF NEF DE LA SURFACE
+               CALL NSEFNS( NEF, NUTYMA, NBSOEF, NBTGEF,
+     %                      LDAPEF, LDNGEF, LDTGEF,
+     %                      MNARSF, NX, NY, NZ,
+     %                      NCOGEL, NUGEEF, NUEFTG, NOSOEL, IERR )
+               IF( NUEFTG .LE. 0 ) GOTO 70
+C              RECHERCHE DU NUMERO DE L'ARETE DANS CET EF
+               DO 50 J=1,NCOGEL
+C                 LE NUMERO DES 2 SOMMETS DE L'ARETE J DE L'EF NEF
+                  NS1 = NOSOEL(J)
+                  NS2 = NOSOEL( MOD(J,NCOGEL) + 1 )
+                  IF( (NS1.EQ.NS1A .AND. NS2.EQ.NS2A) ) THEN
+C                    LES 2 TANGENTES DE L'ARETE
+                     NTG1 = 2 * J - 1
+                     NTG2 = NTG1 + 3
+                     IF( NTG2 .GT. 2*NCOGEL ) NTG2=2
+                  ELSE IF( (NS2.EQ.NS1A .AND. NS1.EQ.NS2A) ) THEN
+C                    LES 2 TANGENTES DE L'ARETE
+                     NTG2 = 2 * J - 1
+                     NTG1 = NTG2 + 3
+                     IF( NTG1 .GT. 2*NCOGEL ) NTG1=2
+                  ELSE
+                     GOTO 50
+                  ENDIF
+C
+C                 TANGENTES RETROUVEES
+                  NTG1 = NOSOEL( 4 + NTG1 )
+                  NTG2 = NOSOEL( 4 + NTG2 )
+                  GOTO 70
+ 50            CONTINUE
+C              ICI ANOMALIE: ARETE NON DANS L'EF NEF
+            ENDIF
+C
+C           LES NUMEROS DES 2 TANGENTES OU 0
+ 70         MCN( MNAVT + 1 ) = NTG1
+            MCN( MNAVT + 2 ) = NTG2
+            MNAVT = MNAVT + 2
+C
+C           CODE GEOMETRIQUE IMPOSE NUL CAR GENERALEMENT NON CALCULABLE
+            MCN( MNAVG + 1 ) = 0
+            MNAVG = MNAVG + 1
+         ENDIF
+ 90   CONTINUE
+C
+C     EXISTE T IL DES ARETES VERIFIANT LE CRITERE ?
+      IF( NBAREX .LE. 0 ) THEN
+         NBLGRC(NRERR) = 1
+         KERR(1) = '0 ARETE VERIFIE LE CRITERE'
+         CALL LEREUR
+         IERR = 10
+         GOTO 9999
+      ENDIF
+C
+C     RENUMEROTATION DES SOMMETS ET TANGENTES DES EF EXTRAITS
+      IF( NBTGS .LE. 0 ) THEN
+         NBTGEF = 0
+      ELSE
+         NBTGEF = 2
+      ENDIF
+      CALL REEFEX( 2,      NTLXLI, 2, NBTGEF,
+     %             NBSOSF, NBTGS,  MNSOSF,
+     %             NBAREX, MNAREX, MNAREX+MXARET*2,
+     %             MNAREX+MXARET*4,
+     %             NTARLE, MNARLE, NTSOLE, MNSOLE, IERR )
+      MCN( MNSOLE + WBCOOR ) = 3
+C
+C     LA LIGNE EST ELLE STRUCTUREE ?
+C     ==============================
+      IF( IERR .EQ. 0 ) THEN
+C        TENTATIVE DE STRUCTURATION DE LA LIGNE EXTRAITE
+         CALL LIGSTR( NTLXLI, NTARLE, MNARLE, NTSOLE, MNSOLE, IER )
+      ENDIF
+C
+ 9999 IF( MNAREX .GT. 0 ) CALL TNMCDS( 'ENTIER', MXAREX, MNAREX )
+      IF( MNOUIS .GT. 0 ) CALL TNMCDS( 'ENTIER', NBSOSF, MNOUIS )
+      IF( MNARIN .GT. 0 ) CALL TNMCDS( 'ENTIER', MXARET, MNARIN )
+      END

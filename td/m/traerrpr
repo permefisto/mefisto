@@ -1,0 +1,9 @@
+variable TRAERRPR 'Trace des ERREURS sur la PRESSION' entier
+ (  1 : 'ISO-ERREURS sur la PRESSION'
+ ,  2 : 'ZONES de COULEURS des ERREURS sur la PRESSION'
+ ,  3 : 'ZONES des ERREURS par SECTIONS X ou Y ou Z=CTE'
+ ,  4 : 'PROFILS des ERREURS dans PLANS X ou Y ou Z=CTE'
+ ,  5 : 'ERREURS le LONG d''une DROITE de 2 POINTS'
+ ,  6 : 'ERREURS PRESSION sur des SURFACES de l''OBJET'
+ ,  7 : 'ERREURS PRESSION sur les SURFACES FRONTALIERES'
+ ,  9 : 'En 2D SURFACE(X,Y,ErreurPression(X,Y))' ) ;

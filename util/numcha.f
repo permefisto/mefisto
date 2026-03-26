@@ -1,0 +1,35 @@
+      SUBROUTINE NUMCHA( NO , NBC , KNO )
+C+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+C BUT :    REALISER LA CONVERSION : ENTIER => CHAINE DE CARACTERES
+C -----
+C ENTREE :
+C --------
+C NO     : ENTIER A CONVERTIR EN CHAINE DE CARACTERES
+C
+C SORTIE :
+C --------
+C NBC    : NOMBRE DE CARATERES DU NUMERO . LE SIGNE - EN TETE
+C KNO    : CHAINE DE NBC CARACTERES
+C+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+C AUTEUR : ALAIN PERRONNET ANALYSE NUMERIQUE PARIS  OCTOBRE 1987
+C.......................................................................
+      INTEGER        NO,NBC
+      CHARACTER*(*)  KNO
+      CHARACTER*24   BUFFER
+      CHARACTER*5    KFORMA
+C
+C     LE NOMBRE DE CHIFFRES (1 OU 2) DE NO (LE '-' => EST COMPRIS)
+      NBC = NBCHIF( NO )
+C
+C     CONVERSION DE L'ENTIER NBC EN CARACTERES
+      WRITE (BUFFER,'(I2)') NBC
+C
+C     LA SPECIFICATION DU FORMAT POUR CADRER JUSTE SANS BLANC
+      KFORMA = '(I' // BUFFER(1:2) // ')'
+C
+C     CONVERSION DE L'ENTIER EN NBC CARACTERES
+      WRITE (BUFFER,KFORMA) NO
+C
+C     COPIE SELON LE NOMBRE DE CARACTERES DE KNO
+      KNO = BUFFER
+      END

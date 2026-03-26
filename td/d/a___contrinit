@@ -1,0 +1,15 @@
+deftms ~>>>CONTRINIT 'CONTRAINTE INITIALE'
+variable muet DATE  'date de creation du tableau'   reel2  ;
+variable muet NUTD  'numero du tableau descripteur' entier ; 
+variable      LTCOIN 'Type de CONTRAINTE INITIALE'  entier   
+(  1 : 'Contrainte Initiale constante'
+, -1 : 'Fonction Contrainte Initiale'
+,  0 : 'Contrainte Initiale a supprimer' ) ; 
+variable  NBCOIN 'Nombre composantes 3 ou 4 ou 6'  entier ;
+cas LTCOIN
+1 : tableau  CONINI(1..NBCOIN)
+'Contraintes SXX SYY SXY ou axi SZZ SRR STETA SRZ ou SXX SYY SZZ SXY SYZ SZX'
+ reel   ; 
+-1 : variable NFCOIN 'Nom fonction Contrainte Initiale' ^~>FONCTION ;
+fincas ;
+fintms ;

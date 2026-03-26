@@ -1,0 +1,96 @@
+{ ======================================================================== }
+{ Software MEFISTO : 2011 September 6, Version                             }
+{ USER's  Name     : Alain Perronnet                                       }
+{ Project Name     : Tests of NLSE on a cube [-1,1]**3                     }
+{                    The Mesh Data File                                    }
+{ Date             : 2011/09/06                                            }
+{ ======================================================================== }
+DefVar t0,a,b,c,eps;
+t0=1;
+a=10;
+b=10;
+c=10;
+eps=0.0001;
+
+DefFunc NewX(x,y,z);
+  NewX = x*2/a -1;
+EndFunc;
+
+DefFunc NewY(x,y,z);
+  NewY = y*2/b -1;
+EndFunc;
+
+DefFunc NewZ(x,y,z);
+  NewZ = z*2/c -1;
+EndFunc;
+
+6; { MAPPINGS R3-->R3 }
+ M1P1;{ NAME of the TRANSFORMATION }
+ 6; { F:R3->R3 define by 3 functions (Fi) }
+ NewX; NewY; NewZ;
+@;
+
+4; { VOLUMES materials of the object }
+  CUBE;
+  M1P1;{ in the lexicon ~>TRANSFO }
+  11;{ regular hexahedron with unit edges }
+   a;{ NBINHX number of X-edges }
+   b;{ NBINHY number of Y-edges }
+   c;{ NBINHZ number of Z-edges }
+@;
+
+3;{ SURFACES faces of the object }
+ BASE; i;{ in the lexicon ~>TRANSFO }
+   37;   { EXTRACTED SURFACE FROM FACES OF A VOLUME }
+ CUBE;   { in the lexicon ~>VOLUME }
+ DefFunc base(x,y,z); base=z<-1+eps; EndFunc;
+ base;   { in the lexicon ~>FONCTION }
+    1;   { faces on boundary }
+
+ TOP; i; 37; CUBE;
+ DefFunc top(x,y,z); top=z>1-eps; EndFunc;
+ top; 1; { faces on boundary }
+
+ BACK; i; 37; CUBE;
+ DefFunc back(x,y,z); back=x<-1+eps; EndFunc;
+ back; 1; { faces on boundary }
+
+ FRONT; i; 37; CUBE;
+ DefFunc front(x,y,z); front=x>1-eps; EndFunc;
+ front; 1; { faces on boundary }
+
+ LEFT; i; 37; CUBE;
+ DefFunc left(x,y,z); left=y<-1+eps; EndFunc;
+ left; 1; { faces on boundary }
+
+ RIGHT; i; 37; CUBE;
+ DefFunc right(x,y,z); right=y>1-eps; EndFunc;
+ right; 1; { faces on boundary }
+
+ BOUNDARY; i; 51;
+ 6; BASE; TOP; BACK; FRONT; LEFT; RIGHT;
+@;
+
+5; { OBJECTS parts of the object }
+ CUBE; 0; { classic 2D ou 3D }
+  2; { number of Points Lines Surfaces Volumes Objects of the object }
+ v; CUBE;      { POINT or LINE or SURFACE or VOLUME or OBJECT? }
+ s; BOUNDARY;  { name of type PLSVO and name of PLSVO}
+
+@;
+
+7; { INTERPOLATION definition of nodes of the mesh }
+   CUBE; { NAME of the OBJECT to be INTERPOLATED? }
+   4;    { LAGRANGE of DEGREE 2 }
+@;
+
+10;
+ { DRAWING of PLSVO meshes }
+ 5; { OBJECT }
+ 3; { ONE OBJECT }
+ { NAME of the OBJECT? }
+ CUBE;
+ 90; { Continue the DRAWING }
+ 90; { Continue the DRAWING }
+
+CLOSE;

@@ -1,0 +1,51 @@
+. Les six valeurs fadi3d se rapportent aux six surfaces ( dans le  meme 
+ordre) definissant le contour du volume a generer  par  la  methode  de
+Winslow. 
+. Ces valeurs definissent une distance  qui  definira  la  hauteur  des
+hexaedres touchant cette surface. Apres avoir calcule un premier  mail-
+lage dit de Winlow "pur" (sans fonctions de controle), elles sont  uti-
+lisees dans la deuxieme phase de generation  dite  d'amelioration,  qui
+permet de controler l'orthogonalite et la hauteur des mailles.
+. Ce coefficient est une fraction  ]0,1]  definissant  la  hauteur  des
+hexaedres touchant la surface  considere  par  rapport  a  la  "largeur
+moyenne" de cet hexaedre, qui est calculee sur le bord (donne) c'est  a
+dire sur cette meme surface.
+. Par exemple une valeur=1.  donnera des mailles "cubiques"
+.             une valeur=0.1 donnera des mailles 10  fois  plus  larges
+.                            que haute (pour des couches limites).          
+.
+.          d a calculer = fadi3d * (d1+d2+d3+d4)/4
+.
+.                       d ?/                    
+.                   d1  | /d4                      
+.              --*------*-----*-- 
+.                   d3 /  d2
+.
+. Par convention :  
+.             une valeur=0.  correspond a aucune prescription  de  dis-
+.                            tance. Le mailleur ameliorera  les  angles
+.                            au bord sans jouer sur les distances. 
+.             une valeur=-1  conserve les distances  issues  du  calcul
+.                            sans correction au bord. Les angles seront
+.                            ameliores en conservant ces distances ini-
+.                            tiales.  
+.             une valeur=-2  la distance prescripte est une  interpola-    
+.                            tion des 4 distances (d1 d2 d3 et d4) cal-
+.                            culees sur  les  bords  "encadrant"  cette
+.                            maille.
+.
+.
+.       d est interpole a partir de d1 d2 d3 d4
+.                          *
+.                          | d4
+.                          *
+.       *                  /
+.    d1 |          <--- d ?/ --->          *
+.       |               |/                 | d2
+.       *---*----*------*-----*----*---*---*
+.                   *  /
+.                   | /
+.                d3 |/
+.                   *
+.
+. N.B. Dans tous les cas, l'amelioration des angles est effectuee.

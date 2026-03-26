@@ -1,0 +1,96 @@
+{ ==================================================================== }
+{ MEFISTO Software     : October 10-th 2007 Version                    }
+{ USER's Name          : Alain Perronnet                               }
+{ Project Name         : hexa                                          }
+{ Date                 : 10/10/2007                                    }
+{ PROJECT              : Test 3D THERMO-ELASTICITY                     }
+{ ==================================================================== }
+@;
+@;
+
+DefVar Pesanteur; Pesanteur=9.81; {m/s/s}
+DefVar Rot; Rot=7900; {Acier Inox 18_10 and 18_12}
+DefVar EYoung,nu;   EYoung=2.03e11; nu=0.29;
+
+
+1;{ OBJECT NAME to treat }
+  { NAME of the OBJECT? }
+  { NAME of OBJECT }
+    hexahedron;
+
+2; { ELASTICITY INPUT DATA }
+
+ { VOLUME: HEXAHEDRON }
+ 2; { YOUNG Modulus & POISSON coefficient }
+ 1; { 3D isotropic homogenous material }
+ EYoung; { YOUNG 'YOUNG''s modulus' reel ; }
+ nu;     { POISON 'POISSON''s coefficient' reel ; }
+
+ 1;    { Rot Volumic MASS Density }
+ 1;    { constant mass density }
+ Rot;  { DMASSE 'value of the density of MASS' reel ; }
+
+ 3;    { DILATATION & Reference TEMPERATURE }
+ 1;    { constant dilatation & reference temperature }
+ 12e-6;{ DILATA value of thermal dilatation
+         http://fr.wikipedia.org/wiki/Dilatation }
+ 20;   { TEMPIN 'value of reference temperature' reel ; }
+
+ 4;    { FOmega INTERNAL FORCES }
+ 1;    { constant force }
+ 1;    { NBCOFO 'number of components of the force' entier ; }
+ 3;    { NUCOFO(1..NBCOFO) 'number of each component of the force' entier }
+ -Rot*Pesanteur; { FORCE(1..NBCOFO) 'Value of each component of the force'}
+ @;
+
+ { SURFACE: TOP }
+ @;
+
+ { SURFACE: BASE }
+ @;
+
+ { SURFACE: RIGHT }
+ 1;   { FORCE or boundary imposed force }
+ 1;   { constant force }
+ 1;   { NBCOFO 'number of components of the force' entier ; }
+ 2;   { NUCOFO(1..NBCOFO) 'number of each component of the force' entier ; }
+ 1e6; { FORCE(1..NBCOFO) 'Value of each component of the force' reel ; }
+ @;
+
+ { SURFACE: LEFT }
+ 2;   { FIXATION or imposed displacement }
+ 1;     { constant fixed displacement }
+ 3;     { NBCOFI 'number of fixed components of the displacement' entier ; }
+ 1;2;3; { NUCOFI(1..NBCOFI) }
+ 0;0;0; { FIXAT(1..NBCOFI) 'value of fixed displacement components' reel ; }
+ @;
+
+ { SURFACE: FRONT }
+ @;
+
+ { SURFACE: BACK }
+ @;
+
+ { POINT: PTDIAG }
+ 1;   { FORCE or boundary imposed force }
+ 1;     { constant force }
+ 3;     { NBCOFO 'number of components of the force' entier ; }
+ 1;2;3; { NUCOFO(1..NBCOFO) 'number of each component of the force' }
+ 1e7; 1e7; 1e7; { FORCE(1..NBCOFO) 'Value of each component of the force' }
+ @;
+@;
+@;
+
+
+3; { STATIONNARY ELASTICITY solver }
+ 1;  { Coefficients are INDEPENDENT of DISPLACEMENTS }
+ 2;  { THERMO-ELASTICITY     else 1; ONLY ELASTICITY }
+ 1;  { CHOLESKY with SKYLINE STORAGE }
+ 8;  { DRAWING of DISPLACEMENT & STRESS }
+ 2;  { DISPLACEMENTS }
+ 2;  { AMPLIFICATION of DISPLACEMENTS }
+ 1e3;{ AMPLIFICATION of DISPLACEMENTS? }
+ 90; { EXECUTION of the DRAWING }
+ 90; { Continue the DRAWING }
+
+CLOSE;

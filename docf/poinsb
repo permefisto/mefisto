@@ -1,0 +1,14 @@
+Les NOMS des POINTS d'INTERPOLATION doivent etre donnes
+dans l'ordre suivant
+ Pour j=1 a nombre de points en Y
+    Pour i=1 a nombre de points en X
+       Donner le nom du POINT  (i,j)
+
+Exemple: 5; 2;  P11;P21;P31;P41;P51;  P12;P22;P32;P42;P52; 
+         Pour une disposition des points
+            P12  P22  P32  P42  P52
+
+            P11  P21  P31  P41  P51
+
+En fait, l'angle de visee en 3D est quelconque, 
+mais une fois adopte, l'ordre indique est impose

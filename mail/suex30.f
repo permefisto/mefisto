@@ -1,0 +1,1061 @@
+      SUBROUTINE SUEX30( NUSURF, NTLXSU, LADEFI, RADEFI,
+     %                   NTFATA, MNFATA, NTSOTA, MNSOTA, IERR )
+C+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+C BUT :     UNE QUAD-TRIANGULATION DEVIENT UNE TRIANGULATION
+C -----     EN MAXIMISANT LE MINIMUM DES QUALITES DES COUPLES DE TRIANGLES
+C           AMELIORER LA QUALITE DE LA TRIANGULATION D'UNE SURFACE
+C           SI LA FONCTION UTILISATEUR TAILLE_IDEALE(x,yz) ou
+C                                      EDGE_LENGTH(x,y,z) EXISTE
+C           ALORS
+C              ADAPTER LA TAILLE DES ARETES DES TRIANGLES
+C              AMELIORER PAR ECHANGE DES DIAGONALES DE 2 TRIANGLES ADJACENTS
+C              SUPPRESSION DES TRIANGLES DE TROP PETIT ANGLE ET
+C              DECOUPAGE DES TRIANGLES AVEC UN TROP GRAND ANGLE
+C           SINON
+C              UTILISER la VALEUR DARETE de la TAILLE D'ARETE PAR DEFAUT
+C              POUR FAIRE LA MEME AMELIORATION
+C
+C ENTREES:
+C --------
+C NUSURF : NUMERO DE LA SURFACE A AMELIORER DANS LE LEXIQUE DES SURFACES
+C NTLXSU : NUMERO DU TABLEAU TS DE LA SURFACE
+C LADEFI : TABLEAU DE DEFINITION DE LA SURFACE PARTITIONNEE
+C          CF '~td/d/a_surface__definition'
+C
+C SORTIES:
+C --------
+C NTFATA : NUMERO      DU TMS 'NSEF' DES NUMEROS DES TRIANGLES AMELIORES
+C MNFATA : ADRESSE MCN DU TMS 'NSEF' DES NUMEROS DES TRIANGLES AMELIORES
+C          CF '~td/d/a___nsef'
+C NTSOTA : NUMERO      DU TMS 'XYZSOMMET' DE LA SURFACE
+C MNSOTA : ADRESSE MCN DU TMS 'XYZSOMMET' DE LA SURFACE
+C          CF '~td/d/a___xyzsommet'
+C IERR   : 0 SI PAS D'ERREUR
+C        > 0 SINON
+C+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+C AUTEUR: A. PERRONNET LABORATOIRE ANALYSE NUMERIQUE PARIS  Octobre 1993
+C MODIFS: A. PERRONNET LJLL UPMC et St PIERRE DU PERRAY     Janvier 2016
+C MODIFS: A. PERRONNET LJLL UPMC PARIS & VEULETTES SUR MER  Avril   2017
+C MODIFS: A. PERRONNET Saint Pierre du Perray               Octobre 2019
+C MODIFS: A. PERRONNET Saint Pierre du Perray               Mars    2020
+C2345X7..............................................................012
+      PARAMETER     (M1TRIA6=6, MXTRPV=2048, MXTRQM=2048)
+      include"./incl/langue.inc"
+      include"./incl/gsmenu.inc"
+      include"./incl/trvari.inc"
+      COMMON / TRTETR / STOPTE, TRACTE
+      LOGICAL           STOPTE, TRACTE, TRACTE0
+      include"./incl/ntmnlt.inc"
+      include"./incl/darete.inc"
+      include"./incl/xyzext.inc"
+      include"./incl/a___xyzsommet.inc"
+      include"./incl/a___nsef.inc"
+      include"./incl/a_surface__definition.inc"
+      include"./incl/pp.inc"
+      COMMON             MCN(MOTMCN)
+      REAL              RMCN(MOTMCN)
+      EQUIVALENCE      (MCN(1),RMCN(1))
+      INTEGER           LADEFI(0:WNGL2P)
+      REAL              RADEFI(0:WNGL2P)
+      INTEGER           NOSOEL(64)
+      CHARACTER*24      KNMSURF
+      CHARACTER*96      KTITRE
+      INTEGER           NOTRPV(MXTRPV), NOTRQM(MXTRQM)
+
+      TRACTE0 = TRACTE
+
+C     NOM DE LA SURFACE DE NUMERO NUSURF DANS LE LEXIQUE DES SURFACES
+      CALL NMOBNU( 'SURFACE', NUSURF, KNMSURF )
+
+      PRINT*
+      IF( LANGAG .EQ. 0 ) THEN
+       PRINT*,'suex30 0: AMELIORATION de la QUALITE des TRIANGLES de la 
+     %SURFACE: ',KNMSURF
+      ELSE
+      PRINT*,'suex30 0: IMPROVEMENT of TRIANGULATION QUALITY of SURFACE:
+     % ', KNMSURF
+      ENDIF
+
+      MNNEWS = 0
+      MNARET = 0
+      MNQUAT = 0
+      MNQUAI = 0
+      NBSTID = 0
+
+C     ARETGR = DARETE EST LA VALEUR PAR DEFAUT DES ARETES DU MAILLAGE
+C     ---------------------------------------------------------------
+      ARETGR = ABS( RADEFI( WRETXS ) )
+      DARETE = ARETGR
+
+C     QUALITE MINIMALE AU DESSOUS DE LAQUELLE LA QUALITE DOIT ETRE AMELIOREE
+C     ----------------------------------------------------------------------
+      QUALMN = ABS( RADEFI( WUALMN ) )
+      QUALMN = MIN( QUALMN, 0.1  )
+      QUALMN = MAX( QUALMN, 0.01 )
+
+C     ANGLE AU DESSOUS DUQUEL 2 TRIANGLES SONT PLANS
+C     ----------------------------------------------
+      ANGL2P = ABS( RADEFI( WNGL2P ) )
+      IF( ANGL2P .GT. 30. ) THEN
+C        LIMITATION POUR EVITER TROP DE PERTE DE MATERIAU
+ccc         ANGL2P = 45.
+         ANGL2P = 31.
+      ENDIF
+
+C     CONVERSION DE DEGRES EN RADIANS
+      ANGL2P = ANGL2P * ATAN(1.) / 45.
+
+C     COSINUS DE L'ANGLE DIEDRE ENTRE LES 2 PLANS DES TRIANGLES AU DESSOUS
+C     DUQUEL LES 2 TRIANGLES SONT CONSIDERES NON-COPLANAIRES
+      COSMAXPL = COS( ANGL2P )
+
+C     NUMERO DE LA SURFACE TRIANGULEE
+C     -------------------------------
+      NUSUQU = LADEFI(WUSUQU)
+      IF( NUSUQU .LE. 0 ) THEN
+         NBLGRC(NRERR) = 1
+         KERR(1) = 'SURFACE INCONNUE'
+         CALL LEREUR
+         IERR = 1
+         RETURN
+      ENDIF
+
+C     EXISTENCE OU NON DE LA FONCTION TAILLE_IDEALE()
+C     -----------------------------------------------
+      NOFOTI = NOFOTIEL()
+
+C     RECUPERATION DES TABLEAUX SOMMETS ET EF DE LA QUAD-TRIANGULATION
+C     ================================================================
+      CALL LXNLOU( NTSURF, NUSUQU, NTLXQU, MNLXQU )
+      IF( NTLXQU .LE. 0 ) THEN
+         NBLGRC(NRERR) = 1
+         KERR(1) = 'QUAD-TRIANGULATION INCONNUE'
+         CALL LEREUR
+         IERR = 1
+         RETURN
+      ENDIF
+C
+C     LE TABLEAU 'XYZSOMMET'
+      CALL LXTSOU( NTLXQU, 'XYZSOMMET', NTSOTR, MNSOTR )
+      IF( NTSOTR .LE. 0 ) THEN
+         NBLGRC(NRERR) = 2
+C        NOM DE LA SURFACE DE NUMERO NUSURF DANS LE LEXIQUE DES SURFACES
+         CALL NMOBNU( 'SURFACE', NUSUQU, KERR(1) )
+         KERR(2) = 'MAILLAGE de la SURFACE SANS SOMMETS'
+         CALL LEREUR
+         IERR = 2
+         RETURN
+      ENDIF
+
+C     LE NOMBRE DE SOMMETS INITIAUX
+      NBSOQT = MCN( MNSOTR + WNBSOM )
+
+C     DIMENSION DE L'ESPACE DE LA SURFACE
+      CALL DIMCOO( NBSOQT,  MCN(MNSOTR+WYZSOM), NDIMLI )
+C
+C     LE TABLEAU 'NSEF'
+      CALL LXTSOU( NTLXQU, 'NSEF', NTSSTR, MNFATR )
+      IF( NTSSTR .LE. 0 ) THEN
+         NBLGRC(NRERR) = 2
+         CALL NMOBNU( 'SURFACE', NUSUQU, KERR(1) )
+         KERR(2) =  'MAILLAGE de la SURFACE SANS NSEF'
+         CALL LEREUR
+         IERR = 3
+         RETURN
+      ENDIF
+
+C     SURFACE FERMEE?
+      LORBITE = 0
+C     FERMETURE IMPOSEE INCONNUE EN ENTREE POUR LA RECALCULER
+      MCN( MNFATR + WUTFMA ) = -1
+      CALL OBJFER( 3, NUSUQU, 1, NOFERM0 )
+C     NOFERM0 : =1 SI L'OBJET EST FERME
+C               =0 SI L'OBJET N'EST PAS FERME
+C               <0 SI SATURATION DU TABLEAU SERVANT AU HACHAGE
+C                  SI LIGNE OU SURFACE ALORS NUTFMA DU TMS 'NSEF'
+C                     EST MIS A JOUR
+      LORBITE = 1
+
+C     LES CARACTERISTIQUES DES NSEF DE CETTE TRIANGULATION
+      CALL NSEFPA( MCN(MNFATR),
+     %             NUTYMA, NBSTEF, M1TRIA4, NBTGEF,
+     %             LDAPEF, LDNGEF, LDTGEF,  NBTRQU,
+     %             NX    , NY    , NZ    ,
+     %             IERR   )
+C     NUTYMA : 'NUMERO DE TYPE DU MAILLAGE'    ENTIER
+C              0 : 'NON STRUCTURE'       , 2 : 'SEGMENT    STRUCTURE' ,
+C              3 : 'TRIANGLE  STRUCTURE' , 4 : 'TRIANGLE   STRUCTURE' ,
+C              5 : 'TETRAEDRE STRUCTURE' , 6 : 'PENTAEDRE  STRUCTURE' ,
+C              7 : 'HEXAEDRE  STRUCTURE'
+C     NBSTEF : NOMBRE DE SOMMETS D'UN EF
+C              0 SI MAILLAGE NON STRUCTURE
+C     M1TRIA4: NOMBRE DE SOMMETS DE STOCKAGE DES NSEF (M1TRIA4=4 )
+C     NBTRQU : NOMBRE DE EF DU MAILLAGE
+C     NX , NY , NZ : LE NOMBRE D'ARETES DANS LES DIRECTION X Y Z
+C                CF LE TMS ~td/d/a___nsef
+C
+      IF( NUTYMA .NE. 0 .AND. NUTYMA .NE. 3 ) THEN
+         NBLGRC(NRERR) = 2
+         CALL NMOBNU( 'SURFACE', NUSUQU, KERR(1) )
+         KERR(2) = ' MAILLAGE DIFFERENT D''UNE TRIANGULATION'
+         CALL LEREUR
+         IERR = 4
+         RETURN
+      ENDIF
+      IF( NBTRQU .LE. 0 ) THEN
+         NBLGRC(NRERR) = 2
+         CALL NMOBNU( 'SURFACE', NUSUQU, KERR(1) )
+         KERR(2) = 'MAILLAGE SANS EF'
+         CALL LEREUR
+         IERR = 4
+         RETURN
+      ENDIF
+
+C     TRIANGULATION AUGMENTEE EN TAILLE DE LA QUAD-TRIANGULATION INITIALE
+C     ===================================================================
+
+C     CONSTRUCTION DU TABLEAU 'NSEF' TRES LARGEMENT AUGMENTEE
+C     -------------------------------------------------------
+      IF( LANGAG .EQ. 0 ) THEN
+         PRINT*,'suex30: NOMBRE INITIAL DE QUADR-TRI ANGLES=',NBTRQU
+      ELSE
+         PRINT*,'suex30: INITIAL NUMBER of QUADR-TRI ANGLES=',NBTRQU
+      ENDIF
+      MXTRIA = NBTRQU * 8
+      IF( NOFOTI .GT. 0 ) THEN
+         MXTRIA = MXTRIA * 3
+      ENDIF
+      MXTRIA = MAX( MXTRIA, 2048 )
+      CALL LXTNDC( NTLXSU, 'NSEF', 'MOTS', WUSOEF + MXTRIA * M1TRIA6 )
+      CALL LXTSOU( NTLXSU, 'NSEF', NTFATA, MNFATA )
+      MNTRIA = MNFATA + WUSOEF
+
+C     GENERATION DU TABLEAU 'XYZSOMMET' DES SOMMETS DES TRIANGLES
+C     -----------------------------------------------------------
+      QMINT0 = 2
+      MNTR   = MNTRIA
+      MCN( MNFATA + WBEFOB ) = 0
+      DO NUELEM = 1,NBTRQU
+C
+C        REMPLISSAGE DU TABLEAU NSEF DE LA TRIANGULATION AMELIOREE
+C        DECOUPAGE D'UN QUADRANGLE EN 2 TRIANGLES CHOISIS POUR
+C        LE MAXIMUM DU MINIMUM DES 2 QUALITES
+         CALL NSEFNS( NUELEM, NUTYMA, M1TRIA4, NBTGEF,
+     %                LDAPEF, LDNGEF, LDTGEF,
+     %                MNFATR, NX, NY, NZ,
+     %                NCOGEL, NUGEEF, NUEFTG, NOSOEL, IERR )
+         IF( IERR .NE. 0 ) GOTO 9999
+
+C        LES 4 SOMMETS DU QUADRANGLE SONT NOSOEL(1:4)
+         IF( NOSOEL(4) .GT. 0 ) THEN
+C
+C           DECOMPOSITION DU QUADRANGLE EN 2 TRIANGLES
+            NOSOEL(5) = NOSOEL(1)
+            NOSOEL(6) = NOSOEL(2)
+
+C           CALCUL DE LA QUALITE MINIMALE DES 2 CAS POSSIBLES
+            CALL QUATRI( NOSOEL(1), RMCN(MNSOTR+WYZSOM), QUA123 )
+            CALL QUATRI( NOSOEL(3), RMCN(MNSOTR+WYZSOM), QUA341 )
+
+            CALL QUATRI( NOSOEL(2), RMCN(MNSOTR+WYZSOM), QUA234 )
+            CALL QUATRI( NOSOEL(4), RMCN(MNSOTR+WYZSOM), QUA412 )
+
+C           MAXIMISATION DU MIN DES 2 QUALITES
+            QM1 = MIN( QUA123, QUA341 )
+            QM2 = MIN( QUA234, QUA412 )
+            IF( QM1 .GE. QM2 ) THEN
+
+C              DECOUPAGE DU QUADRANGLE: 123 + 341
+               QMINT0 = MIN( QMINT0, QM1 )
+C              LE TRIANGLE 123
+               MCN(MNTR)   = NOSOEL(1)
+               MCN(MNTR+1) = NOSOEL(2)
+               MCN(MNTR+2) = NOSOEL(3)
+               MCN(MNTR+3) = 0
+               MNTR = MNTR + 4
+
+C              LE TRIANGLE 341=134
+               MCN(MNTR  ) = NOSOEL(1)
+               MCN(MNTR+1) = NOSOEL(3)
+               MCN(MNTR+2) = NOSOEL(4)
+               MCN(MNTR+3) = 0
+               MNTR = MNTR + 4
+
+            ELSE
+
+C              DECOUPAGE DU QUADRANGLE: 234 + 412
+               QMINT0 = MIN( QMINT0, QM2 )
+C              LE TRIANGLE 234
+               MCN(MNTR)   = NOSOEL(2)
+               MCN(MNTR+1) = NOSOEL(3)
+               MCN(MNTR+2) = NOSOEL(4)
+               MCN(MNTR+3) = 0
+               MNTR = MNTR + 4
+
+C              LE TRIANGLE 412=124
+               MCN(MNTR  ) = NOSOEL(1)
+               MCN(MNTR+1) = NOSOEL(2)
+               MCN(MNTR+2) = NOSOEL(4)
+               MCN(MNTR+3) = 0
+               MNTR = MNTR + 4
+
+            ENDIF
+
+C           2 TRIANGLES AJOUTES
+            MCN(MNFATA+WBEFOB) = MCN(MNFATA+WBEFOB) + 2
+
+         ELSE
+
+C           1 TRIANGLE AJOUTE
+            CALL QUATRI( NOSOEL(1), RMCN(MNSOTR+WYZSOM), QM1 )
+            QMINT0 = MIN( QMINT0, QM1 )
+            MCN(MNTR)   = NOSOEL(1)
+            MCN(MNTR+1) = NOSOEL(2)
+            MCN(MNTR+2) = NOSOEL(3)
+            MCN(MNTR+3) = 0
+            MNTR = MNTR + 4
+            MCN(MNFATA+WBEFOB) = MCN(MNFATA+WBEFOB) + 1
+
+         ENDIF
+
+      ENDDO
+
+      IF( LANGAG .EQ. 0 ) THEN
+         PRINT*,'suex30: NOMBRE FINAL de TRIANGLES=',MCN(MNFATA+WBEFOB),
+     %          ' de QUALITE MININUM=',QMINT0
+      ELSE
+         PRINT*,'suex30: FINAL   NUMBER of TRIANGLES=',
+     %           MCN(MNFATA+WBEFOB),
+     %          ' of MINIMUM QUALITY=',QMINT0
+      ENDIF
+
+C     MISE A JOUR DU TMS 'NSEF' DE LA TRIANGULATION DE LA SURFACE
+C     TYPE DE L'OBJET : SURFACE
+      MCN( MNFATA + WUTYOB ) = 3
+C     LE TYPE INCONNU DE FERMETURE DU MAILLAGE
+      MCN( MNFATA + WUTFMA ) = -1
+C     PAS DE TANGENTES STOCKEES
+      MCN( MNFATA + WBTGEF ) = 0
+      MCN( MNFATA + WBEFAP ) = 0
+      MCN( MNFATA + WBEFTG ) = 0
+C     NUMERO DU TYPE DU MAILLAGE : NON STRUCTURE
+      MCN( MNFATA + WUTYMA ) = 0
+C     NOMBRE DE SOMMETS PAR EF
+      MCN( MNFATA + WBSOEF ) = 4
+C     NOMBRE DE TRIANGLES
+ccc   MCN( MNFATA + WBEFOB ) = MCN( MNFATA + WBEFOB )
+C     LA DATE DE CREATION
+      CALL ECDATE( MCN(MNFATA) )
+C     LE NUMERO DU TABLEAU DESCRIPTEUR
+      MCN( MNFATA + MOTVAR(6) ) = NONMTD( '~>>>NSEF' )
+
+
+C     CONSTRUCTION DU TABLEAU 'XYZSOMMET' DE LA FUTURE TRIANGULATION
+C     AMELIOREE
+C     --------------------------------------------------------------
+      MXSOM = MXTRIA / 2 + 128
+      CALL LXTNDC( NTLXSU, 'XYZSOMMET', 'MOTS', WYZSOM + 3 * MXSOM )
+      CALL LXTSOU( NTLXSU, 'XYZSOMMET',  NTSOTA, MNSOTA )
+      CALL TRTATA( MCN(MNSOTR), MCN(MNSOTA), WYZSOM+3*NBSOQT )
+C     NOMBRE DE SOMMETS ACTUELS DE LA TRIANGUATION
+      MCN( MNSOTA + WNBSOM ) = NBSOQT
+C     LA DATE DE CREATION
+      CALL ECDATE( MCN(MNSOTA) )
+C     LE NUMERO DU TABLEAU DESCRIPTEUR
+      MCN( MNSOTA + WNBTGS ) = 0
+C     LE NOMBRE DE COORDONNEES PAR SOMMET
+      MCN( MNSOTA + WBCOOR ) = 3
+      MCN( MNSOTA + MOTVAR(6) ) = NONMTD( '~>>>XYZSOMMET' )
+      MNXYZS = MNSOTA + WYZSOM
+
+C     TRACE DE LA TRIANGULATION CREEE
+      CALL TRAFAC( KNMSURF, NUSURF, MNFATA, MNSOTA )
+
+
+C     TRAITEMENT DES TRIANGLES DE QUALITE < QUALMN
+C     DES MCN(MNFATA+WBEFOB) TRIANGLES DE NOTRIA, DE LEURS VOISINS et
+C     DE LEURS VOISINS DE VOISINS
+C     ---------------------------------------------------------------
+ccc      MXTRAR = 4  INSUFFISANT pour TRAITER les FICHIERS.obj
+      MXTRAR = 6
+      CALL MODTTRQM( COSMAXPL, QUALMN,
+     %               MXSOM,    MCN(MNSOTA+WNBSOM), RMCN(MNXYZS),
+     %               MXTRAR,   L1ARET, L2ARET, MNARET,
+     %               M1TRIA4,  MXTRIA, MCN(MNFATA+WBEFOB), MCN(MNTRIA),
+     %               MXTRPV,   NOTRPV, MODIFS )
+
+
+C     TRACE ET TRAITEMENT DES TRIANGLES DE QUALITE < QUALMN
+C     DE LEURS VOISINS et DE LEURS VOISINS DE VOISINS
+C     -----------------------------------------------------
+      CALL TRAITRQM( COSMAXPL, QUALMN, NUSURF, KNMSURF,
+     %               NOFERM0,  MXSOM,  MCN(MNSOTA+WNBSOM), MNSOTA,
+     %               MXTRIA,   M1TRIA4,MCN(MNFATA+WBEFOB), MNFATA,
+     %               MXTRAR,   L1ARET, L2ARET, MNARET,
+     %               MXTRQM,   NBTRQM, NOTRQM,
+     %               MXTRPV,   NOTRPV, QTRMOY, QTRMIN, IERR )
+      IF( IERR .NE. 0 ) GOTO 9910
+
+C     TRACE DE LA TRIANGULATION ACTUALISEE
+      CALL TRAFAC( KNMSURF, NUSURF, MNFATA, MNSOTA )
+
+
+C     EVENTUELLE DESTRUCTION et RECONSTRUCTION DU TABLEAU DES ARETES
+C     --------------------------------------------------------------
+ 20   IF( MNARET .GT. 0 ) CALL TNMCDS( 'ENTIER', L1ARET*L2ARET, MNARET )
+C     RECONSTRUCTION DU TABLEAU DES ARETES DE LA TRIANGULATION
+      CALL GEARSU( M1TRIA4, MCN(MNFATA+WBEFOB), MCN(MNTRIA), MXTRAR,
+     %             L1ARET,  L2ARET, MNARET, IERR )
+
+C     ARETE(1,I)= NO DU 1-ER  SOMMET DE L'ARETE
+C     ARETE(2,I)= NO DU 2-EME SOMMET > 1-ER  SOMMET
+C     ARETE(3,I)= CHAINAGE HACHAGE SUR ARETE SUIVANTE
+C     ARETE(4,I)= NUMERO DU 1-ER TRIANGLE CONTENANT CETTE ARETE
+C                 0 SI PAS DE 1-ER  TRIANGLE
+C     ARETE(5,I)= NUMERO DU 2-EME TRIANGLE CONTENANT CETTE ARETE
+C                 0 SI PAS DE 2-EME TRIANGLE
+C     ARETE(3+MXTRAR,I)= NO DU MXTRAR-EME TRIANGLE CONTENANT CETTE ARETE
+C                        0 SI PAS DE MXTRAR-EME TRIANGLE
+C     puis
+C     ARETE(6,I)= NOMBRE DE POINTS AJOUTES SUR L'ARETE I POUR TAILLE_IDEALE
+C     ARETE(7,I)= NUMERO XYZSOM DU DERNIER POINT AJOUTE SUR L'ARETE I
+
+
+C     AJOUT DE POINTS SUR LES ARETES DU MAILLAGE EN FONCTION DE
+C     TAILLE_IDEALE(x,y,z) ou DARETE LA TAILLE D'ARETE PAR DEFAUT
+C     et SOUS-TRIANGULATION DES TRIANGLES OU AU MOINS UN POINT
+C     A ETE AJOUTE SUR UNE ARETE
+C     et AJOUT EVENTUEL DU BARYCENTRE du TRIANGLE 
+C     ------------------------------------------------------------
+      NBTRIA0 = MCN(MNFATA+WBEFOB)
+      NBSOM0  = MCN(MNSOTA+WNBSOM)
+      CALL A1LGARTI( MXSOM,  MCN(MNSOTA+WNBSOM), RMCN(MNXYZS),
+     %               L1ARET, L2ARET, MCN(MNARET),
+     %               MXTRIA, MCN(MNFATA+WBEFOB), MCN(MNTRIA), IERR )
+      IF( IERR .GT. 0 ) THEN
+         GOTO 9999
+      ENDIF
+
+C     TRACE ET TRAITEMENT DES TRIANGLES DE QUALITE < QUALMN
+C     DE LEURS VOISINS et DE LEURS VOISINS DE VOISINS
+      CALL TRAITRQM( COSMAXPL, QUALMN, NUSURF, KNMSURF,
+     %               NOFERM0,  MXSOM,  MCN(MNSOTA+WNBSOM), MNSOTA,
+     %               MXTRIA,   M1TRIA4,MCN(MNFATA+WBEFOB), MNFATA,
+     %               MXTRAR,   L1ARET, L2ARET, MNARET,
+     %               MXTRQM,   NBTRQM, NOTRQM,
+     %               MXTRPV,   NOTRPV, QTRMOY, QTRMIN, IERR )
+      IF( IERR .NE. 0 ) GOTO 9910
+
+C     TRACE DES MCN(MNFATA+WBEFOB) TRIANGLES
+      CALL TRAFAC( KNMSURF, NUSURF, MNFATA, MNSOTA )
+
+
+C     BARYCENTRAGE DE TOUS LES SOMMETS DES MCN(MNFATA+WBEFOB) TRIANGLES
+C     -----------------------------------------------------------------
+      CALL BASTTTR4( COSMAXPL, QUALMN, MCN(MNSOTA+WNBSOM), RMCN(MNXYZS),
+     %               MXTRAR,   L1ARET, L2ARET, MNARET,
+     %               M1TRIA4,  MCN(MNFATA+WBEFOB), MCN(MNTRIA),
+     %               MXTRPV,   NOTRPV,  MODIFS )
+
+C     TRACE ET TRAITEMENT DES TRIANGLES DE QUALITE < QUALMN
+C     DE LEURS VOISINS et DE LEURS VOISINS DE VOISINS
+      CALL TRAITRQM( COSMAXPL, QUALMN, NUSURF, KNMSURF,
+     %               NOFERM0,  MXSOM,  MCN(MNSOTA+WNBSOM), MNSOTA,
+     %               MXTRIA,   M1TRIA4,MCN(MNFATA+WBEFOB), MNFATA,
+     %               MXTRAR,   L1ARET, L2ARET, MNARET,
+     %               MXTRQM,   NBTRQM, NOTRQM,
+     %               MXTRPV,   NOTRPV, QTRMOY, QTRMIN, IERR )
+      IF( IERR .NE. 0 ) GOTO 9910
+
+C     TRACE DES MCN(MNFATA+WBEFOB) TRIANGLES
+      CALL TRAFAC( KNMSURF, NUSURF, MNFATA, MNSOTA )
+
+
+C     SI POSSIBLE ECHANGER LA DIAGONALE DE 2 TRIANGLES ADJACENTS
+C     PAR UNE ARETE POUR TOUTES LES ARETES DE LA TRIANGULATION
+C     ----------------------------------------------------------
+      CALL EC2DTTR( COSMAXPL, RMCN(MNXYZS),
+     %              M1TRIA4, MCN(MNFATA+WBEFOB), MCN(MNTRIA),
+     %              MXTRAR, L1ARET, L2ARET, MNARET, NBDIAG, IERR )
+      IF( IERR   .EQ. 5 ) GOTO 9999
+      IF( NBDIAG .EQ. 0 ) GOTO 30
+
+C     TRACE DES MCN(MNFATA+WBEFOB) TRIANGLES
+      CALL TRAFAC( KNMSURF, NUSURF, MNFATA, MNSOTA )
+
+      IF( MCN(MNFATA+WBEFOB) .GT. NBTRIA0 ) THEN
+         GOTO 20
+      ENDIF
+
+
+C     PRISE EN COMPTE de la FONCTION TAILLE_IDEALE(x,y,z) si ELLE EXISTE
+C     ou de la TAILLE d'ARETE PAR DEFAUT DARETE EN
+C     AJOUTANT UN MILIEU JOINT AUX 2 SOMMETS OPPOSES DE LA PLUS
+C     GRANDE ARETE DU TRIANGLE. SOIT 2 TRIANGLES => 4 TRIANGLES
+C     -----------------------------------------------------------------
+C     CONSTRUCTION DU TABLEAU DES ARETES
+ 30   IF( MNARET.GT.0 ) CALL TNMCDS('ENTIER',L1ARET*L2ARET,MNARET)
+C     RECONSTRUCTION DU TABLEAU DES ARETES
+      CALL GEARSU( M1TRIA4, MCN(MNFATA+WBEFOB), MCN(MNTRIA), MXTRAR,
+     %             L1ARET,  L2ARET, MNARET, IERR )
+
+      NBTRIA0 = MCN(MNFATA+WBEFOB)
+      CALL A2LGARTI( NOFOTI, MXSOM, MCN(MNSOTA+WNBSOM), RMCN(MNXYZS),
+     %               L1ARET, L2ARET, MCN(MNARET),
+     %               MXTRIA, MCN(MNFATA+WBEFOB), MCN(MNTRIA), IERR )
+
+C     TRACE DES TRIANGLES DE QUALITE < QUALMN DES TRIANGLES
+C     DE NOTRIA, DE LEURS VOISINS et DE LEURS VOISINS DE VOISINS
+      CALL TRAITRQM( COSMAXPL, QUALMN, NUSURF, KNMSURF,
+     %               NOFERM0,  MXSOM,  MCN(MNSOTA+WNBSOM), MNSOTA,
+     %               MXTRIA,   M1TRIA4,MCN(MNFATA+WBEFOB), MNFATA,
+     %               MXTRAR,   L1ARET, L2ARET, MNARET,
+     %               MXTRQM,   NBTRQM, NOTRQM,
+     %               MXTRPV,   NOTRPV, QTRMOY, QTRMIN, IERR )
+      IF( IERR .NE. 0 ) GOTO 9910
+
+      IF( QTRMIN .GE. QUALMN ) GOTO 9910
+
+      IF( MCN(MNFATA+WBEFOB) .GT. NBTRIA0 ) THEN
+         CALL TRAFAC( KNMSURF, NUSURF, MNFATA, MNSOTA )
+         GOTO 30
+      ENDIF
+
+
+C     =================================================================
+C     FORMATION SUR NOTRI4(4,NBTRIA) du TABLEAU NOTRIA(6,NBTRIA)
+C     PAR TRIANGLE : SOMMET1 SOMMET2 SOMMET3 0  =>
+C                    SOMMET1 SOMMET2 SOMMET3 TR_VOIS1 TR_VOIS2 TR_VOIS3
+C     =================================================================
+      IF( MNARET .GT. 0 ) CALL TNMCDS( 'ENTIER', L1ARET*L2ARET, MNARET )
+C     CONSTRUCTION DU TABLEAU DES ARETES DE LA TRIANGULATION
+      CALL GEARSU( M1TRIA4, MCN(MNFATA+WBEFOB), MCN(MNTRIA), MXTRAR,
+     %             L1ARET, L2ARET, MNARET, IERR )
+     
+      NBTRI4 = MCN(MNFATA+WBEFOB)
+      CALL GETRI6( L1ARET, L2ARET, MCN(MNARET),
+     %             MCN(MNFATA+WBEFOB), M1TRIA4, MCN(MNTRIA),
+     %                                 M1TRIA6, MCN(MNTRIA), IERR )
+      IF( IERR .NE. 0 ) GOTO 9999
+C     ATTENTION: NOTRIA( M1TRIA4, NBTRIA )  devient MAINTENANT
+C                NOTRIA( M1TRIA6, NBTRIA ) !
+      PRINT*,'suex30: NOTRIA(',M1TRIA4,',',NBTRI4,
+     %       ') est devenu NOTRIA(',M1TRIA6,',',MCN(MNFATA+WBEFOB),')'
+
+
+C     BARYCENTRAGE DES SOMMETS DONT TOUS LES TRIANGLES
+C     SONT COPLANAIRES a l'ANGLE ANGL2P de COPLANEARITE PRES et
+C     REDUCTION DU NOMBRE DE TRIANGLES COPLANAIRES D'UN SOMMET
+C     PAR RETRIANGULATION DE SES TRIANGLES et SA SUPPRESSION
+C     ---------------------------------------------------------
+      CALL BASTCOPL( COSMAXPL, MCN(MNSOTA+WNBSOM), RMCN(MNXYZS),
+     %               MXTRIA, M1TRIA6, MCN(MNFATA+WBEFOB), MCN(MNTRIA) )
+
+C     TRACE DES TRIANGLES DE MAUVAISE QUALITE
+      KTITRE='suex30 10:          TRIANGLES de QUALITE<                '
+      WRITE(KTITRE(42:51),'(F10.7)') QUALMN
+      CALL LISTTRQM( QUALMN, M1TRIA6, MCN(MNFATA+WBEFOB), MCN(MNTRIA),
+     %               MXTRQM, NBTRQM, NOTRQM,
+     %               MCN(MNSOTA+WNBSOM), RMCN(MNXYZS),
+     %               QTRMOY, QTRMIN )
+      CALL TRTRIAN( 'suex30 10', RMCN(MNXYZS),
+     %               M1TRIA6, MXTRQM, NBTRQM, NOTRQM, NOTRIA )
+      IF( QTRMIN .GE. QUALMN ) GOTO 9900
+  
+
+C     AJOUT DU BARYCENTRE DES TRIANGLES DE SURFACE SUPERIEURE A
+C     3 FOIS LA SURFACE MOYENNE DES MCN(MNFATA+WBEFOB) TRIANGLES
+C     ----------------------------------------------------------
+      CALL BATRGRAN( COSMAXPL, MXSOM,  MCN(MNSOTA+WNBSOM), RMCN(MNXYZS),
+     %               MXTRIA,   MCN(MNFATA+WBEFOB), MCN(MNTRIA), SFMOYTR)
+
+C     TRACE DES TRIANGLES DE MAUVAISE QUALITE
+      KTITRE='suex30 7:          TRIANGLES de QUALITE<                 '
+      WRITE(KTITRE(41:50),'(F10.7)') QUALMN
+      CALL LISTTRQM( QUALMN, M1TRIA6, MCN(MNFATA+WBEFOB), MCN(MNTRIA),
+     %               MXTRQM, NBTRQM, NOTRQM,
+     %               MCN(MNSOTA+WNBSOM), RMCN(MNXYZS), QTRMOY, QTRMIN )
+      CALL TRTRIAN( 'suex30 7', RMCN(MNXYZS),
+     %               M1TRIA6, MXTRQM, NBTRQM, NOTRQM, NOTRIA )
+      IF( QTRMIN .GE. QUALMN ) GOTO 9900
+
+
+C     DETECTION et MODIFICATION DES TRIANGLES DONT LES TRIANGLES ADJACENTS
+C     PRESENTENT UN RAPPORT DE SURFACES TRES DIFFERENTS
+C     --------------------------------------------------------------------
+      CALL RASFTRAD( COSMAXPL, MCN(MNSOTA+WNBSOM), RMCN(MNXYZS),
+     %               MCN(MNFATA+WBEFOB), MCN(MNTRIA), RAP2TRMI, SFMOYTR)
+
+C     TRACE DES TRIANGLES DE MAUVAISE QUALITE
+      KTITRE='suex30 8:          TRIANGLES de QUALITE<                 '
+      WRITE(KTITRE(41:50),'(F10.7)') QUALMN
+      CALL LISTTRQM( QUALMN, M1TRIA6, MCN(MNFATA+WBEFOB), MCN(MNTRIA),
+     %               MXTRQM, NBTRQM, NOTRQM,
+     %               MCN(MNSOTA+WNBSOM),  RMCN(MNXYZS), QTRMOY, QTRMIN )
+      CALL TRTRIAN( 'suex30 8', RMCN(MNXYZS),
+     %               M1TRIA6, MXTRQM, NBTRQM, NOTRQM, NOTRIA )
+      IF( QTRMIN .GE. QUALMN ) GOTO 9900
+
+
+C     AJOUT DU BARYCENTRE DU TRIANGLE DE PLUS PETIT RAPPORT des
+C     SURFACES DES PLUS DE 8 TRIANGLES D'UN SOMMET
+C     ---------------------------------------------------------
+      CALL BASTPL8T( COSMAXPL, MXSOM,  MCN(MNSOTA+WNBSOM), RMCN(MNXYZS),
+     %               MXTRIA,   MCN(MNFATA+WBEFOB), MCN(MNTRIA) )
+
+C     TRACE DES TRIANGLES DE MAUVAISE QUALITE
+      KTITRE='suex30 9:          TRIANGLES de QUALITE<                 '
+      WRITE(KTITRE(41:50),'(F10.7)') QUALMN
+      CALL LISTTRQM( QUALMN, M1TRIA6, MCN(MNFATA+WBEFOB), MCN(MNTRIA),
+     %               MXTRQM, NBTRQM, NOTRQM,
+     %               MCN(MNSOTA+WNBSOM),  RMCN(MNXYZS), QTRMOY, QTRMIN )
+      CALL TRTRIAN( 'suex30 9', RMCN(MNXYZS),
+     %               M1TRIA6, MXTRQM, NBTRQM, NOTRQM, NOTRIA )
+      IF( QTRMIN .GE. QUALMN ) GOTO 9900
+
+
+C     SUPPRESSION DES ANGLES DIEDRES PROCHE DE Pi DES COUPLES DE
+C     TRIANGLES de la TRIANGULATION PAR ECHANGE FORCE DES DIAGONALES
+C     --------------------------------------------------------------
+      CALL ANGDIEPI( COSMAXPL, MCN(MNSOTA+WNBSOM), RMCN(MNXYZS),
+     %               MCN(MNFATA+WBEFOB), MCN(MNTRIA) )
+
+C     TRACE DES TRIANGLES DE MAUVAISE QUALITE
+      KTITRE='suex30 11:          TRIANGLES de QUALITE<                '
+      WRITE(KTITRE(42:51),'(F10.7)') QUALMN
+      CALL LISTTRQM( QUALMN, M1TRIA6, MCN(MNFATA+WBEFOB), MCN(MNTRIA),
+     %               MXTRQM, NBTRQM, NOTRQM,
+     %               MCN(MNSOTA+WNBSOM),  RMCN(MNXYZS), QTRMOY, QTRMIN )
+      CALL TRTRIAN( 'suex30 11', RMCN(MNXYZS),
+     %               M1TRIA6, MXTRQM, NBTRQM, NOTRQM, NOTRIA )
+      IF( QTRMIN .GE. QUALMN ) GOTO 9900
+
+
+C     ==================================================================
+C     ITERATIONS SUR LE TRAITEMENT DES TROP GRANDS OU TROP PETITS ANGLES
+C     ==================================================================
+      IEGRAN = 1
+
+C     TABLEAUX DES QUALITES DES TRIANGLES POUR LE TRI
+      MXQUAT = MXTRIA
+      CALL TNMCDC( 'REEL',   MXQUAT, MNQUAT )
+      CALL TNMCDC( 'ENTIER', MXQUAT, MNQUAI )
+
+C     NOMBRE DE TRIANGLES TRAITES
+      NBANTR0 = 0
+
+C     NOMBRE D'ITERATIONS DU TRAITEMENT DES ANGLES
+      NBITER = 0
+
+ 50   NBITER = NBITER + 1
+
+C     FORMATION DU TABLEAU TRQM DES TRIANGLES DE QUALITE INFERIEURE A QUALMN
+C     ET DES TABLEAUX QUAT et QUAI
+C     ----------------------------------------------------------------------
+      NBANTR = 0
+      QUAMIN = 2.
+      NBST   = MCN(MNSOTA+WNBSOM)
+      MNTR   = MNTRIA
+      NBTRQM = 0
+
+      DO NUELEM = 1 , MCN(MNFATA+WBEFOB)
+         IF( MCN(MNTR) .GT. 0 ) THEN
+C           QUALITE DU TRIANGLE
+            CALL QUATRI( MCN(MNTR), RMCN(MNXYZS), Q )
+            QUAMIN = MIN( QUAMIN, Q )
+            IF( Q .LT. QUALMN ) THEN
+C              TRIANGLE DE QUALITE INFERIEURE A LA QUALITE MINIMALE
+               IF( NBTRQM .GE. MXTRQM ) THEN
+                  PRINT*,'suex30: AUGMENTER MXTRQM=',MXTRQM
+                  GOTO 52
+               ENDIF
+               NOTRQM( NBTRQM+1 ) = NUELEM
+              RMCN( MNQUAT + NBTRQM ) = Q
+               MCN( MNQUAI + NBTRQM ) = NBTRQM+1
+               NBTRQM = NBTRQM + 1
+            ENDIF
+         ENDIF
+C        PASSAGE AU TRIANGLE SUIVANT
+         MNTR = MNTR + M1TRIA6
+      ENDDO
+
+ 52   IF( NBTRQM .LE. 0 ) GOTO 9900
+
+
+C     PRESENCE DE NBTRQM>0 TRIANGLES DE QUALITE < QUALMN
+      PRINT*
+      IF( LANGAG .EQ. 0 ) THEN
+         PRINT*,'suex30: SURFACE TRIANGULEE: ',KNMSURF
+         PRINT 10052, NBITER, QUAMIN, NBTRQM, QUALMN
+      ELSE
+         PRINT*,'suex30: TRIANGULATED SURFACE: ',KNMSURF
+         PRINT 20052, NBITER, QUAMIN, NBTRQM, QUALMN
+      ENDIF
+10052 FORMAT('---ITERATION',I3,': AMELIORATION de la QUALITE MIN',G14.6,
+     %' sur',I7,' TRIANGLES au DESSOUS du SEUIL de QUALITE',G14.6,
+     %'----------------------------------')
+20052 FORMAT('---ITERATION',I3,': IMPROVEMENT of QUALITY MINIMUM',G14.6,
+     %' on',I7,' TRIANGLES UNDER the QUALITY THRESHOLD',G14.6,
+     %'----------------------------------')
+
+C     TRACE DES TRIANGLES DE FAIBLE QUALITE ET DE LEURS VOISINS
+      CALL TRTRIAN( 'suex30',  RMCN(MNXYZS), 6, MXTRQM, NBTRQM,
+     %               NOTRQM, MCN(MNTRIA) )
+
+
+cccC     ESSAI d'ECHANGE DES DIAGONALES DES TRIANGLES DE QUALITE INFERIEURE
+cccC     ------- ----------------------------------------------------------
+ccc      CALL EC2DIAGRTR( ANGL2P, MCN(MNSOTA+WNBSOM), RMCN(MNXYZS),
+ccc     %                 NBTRQM, NOTRQM,
+ccc     %                 MCN(MNFATA+WBEFOB), MCN(MNTRIA), NBCHGT )
+ccc      PRINT*,'suex30:',NBCHGT,' ECHANGES de DIAGONALES des TRIANGLES de
+ccc     % QUALITE INFERIEURE par EXECUTION de amqtr4'
+cccC     TRACE DES TRIANGLES DE FAIBLE QUALITE ET DE LEURS VOISINS
+ccc      CALL TRTRIAN( 'suex30', RMCN(MNXYZS), 6, MXTRQM, NBTRQM,
+ccc     %               NOTRQM,  MCN(MNTRIA) )
+
+C     TRI SELON LA QUALITE CROISSANTE
+      CALL TRITRP( NBTRQM, RMCN(MNQUAT), MCN(MNQUAI) )
+
+
+C     RECHERCHE ET TRAITEMENT DES TRIANGLES SELON LEURS ANGLES MIN ET MAX
+C     -------------------------------------------------------------------
+      MNTR0 = MNTRIA - M1TRIA6 -1
+      DO 100 N = 1,NBTRQM
+
+C        LE TRIANGLE NUELEM DE MAUVAISE QUALITE EST A TRAITER
+         NTMQ   = MCN( MNQUAI-1+N )
+         NUELEM = NOTRQM( NTMQ )
+         IF( NUELEM .LE. 0 ) GOTO 100
+
+C        ADRESSE MCN DU TRIANGLE NUELEM
+         MNTR = MNTR0 + M1TRIA6 * NUELEM
+         IF( MCN(MNTR+1) .LE. 0 ) GOTO 100
+
+C        QUALITE DU TRIANGLE
+         CALL QUATRI( MCN(MNTR+1), RMCN(MNXYZS), Q )
+         IF( Q .GE. QUALMN ) GOTO 100
+
+
+C        LE TRIANGLE NUELEM A T IL UN SOMMET NS CENTRE D'UN GRAND TRIANGLE
+C        FORME DE NUELEM ET DE 2 TRIANGLES ADJACENTS S'ENROULANT AUTOUR?
+C        -----------------------------------------------------------------
+         CALL EX3T1TPL( COSMAXPL, RMCN(MNXYZS), MCN(MNTRIA),
+     %                  NUELEM, NS )
+         IF( NS .GT. 0 ) THEN
+
+C           LES 3 TRIANGLES AYANT LE SOMMET NS DE NUELEM COMME
+C           CENTRE D'UN GRAND TRIANGLE SONT REMPLACES PAR CE GRAND TRIANGLE
+C           ET LES 2 AUTRES TRIANGLES SONT DETRUITS
+
+cccC           TRACE DU TRIANGLE NUELEM ET DES 3 TRIANGLES ADJACENTS
+ccc            NOTRPV(1) = NUELEM
+ccc            CALL TRTRIAN( 'suex30',  RMCN(MNXYZS), 6, 1, 1, NOTRPV,
+ccc     %                     MCN(MNTRIA) )
+
+C           REMPLACER LES 3 TRIANGLES COPLANAIRES, AYANT LE SOMMET NS
+C           DU TRIANGLE NUELEM COMME CENTRE D'UN GRAND TRIANGLE,
+C           PAR CE GRAND TRIANGLE ET DETRUIRE LES 2 AUTRES TRIANGLES
+            CALL MO3T1TPL( MCN(MNTRIA), NUELEM, NS )
+            IF( NS .GT. 0 ) THEN
+ccc               PRINT*,'suex30: TRIANGLE',NUELEM,
+ccc     %   ' EST un SOUS-TRIANGLE d''UN GRAND TRIANGLE qui REMPLACE les 3'
+
+cccC              TRACE DU TRIANGLE NUELEM ET DES 3 TRIANGLES ADJACENTS
+ccc               NOTRPV(1) = NUELEM
+ccc               CALL TRTRIAN( 'suex30',  RMCN(MNXYZS), 6, 1, 1, NOTRPV,
+ccc     %                        MCN(MNTRIA) )
+               GOTO 100
+            ENDIF
+
+         ENDIF
+
+C        LE TRIANGLE NUELEM EST IL ISOLE?
+C        C-A-D SES 3 ARETES SONT ELLES SANS TRIANGLE OPPOSE
+C        --------------------------------------------------
+C        NOMBRE D'ARETES FRONTALIERES DU TRIANGLE NUELEM
+C        ADRESSE MCN DU TRIANGLE NUELEM
+         NBARFR = 0
+         DO K=4,6
+            IF( MCN( MNTR + K ) .LE. 0 ) THEN
+               NBARFR = NBARFR + 1
+            ENDIF
+         ENDDO
+         IF( NBARFR .EQ. 3 ) THEN
+C           TRIANGLE NUELEM ISOLE, SANS TRIANGLE ADJACENT => SUPPRIME
+C           ---------------------------------------------------------
+            PRINT*,'suex30: Le TRIANGLE',NUELEM,
+     %             ' AVEC 3 ARETES FRONTALIERES EST SUPPRIME car ISOLE'
+            PRINT*,'St:',  (MCN(MNTR+K),K=1,3),
+     %             '  Tr Op:',(MCN(MNTR+K),K=4,6)
+C           LE TRIANGLE NUELEM EST DETRUIT DANS NOTRIA
+            DO K=1,6
+               MCN( MNTR+ K ) = 0
+            ENDDO
+            MODIF = 1
+            GOTO 99
+         ENDIF
+
+
+cccC        SI LE TRIANGLE NUELEM A UNE TRES PETITE ARETE ALORS
+cccC        SES 2 SOMMETS SONT IDENTIFIES ET NUELEM EST DETRUIT
+cccC        AINSI QUE SON TRIANGLE OPPOSE PAR CETTE PETITE ARETE
+cccC        ----------------------------------------------------
+ccc         CALL SE30ISA6( QUALMN, MXSOM,  MCN(MNSOTA+WNBSOM), RMCN(MNXYZS),
+ccc     %                  NUELEM, MCN(MNFATA+WBEFOB), MCN(MNTRIA), MODIF )
+ccc         IF( MODIF .EQ. 2 ) THEN
+cccC           2 SOMMETS D'UNE PETITE ARETE DE NUELEM ONT ETE IDENTIFIES
+cccC           DESTRUCTION DU TABLEAU DES ARETES
+ccc            IF(MNARET.GT.0) CALL TNMCDS('ENTIER', L1ARET*L2ARET, MNARET)
+cccC           RECONSTRUCTION DU TABLEAU DES ARETES DE LA TRIANGULATION
+ccc            CALL GEARSU( M1TRIA6, MCN(MNFATA+WBEFOB), MCN(MNTRIA), MXTRAR,
+ccc     %                   L1ARET, L2ARET, MNARET, IERR )
+cccC           FORMATION SUR NOTRI6(6,MCN(MNFATA+WBEFOB))
+cccC           du TABLEAU NOTRIA(6,MCN(MNFATA+WBEFOB))
+cccC           PAR TRIANGLE:  SOMMET1 SOMMET2 SOMMET3 TR_VOIS1 TR_VOIS2 TR_VOIS3
+cccC                  =>      SOMMET1 SOMMET2 SOMMET3    0        0        0
+ccc            MN = MNTRIA - 1
+ccc            DO J=1,MXTRIA
+ccc               MCN( MN+4 ) = 0
+ccc               MCN( MN+5 ) = 0
+ccc               MCN( MN+6 ) = 0
+ccc               MN = MN + 6
+ccc            ENDDO
+cccC           PAR TRIANGLE : SOMMET1 SOMMET2 SOMMET3    0        0        0
+cccC               =>         SOMMET1 SOMMET2 SOMMET3 TR_VOIS1 TR_VOIS2 TR_VOIS3
+ccc            CALL GETRI6( L1ARET, L2ARET,  MCN(MNARET),
+ccc     %                   MCN(MNFATA+WBEFOB), M1TRIA6, MCN(MNTRIA),
+ccc     %                           M1TRIA6, MCN(MNTRIA), IERR )
+cccC           ATTENTION: M1TRIA=6  -> M1TRIA=6 INCHANGE
+ccc            GOTO 50
+ccc         ENDIF
+
+
+C        TRAITEMENT du TROP GRAND ANGLE DU TRIANGLE NUELEM
+C        PAR DECOUPAGE A PARTIR D'UN POINT MILIEU DE 2 SOMMETS PROJETES
+C        --------------------------------------------------------------
+         CALL SE30DGA( QUALMN, COSMAXPL,
+     %                 MXSOM,  MCN(MNSOTA+WNBSOM), RMCN(MNXYZS),
+     %                 NUELEM, M1TRIA6, MCN(MNFATA+WBEFOB), MCN(MNTRIA),
+     %                 MODIF )
+
+C        SOMME DES MODIFICATIONS FAITES DANS LA BOUCLE DES TRIANGLES
+ 99      NBANTR = NBANTR + MODIF
+
+C        TRACE DES TRIANGLES DE MAUVAISE QUALITE
+      KTITRE='suex30 12:          TRIANGLES de QUALITE<                '
+         WRITE(KTITRE(42:51),'(F10.7)') QUALMN
+         CALL LISTTRQM( QUALMN, M1TRIA6, MCN(MNFATA+WBEFOB),MCN(MNTRIA),
+     %                  MXTRQM, NBTRQM, NOTRQM,
+     %                  MCN(MNSOTA+WNBSOM), RMCN(MNXYZS),
+     %                  QTRMOY, QTRMIN )
+         CALL TRTRIAN( 'suex30 12', RMCN(MNXYZS),
+     %                  M1TRIA6, MXTRQM, NBTRQM, NOTRQM, NOTRIA )
+
+ 100  ENDDO
+
+
+      IF( NBANTR .GT. 0 ) THEN
+
+C        BARYCENTRAGE DES SOMMETS DONT TOUS LES TRIANGLES
+C        SONT COPLANAIRES a l'ANGLE ANGL2P de COPLANEARITE PRES
+C        ------------------------------------------------------
+         CALL BASTCOPL( COSMAXPL, MCN(MNSOTA+WNBSOM), RMCN(MNXYZS),
+     %                  MXTRIA, M1TRIA6,MCN(MNFATA+WBEFOB),MCN(MNTRIA) )
+
+C        TRACE DES TRIANGLES DE MAUVAISE QUALITE
+      KTITRE='suex30 13:          TRIANGLES de QUALITE<                '
+         WRITE(KTITRE(42:51),'(F10.7)') QUALMN
+         CALL LISTTRQM( QUALMN, M1TRIA6, MCN(MNFATA+WBEFOB),MCN(MNTRIA),
+     %                  MXTRQM, NBTRQM, NOTRQM,
+     %                  MCN(MNSOTA+WNBSOM), RMCN(MNXYZS),
+     %                  QTRMOY, QTRMIN )
+         CALL TRTRIAN( 'suex30 13', RMCN(MNXYZS),
+     %                  M1TRIA6, MXTRQM, NBTRQM, NOTRQM, NOTRIA )
+         IF( QTRMIN .GE. QUALMN ) GOTO 9900
+
+
+C        AJOUT DU BARYCENTRE DU TRIANGLE DE PLUS PETITE ARETE SIMPLE
+C        DES PLUS DE 8 TRIANGLES D'UN SOMMET
+C        -----------------------------------------------------------
+         CALL BASTPL8T( COSMAXPL, MXSOM,MCN(MNSOTA+WNBSOM),RMCN(MNXYZS),
+     %                  MXTRIA,   MCN(MNFATA+WBEFOB), MCN(MNTRIA) )
+
+C        TRACE DES TRIANGLES DE MAUVAISE QUALITE
+      KTITRE='suex30 14:          TRIANGLES de QUALITE<                '
+         WRITE(KTITRE(42:51),'(F10.7)') QUALMN
+         CALL LISTTRQM( QUALMN, M1TRIA6, MCN(MNFATA+WBEFOB),MCN(MNTRIA),
+     %                  MXTRQM, NBTRQM, NOTRQM,
+     %                  MCN(MNSOTA+WNBSOM),  RMCN(MNXYZS),
+     %                  QTRMOY, QTRMIN )
+         CALL TRTRIAN( 'suex30 14', RMCN(MNXYZS),
+     %                  M1TRIA6, MXTRQM, NBTRQM, NOTRQM, NOTRIA )
+         IF( QTRMIN .GE. QUALMN ) GOTO 9900
+
+
+C        SUPPRESSION DES ANGLES DIEDRES PROCHE DE Pi DES COUPLES DE
+C        TRIANGLES de la TRIANGULATION PAR ECHANGE FORCE DE DIAGONALES
+C        -------------------------------------------------------------
+         CALL ANGDIEPI( COSMAXPL, MCN(MNSOTA+WNBSOM), RMCN(MNXYZS),
+     %                  MCN(MNFATA+WBEFOB), MCN(MNTRIA))
+
+C        TRACE DES TRIANGLES DE MAUVAISE QUALITE
+      KTITRE='suex30 15:          TRIANGLES de QUALITE<                '
+         WRITE(KTITRE(42:51),'(F10.7)') QUALMN
+         CALL LISTTRQM( QUALMN, M1TRIA6, MCN(MNFATA+WBEFOB),MCN(MNTRIA),
+     %                MXTRQM, NBTRQM, NOTRQM,
+     %                MCN(MNSOTA+WNBSOM),  RMCN(MNXYZS),
+     %                QTRMOY, QTRMIN )
+         CALL TRTRIAN( 'suex30 15', RMCN(MNXYZS),
+     %                  M1TRIA6, MXTRQM, NBTRQM, NOTRQM, NOTRIA )
+         IF( QTRMIN .GE. QUALMN ) GOTO 9900
+
+      ENDIF
+
+
+C     STRATEGIE DE L'ITERATION SUIVANTE D'AMELIORATION DE LA QUALITE
+C     --------------------------------------------------------------
+C     TRACE DES TRIANGLES DE MAUVAISE QUALITE
+      KTITRE='suex30 16:          TRIANGLES de QUALITE<                '
+      WRITE(KTITRE(42:51),'(F10.7)') QUALMN
+      CALL LISTTRQM( QUALMN, M1TRIA6, MCN(MNFATA+WBEFOB), MCN(MNTRIA),
+     %               MXTRQM, NBTRQM, NOTRQM,
+     %               MCN(MNSOTA+WNBSOM),  RMCN(MNXYZS), QTRMOY, QTRMIN )
+      CALL TRTRIAN( 'suex30 16', RMCN(MNXYZS),
+     %               M1TRIA6, MXTRQM, NBTRQM, NOTRQM, NOTRIA )
+      PRINT*,'suex30 16: SURFACE TRIANGULEE : ',KNMSURF
+      PRINT*,'suex30 16: ITERATION',NBITER,':',
+     %        NBANTR,' TRIANGLES TRAITES'
+
+      IF( NBANTR.GT.0 .AND. NBANTR.NE.NBANTR0 .AND. NBITER.LT.8 ) THEN
+         NBANTR0 = NBANTR
+         GOTO 50
+      ENDIF
+
+
+C     ====================================================================
+C     FIN du TRAITEMENT: IL N'Y A PLUS D'ANGLES TROP GRANDS OU TROP PETITS
+C     ====================================================================
+
+C     MISE A JOUR FINALE des TMS xyzsommt et nsef de la SURFACE
+C     MODIFICATON de NOTRIA(6,NBTRIA) ( NS1 NS2 NS3 NTA1 NTA2 NTA3)
+C                 en NOSOTR(4,NBTRIA) ( NS1 NS2 NS3 0 ) SUR LUI-MEME
+C     --------------------------------------------------------------
+ 9900 NBTRI6 = MCN( MNFATA + WBEFOB )
+      NBTRIA = 0
+      MN4    = MNTRIA
+      MN6    = MNTRIA
+      DO NUELEM = 1, NBTRI6
+         IF( MCN(MN6) .NE. 0 ) THEN
+            MCN(MN4  ) = MCN(MN6)
+            MCN(MN4+1) = MCN(MN6+1)
+            MCN(MN4+2) = MCN(MN6+2)
+C           3 SOMMETS SEULEMENT POUR LE TRIANGLE
+            MCN(MN4+3) = 0
+            MN4 = MN4 + 4
+            NBTRIA = NBTRIA + 1
+         ENDIF
+         MN6 = MN6 + M1TRIA6
+      ENDDO
+C     NOMBRE FINAL DE TRIANGLES
+      MCN(MNFATA+WBEFOB) = NBTRIA
+
+      PRINT*,'suex30: NOTRIA(',M1TRIA6,',',NBTRI6,
+     %       ') est devenu NOTRIA(',M1TRIA4,',',MCN(MNFATA+WBEFOB),')'
+
+
+C     MISE A JOUR DES NUMEROS DE SOMMETS DANS LES TRIANGLES ACTIFS
+C     ------------------------------------------------------------
+C     NEWS EST UN TABLEAU AUXILIAIRE
+ 9910 MXNEWS = 1 + MCN(MNSOTA+WNBSOM)
+      CALL TNMCDC( 'ENTIER', MXNEWS, MNNEWS )
+      CALL MAJXYZNSE( MCN(MNSOTA+WNBSOM), MCN(MNXYZS), MCN(MNNEWS),
+     %                M1TRIA4, MCN(MNFATA+WBEFOB), MCN(MNTRIA) )
+      CALL TNMCDS( 'ENTIER', MXNEWS, MNNEWS )
+
+C     MISE A JOUR DU TABLEAU 'XYZSOMMET' DE CETTE SURFACE
+C     ---------------------------------------------------
+C     LA DATE DE CREATION
+ 9930 CALL ECDATE( MCN(MNSOTA) )
+C     LE NUMERO DU TABLEAU DESCRIPTEUR
+      MCN( MNSOTA + WNBTGS ) = 0
+C     LE NOMBRE DE COORDONNEES PAR SOMMET
+      MCN( MNSOTA + WBCOOR ) = 3
+      MCN( MNSOTA + MOTVAR(6) ) = NONMTD( '~>>>XYZSOMMET' )
+C
+C     MISE A JOUR DU TABLEAU 'NSEF' DE CETTE SURFACE
+C     ----------------------------------------------
+C     TYPE DE L'OBJET : SURFACE
+      MCN( MNFATA + WUTYOB ) = 3
+C     LE TYPE INCONNU DE FERMETURE DU MAILLAGE
+      MCN( MNFATA + WUTFMA ) = -1
+C     PAS DE TANGENTES STOCKEES
+      MCN( MNFATA + WBTGEF ) = 0
+      MCN( MNFATA + WBEFAP ) = 0
+      MCN( MNFATA + WBEFTG ) = 0
+C     NUMERO DU TYPE DU MAILLAGE : NON STRUCTURE
+      MCN( MNFATA + WUTYMA ) = 0
+C     NOMBRE DE SOMMETS PAR EF
+      MCN( MNFATA + WBSOEF ) = M1TRIA4
+C     NOMBRE DE TRIANGLES
+ccc   MCN( MNFATA + WBEFOB ) = MCN( MNFATA + WBEFOB )
+C     LA DATE DE CREATION
+      CALL ECDATE( MCN(MNFATA) )
+C     LE NUMERO DU TABLEAU DESCRIPTEUR
+      MCN( MNFATA + MOTVAR(6) ) = NONMTD( '~>>>NSEF' )
+
+      IF( IERR .NE. 0 ) GOTO 9999
+
+C     TRAITEMENT DES NBTRQM TRIANGLES DE QUALITE INFERIEURE A QUALMN
+C     TRACE DES TRIANGLES DE QUALITE < QUALMN DES TRIANGLES
+C     DE NOTRIA, DE LEURS VOISINS et DE LEURS VOISINS DE VOISINS
+C     --------------------------------------------------------------
+      NBSOM0  = MCN(MNSOTA+WNBSOM)
+      NBTRIA0 = MCN(MNFATA+WBEFOB)
+      CALL TRAITRQM( COSMAXPL, QUALMN, NUSURF, KNMSURF,
+     %               NOFERM0,  MXSOM,  MCN(MNSOTA+WNBSOM), MNSOTA,
+     %               MXTRIA,   M1TRIA4,MCN(MNFATA+WBEFOB), MNFATA,
+     %               MXTRAR,   L1ARET, L2ARET, MNARET,
+     %               MXTRQM,   NBTRQM, NOTRQM,
+     %               MXTRPV,   NOTRPV, QTRMOY, QTRMIN, IERR )
+
+      IF( MCN(MNSOTA+WNBSOM) .GT. NBSOM0    .OR.
+     %    MCN(MNFATA+WBEFOB) .GT. NBTRIA0 ) THEN
+         GOTO 9930
+      ENDIF
+
+C     Le TMS xyzsommet EST EVENTUELLEMENT RACOURCI
+      CALL TAMSRA( NTSOTA, WYZSOM + 3 * MCN(MNSOTA+WNBSOM) )
+C     Le TMS nsef EST EVENTUELLEMENT RACOURCI
+      CALL TAMSRA( NTFATA, WUSOEF + 4 * MCN(MNFATA+WBEFOB) )
+
+C     IMPRESSION DE LA QUALITE DE LA TRIANGULATION et SURFACE FERMEE?
+      CALL IMPQUA( 3, KNMSURF, MNFATA, MNSOTA, NBEFMQ, QUAMIN, SURVOLEF)
+
+C     LE TYPE DE FERMETURE DU MAILLAGE DETECTE DANS IMPQUA
+      NOFERM1 = MCN( MNFATA + WUTFMA )
+      IF( NOFERM0 .NE. NOFERM1 ) THEN
+         IF( NOFERM0 .EQ. 1 .OR. NOFERM1 .EQ. 1 ) THEN
+            PRINT*,'suex30 17: ATTENTION CHANGEMENT de FERMETURE de la T
+     %RIANGULATION de la SURFACE ',KNMSURF
+            TRACTE = .TRUE.
+ccc            CALL TRAFAC( KNMSURF, NUSURF, MNFATA, MNSOTA )
+         ENDIF
+      ENDIF
+
+      PRINT*,'suex30: Fin de l''AMELIORATION de la QUALITE des',
+     %        MCN(MNFATA+WBEFOB),' TRIANGLES de QUALITE MIN',QUAMIN,
+     %       ' pour',MCN(MNSOTA+WNBSOM),' SOMMETS'
+
+C     TRACE DE LA TRIANGULATION DE QUALITE AMELIOREE FINALE
+      CALL TRAFAC( KNMSURF, NUSURF, MNFATA, MNSOTA )
+
+
+C     DESTRUCTION DES TABLEAUX DEVENUS INUTILES
+ 9999 IF( MNQUAI .GT. 0 ) CALL TNMCDS( 'REEL',   MXQUAT, MNQUAI )
+      IF( MNQUAT .GT. 0 ) CALL TNMCDS( 'REEL',   MXQUAT, MNQUAT )
+      IF( MNARET .GT. 0 ) CALL TNMCDS( 'ENTIER', L1ARET*L2ARET, MNARET )
+
+      TRACTE = TRACTE0
+      RETURN
+      END

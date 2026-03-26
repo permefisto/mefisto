@@ -1,0 +1,53 @@
+These menu options define the section planes in which 
+the solution will be drawn with a color function of solution values
+from minimum BLUE to maximum MAGENTA
+(several planes may be simultaneously drawn)
+
+1 : X=Constant  Drawn of solution section from X=CT planes
+2 : Y=Constant  Drawn of solution section from Y=CT planes
+3 : Z=Constant  Drawn of solution section from Z=CT planes
+                Default option
+
+4 : a PLANE to define
+A PLANE defined by the input of 3 POINTS not on a same straight line
+
+5 : COLOR of Boundary EDGES
+To define the color of boundary edges to locate them
+
+6 : DRAWING TYPE of Boundary EDGES
+continuous line or dotted line to draw the boundary edges
+
+7 : COLOR of EDGES on SECTION PLANES
+to see the intersection of sections and the mesh
+
+8 : DRAWING TYPE of EDGES on SECTION PLANES
+continuous line or dotted line to draw the edges in section planes
+
+11: NUMBER of PLANES   Default value=1
+
+12: Regular DISTANCE between MIN-MAX
+The object COORDINATES MIN and MAX are computed
+The constant coordinate of the i-th drawn PLANE will be
+      MIN + (i-1)*(MAX-MIN)/(number of PLANES-1)
+
+13: Give the COORDINATE MIN & MAX of PLANES
+Then, the constant coordinate of the i-th drawn PLANE will be
+      MIN + (i-1)*(MAX-MIN)/(number of PLANES-1)
+
+14: Give the COORDINATE of each PLANE
+
+15: AMPLIFICATION coefficient
+This coefficient multiply the value of the solution
+in the normal direction
+
+19: REDUCTION % of FACES
+to see better the position of edges of faces
+or to see the interior of the materials or the other side
+
+80: INITIATE AGAIN the data of PLANES
+to suppress the old definitions of planes
+and define new planes
+
+90: EXECUTION of the DRAWING
+Draw with the drawing characteristics defined before
+planes, colors, type of lines, ...

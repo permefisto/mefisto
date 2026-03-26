@@ -1,0 +1,5 @@
+L'angle A du secteur doit verifier
+   0 < A <= 360 Degres.
+Le nombre d'aretes sur le secteur angulaire
+doit etre >=3 si l'angle est >180 degres
+          >=2 sinon

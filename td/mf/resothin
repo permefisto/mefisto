@@ -1,0 +1,4 @@
+variable ResoTHIN 'RESOLUTION thermique INSTATIONNAIRE ' entier
+(1: 'Rho C, A, V, CT, g INDEPENDANT of t & TEMP, SOURCE, CONTACT depend t seul',
+ 2: 'Rho C, A, V, CT, g INDEPENDANT of t & TEMP, SOURCE, CONTACT depend t & TEMP',
+ 3: 'Au moins un des Rho C, A, V, CT, g, FOmega, FGamma, TempDir depend t & TEMP' ) ;

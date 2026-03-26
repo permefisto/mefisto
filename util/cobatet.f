@@ -1,0 +1,52 @@
+      SUBROUTINE COBATET( PT, S1TE, S2TE, S3TE, S4TE,
+     %                    V,  COBARY, IERR )
+C+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+C BUT :    CALCUL DES 4 COORDONNEES BARYCENTRIQUES DU POINT PT DANS LE
+C -----    TETRAEDRE DE SOMMETS S1TE-S2TE-S3TE-S4TE
+C          CF AUSSI LE SP cobate.f
+C ENTREES:
+C --------
+C PT     : LES 3 COORDONNEES DU POINT
+C SiTE   : LES 3 COORDONNEES DU SOMMET i DU TETRAEDRE
+C
+C SORTIES:
+C --------
+C V      : LE VOLUME DU TETRAEDRE NOSOTE (POSITIF NUL ou NEGATIF)
+C COBARY : LA VALEUR DES 4 COORDONNEES BARYCENTRIQUES DE PT
+C          ATTENTION A L'ORDRE : =======================================
+C          COBARY(I) EST ICI LA COORDONNEE BARYCENTRIQUE OPPOSEE
+C                    A LA FACE I DE SOMMETS I, I+1, I+2 MODULO 4
+C IERR   : 0 SI LE TETRAEDRE NOSOTE N'EST PAS DEGENERE
+C          1 SI LE TETRAEDRE NOSOTE EST DEGENERE DE VOLUME NEGATIF OU NUL
+C+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+C AUTEUR: ALAIN PERRONNET LJLL UPMC & St PIERRE du PERRAY      AOUT 2015
+C23456...............................................................012
+      DOUBLE PRECISION  PT(3), S1TE(3), S2TE(3), S3TE(3), S4TE(3),
+     %                  COBARY(4), V, VOLTET
+C
+C     CALCUL DU DETERMINANT DE S1TE, S2TE, S3TE, S4TE = 6 VOLUME
+      V = VOLTET( S1TE, S2TE, S3TE, S4TE )
+      IF( V .LE. 0D0 ) THEN
+         IERR = 1
+         COBARY(1) = 0D0
+         COBARY(2) = 0D0
+         COBARY(3) = 0D0
+         COBARY(4) = 0D0
+         RETURN
+      ENDIF
+
+C     CALCUL DU DETERMINANT DE 1 2 3 PT
+      COBARY(1) = VOLTET( S1TE, S2TE, S3TE, PT ) / V
+
+C     CALCUL DU DETERMINANT DE 2 4 3 PT
+      COBARY(2) = VOLTET( S2TE, S4TE, S3TE, PT ) / V
+
+C     CALCUL DU DETERMINANT DE 3 4 1 PT
+      COBARY(3) = VOLTET( S3TE, S4TE, S1TE, PT ) / V
+
+C     CALCUL DU DETERMINANT DE 4 2 1 PT
+      COBARY(4) = VOLTET( S4TE, S2TE, S1TE, PT ) / V
+
+      IERR  = 0
+      RETURN
+      END

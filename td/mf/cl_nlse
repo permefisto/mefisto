@@ -1,0 +1,4 @@
+variable CL_NLSE 'Condition Limite Equations SCHRODINGER' entier
+( 2 : 'Fgamma FLUX Complexe IMPOSE de l''ONDE'
+, 3 : 'ONDE_D VALEUR Complexe IMPOSEE de l''ONDE'
+, 8 : 'ONDE_0 VALEUR Complexe IMPOSEE de l''ONDE INITIALE' ) ;

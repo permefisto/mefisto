@@ -1,0 +1,54 @@
+#!/bin/bash
+#  Execution du solveur de l'EQUATION NON LINEAIRE de SCHRODINGER
+#            de Mefisto par le script NLSER_OMP
+#
+#  Alain Perronnet   Octobre 2012  Version LINUX 64 bits
+#   
+if test -f $MEFISTO/td/m/anglais
+then
+  LANGAGE=1
+  LANGUE=ANGLAISE
+  echo
+  echo '==============================================================================='
+  echo 'MEFISTO-NLSER_OMP: Solver of NONLINEAR SCHRODINGER EQUATION under LINUX 64 bits'
+  echo '==============================================================================='
+  echo 'Project (low case) name' \?
+else
+  LANGAGE=0
+  LANGUE=FRANCAISE
+  echo
+  echo '======================================================================================'
+  echo 'MEFISTO-NLSER_OMP: Resoudre l''EQUATION NON LINEAIRE de SCHRODINGER sous LINUX 64 bits'
+  echo '======================================================================================'
+  echo 'nom (en minuscules) du projet' \?
+fi
+read nomproj
+
+direxec=$MEFISTOX/$nomproj
+echo
+if [ $LANGAGE = 0 ]
+then
+  echo "Execution MEFISTO NLSER_OMP dans le repertoire $direxec"
+else
+  echo "Execution MEFISTO NLSER_OMP in the directory $direxec"
+fi
+
+if test -d $direxec
+then
+  cd  $direxec 
+  export OMP_NUM_THREADS=8
+  echo "OMP_NUM_THREADS="$OMP_NUM_THREADS
+  time $MEFISTO/pp/ppnlse
+else  
+  if [ $LANGAGE = 0 ]
+  then
+    echo Commande INITIER NON executee au prealable
+    echo "avec ce nom de projet $nomproj"
+    echo Executer INITIER puis MAILLER
+  else
+    echo Command INITIER NOT EXECUTED BEFORE
+    echo "with this project name $nomproj"
+    echo Execute INITIER and after MESHER
+  fi
+fi
+echo

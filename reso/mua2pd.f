@@ -1,0 +1,103 @@
+      SUBROUTINE MUA2PD( NTDL, ALFA1, NCODS1, MU1, A1,
+     +                         ALFA2, NCODS2, MU2, A2,
+     +                                        MU3, A3 )
+C ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+C BUT : FORMER A3 COMBINAISON LINEAIRE DES MATRICES A1 ET A2
+C ---   A3 = ALFA1 * A1 + ALFA2 * A2  MATRICES STOCKEES PROFIL
+C       A1 EST SYMETRIQUE OU DIAGONALE OU NON SYMETRIQUE
+C       A2 EST SYMETRIQUE OU DIAGONALE OU NON SYMETRIQUE
+C       A3 EST DU TYPE RESULTANT DE LA COMBINAISON LINEAIRE
+C
+C ENTREES:
+C --------
+C NTDL   : ORDRE DES MATRICES A1 A2 A3
+C
+C ALFA1  : COEFFICIENT REEL DOUBLE PRECISION
+C NCODS1 : CODE DE STOCKAGE DU PROFIL DE LA MATRICE A1
+C          0 DIAGONALE, 1 SYMETRIQUE, -1 NON SYMETRIQUE
+C MU1    : MU1(1)=0 MU1(I+1)=ADRESSE DANS A1 DU I-EME COEFFICIENT DIAGONAL
+C A1     : MATRICE STOCKEE SOUS FORME PROFIL
+C
+C ALFA2  : COEFFICIENT REEL DOUBLE PRECISION
+C NCODS2 : CODE DE STOCKAGE DU PROFIL DE LA MATRICE A2
+C          0 DIAGONALE, 1 SYMETRIQUE, -1 NON SYMETRIQUE
+C MU2    : MU2(1)=0 MU2(I+1)=ADRESSE DANS A1 DU I-EME COEFFICIENT DIAGONAL
+C A2     : MATRICE STOCKEE SOUS FORME PROFIL
+C
+C MU3    : POINTEUR SUR LA MATRICE PROFIL A3 RESULTAT
+C
+C SORTIE :
+C --------
+C A3     : POINTEUR ET MATRICE PROFIL RESULTAT
+C+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+C AUTEUR : ALAIN PERRONNET UPMC ANALYSE NUMERIQUE PARIS     OCTOBRE 1979
+C2345X7..............................................................012
+      include"./incl/gsmenu.inc"
+      DOUBLE PRECISION  ALFA1,ALFA2,A1(*),A2(*),A3(*)
+      INTEGER           MU1(*),MU2(*),MU3(*)
+C
+      NTDL1 = NTDL + 1
+      IF( NCODS1 .EQ. 0 .AND. NCODS2 .EQ. 0 ) THEN
+C
+C        A1 ET A2 SONT DIAGONALES
+C        ------------------------
+         CALL CL2VED( NTDL, ALFA1,A1, ALFA2,A2, A3)
+C
+      ELSE IF( NCODS1     .EQ. NCODS2      .AND.
+     %         MU1(NTDL1) .EQ. MU2(NTDL1)  .AND.
+     %         MU2(NTDL1) .EQ. MU3(NTDL1) ) THEN
+C
+C        A1 ET A2 ONT MEME PROFIL NON DIAGONAL
+C        -------------------------------------
+         CALL CL2VED( MU1(NTDL1), ALFA1,A1, ALFA2,A2, A3)
+C
+      ELSE IF( NCODS1 .GT. 0 .AND. NCODS2 .GT. 0 ) THEN
+C
+C        A1 ET A2 SONT SYMETRIQUES MAIS DE PROFILS DIFFERENTS
+C        ----------------------------------------------------
+         CALL A2SPD( NTDL, ALFA1,MU1,A1, ALFA2,MU2,A2,  A3 )
+C
+      ELSE IF( NCODS1 .LT. 0 .AND. NCODS2 .LT. 0 ) THEN
+C
+C        A1 ET A2 NON SYMETRIQUES MAIS DE PROFILS DIFFERENTS
+C        ---------------------------------------------------
+         CALL A2NSPD( NTDL, ALFA1,MU1,A1, ALFA2,MU2,A2,  A3 )
+C
+      ELSE IF( NCODS1 .EQ. 0 .AND. NCODS2 .NE. 0 ) THEN
+C
+C        A1 EST DIAGONALE A2 EST NON DIAGONALE
+C        -------------------------------------
+         CALL A2DPD ( NTDL, ALFA1,A1, ALFA2,MU2,A2, A3 )
+C
+      ELSE IF( NCODS1 .EQ. 0 .AND. NCODS2 .NE. 0 ) THEN
+C
+C        A2 EST DIAGONALE A1 EST NON DIAGONALE
+C        -------------------------------------
+         CALL A2DPD ( NTDL, ALFA2,A2, ALFA1,MU1,A1, A3 )
+C
+      ELSE IF( NCODS1 .LT. 0 .AND. NCODS2 .GT. 0 ) THEN
+C
+C        A1 NON SYMETRIQUE A2 SYMETRIQUE
+C        -------------------------------
+         CALL A2NSSD( NTDL, ALFA1,MU1,A1, ALFA2,MU2,A2,  A3 )
+C
+      ELSE IF( NCODS2 .LT. 0 .AND. NCODS1 .GT. 0 ) THEN
+C
+C        A2 NON SYMETRIQUE A1 SYMETRIQUE
+C        -------------------------------
+         CALL A2NSSD( NTDL, ALFA2,MU2,A2, ALFA1,MU1,A1, A3 )
+C
+      ELSE
+C
+C        CAS NON TRAITE
+         NBLGRC(NRERR) = 2
+         KERR(1) = 'SP MUA2PD: CAS NON TRAITE. A PROGRAMMER'
+         WRITE(KERR(5)(1:3),'(I3)') NCODS1
+         WRITE(KERR(5)(4:6),'(I3)') NCODS2
+         KERR(2) = 'NCODS1=' // KERR(5)(1:3) //
+     %             'NCODS2=' // KERR(5)(4:6)
+         CALL LEREUR
+C
+      ENDIF
+      RETURN
+      END

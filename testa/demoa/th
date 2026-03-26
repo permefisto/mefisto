@@ -1,0 +1,53 @@
+{ ================================================================ }
+{ MEFISTO software : Version August 2006                           }
+{ USER name        : Alain Perronnet                               }
+{ PROJECT name     : demo in american                              }
+{ DATE             : 14/9/2006                                     }
+{ ================================================================ }
+@;
+@;
+
+1; CARDAN;  { NAME of the OBJECT }
+ 
+2;{ INPUT of CHARACTERISTICS or BOUNDARY CONDITIONS }
+
+ { VOLUME: CARDAN }
+    2;   { CONDUCTIVITY density }
+    1;   { material 3D homogenous isotropic: STEEL } 
+  200;   { material conductivity of STEEL }
+ @;
+
+ { SURFACE: CYL4 }
+   3;     { DIRICHLET condition: imposed temperature }
+   1;     { constant }
+ 200;     { degrees for the fixed temperature }
+ @;
+
+ { SURFACE: CYL4_SYM }
+   3;     { DIRICHLET condition: imposed temperature }
+   1;     { constant }
+ 200;     { degrees for the fixed temperature }
+ @;
+
+ { SURFACE: BASE }
+   3;     { DIRICHLET condition: imposed temperature }
+   1;     { constant }
+  20;     { degrees for the fixed temperature }
+ @;
+
+@; {end of PLSV of the OBJECT}
+
+3;  { STEADY HEAT SOLVER }
+  1;{ COEFFICIENTS are INDEPENDENTS of TEMPERATURE => LINEAR PROBLEM }
+  2;{ PRECONDITIONED COJUGUATE GRADIENT }
+  1;{ LEVEL of PRECONDITIONMENT of CONJUGUATE GRADIENT }
+@;
+
+8;  {drawing of temperature and fluxes}
+2;  {temperature}
+1;  {isothermal surfaces}
+2;  {regular iso between min and max temperatures}
+90; {execute the drawing}
+
+
+CLOSE;

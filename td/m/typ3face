@@ -1,0 +1,6 @@
+variable TYP3FACE 'Types trace des 3 FACES' entier
+( 0: 'PAS de TRACE'
+, 1: '8 ARETES englobantes'
+, 2: 'GRILLE quadrangulaire'
+, 3: '3 FACES en FOND'
+, 4: 'DAMIER selon 2 couleurs' ) ;

@@ -1,0 +1,12 @@
+deftms ~>>>SOURCE  'Source de Chaleur'
+variable muet DATE 'date de creation du tableau'   reel2  ;
+variable muet NUTD 'numero du tableau descripteur' entier ;
+variable    LTSOUR 'Type de la Source' entier 
+ ( 1 : 'Source constante' 
+, -1 : 'Fonction Source' 
+,  0 : 'Source a supprimer' ) ;
+cas LTSOUR
+  1 : variable SOURCE 'Valeur de la Source' reel ; 
+ -1 : variable NFSOUR 'Nom fonction SOURCE' ^~>FONCTION ;
+fincas ;
+fintms ;

@@ -1,0 +1,100 @@
+{========================================================================}
+{ MEFISTO Version Septembre 1998      PROJET: VVPT3D  Maillage 3R1C      }
+{ Utilisateur: Perronnet Alain        Date:   9/10/98                    }
+{========================================================================}
+ defvar t0,a,b,c,eps;
+ t0=1;
+ a=10;
+ b=10;
+ c=10;
+ eps=0.0001;
+
+1; 1; {POINTS}
+  ORIGINE; I; 1; 0; 0; 0;
+  Z;       I; 1; 0; 0; 0;
+@;
+@;
+
+6; {Transformations mathematiques}
+ DILATATION;
+  3; {isometrie de R3 -> R3}
+  1; {translation+rotation+dilatation definies par 2 points et 7 reels}
+  ORIGINE; {nom du 1-er  point de l'axe de rotation}
+  Z;       {nom du 2-eme point de l'axe de rotation}
+  0;       {angle en degres de la rotation autour de l'axe}
+  0;       {abscisse du vecteur translation}
+  0;       {ordonnee du vecteur translation}
+  0;       {cote     du vecteur translation}
+ 1/a;      {coefficient de dilatation selon oX}
+ 1/b;      {coefficient de dilatation selon oY}
+ 1/c;      {coefficient de dilatation selon oZ}
+@;
+
+3; { SURFACES de l objet }
+ carre;
+    DILATATION;{ DANS LE LEXIQUE ~>TRANSFO }
+    11;{ cube rectangle regulier d aretes 1 }
+    a;{ NBINHX 'nombre d'aretes en x' entier ; }
+    b;{ NBINHY 'nombre d'aretes en y' entier ; }
+
+  carret; I; 31; {triangulation d'une quadrangulation}
+    carre; 1;    {creation d'une ARETE S1 S3}
+@;
+
+4; { VOLUMES materiaux de l objet }
+  cube; I;
+  14; carret; 2; c; 1; {c tranches egales pour une epaisseur en z de 1}
+@;
+
+3;{ SURFACES faces de l objet }
+
+ base; i;{ DANS LE LEXIQUE ~>TRANSFO }
+   37;   { surface extraite d un volume }
+ cube;   { DANS LE LEXIQUE ~>VOLUME }
+ deffonc base(x,y,z); base=z<eps; finfonc;
+ base;   { DANS LE LEXIQUE ~>FONCTION }
+    1;   { faces frontalieres }
+
+ haut; i; 37; cube;
+ deffonc haut(x,y,z); haut=z>1-eps; finfonc;
+ haut; 1; { faces frontalieres }
+
+ derriere; i; 37; cube;
+ deffonc derriere(x,y,z); derriere=x<eps; finfonc;
+ derriere; 1;
+
+ devant; i; 37; cube;
+ deffonc devant(x,y,z); devant=x>1-eps; finfonc;
+ devant; 1; { faces frontalieres }
+
+ gauche; i; 37; cube;
+ deffonc gauche(x,y,z); gauche=y<eps; finfonc;
+ gauche; 1;
+
+ droite; i; 37; cube;
+ deffonc droite(x,y,z); droite=y>1-eps; finfonc;
+ droite; 1;
+
+ peau; i; 51;
+    6; base; haut; derriere; devant; gauche; droite;
+
+@;
+
+5;{ OBJETS parties de l OBJET }
+ cube; 0; { classique 2D ou 3D }
+  2; { nombre des Points Lignes Surfaces Volumes Objets de l'objet}
+ v; cube; {'nom du type PLSVO et nom du PLSVO'}
+ s; peau;
+@;
+
+7; { INTERPOLATION definition NOEUDS du maillage }
+   cube;
+    3; {LAGRANGE de DEGRE 1 }
+   {4;  LAGRANGE de DEGRE 2 }
+@;
+
+10; { TRACE du MAILLAGE des PLSVO }
+  5;{ Tous les OBJETS }
+ 90;{ EXECUTION du TRACE }
+@;
+FERMER;

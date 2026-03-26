@@ -1,0 +1,55 @@
+deftms ~>>>NPEF 'NO des NOEUDS et POINTS des EF d''un TYPE d''EF d''un OBJET'
+variable muet DATE   'Date de creation du tableau'   reel2  ;
+variable muet NUTD   'Numero du tableau descripteur' entier ;
+variable NUTYEL 'Numero du type des elements finis'  entier ;
+variable NBELEM 'Nombre d''EF de ce TYPE'    entier ;
+variable NBELAP 'Nombre d''EF avec POINTEUR sur EF a TG' entier ; 
+variable NBELTG 'Nombre d''EF a tg'          entier ;        
+variable NBNDEL 'Nombre de noeuds d''un EF'  entier ;      
+variable NBPGEL 'Nombre de points d''un EF (0 si points=noeuds)' entier ;
+variable NBTGEL 'Nombre de tangentes d''un EF' entier  
+ ( 0 : '0 tg par sommet' ,      2 : '2 tg par arete' ,
+   6 : '6 tg par triangle' ,    8 : '8 tg par quadrangle' ,
+  12 : '12 tg par tetraedre' , 18 : '18 tg par pentaedre' , 
+  24 : '24 tg par hexaedre' )  ;
+variable NBPSEL 'Nombre de SOMMETS d''EF sur un POINT utilisateur'  entier ;
+variable MOPSEL 'Nombre de variables des tableaux NLPSEL et NEPSEL' entier ;
+variable NBLAEL 'Nombre d''ARETES d''EF sur une LIGNE utilisateur'  entier ;
+variable MOLAEL 'Nombre de variables des tableaux NLLAEL et NELAEL' entier ;
+variable NBSFEL 'Nombre de FACES d''EF sur une SURFACE utilisateur' entier ;
+variable MOSFEL 'Nombre de variables des tableaux NLSFEL et NESFEL' entier ;
+variable NBVCEL 'Nombre d''EF dans un VOLUME utilisateur'  entier ;
+variable MOVCEL 'Nombre de variables des tableaux NLVCEL et NEVCEL' entier ; 
+
+tableau NUNDEL(1..NBELEM,1..NBNDEL) 'Numero des NOEUDS de chaque EF' entier ;
+tableau NUPGEL(1..NBELEM,1..NBPGEL) 'Numero des POINTS de chaque EF' entier ; 
+
+tableau NUPSEL(1..NBPSEL) 'Nom du POINT=SOMMET d''un EF'             ^~>POINT ;
+tableau NLPSEL(1..MOPSEL) 'Numero de ce SOMMET dans l''EF'             entier ;
+tableau NEPSEL(1..MOPSEL) 'Numero de l''EF support de ce POINT=SOMMET' entier ; 
+
+tableau NULAEL(1..NBLAEL) 'Nom de la LIGNE d''une ARETE d''un EF'  ^~>LIGNE ;
+tableau NLLAEL(1..MOLAEL) 'Numero de cette ARETE dans l''EF'         entier ;
+tableau NELAEL(1..MOLAEL) 'Numero de l''EF support de cette ARETE'   entier ; 
+
+tableau NUSFEL(1..NBSFEL) 'Nom de la SURFACE d''une FACE d''un EF' ^~>SURFACE ;
+tableau NLSFEL(1..MOSFEL) 'Numero de cette FACE dans l''EF'            entier ;
+tableau NESFEL(1..MOSFEL) 'Numero de l''EF support de cette FACE'      entier ;  
+
+tableau NUVCEL(1..NBVCEL) 'Nom du VOLUME d''un EF'            ^~>VOLUME ;
+tableau NLVCEL(1..MOVCEL) 'Numero local de ce VOLUME dans l''EF' entier ;
+tableau NEVCEL(1..MOVCEL) 'Numero de l''EF support de ce VOLUME' entier ;
+
+tableau LPELTG(1..NBELAP) 'Numero>0 de l''EF a TG sinon 0' entier ;
+tableau NUTGEL(1..NBELTG,1..NBTGEL) '+-No des tangentes de l''EF a tg' entier ;
+fintms ;
+
+
+--------------------------------------------------------------------------------
+Pour memoire : 
+- NLVCEL(k) = 1 systematiquement donc ce tableau n'est pas stocke
+- NEVCEL(k) = k k=1,...,MOVCEL systematiquement donc ce tableau n'est pas stocke
+Ces 2 tableaux sont presents pour des raisons d'homogeneite avec ce qui precede
+- NBELAP = NBELEM s'il existe au moins un ef avec tg, 0 sinon
+--------------------------------------------------------------------------------
+

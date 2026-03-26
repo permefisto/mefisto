@@ -1,0 +1,12 @@
+deftms ~>>>VISCOSITE 'Mhu Dynamic Viscosity of a fluid'
+variable muet DATE 'date of creation of the TMS'   reel2  ;
+variable muet NUTD 'number of the descriptor array TD' entier ; 
+variable      LTVISC 'Type of Viscosity' entier
+( 1 : 'CONSTANT Dynamic Viscosity'
+,-1 : 'FUNCTION Dynamic Viscosity'
+, 0 : 'Delete the Viscosity' ) ;
+cas LTVISC
+ 1: variable VISCOS 'Dynamic Viscosity VALUE of fluid'  reel ;
+-1: variable NFVISC 'Dynamic Viscosity Function NAME' ^~>FONCTION ;
+fincas ;   
+fintms ;

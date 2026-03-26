@@ -1,0 +1,95 @@
+{ ==================================================================== }
+{ MEFISTO Software     : Version December 2008                         }
+{ USER's Name          : Alain Perronnet                               }
+{ Project Name         : tube3d                                        }
+{ Date                 : January 5-th 2009                             }
+{ ==================================================================== }
+DefVar xmin,xmax,ymin,ymax;
+xmin=0; xmax=1;
+ymin=0; ymax=1;
+
+DefFunc parabol(t,x,y,z,ntyplsv,nuplsv,nucomp);
+  if nucomp=3
+  then
+    parabol = 16 * t * (x-xmin)*(xmax-x)/(xmax-xmin)
+                     * (y-ymin)*(ymax-y)/(ymax-ymin);
+  else
+    parabol = 0;
+  endif;
+EndFunc;
+
+ 1;
+ { NAME of the OBJECT to TREAT }
+ cavity3d;
+
+ 2; { DATA INPUT of the FLUID }
+
+ { VOLUME: cube }
+ 1;   { Rot  The Mass Density }
+ 1;   { Mass Constant }
+DefVar roWater; roWater=1000;
+ roWater;{ DMASSE Value of the constant mass density of WATER  kg/m3}
+ 
+ 2;     { nu The FLUID VISCOSITY }
+ 1;     { Constant Viscosity }
+ 0.001; { VISCOS WATER VISCOSITY in Pa.s}
+ @;
+
+ { SURFACE: TOP }
+ 2; { Fixation of the VELOCITY }
+-1; { fixed velocity FUNCTION }
+ 3; { NBCOBV number of components of the fixed velocity }
+ 1; 2; 3; { NUCOBV(1..NBCOBV) nb of each component of the fixed velocity}
+ parabol;  { name of velocity FUNCTION }
+ @;
+
+ { SURFACE: BASE }
+ 2; { Fixation of the VELOCITY }
+-1; { fixed velocity FUNCTION }
+ 3; { NBCOBV number of components of the fixed velocity }
+ 1; 2; 3; { NUCOBV(1..NBCOBV) nb of each component of the fixed velocity}
+ parabol;  { name of velocity FUNCTION }
+ @;
+
+ { SURFACE: RIGHT }
+ 2; { Fixation of the VELOCITY }
+ 1; { constant fixed velocity }
+ 3; { NBCOBV number of components of the fixed velocity }
+ 1; 2; 3; { NUCOBV(1..NBCOBV) nb of each component of the fixed velocity}
+ 0; 0; 0; { BLVITE(1..NBCOBV) Value of the fixation }
+ @;
+
+ { SURFACE: LEFT }
+ 2; { Fixation of the VELOCITY }
+ 1; { constant fixed velocity }
+ 3; { NBCOBV number of components of the fixed velocity }
+ 1; 2; 3; { NUCOBV(1..NBCOBV) nb of each component of the fixed velocity}
+ 0; 0; 0; { BLVITE(1..NBCOBV) Value of the fixation }
+ @;
+
+ { SURFACE: FRONT }
+ 2; { Fixation of the VELOCITY }
+ 1; { constant fixed velocity }
+ 3; { NBCOBV number of components of the fixed velocity }
+ 1; 2; 3; { NUCOBV(1..NBCOBV) nb of each component of the fixed velocity}
+ 0; 0; 0; { BLVITE(1..NBCOBV) Value of the fixation }
+ @;
+
+ { SURFACE: BACK }
+ 2; { Fixation of the VELOCITY }
+ 1; { constant fixed velocity }
+ 3; { NBCOBV number of components of the fixed velocity }
+ 1; 2; 3; { NUCOBV(1..NBCOBV) nb of each component of the fixed velocity}
+ 0; 0; 0; { BLVITE(1..NBCOBV) Value of the fixation }
+ @;
+@;
+
+8; {=== FRACTIONAL UNSTEADY NAVIER-STOKES SOLVER Algorithm2 ============}
+   1;  { SKYLINE CROUT FACTORIZATION }
+ 0.0;  { INITIAL TIME }
+ 1.0;  { FINAL   TIME }
+0.01;  { STEP of TIME }
+  10;  { NUMBER of ADDED SOLUTION VECTORS }
+@;
+
+CLOSE;

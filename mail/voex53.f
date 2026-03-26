@@ -1,0 +1,431 @@
+      SUBROUTINE VOEX53( NUVOFI, LADEFI,
+     %                   NTNSEM, MNNSEM, NTXYZM, MNXYZM, IERR )
+C+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+C BUT :     SEPARER LES MATERIAUX EN AUTANT DE VOLUMES MAILLES
+C -----     LE NOM DE CHAQUE VOLUME EST CELUI DONNE CONCATENE AVEC
+C           .NumeroMateriau de 1 a NBDM NomBre De Materiaux
+C
+C ENTREES:
+C --------
+C NUVOFI : NUMERO DU VOLUME FINAL DANS LE LEXIQUE DES VOLUMES
+C LADEFI : TABLEAU DE DEFINITION DU VOLUME VU EN ENTIER
+C          CF '$MEFISTO/td/d/a_volume__definition'
+C
+C SORTIES:
+C --------
+C NTNSEM : NUMERO      DU TMS 'NSEF' DU DERNIER MATERIAU
+C MNNSEM : ADRESSE MCN DU TMS 'NSEF' DU DERNIER MATERIAU
+C          CF '$MEFISTO/td/d/a___nsef'
+C NTXYZM : NUMERO      DU TMS 'XYZSOMMET' DU DERNIER MATERIAU
+C MNXYZM : ADRESSE MCN DU TMS 'XYZSOMMET' DU DERNIER MATERIAU
+C          CF '~/td/d/a___xyzsommet'
+C IERR   : 0 SI PAS D'ERREUR
+C        > 0 SINON
+C+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+C AUTEUR : Alain PERRONNET TIMS NTU TAIPEI TAIWAN          Decembre 2009
+C2345X7..............................................................012
+      include"./incl/langue.inc"
+      include"./incl/gsmenu.inc"
+      include"./incl/ntmnlt.inc"
+      include"./incl/a___materiaux.inc"
+      include"./incl/a___xyzsommet.inc"
+      include"./incl/a___nsef.inc"
+      include"./incl/a_volume__definition.inc"
+      COMMON / UNITES / LECTEU, IMPRIM, INTERA, NUNITE(29)
+      include"./incl/pp.inc"
+      COMMON            MCN(MOTMCN)
+      REAL              RMCN(1)
+      EQUIVALENCE      (MCN(1),RMCN(1))
+      INTEGER           LADEFI(0:*)
+      CHARACTER*24      NMVOIN, NMVOFI, NMMATE, NMMAT1, KNO, NMOLD
+C
+      MNLIPO = 0
+      MNNOMA = 0
+C
+C     NUMERO DU VOLUME MULTI-MATERIAUX A TRAITER
+      NUVOIN = LADEFI(WUVOIN)
+      IF( NUVOIN .LE. 0 ) GOTO 9991
+      CALL NMOBNU( 'VOLUME', NUVOIN, NMVOIN )
+      IF( LANGAG .EQ. 0 ) THEN
+         WRITE(IMPRIM,*)'1 VOLUME MULTI-MATERIAUX EN AUTANT DE VOLUMES M
+     %ONO-MATERIAU',NMVOIN
+      ELSE
+         WRITE(IMPRIM,*)'1 MULTI-MATERIAL VOLUME GIVES MANY MONO-MATERIA
+     %L VOLUMES',NMVOIN
+      ENDIF
+C
+C     RECUPERATION DES TABLEAUX DU VOLUME MULTI-MATERIAUX
+      CALL LXNLOU( NTVOLU, NUVOIN, NTVOIN, MNVOIN )
+      IF( NTVOIN .LE. 0 ) GOTO 9991
+C
+C     LE TABLEAU 'MATERIAUX'
+      CALL LXTSOU( NTVOIN, 'MATERIAUX', NTMATE, MNMATE )
+      IF( NTMATE .LE. 0 ) GOTO 9992
+C     UN SEUL MATERIAU => PAS DE SEPARATION
+C
+C     ICI: PLUSIEURS MATERIAUX = VOLUMES
+C     CHAQUE EF A SON NUMERO DE MATERIAU=VOLUME RANGE A L'ADRESSE MNUDMEF
+C     NOMBRE DE MATERIAUX
+      NBDM   = MCN( MNMATE + WNBDM )
+C     NOMBRE D''ELEMENTS FINIS DU MAILLAGE AVEC NO DE MATERIAU
+      NBDMEF = MCN( MNMATE + WBDMEF )
+C     ADRESSE MCN DU NO DE MATERIAU DE CHAQUE EF
+      MNUDMEF= MNMATE + WUDMEF
+C
+C     AFFICHAGE DU NOMBRE DE MATERIAUX
+      CALL NMOBNU( 'VOLUME', NUVOFI, NMVOFI )
+      NBLGRC(NRERR) = 2
+      WRITE(KERR(MXLGER)(1:5),'(I5)'  ) NBDM
+      KERR(1) = 'VOLUME INITIAL: ' // NMVOIN
+      IF( LANGAG .EQ. 0 ) THEN
+         KERR(1) = 'VOLUME INITIAL ' // NMVOIN
+         KERR(2) = 'NOMBRE de MATERIAUX=' // KERR(MXLGER)(1:5)
+      ELSE
+         KERR(1) = 'INITIAL VOLUME NAME: ' // NMVOIN
+         KERR(2) = 'NUMBER of MATERIALS=' // KERR(MXLGER)(1:5)
+      ENDIF
+      CALL LERESU
+C
+C     ADRESSE MCN DU TABLEAU VOLUME>NUVOFI>DEFINITION  POUR COPIE ULTERIEURE
+      CALL LXNLOU( NTVOLU, NUVOFI, NTVOFI, MNVOFI )
+      CALL LXTSOU( NTVOFI, 'DEFINITION', NTDEFV, MNDEFV )
+C
+C     TABLEAU DU NUMERO VOLUME DE CHAQUE MATERIAU
+      CALL TNMCDC( 'ENTIER', NBDM, MNNOMA )
+      CALL AZEROI( NBDM, MCN(MNNOMA) )
+      NB = 0
+      MN = MNUDMEF
+      DO 30 NUEF=1, NBDMEF
+C        NO MATERIAU-VOLUME DE L'EF DANS LE LEXIQUE DES VOLUMES
+         NOMALX = MCN( MNUDMEF - 1 + NUEF )
+         DO 20 I=1, NB
+C           NO MATERIAU DEJA RECENSE
+            NUMAT = MCN( MNNOMA - 1 + I )
+            IF( NUMAT .EQ. NOMALX ) GOTO 30
+ 20      CONTINUE
+C        NOUVEAU NUMERO DE MATERIAU RECENSE
+         MCN( MNNOMA + NB ) = NOMALX
+         NB = NB + 1
+ 30   CONTINUE
+C
+C     LE TABLEAU 'XYZSOMMET' DU VOLUME MULTI-MATERIAUX
+      CALL LXTSOU( NTVOIN, 'XYZSOMMET', NTXYZS, MNXYZS )
+      IF( NTXYZS .LE. 0 ) GOTO 9993
+C     LE NOMBRE DE SOMMETS
+      NBSMMT = MCN( MNXYZS + WNBSOM )
+C
+C     LE TABLEAU 'NSEF' DU VOLUME MULTI-MATERIAUX
+      CALL LXTSOU( NTVOIN, 'NSEF', NTNSEF, MNNSEF )
+      IF( NTNSEF .LE. 0 ) GOTO 9994
+C
+C     LES CARACTERISTIQUES DES NSEF DU VOLUME MULTI-MATERIAUX
+      CALL NSEFPA( MCN(MNNSEF) ,
+     %             NUTYMA, NBSOEL, NBSOEF, NBTGEF,
+     %             LDAPEF, LDNGEF, LDTGEF, NBEF,
+     %             NX,     NY,     NZ,
+     %             IERR   )
+C     NUTYMA : 'NUMERO DE TYPE DU MAILLAGE'    ENTIER
+C              0 : 'NON STRUCTURE'       , 2 : 'SEGMENT    STRUCTURE',
+C              3 : 'TETRAEDRE  STRUCTURE', 4 : 'TETRAEDRE  STRUCTURE',
+C              5 : 'TETRAEDRE STRUCTURE' , 6 : 'PENTAEDRE  STRUCTURE',
+C              7 : 'HEXAEDRE  STRUCTURE'
+C     NBSOEL : NOMBRE REEL DE SOMMETS DES EF
+C            ( TETRAEDRE NBSOEL=4, PENTAEDRE NBSOEL=5, ... )
+C              0 SI MAILLAGE NON STRUCTURE
+C     NBSOEF : NOMBRE DE SOMMETS DE STOCKAGE DES NSEF
+C            ( TETRAEDRE PENTAEDRE HEXAEDRE PYRAMIDE NBSOEF=8 )
+C     NBEF : NOMBRE DE EF DU MAILLAGE
+C     NX, NY, NZ : LE NOMBRE D'ARETES DANS LES DIRECTIONS X Y Z
+C                CF LE TMS ~td/d/a___nsef
+C
+      IF( NUTYMA .NE. 0 ) GOTO 9995
+      IF( NBDM .GT. 0 .AND. NBEF .NE. NBDMEF ) GOTO 9996
+C
+C     DECLARATION D'UN TABLEAU DE RENUMEROTATION
+      CALL TNMCDC( 'ENTIER', 1+NBSMMT, MNLIPO )
+      IF( MNLIPO .LE. 0 ) GOTO 9998
+C
+      NOTADS = NONMTD( '~>>>NSEF' )
+      NOTADC = NONMTD( '~>>>XYZSOMMET' )
+C
+C     SEPARATION DU MAILLAGE DE CHAQUE VOLUME-MATERIAU
+C     ================================================
+      DO 1000 NUMATE = 1, NBDM
+C
+C        NUMERO DU VOLUME-MATERIAU DANS LE LEXIQUE VOLUME
+         NOMALX = MCN( MNNOMA-1+NUMATE )
+C
+C        CREATION DU NOM DU VOLUME-MATERIAU NUMATE
+         NBC = NUDCNB( NMVOFI )
+C        NOMBRE DE CARATERES DE NUMATE ET NOM EN CARACTERES
+         CALL NUMCHA( NUMATE, NBCNO, KNO )
+C        NOMBRE DE CARACTERES EXCEDANT 24
+         NBCTROP = NBC+1+NBCNO - 24
+         IF( NBCTROP .GT. 0 ) NBC=NBC-NBCTROP
+C        NOM MATERIAU = NOM VOLUME FINAL .NoMateriau
+         NMMATE = NMVOFI(1:NBC) // '.' // KNO(1:NBCNO)
+         CALL LXLXOU( NTVOLU, NMMATE, NTMATE, MNMATE )
+         IF( NTMATE .GT. 0 ) CALL LXLXDS( NTVOLU, NMMATE )
+C
+C        CREATION OUVERTURE DU LEXIQUE DE CE MATERIAU-VOLUME
+         IF( NUMATE .EQ. 1 ) THEN
+C           LE PREMIER MATERIAU EST LE VOLUME FINAL
+C           PROTECTION POUR CHANGER LE NOM DU VOLUME FINAL
+            NMMAT1 = NMMATE
+            CALL LXLXOU( NTVOLU, NMVOFI, NTMATE, MNMATE )
+            CALL LXTSOU( NTMATE, 'XYZSOMMET',  NTXYZM, MNXYZM )
+            IF( NTXYZM .GT. 0 ) CALL LXTSDS( NTMATE, 'XYZSOMMET' )
+            CALL LXTSOU( NTMATE, 'NSEF',  NTNSEM, MNNSEM )
+            IF( NTNSEM .GT. 0 ) CALL LXTSDS( NTMATE, 'NSEF' )
+         ELSE
+C           DECLARATION DU LEXIQUE DE CE MATERIAU-VOLUME
+            CALL LXLXDC( NTVOLU, NMMATE, 24, 16 )
+            CALL LXLXOU( NTVOLU, NMMATE, NTMATE, MNMATE )
+         ENDIF
+         WRITE(IMPRIM,*)
+         CALL NMOBNU( 'VOLUME', NOMALX, NMOLD )
+         IF( LANGAG .EQ. 0 ) THEN
+            WRITE(IMPRIM,*) 'Creation du Volume ',NMMATE,
+     %                      ' anciennement ',NMOLD
+         ELSE
+            WRITE(IMPRIM,*) 'Creation of Volume ',NMMATE,
+     %                      ' formerly ',NMOLD
+         ENDIF
+C
+C        RECHERCHE DU NOMBRE D'EF DE CE MATERIAU
+         NBEF1M = 0
+         DO NUEF = 1, NBEF
+            IF( MCN(MNUDMEF-1+NUEF) .EQ. NOMALX ) NBEF1M = NBEF1M + 1
+         ENDDO
+C
+C        CONSTRUCTION DU TABLEAU 'NSEF' DU MATERIAU
+         MONSEM = WUSOEF + NBEF1M * 8
+         CALL LXTNDC( NTMATE, 'NSEF', 'MOTS',  MONSEM )
+         CALL LXTSOU( NTMATE, 'NSEF',  NTNSEM, MNNSEM )
+C
+C        GENERATION DU TABLEAU DU NUMERO DES SOMMETS DES EF DU MATERIAU
+         MNS = MNNSEM + WUSOEF
+         DO 120 NUEF = 1, NBEF
+C
+            IF( MCN(MNUDMEF-1+NUEF) .EQ. NOMALX ) THEN
+C              EF DU MATERIAU
+C              REMPLISSAGE DU TABLEAU NSEF DES NO DE SOMMETS DE L'EF NUEF
+               CALL NSEFNS( NUEF,   NUTYMA, NBSOEF, NBTGEF,
+     %                      LDAPEF, LDNGEF, LDTGEF,
+     %                      MNNSEF, NX, NY, NZ ,
+     %                      NCOGEL, NUGEEF, NUEFTG, MCN(MNS), IERR )
+               IF( IERR .NE. 0 ) GOTO 9997
+               MNS = MNS + 8
+            ENDIF
+C
+ 120     CONTINUE
+C
+C        RECHERCHE DU NOMBRE ET DES NUMEROS DES SOMMETS DE CE MATERIAU
+         CALL AZEROI( 1+NBSMMT, MCN(MNLIPO) )
+C        PARCOURS DES SOMMETS DES EF DE CE MATERIAU
+         MNS = MNNSEM + WUSOEF - 1
+         DO 140 NUEF = 1, NBEF1M
+            DO 130 I = 1, 8
+C              LE NUMERO DU SOMMET DANS LE VOLUME INITIAL
+               NP = MCN( MNS + I )
+C              IL EST MARQUE
+               IF( NP .GT. 0 ) MCN( MNLIPO + NP ) = 1
+ 130        CONTINUE
+            MNS = MNS + 8
+ 140     CONTINUE
+C
+C        LES SOMMETS SONT RENUMEROTES DE 1 A NBS
+         NBS = 0
+         DO 150 I = 1, NBSMMT
+            IF( MCN(MNLIPO+I) .GT. 0 ) THEN
+               NBS = NBS + 1
+               MCN(MNLIPO+I) = NBS
+            ENDIF
+ 150     CONTINUE
+C
+C        PARCOURS DES SOMMETS DES NSEF DE CE VOLUME  POUR
+C        OBTENIR UNE NUMEROTATION LOCALE DES SOMMETS
+         MNS = MNNSEM + WUSOEF - 1
+         DO 170 NUEF = 1, NBEF1M
+            DO 160 I = 1, 8
+C              LE NUMERO DU SOMMET DANS LE VOLUME PARTITION
+               NP = MCN( MNS + I )
+C              LE NOUVEAU NUMERO LOCAL
+               IF( NP .GT. 0 ) MCN( MNS + I ) = MCN( MNLIPO + NP )
+ 160        CONTINUE
+            MNS = MNS + 8
+ 170     CONTINUE
+C
+C        variable NUTYOB        'numero de type de l''objet'    entier
+C       ( 1 : 'point' , 2 : 'ligne' , 3 : 'surface' , 4 : 'volume' )  ;
+         MCN( MNNSEM + WUTYOB ) = 4
+C        variable NUTFMA 'Ligne ou Surface fermee ou non-ferme (P et V sont inco
+C        ( -1 : 'inconnu' , 0 : 'non-ferme' , 1 : 'ligne ou surface fermee' ) ;
+         MCN( MNNSEM + WUTFMA ) = -1
+C        variable NBSOEF 'nombre de sommets par EF' entier
+C        ( 1 : 'sommet' , 2 : 'arete' , 4 : 'face' , 8 : 'cube' ) ;
+         MCN( MNNSEM + WBSOEF ) = 8
+C        variable NBTGEF 'nombre de tangentes par EF' entier
+C        ( 0 : '0 tg par EF' , 1 : '1 tg par sommet' , 2 : '2 tg par arete' ,
+C          8 : '8 tg par face' ,  24 : '24 tg par cube' )  ;
+         MCN( MNNSEM + WBTGEF ) = 0
+         MCN( MNNSEM + WBEFAP ) = 0
+         MCN( MNNSEM + WBEFTG ) = 0
+C        variable NBEFOB 'nombre des EF du PLSV'  entier ;
+         MCN( MNNSEM + WBEFOB ) = NBEF1M
+C        variable NUTYMA 'numero de type du maillage' entier
+C        ( 0 : 'non structure' , ... )
+         MCN( MNNSEM + WUTYMA ) = 0
+C        LA DATE DE CREATION DU TABLEAU NSEF DU MATERIAU
+         CALL ECDATE( MCN(MNNSEM) )
+C        AJOUT DU NUMERO DU TABLEAU DESCRIPTEUR
+         MCN( MNNSEM + MOTVAR(6) ) = NOTADS
+         NBC = NUDCNB( NMMATE )
+         WRITE(IMPRIM,*) 'Creation tms Volume ',NMMATE(1:NBC),'>NSEF'
+C
+C        CONSTRUCTION DU TABLEAU 'XYZSOMMET' DU MATERIAU
+         MOXYZM = WYZSOM + 3 * NBS
+         CALL LXTNDC( NTMATE, 'XYZSOMMET', 'MOTS',  MOXYZM )
+         CALL LXTSOU( NTMATE, 'XYZSOMMET',  NTXYZM, MNXYZM )
+C
+C        L'ADRESSE DES COORDONNEES DE CE MATERIAU
+         MNSV = MNXYZS + WYZSOM - 3
+         MNSM = MNXYZM + WYZSOM - 3
+C        LES COORDONNEES
+         DO 180 J = 1, NBSMMT
+C           NO RENUMEROTE DANS CE MATERIAU DU SOMMET J INITIAL
+            NP = MCN( MNLIPO + J )
+            IF( NP .GT. 0 ) THEN
+C              LES 3 COORDONNEES DU SOMMET J  INITIAL    DEBUTE EN
+               MNCV = MNSV + 3 * J
+C              LES 3 COORDONNEES DU SOMMET NP RENUMEROTE DEBUTE EN
+               MNCM = MNSM + 3 * NP
+               RMCN( MNCM   ) = RMCN( MNCV   )
+               RMCN( MNCM+1 ) = RMCN( MNCV+1 )
+               RMCN( MNCM+2 ) = RMCN( MNCV+2 )
+            ENDIF
+ 180     CONTINUE
+C
+C        LE NOMBRE DE SOMMETS DU MATERIAU
+         MCN( MNXYZM + WNBSOM ) = NBS
+C        LE NOMBRE DE TANGENTES
+         MCN( MNXYZM + WNBTGS ) = 0
+C        LE NOMBRE DE COORDONNEES PAR SOMMET
+         MCN( MNXYZM + WBCOOR ) = 3
+C        LA DATE DE CREATION
+         CALL ECDATE( MCN(MNXYZM) )
+C        AJOUT DU NUMERO DU TABLEAU DESCRIPTEUR
+         MCN( MNXYZM + MOTVAR(6) ) = NOTADC
+        WRITE(IMPRIM,*)'Creation tms Volume ',NMMATE(1:NBC),'>XYZSOMMET'
+C
+         IF( NUMATE .GT. 1 ) THEN
+C           COPIE DU TABLEAU DEFINITION DU PREMIER MATERIAU
+            CALL LXTNDC( NTMATE, 'DEFINITION', 'MOTS', 1+WUVOIN )
+            CALL LXTSOU( NTMATE, 'DEFINITION', NTDEFM, MNDEFM )
+            CALL TRTATA( MCN(MNDEFV), MCN(MNDEFM), 1+WUVOIN )
+C           FERMETURE DU LEXIQUE DU MATERIAU-VOLUME
+            CALL LXLXFE( NTVOLU, NMMATE )
+         ENDIF
+C
+ 1000 CONTINUE
+C
+C     SUPPRESSION DU TABLEAU DEVENU INUTILE
+      IF( MNLIPO .GT. 0 ) CALL TNMCDS( 'ENTIER', 1+NBSMMT, MNLIPO )
+      IF( MNNOMA .GT. 0 ) CALL TNMCDS( 'ENTIER', NBDM, MNNOMA )
+C
+C     REMPLACEMENT DU NOM DU VOLUME FINAL PAR VOLUMEFINAL.1
+      CALL LXNMNM( NTVOLU, NMVOFI, NMMAT1 )
+      IERR = 0
+      RETURN
+C
+ 9991 NBLGRC(NRERR) = 1
+      IF( LANGAG .EQ. 0 ) THEN
+         KERR(1) = 'VOLUME INITIAL INCONNU'
+      ELSE
+         KERR(1) = 'UNKNOWN INITIAL VOLUME'
+      ENDIF
+      CALL LEREUR
+      IERR = 1
+      RETURN
+C
+ 9992 NBLGRC(NRERR) = 1
+      IF( LANGAG .EQ. 0 ) THEN
+         KERR(1) = 'VOLUME INITIAL AVEC 1 MATERIAU SEULEMENT'
+      ELSE
+         KERR(1) = 'INITIAL VOLUME WITH ONLY ONE MATERIAL'
+      ENDIF
+      CALL LEREUR
+      IERR = 2
+      RETURN
+C
+ 9993 NBLGRC(NRERR) = 2
+      IF( LANGAG .EQ. 0 ) THEN
+         KERR(1) = 'VOLUME INITIAL ' // NMVOIN
+         KERR(2) = 'VOLUME SANS LE TMS XYZSOMMET'
+      ELSE
+         KERR(1) = 'INITIAL VOLUME NAME: ' // NMVOIN
+         KERR(2) = 'VOLUME WITHOUT XYZSOMMET TMS'
+      ENDIF
+      CALL LEREUR
+      IERR = 3
+      RETURN
+C
+ 9994 NBLGRC(NRERR) = 2
+      IF( LANGAG .EQ. 0 ) THEN
+         KERR(1) = 'VOLUME INITIAL ' // NMVOIN
+         KERR(2) = 'VOLUME SANS LE TMS NSEF'
+      ELSE
+         KERR(1) = 'INITIAL VOLUME NAME: ' // NMVOIN
+         KERR(2) = 'VOLUME WITHOUT NSEF TMS'
+      ENDIF
+      CALL LEREUR
+      IERR = 4
+      RETURN
+C
+ 9995 NBLGRC(NRERR) = 2
+      IF( LANGAG .EQ. 0 ) THEN
+         KERR(1) = 'VOLUME INITIAL ' // NMVOIN
+         KERR(2) = 'MAILLAGE STRUCTURE donc MONO-MATERIAU'
+      ELSE
+         KERR(1) = 'INITIAL VOLUME NAME: ' // NMVOIN
+         KERR(2) = 'STRUCTURED MESH => ONLY ONE MATERIAL'
+      ENDIF
+      CALL LEREUR
+      IERR = 5
+      RETURN
+C
+ 9996 NBLGRC(NRERR) = 1
+      IF( LANGAG .EQ. 0 ) THEN
+         KERR(1) ='NOMBRE d''EF NON EGAL ENTRE VOLUME et MATERIAUX'
+      ELSE
+         KERR(1) ='FINITE ELEMENT NUMBER NOT EQUAL BETWEEN VOLUME and MA
+     %TERIALS'
+      ENDIF
+      CALL LEREUR
+      IERR = 6
+      RETURN
+C
+ 9997 NBLGRC(NRERR) = 2
+      WRITE(KERR(MXLGER)(1:10),'(I10)') NUEF
+      IF( LANGAG .EQ. 0 ) THEN
+         KERR(1) = 'VOLUME INITIAL ' // NMVOIN
+         KERR(2) = 'ELEMENT FINI' // KERR(MXLGER)(1:10) // ' INCORRECT'
+      ELSE
+         KERR(1) = 'INITIAL VOLUME NAME: ' // NMVOIN
+         KERR(2) ='INCORRECT FINITE ELEMENT' // KERR(MXLGER)(1:10)
+      ENDIF
+      CALL LEREUR
+      IERR = 7
+      RETURN
+C
+C
+ 9998 NBLGRC(NRERR) = 1
+      IF( LANGAG .EQ. 0 ) THEN
+         KERR(1) = 'PAS ASSEZ DE MEMOIRE'
+      ELSE
+         KERR(1) = 'NOT ENOUGH MEMORY'
+      ENDIF
+      CALL LEREUR
+      IERR = 8
+      RETURN
+      END

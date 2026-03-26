@@ -1,0 +1,56 @@
+--------------------------------------------------------------
+Logiciel MEFISTO       Version Francaise       Decembre 2008
+--------------------------------------------------------------
+Le menu de traces des maillages a ete modifie au niveau
+des Points, Lignes, Surfaces, Volumes et Objets.
+NOUVEAUTES:
+MAILLER
+- Option 16 des surfaces: un QUADRANGULEUR
+  le long des normales d'une ligne  profil
+- Option 19 des surfaces: un TRIANGULEUR par ajout du
+  barycentre de triangles avec les memes donnees que 9;
+- Option 26 des surfaces 2D: un editeur de maillages
+  plans par des clics de la souris
+- Option 33 des volumes: Un HEXAEDRISEUR d'un CUBE ou
+  d'une SPHERE
+- Option 4 des traces des Volumes: Trace des Elements
+  Finis d'un volume sectionnes par un PLAN
+- Option 5 des traces des Objets: Trace des Elements
+  Finis d'un objet sectionnes par un PLAN
+- Option 16 des traces des gradients, flux, contraintes:
+  Trace des fleches gradients ou flux normaux ou
+  contraintes des EF d'un objet sectionnes par un PLAN
+- Option 39 tout triangle ou quadrangle du maillage initial
+  est decoupe en 4 sous elements du meme type
+- Ajout de VOLUMES MULTI-MATERIAUX (un materiau=un volume):
+  Une union de plusieurs volumes est un VOLUME MULTI-MATERIAUX
+  Un volume de type 9 avec plusieurs volumes de type 8 est
+  un VOLUME MULTI-MATERIAUX
+  Les surfaces, interfaces entre 2 materiaux, sont tracees.
+- Volume 15 par rotation d'une surface maillee:
+  La restriction "AUCUN SOMMET du bord de la surface SUR
+  L'AXE DE ROTATION" a ete levee en creeant des pyramides
+- Volume 19 un TETRAEDRISEUR par ajout du barycentre des
+  tetraedres avec les memes donnees que volume 9;
+- Volume 31 la tetraedrisation decoupe maintenant les
+  pyramides(issues d'un volume 15), pentaedres, hexaedres.
+  Si le volume est MULTI-MATERIAUX, ses materiaux (volumes
+  qui le constituent) sont tetraedrises et ecrasent l'ancien
+  maillage de pyramides, pentaedres, hexaedres.
+  Idem pour l'option 30; amelioration d'une tetraedrisation.
+  Cet ecrasement permet la compatibilite des triangles sur les
+  interfaces entre materiaux
+- Volume 39 tout tetraedre ou pentaedre ou hexaedre est
+  decoupe en 8 sous ef du meme type et toute pyramide est
+  decoupee en 6 sous-pyramides et 4 sous tetraedres
+ELASTICER:
+- Trace du critere de plasticite de Von Mises ou Tresca
+FLUIDER:
+- Resolution du probleme de STOKES stationnaire et
+  instationnaire pour un fluide 2D incompressible
+  pour des elements finis de Taylor-Young et Brezzi-Fortin
+--------------------------------------------------------------
+En cas de probleme, prevenir Alain PERRONNET
+E-mail  : perronnet@ann.jussieu.fr
+Internet: http://www.ann.jussieu.fr/~perronnet
+--------------------------------------------------------------

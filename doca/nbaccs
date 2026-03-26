@@ -1,0 +1,5 @@
+The angle A of the sector must verify
+   0 < A <= 360 Degrees.
+The number of edges on the angular sector
+must be >=3 if the angle is >180 degrees
+else    >=2

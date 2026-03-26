@@ -1,0 +1,140 @@
+      SUBROUTINE LXTYVA( NOIDEN, NBPTLX, MNPTLX, NRETOU )
+C+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+C BUT :     STOCKER LES POINTEURS SUR LES LEXIQUES DE CE TMS
+C -----
+C ENTREES :
+C ---------
+C NOIDEN  : NUMERO DE L'IDENTIFICATEUR A AFFICHER
+C
+C SORTIES :
+C ---------
+C NBPTLX  : NOMBRE DE POINTEURS SUR LES LEXIQUES CONTENUS DANS LE TMS
+C MNPTLX  : ADRESSE MCN DU TABLEAU CONTENANT LES NBPTLX COUPLES
+C           ( NO TYPE OBJET, NO DANS LE LEXIQUE OBJET )
+C           NO TYPE DE L'OBJET  CF FUNCTION NTYOBJ =  1: POINT 2:LIGNE
+C                 3:SURFACE 4:VOLUME 5:OBJET 6:TRANSFORMATION
+C           0 SI LE TABLEAU N'EXISTE PAS EN SORTIE
+C NRETOU  : 0 SI PAS D'ERREUR RENCONTREE >0 SINON
+C+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+C AUTEUR : ALAIN PERRONNET ANALYSE NUMERIQUE UPMC  PARIS    OCTOBRE 1988
+C23456---------------------------------------------------------------012
+      include"./incl/td.inc"
+      include"./incl/gsmenu.inc"
+      include"./incl/msvaau.inc"
+C.......................................................................
+      COMMON / UNITES / LECTEU,IMPRIM,NUNITE(30)
+      include"./incl/pp.inc"
+      COMMON            MCN(MOTMCN)
+C
+C     RECHERCHE DU NOMBRE DE VARIABLES SI C'EST UN TABLEAU
+      NBV    = 1
+      NRETOU = 0
+C
+C     POSITION DANS LE TAS
+      N = IDENT(2,NOIDEN)
+      IF( N .GT. 0 ) THEN
+C        C'EST UN TABLEAU
+C        LE NOMBRE DE SES INDICES
+         M = LETAS( N )
+         DO 10 I=1,M
+            NBV = NBV * ( LETAS(N+2) - LETAS(N+1) + 1 )
+            N   = N + 2
+ 10      CONTINUE
+      ENDIF
+C
+C     SI PAS DE VARIABLE => RETOUR
+      IF( NBV .LE. 0 ) RETURN
+C
+C     LE TYPE DE LA VARIABLE A AFFICHER
+      NOTYPE = IDENT(1,NOIDEN)
+      IF( NOTYPE .LE. 0 .OR. NOTYPE .GT. NBTYPV ) THEN
+         NBLGRC(NRERR) = 1
+         WRITE(KERR(MXLGER)(1:4),'(I4)') NOTYPE
+         KERR(1) = 'LXTYVA:'//KERR(MXLGER)(1:4)//' TYPE INCORRECT'
+         CALL LEREUR
+         NRETOU = 1
+         RETURN
+      ENDIF
+C
+C     LA POSITION DU 1-ER CARACTERE DE L'IDENTIFICATEUR
+      NL = IDENT(4,NOIDEN)
+      NC = IDENT(5,NOIDEN)
+C     NOMBRE DE MOTS DE LA VARIABLE
+      MOT = MOTVAR( NOTYPE )
+C
+      GOTO( 9000, 100, 9000, 100, 100, 100, 9000, 9000, 9000,
+     %      9000, 200,  100, 600 ), NOTYPE
+C          LOGIQUE  => 1 CARACTERE=> 2  ENTIER/2 => 3 ENTIER   => 4
+C          REEL     => 5 REEL2    => 6  REEL4    => 7 COMPLEXE => 8
+C          COMPLEXE2=> 9 MOTS     => 10 ^LEXIQUE =>11 XYZ      =>12
+C          TMS      => 21
+C
+ 100  LDTS(LHTMS) = LDTS(LHTMS) + MOT * NBV
+      RETURN
+C
+C     ^NOM_LEXIQUE
+C     ============
+ 200  CALL CHMOT( '^', NL,NC, NLD,NCD, NLF,NCF )
+      NL = NLF
+      NC = NCF
+      CALL CHLEXI( NL,NC, NLD,NCD, NLF,NCF )
+C
+C     NOM DU LEXIQUE JUSTE APRES ADAM
+      NTYLX = NTYOBJ( KTD(NLD)(NCD+2:NCD+2) )
+      IF( NTYLX .EQ. 0 ) THEN
+C        LEXIQUE INCONNU
+         NRETOU = 1
+         RETURN
+      ENDIF
+C
+C     DECLARATION OU AUGMENTATION DU TABLEAU DES POINTEURS SUR LX
+      CALL TNMCAU( 'ENTIER', NBPTLX*2, (NBPTLX+NBV)*2, NBPTLX*2,
+     %              MNPTLX )
+C     ADRESSE MCN DE LA PREMIERE VALEUR A STOCKER
+      MN     = MNPTLX + NBPTLX * 2
+C     NOMBRE TOTAL DE POINTEURS SUR LES LEXIQUES
+      NBPTLX = NBPTLX + NBV
+C
+      DO 240 I=1,NBV
+C        LE NUMERO DANS LE LEXIQUE
+         NPTLX = MCN( MNTAMS(LHTMS) + LDTS(LHTMS) )
+C        LE STOCKAGE DANS LE TABLEAU
+         MCN( MN     ) = NTYLX
+         MCN( MN + 1 ) = NPTLX
+         MN = MN + 2
+C        LE DECALAGE
+         LDTS(LHTMS) = LDTS(LHTMS) + MOT
+ 240  CONTINUE
+      RETURN
+C
+C     TYPEOBJET
+C     =========
+C     DECLARATION OU AUGMENTATION DU TABLEAU DES POINTEURS SUR LX
+ 600  CALL TNMCAU( 'ENTIER', NBPTLX*2, (NBPTLX+NBV)*2, NBPTLX*2,
+     %              MNPTLX )
+C     ADRESSE MCN DE LA PREMIERE VALEUR A STOCKER
+      MN     = MNPTLX + NBPTLX * 2
+C     NOMBRE TOTAL DE POINTEURS SUR LES LEXIQUES
+      NBPTLX = NBPTLX + NBV
+C
+      DO 640 I=1,NBV
+C        LE TYPE DE L'OBJET
+         NTYLX = MCN( MNTAMS(LHTMS) + LDTS(LHTMS) )
+C        LE NUMERO DANS LE LEXIQUE
+         NPTLX = MCN( MNTAMS(LHTMS) + LDTS(LHTMS) + 1 )
+C        LE STOCKAGE DANS LE TABLEAU
+         MCN( MN     ) = NTYLX
+         MCN( MN + 1 ) = NPTLX
+         MN = MN + 2
+C        LE DECALAGE
+         LDTS(LHTMS) = LDTS(LHTMS) + MOT
+ 640  CONTINUE
+      RETURN
+C
+C     ERREUR TYPE INCORRECT ICI
+ 9000 NBLGRC(NRERR) = 1
+      WRITE(KERR(MXLGER)(1:4),'(I4)') NOTYPE
+      KERR(1) ='LXTYVA:TYPE '//KERR(MXLGER)(1:4)//' INCORRECT'
+      CALL LEREUR
+      NRETOU = 1
+      END

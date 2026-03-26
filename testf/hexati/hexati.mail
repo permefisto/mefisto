@@ -1,0 +1,155 @@
+ { =============================================== }
+ { MEFISTO Version Janvier 1997     PROJET: hexati }
+ { Utilisateur: perronne            Date: 16/ 6/97 }
+ { =============================================== }
+ defvar  x1, y1, z1, r, x12, y12, z12, r2;
+ x1=1;    x12=x1/2;
+ y1=2;    y12=y1/2;
+ z1=1.5;  z12=z1/2;
+ r=1;     r2=r**2;
+
+ deffonc taille_ideale(x,y,z);
+    taille_ideale = 0.03 + 0.2 * 
+       sqrt( abs( (x-x12)**2 + (y-y12)**2 + (z-z12)**2 - r2 ) );
+ finfonc;
+
+1; { POINTS sommets de l objet }
+  1; { FRAPPE des valeurs }
+ p1; i; 1; 0; 0; 0;
+ { DANS LE LEXIQUE ~>TRANSFO }
+ { coordonnees x y z }
+ { COORPO '3 coordonnees cartesiennes du point' xyz ; }
+ p2; i; 1; 1; 0; 0;
+ p3; i; 1; 1; 2; 0;
+ p4; i; 1; 0; 2; 0;
+ p5; i; 1; 0; 0; 1.5;
+ p6; i; 1; 1; 0; 1.5;
+ p7; i; 1; 1; 2; 1.5;
+ p8; i; 1; 0; 2; 1.5;
+ @;
+
+2; { LIGNES aretes de l objet }
+ p1p2; i; 2; 5; 1; p1; p2;
+ { DANS LE LEXIQUE ~>TRANSFO }
+ { segment de droite }
+ { NBARLI 'nombre d''aretes de la ligne' entier ; }
+ { RAIGEO 'raison geometrique espacant les sommets' reel ; }
+ { DANS LE LEXIQUE ~>POINT }
+ { DANS LE LEXIQUE ~>POINT }
+ p2p3; i; 2; 10; 1; p2; p3;
+ { DANS LE LEXIQUE ~>TRANSFO }
+ { segment de droite }
+ { NBARLI 'nombre d''aretes de la ligne' entier ; }
+ { RAIGEO 'raison geometrique espacant les sommets' reel ; }
+ { DANS LE LEXIQUE ~>POINT }
+ { DANS LE LEXIQUE ~>POINT }
+ p3p4; i; 2; 5; 1; p3; p4;
+ { DANS LE LEXIQUE ~>TRANSFO }
+ { segment de droite }
+ { NBARLI 'nombre d''aretes de la ligne' entier ; }
+ { RAIGEO 'raison geometrique espacant les sommets' reel ; }
+ { DANS LE LEXIQUE ~>POINT }
+ { DANS LE LEXIQUE ~>POINT }
+ p4p1; i; 2; 10; 1; p4; p1;
+ { DANS LE LEXIQUE ~>TRANSFO }
+ { segment de droite }
+ { NBARLI 'nombre d''aretes de la ligne' entier ; }
+ { RAIGEO 'raison geometrique espacant les sommets' reel ; }
+ { DANS LE LEXIQUE ~>POINT }
+ { DANS LE LEXIQUE ~>POINT }
+ p5p6; i; 2; 5; 1; p5; p6;
+ { DANS LE LEXIQUE ~>TRANSFO }
+ { segment de droite }
+ { NBARLI 'nombre d''aretes de la ligne' entier ; }
+ { RAIGEO 'raison geometrique espacant les sommets' reel ; }
+ { DANS LE LEXIQUE ~>POINT }
+ { DANS LE LEXIQUE ~>POINT }
+ p6p7; i; 2; 10; 1; p6; p7;
+ { DANS LE LEXIQUE ~>TRANSFO }
+ { segment de droite }
+ { NBARLI 'nombre d''aretes de la ligne' entier ; }
+ { RAIGEO 'raison geometrique espacant les sommets' reel ; }
+ { DANS LE LEXIQUE ~>POINT }
+ { DANS LE LEXIQUE ~>POINT }
+ p7p8; i; 2; 5; 1; p7; p8;
+ { DANS LE LEXIQUE ~>TRANSFO }
+ { segment de droite }
+ { NBARLI 'nombre d''aretes de la ligne' entier ; }
+ { RAIGEO 'raison geometrique espacant les sommets' reel ; }
+ { DANS LE LEXIQUE ~>POINT }
+ { DANS LE LEXIQUE ~>POINT }
+ p8p5; i; 2; 10; 1; p8; p5;
+ { DANS LE LEXIQUE ~>TRANSFO }
+ { segment de droite }
+ { NBARLI 'nombre d''aretes de la ligne' entier ; }
+ { RAIGEO 'raison geometrique espacant les sommets' reel ; }
+ { DANS LE LEXIQUE ~>POINT }
+ { DANS LE LEXIQUE ~>POINT }
+ p1p5; i; 2; 7; 1; p1; p5;
+ { DANS LE LEXIQUE ~>TRANSFO }
+ { segment de droite }
+ { NBARLI 'nombre d''aretes de la ligne' entier ; }
+ { RAIGEO 'raison geometrique espacant les sommets' reel ; }
+ { DANS LE LEXIQUE ~>POINT }
+ { DANS LE LEXIQUE ~>POINT }
+ p2p6; i; 2; 7; 1; p2; p6;
+ { DANS LE LEXIQUE ~>TRANSFO }
+ { segment de droite }
+ { NBARLI 'nombre d''aretes de la ligne' entier ; }
+ { RAIGEO 'raison geometrique espacant les sommets' reel ; }
+ { DANS LE LEXIQUE ~>POINT }
+ { DANS LE LEXIQUE ~>POINT }
+ p3p7; i; 2; 7; 1; p3; p7;
+ { DANS LE LEXIQUE ~>TRANSFO }
+ { segment de droite }
+ { NBARLI 'nombre d''aretes de la ligne' entier ; }
+ { RAIGEO 'raison geometrique espacant les sommets' reel ; }
+ { DANS LE LEXIQUE ~>POINT }
+ { DANS LE LEXIQUE ~>POINT }
+ p4p8; i; 2; 7; 1; p4; p8;
+ { DANS LE LEXIQUE ~>TRANSFO }
+ { segment de droite }
+ { NBARLI 'nombre d''aretes de la ligne' entier ; }
+ { RAIGEO 'raison geometrique espacant les sommets' reel ; }
+ { DANS LE LEXIQUE ~>POINT }
+ { DANS LE LEXIQUE ~>POINT }
+ @;
+
+20; { PRECISION pour IDENTIFIER des POINTS }
+ 1; 0.001;   {Autour d'un POINT NON ORIGINE}
+ 2; 0.0005;  {Autour de l'ORIGINE}
+@;
+
+3; { SURFACES faces de l objet }
+ bas; i; 1;  { quadrangle ALGEBRIQUE structure ou non }
+ p1p2; p2p3; p3p4; p4p1; { DANS LE LEXIQUE ~>LIGNE }
+ 2;                      { maillage irregulier }
+ gauche;   i; 1; p1p2; p2p6; p5p6; p1p5; 2;
+ derriere; i; 1; p4p1; p4p8; p8p5; p1p5; 2;
+ devant;   i; 1; p2p3; p3p7; p6p7; p2p6; 2;
+ droite;   i; 1; p3p4; p4p8; p7p8; p3p7; 2;
+ haut;     i; 1; p5p6; p6p7; p7p8; p8p5; 2;
+ hexad; i; 51; 6; bas; gauche; derriere; devant; droite; haut;
+@;
+
+4; { VOLUMES parties de l objet }
+ hexad8; i; 8;{ un volume ferme d un volume pour option 9 }
+ 1;        { NBSF1V nombre de surfaces fermees contour du volume }
+ hexad;    { DANS LE LEXIQUE ~>SURFACE }
+
+ hexad9; i; 9; { le volume union de volumes fermes de type 8 }
+ 50000;      { MXSOVO nombre maximal de sommets de la tetraedrisation }
+ 0.2;        { ARETGR longueur de l'arete de la grille reguliere } 
+ 3.0;        { ANTE2P degres du petit angle de coplanearite }
+ 0;          { NBPTIV nombre de points internes fournis par lutilisateur }
+ 1;          { NBVOPA nombre de volumes de type 8 de la partition }
+ hexad8;     { DANS LE LEXIQUE ~>VOLUME } 
+
+ hexada; i; 30; { amelioration d une tetraedrisation }
+     hexad9;    { DANS LE LEXIQUE ~>VOLUME }
+       0.33;    { QUTEMN qualite au dessous de laquelle ameliorer }
+        3.0;    { ANTE2P degres du petit angle de coplanearite }
+          5;    { NBITAT nombre des iterations pour ameliorer }
+@;       
+FERMER;
+

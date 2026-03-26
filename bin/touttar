@@ -1,0 +1,10 @@
+#!/bin/bash
+# tar des sources de Mefisto  Mai 1998
+#
+cd $mefisto
+rm tout.tar
+tar cvf tout1.tar doc elas/*.f incl install LISEZMOI mail/*.f
+tar cvf tout2.tar LISEZMOI mail/*.f prpr/*.f reso/*.f td test
+tar cvf tout3.tar ther/*.f util/*.f  xvue/*.f xvue/*.c*
+tar cvf tout.tar tout1.tar tout2.tar tout3.tar
+gzip tout.tar

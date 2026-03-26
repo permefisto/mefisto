@@ -1,0 +1,14 @@
+variable VITEPR3D 'Traces 3D des VITESSES ou PRESSIONS ou ERREURS' entier
+ ( 1 : 'Traces de la PRESSION'
+,  2 : 'Traces de la VITESSE sous FORME de FLECHES'
+,  3 : 'Traces de la COMPOSANTE X Y Z ou MODULE de la VITESSE'
+,  4 : '|VITESSE|Moy Mx PRESSION Mi Mx TEMPERATURE Moy Mi Mx(Temps)'
+,  5 : 'Traces de la TEMPERATURE'
+,  6 : 'Traces des FLUX de TEMPERATURE'
+,  7 : 'Calcul et Trace du PARCOURS de PARTICULES dans le FLUIDE'
+, 10 : 'VORTICITE=TOURBILLON=ROTATIONNEL de la VITESSE'
+, 12 : 'INTEGRALE de la PRESSION  sur les SURFACES de l OBJET 3D'
+, 13 : 'FLUX NORMAL de la VITESSE sur les SURFACES de l OBJET 3D'
+, 90 : 'Affichage VITESSE et PRESSION et ERREUR aux Noeuds'
+, 91 : 'Trace ERREURS |VITESSE| si Vitesse_exacte(t,x,y,z,nc)'
+, 92 : 'Trace ERREURS PRESSION  si Pression_Exacte(t,x,y,z)' ) ;

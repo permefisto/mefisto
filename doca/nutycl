@@ -1,0 +1,69 @@
+The DISPLACEMENTS of the INITIAL LINE define the SURFACE
+(future QUADRANGULATION) with 6 options:
+
+0: 3 points by surface define the transformations
+   From the INITIAL LINE a reference system S0 is defined
+   by 3 points P01 P02 P03
+   P01 is the ORIGIN
+   P01-P02=E1 define the vector E1 with NORM(E1)=1
+   E3 = E1 x P01-P03 with NORM(E3)=1
+   E2 = E3 x E1      with NORM(E2)=1
+
+   For every displacement I 3 points are associated which define
+   in a same way as above, a reference system SI
+
+   The MAPPING transforms the system S0 into the system SI
+   and the INITIAL LINE into the LINE I.
+   The vertices of LINES I and I+1 are linked to form quadrangles
+   Example: S14.0; I; 14; INITIAL_LINE; 0; 2; {nombre de slices}
+         P01;P02;P03;  P11;P12;P13;   P21;P22;P23;
+        {the 3 points of definition of reference systems}    
+
+1: 3 points by surface define the transformations
+   3 lines define the mappings of the initial line
+   In a same way as previously, the 3 definition points are
+   the vertices of same number on the 3 lines to define S1, ... SI
+   The first vertex of the 3 lines define P01 P02 P03, ...
+   Example: S14.1; I; 14; INITIAL_LINE; 1; L1; L2; L3;
+   {the 3 lines of which vertices define the reference systems}
+
+2: translation of a constant cote z>0 (a stack)
+   the INITIAL LINE is translated of a constant Z>0 constante
+   to form a stack of slices
+   Example: S14.2; I; 14; INITIAL_LINE; 2;
+            3; {slices}
+            6; {maximum cote to cut into 3 slices of thickness=2}
+
+3: translation of a cote z>0 for each line
+   The INITIAL LINE is translated of a cote Z>0, variable for every line
+   ATTENTION: The cote is ABSOLUTE, NOT RELATIVE to the previous.
+   Example: S14.3; I; 14; INITIAL_LINE; 3; 2; {slices}
+         4; 7; {2 slices of cote Z=4 & 7}    
+
+4: translation vector (x y z) valuable for all slices
+   the previous line is translated of this vector to give the
+   following line. And so on ...
+   Example: S14.4; I; 14; INITIAL_LINE; 4; 5; {slices}
+   1; 2; 3; {the 3 components of the constant translation vector}
+
+5: translation vectors (x y z) for each slice
+   Example: S14.5; I; 14; INITIAL_LINE; 5; 2; {slices} 
+   1; 2; 3;
+   {les 3 components of first translation of the initial line => L1}
+   1.5; 2; 5;
+   {les 3 components of the translation of the line L1 => L2 ...}
+
+6: 3 functions X Y Z(no_slice,x,y,z) transform the initial line
+   The vertices of the initial line are transformed by a mapping
+   defined from R3 into R3 by 3 user's functions
+   For example: ABSCISSE(no_slice,x,y,z)
+                ORDINATE(no_slice,x,y,z)
+                COTE    (no_slice,x,y,z)
+   Every vertex (x,y,z) of the initial line becomes the vertex
+   (ABSCISSE(no_slice,x,y,z), ORDINATE(no_slice,x,y,z),
+    COTE    (no_slice,x,y,z)) of the line of the slice of number no_slice  
+   Example: S14.6; I; 14; INITIAL_LINE; 6; 5; {slices}
+   defvar r3; r3=2;   { mapping de R3 -> R3 defined by 3 functions }
+   deffunc c3x(x,y,z); c3x=r3*sin(x/r3); endfunc;   c3x;
+   deffunc c3y(x,y,z); c3y=r3*cos(x/r3); endfunc;   c3y;
+   deffunc c3z(x,y,z); c3z=z;            endfunc;   c3z;

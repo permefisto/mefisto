@@ -1,0 +1,196 @@
+{ ===================================================================== }
+{ MEFISTO Software  : February 24, 2022 Version                         }
+{ USER's  Name      : Alain Perronnet                                   }
+{ Project Name      : nstg2d Navier-Stokes TAYLOR-GREEN vortex solution }
+{ Date              : February 24, 2022  11h 12m                        }
+{ ===================================================================== }
+
+{ The Fluid Characteristics ================================================= }
+DefVar  RhoAir; RhoAir=1.2;    { kg/m3 Wet Air Mass Density at sea level}
+DefVar  MuAir;  MuAir=18.5E-6; { kg/(m.s) or Pa.s Air Dynamic Viscosity=18.5 10-6}
+DefVar  NuAir;  NuAir=MuAir/RhoAir; { m2/s Air Kinematic Viscosity=15.6 10-6 a 20 C}
+
+DefVar RhoWater; RhoWater=1; {1000; kg/m3 MASS Density of WATER  cf wikipedia}
+DefVar MuWater;  MuWater=1;  {1.002e-3; at 20C Pa.s=kg/(m s) WATER DYNAMIC VISCOSITY}
+DefVar NuWater;  NuWater=MuWater/RhoWater; { m2/s WATER KINEMATIC VISCOSITY }
+
+DefVar RhoClassic; RhoClassic=1;                   {kg/m3    CLASSIC MASS      DENSITY }
+DefVar MuClassic;  MuClassic=1;                    {kg/(m s) CLASSIC DYNAMIC   VISCOSITY}
+DefVar NuClassic;  NuClassic=MuClassic/RhoClassic; {m2/s     CLASSIC KINEMATIC VISCOSITY}
+
+
+{Taylor-Green Vortex Solution 2d of incompressible Navier-Stokes equations}
+{The exact-solutions: }
+DefFunc F(t); F=exp(- 2 * NuClassic * t);  EndFunc;
+DefFunc XVelocity(t,x,y); XVelocity= sin(x)*cos(y)*F(t); EndFunc;
+DefFunc YVelocity(t,x,y); YVelocity=-cos(x)*sin(y)*F(t); EndFunc;
+DefFunc Pressure (t,x,y); 
+   Pressure=RhoClassic*(cos(2*x)+cos(2*y))*(F(t)**2)/4;
+EndFunc;
+DefFunc StreamFunction(t,x,y); 
+ StreamFunction = -cos(x)*cos(y)*F(t);
+EndFunc;
+DefFunc Vorticity(t,x,y); 
+ Vorticity = -2*cos(x)*cos(y)*F(t);
+EndFunc;
+
+DefFunc Exact_Velocity(t,x,y,z,nocomp);
+if nocomp=1 then
+   Exact_Velocity=XVelocity(t,x,y);
+else
+   Exact_Velocity=YVelocity(t,x,y);
+EndIf;
+EndFunc;
+
+DefFunc Exact_Pressure(t,x,y,z);
+  Exact_Pressure=Pressure(t,x,y);
+EndFunc;
+
+{ The boundary conditions }
+DefFunc FixVelocity(t,x,y,z,ntyob,numob,nocomp);
+if nocomp=1 then
+   FixVelocity=XVelocity(t,x,y);
+else
+   FixVelocity=YVelocity(t,x,y);
+EndIf;
+EndFunc;
+
+DefFunc FixPressure(t,x,y,z,ntyob,numob);
+  FixPressure=Pressure(t,x,y);
+EndFunc;
+
+{ The initial conditions }
+DefFunc InitVelocity(t,x,y,z,ntyob,numob,nocomp);
+if nocomp=1 then
+   InitVelocity=0;    {or XVelocity(t,x,y) * 0.5;}
+else
+   InitVelocity=0;    {or YVelocity(t,x,y) * 0.5;}
+EndIf;
+EndFunc;
+
+DefFunc InitPressure(t,x,y,z,ntyob,numob);
+  InitPressure=0;     {or Pressure(t,x,y) * 0.5;}
+EndFunc;
+
+
+2;  { FLUID INPUT DATA ...............................................}
+
+ { on SURFACE: ABCDT The Fluid Characteristics =======================}
+ 1;          { Rho MASS DENSITY OF CLASSIC FLUID }
+ 1;          { Mass Constant }
+ RhoClassic; { DMASSE Value of the constant mass density }
+
+ 2;          { mu CLASSIC FLUID DYNAMIC VISCOSITY }
+ 1;          { Constant Viscosity }
+ MuClassic;  { mu VISCOS CLASSIC VISCOSITY in Pa.s }
+
+ 3;          { FOmega INTERIOR FORCES }
+ 0;          { Delete Force Data }
+
+ 4;          { INITIAL VELOCITIES =====================================}
+-1;          { Initial Velocity Function }
+ 2;          { NBCOVI Number of Initial Velocity Components at a node }
+ 1; 2;       { NUCOVI(1..NBCOVI) Number of Initial Velocity Components }
+ InitVelocity; { NAME of the Initial Velocity FUNCTION m/s }
+
+ 5;          { INITIAL PRESSURE =======================================}
+ -1;         { INITIAL PRESSURE FUNCTION }
+ InitPressure; { VAPRE0 Initial Pressure Function Name }
+@;
+
+ { on LINE : ABCD } { The Boundary Conditions =========================}
+ 2;    { Fixation of the VELOCITY }
+-1;    { Fixed Velocity FUNCTION }
+ 2;    { NBCOBV number of components of the fixed Velocity }
+ 1; 2; { NUCOBV(1..NBCOBV) nb of each component of the fixed velocity}
+ FixVelocity;
+
+ 3;    { BLOCKING-UP the IMPOSED PRESSURE }
+-1;    { Fixed Pressure FUNCTION }
+ FixPressure; {Name of Pressure Function }
+ @;
+
+
+7; { IMPLICIT   UNSTEADY NAVIER-STOKES SOLVER =========================}
+   1;   { SKYLINE CROUT FACTORIZATION L D tL }
+  0.0;  { INITIAL TIME }
+  5.0;  { FINAL   TIME }
+ 0.01;  { STEP of TIME }
+   50;  { NUMBER of ADDED SOLUTION VECTORS }
+@;
+@;
+
+10; { DRAWING of VELOCITIES PRESSURES ...............................}
+ 2;  { INITIAL and FINAL TIME of SOLUTIONS VECTORS to DRAW }
+ 0;  { INITIAL TIME }
+ 10; { FINAL   TIME }
+
+90;  { The PRINTING VELOCITY PRESSURE ERRORS at Nodes }
+     { Exact_Velocity(t,x,y,z,nocomp) is GIVEN }
+     { Exact_Pressure(t,x,y,z) is GIVEN }
+
+ 1;  { The PRESSURE drawings }
+ 2;  { ISO-PRESSURES COLOR ZONES }
+ 90; { Drawing of ZONES of COLORS }
+ 90; { Continue the DRAWING }
+ @;
+ @;
+ @;
+
+ 2;  { The VELOCITY is drawn with ARROWS }
+ 90; { DRAWING of VELOCITY ARROWS }
+ 90; { Continue the DRAWING }
+ @;
+ @;
+
+ 9;  { The STREAM FUNCTION Psi ou (Vx,Vy)=(dPsi/dy,-dPsi/dx) }
+ 2;  { COLOR ZONES of ISO-STREAM FUNCTION }
+ 90; { Drawing of ZONES of COLORS }
+ 90; { Continue the DRAWING }
+ @;
+ @;
+
+ 9;  { 3d-SURFACE(X,Y,StreamFunction(X,Y)) }
+ 90; { DRAWING of SOLUTION from Z }
+ 90; { Continue the DRAWING }
+ @;
+ @;
+ @;
+
+ 7;  { COMPUTE and DRAW the RUN of PARTICLES in the FLUID }
+ 2;  { Give XYZ VelocityXYZ RADIUS TIME0 of PARTICLES to RUN }
+ { NUMBER of PARTICLES (>0)? }
+ 3;
+ { VALUE of XYZ? Particle 1 }
+ 0.5; 0.5; 0;
+ { VALUE of Velocity XYZ? Particle 1 }
+ 0; 0; 0;
+ { RADIUS of BOOL? Particle 1 }
+ 0;
+ { START TIME? Particle 1 }
+ 0;
+
+ { VALUE of XYZ? Particle 2 }
+ 1.0; 1.0; 0;
+ { VALUE of Velocity XYZ? Particle 2 }
+ 0; 0; 0;
+ { RADIUS of BOOL? Particle 2 }
+ 0;
+ { START TIME? Particle 2 }
+ 0;
+
+ { VALUE of XYZ? Particle 3 }
+ 1.3; 1.3; 0;
+ { VALUE of Velocity XYZ? Particle 3 }
+ 0; 0; 0;
+ { RADIUS of BOOL? Particle 3 }
+ 0;
+ { START TIME? Particle 3 }
+ 0;
+
+ 3;  { Compute the RUN of GIVEN PARTICLES }
+ 90; { Continue the DRAWING }
+ @;
+ @;
+ @;
+CLOSE;

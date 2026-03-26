@@ -1,0 +1,11 @@
+Des sommets sont a extraire d'un PLSV c'est a dire
+Point, Ligne, Surface, Volume. 
+
+Donner le TYPE ( P ou L ou S ou V ) puis son NOM. 
+
+Exemple:  LIGNE;  POURTOUR; 
+          deffonc PLANXY(x,y,z); PLANXY = (z=0); finfonc;
+          PLANXY;
+   extrait les sommets de la ligne de nom POURTOUR
+   dont les 3 coordonnees x,y,z donnent vrai par PLANXY,
+   c'est a dire ici tous les sommets du plan xy de la ligne

@@ -1,0 +1,5 @@
+variable VALZONE 'Valeurs des ZONES' entier
+( 1 : 'Trace des ZONES de COULEURS'
+, 5 : 'COULEUR des ARETES du MAILLAGE'
+, 6 : 'TYPE TRAIT des ARETES MAILLAGE'
+,90 : 'Trace des ZONES de COULEURS' ) ;

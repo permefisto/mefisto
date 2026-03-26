@@ -1,0 +1,225 @@
+{ ==================================================================== }
+{ Software MEFISTO     : February 2010 Version                         }
+{ USER's Name          : Alain Perronnet                               }
+{ Project Name         : habc                                          }
+{ Date                 : February 22-th 2010                           }
+{ PROJET               : Unsteady Thermo-Elasticity on an HEXAEDRON    }
+{                        Comparison exact and computed solution        }
+{ ==================================================================== }
+
+DefVar t0; t0=1;
+DefVar DeltaT; DeltaT=0.1;
+DefVar CeofTemp; CeofTemp=10.0;
+
+{Rot MASS Density, Cp MASSIC HEAT and its product RotCp}
+DefVar Rot, Cp, RotCp; Rot=7800;  {coefficients for stainless Steel}
+            Cp=1500; RotCp= Rot * Cp;
+
+{Conductivity}
+DefVar k; k=26; {W m-1 K-1 stainless Steel at 20 Celsius degrees};
+
+{Heat transfer coefficient on Fourier-Robin surfaces TOP RIGHT BACK}
+DefVar gTOP, gRIGHT, gBACK;
+gTOP=1; gRIGHT=2; gBACK=3;
+
+{Velocity, coefficient in front of the grad temperature}
+defvar V1,V2,V3;  V1=a/50; V2=b/50; V3=c/50;
+
+{Coefficient in front of the temperature}
+DefVar CfTemp; CfTemp=0.5;
+
+DefVar Pi; Pi=atan(1) * 4;
+DefVar pisa,pisb,pisc;
+pisa = PI / a;   pisb = Pi / b; pisc = Pi / c;
+DefVar a2b2, a2b2c2; a2b2=(a*b)**2; a2b2c2=(a*b*c)**2;
+
+{To display the errors}
+DefFunc Exact_Temperature(t,x,y,z);
+  Exact_Temperature=CeofTemp*(t+t0)*x*(a-x)*y*(b-y)/a2b2*sin(Pisc*z);
+EndFunc;
+
+{To define temperature on Dirichlet boundaries}
+DefFunc temperature(t,x,y,z,nutyob,nuobj,temper);
+  temperature=exact_temperature(t,x,y,z);
+EndFunc;
+
+DefFunc dttemperature(t,x,y,z);
+  dttemperature=CeofTemp*x*(a-x)*y*(b-y)/a2b2*sin(Pisc*z);
+EndFunc;
+
+DefFunc dxtemperature(t,x,y,z);
+  dxtemperature=CeofTemp*(t+t0)*(a-2*x)*y*(b-y)/a2b2*sin(Pisc*z);
+EndFunc;
+DefFunc ddxtemperature(t,x,y,z);
+  ddxtemperature=-CeofTemp*(t+t0)*2*y*(b-y)/a2b2*sin(Pisc*z);
+EndFunc;
+
+DefFunc dytemperature(t,x,y,z);
+  dytemperature=CeofTemp*(t+t0)*x*(a-x)*(b-2*y)/a2b2*sin(Pisc*z);
+EndFunc;
+DefFunc ddytemperature(t,x,y,z);
+  ddytemperature=-CeofTemp*(t+t0)*x*(a-x)*2/a2b2*sin(Pisc*z);
+EndFunc;
+
+DefFunc dztemperature(t,x,y,z);
+  dztemperature=CeofTemp*(t+t0)*x*(a-x)*y*(b-y)/a2b2*Pisc*cos(Pisc*z);
+EndFunc;
+DefFunc ddztemperature(t,x,y,z);
+  ddztemperature=-CeofTemp*(t+t0)*x*(a-x)*y*(b-y)/a2b2*Pisc*Pisc*sin(Pisc*z);
+EndFunc;
+
+{fomega=-k Laplacien temperature + V gradient temperature + CfTemp temperature}
+DefFunc fomega(t,x,y,z,nutyob,nuobjt,temper);
+  fomega = - k * ( ddxtemperature(t,x,y,z) +
+                   ddytemperature(t,x,y,z) +
+                   ddztemperature(t,x,y,z) )
+            + V1 * dxtemperature(t,x,y,z)
+            + V2 * dytemperature(t,x,y,z)
+            + V3 * dztemperature(t,x,y,z)
+            + CfTemp * Exact_Temperature(t,x,y,z);
+EndFunc;
+
+DefFunc RobinTOP(t,x,y,z,nutyob,nuobj,temper);
+  RobinTOP =  k  * dztemperature(t,x,y,z) +
+              gTOP * temperature(t,x,y,z,nutyob,nuobj,temper);
+EndFunc;
+
+DefFunc RobinRIGHT(t,x,y,z,nutyob,nuobj,temper);
+  RobinRIGHT = k  * dytemperature(t,x,y,z) +
+             gRIGHT * temperature(t,x,y,z,nutyob,nuobj,temper);
+EndFunc;
+
+DefFunc RobinBACK(t,x,y,z,nutyob,nuobj,temper);
+  RobinBACK = -k * dxtemperature(t,x,y,z) +
+             gBACK * temperature(t,x,y,z,nutyob,nuobj,temper);
+EndFunc;
+
+{ ==================== The steady heat problem  ============================}
+
+1;  { NAME of the OBJECT to TREAT }
+ hexahedron;
+
+2;  { DATA for the STEADY HEAT PROBLEM }
+
+ { VOLUME: HEXAHEDRON }
+   1; { DENSITY of MASS }
+     1;    { constant mass }
+     Rot ; { value of the density of MASS }
+
+   7; { MASSIC HEAT of a PLSV }
+     1;    { constant massic heat }
+     Cp;   { value of the massic heat }
+
+   2;  { HEAT CONDUCTIVITY DENSITY }
+     3; { 3D HOMOGENOUS ISOTROPIC material }
+     k; { CONDUC constant value of the material conductivity }
+
+   4; { HEAT SOURCE DENSITY }
+    -1;      { user function source }
+     fomega; { in the lexicon ~>FONCTION }
+
+   5; { VELOCITY in the material }
+     1;   {type constant of Velocity }
+     3;   {number of components of the Velocity}
+     V1; V2; V3; {Value of 3 components of material Velocity}
+
+   6; { CT Coefficient in front of TEMPERATURE }
+     1;      {type constant of coefficient}
+     CfTemp; {value coefficient in front of temperature }
+   @;
+
+ { SURFACE: TOP }
+  1; { EXCHANGE HEAT TRANSFER COEFFICIENT  Robin condition }
+      1; {constant heat transfer coefficient}
+      gTOP; {heat transfer coefficient value}
+  2;  { source of heat imposed at the boundary }
+     -1; { user's function }
+      RobinTOP; { in the lexicon ~>FONCTION }
+  @;
+
+ { SURFACE: BASE }
+  3;  { CONTACT imposed temperature  Dirichlet condition }
+     -1; { user's function }
+      temperature; { in the lexicon ~>FONCTION }
+  @;
+
+ { SURFACE: RIGHT }
+  1; { ECHANGE heat transfer coefficient  Robin condition }
+      1; {constant heat transfer coefficient}
+      gRIGHT; {heat transfer coefficient value}
+  2;  { source of heat imposed at the boundary }
+     -1; { user's function }
+      RobinRIGHT; { in the lexicon ~>FONCTION }
+  @;
+
+ { SURFACE: LEFT }
+   3;  { CONTACT imposed temperature  Dirichlet condition }
+     -1; { user's function }
+      temperature; { in the lexicon ~>FONCTION }
+   @;
+
+ { SURFACE: FRONT }
+   3;  { CONTACT imposed temperature  Dirichlet condition }
+     -1; { user's function }
+      temperature; { in the lexicon ~>FONCTION }
+   @;
+
+ { SURFACE: BACK }
+  1; { ECHANGE heat transfer coefficient  Robin condition }
+      1; {constant heat transfer coefficient}
+      gBACK; {heat transfer coefficient value}
+  2;  { source of heat imposed at the boundary }
+     -1; { user's function }
+      RobinBACK; { in the lexicon ~>FONCTION }
+  @;
+
+3;  { SOLUTION of the STEADY LINEAR HEAT PROBLEM }
+    1; { RESOLUTION pb THERMIQUE LINEAIRE STATIONNAIRE }
+    1; { Solution by factorization CHOLESKY on skyline storage }
+   {2;  Solution by Conjuguate Gradient preconditioned by levels }
+   {1;  1 level for the preconditioner }
+@;
+@;
+{=====================  The UNSTEADY HEAT PROBLEM ==========================}
+{fomega = RotCp dtemperature/dt - k Laplacien temperature 
+        + V gradient temperature + CfT temperature}
+DefFunc fomega(t,x,y,z,nutyob,nuobjt,temper);
+  fomega = RotCp * dttemperature(t,x,y,z)
+            - k *( ddxtemperature(t,x,y,z) +
+                   ddytemperature(t,x,y,z) +
+                   ddztemperature(t,x,y,z) )
+            + V1 * dxtemperature(t,x,y,z)
+            + V2 * dytemperature(t,x,y,z)
+            + V3 * dztemperature(t,x,y,z)
+            + CfTemp * Exact_Temperature(t,x,y,z);
+EndFunc;
+
+     {=======================================================================}
+4;   { SOLVE the UNSTEADY HEAT PROBLEM on time interval [0,0.5]              }
+     {=======================================================================}
+      1; { [M] [K] g are INDEPENDENTS of TIME and TEMPERATURE }
+    0.0; { INITIAL TIME of the study }
+      2; { INITIAL TEMPERATUE is the ALREADY computed VECTEUR"TEMPERATURE}
+    0.5; { FINAL TIME of the study }
+    0.1; { Value of the constant STEP OF TIME }
+      5; { Number of VECTEUR"TEMPERATURE to add during the study }
+      1; { Solution by factorization CHOLESKY on skyline storage }
+      1; { Value of 1/2<=theta<=1 coefficient of the method }
+@;
+
+     {=======================================================================}
+4;   { SOLVE the UNSTEADY HEAT PROBLEM on time interval [0.5,1.0]            }
+     {=======================================================================}
+      1; { [M] [K] g INDEPENDANTS du TEMPS et de la TEMPERATURE }
+    0.5; { INITIAL TIME of the study }
+      2; { INITIAL TEMPERATUE is the ALREADY computed VECTEUR"TEMPERATURE}
+    1.0; { FINAL TIME of the study }
+    0.1; { Value of the constant STEP OF TIME }
+      5; { Number of VECTEUR"TEMPERATURE to add during the study }
+   2; 1; { Solution by PRECONDITIONED CONJUGATE GRADIENT by 1 LEVEL }
+      1; { Value of 1/2<=theta<=1 coefficient of the method }
+@;
+
+8; {DRAWING of the temperature or fluxes }
+  2; 3; 1; 11; 1; 12; 90; {Drawing of temperature on a plane section x=Cte}
+CLOSE;

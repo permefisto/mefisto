@@ -1,0 +1,6 @@
+variable CL_THER 'div A grad Boundary Condition' entier
+( 1 : 'g HEAT TRANSFER COEFFICIENT Inside<->Outside Fluid'
+, 2 : 'FGamma SOURCE IMPOSED FLUX or g * Outside Temperature'
+, 3 : 'Theta_D CONTACT IMPOSED TEMPERATURE'
+, 8 : 'Theta_0 INITIAL TEMPERATURE'
+, 9 : 'Vo INITIAL WAVE SPEED' ) ;

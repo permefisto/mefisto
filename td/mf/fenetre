@@ -1,0 +1,5 @@
+variable FENETRE 'Largeur Hauteur en Pixels de la FENETRE' entier
+( 0 : 'Valeurs INITIALES par DEFAUT'
+, 1 : 'Nombre PIXELS de la LARGEUR de la FENETRE'
+, 2 : 'Nombre PIXELS de la HAUTEUR de la FENETRE'
+, 3 : 'Nombre PIXELS de la HAUTEUR des CARACTERES des MENUS' );

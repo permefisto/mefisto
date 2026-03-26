@@ -1,0 +1,202 @@
+      SUBROUTINE IN2CYL( NOAXCY, XCENTR, YCENTR, ZCENTR,
+     %                   RAYCAY, RAYCAZ, AL0CAZ, AL1CAZ, COTCAZ,
+     %                   NOFOTI,
+     %                   MXSOLI, NBSOLI, MNALON, IERR )
+C+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+C BUT :    CALCULER LA LONGITUDE DES NBSOLI SOMMETS DE LA LIGNE
+C -----    INTERSECTION DE 2 CYLINDRES TELS QUE LES LONGUEURS DES
+C          ARETES VERIFIENT LA FONCTION TAILLE_IDEALE(X,Y,Z)
+C
+C ENTREES:
+C --------
+C NOAXCY : NUMERO D'AXE DU GRAND CYLINDRE X (=1) OU Y (=2)
+C XCENTR : ABSCISSE DU POINT D'INTERSECTION DES 2 AXES DES CYLINDRES
+C YCENTR : ORDONNEE DU POINT D'INTERSECTION DES 2 AXES DES CYLINDRES
+C ZCENTR : COTE     DU POINT D'INTERSECTION DES 2 AXES DES CYLINDRES
+C RAYCAY : RAYON DU CYLINDRE EN X OU Y
+C RAYCAZ : RAYON DU CYLINDRE EN Z
+C AL0CAZ : LONGITUDE INITIALE ANGLE OX,POINT1 DANS LE PLAN XY
+C AL1CAZ : LONGITUDE FINALE   ANGLE OX,POINT1 DANS LE PLAN XY
+C COTCAZ : INDICATEUR DE COTE POSITIVE (=1) OU NEGATIVE DE L'INTERSECTION (=-1)
+C NOFOTI : NUMERO DE LA FONCTION TAILLE_IDEALE DANS LE LEXIQUE FONCTION
+C
+C SORTIES:
+C --------
+C MXSOLI : NOMBRE MAXIMAL DE SOMMETS DECLARABLES DE LA LIGNE
+C NBSOLI : NOMBRE DE SOMMETS DE LA LIGNE
+C MNALON : ADRESSE MCN DU DEBUT DES ANGLES DE LONGITUDE DES SOMMETS
+C IERR   : 0 SI PAS D'ERREUR, >0 SINON
+C+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+CAUTEUR : A.PERRONNET  ANALYSE NUMERIQUE UPMC PARIS       SEPTEMBRE 1996
+C2345X7..............................................................012
+      include"./incl/gsmenu.inc"
+      COMMON / UNITES / LECTEU, IMPRIM, INTERA, NUNITE(29)
+      include"./incl/pp.inc"
+      COMMON            MCN(MOTMCN)
+      REAL              RMCN(1)
+      EQUIVALENCE      (MCN(1),RMCN(1))
+      DOUBLE PRECISION  XYZD(3), DTAILL, DTAIL2
+      REAL              XYZ0(3), XYZ1(3)
+      EQUIVALENCE      (XYZ0(1),X0),(XYZ0(2),Y0),(XYZ0(3),Z0)
+      EQUIVALENCE      (XYZ1(1),X1),(XYZ1(2),Y1),(XYZ1(3),Z1)
+C
+C     DECLARATION DU TABLEAU XYZS
+      MXSOLI = 128
+      CALL TNMCDC( 'REEL', MXSOLI, MNALON )
+C
+      NBSOLI = 1
+      NBTGS  = 0
+C
+C     CALCUL DU POINT D'INTERSECTION DES 2 CYLINDRES DE LONGITUDE AL0CAZ
+      IF( NOAXCY .EQ. 2 ) THEN
+C
+C        GRAND CYLINDRE D'AXE Y
+C        ......................
+         X0 = XCENTR + RAYCAZ * COS( AL0CAZ )
+         Y0 = YCENTR + RAYCAZ * SIN( AL0CAZ )
+         Z0 = ZCENTR + RAYCAY * SIN( ACOS( X0 / RAYCAY ) )
+C
+      ELSE
+C
+C        GRAND CYLINDRE D'AXE X
+C        ......................
+         X0 = XCENTR + RAYCAZ * COS( AL0CAZ )
+         Y0 = YCENTR + RAYCAZ * SIN( AL0CAZ )
+         Z0 = ZCENTR + RAYCAY * SIN( ACOS( Y0 / RAYCAY ) )
+C
+      ENDIF
+      IF( COTCAZ .LT. 0 ) Z0 = -Z0
+C
+C     STOCKAGE DE LA LONGITUDE
+      RMCN(MNALON) = AL0CAZ
+C
+      RMIN = AL0CAZ
+      RMAX = AL1CAZ
+      R0   = AL0CAZ
+C
+C     LA BOUCLE SUR LES SOMMETS DE L'ARC
+C     ==================================
+C     LONGUEUR APPROXIMATIVE DE L'ARC RESTANT A MAILLER
+ 10   H = (AL1CAZ-RMIN) * RAYCAZ
+C
+C     LA TAILLE_IDEALE AUTOUR DU SOMMET XYZ0
+      XYZD(1) = X0
+      XYZD(2) = Y0
+      XYZD(3) = Z0
+      CALL FONVAL( NOFOTI, 3, XYZD,  NCODEV, DTAILL )
+      IF( NCODEV .EQ. 0 ) THEN
+C        NCODEV  : 0 DTAILL N'EST PAS INITIALISEE EN SORTIE
+C                  1 DTAILL   EST     INITIALISEE EN SORTIE
+         NBLGRC(NRERR) = 2
+         KERR(1) = 'FONCTION TAILLE_IDEALE INCALCULABLE AU POINT'
+         KERR(2) = ' '
+         WRITE(KERR(2)(1:15), '(E15.7)') XYZD(1)
+         WRITE(KERR(2)(18:32),'(E15.7)') XYZD(2)
+         WRITE(KERR(2)(35:49),'(E15.7)') XYZD(3)
+         CALL LEREUR
+         IERR = 1
+         RETURN
+      ENDIF
+C
+C     ESSAI DE CREER UN ARC DE LONGUEUR CETTE TAILLE
+      DTAILL = ABS( DTAILL )
+      IF( DTAILL .LT. H*0.65 ) THEN
+         IPAS  = 0
+         RMIN0 = RMIN
+         RMAX0 = RMAX
+C
+C        LA VALEUR INITIALE DE LA LONGITUDE DU NOUVEAU POINT
+ 15      R1     = ( RMIN + RMAX ) / 2
+         NBITER = 0
+C
+C        LES ITERATIONS POUR OBTENIR UN ARC DE TAILLE_IDEALE
+C        ---------------------------------------------------
+ 20      NBITER = NBITER + 1
+         IF( NBITER .GT. 256 ) THEN
+            NBLGRC(NRERR) = 1
+            KERR(1) = 'IN2CYL: ARC DE TAILLE NON IDEALE'
+            CALL LEREUR
+            GOTO 50
+         ENDIF
+C
+         IF( NOAXCY .EQ. 2 ) THEN
+C           GRAND CYLINDRE D'AXE Y
+            X1 = XCENTR + RAYCAZ * COS( R1 )
+            Y1 = YCENTR + RAYCAZ * SIN( R1 )
+            Z1 = ZCENTR + RAYCAY * SIN( ACOS( X1 / RAYCAY ) )
+         ELSE
+C           GRAND CYLINDRE D'AXE X
+            X1 = XCENTR + RAYCAZ * COS( R1 )
+            Y1 = YCENTR + RAYCAZ * SIN( R1 )
+            Z1 = ZCENTR + RAYCAY * SIN( ACOS( Y1 / RAYCAY ) )
+         ENDIF
+         IF( COTCAZ .LT. 0 ) Z1 = -Z1
+C
+C        LONGUEUR APPROXIMATIVE DE L'ARC
+         HA = DIST2P( XYZ0, XYZ1 )
+         IF( ABS(HA-DTAILL) .GT. 0.01*DTAILL ) THEN
+C           CONVERGENCE NON ASSUREE => UNE ITERATION DE PLUS
+            IF( HA .GT. DTAILL ) THEN
+C              ARC TROP GRAND
+               RMAX = R1
+               R1   = ( RMIN + R1 ) / 2
+            ELSE
+C              ARC TROP PETIT
+               RMIN = R1
+               R1   = ( RMAX + R1 ) / 2
+            ENDIF
+            GOTO 20
+         ENDIF
+C
+C        CONVERGENCE ASSUREE AU POINT XYZ1
+         IF( IPAS .LE. 4 ) THEN
+C           LA TAILLE_IDEALE AUTOUR DU SOMMET XYZ1
+            XYZD(1) = X1
+            XYZD(2) = Y1
+            XYZD(3) = Z1
+            CALL FONVAL( NOFOTI, 3, XYZD,  NCODEV, DTAIL2 )
+            DTAIL2 = ABS( DTAIL2 )
+            IF( DTAIL2 .LT. DTAILL ) THEN
+               DTAILL = DTAIL2
+               IPAS   = IPAS + 1
+               RMIN   = RMIN0
+               RMAX   = RMAX0
+               GOTO 15
+            ENDIF
+         ENDIF
+C
+C        STOCKAGE DE L'ANGLE DE LONGITUDE
+ 50      IF( MXSOLI .LE. NBSOLI ) THEN
+C
+C           SATURATION DU TABLEAU ALON => IL EST AUGMENTE
+            CALL TNMCAU( 'REEL', MXSOLI, MXSOLI+128,
+     %                    NBSOLI, MNALON )
+            MXSOLI = MXSOLI + 128
+         ENDIF
+C
+C        LA LONGITUDE DU POINT XYZ1
+         RMCN(MNALON+NBSOLI) = R1
+         NBSOLI = NBSOLI + 1
+C
+C        PASSAGE A L'ARETE SUIVANTE
+         X0 = X1
+         Y0 = Y1
+         Z0 = Z1
+C
+         RMAX = AL1CAZ
+         RMIN = R1
+         R0   = R1
+         GOTO 10
+      ENDIF
+C
+C     STOCKAGE DE LA LONGITUDE DU DERNIER POINT DE L'ARC INTERSECTION
+      IF( MXSOLI .LE. NBSOLI ) THEN
+C        SATURATION DU TABLEAU ALON => IL EST AUGMENTE
+         CALL TNMCAU( 'REEL', MXSOLI, MXSOLI+128,
+     %                 NBSOLI, MNALON )
+         MXSOLI = MXSOLI + 128
+      ENDIF
+C     LE STOCKAGE DE LA DERNIERE LONGITUDE
+      RMCN(MNALON+NBSOLI) = AL1CAZ
+      NBSOLI = NBSOLI + 1
+      END

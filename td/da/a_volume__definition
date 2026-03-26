@@ -1,0 +1,211 @@
+deftms ~>VOLUME>>DEFINITION 'Definition of a VOLUME'
+variable muet DATE 'date of creation of the TMS'   reel2 ;
+variable muet NUTD 'number of the descriptor array TD' entier ;
+variable NTYTRV 'transformation (I for IDENTITY)' ^~>TRANSFO ;
+variable NUTYVO 'type of the volume'   entier
+ ( 1  : 'STRUCTURED TRANSFINITE HEXAHEDRON'
+ , 2  : 'STRUCTURED ELLIPTICAL HEXAHEDRON'
+ , 3  : 'STRUCTURED TRANSFINITE TETRAHEDRON'
+ , 4  : 'STRUCTURED TRANSFINITE PENTAHEDRON'
+ , 8  : '1 CLOSED VOLUME FOR THE OPTION 9'
+ , 9  : 'TETRAHEDRIZATION1 of OPTION 8 VOLUMES'
+ , 10 : 'INPUT DATA of XYZSOMMET & NSEF TMS'
+ , 11 : 'RECTANGULAR HEXAHEDRON WITH EDGES of LENGTH 1'
+ , 12 : 'RECTANGULAR TETRAHEDRON WITH EDGES of LENGTH 1'
+ , 13 : 'RECTANGULAR PENTAHEDRON WITH EDGES of LENGTH 1'
+ , 14 : 'PATH 3D of a GENERIC SURFACE (EXTRUSION)'
+ , 15 : 'ROTATION of a SURFACE AROUND an AXIS'
+ , 16 : 'MAGNIFYING OF A 3D-SURFACE INTO LAYERS'
+ , 19 : 'TETRAHEDRIZATION2 of OPTION 8 VOLUMES'
+ , 21 : 'CYLINDER'
+ , 22 : '1/2 CYLINDER'
+ , 23 : 'CONE'
+ , 24 : '1/2 CONE'
+ , 25 : 'TREE from Z Cst PLANE-CIRCLES PIECES'
+ , 26 : 'UPDATE of EDGE LENGTH of a TETRAHEDRIZATION'
+ , 30 : 'QUALITY IMPROVEMENT of a TETRAHEDRIZATION'
+ , 31 : 'TETRAHEDRIZATION of a TETRA-PENTA-HEXAHEDRIZATION' 
+ , 33 : 'HEXAHEDRIZATION of a CUBE or a SPHERE'
+ , 35 : 'EXTRACT an HEXAHEDRON of a STRUCTURED HEXAEDRON' 
+ , 36 : 'EXTRACT a VOLUME FROM a VOLUME and a CRITERION'
+ , 39 : 'SUBDIVISION INTO 8 FE of EVERY 3D FE'
+ , 48 : 'IMPOSED POINTS ONTO the NEAREST VERTEX of the VOLUME'
+ , 50 : 'MAPPING of a VOLUME'
+ , 51 : 'UNION of SEVERAL VOLUMES into a MULTI-MATERIAL VOLUME' 
+ , 53 : '1 MULTI-MATERIAL VOLUME GIVES MANY MONO-MATERIAL VOLUMES'
+ , 54 : '1 MULTI-MATERIAL VOLUME GIVES ONE MONO-MATERIAL VOLUME'
+ , 61 : 'REGULAR 6-CUBE of TYPE FINITE DIFFERENCES'
+ , 62 : 'SIMILARITY of 6-CUBES'
+ , 63 : 'FINITE DIFFERENCES AND SIMILARITY of 6-CUBES' 
+ , 81 : 'RENAME a VOLUME'
+ , 82 : 'DELETE THIS VOLUME') ;
+ cas NUTYVO
+  1: tableau  NU6FAC(1..6) 'NAMES of the 6 quadrangles' ^~>SURFACE ;
+  2: tableau  NU6FAR(1..6) 'NAMES of the 6 quadrangles' ^~>SURFACE ;
+     variable NITC3D 'NUMBER of improvment iterations(0-100)' entier ; 
+     cas NITC3D
+   1..100: tableau FADI3D(1..6) 'ratio of the distance to the boundary' reel ;
+     fincas ;
+  3: tableau  NU4FAC(1..4) 'NAMES of the 4 triangles' ^~>SURFACE ; 
+  4: tableau  NU5FAC(1..5) 'NAMES of the 5 faces'  ^~>SURFACE ; 
+  8: variable NBSF1V 'NUMBER of closed surfaces of the volume' entier ;
+     tableau  NUSF1V(1..NBSF1V) 'NAMES of the closed surfaces' ^~>SURFACE ;
+  9: variable MXSOVO 'MAX NUMBER of VERTICES of the tetrahedrization' entier ;
+     variable ARETGR 'MAX LENGTH of EDGES of the regular grid' reel ;
+     variable ANEN2P 'MAX (degrees) angle of coplanearity' reel; 
+     variable NBPTIV 'NUMBER of internal points future vertices' entier ;
+     variable NBVOPA 'NUMBER of volumes of type 8 of the partition' entier ;
+     tableau  NUVOPA(1..NBVOPA) 'NAMES of volumes of the partition' ^~>VOLUME ;
+     tableau  NUPTIV(1..NBPTIV)
+             'NAMES of internal points future vertices' ^~>POINT ; 
+     tableau  DISSOV(1..NBPTIV) 'wished distance up to near vertices' reel ;
+ 10 : variable NUTSOV 'NAME of xyzsommet TMS'  tms ~>>>XYZSOMMET ;
+      variable NUTSSV 'NAME of nsef TMS'       tms ~>>>NSEF ;
+ 11 : variable NBINHX 'NUMBER of X-edges' entier ;   
+      variable NBINHY 'NUMBER of Y-edges' entier ; 
+      variable NBINHZ 'NUMBER of Z-edges' entier ; 
+ 12 : variable NBACTE 'NUMBER of sub-edges on an edge' entier ;   
+ 13 : variable NBACTP 'NUMBER of sub-edges on a triangle edge' entier ;   
+      variable NBARHP 'NUMBER of sub-edges on a quadrangle edge' entier ; 
+ 14 : variable NUSUCS 'NAME of the initial surface'  ^~>SURFACE ;
+      variable NUTYCS 'type NUMBER of slices' entier 
+( 0: '3 points for each slice to define the displacements' ,
+  1: '3 line vertices to define the mappings of the generic surface' ,
+  2: 'translation of a constant cote z>0 (a stack)' ,
+  3: 'translation of a cote z>0 for each displacement' ,
+  4: 'translation vector (x y z) valuable for all slices' ,
+  5: 'translation vectors (x y z) defined one by slice' ,
+  6: '3 functions X Y Z(no_slice,x,y,z) to map the initial surface' ) ;
+      cas NUTYCS
+      0 : variable NBTRCS 'NUMBER of slices of the final volume' entier ;
+          tableau  NPTRCS(1..3,0..NBTRCS)
+         'NAME of 3 points to define each plane surface of slices' ^~>POINT ; 
+      1 : tableau  NLTRCS(1..3)
+ 'NAME of lines to define the 3 points of each plane of slices' ^~>LIGNE ;
+      2 : variable NBTRCS 'NUMBER of slices of the final volume' entier ;
+          variable ZMAXCS 'MAX Z cote to cut in slices' reel ;
+      3 : variable NBTRCS 'NUMBER of slices of the final volume' entier ;
+          tableau  ZCTRCS(1..NBTRCS) 'cote (z>0) of each surface of slices'
+          reel ;
+      4 : variable NBTRCS 'NUMBER of slices of the final volume' entier ;
+          tableau  TRCOCS(1..3) 'constant translation vector of slices' reel ;    
+      5 : variable NBTRCS 'NUMBER of slices of the final volume' entier ;
+          tableau  TRVACS(1..3,1..NBTRCS)
+                  'translation vector of each slice' reel ; 
+      6 : variable NBTRCS 'NUMBER of slices of the final volume' entier ;
+      variable FONXCS 'function abscisse X(no_slice,x0,y0,z0)' ^~>FONCTION ;
+      variable FONYCS 'function ordinate Y(no_slice,x0,y0,z0)' ^~>FONCTION ;
+      variable FONZCS 'function cote     Z(no_slice,x0,y0,z0)' ^~>FONCTION ;
+      fincas ;
+ 15 : variable NUSUAV 'NAME of the surface to be rotated' ^~>SURFACE ;
+      variable NUP1AV 'NAME of the point 1 of the axis' ^~>POINT ; 
+      variable NUP2AV 'NAME of the point 2 of the axis' ^~>POINT ;
+      variable NBANAV 'NUMBER of angles of rotation' entier ;
+      variable NTYPAV 'type of angles of rotation'  entier
+                      ( 0 : 'constant angles' , 1 : 'variable angles' ) ;
+      cas NTYPAV 
+      0 : variable ANMXAV 'total angle (degrees) of rotations' reel ;
+      1 : tableau  ANGLAV(1..NBANAV) 'list of rotation angles (degrees)' reel ;
+      fincas ;  
+ 16 : variable NUSFAG 'name of the surface to be magnify' ^~>SURFACE ;
+      variable NBCOLA 'number of first boundary layers' entier ;
+      variable EPCOLA 'thickness of ONE first boundary layer' reel ;
+      variable NBLACO 'number of LAST layers' entier ;
+      variable EPLACO 'thickness of the LAST boundary layer' reel ;
+
+ 19 : variable MXSOVO 'MAX NUMBER of VERTICES of the tetrahedrization' entier ;
+      variable ARETGR 'MAX LENGTH OF EDGES of the regular grid' reel ;
+      variable ANEN2P 'MAX (degrees) angle of coplanearity' reel; 
+      variable NBPTIV 'NUMBER of internal points future vertices' entier ;
+      variable NBVOPA 'NUMBER of volumes of type 8 of the partition' entier ;
+      tableau  NUVO19(1..NBVOPA) 'NAMES of volumes of the partition' ^~>VOLUME ;
+      tableau  NUPT19(1..NBPTIV)
+              'NAMES of internal points future vertices' ^~>POINT ; 
+      tableau  DISS19(1..NBPTIV) 'wished distance up to near vertices' reel ;
+ 20 : variable MXSOVO 'MAX NUMBER of vertices of the tetrahedrization' entier ;
+      variable ARETGR 'MAX length of edges of the regular grid' reel ;
+      variable ANEN2P 'MAX (degrees) angle of coplanearity' reel ; 
+      variable NBPTIV 'NUMBER of internal points future vertices' entier ;
+      variable NBVOPA 'NUMBER of volumes of type 8 of the partition' entier ;
+      variable NUC1SF 'NAME point centre of convex surface1 of volume8 1' ^~>POINT ;
+      tableau  NUVO20(1..NBVOPA) 'NAMES of volumes of the partition' ^~>VOLUME ;
+      tableau  NUPT20(1..NBPTIV)
+              'NAMES of internal points future vertices' ^~>POINT ; 
+      tableau  DISS20(1..NBPTIV) 'wished distance up to near vertices' reel ;
+21..22 : variable NBARCY 'NUMBER of EDGES on the RADIUS' entier ;
+      variable RAYOCI 'Cylinder RADIUS in the PLANE xOy' reel ;
+      variable RAGRCY 'GEOMETRICAL RATIO on RADIUS centre -> exterior' reel ; 
+      variable NUPOCY 'POINT NAME of the superior CENTRE of cylinder' ^~>POINT ;
+      variable NBAHCY 'NUMBER of EDGES on the HEIGHT of cylinder' entier ; 
+      variable RAGHCY 'GEOMETRICAL RATIO on HEIGHT Bottom-Up' reel ;     
+      variable RAYOCS 'RADIUS of CYLINDER in the SUPERIOR PLANE' reel ;
+      variable NBSECY 'NUMBER of ANGULAR SECTORS' entier ; 
+      variable RAGACY 'GEOMETRICAL RATIO on ANGLES X -> -X' reel ;
+ 23..24 : variable NBINRC 'NUMBER of edges on the radius' entier ;
+      variable RAYONC 'RADIUS of the circle centred at origin' reel ;
+      variable RAGERA 'GEOMETRICAL RATIO on RADIUS centre->exterior' reel ;
+      variable NUPOSC 'NAME of the POINT SUMMIT of the CONE (Z>0)' ^~>POINT ;
+      variable NBINHC 'NUMBER of EDGES on the HEIGHT of the cone' entier ;
+      variable RAGEHA 'GEOMETRICAL RATIO on HEIGHT base->top' reel ;     
+      variable NBINSC 'EVEN NUMBER of cone ANGULAR SECTORS' entier ;  
+      variable RAGEAN 'GEOMETRICAL RATIO on ANGLES X -> -X' reel ;
+ 25 : variable NBZCER 'Cst Z-CIRCLE number' entier ;
+      variable NBPIEV 'TREE PIECES number' entier ;
+      variable NTZCPV 'TOTAL number of Z-CIRCLES describing the PIECES' entier ;
+      tableau  NUPZCV(1..NBZCER) 'Z-CIRCLE centre name' ^~>POINT ; 
+      tableau  RAYZCV(1..NBZCER) 'Z-CIRCLE radius' reel ;
+      tableau  NBZCPV(1..NBPIEV) 'Z-CIRCLES number of each PIECE' entier ;
+      tableau  PTZCPV(1..NTZCPV) 'Z-CIRCLE CENTRE names of each PIECE' ^~>POINT ;
+ 26 : variable NUVOIN 'TETRAHEDRIZED VOLUME NAME to TREAT EDGE LENGTH' ^~>VOLUME ;
+      variable ARETGR 'MAX LENGTH of edges of TETRAHEDRA' reel ;
+      variable NBPTIM 'User IMPOSED POINT XYZD Number' entier ;
+      tableau  XYZDIM(1..4,1..NBPTIM) 'X Y Z WISHED DISTANCE to NEIGHBORS' reel ;
+ 30 : variable NUVOIN 'TETRAHEDRIZED VOLUME NAME' ^~>VOLUME ;
+      variable ARETGR 'MAX LENGTH of EDGES of TETRAHEDRA' reel ;
+      variable QUTEMN 'MAX QUALITY to be IMPROVED' reel ;
+      variable ANTE2P 'MAX DEGREES of COPLANEARITY' reel ; 
+      variable NBITAT 'NUMBER of IMPROVEMENT ITERATIONS' entier ;
+ 31 : variable NUVOAS 'NAME of VOLUME with tetra-penta-hexaedra' ^~>VOLUME ;  
+ 33 : variable CUBSPO 'CUBE or SPHERE' entier
+      ( 1: 'CUBE', 2: 'SPHERE' );
+      variable CUBSPN 'NUMBER of EDGES in a direction of KERNEL' entier ;
+      variable CUBSPC 'NUMBER of HOMOTHETIC LAYERS beyond KERNEL' entier ;
+      variable CUBSPL 'LENGTH of cube or sphere KERNEL' reel ;
+      variable CUBSPD 'TOTAL LENGTH of the cube or sphere' reel ;
+ 35 : variable NUVOIN 'NAME of the structured hexahedron' ^~>VOLUME ;
+      variable I3MIN 'min>=1 NUMBER of the edge of I-axis' entier ; 
+      variable I3MAX 'MAX NUMBER of the edge of I-axis' entier ; 
+      variable J3MIN 'min>=1 NUMBER of the edge of J-axis' entier ; 
+      variable J3MAX 'MAX NUMBER of the edge of J-axis' entier ; 
+      variable K3MIN 'min>=1 NUMBER of the edge of K-axis' entier ; 
+      variable K3MAX 'MAX NUMBER of the edge of K-axis' entier ; 
+      variable HEXDES 'KEEP the'          entier
+                     ( 0 : 'HEXAHEDRA NOT NAMED => 1 HOLE'
+                     , 1 : 'HEXAHEDRA NAMED' );
+ 36 : variable NUVOIN 'NAME of the initial volume'     ^~>VOLUME ;
+      variable NUFOCV 'NAME of the criterion function' ^~>FONCTION ;
+ 39 : variable NUVO8E 'NAME of volume to cut FE into 8 sub FE' ^~>VOLUME ;
+ 48 : variable NUVOIN 'NAME of the initial volume'     ^~>VOLUME ;
+      variable NBPOST 'NUMBER of POINTS becoming VERTICES' entier ;
+      tableau  NUPOST(1..NBPOST) 'NAME of POINTS becoming VERTICES' ^~>POINT ;
+ 50 : variable NUVOIN 'NAME of the initial volume'     ^~>VOLUME ;
+ 51 : variable NBVOUN 'NUMBER of volumes of the union' entier ;
+      tableau  NUVOUN(1..NBVOUN) 'NAMES of volumes of the union' ^~>VOLUME ;
+ 53 : variable NUVOIN 'NAME of the initial multi-material volume' ^~>VOLUME ;
+ 61 : variable CUBE6M 'min position of cube6' entier
+       ( 0 : 'origine has the coordinate minimum of the cube6'
+       , 1 : 'origine is the centre of the cube6'
+       , 2 : 'origine is the centre of the middle sub-cube6' ) ;
+      variable CUBE6N 'EDGE NUMBER for one direction' entier;
+      variable CUBE6A 'constant LENGTH of EDGES' reel ;
+62..63 : variable CUBE6M 'min position of cube6' entier
+       ( 0 : 'ORIGINE has the COORDINATE MINIMUM of the cube6'
+       , 1 : 'ORIGINE is the CENTRE of the CUBE6'
+       , 2 : 'ORIGINE is the CENTRE of the MIDDLE SUB-CUBE6' ) ;
+      variable CUBE6N 'NUMBER of KERNEL EDGES' entier;
+      variable CUBE6C 'NUMBER of LAYERS' entier;
+      variable CUBE6L 'KERNEL 6-cube WIDTH' reel ;
+      variable CUBE6D '6-cube TOTAL WIDTH' reel ;
+ 81 : variable NVAVAN 'old NAME of the volume to be RENAMED' ^~>VOLUME ;
+fincas ;
+fintms ;

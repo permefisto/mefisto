@@ -1,0 +1,4 @@
+variable SAISI_PT 'Les MODES de SAISIE des POINTS'  entier
+ ( 1 : 'FRAPPE des valeurs'
+ , 2 : 'SAISIE avec la SOURIS de POINTS 2D'
+ , 3 : 'SAISIE avec la SOURIS de POINTS 3D' ) ;

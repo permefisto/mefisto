@@ -1,0 +1,4 @@
+This number of edges must be >0 and >number of check points
+or interpolation points in the direction of one edge of the
+BEZIER triangle.
+This number is equal on the 3 edges of the BEZIER triangle.

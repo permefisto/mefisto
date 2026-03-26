@@ -1,0 +1,20 @@
+#!/bin/bash
+cd $mefisto
+for i in $*
+do 
+  if test -d $i 
+  then
+    echo
+    echo destruction de $mefisto/$i/lib puis tar et gz de $i
+    echo ==============================================================
+    rm $i/lib
+    rm $i.tar.gz
+    rm $i/*.bak
+    tar -cvf $i.tar $i
+    gzip $i.tar
+    ls -l $i.tar.gz
+  fi
+done
+ls -l
+echo
+echo ATTENTION: Les librairies $mefisto/\./lib doivent etre regenerees

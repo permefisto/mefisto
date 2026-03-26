@@ -1,0 +1,5 @@
+The NAME of a POINT to define the PLANE with the
+CENTRE and the POINT on the CIRCLE
+(necessary in 3D but done also in 2D)
+
+The input stops only with the input of existing POINTS.

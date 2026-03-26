@@ -1,0 +1,6 @@
+variable PARTICLE 'DRAWINGS of PARTICLE RUN' entier
+ ( 1 : 'Give LONGITUDES LATITUDES RADIUS TIME0 of PARTICLES to RUN'
+,  2 : 'Give XYZ VelocityXYZ RADIUS TIME0 of PARTICLES to RUN'
+,  3 : 'Compute the RUN of GIVEN PARTICLES'
+,  4 : 'Compute the RUN of GIVEN PARTICLES-DROPLETS COVID in AIR'
+,  5 : 'Draw the already COMPUTED RUN of GIVEN PARTICLES' ) ;

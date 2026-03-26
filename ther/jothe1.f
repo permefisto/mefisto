@@ -1,0 +1,970 @@
+      SUBROUTINE JOTHE1( NTLXOB , NUTYSD , NUOBSD , NBJOIN , MXNOJO ,
+     &                   LIOBJE , NBNOJO , NUNOJO , IPREC , IERR )
+C ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+C BUT : CALCULER LES TEMPERATURES ET FLUX DANS UN SOUS-DOMAINE
+C ----- 2D OU 3D OU AXISYMETRIQUE EN THERMIQUE LINEAIRE STATIONNAIRE
+C       ASSEMBLAGE DE LA MATRICE DE DIRICHLET
+C       DIVERSES INITIALISATIONS  DE LA METHODE DES JOINTS.
+C ENTREES :
+C ---------
+C NTLXOB : NUMERO DU LEXIQUE DE L'OBJET
+C NUTYSD : NUMERO DU TYPE DE L'OBJET
+C NUOBSD : NUMERO DANS LES OBJETS DE CE TYPE
+C NBJOIN : NOMBRE DE JOINTS
+C LIOBJE : LE TABLEAU DES OBJETS ASSOCIES AUX JOINTS
+C NBOBJE : LE TABLEAU DES NOMBRES DE NOEUDS DES JOINTS
+C NUNOJO : LE TABLEAU DES NUMEROS DES NOEUDS DES JOINTS
+C
+C SORTIES :
+C ---------
+C IERR   : 0 SI PAS D'ERREUR , NON NUL SINON
+C ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+C AUTEUR : PASCAL JOLY     ANALYSE NUMERIQUE UPMC PARIS  FEVRIER 1990
+C23456---------------------------------------------------------------012
+      DOUBLE PRECISION   PENALI
+      PARAMETER         (PENALI=0D0)
+      PARAMETER         (MXTYEL=7)
+      PARAMETER         (MOPAGE=512)
+      include"./incl/gsmenu.inc"
+      include"./incl/ntmnlt.inc"
+      include"./incl/donthe.inc"
+      include"./incl/donele.inc"
+      include"./incl/a_objet__topologie.inc"
+      include"./incl/a___xyzsommet.inc"
+      include"./incl/a___xyznoeud.inc"
+      include"./incl/a___xyzpoint.inc"
+      include"./incl/a___npef.inc"
+      include"./incl/a___conductivite.inc"
+      include"./incl/a___echange.inc"
+      include"./incl/a___source.inc"
+      include"./incl/a___contact.inc"
+      include"./incl/a___dilatation.inc"
+      include"./incl/a___vecteur.inc"
+      include"./incl/a___profil.inc"
+      include"./incl/a___morse.inc"
+      include"./incl/a___fluxpt.inc"
+      include"./incl/a___dtemperature.inc"
+      include"./incl/msvaau.inc"
+      include"./incl/homdir.inc"
+      include"./incl/ponoel.inc"
+      include"./incl/cthet.inc"
+C
+      include"./incl/pp.inc"
+      COMMON            MCN(MOTMCN)
+      COMMON / UNITES / LECTEU,IMPRIM,INTERA,NUNITE(29)
+      COMMON / ELFINI / NELFI(512)
+      COMMON / SOUSDO / NORESO,NTDL,NDSM,NDIM,NPIMAX
+      COMMON / MSIMTA / NOIMPR
+      INTEGER           NOMTAB(5),
+     %                  NOTYOB(2,MXNOEL),NOOBVC,NOOBSF(6),NOOBLA(12),
+     %                  NOOBPS(8)
+      INTEGER           LIOBJE(NBJOIN,4),NBNOJO(NBJOIN,2),
+     %                  NUNOJO(NBJOIN,2,MXNOJO)
+      REAL              RMCN(1)
+      DOUBLE PRECISION  DMCN(1),RELMIN,D2PI
+      DOUBLE PRECISION  XYZPI(3)
+CPU      DOUBLE PRECISION  DINFO,DCPU
+      EQUIVALENCE      (MCN(1),RMCN(1),DMCN(1))
+      INTEGER           NUMIOB(4),NUMAOB(4),MNDOEL(4)
+      CHARACTER*4       NOMELE(2)
+      CHARACTER*160     KNOMFI
+      LOGICAL           COMP
+      DATA              RELMIN/-1D28/
+C
+C     QUELQUES INITIALISATIONS
+CPU   DCPU   = DINFO( 'DELTA CPU' )
+      IERR   = 0
+      D2PI   = ATAN( 1D0 ) * 8D0
+      NBJEUX = 1
+C     LE NOMBRE DE MOTS D'UNE VARIABLE REEL2
+      MOREE2 = MOTVAR(6)
+C
+C     PROTECTION DES ADRESSES POUR EVITER DES PROBLEMES LORS
+C     DE LA DESTRUCTION DES TABLEAUX
+      IATPOB = 0
+      NBDLMX = 0
+      IATAUX = 0
+      IATAEL = 0
+      IATHER = 0
+      IASOUR = 0
+      MNNODL = 0
+      MONODL = 0
+      IAX    = 0
+      IANFNX = 0
+      IAVFNX = 0
+      IANDLX = 0
+      IAVDLX = 0
+      NBJECO = 1
+      NBJESO = 1
+C
+C     AFFICHAGE ET VERIFICATION DU NOM_DE_L'OBJET
+C     ===========================================
+C
+C     RECHERCHE DU TABLEAU DES COORDONNEES DES SOMMETS
+      CALL LXTSOU( NTLXOB , 'XYZSOMMET' , NT , MNS )
+C     NDIM LA DIMENSION 2 OU 3 DE L'ESPACE DES COORDONNEES
+      NBPO = MCN(MNS+WNBSOM)
+      CALL DIMCOO( NBPO , MCN(MNS+WYZSOM) , NDIM )
+C     LE NOMBRE DE D'INCONNUES PAR NOEUDS
+      NBINCO = 1
+C
+C     ADRESSAGE DES ADRESSES DES TABLEAUX ELEMENTS DE CET OBJET
+      MNELEM = 0
+      CALL TNMCDC( 'ENTIER' , 2*MXTYEL , MNELEM )
+      MNTELE = MNELEM + MXTYEL
+C
+C     RECHERCHE DES TABLEAUX SOMMETS NOEUDS POINTS ASSOCIES A L'OBJET
+C     ===============================================================
+C
+      CALL NDPGEL( NTLXOB , NTTOPO , MNTOPO ,
+     %             NTPOGE , MNPOGE , NTNOEU , MNNOEU ,
+     %             NBTYEL , MCN(MNTELE) , MCN(MNELEM) , IERR )
+      IF( IERR .NE. 0 ) RETURN
+C
+C     LE TYPE DE MAILLAGE ET LES OBJETS INTERNES ET AUX LIMITES
+      NDPGST = MCN( MNTOPO + WDPGST )
+      NBOBIN = MCN( MNTOPO + WBOBIN )
+      NBOBCL = MCN( MNTOPO + WBOBCL )
+C
+C     RECHERCHE DU MIN ET MAX DES NUMEROS DES OBJETS IMPLIQUES
+C     ========================================================
+C
+C     DANS L'OBJET ( POINTS , LIGNES , SURFACES , VOLUMES )
+C     LES 4 MINIMA D'ABORD , LES 4 MAXIMA ENSUITE
+      J = IINFO( 'GRAND' )
+      K = - J
+      DO 110 I=1,4
+         NUMIOB(I) = J
+         NUMAOB(I) = K
+ 110  CONTINUE
+C
+C     L'ADRESSE MCN DU DEBUT DU TABLEAU NUOBIN
+      MNOBIN = MNTOPO + WMTYEL + NBTYEL
+      MN     = MNOBIN - 2
+      DO 120 I=1,NBOBIN
+C        LE TYPE DE L'OBJET INTERNE
+         MN   = MN + 2
+         NYOB = MCN( MN )
+         NUOB = MCN( MN + 1 )
+C        LE MINIMUM DES NUMEROS D'OBJETS
+         NUMIOB( NYOB ) = MIN( NUMIOB(NYOB) , NUOB )
+C        LE MAXIMUM DES NUMEROS D'OBJETS
+         NUMAOB( NYOB ) = MAX( NUMAOB(NYOB) , NUOB )
+ 120  CONTINUE
+C
+C     L'ADRESSE MCN DU DEBUT DU TABLEAU NUOBCL
+      MNOBCL = MNOBIN + MOTVAR(13) * NBOBIN
+      MN     = MNOBCL - 2
+      DO 130 I=1,NBOBCL
+C        LE TYPE DE L'OBJET AUX LIMITES
+         MN   = MN + 2
+         NYOB = MCN( MN )
+         NUOB = MCN( MN + 1 )
+C        LE MINIMUM DES NUMEROS D'OBJETS
+         NUMIOB( NYOB ) = MIN( NUMIOB(NYOB) , NUOB )
+C        LE MAXIMUM DES NUMEROS D'OBJETS
+         NUMAOB( NYOB ) = MAX( NUMAOB(NYOB) , NUOB )
+ 130  CONTINUE
+C
+C     DECLARATION DES TABLEAUX DES DONNEES DES OBJETS
+      DO 140 I=1,4
+C        NOMBRE DE VARIABLES DES TABLEAUX
+         IF( NUMIOB(I) .EQ. J ) THEN
+C           OBJET NON REPERTORIE
+            NUMAOB(I) = 0
+            MNDOEL(I) = 0
+         ELSE
+            K = NUMAOB(I) - NUMIOB(I) + 1
+            CALL TNMCDC( 'ENTIER' , K * MXDOTH , MNDOEL(I) )
+            CALL AZEROI( K * MXDOTH , MCN( MNDOEL(I) ) )
+         ENDIF
+ 140  CONTINUE
+C     ICI NUMIOB CONTIENT LES 4 NUMEROS MINIMA DES OBJETS
+C         NUMAOB          LES 4 NUMEROS MAXIMA DES OBJETS
+C     MNDOEL LES 4 ADRESSES MCN DES TABLEAUX DES ADRESSES DES
+C     TABLEAUX DECRIVANT LA THERMIQUE DE L'OBJET COMPLET
+C
+C     OUVERTURE DES TABLEAUX DES DONNEES THERMIQUES DES PLSV DE L'OBJET
+C     =================================================================
+      CALL THEDON( NUMIOB, NBOBIN, MNOBIN, NBOBCL, MNOBCL,
+     %             NBJEUX, MNDOEL,
+     %             IEMAST, IECHMA, IECOND, IEDILA, IEVIFL, IECOET,
+     %             IESOIN, IECONT, IEECHA, IESOCL, IESOPO,
+     %             IETEIN, IEVIIN, IEVIANT,IECOBO,
+     %             IERR )
+      IF( IERR .GT. 0 ) THEN
+         IERR = 4
+         GOTO 9999
+      ENDIF
+C
+C     INITIALISATIONS DE VARIABLES ET AFFICHAGES
+C     ==========================================
+C
+C     LE NOMBRE DE NOEUDS DU MAILLAGE DE L'OBJET
+      NBNOEU = MCN(MNNOEU+WNBNOE)
+C     LE NOMBRE TOTAL DE DEGRES DE LIBERTE
+      NTDL   = NBNOEU
+C
+      IF (NOIMPR.GE.2)
+     % WRITE(IMPRIM,10210) NDIM,NBNOEU,NTDL,NDSM
+10210 FORMAT(' DIMENSION 2 OU 3 DE L''ESPACE',T32,'=',I6/
+     %' NOMBRE DE NOEUDS'                    ,T32,'=',I6/
+     %' NOMBRE DE DEGRES DE LIBERTE'         ,T32,'=',I6/
+     %' NOMBRE DE JEUX DE DONNEES'           ,T32,'=',I6)
+C
+C     LES TABLEAUX POBA NECESSAIRES AUX TABLEAUX ELEMENTAIRES
+C     =======================================================
+C
+C     OUVERTURE DU FICHIER DIRECT POBA SUPPORT DE TABLEAUX ELEMENTAIRES
+      CALL TRUNIT( NFPOBA )
+      KNOMFI = HOMDIR // '/pp/pxyz'
+      OPEN( UNIT=NFPOBA , ERR=9900 , STATUS='OLD' ,
+     %      FILE=KNOMFI , ACCESS='DIRECT' , FORM='UNFORMATTED' ,
+     %      RECL=MOPAGE*NBCHMO )
+C     LECTURE DE LA PREMIERE PAGE
+      READ (UNIT=NFPOBA,REC=1) NELFI
+C
+      IATPOB = 0
+      CALL TNMCDC( 'ENTIER' , NBTYEL*MXPOBA , IATPOB )
+      MOAUX  = 1
+      NOAXIS = 0
+      DO 250 NOTYEL=1,NBTYEL
+C        L'ADRESSE DU TABLEAU ELEMENTS
+         MNELE  = MCN( MNELEM - 1 + NOTYEL )
+C        LE NUMERO DU TYPE DE L'ELEMENT FINI
+         NUTYEL = MCN( MNELE + WUTYEL )
+C
+C        LE NOMBRE D'ELEMENTS DE CE TYPE
+         NBELEM = MCN( MNELE + WBELEM )
+C
+         IF (NUTYEL.LE.4) THEN
+C           ELEMENTS AXISYMETRIQUE
+            NOAXIS = 1
+         ENDIF
+C
+C        LES CARACTERISTIQUES DE L'ELEMENT FINI
+         CALL ELNUNM( NUTYEL , NOMELE )
+         CALL ELTYCA( NUTYEL )
+C
+C        LES CARACTERISTIQUES DES TABLEAUX DE L'ELEMENT FINI THERMIQUE
+         CALL ETTAEL( NUTYEL,NDSM,
+     %                NBDL,NCODEM,NTPOBA,NOMTAB,MOTAUX )
+C        NBDL       : NOMBRE DE DL DE L ELEMENT
+C        NTPOBA    : NOMBRE DE TABLEAUX A LIRE SUR LE FICHIER POBA
+C        NOMTAB(J) : NOM DU J-EME TABLEAU DE POBA A LIRE 1<=J<=NTPOBA
+C        MOTAUX    : NOMBRE DE MOTS AUXILIAIRES NECESSAIRES A L ELEMENT
+C
+C        DECLARATION ET LECTURE DES TABLEAUX DE POBA
+         IF( NTPOBA .GT. 0 ) THEN
+            DO 240 J=1,NTPOBA
+               CALL FINDEL(NOMTAB(J),MCN(IATPOB-1+(NOTYEL-1)*MXPOBA+J),
+     &                     NFPOBA,MOPAGE)
+ 240        CONTINUE
+         ENDIF
+C
+C        BILAN DES TABLEAUX AUXILIAIRES ET ELEMENTAIRES
+         IF( MOAUX  .LT. MOTAUX ) MOAUX  = MOTAUX
+         IF( NBDLMX .LT. NBDL   ) NBDLMX = NBDL
+ 250  CONTINUE
+C
+C     ADRESSAGE DES TABLEAUX AUXILIAIRES ET ELEMENTAIRES
+C     ===================================================
+C
+      IATAUX = 0
+      CALL TNMCDC( 'REEL2' , MOAUX , IATAUX )
+C     LA MATRICE ELEMENTAIRE ET LES NDSM SECONDS MEMBRES
+      MOTAEL = NBDLMX * (NBDLMX+1) / 2 + NBDLMX * NDSM
+      IATAEL = 0
+      CALL TNMCDC( 'REEL2' , MOTAEL , IATAEL )
+      IATHER = 0
+      CALL TNMCDC( 'REEL2' , 27 , IATHER )
+      IASOUR = 0
+      CALL TNMCDC( 'REEL2' , 3*NDSM , IASOUR )
+      MNNODL = 0
+      MONODL = NBDLMX
+      CALL TNMCDC( 'ENTIER' , MONODL, MNNODL )
+      IAX    = 0
+      CALL TNMCDC( 'ENTIER' , NBDLMX*NDIM , IAX )
+C     LE TABLEAU DU NUMERO DES POINTS D'UN ELEMENT
+C
+C     LES NUMEROS DES DEGRES DE LIBERTE FIXES ET DES SOURCES PONCTUELLES
+      IANDLX = 0
+      CALL TNMCDC( 'ENTIER' , NTDL , IANDLX )
+      CALL AZEROI( NTDL , MCN(IANDLX) )
+      IANFNX = 0
+      CALL TNMCDC( 'ENTIER' , NTDL , IANFNX )
+      CALL AZEROI( NTDL , MCN(IANFNX) )
+C
+C     LES TABLEAUX REELS DES VALEURS DES DL FIXES ET LES SOURCES NODALES
+      K      = NTDL * NDSM
+      IAVDLX = 0
+      CALL TNMCDC( 'REEL2' , K , IAVDLX )
+      IAVDX  = ( IAVDLX - 1 ) / 2
+      IAVFNX = 0
+      CALL TNMCDC( 'REEL2' , K , IAVFNX )
+      IAVFX  = ( IAVFNX - 1 ) / 2
+      DO 260 I=1,K
+         DMCN(IAVDX + I) = RELMIN
+         DMCN(IAVFX + I) = RELMIN
+ 260  CONTINUE
+C
+C     LE SYSTEME LINEAIRE
+C     +++++++++++++++++++
+C
+C     STOCKAGE MORSE DE LA MATRICE
+C     ============================
+C
+C     CALCUL DU SQUELETTE DE LA MATRICE
+C     (LA MATRICE EST ICI SYMETRIQUE)
+      NCODSA = 1
+      MNLPLI = 0
+      MNLPCO = 0
+      CALL PRGCMC( MNTOPO , MCN(MNELEM), MNNOEU ,
+     %             NBINCO , NCODSA ,
+     %             MNLPLI , MNLPCO , IERR )
+C
+C     DECLARATION INITIALISATION DE LA MATRICE MORSE SYMETRIQUE
+C     ---------------------------------------------------------
+C
+C     UNE MATRICE SANS CONDITIONS AUX LIMITES
+      CALL LXTSOU( NTLXOB , 'MORSE"CONDUCTIVITE' ,
+     %             NTMORS , MNMORS )
+      IF( NTMORS .GT. 0 ) THEN
+C        LA MATRICE MORSE EST DETRUITE POUR ETRE REDECLAREE
+         CALL LXTSDS( NTLXOB , 'MORSE"CONDUCTIVITE' )
+      ENDIF
+C     LA TAILLE DE LA MATRICE
+      LOLPCO = MCN(MNLPLI+NTDL)
+      WRITE(IMPRIM,10291) LOLPCO
+10291 FORMAT(/'MATRICE MORSE ',I10,
+     %        ' VARIABLES DOUBLE PRECISION')
+      LPMORS = WPLIGN + 1 + NTDL + LOLPCO
+      IF( MOD(LPMORS,MOREE2) .EQ. 1 ) LPMORS = LPMORS + 1
+      LO = LPMORS / MOREE2 + LOLPCO
+      CALL LXTNDC( NTLXOB , 'MORSE"CONDUCTIVITE', 'REEL2' , LO )
+      CALL LXTSOU( NTLXOB , 'MORSE"CONDUCTIVITE' ,
+     %             NTMORS , MNMORS )
+C     COPIE DU TABLEAU LPLIGN
+      CALL TRTATA( MCN(MNLPLI) , MCN(MNMORS+WPLIGN) , NTDL+1 )
+C     COPIE DU TABLEAU LPCOLO
+      CALL TRTATA( MCN(MNLPCO) , MCN(MNMORS+WPLIGN+NTDL+1) , LOLPCO )
+C     DESTRUCTION DES TABLEAUX TEMPORAIRES
+      CALL TNMCDS( 'ENTIER' , NTDL+1 , MNLPLI )
+      CALL TNMCDS( 'ENTIER' , LOLPCO , MNLPCO )
+C     MISE A JOUR DES ADRESSES
+      MNLPLI = MNMORS + WPLIGN
+      MNLPCO = MNLPLI + NTDL + 1
+      MNAG   = MNMORS + LPMORS
+C     INITIALISATION DE LA MATRICE
+      CALL AZEROD( LOLPCO , MCN(MNAG ) )
+C
+C     ADRESSAGE INITIALISATION DU SECOND MEMBRE
+C     =========================================
+C
+      CALL LXTSOU( NTLXOB , 'VECTEUR"B' , NTB , MNAB )
+      IF( NTB .GT. 0 ) THEN
+C        LE VECTEUR EST DETRUIT POUR ETRE REDECLARE
+         CALL LXTSDS( NTLXOB , 'VECTEUR"B' )
+      ENDIF
+      LB    = ( WECTEU + NDSM * NTDL * MOREE2 ) / MOREE2
+      CALL LXTNDC( NTLXOB , 'VECTEUR"B' , 'REEL2' , LB )
+      CALL LXTSOU( NTLXOB , 'VECTEUR"B' , NTB , MNAB )
+      MNB = MNAB + WECTEU
+      CALL AZEROD( NDSM * NTDL , MCN(MNB) )
+C
+C     LE NOMBRE DE DEGRES DE LIBERTE FIXES
+      NBDLFX = 0
+C
+C     LE NOMBRE MAXIMAL DE POINTS D'INTEGRATION SUR UN ELEMENT
+      NPIMAX = 0
+C
+C     LA GENERATION DES TABLEAUX ELEMENTAIRES ET DU SYSTEME LINEAIRE
+C     ==============================================================
+C
+C     LA BOUCLE SUR LES TYPES D'ELEMENTS
+      DO 500 NOTYEL = 1 , NBTYEL
+C
+C        L'ADRESSE DU TABLEAU ELEMENTS
+         MNELE = MCN( MNELEM - 1 + NOTYEL )
+C        LE NUMERO DU TYPE DE L'ELEMENT FINI
+         NUTYEL = MCN( MNELE + WUTYEL )
+C
+C        LE NOMBRE D'ELEMENTS DE CE TYPE
+         NBELEM = MCN( MNELE + WBELEM )
+C
+C        L'ADRESSE MCN DES NOEUDS ET POINTS GEOMETRIQUES DES EF DE CE TYPE
+         MNNDEL = MNELE + WUNDEL
+         MNPGEL = MNNDEL
+         IF( NDPGST .GE. 2 ) THEN
+C           POINTS DIFFERENTS DE NOEUDS
+            MNPGEL = MNPGEL + NBELEM * MCN(MNELE+WBNDEL)
+         ENDIF
+C
+C        LES CARACTERISTIQUES DE L'ELEMENT FINI
+         CALL ELNUNM( NUTYEL , NOMELE )
+         CALL ELTYCA( NUTYEL )
+C
+C        LES ADRESSAGES POUR RECUPERER LES INFORMATIONS
+C        DU TABLEAU DES POLY(POINTS INTEGRATION) , ...
+C        ----------------------------------------------
+C        SELON LE TYPE DE L'ELEMENT
+         GOTO(401,401,401,401,400,400,400,400,400,400,
+     &        400,400,401,400,401,401,400,401,400,400,
+     &        400,400,400,400)                       , NUTYEL
+C
+C        ERREUR
+ 400     NBLGRC(NRERR) = 1
+         KERR(1) = ' ERREUR : ELEMENT '// NOMELE(1)
+     &             // NOMELE(2) //' NON PROGRAMME'
+         CALL LEREUR
+         GOTO 9999
+C
+C        ELEMENTS AXISYMETRIQUES
+C        ***********************
+C        RECHERCHE DU TABLEAU DE POBA ET PARTAGE EN P ET DP
+ 401     L      = IATPOB + (NOTYEL-1) * MXPOBA
+C
+C        L'ELEMENT FINI : ARETE DE REFERENCE
+         IA     = MCN( L  )
+C        DIMENSION DE L ESPACE
+C        NDIMA  = MCN( IA )
+C        NOMBRE DE POLYNOMES D INTERPOLATION
+         NBPOLA = MCN( IA + 1 )
+C        NOMBRE DE POINTS D INTEGRATION NUMERIQUE
+         NPIA   = MCN( IA + 2 )
+C        ADRESSE DES POIDS DES POINTS DE LA FORMULE D INTEGRATION
+         IAPOIA = IA + 8
+C        ADRESSE DES VALEURS DES POLYNOMES AUX POINTS D INTEGRATION
+         IAPOLA = IAPOIA + MCN( IA + 3 ) * MOREE2 * NPIA
+C        ADRESSE DES VALEURS DES DERIVEES DES POLYNOMES AUX POINTS D I
+         IADPOA = IAPOLA + MCN(IA + 4) * MOREE2 * NBPOLA * NPIA
+C
+C        L'ELEMENT FINI : SURFACE DE REFERENCE
+         L      = L + 1
+         IA     = MCN( L  )
+C        DIMENSION DE L ESPACE
+C        NDIM   = MCN( IA )
+C        NOMBRE DE POLYNOMES D INTERPOLATION
+         NBPOLY = MCN( IA + 1 )
+C        NOMBRE DE POINTS D INTEGRATION NUMERIQUE
+         NPI    = MCN( IA + 2 )
+C        ADRESSE DES POIDS DES POINTS DE LA FORMULE D INTEGRATION
+         IAPOID = IA + 8
+C        ADRESSE DES VALEURS DES POLYNOMES AUX POINTS D INTEGRATION
+         IAPOL  = IAPOID + MCN( IA + 3 ) * MOREE2 * NPI
+C        ADRESSE DES VALEURS DES DERIVEES DES POLYNOMES AUX POINTS D I
+         IADPOL = IAPOL + MCN(IA + 4) * MOREE2 * NBPOLY * NPI
+         NBDL   = NBPOLY
+C        ADRESSE DU SECOND MEMBRE ELEMENTAIRE
+C        DERRIERE LA MATRICE SYMETRIQUE ELEMENTAIRE
+         IASE   = IATAEL + NBDL * (NBDL+1) / 2  * MOREE2
+C
+C        LES TABLEAUX AUXILIAIRES
+         IAF1   = IATAUX
+         IAF2   = IAF1   + MOREE2 * NPI
+         IAPDEL = IAF2   + MOREE2 * NPI
+         IADP   = IAPDEL + MOREE2 * NPI
+         IADFM1 = IADP   + MOREE2 * 2 * NBPOLY * NPI
+C        AU TOTAL  = IADFM1 + MOREE2 * 4 * NPI
+C
+C        LA BOUCLE SUR LES ELEMENTS DE CE TYPE NUTYEL
+C        ============================================
+         DO 495 NUELEM = 1 , NBELEM
+C
+C           LES NOEUDS DE L'ELEMENT
+C           -----------------------
+            CALL EFNOEU( MNELE , NUELEM , NBNDEL , MCN(MNNODL) )
+C
+C           LES POINTS GEOMETRIQUES DE L'ELEMENT
+C           ------------------------------------
+CCC            CALL EFPOGE( MNELE , NUELEM , NBPGEF , MCN(IAPOEF) )
+C
+C           LE NUMERO DE VOLUME  DE L'EF
+C           LE NUMERO DE SURFACE DES FACES   DE L'EF
+C           LE NUMERO DE LIGNE   DES ARETES  DE L'EF
+C           LE NUMERO DE POINT   DES SOMMETS DE L'EF
+C           ----------------------------------------
+            CALL EFPLSV( MNELE  , NUELEM ,
+     %                   NOVCEL , NOSFEL , NOLAEL , NOPSEL ,
+     %                   NOOBVC , NOOBSF , NOOBLA , NOOBPS )
+C
+C           LES COORDONNEES DES POINTS DE L'ELEMENT
+C           ---------------------------------------
+            DO 440 I=1,NBPOE
+C              LE NUMERO DU I-EME POINT DE L'ELEMENT NUELEM
+               N    = MCN( MNPGEL-1 + NUELEM + NBELEM*(I-1) )
+               IACE = MNPOGE + WYZPOI + (N-1) * 3
+               L    = IAX - 1 + I
+               RMCN( L ) = RMCN(IACE)
+               RMCN( L + NBPOE ) = RMCN(IACE+1)
+               IF( NDIM .EQ. 3 ) THEN
+                  RMCN( L + NBPOE + NBPOE ) = RMCN(IACE+2)
+               ENDIF
+ 440        CONTINUE
+C
+C           LE CALCUL DES TABLEAUX AUXILIAIRES ET DE LA MATRICE DE CONDUCTIVITE
+C           ===================================================================
+C           SELON LE TYPE DE THERMIQUE
+C           ==========================
+            GOTO(441,441,441,441,400,400,400,400,400,400,
+     &           400,400,441,400,441,441,400,441,400,400,
+     &           400,400,400,400)                       , NUTYEL
+C
+C
+C           LE CALCUL DES TABLEAUX AUXILIAIRES EN 2D OU AXISYMETRIE
+C           -------------------------------------------------------
+ 441        CALL E12LAG (NBPOLY,NPI ,MCN(IAPOID),
+     %                  MCN(IAPOL) ,MCN(IADPOL),
+     %                  RMCN(IAX)  ,MCN(IAF1),MCN(IAF2),
+     %                  MCN(IAPDEL),MCN(IADP),MCN(IADFM1) )
+C
+C           INITIALISATION
+C           --------------
+            CALL AZEROD( NBPOLY*(NBPOLY+1)/2 , MCN(IATAEL) )
+C
+C           LA MATRICE ELEMENTAIRE DE CAPACITE EN 2D OU EN AXISYMETRIE
+C           ----------------------------------------------------------
+CCC            IF (NTCAMAX.GT.0)
+            CALL TM2LAG( D2PI, NOAXIS, 1, 1,
+     %                  NBPOLY,NPI,MCN(IAPOL),
+     %                  NOOBSF(1),NUMIOB(3),NUMAOB(3),MCN(MNDOEL(3)),
+     %                  MCN(IAF1),MCN(IAF2),
+     %                  MCN(IAPDEL),
+     %                  MCN(IATHER),MCN(IATAEL))
+C
+C           LA MATRICE ELEMENTAIRE DE CONDUCTIVITE EN 2D OU EN AXISYMETRIE
+C           --------------------------------------------------------------
+            CALL TR2LAG(D2PI,NOAXIS,RMCN(IAX),
+     %                  NBNSOM, NOOBPS, PENALI,
+     %                  NUMIOB(1), NUMAOB(1), MCN(MNDOEL(1)),
+     %                  NBPOLA,NPIA,MCN(IAPOIA),
+     %                  MCN(IAPOLA),MCN(IADPOA),
+     %                  NARET,NOOBLA,MCN(IASOUR),
+     %                  NUMIOB(2),NUMAOB(2),MCN(MNDOEL(2)),
+     %                  NBPOLY,NPI,MCN(IAPOID),MCN(IAPOL),
+     %                  NOOBSF(1),NUMIOB(3),NUMAOB(3),MCN(MNDOEL(3)),
+     %                  MCN(IAF1),MCN(IAF2),
+     %                  MCN(IAPDEL),MCN(IADP),
+     %                  MCN(IATHER), MCN(IATHER),MCN(IATAEL),IERR)
+            IF( IERR .NE. 0 ) GOTO 9999
+C
+C           LES NDSM SECONDS MEMBRES ELEMENTAIRES SELON LE TYPE DE THERMIQUE
+C           ================================================================
+            GOTO(445,445,445,445,400,400,400,400,400,400,
+     &           400,400,445,400,445,445,400,445,400,400,
+     &           400,400,400,400)                       , NUTYEL
+C
+C           LES SECONDS MEMBRES ELEMENTAIRES EN AXISYMETRIE
+C           -----------------------------------------------
+ 445        CALL TS2LAG(D2PI,NOAXIS,RMCN(IAX),NDSM,NTDL,
+     %                  NBNSOM, NOOBPS, PENALI,
+     %                  NUMIOB(1), NUMAOB(1), MCN(MNDOEL(1)),
+     %                  NBPOLA,NPIA,MCN(IAPOIA),
+     %                  MCN(IAPOLA),MCN(IADPOA),
+     %                  NARET,NOOBLA,MCN(IASOUR),
+     %                  NUMIOB(2),NUMAOB(2),MCN(MNDOEL(2)),
+     %                  NBPOLY,NPI,MCN(IAPOL),
+     %                  NOOBSF(1),MCN(IAPDEL),MCN(IASOUR),
+     %                  NUMIOB(3),NUMAOB(3),MCN(MNDOEL(3)),
+     %                  MCN(IAF1),MCN(IAF2),MCN(IADP),
+     %                  0, MCN(IASE))
+C
+C           ASSEMBLAGE DE LA MATRICE ET DU SECOND MEMBRE ELEMENTAIRE
+C           =========================================================
+            NBDL = NBNOE
+            CALL ASABGC(NTDL,NDSM,NBDL,MCN(MNNODL),
+     &                  MCN(IATAEL),MCN(IATAEL),MCN(IASE),
+     &                  NCODSA,MCN(MNLPLI),MCN(MNLPCO),MCN(MNAG),
+     &                  MCN(MNB))
+C
+C           LE CALCUL DU TYPE OBJET DE CHAQUE NOEUD DE L'ELEMENT
+C           EN COMMENCANT PAR LE VOLUME, PUIS LES FACES, PUIS LES ARETES
+C           PUIS LES SOMMETS CE QUI ASSURE LA PRIORITE DES POINTS SUR
+C           LES LIGNES , SURFACES ET VOLUMES
+C           ------------------------------------------------------------
+            CALL EFNTND( NOOBVC , NOOBSF , NOOBLA , NOOBPS , NOTYOB )
+C
+C           LE RECENSEMENT DES CONTACTS NODAUX ET DES SOURCES NODALES
+C           =========================================================
+C           LA BOUCLE SUR LES NOEUDS DE L ELEMENT
+            DO 492 J=1,NBNOE
+C              LE NUMERO DU NOEUD
+               NONOE = MCN( MNNDEL-1 + NUELEM + NBELEM*(J-1) )
+C              LE TYPE OBJET DU NOEUD
+               NTYOB = NOTYOB(1,J)
+               NOOB  = NOTYOB(2,J)
+C
+               IF (NTYOB.EQ.0) GOTO 492
+               IF (NOOB.GE.NUMIOB(NTYOB)
+     S       .AND. NOOB.LE.NUMAOB(NTYOB)) THEN
+C
+C                 EXISTE-T-IL UN CONTACT EN CE NOEUD ?
+C                 ------------------------------------
+                  MN1 = MNDOEL(NTYOB)
+     %                + MXDOTH * ( NOOB - NUMIOB(NTYOB) ) - 1
+     %                + LPCONT
+                  MN0 = MN1
+                  MN1 = MCN( MN1 )
+                  IF( MN1 .GT. 0 ) THEN
+C=====================================================================
+CW         WRITE(IMPRIM,1993) NUELEM,J,NONOE,NTYOB,NOOB,MN0,MN1
+CW1993     FORMAT(/' ELEMENT',I5,' NOEUD',I3,' NUMERO',I5/,
+CW     %   ' TYPE ET NUM',2I5,' MN1 MCN(MN1)',2I9)
+CW         WRITE(IMPRIM,1999) NOOB,NTYOB,NUMIOB(NTYOB)
+CW1999     FORMAT(' NOOB NTYOB ET NUMIOB',3I9)
+C=====================================================================
+C                    OUI : LE TABLEAU CONTACT EXISTE
+C                    CALCUL DES NDSM CONTACTS OU TEMPERATURES FIXEES
+C                    EN CE NOEUD
+                     N = MNNOEU + WYZNOE + 3 * NONOE - 3
+                     XYZPI(1) = RMCN(N)
+                     XYZPI(2) = RMCN(N+1)
+                     XYZPI(3) = RMCN(N+2)
+C=====================================================================
+CW         WRITE(IMPRIM,1899)  XYZPI(1), XYZPI(2), XYZPI(3)
+CW1899     FORMAT(' X Y Z',3E15.6)
+C=====================================================================
+                     CALL RECONT( NTYOB,NOOB, 3, XYZPI,
+     %                            MN1, RMCN(IASOUR) )
+C
+C                    LA BOUCLE SUR LES D.L. FIXES
+                     DO 486 L=1,NDSM
+                        NBDLFX = NBDLFX + 1
+C                       LA VALEUR FIXEE
+                        DMCN(IAVDX+(NONOE-1)*NDSM+L)  = DMCN(IASOUR/2+L)
+C                       LE TEMOIN DE VALEUR FIXEE
+                        MCN(IANDLX-1+NONOE) = 1
+C=====================================================================
+CW         WRITE(IMPRIM,1699) NONOE,DMCN(IASOUR/2+L)
+CW1699     FORMAT(' NOEUD : VALEUR DU CONTACT',I8,E15.6)
+C=====================================================================
+ 486                 CONTINUE
+                     GOTO 492
+                  ENDIF
+C
+C                 UNE SOURCE PONCTUELLE EST ELLE FIXEE?
+C                 -------------------------------------
+                  MN1 = MNDOEL(NTYOB)
+     %                + MXDOTH * ( NOOB - NUMIOB(NTYOB) ) - 1
+     %                + LPSOUR
+                  MN1 = MCN( MN1 )
+                  IF( MN1 .GT. 0 ) THEN
+C=====================================================================
+CW         WRITE(IMPRIM,1993) NUELEM,J,NONOE,NTYOB,NOOB,MN0,MN1
+CW         WRITE(IMPRIM,1999) NOOB,NTYOB,NUMIOB(NTYOB)
+C=====================================================================
+C                    OUI : LE TABLEAU SOURCE EXISTE
+C                    CALCUL DES NDSM SOURCES EN CE NOEUD
+                     N = MNNOEU + WYZNOE + 3 * NONOE - 3
+                     XYZPI(1) = RMCN(N)
+                     XYZPI(2) = RMCN(N+1)
+                     XYZPI(3) = RMCN(N+2)
+C=====================================================================
+CW         WRITE(IMPRIM,1899) XYZPI(1), XYZPI(2), XYZPI(3)
+C=====================================================================
+                     CALL RESOUR( NTYOB, NOOB, 3, XYZPI,
+     %                            MN1, RMCN(IASOUR) )
+C                    LA BOUCLE SUR LES COMPOSANTES
+                     DO 488 L=1,NDSM
+C                       LA VALEUR DE LA SOURCE PONCTUELLE
+                        DMCN(IAVFX+(NONOE-1)*NDSM+L) = DMCN(IASOUR/2+L)
+C=====================================================================
+CW         WRITE(IMPRIM,1799) NONOE,DMCN(IASOUR/2+L)
+CW1799     FORMAT(' NOEUD : VALEUR DE LA SOURCE',I8,E15.6)
+C=====================================================================
+C                       LE TEMOIN DE VALEUR FIXEE
+                        MCN(IANFNX-1+NONOE) = 1
+ 488                 CONTINUE
+                  ENDIF
+               ENDIF
+ 492        CONTINUE
+ 495     CONTINUE
+ 500  CONTINUE
+      IF( IERR .NE. 0 ) GOTO 9999
+C
+C     COMPRESSION DES TABLEAUX DES DL FIXES ET DES SOURCES NODALES
+C     ===========================================================
+      NBDLFX = 0
+      NBFNFX = 0
+      IA     = IANDLX - 1
+      IAN    = IANFNX - 1
+      DO 659 I=1,NTDL
+         II = 0
+         JJ = 0
+         IF( MCN( IA + I ) .NE. 0 ) THEN
+            NBDLFX = NBDLFX + 1
+            MCN( IA + NBDLFX ) = I
+            DO 656 L=1,NDSM
+               DMCN(IAVDX+(NBDLFX-1)*NDSM+L) = DMCN(IAVDX+(I-1)*NDSM+L)
+ 656        CONTINUE
+            II = 1
+         ENDIF
+C
+         IF( MCN(IAN+I) .NE. 0 ) THEN
+            NBFNFX = NBFNFX + 1
+            MCN( IAN + NBFNFX ) = I
+            KK  = IAVFX + ( I - 1 ) * NDSM
+            LL  = IAVFX + ( NBFNFX-1 ) * NDSM
+            DO 658 L=1,NDSM
+               DMCN( LL + L ) = DMCN( KK + L )
+ 658        CONTINUE
+            JJ = 1
+            IF( II + JJ .GE. 2 ) THEN
+                WRITE(KERR(MXLGER)(1:8),'(I8)') I
+                NBLGRC(NRERR) = 3
+                KERR(1) = 'LE NOEUD ' // KERR(MXLGER)(1:8) //
+     %                    'EST DE TEMPERATURE FIXEE'
+                KERR(2) = 'ET SUPPORTE UNE SOURCE NODALE'
+                KERR(3) = 'ERREUR : OPTION INTERDITE'
+                CALL LEREUR
+                IERR = IERR + 1
+            ENDIF
+         ENDIF
+ 659  CONTINUE
+C
+      IF( NBFNFX .GT. 0 ) THEN
+         WRITE(IMPRIM,10665) NBFNFX
+10665    FORMAT(/' NOMBRE DE COMPOSANTES DE SOURCES NODALES=',I5
+     %          /1X,80('-'))
+         DO 675 I=1,NBFNFX
+            WRITE(IMPRIM,10675) MCN(IAN+I),(DMCN(IAVFX+NDSM*(I-1)+J),
+     %                         J=1,NDSM)
+10675       FORMAT(' SOURCE NODALE AU  DL=',I6,(T30,4G15.5))
+ 675     CONTINUE
+      ENDIF
+CCC      IF( NBDLFX .GT. 0 ) THEN
+         WRITE(IMPRIM,10679) NBDLFX
+10679    FORMAT(/' NOMBRE DE DEGRES DE LIBERTE FIXES =',I5/1X,80('-'))
+         DO 680 I=1,NBDLFX
+            WRITE(IMPRIM,10680) MCN(IA+I),(DMCN(IAVDX+NDSM*(I-1)+J),
+     %                          J=1,NDSM)
+10680       FORMAT(' TEMPERATURE FIXEE DL=',I6,(T30,4G15.5))
+ 680     CONTINUE
+CCC      ENDIF
+C     MISE A JOUR DES TABLEAUX DE DONNEES
+      CALL TNMCRA( 'ENTIER' , NTDL , MAX(NBFNFX,1) , IANFNX )
+      CALL TNMCRA( 'REEL2'  , NTDL*NDSM , MAX(NDSM*NBFNFX,1) , IAVFNX)
+      CALL TNMCRA( 'ENTIER' , NTDL , MAX(NBDLFX,1) , IANDLX )
+      CALL TNMCRA( 'REEL2'  , NTDL*NDSM , MAX(NDSM*NBDLFX,1),IAVDLX)
+      IF( IERR .GT. 0 ) GOTO 9999
+C
+C     ASSEMBLAGE DES SOURCES NODALES
+C     ==============================
+      CALL ASFONO(NTDL,NDSM,NBFNFX,MCN(IANFNX),MCN(IAVFNX),RELMIN,
+     %            MCN(MNB))
+C
+C     CALCUL DE LA RESULTANTE TOTALE DES SOURCES AVANT C.L.
+C     =====================================================
+      IAFALL = 0
+      CALL TNMCDC( 'REEL2' , NDSM*NDIM , IAFALL )
+      CALL RESFOR( NBNOEU,NBINCO,NTDL,NDSM,MCN(MNB),
+     &             'SOURCE',MCN(IAFALL) )
+      CALL TNMCDS( 'REEL2' , NDSM*NDIM , IAFALL )
+C
+C     LE TRAITEMENT DES JOINTS
+C     ========================
+C
+      IANBFI = 0
+      CALL TNMCDC( 'ENTIER' , NTDL , IANBFI )
+      CALL AZEROI( NTDL , MCN(IANBFI) )
+      NBNI = 0
+      DO 700 NBJ = 1 , NBJOIN
+         DO 701 JI = 1 , 2
+            NTY = LIOBJE(NBJ,JI*2-1)
+            NOB = LIOBJE(NBJ,JI*2)
+            IF ( NTY .NE. NUTYSD ) GOTO 701
+            IF ( NOB .NE. NUOBSD ) GOTO 701
+            NBN = NBNOJO(NBJ,JI)
+            DO 702 NBO = 1 , NBN
+C           REMARQUE : UN NOEUD PEUT ETRE COMMUN A DEUX JOINTS
+C           NE POSE PAS DE PROBLEME DU POINT DE VUE DES C.L. !
+                  MCN(IANBFI+NBNI) = NUNOJO(NBJ,JI,NBO)
+                  NBNI = NBNI + 1
+ 702        CONTINUE
+            GOTO 700
+ 701     CONTINUE
+ 700  CONTINUE
+C
+C================================================== IMPRESSIONS  ==============
+         IF (NBNI.GT.0) THEN
+            WRITE(IMPRIM,4422) NBNI,(MCN(IANBFI+NI-1),NI=1,NBNI)
+ 4422       FORMAT(/,
+     &      ' NOMBRE DE NOEUDS SUR LE JOINT =',I5/
+     &      1X,80('-')/, 20(' NUMEROS',10I6/) )
+         ENDIF
+C==============================================================================
+C
+C     PRISE EN COMPTE DES CONDITIONS AUX LIMITES
+C     ==========================================
+C
+      IF (NBDLFX .GT. 0 ) THEN
+         CALL BLDLGC(NTDL,NDSM,NBDLFX,MCN(IANDLX),MCN(IAVDLX),NCODSA,
+     &               MCN(MNLPLI),MCN(MNLPCO),MCN(MNAG),MCN(MNB))
+      ENDIF
+C
+C     MISE A JOUR DU TMS 'MORSE"CONDUCTIVITE'
+C     =======================================
+C
+      MCN( MNMORS + WBLIMO ) = NTDL
+      MCN( MNMORS + WPMORS ) = LPMORS
+C     LA DATE
+      CALL ECDATE( MCN(MNMORS) )
+C     LE NUMERO DU TABLEAU DESCRIPTEUR
+      MCN( MNMORS + MOREE2 ) = NONMTD( '~>>>MORSE' )
+C
+C     CALCUL DE LA MATRICE DE PRECONDITIONNEMENT
+C     ==========================================
+C
+      IF (IPREC.GE.1) THEN
+C        INITIALISATION DE LA MATRICE
+         CALL TNMCDC( 'REEL2' , LOLPCO , MNAGG )
+         CALL TRTATA( MCN(MNAG) , MCN(MNAGG) , LOLPCO*MOREE2 )
+         IF (IPREC.GE.3) THEN
+C           PRECONDITIONNEMENT DIRICHLET SUR LE JOINT
+            IF (NBNI .GT. 0 ) THEN
+               CALL TNMCDC( 'REEL2' , NTDL , IAV )
+               CALL AZEROD(  NTDL , MCN(IAV) )
+               CALL TNMCDC( 'REEL2' , NTDL , IAB )
+               CALL AZEROD(  NTDL , MCN(IAB) )
+               CALL BLDLGC(NTDL,NDSM,NBNI,MCN(IANBFI),MCN(IAV),NCODSA,
+     &                    MCN(MNLPLI),MCN(MNLPCO),MCN(MNAGG),MCN(IAB))
+               CALL TNMCDS( 'REEL2' , NTDL , IAV )
+               CALL TNMCDS( 'REEL2' , NTDL , IAB )
+            ENDIF
+         ENDIF
+C        LE NIVEAU DE FACTORISATION INCOMPLETE
+         NIVEAU = NTDL
+         MNLPLC = 0
+         MNLPCC = 0
+         MNLPLU = 0
+         IERR   = 0
+         CALL CALPNT( NTDL,NIVEAU,NCODSA,MNLPLI,MNLPCO,
+     S                MNLPLC,MNLPCC,MNLPLU,COMP,IERR )
+C        VERIFICATION DE LA FACTORISATION
+         IF( IERR .NE. 0 ) THEN
+            WRITE(KERR(MXLGER)(1:8),'(I8)') NIVEAU
+            NBLGRC(NRERR) = 2
+            KERR(1) = ' PROBLEME DE FACTORISATION AU NIVEAU '
+     &              // KERR(MXLGER)(1:8)
+            KERR(2) = ' ABANDON DE LA FACTORISATION'
+            CALL LEREUR
+            GO TO 9999
+         END IF
+C        DECLARATION INITIALISATION DE LA MATRICE MORSE DE CONDITIONNEMENT
+         LOLPCC = MCN(MNLPLC+NTDL)
+         CALL LXTSOU( NTLXOB , 'MORSE"CONDUCTIVITE_C' , NTMORC, MNMORC )
+         IF( NTMORC .GT. 0 ) THEN
+C           LA MATRICE MORSE EST DETRUITE POUR ETRE REDECLAREE
+            CALL LXTSDS( NTLXOB , 'MORSE"CONDUCTIVITE_C' )
+         ENDIF
+         LPMORC = WPLIGN + 1 + NTDL + LOLPCC
+         IF( MOD(LPMORC,MOREE2) .EQ. 1 ) LPMORC = LPMORC + 1
+         LO = LPMORC / MOREE2 + LOLPCC
+         CALL LXTNDC( NTLXOB , 'MORSE"CONDUCTIVITE_C' , 'REEL2' , LO )
+         CALL LXTSOU( NTLXOB , 'MORSE"CONDUCTIVITE_C' , NTMORC, MNMORC )
+C        COPIE DU TABLEAU LPLIGN
+         CALL TRTATA( MCN(MNLPLC) , MCN(MNMORC+WPLIGN) , NTDL+1 )
+C        COPIE DU TABLEAU LPCOLO
+         CALL TRTATA( MCN(MNLPCC) , MCN(MNMORC+WPLIGN+NTDL+1) , LOLPCC )
+C        DESTRUCTION DES TABLEAUX TEMPORAIRES
+         CALL TNMCDS( 'ENTIER' , NTDL+1 , MNLPLC )
+         CALL TNMCDS( 'ENTIER' , LOLPCC , MNLPCC )
+C        MISE A JOUR DES ADRESSES
+         MNLPLC = MNMORC + WPLIGN
+         MNLPCC = MNLPLC + NTDL + 1
+         MNAGC  = MNMORC + LPMORC
+         CALL AZEROD( LOLPCC , MCN(MNAGC) )
+         CALL INCHGC( NTDL ,
+     &                MCN(MNLPLI),MCN(MNLPCO),MCN(MNAGG),
+     &                MCN(MNLPLC),MCN(MNLPCC),MCN(MNAGC), IERR )
+         CALL TNMCDS( 'REEL2' , LOLPCO , MNAGG )
+C
+C        MISE A JOUR DU TMS 'MORSE"CONDUCTIVITE_C'
+C        =========================================
+         MCN( MNMORC + WBLIMO ) = NTDL
+         MCN( MNMORC + WPMORS ) = LPMORC
+C        LA DATE
+         CALL ECDATE( MCN(MNMORC) )
+C        LE NUMERO DU TABLEAU DESCRIPTEUR
+         MCN( MNMORC + MOREE2 ) = NONMTD( '~>>>MORSE' )
+C
+      ENDIF
+C
+C     MISE A JOUR DU TMS 'VECTEUR"B'
+C     ==============================
+C
+      MCN( MNAB + WBCOVE ) = NTDL
+      MCN( MNAB + WBVECT ) = NDSM
+      MCN( MNAB + WBCPIN ) = 0
+C     LA DATE
+      CALL ECDATE( MCN(MNAB) )
+C     LE NUMERO DU TABLEAU DESCRIPTEUR
+      MCN( MNAB + MOREE2 ) = NONMTD( '~>>>VECTEUR' )
+C
+C     ADRESSAGE INITIALISATION DU VECTEUR TEMPERATURE
+C     ===============================================
+C
+      CALL LXTSOU( NTLXOB , 'VECTEUR"TEMPERATURE' ,
+     &             NTVECT , MNVECT )
+      IF( NTVECT .GT. 0 ) THEN
+C        LE VECTEUR EST DETRUIT POUR ETRE REDECLARE
+         CALL LXTSDS( NTLXOB , 'VECTEUR"TEMPERATURE' )
+      ENDIF
+      L    = ( WECTEU + NDSM * NTDL * MOREE2 ) / MOREE2
+      CALL LXTNDC( NTLXOB , 'VECTEUR"TEMPERATURE' , 'REEL2' , L )
+      CALL LXTSOU( NTLXOB , 'VECTEUR"TEMPERATURE' ,
+     &             NTVECT , MNVECT )
+      MNU0 = MNVECT + WECTEU
+      CALL AZEROD( NDSM * NTDL , MCN(MNU0) )
+C
+C     PRISE EN COMPTE DES CONDITIONS AUX LIMITES
+C     ==========================================
+C
+      IF (NBDLFX.GT.0) THEN
+      IX = (MNU0-1)/2
+      IV = (IAVDLX-1)/2
+      DO K=1,NBDLFX
+         NDL = MCN(IANDLX+K-1)
+         DMCN(IX+NDL) = DMCN(IV+K)
+      ENDDO
+      ENDIF
+C
+C     DESTRUCTION DES TABLEAUX TEMPORAIRES
+C     ====================================
+9999  IF( MNELEM .GT. 0 ) CALL TNMCDS( 'ENTIER' ,2*MXTYEL , MNELEM )
+      DO 10000 I=1,4
+         IF( MNDOEL(I) .GT. 0 ) THEN
+            KK = NUMAOB(I) - NUMIOB(I) + 1
+            CALL TNMCDS( 'ENTIER' , KK * MXDOTH , MNDOEL(I) )
+         ENDIF
+10000 CONTINUE
+      IF( IATPOB .GT. 0 ) CALL TNMCDS( 'ENTIER' , NBTYEL*MXPOBA ,
+     %                                  IATPOB )
+      IF( IATAUX .GT. 0 ) CALL TNMCDS( 'REEL2'  , MOAUX  , IATAUX )
+      IF( IATAEL .GT. 0 ) CALL TNMCDS( 'REEL2'  , MOTAEL , IATAEL )
+      IF( IATHER .GT. 0 ) CALL TNMCDS( 'REEL2'  , 27     , IATHER )
+      IF( IASOUR .GT. 0 ) CALL TNMCDS( 'REEL2'  , 3*NDSM , IASOUR )
+      IF( MNNODL .GT. 0 ) CALL TNMCDS( 'ENTIER' , MONODL , MNNODL )
+      IF( IAX    .GT. 0 ) CALL TNMCDS( 'ENTIER' , NBDLMX*NDIM , IAX )
+      IF( IANFNX .GT. 0 ) CALL TNMCDS( 'ENTIER' ,
+     %                                  MAX(NBFNFX,1) , IANFNX )
+      IF( IAVFNX .GT. 0 ) CALL TNMCDS( 'REEL2'   ,
+     %                                  MAX(NDSM*NBFNFX,1) , IAVFNX )
+      IF( IANDLX .GT. 0 ) CALL TNMCDS( 'ENTIER'  ,
+     %                                  MAX(NBDLFX,1) , IANDLX )
+      IF( IAVDLX .GT. 0 ) CALL TNMCDS( 'REEL2'   ,
+     %                                  MAX(NDSM*NBDLFX,1) , IAVDLX )
+      IF ( IANBFI .GT. 0) CALL TNMCDS( 'ENTIER' , NTDL  , IANBFI )
+C
+CPU   I = NINT( DINFO( 'DELTA CPU' ) )
+CPU   WRITE(IMPRIM,12000) I
+CPU   12000 FORMAT(/'FIN NORMALE JOTHE1 : COUT    =',I12,' SECONDES CPU'/)
+C
+      RETURN
+C     ERREUR A L'OUVERTURE DU FICHIER POBA
+ 9900 NBLGRC(NRERR) = 2
+      KERR(1) = ' IMPOSSIBLE D''OUVRIR LE FICHIER POBA : '
+      KERR(2) = KNOMFI(1:NUDCNB(KNOMFI))
+      CALL LEREUR
+      RETURN
+      END

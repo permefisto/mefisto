@@ -1,0 +1,5 @@
+This number NITC2D controls the wished corrections from the results
+obtained with the WINSLOW method
+   NITC2D <=0   : NO correction to do. ( pure WINSLOW method )
+0< NITC2D <=100 : the number of correction iterations to be done.
+In fact, if there is convergence this number will not be attained.

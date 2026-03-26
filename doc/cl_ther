@@ -1,0 +1,11 @@
+The boundary conditions may be:
+- a FOURIER-ROBIN condition 
+(normal flux:- conduc d temperature/dn = ECHANGE (temperature-exterior temperature))
+  input the heat transfer coefficient ECHANGE(1)
+	and the heat SOURCE(2) = ECHANGE * exterior fluid temperature
+
+- a NEUMANN condition (conduc d temperature/dn = SOURCE)
+  input SOURCE(2)= heat normal flux
+
+- a DIRICHLET condition (temperature = CONTACT)
+  input the CONTACT(3) equal to the imposed temperature for every node

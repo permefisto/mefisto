@@ -1,0 +1,48 @@
+      SUBROUTINE CBARTETR(  NTE, 
+C     L'ADRESSE MCN DU DEBUT DU TABLEAU NPEF DE CE TYPE D'EF
+      NTYEF = 1
+      MNELE = MCN( MNNPEF -1 + NTYEF )
+
+C     LE NOMBRE D'ELEMENTS FINIS
+      NBELEM = MCN( MNELE + WBELEM )
+
+C     RECHERCHE DU POINT XYZP0 DANS LES EF
+C     ------------------------------------
+      MNP = MNXYZP + WYZPOI -3
+      DO 100 NEF = 1, NBELEM
+
+C        LE NO DES NOEUDS DU TETRAEDRE NEF
+         MNN = MNELE  + WUNDEL -1 + NEF
+C        LES 4 SOMMETS SONT EN TETE DES NOEUDS DE L'EF
+         MNS1 = MNP + 3 * MCN(MNN)
+         MNN  = MNN + NBELEM
+         MNS2 = MNP + 3 * MCN(MNN)
+         MNN  = MNN + NBELEM
+         MNS3 = MNP + 3 * MCN(MNN)
+         MNN  = MNN + NBELEM
+         MNS4 = MNP + 3 * MCN(MNN)
+         MNN  = MNN + NBELEM
+
+C        LE VOLUME DU TETRAEDRE P1 P2 P3 P4
+C        CALCUL DES COORDONNEES BARYCENTRIQUES DU POINT P
+         D = VOLTER( RMCN(MNS1),RMCN(MNS2),RMCN(MNS3),RMCN(MNS4) )
+
+         IF( D .GT. 0 ) THEN
+
+C           TETRAEDRE DE VOLUME NON DEGENERE
+C           CALCUL DES 4 COORDONNEES BARYCENTRIQUES DU
+C           POINT XYZP0 DANS LE TETRAEDRE NEF
+            CB1 = VOLTER(XYZP0,RMCN(MNS2),RMCN(MNS3),RMCN(MNS4)) / D
+            CB2 = VOLTER(XYZP0,RMCN(MNS3),RMCN(MNS1),RMCN(MNS4)) / D
+            CB3 = VOLTER(XYZP0,RMCN(MNS1),RMCN(MNS2),RMCN(MNS4)) / D
+            CB4 = VOLTER(XYZP0,RMCN(MNS1),RMCN(MNS3),RMCN(MNS2)) / D
+            IF( CB1 .GE. -1D-8 .AND. CB1 .LE. 1D0 .AND.
+     %          CB2 .GE. -1D-8 .AND. CB2 .LE. 1D0 .AND.
+     %          CB3 .GE. -1D-8 .AND. CB3 .LE. 1D0 .AND.
+     %          CB4 .GE. -1D-8 .AND. CB4 .LE. 1D0 ) THEN
+C              LE POINT EST DANS LE TETRAEDRE NEF
+C              OU SUR UNE DE SES 4 FACES
+               IERR = 0
+               GOTO 9000
+            ENDIF
+

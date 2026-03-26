@@ -1,0 +1,35 @@
+#!/bin/bash
+# compilation d un sp fortran    A. Perronnet  Octobre 1996  
+  echo nom du Repertoire du fichier Fortran? 
+  read dir
+  echo nom du SP fortran dans ce Repertoire? 
+  read nomsp
+#
+  nomsp=`basename $nomsp .f`
+  nomspf=$dir/$nomsp.f 
+  nomspo=$nomsp.o
+  nomspexe=$nomsp
+  rm $nomspexe
+#
+# compilation de nomspf 
+  f77 -g $nomspf -o $nomspexe 
+  rm  $nomspo  
+#
+# en sortie le module objet a pour nom nomspexe       
+  if test -f $nomspexe
+  then 
+     echo module objet OK  $nomspexe
+  else
+     rm  $nomspexe
+     echo CORRIGER $nomspf et RECOMPILER
+  fi
+
+   
+
+# Compilation + Edition MEFISTO    
+#
+# f77 -g  $nomspf  ~/xvue/xvuelc.o \
+#     ~/mail/lib ~/ot/lib ~/util/lib ~/xvue/lib \
+#     -Xt -Xm -X11 -Xext \
+#     -o $nomspexe
+

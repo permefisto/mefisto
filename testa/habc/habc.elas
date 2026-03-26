@@ -1,0 +1,627 @@
+{ ==================================================================== }
+{ Software MEFISTO     : February 2010 Version                         }
+{ USER's Name          : Alain Perronnet                               }
+{ Project Name         : habc                                          }
+{ Date                 : February 22-th 2010                           }
+{ PROJET               : Unsteady Thermo-Elasticity on an HEXAEDRON    }
+{                        Comparison exact and computed solution        }
+{ ==================================================================== }
+
+{Coefficients for stainless steel at 0.3 C}
+DefVar dilatation,TempRef;  dilatation=11.4e-6; TempRef=0.3;
+DefVar E,nu,cont0,coef;     E=2E11; nu=0.24; cont0=0.02; coef=0.05;
+DefVar cu1, cu2, cu3; {coefficient of displacement}
+cu1=0.01; cu2=0.02; cu3=0.03;
+
+DefVar d1,d2,d3;
+d1 = E * (1-nu) / ( (1+nu) * (1-2*nu) );
+d2 = E * nu     / ( (1+nu) * (1-2*nu) );
+d3 = E          / ( (1+nu) * 2 );  { /2 pour EPS12=(du1/dx2+du2/dx1)/2 }
+
+Deffunc defther(t,x,y,z);
+  defther = dilatation * (exact_temperature(t,x,y,z) - TempRef);
+Endfunc;
+
+Deffunc u1(t,x,y,z);
+  u1 = coef * (t+t0)**2 * x * (a-x) * y * (b-y) * z * (c-z) / a2b2c2;
+Endfunc;
+
+Deffunc u2(t,x,y,z);
+  u2 = coef * (t+t0)**2 * sin(Pisa*x) * sin(Pisb*y) * sin(Pisc*z);
+Endfunc;
+
+Deffunc u3(t,x,y,z);
+  u3 = coef * (t+t0)**2 * x * (a-x) * y * (b-y) * z * (c-z) / a2b2c2;
+Endfunc;
+
+
+Deffunc dtu1(t,x,y,z);
+  dtu1 = coef * 2 * (t+t0) * x * (a-x) * y * (b-y) * z * (c-z) / a2b2c2;
+Endfunc;
+
+Deffunc dtu2(t,x,y,z);
+  dtu2 = coef * 2 * (t+t0) * sin(Pisa*x) * sin(Pisb*y) * sin(Pisc*z);
+Endfunc;
+
+Deffunc dtu3(t,x,y,z);
+  dtu3 = coef * 2 * (t+t0) * x * (a-x) * y * (b-y) * z * (c-z) / a2b2c2;
+Endfunc;
+
+
+Deffunc dttu1(t,x,y,z);
+  dttu1 = coef * 2 * x * (a-x) * y * (b-y) * z * (c-z) / a2b2c2;
+Endfunc;
+
+Deffunc dttu2(t,x,y,z);
+  dttu2 = coef * 2 * sin(Pisa*x) * sin(Pisb*y) * sin(Pisc*z);
+Endfunc;
+
+Deffunc dttu3(t,x,y,z);
+  dttu3 = coef * 2 * x * (a-x) * y * (b-y) * z * (c-z) / a2b2c2;
+Endfunc;
+
+
+Deffunc dxu1(t,x,y,z);
+  dxu1 = coef * (t+t0)**2 * (a-2*x) * y * (b-y) * z * (c-z) / a2b2c2;
+Endfunc;
+
+Deffunc dyu1(t,x,y,z);
+  dyu1 = coef * (t+t0)**2 * x * (a-x) * (b-2*y) * z * (c-z) / a2b2c2;
+Endfunc;
+
+Deffunc dzu1(t,x,y,z);
+  dzu1 = coef * (t+t0)**2 * x * (a-x) * y * (b-y) * (c-2*z) / a2b2c2;
+Endfunc;
+
+
+Deffunc dxu2(t,x,y,z);
+  dxu2 = coef * (t+t0)**2 * Pisa * cos(Pisa*x) * sin(Pisb*y) * sin(Pisc*z);
+Endfunc;
+
+Deffunc dyu2(t,x,y,z);
+  dyu2 = coef * (t+t0)**2 * sin(Pisa*x) * Pisb * cos(Pisb*y) * sin(Pisc*z);
+Endfunc;
+
+Deffunc dzu2(t,x,y,z);
+  dzu2 = coef * (t+t0)**2 * sin(Pisa*x) * sin(Pisb*y) * Pisc * cos(Pisc*z);
+Endfunc;
+
+
+Deffunc dxu3(t,x,y,z);
+  dxu3 = coef * (t+t0)**2 * (a-2*x) * y * (b-y) * z * (c-z) / a2b2c2;
+Endfunc;
+
+Deffunc dyu3(t,x,y,z);
+  dyu3 = coef * (t+t0)**2 * x * (a-x) * (b-2*y) * z * (c-z) / a2b2c2;
+Endfunc;
+
+Deffunc dzu3(t,x,y,z);
+  dzu3 = coef * (t+t0)**2 * x * (a-x) * y * (b-y) * (c-2*z) / a2b2c2;
+Endfunc;
+
+
+Deffunc dxxu1(t,x,y,z);
+  dxxu1 = coef * (t+t0)**2 * (-2) * y * (b-y) * z * (c-z) / a2b2c2;
+Endfunc;
+
+Deffunc dxyu1(t,x,y,z);
+  dxyu1 = coef * (t+t0)**2 * (a-2*x) * (b-2*y) * z * (c-z) / a2b2c2;
+Endfunc;
+
+Deffunc dxzu1(t,x,y,z);
+  dxzu1 = coef * (t+t0)**2 * (a-2*x) * y * (b-y) * (c-2*z) / a2b2c2;
+Endfunc;
+
+Deffunc dyyu1(t,x,y,z);
+  dyyu1 = coef * (t+t0)**2 * x * (a-x) * (-2) * z * (c-z) / a2b2c2;
+Endfunc;
+
+Deffunc dyzu1(t,x,y,z);
+  dyzu1 = coef * (t+t0)**2 * x * (a-x) * (b-2*y) * (c-2*z) / a2b2c2;
+Endfunc;
+
+Deffunc dzzu1(t,x,y,z);
+  dzzu1 = coef * (t+t0)**2 * x * (a-x) * y * (b-y) * (-2) / a2b2c2;
+Endfunc;
+
+
+Deffunc dxxu2(t,x,y,z);
+  dxxu2 =-coef * (t+t0)**2 * Pisa * Pisa * sin(Pisa*x) * sin(Pisb*y) * sin(Pisc*z);
+Endfunc;
+
+Deffunc dxyu2(t,x,y,z);
+  dxyu2 = coef * (t+t0)**2 * Pisa * Pisb * cos(Pisa*x) * cos(Pisb*y) * sin(Pisc*z);
+Endfunc;
+
+Deffunc dxzu2(t,x,y,z);
+  dxzu2 = coef * (t+t0)**2 * Pisa * Pisc * cos(Pisa*x) * sin(Pisb*y) * cos(Pisc*z);
+Endfunc;
+
+Deffunc dyyu2(t,x,y,z);
+  dyyu2 =-coef * (t+t0)**2 * sin(Pisa*x) * Pisb * Pisb * sin(Pisb*y) * sin(Pisc*z);
+Endfunc;
+
+Deffunc dyzu2(t,x,y,z);
+  dyzu2 = coef * (t+t0)**2 * Pisb * Pisc * sin(Pisa*x) * cos(Pisb*y) * cos(Pisc*z);
+Endfunc;
+
+Deffunc dzzu2(t,x,y,z);
+  dzzu2 =-coef * (t+t0)**2 * sin(Pisa*x) * sin(Pisb*y) * Pisc * Pisc * sin(Pisc*z);
+Endfunc;
+
+
+Deffunc dxxu3(t,x,y,z);
+  dxxu3 = coef * (t+t0)**2 * (-2) * y * (b-y) * z * (c-z) / a2b2c2;
+Endfunc;
+
+Deffunc dxyu3(t,x,y,z);
+  dxyu3 = coef * (t+t0)**2 * (a-2*x) * (b-2*y) * z * (c-z) / a2b2c2;
+Endfunc;
+
+Deffunc dxzu3(t,x,y,z);
+  dxzu3 = coef * (t+t0)**2 * (a-2*x) * y * (b-y) * (c-2*z) / a2b2c2;
+Endfunc;
+
+Deffunc dyyu3(t,x,y,z);
+  dyyu3 = coef * (t+t0)**2 * x * (a-x) * (-2) * z * (c-z) / a2b2c2;
+Endfunc;
+
+Deffunc dyzu3(t,x,y,z);
+  dyzu3 = coef * (t+t0)**2 * x * (a-x) * (b-2*y) * (c-2*z) / a2b2c2;
+Endfunc;
+
+Deffunc dzzu3(t,x,y,z);
+  dzzu3 = coef * (t+t0)**2 * x * (a-x) * y * (b-y) * (-2) / a2b2c2;
+Endfunc;
+
+
+Deffunc sig011(x,y,z);
+  sig011 = cont0 * x;
+Endfunc;
+
+Deffunc sig022(x,y,z);
+  sig022 = cont0 * y;
+Endfunc;
+
+Deffunc sig033(x,y,z);
+  sig033 = cont0 * z;
+Endfunc;
+
+Deffunc sig012(x,y,z);
+  sig012 = cont0 * x * y;
+Endfunc;
+
+Deffunc sig023(x,y,z);
+  sig023 = cont0 * y * z;
+Endfunc;
+
+Deffunc sig031(x,y,z);
+  sig031 = cont0 * z * x;
+Endfunc;
+
+
+Deffunc dxsig011(x,y,z);
+  dxsig011 = cont0;
+Endfunc;
+
+Deffunc dysig022(x,y,z);
+  dysig022 = cont0;
+Endfunc;
+
+Deffunc dzsig033(x,y,z);
+  dzsig033 = cont0;
+Endfunc;
+
+
+Deffunc dxsig012(x,y,z);
+  dxsig012 = cont0 * y;
+Endfunc;
+
+Deffunc dysig012(x,y,z);
+  dysig012 = cont0 * x;
+Endfunc;
+
+Deffunc dysig023(x,y,z);
+  dysig023 = cont0 * z;
+Endfunc;
+
+Deffunc dzsig023(x,y,z);
+  dzsig023 = cont0 * y;
+Endfunc;
+
+Deffunc dxsig031(x,y,z);
+  dxsig031 = cont0 * z;
+Endfunc;
+
+Deffunc dzsig031(x,y,z);
+  dzsig031 = cont0 * x;
+Endfunc;
+
+
+Deffunc sig11(t,x,y,z);
+DefVar aux;
+  aux = defther(t,x,y,z);
+  sig11 = d1 * ( dxu1(t,x,y,z) - aux ) 
+        + d2 * ( dyu2(t,x,y,z) - aux )
+        + d2 * ( dzu3(t,x,y,z) - aux )
+        + sig011(x,y,z);
+Endfunc;
+
+Deffunc sig22(t,x,y,z);
+DefVar aux;
+  aux = defther(t,x,y,z);
+  sig22 = d2 * ( dxu1(t,x,y,z) - aux ) 
+        + d1 * ( dyu2(t,x,y,z) - aux )
+        + d2 * ( dzu3(t,x,y,z) - aux )
+        + sig022(x,y,z);
+Endfunc;
+
+Deffunc sig33(t,x,y,z);
+DefVar aux;
+  aux = defther(t,x,y,z);
+  sig33 = d2 * ( dxu1(t,x,y,z) - aux ) 
+        + d2 * ( dyu2(t,x,y,z) - aux )
+        + d1 * ( dzu3(t,x,y,z) - aux )
+        + sig033(x,y,z);
+Endfunc;
+
+Deffunc sig12(t,x,y,z);
+  sig12 = d3 * ( dyu1(t,x,y,z) + dxu2(t,x,y,z) ) + sig012(x,y,z);
+Endfunc;
+
+Deffunc sig23(t,x,y,z);
+  sig23 = d3 * ( dzu2(t,x,y,z) + dyu3(t,x,y,z) ) + sig023(x,y,z);
+Endfunc;
+
+Deffunc sig31(t,x,y,z);
+  sig31 = d3 * ( dxu3(t,x,y,z) + dzu1(t,x,y,z) ) + sig031(x,y,z);
+Endfunc;
+
+
+Deffunc dxsig11(t,x,y,z);
+DefVar aux;
+  aux = dilatation * dxtemperature(t,x,y,z);
+  dxsig11 = d1 * ( dxxu1(t,x,y,z) - aux ) 
+          + d2 * ( dxyu2(t,x,y,z) - aux )
+          + d2 * ( dxzu3(t,x,y,z) - aux )
+          + dxsig011(x,y,z);
+Endfunc;
+
+Deffunc dysig22(t,x,y,z);
+DefVar aux;
+  aux = dilatation * dytemperature(t,x,y,z);
+  dysig22 = d2 * ( dxyu1(t,x,y,z) - aux ) 
+          + d1 * ( dyyu2(t,x,y,z) - aux )
+          + d2 * ( dyzu3(t,x,y,z) - aux )
+          + dysig022(x,y,z);
+Endfunc;
+
+Deffunc dzsig33(t,x,y,z);
+DefVar aux;
+  aux = dilatation * dztemperature(t,x,y,z);
+  dzsig33 = d2 * ( dxzu1(t,x,y,z) - aux ) 
+          + d2 * ( dyzu2(t,x,y,z) - aux )
+          + d1 * ( dzzu3(t,x,y,z) - aux )
+          + dzsig033(x,y,z);
+Endfunc;
+
+Deffunc dxsig12(t,x,y,z);
+  dxsig12 = d3 * ( dxyu1(t,x,y,z) + dxxu2(t,x,y,z) ) + dxsig012(x,y,z);
+Endfunc;
+
+Deffunc dysig12(t,x,y,z);
+  dysig12 = d3 * ( dyyu1(t,x,y,z) + dxyu2(t,x,y,z) ) + dysig012(x,y,z);
+Endfunc;
+
+Deffunc dysig23(t,x,y,z);
+  dysig23 = d3 * ( dyzu2(t,x,y,z) + dyyu3(t,x,y,z) ) + dysig023(x,y,z);
+Endfunc;
+
+Deffunc dzsig23(t,x,y,z);
+  dzsig23 = d3 * ( dzzu2(t,x,y,z) + dyzu3(t,x,y,z) ) + dzsig023(x,y,z);
+Endfunc;
+
+Deffunc dzsig31(t,x,y,z);
+  dzsig31 = d3 * ( dxzu3(t,x,y,z) + dzzu1(t,x,y,z) ) + dzsig031(x,y,z);
+Endfunc;
+
+Deffunc dxsig31(t,x,y,z);
+  dxsig31 = d3 * ( dxxu3(t,x,y,z) + dxzu1(t,x,y,z) ) + dxsig031(x,y,z);
+Endfunc;
+
+{Forces sans l'acceleration pour le PB stationnaire}
+Deffunc force(t,x,y,z,nutype,nuobj,ncomp,xn,yn,zn);
+  if ncomp=1 then
+    force = - dxsig11(t,x,y,z) - dysig12(t,x,y,z) - dzsig31(t,x,y,z)
+            + cu1 * u1(t,x,y,z) ;
+  else
+    if ncomp=2 then
+       force = - dxsig12(t,x,y,z) - dysig22(t,x,y,z) - dzsig23(t,x,y,z)
+               + cu2 * u2(t,x,y,z) ;
+    else
+       force = - dxsig31(t,x,y,z) - dysig23(t,x,y,z) - dzsig33(t,x,y,z)
+               + cu3 * u3(t,x,y,z) ;
+    endif;
+  endif;
+Endfunc;
+
+{on TOP}
+Deffunc pressureTOP(t,x,y,z,ncomp);
+  if ncomp=1 then
+    pressureTOP = sig31(t,x,y,z);
+  else
+    if ncomp=2 then
+      pressureTOP = sig23(t,x,y,z);
+    else
+      pressureTOP = sig33(t,x,y,z);
+    endif;
+  endif;
+Endfunc;
+
+{on RIGHT}
+Deffunc pressureRIGHT(t,x,y,z,ncomp);
+  if ncomp=1 then
+    pressureRIGHT = sig12(t,x,y,z);
+  else
+    if ncomp=2 then
+      pressureRIGHT = sig22(t,x,y,z);
+    else
+      pressureRIGHT = sig23(t,x,y,z);
+    endif;
+  endif;
+Endfunc;
+
+{on FRONT}
+Deffunc pressureFRONT(t,x,y,z,ncomp);
+  if ncomp=1 then
+    pressureFRONT = sig11(t,x,y,z);
+  else
+    if ncomp=2 then
+      pressureFRONT = sig12(t,x,y,z);
+    else
+      pressureFRONT = sig31(t,x,y,z);
+    endif;
+  endif;
+Endfunc;
+
+Deffunc pressure(t,x,y,z,nutype,nuobj,ncomp,xn,yn,zn);
+  if nuobj=nuobjt( 'surface', 'top' ) then
+    pressure = pressureTOP(t,x,y,z,ncomp);
+  else
+    if nuobj=nuobjt( 'surface', 'right' ) then
+      pressure = pressureRIGHT(t,x,y,z,ncomp);
+    else
+      pressure = pressureFRONT(t,x,y,z,ncomp);
+    endif;
+  endif;
+Endfunc;
+
+Deffunc fixation(t,x,y,z,nutype,nuobj,ncomp);
+  if ncomp=1 then
+     fixation = u1(t,x,y,z);
+  else
+    if ncomp=2 then
+       fixation = u2(t,x,y,z);
+    else
+       fixation = u3(t,x,y,z);
+    endif;
+  endif;
+Endfunc;
+
+Deffunc contrinit(t,x,y,z,nutype,nuobj,ncomp);
+  if ncomp=1 then
+     contrinit = sig011(x,y,z);
+  else
+    if ncomp=2 then
+      contrinit = sig022(x,y,z);
+    else
+      if ncomp=3 then
+        contrinit = sig033(x,y,z);
+      else
+        if ncomp=4 then
+          contrinit = sig012(x,y,z);
+        else
+          if ncomp=5 then
+            contrinit = sig023(x,y,z);
+          else
+            contrinit = sig031(x,y,z);
+          endif;
+        endif;
+      endif;
+    endif;
+  endif;
+Endfunc;
+
+Deffunc velocityinit(t,x,y,z,nutype,nuobj,ncomp);
+  if ncomp=1 then
+    velocityinit = dtu1(t,x,y,z);
+  else
+    if ncomp=2 then
+      velocityinit = dtu2(t,x,y,z);
+    else
+      velocityinit = dtu3(t,x,y,z);
+    endif;
+  endif;
+Endfunc;
+
+Deffunc exact_displacement(t,x,y,z,ncomp);
+  if ncomp=1 then
+    exact_displacement = u1(t,x,y,z);
+  else
+    if ncomp=2 then
+      exact_displacement = u2(t,x,y,z);
+    else
+      exact_displacement = u3(t,x,y,z);
+    endif;
+  endif;
+Endfunc;
+
+@;
+@;
+{=========================================================================}
+                {===================}
+{1; HEXAHEDRON;   OBJECT NAME       }
+                {===================}
+@;
+   {================================================}
+2; { DATA INPUT of STEADY THERMO-ELASTICITY PROBLEM }
+   {================================================}
+
+{ VOLUME: HEXAEDRON  }
+{====================}
+ 1; { density of MASS }
+   1; { constant }
+ Rot; { DMASS  density of mass }
+
+ 2; { YOUNG's modulus and POISSON's coefficient }
+   1;  { isotropic homgeneous 3D material }
+   E;  { YOUNG's modulus }
+  nu;  { POISSON's coefficient }
+
+   3;  { DILATATION coefficient and REFERENCE TEMPERATURE }
+   1;  { LTDILA CONSTANT TYPE of INPUT DATA }
+dilatation; { DILATA THERMAL DILATATION coefficient }
+TempRef;    { TEMPIN temperature of reference }
+
+ 4; { density of VOLUMIC FORCE }
+  -1;  { user's function }
+   3;  { NBCOFO force component number to define }
+   1; 2; 3; { NUCOFO(1..NBCOFO) }
+    force;  { in lexicon ~>FONCTION }
+ 
+ 6; { coefficient of displacement }
+   1;            { CONSTANT Coefficients of Displacement }
+   3;            { Number of  components of coefficients }
+   1; 2; 3;      { Numero of components of coefficients}
+  cu1; cu2; cu3; { Value of Coefficients du Displacement }
+
+ 7; { density of CONTRAINTES INITIALES }
+  -1;  { user's function }
+   6;  { NBCOIN le number of components 3 ou 4 ou 6 }
+ contrinit; { in lexicon ~>FONCTION }
+@;
+
+{ SURFACE: TOP }
+{===============}
+ 1;  { FORCE boundary fixed force }
+   -1;    { LTFORC type of forces }
+    3;    { NBCOFO force component number to define }
+    1; 2; 3; { le numero of la component of forces a definir }
+   pressure; { NFFORC function name FORCE  ^~>FONCTION }
+@;
+
+{ SURFACE: BASE }
+{=================}
+ 2; { FIXATION value of  fixed displacements }
+  -1;     { user's function }
+   3;     { NBCOFI le number of components of fixed displacements }
+   1; 2; 3; { NUCOFI(1..NBCOFI) }
+  fixation; { in lexicon ~>FONCTION }
+@;
+
+{ SURFACE: RIGHT }
+{=================}
+ 1;  { FORCE boundary fixed force }
+   -1;    { LTFORC type of forces }
+    3;    { NBCOFO force component number to define }
+    1; 2; 3; { le numero of la component of forces a definir }
+   pressure; { NFFORC function name FORCE  ^~>FONCTION }
+@;
+
+{ SURFACE: LEFT }
+{=================}
+ 2; { FIXATION value of  fixed displacements }
+  -1;     { user's function }
+   3;     { NBCOFI le number of components of fixed displacements }
+   1; 2; 3; { NUCOFI(1..NBCOFI) }
+  fixation; { in lexicon ~>FONCTION }
+@;
+
+{ SURFACE: FRONT }
+{===================}
+ 1;  { FORCE boundary fixed force }
+   -1;    { LTFORC type of forces }
+    3;    { NBCOFO force component number to define }
+    1; 2; 3; { le numero of la component of forces a definir }
+   pressure; { NFFORC function name FORCE  ^~>FONCTION }
+@;
+
+{ SURFACE: BACK }
+{===============}
+ 2; { FIXATION value of  fixed displacements }
+  -1;     { user's function }
+   3;     { NBCOFI number of components of fixed displacements }
+   1; 2; 3; { NUCOFI(1..NBCOFI) }
+  fixation; { in lexicon ~>FONCTION }
+@;
+
+     {=================================================================}
+3; 1;{            RESOUDRE pb ELASTICITY STATIONNAIRE LINEAIRE         }
+     {=================================================================}
+  2; { 1; no THERMO-ELASTICITY } {  2;  THERMO-ELASTICITY }
+  1; { CHOLESKY PROFIL pour stocker les matrices globales }
+@;
+@;
+
+
+     {=======================================================================}
+4;   { UNSTEADY ELASTICITY SOLUTION on TIME INTERVAL [0,0.5]                 }
+     {=======================================================================}
+{Modification to appear the acceleration }
+ DefFunc force(t,x,y,z,nutype,nuobj,ncomp,xn,yn,zn);
+   if ncomp=1 then
+     force = Rot * dttu1(t,x,y,z) 
+           - dxsig11(t,x,y,z) - dysig12(t,x,y,z) - dzsig31(t,x,y,z)
+           + cu1 * u1(t,x,y,z) ;
+   else
+     if ncomp=2 then
+       force = Rot * dttu2(t,x,y,z) 
+             - dxsig12(t,x,y,z) - dysig22(t,x,y,z) - dzsig23(t,x,y,z)
+             + cu2 * u2(t,x,y,z) ;
+     else
+       force = Rot * dttu3(t,x,y,z) 
+             - dxsig31(t,x,y,z) - dysig23(t,x,y,z) - dzsig33(t,x,y,z)
+             + cu3 * u3(t,x,y,z) ;
+     endif;
+   endif;
+ Endfunc;
+
+{Others input data are unchanged for the unsteady problem }
+    1;  { M and K are INDEPENDANT of TIME but, f DEPENDS of TIME }
+    2;  { 1; no THERMO-ELASTICITY } {  2;  THERMO-ELASTICITY }
+    0;  { DAMPING COEFFICIENT of MASS   }
+    0;  { DAMPING COEFFICIENT of STIFFNESS }
+  0.0;  { TIME INITIAL }
+    2;  { DISPLACEMENT INITIAL from the steady solution }
+   -1;  { INITIAL VELOCITY INITIALE by function }
+ velocityinit;   { in lexicon ~>FONCTION }
+  0.5;  { TIME FINAL }
+  0.1;  { CONSTANT TIME STEP }
+    5;  { NUMBER OF VECTEURS displacement A STOCKER => ALL }
+    1;  { SOLUTION by CHOLESKY and SKYLINE MATRIX }
+    1;  { TIME INTEGRATION NEWMARK SCHEME }
+@;
+
+     {=======================================================================}
+4;   { UNSTEADY ELASTICITY SOLUTION on TIME INTERVAL [0.5,1.0]               }
+     {=======================================================================}
+    1;  { M et K INDEPENDANTS du TIME f DEPEND du TIME }
+    2;  { 1; no THERMO-ELASTICITY } {  2;  THERMO-ELASTICITY }
+    0;  { DAMPING COEFFICIENT of MASS   }
+    0;  { DAMPING COEFFICIENT of STIFFNESS }
+  0.5;  { TIME INITIAL of l'etude }
+    3;  { DISPLACEMENT INITIAL from DISPLACEMENT at t=0.4 and t=0.5 }
+  1.0;  { TIME FINAL of the stay }
+  0.1;  { CONSTANT TIME STEP }
+    5;  { NUMBER OF VECTEURS displacement to store => ALL }
+ 2; 1;  { SOLUTION by PRECONDITIONED C G with level 1 and CONDENSED MATRIX }
+    1;  { TIME INTEGRATION NEWMARK SCHEME }
+@;
+
+
+8; {Drawings of stress arraws }
+1; 15; 75; 90;
+CLOSE;
+
+
+

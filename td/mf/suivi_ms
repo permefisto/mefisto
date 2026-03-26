@@ -1,0 +1,2 @@
+variable SUIVI_MS 'Maintenance des fichiers de la MS' entier
+ ( 1  : 'AJOUT d''un fichier a la MS' ) ;

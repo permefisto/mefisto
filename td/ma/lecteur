@@ -1,0 +1,4 @@
+variable LECTEUR 'INPUT UNIT' entier
+( 1: 'Classic KEYBOARD'
+, 2: 'Begin of a file with rewind'
+, 3: 'File in its last state' ) ;

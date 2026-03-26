@@ -1,0 +1,18 @@
+La fonction utilisateur (de nom quelconque a choisir)
+donne une valeur reelle a l'ABSCISSE finale du POINT
+de coordonnees initiales x,y,z. 
+
+Elle doit comprendre dans cet ordre les 4 parametres  no_tranche X Y Z
+et etre programmee selon la grammaire du langage LU
+(cf documentation et exemples du menu de depart ) 
+
+A l'execution, les parametres no_tranche X Y Z sont initialises.
+Ils peuvent ou non servir a calculer la valeur de l'ABSCISSE.
+            
+EXEMPLE:
+deffonc ABSCISSE( no_tranche , x , y , z ) ; 
+   si    (no_tranche>2)
+   alors  ABSCISSE = x + 1;
+   sinon  ABSCISSE = x;
+   finsi;  
+finfonc; 

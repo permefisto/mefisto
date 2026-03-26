@@ -1,0 +1,155 @@
+Ce MENU definit les PARAMETRES du TRACE 3D ou encore
+l'HEXAEDRE extreme visible dans la fenetre ecran.
+ 
+19: % REDUCTION des FACES
+    pour mieux voir la position des edges ou voir derriere
+ 
+22: AGRANDIR 2 clics SOURIS au Min MAX de la future FENETRE
+    Avec la souris, definir dans la fenetre 2 points min max.
+    Ces points deviennent ensuite les coins extremes de la fenetre
+    suivante. 
+    Seuls les PLSVO contenus dans cette nouvelle fenetre seront
+    visibles sur l'ecran.
+
+23: REDUIRE  par 2 clics SOURIS
+    Avec la souris, definir dans la fenetre les 2 points min max
+    tels que la totalit'e de l'actuelle fenetre
+    occupera dans la future fenetre.
+
+24: TRANSLATER par 2 clics SOURIS
+    Avec la souris, definir un premier point P1.
+    Avec la souris, definir un second  point P2.
+    Le trac'e sera fait avec la translation definie par le vecteur P1P2.
+
+25: FENETRE 2D [Xmin MAX] [Ymin MAX]
+    Definit la fenetre en coordonnees OBJET 2D pour les
+    traces ulterieurs.
+
+26: RE-DEFINITION des XYZ EXTREMES
+    DEMANDE et IMPOSE les COORDONNEES EXTREMES XYZ de tous
+    les POINTS ou SOMMETS, et DEFINIT ainsi le nouveau
+    CADRE OBJET par defaut.
+    Pour revenir en 2D, il suffit de fournir Zmin=ZMAX=0 
+    Seuls les PLSVO contenus dans cet HEXAEDRE min max seront 
+    traces sur l'ecran. 
+
+27: SCENE TOTALE des XYZ EXTREMES
+    Impose un CADRE OBJET defini par les COORDONNEES
+    EXTREMES calculees ou definies par 16.  
+    En general, l'objet est ainsi trace entierement.
+
+30: LONGITUDE et LATITUDE (degres)
+    Le trace se fait selon une AXONOMETRIE TRIMETRIQUE
+    pour conserver les DISTANCES. 
+    Le POINT VISE est inchange .
+    Par defaut, c'est le CENTRE de l'HEXAEDRE des coordonnees
+    extremes des points actuels.
+    L'AXE des X passant par le POINT VISE definit
+    l'ANGLE (en degres) ZERO de LONGITUDE 
+    La longitude varie dans [-180,180] degres.
+    La LATITUDE est l'angle (en degres) par rapport au PLAN XY
+    lequel contient le point vise.
+    La latitude varie dans [-90,90] degres.
+    Les VALEURS par DEFAUT sont : 30 degres de longitude
+                                  20 degres de latitude. 
+
+31: XYZ du Point VU et XYZ de l'OEIL
+    Demande la position du POINT VISE et de l'OEIL.
+    Les 2 POINTS definissent la direction orthogonale au plan
+    de trace. Plan ensuite mis a l'echelle dans la fenetre ecran.
+
+32: Demi LARGEUR et HAUTEUR de la SCENE
+    La LARGEUR/2 et la HAUTEUR/2 de l'objet a tracer dans la fenetre 
+    ecran a partir du point vise. 
+
+33: PLAN de SECTION Arriere Avant / Pt VU'
+    ARRIERE et AVANT designe la distance par rapport au point vise
+    des 2 plans orthogonaux a la direction de visee 
+    (pt VISE -> OEIL) place derriere et devant et qui servent 
+    a eviter le trace des points, aretes, faces, ... ,
+    des que l'un des points extremite est en dehors de cette tranche.   
+
+34: LOUPE ou GROSSISSEMENT du trace
+    Demande le GROSSISSEMENT du trace actuel 
+    Si la valeur = 2, la largeur et hauteur de la SCENE reduisent de moitie
+    >1 => impression de grossissement de l'objet (loupe)
+    <1 => impression de reduction de l'objet en voyant mieux l'ensemble
+
+35: ROTATION autour de l''axe Z (degres)
+    Demande l'angle en degres de rotation autour de l'axe vertical
+    pour les futurs traces ( Accroissement de la longitude )
+
+36: CHANGER la PALETTE des COULEURS
+    Le numero de 1 a 16 definit la palette des couleurs
+    1:Les COULEURS varient rapidement et s'assombrissent
+      L'intensite decroit.
+    2:Les COULEURS varient rapidement et s'assombrissent.
+    3:Palette ARC EN CIEL
+    4:Palette du CYAN    au BLEU  puis au BLEU  NOIR.
+    5:Palette du JAUNE   au ROUGE puis au ROUGE NOIR.
+    6:Palette du JAUNE   au VERT  puis au VERT  NOIR.
+    7:Palette du MAGENTA au ROUGE puis au ROUGE NOIR.
+    8:Palette du MAGENTA au BLEU  puis au BLEU  NOIR. 
+    9:Palette du CYAN    au VERT  puis au VERT  NOIR.
+   10:Palette de 256 GRIS.         
+   11:Palette ARC EN CIEL CLAIRE SANS VERT pour les ZONES ISOVALEURS.
+   12:Palette du BLEU au ROUGE PAR le VERT JAUNE ORANGE
+      pour la QUALITE des EF.
+   13:Palette du ROUGE au VERT en passant par le JAUNE avec
+      passage ressere autour du JAUNE et du NOIR est ajoute aux couleurs
+   14:Palette ARC EN CIEL    CONTINUE pour les ZONES ISOVALEURS
+   15:Palette ARC EN CIEL DISCONTINUE pour les ZONES ISOVALEURS
+   16:Palette BLEU BLANC ROUGE CONTINUE pour les ZONES ISOVALEURS.
+
+38: RETOUR aux COULEURS par DEFAUT
+    Reprend tous les PARAMETRES INITIAUX par DEFAUT:
+    Palette des couleurs, couleurs des aretes, faces, ...
+
+39: COULEUR du FOND de la FENETRE
+    Impose une nouvelle couleur pour le fond de la fenetre de trace
+
+44: SAISIR et TRACER UN TEXTE
+Cliquer un point, taper un texte pour enrichir le trace.
+
+47: 3 FACES ELOIGNEES de l'HEXAEDRE GLOBAL
+Les 3 FACES de l'HEXAEDRE ENGLOBANT ACTUEL des coordonnes
+qui sont les plus eloignees de l'oeil vont etre tracees
+A la fin elles seront completees des 3 aretes visibles restantes
+Comment?
+  0: Supprime ensuite ce type de trace
+  1: 8 ARETES englobantes
+     Seules les aretes de l'hexaedre englobant sont tracees
+  2: GRILLE quadrangulaire
+     Les 3 faces sont decoupees selon une grille de quadrangles
+     sans couleur de fond
+  3: 3 FACES en FOND
+     Les 3 faces ont toutes la meme couleur
+  4: DAMIER selon 2 couleurs
+     Les 3 faces sont decoupees en quadrangles
+     Ces quadrangles sont remplis de couleurs alternees
+     La plus longue arete est decoupee en 10 + 2 marges ce qui
+     definit la taille d'un carreau
+     Les 2 autres dimensions sont ajustees a un nombre entier
+     de longueurs de carreau
+
+48: 3 ARETES VUES de l''HEXAEDRE
+Les 3 aretes les plus proches de l'oeil vont etre tracees.
+
+49: Trace les AXES du REPERE de l'objet sous differentes formes
+
+50: EFFACER le trace actuel
+
+60: ENCADRER une figure deja tracee pour ameliorer la presentation
+    en vue d'une impression
+
+75: Activer la TRANSLATION ORBITE ZOOM alors
+un mouvement de la souris donne avec le
+bouton 1 de la souris une translation du PLSVO
+bouton 2 de la souris une orbite du PLSVO
+bouton 3 de la souris un zoom du PLSVO
+Pour ABANDONNER, frapper la touche ECHAPPEMENT.
+
+76: Arreter la TRANSLATION ORBITE ZOOM commandee par la souris
+Revient au mode sans mouvement du PLSVO avec la souris
+
+90: EXECUTER le TRACE 

@@ -1,0 +1,76 @@
+      SUBROUTINE NBMONSEF( NSEF, MOTSNSEF )
+C+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+C BUT : CALCULER LE NOMBRE DE MOTS DU TMS NSEF
+C ----- cf le TMS $MEFISTO/td/d/a___nsef
+C
+C ENTREE:
+C -------
+C NSEF  : LE TABLEAU a___nsef
+C
+C SORTIE:
+C -------
+C MOTSNSEF: NOMBRE DE MOTS DU TMS NSEF
+C+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+C AUTEUR : ALAIN PERRONNET LJLL UPMC & SAINT PIERRE DU PERRAY   MAI 2010
+C2345X7..............................................................012
+      include"./incl/a___nsef.inc"
+      INTEGER  NSEF(0:*)
+C
+C     LES VARIABLES DU TABLEAU NSEF
+      NBSOEF = NSEF( WBSOEF )
+      NBEFOB = NSEF( WBEFOB )
+      NUTYMA = NSEF( WUTYMA )
+C
+      IF( NUTYMA .EQ. 0 ) THEN
+C        MAILLAGE NON STRUCTURE
+         MOTSNSEF = WUSOEF + NBSOEF * NBEFOB
+         GOTO 100
+      ENDIF
+C
+      GOTO( 10, 20, 30, 40, 50, 60, 70, 80 ), NUTYMA
+C
+C     POINT STRUCTURE
+ 10   MOTSNSEF = WBARNS
+      GOTO 100
+C
+C     SEGMENT STRUCTURE
+ 20   MOTSNSEF = WBARSE
+      GOTO 100
+C
+C     TRIANGLE STRUCTURE
+ 30   MOTSNSEF = WBARTR
+      GOTO 100
+C
+C     QUADRANGLE NON STRUCTURE
+ 40   MOTSNSEF = WBARYQ
+      GOTO 100
+C
+C     TETRAEDRE STRUCTURE
+ 50   MOTSNSEF = WBARTE
+      GOTO 100
+C
+C     PENTAEDRE STRUCTURE
+ 60   MOTSNSEF = WBARZP
+      GOTO 100
+C
+C     HEXAEDRE STRUCTURE
+ 70   MOTSNSEF = WBARZH
+      GOTO 100
+C
+C     6-CUBE STRUCTURE
+ 80   MOTSNSEF = WDNCUB
+C
+C     TABLEAU LPEFTAG
+ 100  NBEFAP = NSEF( WBEFAP )
+      MOTSNSEF = MOTSNSEF + NBEFAP
+C
+C     TABLEAU NGEFTG
+      NBEFTG = NSEF( WBEFTG )
+      MOTSNSEF = MOTSNSEF + NBEFTG
+C
+C     TABLEAU NUTGEF
+      NBTGEF = NSEF( WBTGEF )
+      MOTSNSEF = MOTSNSEF + NBTGEF * NBEFTG
+C
+      RETURN
+      END

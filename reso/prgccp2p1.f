@@ -1,0 +1,99 @@
+      SUBROUTINE PRGCCP2P1( NBNOE,   NONOSO,  NBSOM,
+     %                      NCODSA,  LP2LIGN, LP2COLO, NBCMP1,
+     %                      LP1LIGN, LP1COLO, IERR )
+C ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+C BUT :    GENERER LE NO DES COLONNES DE LA MATRICE CONDENSEE POUR
+C -----    LES SOMMETS (INTERPOLATION P1) CONNAISSANT CEUX
+C          POUR LES NOEUDS P2 A PARTIR D'UN MAILLAGE P2
+
+C ENTREES:
+C --------
+C NBNOE  : NOMBRE DE NOEUDS  DU MAILLAGE
+C NONOSO : NONOSO(I)=NO SOMMET SI SOMMET, 0 SI MILIEU D'ARETE
+C NBSOM  : NOMBRE DE SOMMETS DU MAILLAGE
+C NCODSA : CODE DE STOCKAGE DE LA MATRICE MORSE
+C           0 : MATRICE DIAGONALE
+C          -1 : MATRICE NON SYMETRIQUE
+C           1 : MATRICE SYMETRIQUE
+C LP2LIGN: POINTEUR SUR LES COEFFICIENTS DIAGONAUX DE LA MATRICE P2 CONDENSEE
+C LP2COLO: NUMERO DES COLONNES DES COEFFICIENTS STOCKES DE LA MATRICE P2
+C          LE NOMBRE DE COLONNES DES SOMMETS VOISINS = L21LIGN(NBNOE)
+C NBCMP1 : NOMBRE DE COEFFICIENTS (ET NO COLONNES) DE LA MATRICE P1
+
+C SORTIES:
+C --------
+C LP1LIGN: POINTE SUR LE DERNIER NUMERO DE COLONNES DE CHAQUE SOMMET
+C LP1COLO: LISTE DES NUMEROS DE COLONNES DES COEFFICIENTS NON NULS
+C          DE LA MATRICE P1 POUR LES SOMMETS P1
+C IERR   : 0 SI PAS D'ERREUR, 1 SINON
+C+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+C AUTEUR : ALAIN PERRONNET LJLL UPMC & St PIERRE du PERRAY     Juin 2012
+C MODIFS : ALAIN PERRONNET             St PIERRE du PERRAY     Mars 2021
+C MODIFS : ALAIN PERRONNET             St PIERRE du PERRAY    Avril 2023
+C23456---------------------------------------------------------------012
+      include"./incl/pp.inc"
+      COMMON         MCN(MOTMCN)
+      INTEGER        NONOSO(1:NBNOE), LP2LIGN(0:NBNOE), LP2COLO(1:*),
+     %               LP1LIGN(0:NBSOM), LP1COLO(1:NBCMP1)
+
+      IERR = 0
+      IF( NCODSA .EQ. 0 ) THEN
+         IERR = 1
+         GOTO 9000
+      ENDIF
+
+C     PARCOURS DES NUMEROS DE COLONNES DES NOEUDS
+C     POUR CALCULER LE NUMERO DES COLONNES DES SOMMETS P1
+C     ---------------------------------------------------
+      DO NOE = 1, NBNOE
+
+C        NUMERO DE SOMMET DU NOEUD NOE
+         NUSOM = NONOSO( NOE )
+         IF( NUSOM .GT. 0 ) THEN
+
+C           NUSOM EST UN SOMMET
+            LPCOL0 = LP1LIGN( NUSOM-1 )
+            NBCOLS = 0
+            DO LC = LP2LIGN(NOE-1)+1, LP2LIGN(NOE)
+C
+C              NUMERO COLONNE D'UN NOEUD P2
+               NCL = LP2COLO( LC )
+
+C              NUMERO SOMMET P1 DE CE NOEUD P2
+               NCS = NONOSO( NCL )
+
+               IF( NCS .GT. 0 ) THEN
+C                 C'EST UN SOMMET: COEFFICIENT EXISTANT
+                  NBCOLS = NBCOLS + 1
+                  LP1COLO( LPCOL0 + NBCOLS ) = NCS
+               ENDIF
+
+            ENDDO
+
+         ENDIF
+
+      ENDDO
+
+C     TRI CROISSANT DES NUMEROS DE SOMMETS VOISINS
+      LP0 = 0
+      DO NCS = 1, NBSOM
+         LP1 = LP1LIGN( NCS )
+         CALL TRIENT( LP1-LP0, LP1COLO(LP0+1) )
+         LP0 = LP1
+      ENDDO
+
+ccc      PRINT*
+ccc      PRINT*,'prgccp2p1:',('NOEUD',K,' -> SOMMET',NONOSO(K),K=1,NBNOE)
+ccc      PRINT*
+ccc      DO NOE=1,NBNOE
+ccc         PRINT*,'prgccp2p1: LP2COLO du NOEUD P2',NOE,':',
+ccc     %          (LP2COLO(K),K=LP2LIGN(NOE-1)+1,LP2LIGN(NOE))
+ccc      ENDDO
+ccc      PRINT*
+ccc      DO NOE=1,NBSOM
+ccc         PRINT*,'prgccp2p1: LP1COLO du SOMMETP1',NOE,':',
+ccc     %          (LP1COLO(K),K=LP1LIGN(NOE-1)+1,LP1LIGN(NOE))
+ccc      ENDDO
+
+ 9000 RETURN
+      END

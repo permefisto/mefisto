@@ -1,0 +1,15 @@
+La ligne generatrice subit N rotations qui creent autant de
+tranches. Les M aretes generent N*M quadrangles.
+Des sommets de la ligne peuvent etre sur l'axe de rotation. 
+Les quadrangles deviennent alors des triangles. 
+L'angle total de rotation peut atteindre 360 degres.
+
+Exemple:
+S15.1; I; 15; LIGNE_INITIALE; P1_AXE; P2_AXE; 4; {rotations}
+1; {angles a preciser pour chaque rotation}
+20; 30; 40; 50;
+Definit une surface par 4 rotations de 20 puis 50 puis 90
+puis 140 degres de la ligne initiale autour de l'axe defini
+par les points P1_AXE et P2_AXE 
+autrement dit, par rotation de 20 degres de la ligne initiale,
+de 30 degres de la nouvelle ligne, ...

@@ -1,0 +1,10 @@
+La PRECISION pour IDENTIFIER 2 POINTS est DIFFERENTE
+selon que les POINTS SONT PROCHES DE L'ORIGINE ou NON.
+Les 2 points sont IDENTIFIES si
+soit, leurs 3 coordonnees sont <= EPZERO ;
+soit, une de leurs 3 coordonnees est > EPZERO et
+ abs(x2-x1) <= EPSXYZ abs(x1)      
+ abs(y2-y1) <= EPSXYZ abs(y1)
+ abs(z2-z1) <= EPSXYZ abs(z1)
+EPZERO est la precision autour de l'ORIGINE.
+EPSXYZ est la precision autour d'un POINT NON ORIGINE.

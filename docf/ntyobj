@@ -1,0 +1,38 @@
+Pour chaque composant de l'objet, donner dans cet ordre
+le NOM du type POINT LIGNE SURFACE VOLUME ou OBJET
+le NOM du POINT LIGNE SURFACE VOLUME ou OBJET
+Ce NOM peut etre REDUIT a son initiale.
+
+Exemple :
+5;   OBJET; O3;  VOLUME; V1;  SURFACE; S7;  L; L5;  POINT; P1;
+L'OBJET est constitue de 5 PLSVO, un de chaque type.
+
+Exemple plus complet en 3D:       
+5; { OBJETS PARTIES DE L OBJET }
+ MACHOIRE; {NOM DE L'OBJET}
+ 0;  { CLASSIQUE 2D OU 3D }
+ 5;  { NBDOBJ NOMBRE DES POINTS LIGNES SURFACES VOLUMES OBJETS DE L''OBJET }
+ V; PIECE_MECANIQUE; { NTYOBJ(1..NBDOBJ) NOM DU TYPE PLSVO ET NOM DU PLSVO }
+ S; RONDELLE_DROITE;
+ S; RONDELLE_GAUCHE;
+ S; CYLINDRE_AVEC_FORCE;
+ S; RAIL_FIXE;
+ @;
+7; { INTERPOLATION DEFINITION NOEUDS DU MAILLAGE }
+ MACHOIRE; 4; { LAGRANGE DE DEGRE 2 }
+@;
+
+Exemple en axisymetrique:
+5;{ OBJETS parties de l OBJET }
+ CHATEAU;  0; { resolution classique 2D ou 3D avec renumerotation }
+ 5; { nombre des Points Lignes Surfaces Volumes Objets de l'objet }
+ S; TERRE;
+ S; BETON;
+ L; D2E2;
+ L; D1D2;
+ L; DEPLNUL;
+@;
+7; { Interpolation }
+ chateau;
+ 2; {AXISYMETRIQUE LAGRANGE DE DEGRE 2}
+@;

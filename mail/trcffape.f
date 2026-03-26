@@ -1,0 +1,304 @@
+      SUBROUTINE TRCFFAPE( KTITRE, PTXYZD, MXFACO, LEFACO, NO0FAR,
+     %                     NOTETR, NBTECF, NOTECF, NBTRCF, NOTRCF,
+     %                     MXARCF, NBCF,   N1ARCF, NOARCF,
+     %                     NBSTIS, NOSTIS, NBPTIN, PTINTERS )
+C+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+C BUT :    TRACE DES ARETES DES TETRAEDRES PERFORANT UN CF
+C -----    TRACE DES FACES PERDUES D'UN CF ET DES TETRAEDRES VOISINS
+
+C ENTREES:
+C --------
+C KTITRE : TITRE DU TRACE COMPLETE PAR LE NOMBRE DE TETRAEDRES
+C PTXYZD : PAR POINT : X  Y  Z  DISTANCE_SOUHAITEE
+C MXFACO : NOMBRE MAXIMAL DECLARABLE DE FACES DU CONTOUR
+C LEFACO : FACE DU CONTOUR OU INTERFACES ENTRE VOLUMES
+C          IL CONTIENT DANS CET ORDRE
+C          NUMERO (DANS PTXYZD) DU SOMMET 1, SOMMET 2, SOMMET 3
+C          NUMERO (DANS NUVOPA 0 SINON) DU VOLUME1 , VOLUME2 DE LA FACE
+C          NUMERO (DANS LEFACO) DE LA FACE ADJACENTE PAR L'ARETE 1 2 3
+C
+C          ATTENTION: UNE ARETE PEUT APPARTENIR A PLUS DE 2 FACES
+C          => CHAINAGE CIRCULAIRE DE CES FACES DANS LEFACO
+C          LEFACO(9,*)  -> FACE SUIVANTE (*=0:VIDE, *<>0:NON VIDE)
+C          HACHAGE AVEC LA SOMME DES 3 SOMMETS MODULO MXFACO
+C          LF = MOD( NOSOFA(1)+NOSOFA(2)+NOSOFA(3) , MXFACO ) + 1
+C          NF = LEFACO( 10, LF ) LE NUMERO DE LA 1-ERE FACE DANS LEFACO
+C          SI LA FACE NE CONVIENT PAS. PASSAGE A LA SUIVANTE
+C          NF  = LEFACO( 9, NF )  ...
+C          LEFACO(11,.) = NO NOTETR D'UN TETRAEDRE AYANT CETTE FACE, 0 SINON
+C NO0FAR : NUMERO DES 3 SOMMETS DES FACES AJOUTEES AU CF
+C NOTETR : LISTE DES TETRAEDRES
+C          SOMMET1,    SOMMET2,    SOMMET3,    SOMMET4,
+C          TETRAEDRE1, TETRAEDRE2, TETRAEDRE3, TETRAEDRE4
+C          DE L'AUTRE COTE DE LA FACE
+C          1: 123      2: 234      3: 341      4: 412
+
+C NBTECF : NOMBRE DE TETRAEDRES DE LA LISTE DES TETRAEDRES A TRACER
+C NOTECF : NUMERO DANS NOTETR DES TETRAEDRES A TRACER
+C NBTRCF : NOMBRE DE TRIANGLES DU TABLEAU NOTRCF
+C          C-A-D DU POLYGONE ENCORE DIT ENSUITE ETOILE
+C NOTRCF : TABLEAU DU NUMERO DANS LEFACO DES TRIANGLES DE L'ETOILE
+
+C NBCF   : NOMBRE DE LIGNES FERMEES PERIPHERIQUES DES FACES PERDUES
+C N1ARCF : NUMERO DU 1-ER SOMMET OU ARETE DU CONTOUR FERME
+C NOARCF : 1:NUMERO DES SOMMETS DE LA LIGNE DU CONTOUR FERME
+C          2:NUMERO DU SOMMET SUIVANT DANS NOARCF
+C          3:NUMERO DANS LEFACO DU TRIANGLE ADJACENT OPPOSE A L'ARETE
+C NBSTIS : NOMBRE DE SOMMETS ISOLES DANS L'ETOILE
+C NOSTIS : NUMERO DES SOMMETS ISOLES N'APPARTENANT PAS AU CONTOUR
+C NBPTIN : NOMBRE DE POINTS INTERSECTION AVEC DES TRIANGLES LEFACO
+C PTINTERS:XYZ DES NBPTIN POINTS D'INTERSECTION
+C+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+C AUTEUR : ALAIN PERRONNET LJLL UPMC  ST PIERRE DU PERRAY SEPTEMBRE 2014
+C2345X7..............................................................012
+      include"./incl/trvari.inc"
+      include"./incl/mecoit.inc"
+      include"./incl/xyzext.inc"
+C
+      COMMON / TRTETR / STOPTE, TRACTE
+      LOGICAL           STOPTE, TRACTE
+C     STOPTE = FAUX ==> PAS D'ARRET APRES LE TRACE DE CHAQUE TETRAEDRE
+C              VRAI ==> DEMANDE D'UN CARACTERE POUR REDEMARRER
+C     TRACTE = FAUX ==> PAS DE TRACE DES TETRAEDRES
+C              VRAI ==> TRACE DES TETRAEDRES DE L'ETOILE
+C
+      DOUBLE PRECISION  PTXYZD(4,*), PTINTERS(3,NBPTIN)
+      INTEGER           LEFACO(1:11,0:MXFACO), NO0FAR(3,*),
+     %                  NOTETR(8,*), NOTECF(NBTECF),
+     %                  NOTRCF(NBTRCF), NOSTIS(NBSTIS),
+     %                  N1ARCF(0:NBCF), NOARCF(3,MXARCF), NOSOTR(3)
+      REAL              XYZ(3), XYZ2(3), XYZBAR(3)
+      CHARACTER*(*)     KTITRE
+      DOUBLE PRECISION  VECNOR(3), D
+      DOUBLE PRECISION  ARMIN, ARMAX, SURFTR(4), VOLUTE
+
+      IF( .NOT. TRACTE ) RETURN
+
+ccc      print *,KTITRE
+ccc      print *,'TRCFFAPE: Trace cf d''une face perdue NBTECF=',NBTECF,
+ccc     %' NBTRCF=',NBTRCF,' NBSTIS=',NBSTIS,
+ccc     %' NBPTIN=',NBPTIN
+cccC     IMPRESSION DES TETRAEDRES
+ccc      DO N=1,NBTECF
+ccc         NT = NOTECF(N)
+ccc         print *,'TRCFFAPE: TETRAEDRE NOTETR(',NT,')=',
+ccc     %            (NOTETR(L,NT),L=1,8)
+ccc      ENDDO
+
+C     CADRE COOEXT RESTREINT AUX TETRAEDRES A TRACER
+      DO L=1,3
+C        LE MINIMUM
+         COOEXT(L,1) =  1E25
+C        LE MAXIMUM
+         COOEXT(L,2) = -1E25
+      ENDDO
+
+      DO N = 1, NBTECF
+         NTE = NOTECF(N)
+         IF( NTE .GT. 0 .AND. NOTETR(1,NTE) .GT. 0 ) THEN
+            DO K = 1, 4
+               NS = NOTETR( K, NTE )
+               DO L=1,3
+                  XYZ(L) = REAL( PTXYZD(L,NS) )
+C                 LE MINIMUM
+                  COOEXT(L,1) = MIN( COOEXT(L,1), XYZ(L) )
+C                 LE MAXIMUM
+                  COOEXT(L,2) = MAX( COOEXT(L,2), XYZ(L) )
+               ENDDO
+            ENDDO
+         ENDIF
+      ENDDO
+
+      DO N = 1, NBTRCF
+         NF = NOTRCF( N )
+         DO K = 1, 3
+            IF( NF .GT. 0 ) THEN
+               NS = LEFACO(K,NF)
+            ELSE
+               NS = NO0FAR(K,-NF)
+            ENDIF
+            DO L=1,3
+               XYZ(L) = REAL( PTXYZD(L,NS) )
+C              LE MINIMUM
+               COOEXT(L,1) = MIN( COOEXT(L,1), XYZ(L) )
+C              LE MAXIMUM
+               COOEXT(L,2) = MAX( COOEXT(L,2), XYZ(L) )
+            ENDDO
+         ENDDO
+      ENDDO
+
+      AXOLAR = 0
+      DO L=1,3
+         AXOPTV(L) = ( COOEXT(L,1) + COOEXT(L,2) ) * 0.5
+         AXOEIL(L) = COOEXT(L,2)
+         AXOLAR = MAX( AXOLAR, COOEXT(L,2) - COOEXT(L,1) )
+      ENDDO
+      AXOLAR = AXOLAR * 0.5
+      AXOHAU = AXOLAR * 0.75
+C     PAS DE PLAN ARRIERE ET AVANT
+      AXOARR = 0
+      AXOAVA = 0
+      CALL AXONOMETRIE( AXOPTV, AXOEIL, AXOLAR, AXOHAU, AXOARR, AXOAVA )
+
+      DISMOY = AXOLAR/30
+
+C     TRACE EN MODE 3 BOUTONS POUR DEPLACEMENT ROTATIONS ZOOM
+      PREDU0  = PREDUF
+      PREDUF  = 15.0
+      LORBITE = 1
+      IF( LORBITE .EQ. 0 ) GOTO 20
+C
+C     INITIALISATION DE L'ORBITE
+C     ==========================
+      CALL ORBITE0( NOTYEV )
+      GOTO 20
+C
+C     TRACE SELON L'ORBITE OU ZOOM OU TRANSLATION ACTIFS
+C     ==================================================
+ 10   CALL ORBITE1( NOTYEV )
+      IF( NOTYEV .EQ. 0 ) GOTO 9000
+C
+C     TRACE DES AXES 3D
+ 20   CALL TRAXE3
+C
+C     TRACE DES TETRAEDRES
+      DO N=1,NBTECF
+         NT = NOTECF(N)
+         IF( NT .GT. 0 .AND. NOTETR(1,NT) .GT. 0 ) THEN
+
+C           TRACE DE LA QUALITE DU TETRAEDRE NT
+            CALL QUATETD( PTXYZD(1,NOTETR(1,NT)),
+     %                    PTXYZD(1,NOTETR(2,NT)),
+     %                    PTXYZD(1,NOTETR(3,NT)),
+     %                    PTXYZD(1,NOTETR(4,NT)),
+     %                    ARMIN, ARMAX, SURFTR, VOLUTE, QUALIT )
+
+            IF( QUALIT .LE. 0.01 ) THEN
+               NC = NCROUG
+               CALL XVEPAISSEUR( 3 )
+            ELSE
+               NC = N1COUL + 9 - INT( 10.0 * ( 1.0 - QUALIT ) )
+               CALL XVEPAISSEUR( 1 )
+            ENDIF
+
+C           LE TRACE DES 6 ARETES DU TETRAEDRE NOTETR(*,NT)
+ccc            CALL TRTETRA( NC, NOTETR(1,NT), PTXYZD )
+            CALL TRTETRA( NCGRIS, NOTETR(1,NT), PTXYZD )
+
+C           LE TRACE DU NUMERO DES SOMMETS DES TETRAEDRES DE NOTECF
+            DO I = 1, 4
+               NS1 = NOTETR(I,NT)
+               IF( NS1 .LE. 0 ) THEN
+              print*,'Pb TRCFFAPE: NOTETR(',NT,')=',(NOTETR(K,NT),K=1,8)
+               ENDIF
+               XYZ(1) = REAL( PTXYZD(1,NS1) )
+               XYZ(2) = REAL( PTXYZD(2,NS1) )
+               XYZ(3) = REAL( PTXYZD(3,NS1) )
+               CALL ENTIER3D( NCGRIM, XYZ, NS1 )
+            ENDDO
+
+         ENDIF
+      ENDDO
+C
+C     LE TRACE DES FACES TRIANGULAIRES DU CF
+      CALL XVEPAISSEUR( 0 )
+      DO N = 1, NBTRCF
+         NF = NOTRCF( N )
+         IF( NF .GT. 0 ) THEN
+            NOSOTR(1) = LEFACO(1,NF)
+            NOSOTR(2) = LEFACO(2,NF)
+            NOSOTR(3) = LEFACO(3,NF)
+C           COULEUR DE LA FACE PERDUE LEFACO
+            NCFA = NCROUG
+         ELSE
+            NOSOTR(1) = NO0FAR(1,-NF)
+            NOSOTR(2) = NO0FAR(2,-NF)
+            NOSOTR(3) = NO0FAR(3,-NF)
+C           COULEUR DE LA FACE AJOUTEE NO0FAR
+            NCFA = NCROSE
+         ENDIF
+
+         IF( NOSOTR(1) .GT. 0 ) THEN
+
+C           TRACE DE LA FACE NF DE NOSOTR
+            CALL TRFATR( NCFA, NCNOIR, NOSOTR(1), PTXYZD )
+
+C           TRACE DE LA NORMALE A LA FACE EN SON BARYCENTRE
+            CALL VECNOR3D( PTXYZD(1,NOSOTR(1)),
+     %                     PTXYZD(1,NOSOTR(2)),
+     %                     PTXYZD(1,NOSOTR(3)), VECNOR )
+
+C           BARYCENTRE DE LA FACE NF DE NOSOTR
+            DO L=1,3
+               XYZBAR(L) = REAL( PTXYZD(L,NOSOTR(1))
+     %                         + PTXYZD(L,NOSOTR(2))
+     %                         + PTXYZD(L,NOSOTR(3)) ) / 3
+            ENDDO
+
+C           NORME DU VECTEUR NORMAL
+            D = SQRT( VECNOR(1)**2 + VECNOR(2)**2 + VECNOR(3)**2 )
+            DO L=1,3
+               XYZ(L) = XYZBAR(L) + REAL( VECNOR(L) / D * DISMOY )
+            ENDDO
+            CALL SYMBOLE3D( NCJAUN, XYZBAR, '*' )
+            CALL TRAIT3D(   NCJAUN, XYZBAR, XYZ )
+
+         ENDIF
+      ENDDO
+C
+C     LE TRACE DES ARETES PERIPHERIQUES DU CF
+      CALL XVEPAISSEUR( 0 )
+      DO NCF = 1, NBCF
+C        LA PREMIERE ARETE DU CF
+         NA0 = N1ARCF( NCF )
+         IF( NA0 .LE. 0 ) GOTO 40
+         NA1 = NA0
+
+ 30      NA2 = NOARCF( 2, NA1 )
+C        TRACE DE L'ARETE NA1
+         NS1 = NOARCF(1,NA1)
+         XYZ(1) = REAL( PTXYZD(1,NS1) )
+         XYZ(2) = REAL( PTXYZD(2,NS1) )
+         XYZ(3) = REAL( PTXYZD(3,NS1) )
+         CALL ENTIER3D( NCBLEU, XYZ, NS1 )
+         NS2 = NOARCF(1,NA2)
+         XYZ2(1) = REAL( PTXYZD(1,NS2) )
+         XYZ2(2) = REAL( PTXYZD(2,NS2) )
+         XYZ2(3) = REAL( PTXYZD(3,NS2) )
+         CALL ENTIER3D( NCBLEU, XYZ2, NS2 )
+         CALL TRAIT3D( NCCYAN, XYZ, XYZ2 )
+
+         IF( NA2 .NE. NA0 ) THEN
+C           PASSAGE A L'ARETE SUIVANTE
+            NA1 = NA2
+            GOTO 30
+         ENDIF
+      ENDDO
+C
+C     LE TRACE DES POINTS ISOLES
+ 40   DO N = 1, NBSTIS
+         NS1 = NOSTIS(N)
+         XYZ(1) = REAL( PTXYZD(1,NS1) )
+         XYZ(2) = REAL( PTXYZD(2,NS1) )
+         XYZ(3) = REAL( PTXYZD(3,NS1) )
+         CALL ENTIER3D( NCVERT, XYZ, NS1 )
+      ENDDO
+
+C     TRACE DES POINTS D'INTERSECTION
+      DO N = 1, NBPTIN
+         XYZ(1) = REAL( PTINTERS(1,N) )
+         XYZ(2) = REAL( PTINTERS(2,N) )
+         XYZ(3) = REAL( PTINTERS(3,N) )
+         CALL SYMBOLE3D( NCGRIS, XYZ, '@' )
+      ENDDO
+
+C     TITRE ET TRACE EFFECTIF
+      CALL TRFINS( KTITRE )
+C
+C     REPRISE DE L'ORBITE
+C     ===================
+      IF( LORBITE .NE. 0 ) GOTO 10
+C
+ 9000 PREDUF = PREDU0
+      RETURN
+      END

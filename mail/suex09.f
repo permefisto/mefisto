@@ -1,0 +1,1021 @@
+      SUBROUTINE SUEX09( NUTYSU, NTLXSU, LADEFI, RADEFI,
+     %                   NTFASU, MNFASU, NTSOFA, MNSOFA, IERR )
+C+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+C BUT :    GENERER LA TRIANGULATION PAR DES TRIANGLES EQUILATERAUX
+C -----    D'UN ARBRE-4 RECOUVRANT DE TRIANGLES EQUILATERAUX
+C          LE CONTOUR DU DOMAINE PLAN EST DEFINI PAR DES LIGNES FERMEES
+C          LA PREMIERE LIGNE ETANT L'ENVELOPPE DE TOUTES LES AUTRES
+C          LA FONCTION TAILLE_IDEALE(X,Y,Z) EST ICI UTILISABLE
+C          DES LORS TOUTE ARETE ISSUE D'UN SOMMET S A UNE LONGUEUR
+C          COMPRISE ENTRE 0.65 TAILLE_IDEALE(S) ET 1.3 TAILLE_IDEALE(S)
+C
+C ENTREES:
+C --------
+C NUTYSU : NUMERO D'OPTION DE GENERATION DU MAILLAGE DE CETTE SURFACE
+C          9 APPEL DIRECT DU SP SUEX09
+C          1 APPEL PAR LE SP SUEX01-QUNSAL (QUADRANGLE ALGEBRIQUE)
+C          6 APPEL PAR LE SP SUEX06-TRNSAL (TRIANGLE   ALGEBRIQUE)
+C         23 APPEL PAR LE SP TORETI TORE avec FONCTION TAILLE_IDEALE
+C NTLXSU : NUMERO DU TABLEAU TS DU LEXIQUE DU QUADRANGLE
+C LADEFI : TABLEAU DE DEFINITION DE LA SURFACE LIMITEE PAR LES LIGNES
+C          CF '~/td/d/a_surface__definition'
+C RADEFI : TABLEAU REEL DE DEFINITION DE LA MEME SURFACE
+C          CES DEUX TABLEAUX LADEFI ET RADEFI ONT MEME ADRESSE A L'APPEL
+C
+C SORTIES:
+C --------
+C NTFASU : NUMERO      DU TMS 'NSEF' DES NUMEROS DES SOMMETS DES FACES
+C MNFASU : ADRESSE MCN DU TMS 'NSEF' DES NUMEROS DES SOMMETS DES FACES
+C          CF ~/td/d/a___nsef'
+C NTSOFA : NUMERO      DU TMS 'XYZSOMMET' XYZ DES SOMMETS DES TRIANGLES
+C MNSOFA : ADRESSE MCN DU TMS 'XYZSOMMET' XYZ DES SOMMETS DES TRIANGLES
+C          CF '~/td/d/a___xyzsommet'
+C IERR   : 0 SI PAS D'ERREUR
+C        > 0 SINON
+C+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+C AUTEUR : ALAIN PERRONNET  ANALYSE NUMERIQUE PARIS UPMC       MARS 1997
+C....................................................................012
+      include"./incl/langue.inc"
+      include"./incl/gsmenu.inc"
+      include"./incl/ntmnlt.inc"
+      include"./incl/a___xyzsommet.inc"
+      include"./incl/a___nsef.inc"
+      include"./incl/a_ligne__definition.inc"
+      include"./incl/a_surface__definition.inc"
+      include"./incl/trvari.inc"
+      COMMON / UNITES / LECTEU, IMPRIM, INTERA, NUNITE(29)
+      include"./incl/pp.inc"
+      COMMON            MCN(MOTMCN)
+      REAL              RMCN(1)
+      DOUBLE PRECISION  DMCN(1)
+      EQUIVALENCE      (MCN(1),RMCN(1),DMCN(1))
+
+      LOGICAL           TRATRI
+      COMMON / DV2DCO / TRATRI
+
+      INTEGER           LADEFI(0:*)
+      REAL              RADEFI(0:*)
+C
+      REAL              COMXMI(3,2)
+      REAL              ORIGIN(3), XYZ(3)
+      INTEGER           NLP1P2(1:2), NOSOTR(4), NOLIGN(4), NOTG(8)
+      DOUBLE PRECISION  D2D3(3,3), V, DINFO, XYZD(3)
+      CHARACTER*24      KNOMLG
+
+      PRINT*
+      IF(LANGAG .EQ. 0 ) THEN
+         PRINT*,'suex09: TRIANGULATION par ARBRE4 de TRIANGLES EQUILATER
+     %AUX. OPTION:',NUTYSU
+      ELSE
+         PRINT*,'suex09: TRIANGULATION by QUADTREE of REGULAR TRIANGLES.
+     % OPTION:',NUTYSU
+      ENDIF
+
+C     INITIALISATION DU TEMPS CPU
+      V = DINFO( 'DELTA CPU' )
+      IERR   = 0
+      NBSATXYD = 0
+      MNDALF = 0
+      MNARTR = 0
+      MNPXYD = 0
+      MNSLIG = 0
+      MNARST = 0
+      MNSOAR = 0
+      MNDTGL = 0
+      MNEFLI = 0
+
+C     TRACE OU NON DES TRIANGLES GENERES
+      TRATRI = .FALSE.
+C
+C     LES PRINCIPALES VARIABLES
+C     =========================
+C     EXISTENCE OU NON DE LA FONCTION 'TAILLE_IDEALE'
+      NOFOTI = NOFOTIEL()
+C     ATTENTION: SI LA FONCTION TAILLE_IDEALE EXISTE
+C                ALORS PXYD(3,*) EST LA TAILLE_IDEALE DANS L'ESPACE INITIAL
+C                SINON PXYD(3,*) EST LA DISTANCE CALCULEE DANS LE PLAN PAR
+C                PROPAGATION A PARTIR DES TAILLES DES ARETES DE LA FRONTIERE
+      IF(LANGAG .EQ. 0 ) THEN
+         IF( NOFOTI .GT. 0 ) THEN
+C           LA FONCTION TAILLE_IDEALE(X,Y,Z) EXISTE
+            WRITE(IMPRIM,10000) 'AVEC'
+         ELSE
+C           LA FONCTION TAILLE_IDEALE(X,Y,Z) N'EXISTE PAS
+            WRITE(IMPRIM,10000) 'SANS'
+         ENDIF
+      ELSE
+         IF( NOFOTI .GT. 0 ) THEN
+C           LA FONCTION TAILLE_IDEALE(X,Y,Z) EXISTE
+            WRITE(IMPRIM,20000) 'WITH'
+         ELSE
+C           LA FONCTION TAILLE_IDEALE(X,Y,Z) N'EXISTE PAS
+            WRITE(IMPRIM,20000) 'WITHOUT'
+         ENDIF
+      ENDIF
+10000 FORMAT(' suex09: TRIANGULATION ',A4,
+     %       ' FONCTION TAILLE_IDEALE(X,Y,Z)')
+20000 FORMAT(' suex09: TRIANGULATION ',A7,
+     %       ' FUNCTION EDGE_LENGTH(X,Y,Z)')
+C
+C     LA LONGUEUR MAXIMALE DES ARETES DES TRIANGLES EQUILATERAUX
+C     PARAMETRE INACTIF SI LA FONCTION TAILLE_IDEALE(X,Y,Z) EST FOURNIE
+      ARETMX = ABS( RADEFI( WRETMX ) )
+      IF( ARETMX .LE. 0 ) THEN
+         NBLGRC(NRERR) = 1
+         IF( LANGAG .EQ. 0 ) THEN
+            KERR(1) = 'ARETE MAXIMALE DEMANDEE DES TRIANGLES <=0'
+         ELSE
+            KERR(1) = 'For triangles, INPUT of MAXIMUM EDGE LENGTH<=0'
+         ENDIF
+         CALL LEREUR
+         IERR = 1
+         GOTO 9999
+      ENDIF
+C
+C     NOMBRE DE LIGNES FERMEES DE DEFINITION DE LA FRONTIERE DE LA SURFACE
+      NBLFTR = LADEFI( WBLFTR )
+      IF( NBLFTR .LE. 0 ) THEN
+         NBLGRC(NRERR) = 1
+         IF( LANGAG .EQ. 0 ) THEN
+            KERR(1) = 'SURFACE SANS LIGNES FERMEES'
+         ELSE
+            KERR(1) = 'SURFACE WITHOUT CLOSED LINES'
+         ENDIF
+         CALL LEREUR
+         IERR = 1
+         GOTO 9999
+      ENDIF
+C
+C     NOMBRE DE POINTS INTERNES IMPOSES FUTURS SOMMETS INTERNES
+C     DE LA TRIANGULATION
+      NBPTIT = LADEFI( WBPTIT )
+      NBPTIT = MAX( 0, NBPTIT )
+C
+C     MIN MAX DES COORDONNEES DES LIGNES FERMEES
+      COMXMI(1,1) =  1E27
+      COMXMI(1,2) = -1E27
+      COMXMI(2,1) =  1E27
+      COMXMI(2,2) = -1E27
+      COMXMI(3,1) =  1E27
+      COMXMI(3,2) = -1E27
+C
+C     =============================================================
+C     CALCUL DU NOMBRE D'ARETES ET DE SOMMETS DES LIGNES FERMEES
+C     QUI CONSTITUENT LA FRONTIERE DE LA SURFACE PLANE A TRIANGULER
+C     =============================================================
+C     LA PREMIERE COMPOSANTE EST L'EXTERIEUR L'ENVELOPPE DU DOMAINE
+C     LES ARETES SE SUIVENT . LA FIN EST LE DEBUT DE LA SUIVANTE
+      NBARFR = 0
+C
+C     BOUCLE SUR LES LIGNES FERMEES DE LA FRONTIERE DE LA SURFACE PLANE
+      DO 20 N=1,NBLFTR
+C
+C        LE NUMERO DE LA LIGNE FERMEE DANS LE LEXIQUE DES LIGNES
+         NL = LADEFI( WULFTR - 1 + N )
+ 5       IF( NL .LE. 0 ) THEN
+            NBLGRC(NRERR) = 2
+            WRITE( KERR(MXLGER)(1:6), '(I6)' ) N
+            WRITE( KERR(MXLGER-1)(1:6), '(I6)' ) NL
+            IF( LANGAG .EQ. 0 ) THEN
+            KERR(1) = 'LIGNE FERMEE '// KERR(MXLGER)(1:6) //' INCONNUE'
+            KERR(2) = 'NUMERO DANS LX DE LIGNE =' // KERR(MXLGER-1)(1:6)
+            ELSE
+            KERR(1) = 'CLOSED LINE '// KERR(MXLGER)(1:6) //' UNKNOWN'
+            KERR(2) = 'NUMBER of the LINE=' // KERR(MXLGER-1)(1:6)
+            ENDIF
+            CALL LEREUR
+            IERR = 2
+            GOTO 20
+         ENDIF
+C
+C        LES TABLEAUX XYZSOMMET ET NSEF DE CETTE LIGNE
+         CALL LXNLOU( NTLIGN, NL, NTLXLF, MNLXLF )
+         IF( NTLXLF .LE. 0 ) THEN
+C           LA LIGNE NL DU LEXIQUE DES LIGNES N'EXISTE PAS
+            NL = -NL
+            GOTO 5
+         ENDIF
+C
+C        LE NOM UTILISATEUR DE LA LIGNE
+         CALL NMOBNU( 'LIGNE', NL, KNOMLG )
+         CALL LXTSOU( NTLXLF, 'XYZSOMMET', NTSOML, MNSOLI )
+         IF( NTSOML .LE. 0 ) THEN
+            NBLGRC(NRERR) = 2
+            KERR(1) = KNOMLG
+            IF( LANGAG .EQ. 0 ) THEN
+               KERR(2) = 'LIGNE SANS TMS XYZSOMMET'
+            ELSE
+               KERR(2) = 'LINE WITHOUT TMS XYZSOMMET'
+            ENDIF
+            CALL LEREUR
+            IERR = 3
+            GOTO 20
+         ENDIF
+C
+C        MIN MAX DES COORDONNEES DE LA LIGNE
+         NBSOM  = MCN(MNSOLI+WNBSOM)
+         NBCOOR = MCN(MNSOLI+WBCOOR)
+C        L'ADRESSE -1 DES COORDONNEES
+         MN = MNSOLI + WYZSOM - 1
+         DO 9 J=1,NBSOM
+            DO 7 I=1,NBCOOR
+C              LA COORDONNEE I DU POINT J
+               R = RMCN( MN + I )
+               IF( R .LT. COMXMI(I,1) ) THEN
+                  COMXMI(I,1) = R
+               ENDIF
+               IF( R .GT. COMXMI(I,2) ) THEN
+                  COMXMI(I,2) = R
+               ENDIF
+ 7          ENDDO
+            MN = MN + NBCOOR
+ 9       ENDDO
+C
+         CALL LXTSOU( NTLXLF, 'NSEF', NTARLI, MNARLI )
+         IF( NTARLI .LE. 0 ) THEN
+            NBLGRC(NRERR) = 2
+            KERR(1) = KNOMLG
+            IF( LANGAG .EQ. 0 ) THEN
+               KERR(2) = 'LIGNE SANS TMS NSEF'
+            ELSE
+               KERR(2) = 'LINE WITHOUT TMS NSEF'
+            ENDIF
+            CALL LEREUR
+            IERR = 4
+            GOTO 20
+         ENDIF
+C
+C        LES ARETES DE LA LIGNE FORMENT ELLES UNE COURBE FERMEE ?
+C        --------------------------------------------------------
+C        LE TYPE DU MAILLAGE DE CETTE LIGNE
+         NUTYML = MCN( MNARLI + WUTYMA )
+         IF( NUTYML .EQ. 0 ) THEN
+C           LIGNE NON STRUCTUREE
+            NBARLI = MCN( MNARLI + WBEFOB )
+         ELSE
+C           LIGNE STRUCTUREE
+            NBARLI = MCN( MNARLI + WBARSE )
+         ENDIF
+C
+         IF( N .EQ. 1 ) THEN
+C
+C           L'ENVELOPPE DE LA SURFACE PLANE A TRAITER
+C           -----------------------------------------
+C           DEFINITION DU PLAN DANS R**3 DE LA TRIANGULATION
+            MN = MNSOLI + WYZSOM
+            CALL MXTRIE( MCN(MNSOLI+WNBSOM), RMCN(MN),
+     %                   N0, N1, N2, I )
+            IF( I .NE. 0 ) GOTO 15
+C
+C           LES 3 COORDONNEES DES 3 POINTS DU TRIEDRE
+            MN = MNSOLI + WYZSOM + 3 * N0 - 3
+            ORIGIN( 1 ) = RMCN( MN )
+            ORIGIN( 2 ) = RMCN( MN + 1 )
+            ORIGIN( 3 ) = RMCN( MN + 2 )
+            MN1 = MNSOLI + WYZSOM + 3 * N1 - 3
+            MN2 = MNSOLI + WYZSOM + 3 * N2 - 3
+C           L'ORIGINE DES AXES DANS LE PLAN
+            CALL DF3D2D( ORIGIN, RMCN(MN1), RMCN(MN2), D2D3, IER )
+            IF( IER .EQ. 0 ) GOTO 17
+C
+C           ERREUR : TOUS LES POINTS DE L'ENVELOPPE SONT COLINEAIRES
+ 15         NBLGRC(NRERR) = 2
+            KERR(1) = KNOMLG
+            IF( LANGAG .EQ. 0 ) THEN
+               KERR(2) = 'LIGNE FERMEE REDUITE A UNE DROITE'
+            ELSE
+               KERR(2) = 'CLOSED LINE REDUCED AT A STRAIGHT LINE'
+            ENDIF
+            CALL LEREUR
+            IERR = 2
+            GOTO 9999
+C
+         ENDIF
+C
+C        LE NOMBRE TOTAL D'ARETES ACTUELLES DE LA FRONTIERE DE LA SURFACE
+ 17      NBARFR = NBARFR + NBARLI
+ 20   ENDDO
+      IF( IERR .NE. 0 ) GOTO 9999
+
+      IF( TRATRI ) THEN
+C        SI LES TRACES SONT DEMANDES => INITIALISATION AXONOMETRIE
+         CALL EFFACE
+         DISTMX=MAX( COMXMI(1,2) - COMXMI(1,1),
+     %               COMXMI(2,2) - COMXMI(2,1),
+     %               COMXMI(3,2) - COMXMI(3,1) )
+         AXOAVA = 0
+         AXOARR = 0
+         AXOLAR = DISTMX * 0.9
+         AXOHAU = DISTMX * 0.9
+         AXOPTV(1) = ( COMXMI(1,1) + COMXMI(1,2) ) / 2
+         AXOPTV(2) = ( COMXMI(2,1) + COMXMI(2,2) ) / 2
+         AXOPTV(3) = ( COMXMI(3,1) + COMXMI(3,2) ) / 2
+         AXOEIL(1) =   COMXMI(1,2)
+         AXOEIL(2) =   COMXMI(2,2)
+         AXOEIL(3) =   COMXMI(3,2)
+         CALL AXONOMETRIE( AXOPTV,AXOEIL, AXOLAR,AXOHAU, AXOARR,AXOAVA )
+      ENDIF
+
+C     ========================================================
+C     QUELQUES RESERVATIONS DE TABLEAUX POUR FAIRE LES CALCULS
+C     ========================================================
+C     LE TABLEAU POINTEUR SUR LA PREMIERE ARETE DE CHAQUE LIGNE FERMEE
+      CALL TNMCDC( 'ENTIER', NBLFTR, MNDALF )
+C
+C     DECLARATION DU TABLEAU DES COORDONNEES DES SOMMETS DE LA FRONTIERE
+C     PUIS DES SOMMETS INTERNES AJOUTES
+C     MAJORATION EMPIRIQUE DU NOMBRE DE SOMMETS DE LA TRIANGULATION
+C     LE CARRE DU DIAMETRE DE L'HEXAEDRE ENGLOBANT
+      R = (COMXMI(1,2)-COMXMI(1,1))**2 +
+     %    (COMXMI(2,2)-COMXMI(2,1))**2 +
+     %    (COMXMI(3,2)-COMXMI(3,1))**2
+      MXSOMM = MAX( NINT( R/((ARETMX/1.5)**2) )+10000,
+     %              256*NBPTIT+NINT( (NBARFR/1.8D0)**2 ) )
+      IF( NOFOTI .GT. 0 ) MXSOMM = MXSOMM * 2
+C
+C     BOUCLE EVENTUELLE SUR LES MAJORATIONS DU NOMBRE DE SOMMETS
+ 25   IF( LANGAG .EQ. 0 ) THEN
+         WRITE(IMPRIM,10025) MXSOMM
+      ELSE
+         WRITE(IMPRIM,20025) MXSOMM
+      ENDIF
+10025 FORMAT(/' NOMBRE MAXIMAL DE SOMMETS DECLARES=',I8)
+20025 FORMAT(/' DECLARED MAXIMUM VERTICES NUMBER=',I8)
+C
+C     PXYD( 3, MXSOMM ) LES COORDONNEES DES SOMMETS
+      CALL TNMCDC( 'REEL2', 3*MXSOMM, MNPXYD )
+C     L'ADRESSE DMCN DOUBLE PRECISION DU TMC
+      MNDPXY = ( MNPXYD + 1 ) / 2
+C
+C     LES EVENTUELLES TANGENTES AUX SOMMETS DES ARETES DES LIGNES FERMEES
+      CALL TNMCDC( 'ENTIER', 2*NBLFTR, MNEFLI )
+      MNXYLI = MNEFLI + NBLFTR
+C     LE NOMBRE DE TANGENTES DES LIGNES DE LA FRONTIERE DE LA SURFACE
+      NBTGLG = 0
+C     LE NOMBRE D'ARETES A TANGENTES DES LIGNES DE LA FRONTIERE DE LA SURFACE
+      NBARTG = 0
+C
+C     LE TABLEAU NOSOAR DES ARETES DES TRIANGLES
+C     1: SOMMET 1 DANS PXYD,
+C     2: SOMMET 2 DANS PXYD,
+C     3: NUMERO (DANS LADEFI) DE 1 A NBLFTR DE LIGNE,
+C     4: NUMERO DANS NOARTR DU TRIANGLE 1 PARTAGEANT CETTE ARETE,
+C     5: NUMERO DANS NOARTR DU TRIANGLE 2 PARTAGEANT CETTE ARETE,
+C     6: CHAINAGE DES ARETES FRONTALIERES OU INTERNES OU
+C        DES ARETES SIMPLES DES ETOILES DE TRIANGLES,
+C     7: CHAINAGE DU HACHAGE DES ARETES
+C
+C     NOMBRE D'ARETES = 3 ( NOMBRE DE SOMMETS - 1 + NOMBRE DE TROUS )
+C     POUR LE HACHAGE DES ARETES MXSOAR DOIT ETRE > 3*MXSOMM!
+C     H(NS1,NS2) = MIN( NS1, NS2 )
+      MOSOAR = 7
+      MXTROU = MAX( 1024, NBLFTR )
+      MXSOAR = NINT( 3.5 * ( MXSOMM + MXTROU ) )
+      CALL TNMCDC( 'ENTIER', MOSOAR*MXSOAR, MNSOAR )
+      CALL INSOAR( MXSOMM, MOSOAR, MXSOAR, N1SOAR, MCN(MNSOAR) )
+C
+C     NOARST( MXSOMM ) NUMERO NOSOAR D'UNE ARETE POUR CHACUN DES SOMMETS
+      CALL TNMCDC( 'ENTIER', MXSOMM, MNARST )
+      CALL AZEROI( MXSOMM, MCN(MNARST) )
+C
+C     NSLIGN( MXSOMM ) NO DE SOMMET DANS SA LIGNE POUR CHAQUE SOMMET FRONTALIER
+C                   OU NO DU POINT SI INTERNE FORC'E PAR L'UTILISATEUR
+C                   OU  0 SI INTERNE CREE PAR LE MODULE
+      CALL TNMCDC( 'ENTIER', MXSOMM, MNSLIG )
+      CALL AZEROI( MXSOMM, MCN(MNSLIG) )
+C
+C     ======================================================================
+C     INITIALISATION DES ARETES FRONTALIERES DE LA TRIANGULATION FUTURE
+C     RENUMEROTATION DES SOMMETS DES ARETES DES LIGNES POUR LA TRIANGULATION
+C     MISE A L'ECHELLE DES COORDONNEES DES SOMMETS POUR OBTENIR UNE
+C     MEILLEURE PRECISION LORS DES CALCULS + QUELQUES VERIFICATIONS
+C     BOUCLE SUR LES LIGNES FERMEES QUI FORMENT LA FRONTIERE
+C     ======================================================================
+      NOAR   = 0
+      MNDP   = MNDPXY
+      NBSOML = 0
+      DO 100 N=1,NBLFTR
+C
+C        LE NUMERO DANS LE LEXIQUE DES LIGNES DE LA LIGNE FERMEE
+         NL = LADEFI( WULFTR - 1 + N )
+C        LE NOM DE LA LIGNE
+         CALL NMOBNU( 'LIGNE', NL, KNOMLG )
+C
+C        LES TABLEAUX XYZSOMMET ET NSEF DE CETTE LIGNE
+         CALL LXNLOU( NTLIGN, NL, NTLXLF, MNLXLF )
+         CALL LXTSOU( NTLXLF, 'XYZSOMMET', NTSOML, MNSOLI )
+         CALL LXTSOU( NTLXLF, 'NSEF', NTARLI, MNARLI )
+C
+         MCN(MNXYLI-1+N) = MNSOLI
+         MCN(MNEFLI-1+N) = MNARLI
+         NBTGLG = NBTGLG + MCN( MNSOLI + WNBTGS )
+         NBARTG = NBARTG + MCN( MNARLI + WBEFTG )
+C
+C        L'INITIALISATION DE LA PREMIERE ARETE DE LA LIGNE DANS LA TRIANGULATION
+C        -----------------------------------------------------------------------
+C        LE NUMERO DES 2 SOMMETS (NS1,NS2) DE LA PREMIERE ARETE DE LA LIGNE
+C        LE TYPE DU MAILLAGE DE CETTE LIGNE
+         NUTYML = MCN( MNARLI + WUTYMA )
+         IF( NUTYML .EQ. 0 ) THEN
+C           LIGNE NON STRUCTUREE
+            NBARLI = MCN( MNARLI + WBEFOB )
+C           LE NUMERO DES 2 SOMMETS DE LA 1-ERE ARETE
+            NS1 = MCN( MNARLI + WUSOEF )
+            NS2 = MCN( MNARLI + WUSOEF + 1 )
+         ELSE
+C           LIGNE STRUCTUREE
+            NBARLI = MCN( MNARLI + WBARSE )
+C           LE NUMERO DES 2 SOMMETS DE LA 1-ERE ARETE
+            NS1 = 1
+            NS2 = 2
+         ENDIF
+C
+C        LE SOMMET NS0 EST L'ORIGINE DE LA LIGNE
+         NS0 = NS1
+C
+C        LES 2 COORDONNEES DU PREMIER SOMMET DE LA LIGNE
+         MNC1   = MNSOLI + WYZSOM + 3 * NS1 - 3
+         MNC0   = MNC1
+         NBSOML = NBSOML + 1
+         NBSOM0 = NBSOML
+C        LE POINT NBSOML EN COORDONNEES 3D
+         XYZD(1) = RMCN( MNC1   )
+         XYZD(2) = RMCN( MNC1+1 )
+         XYZD(3) = RMCN( MNC1+2 )
+C        PASSAGE DES COORDONNEES 3D AUX 2 COORDONNEES PLANES
+         CALL CH3DDD( ORIGIN, D2D3, XYZD, DMCN(MNDP) )
+         MNDP = MNDP + 3
+C
+C        LE NUMERO N DE LA LIGNE DU SOMMET ET SON NUMERO NS1 DANS LA LIGNE
+         MCN(MNSLIG-1+NBSOML) = 1 000 000 * N + NS1
+C
+C        INITIALISATION DE LA 1-ERE ARETE DE CETTE LIGNE FERMEE
+         CALL FASOAR( NBSOML, NBSOML+1, -1, -1, N,
+     %                MOSOAR, MXSOAR, N1SOAR, MCN(MNSOAR), MCN(MNARST),
+     %                NOAR0,  IERR )
+C        PAS DE TEST SUR IERR CAR PAS DE SATURATION POSSIBLE A CE NIVEAU
+C
+C        LE POINTEUR SUR LA PREMIERE ARETE DE LA LIGNE FERMEE N
+         MCN( MNDALF - 1 + N ) = NOAR0
+C
+C        LA NOUVELLE ARETE EST LA SUIVANTE DE L'ARETE DEFINIE JUSTE AVANT
+         IF( NOAR .GT. 0 ) THEN
+            MCN( MNSOAR - MOSOAR + MOSOAR * NOAR + 5 ) = NOAR0
+         ENDIF
+C
+C
+C        L'INITIALISATION DES ARETES SUIVANTES DE LA LIGNE DANS LA TRIANGULATION
+C        -----------------------------------------------------------------------
+C        RECHERCHE DE L'ARETE SUIVANTE DE SOMMET COMMUN NS2
+         PERMT2 = 0.0
+         DO 70 I=2,NBARLI
+C
+C           NS2 EST LE SOMMET COMMUN A RETROUVER PARMI LES ARETES
+            IPAS = 0
+            J    = I
+C
+C           BOUCLE CIRCULAIRE SUR LES ARETES
+C           --------------------------------
+C              LES 2 SOMMETS NLP1P2 DE L'ARETE J DE LA LIGNE
+ 30            IF( NUTYML .EQ. 0 ) THEN
+C                 LIGNE NON STRUCTUREE
+                  MN =  MNARLI + WUSOEF + (J-1) * 2
+                  NLP1P2(1) = MCN( MN )
+                  NLP1P2(2) = MCN( MN + 1 )
+               ELSE
+C                 LIGNE STRUCTUREE
+                  NLP1P2(1) = J
+                  NLP1P2(2) = J+1
+               ENDIF
+               IF( NLP1P2(1) .EQ. NS2 .AND. NLP1P2(2) .NE. NS1 ) THEN
+                  NS1 = NLP1P2(1)
+                  NS2 = NLP1P2(2)
+                  GOTO 50
+               ELSE IF( NLP1P2(2).EQ.NS2 .AND. NLP1P2(1).NE.NS1 ) THEN
+                  NS1 = NLP1P2(2)
+                  NS2 = NLP1P2(1)
+                  GOTO 50
+               ENDIF
+C
+C              L'ARETE J N'EST PAS L'ARETE SUIVANTE DE L'ARETE I
+               IF( J .LT. NBARLI ) THEN
+                  J = J + 1
+               ELSE
+                  J = 1
+               ENDIF
+               IF( J .EQ. I ) THEN
+                  IF( IPAS .EQ. 0 ) THEN
+C                    1-ER PASSAGE
+                     IPAS = IPAS + 1
+                  ELSE
+C                    2-EME PASSAGE
+                     GOTO 45
+                  ENDIF
+               ENDIF
+               GOTO 30
+C           FIN DE BOUCLE CIRCULAIRE SUR LES ARETES
+C           ( ARRIVEE CORRECTE EN 50 )
+C
+C           PAS D'ARETE SUIVANTE => ERREUR
+ 45         NBLGRC(NRERR) = 3
+            IF( LANGAG .EQ. 0 ) THEN
+               KERR(1)='LIGNE NON FERMEE: ' // KNOMLG
+               KERR(2)='Au MOINS UN SOMMET N''APPARTIENT PAS a 2 ARETES'
+      KERR(3)='OU la LIGNE est l''UNION de PLUSIEURS LIGNES FERMEES a SE
+     %PARER'
+            ELSE
+               KERR(1)='NOT CLOSED LINE: ' // KNOMLG
+               KERR(2)='At LEAST A VERTEX DO NOT BELONG TO 2 EDGES'
+       KERR(3)='OR the LINE is an UNION of SEVERAL CLOSED LINES to be SE
+     %PARATED'
+            ENDIF
+            CALL LEREUR
+            IERR = 8
+            GOTO 100
+
+C
+C           L'ARETE PRECEDENTE EST DOTEE DE SA SUIVANTE:CELLE CREE ENSUITE
+C           LES 2 COORDONNEES DU SOMMET DE LA LIGNE
+ 50         MNC2   = MNSOLI + WYZSOM + 3 * NS1 - 3
+            NBSOML = NBSOML + 1
+C           LE POINT NBSOML EN COORDONNEES 3D
+            XYZD(1) = RMCN( MNC2   )
+            XYZD(2) = RMCN( MNC2+1 )
+            XYZD(3) = RMCN( MNC2+2 )
+C           PASSAGE DES COORDONNEES 3D AUX COORDONNEES PLANES
+            CALL CH3DDD( ORIGIN, D2D3, XYZD, DMCN(MNDP) )
+            MNDP = MNDP + 3
+C
+C           L'ARETE NBSOML A POUR SOMMETS NBSOML ET NBSOML+1
+            IF( I .NE. NBARLI ) THEN
+C              NBSOML + 1 EST LE 2-EME SOMMET DE L'ARETE
+               NN = NBSOML + 1
+            ELSE
+C              LE 2-EME SOMMET DE LA DERNIERE ARETE EST LE PREMIER SOMMET DE LA
+               NN = NBSOM0
+            ENDIF
+            CALL FASOAR( NBSOML, NN,    -1,    -1,   N,
+     %                   MOSOAR, MXSOAR, N1SOAR, MCN(MNSOAR),
+     %                   MCN(MNARST),  NOAR, IERR )
+C           PAS DE TEST SUR IERR CAR PAS DE SATURATION POSSIBLE A CE NIVEAU
+C
+C           CHAINAGE DES ARETES FRONTALIERES EN POSITION 6 DU TABLEAU NOSOAR
+C           LA NOUVELLE ARETE EST LA SUIVANTE DE L'ARETE DEFINIE JUSTE AVANT
+            MCN( MNSOAR - MOSOAR + MOSOAR * NOAR0 + 5 ) = NOAR
+            NOAR0 = NOAR
+C
+C           LE NUMERO DE LA LIGNE ET SON NUMERO DANS LA LIGNE
+            MCN(MNSLIG-1+NBSOML) = 1 000 000 * N + NS1
+C
+C           CALCUL DU PERIMETRE DE LA LIGNE ENVELOPPE DANS R**3
+            IF( N .EQ. 1 ) THEN
+               PERMT2 = PERMT2 + SQRT( (RMCN(MNC2)  -RMCN(MNC1)  )**2
+     %                               + (RMCN(MNC2+1)-RMCN(MNC1+1))**2
+     %                               + (RMCN(MNC2+2)-RMCN(MNC1+2))**2 )
+               MNC1 = MNC2
+            ENDIF
+ 70      ENDDO
+C
+C        PAS D'ARETE SUIVANTE.LE DERNIER SOMMET EST IL LE PREMIER?
+         IF( NS2 .NE. NS0 ) THEN
+            NBLGRC(NRERR) = 2
+            IF( LANGAG .EQ. 0 ) THEN
+               KERR(1)='LIGNE NON FERMEE: ' // KNOMLG
+               KERR(2)='AU MOINS UN SOMMET N''APPARTIENT PAS A 2 ARETES'
+            ELSE
+               KERR(1)='NOT CLOSED LINE: ' // KNOMLG
+               KERR(2)='AT LEAST A VERTEX DO NOT BELONG TO 2 EDGES'
+            ENDIF
+            CALL LEREUR
+            IERR = 8
+            GOTO 100
+         ENDIF
+C
+C        ICI  LA COURBE SE REFERME
+C        ATTENTION: LA DERNIERE ARETE DE LA LIGNE FERMEE ENVELOPPE
+C                   DEVIENT EN FAIT LA PREMIERE ARETE DE CETTE LIGNE
+C                   DANS LE CHAINAGE DES ARETES DE LA FRONTIERE!
+         IF( N .EQ. 1 ) THEN
+            NBSOL1 = NBSOML
+C           LA LONGUEUR DE LA DERNIERE ARETE DE LA LIGNE ENVELOPPE
+            PERMT2 = PERMT2 + SQRT( (RMCN(MNC0)  -RMCN(MNC1)  )**2
+     %                            + (RMCN(MNC0+1)-RMCN(MNC1+1))**2
+     %                            + (RMCN(MNC0+2)-RMCN(MNC1+2))**2 )
+         ENDIF
+C
+ 100  ENDDO
+      IF( IERR .NE. 0 ) GOTO 9999
+C
+C     CHAINAGE DES ARETES FRONTALIERES : LA DERNIERE ARETE FRONTALIERE
+      MCN( MNSOAR - MOSOAR + MOSOAR * NOAR + 5 ) = 0
+C
+      IF( NBSOML .NE. NBARFR ) THEN
+C        ERREUR: AU MOINS UN POINT EST MULTIPLE
+         NBLGRC(NRERR) = 1
+         IF( LANGAG .EQ. 0 ) THEN
+            KERR(1)='ERREUR: UN SOMMET FRONTALIER MULTIPLE'
+         ELSE
+            KERR(1)='ERROR: A MULTIPLE BOUNDARY VERTEX'
+         ENDIF
+         CALL LEREUR
+         IERR = 15
+         GOTO 9999
+      ENDIF
+C
+C     TOUS LES SOMMETS ET ARETES FRONTALIERS SONT NUMEROTES DE 1 A NBARFR
+C     RESERVATION DU TABLEAU DES NUMEROS DES 3 ARETES DE CHAQUE TRIANGLE
+C     NOARTR( MOARTR, MXARTR )
+      MOARTR = 3
+C     NOMBRE DE TRIANGLES = 2 ( NOMBRE DE SOMMETS - 1 + NOMBRE DE TROUS )
+      MXARTR = 2 * ( MXSOMM + MXTROU )
+      CALL TNMCDC( 'ENTIER', MOARTR*MXARTR, MNARTR )
+C
+C     ==========================================================
+C     GENERATION D'UN ARBRE RECOUVRANT DE TRIANGLES EQUILATERAUX
+C     TRIANGULATION DES TE FEUILLES AVEC LES POINTS INTERNES
+C     PUIS, AMELIORATION DE LA QUALITE DE LA TRIANGULATION
+C     ==========================================================
+      CALL TEABR4( NOFOTI, NUTYSU, ARETMX, PERMT2, MXSOMM,
+     %             NBLFTR, LADEFI(WULFTR), MCN(MNDALF),
+     %             NBPTIT, LADEFI(WULFTR+NBLFTR),
+     %             RADEFI(WULFTR+NBLFTR+NBPTIT), NBARFR,
+     %             MOSOAR, MXSOAR, N1SOAR, MCN(MNSOAR),
+     %             MOARTR, MXARTR, N1ARTR, MCN(MNARTR),
+     %             RMCN(MNPXYD), MCN(MNARST), MCN(MNSLIG),
+     %             NBSOMM, NBSOM1, NBTRIA, NDTRIA,
+     %             ORIGIN, D2D3, XMIN, YMIN, XYMXMI,
+     %             IERR )
+CCC
+CCC      IF( IERR .EQ. 1 .OR. IERR .EQ. 2 ) THEN
+CCC      IERR.EQ.2 ABANDON CAR 1 ARETE APPARTIENT
+CCC      A PLUS DE 2 TRIANGLES => IERR=2 DANS FASOAR
+CCC
+      IF( IERR .GT. 50 ) THEN
+
+C        SATURATION DES SOMMETS => REDEPART AVEC 2 FOIS PLUS DE SOMMETS
+         NBSATXYD = NBSATXYD + 1
+         WRITE(IMPRIM,*)
+         WRITE(IMPRIM,*) '%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%'
+         IF( LANGAG .EQ. 0 ) THEN
+            WRITE(IMPRIM,*) 'SUEX09: TROP de SOMMETS GENERES'
+          WRITE(IMPRIM,*)'MODIFIEZ votre LONGUEUR des ARETES par DEFAUT'
+            WRITE(IMPRIM,*) 'ou VOTRE fonction TAILLE_IDEALE(x,y,z)'
+         ELSE
+            WRITE(IMPRIM,*) 'SUEX09: TOO MUCH CREATED VERTICES'
+            WRITE(IMPRIM,*) 'MODIFY your EDGE LENGTH value by DEFAULT'
+            WRITE(IMPRIM,*) 'or YOUR function EDGE_LENGTH(x,y,z)'
+         ENDIF
+         WRITE(IMPRIM,*) '%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%'
+         WRITE(IMPRIM,*)
+
+         IF( MNARST.GT.0 ) CALL TNMCDS( 'ENTIER', MXSOMM  , MNARST )
+         IF( MNARTR.GT.0 ) CALL TNMCDS( 'ENTIER', MOARTR*MXARTR, MNARTR)
+         IF( MNSOAR.GT.0 ) CALL TNMCDS( 'ENTIER', MOSOAR*MXSOAR, MNSOAR)
+         IF( MNSLIG.GT.0 ) CALL TNMCDS( 'ENTIER', MXSOMM, MNSLIG )
+         IF( MNEFLI.GT.0 ) CALL TNMCDS( 'ENTIER', 2*NBLFTR, MNEFLI )
+         IF( MNPXYD.GT.0 ) CALL TNMCDS( 'REEL2',  3*MXSOMM, MNPXYD )
+
+         IF( NBSATXYD .EQ. 3 ) GOTO 9999
+
+C        REDEPART AVEC 2 FOIS PLUS DE SOMMETS
+         MXSOMM = 2 * MXSOMM
+         IERR   = 0
+         GOTO 25
+      ELSE IF( IERR .NE. 0 ) THEN
+         NBLGRC(NRERR) = 1
+         IF( LANGAG .EQ. 0 ) THEN
+            KERR(1) = 'TRIANGULATION NON REALISEE'
+         ELSE
+            KERR(1) = 'TRIANGULATION NOT CREATED'
+         ENDIF
+         CALL LEREUR
+         GOTO 9999
+      ENDIF
+C
+C     GENERATION DU TABLEAU 'XYZSOMMET' DE LA SURFACE TRIANGULEE
+C     ----------------------------------------------------------
+      CALL LXTSOU( NTLXSU, 'XYZSOMMET', NTSOFA, MNSOFA )
+      IF( NTSOFA .GT. 0 ) THEN
+         CALL LXTSDS( NTLXSU, 'XYZSOMMET' )
+      ENDIF
+      CALL LXTNDC( NTLXSU, 'XYZSOMMET','MOTS',WYZSOM+3*(NBSOM1+NBTGLG) )
+      CALL LXTSOU( NTLXSU, 'XYZSOMMET', NTSOFA, MNSOFA )
+C     LE NOMBRE DE SOMMETS DE LA SURFACE TRIANGULEE
+      MCN( MNSOFA + WNBSOM ) = NBSOM1
+C     LE NOMBRE DE TANGENTES DE LA TRIANGULATION = TG DES LIGNES DU CONTOUR
+      MCN( MNSOFA + WNBTGS ) = NBTGLG
+C     LE NOMBRE DE COORDONNEES D'UN SOMMET
+      MCN( MNSOFA + WBCOOR ) = 3
+C
+C     LES COORDONNEES DES SOMMETS DES TRIANGLES DE LA SURFACE
+      MNS = MNSOFA + WYZSOM
+      MNC = (MNPXYD+1)/2
+C
+      DO I=1,NBSOMM
+         IF( MCN(MNARST-1+I) .GT. 0 ) THEN
+C           LE POINT I EST UN SOMMET D'UN TRIANGLE
+C           REMISE A L'ECHELLE INVERSE DANS LE PLAN
+            XYZ(1) = REAL( DMCN(MNC) )
+            XYZ(1) = ECHMIS( XYZ(1), XMIN, XYMXMI )
+            XYZ(2) = REAL( DMCN(MNC+1) )
+            XYZ(2) = ECHMIS( XYZ(2), YMIN, XYMXMI )
+C           RETOUR AU REPERE 3D
+            CALL CH2D3D( ORIGIN, D2D3, XYZ, RMCN(MNS) )
+C
+C           SI LE SOMMET EST UN POINT OU APPARTIENT A UNE LIGNE
+C           SES COORDONNEES INITIALES SONT RESTAUREES
+            N = MCN( MNSLIG - 1 + I )
+            IF( N .GT. 0 ) THEN
+               IF( N .GE. 1 000 000 ) THEN
+C                 SOMMET D'UNE LIGNE
+C                 RETOUR AUX COORDONNEES INITIALES
+                  L = N / 1 000 000
+                  N = N - 1 000 000 * L
+C                 LE NUMERO DE LA LIGNE FERMEE
+                  NL = LADEFI( WULFTR - 1 + L )
+C                 LE TABLEAU XYZSOMMET DE CETTE LIGNE
+                  CALL LXNLOU( NTLIGN, NL, NTLXLF, MNLXLF )
+                  CALL LXTSOU( NTLXLF, 'XYZSOMMET', NTSOML, MNSOLI )
+                  MN = MNSOLI + WYZSOM + 3 * N - 3
+               ELSE
+C                 POINT UTILISATEUR N INTERNE IMPOSE
+C                 RETOUR AUX COORDONNEES INITIALES
+C                 LE TABLEAU XYZSOMMET DE CE POINT
+                  CALL LXNLOU( NTPOIN, N, NTLXLF, MNLXLF )
+                  CALL LXTSOU( NTLXLF, 'XYZSOMMET', NTSOML, MNSOLI )
+                  MN = MNSOLI + WYZSOM
+               ENDIF
+C              RESTAURATION DES COORDONNEES INITIALES
+               RMCN( MNS     ) = RMCN( MN )
+               RMCN( MNS + 1 ) = RMCN( MN + 1 )
+               RMCN( MNS + 2 ) = RMCN( MN + 2 )
+            ENDIF
+            MNS = MNS + 3
+         ENDIF
+         MNC = MNC + 3
+      ENDDO
+C
+C     AJOUT DANS L'ORDRE DES LIGNES DES 3 COMPOSANTES DES TANGENTES
+      CALL TNMCDC( 'ENTIER', NBLFTR+1, MNDTGL )
+      MCN(MNDTGL) = 0
+      NBTGLG = 0
+      DO N=1,NBLFTR
+C        LE TABLEAU XYZSOMMET DE CETTE LIGNE
+         MNSOLI = MCN(MNXYLI-1+N)
+C        LE NOMBRE DE TANGENTES DE LA LIGNE
+         NBTGSL = MCN(MNSOLI+WNBTGS)
+         IF( NBTGSL .GT. 0 ) THEN
+C           LE DECALAGE POUR ATTEINDRE LES COMPOSANTES DES TGS
+            NBSOML = MCN(MNSOLI+WNBSOM)
+            MNC    = MNSOLI + WYZSOM + 3 * NBSOML
+C           COPIE DES TANGENTES DANS LE MEME ORDRE
+            CALL TRTATA( MCN(MNC), MCN(MNS), 3*NBTGSL )
+            MNS = MNS + 3*NBTGSL
+         ENDIF
+C        LE NUMERO DE LA DERNIERE TANGENTE DE LA LIGNE N
+         NBTGLG = NBTGLG + MCN( MNSOLI + WNBTGS )
+         MCN(MNDTGL+N) = NBTGLG
+      ENDDO
+C
+C     LA DATE DE CREATION DU TMS XYZSOMMET
+      CALL ECDATE( MCN(MNSOFA) )
+C     LE NUMERO DU TABLEAU DESCRIPTEUR
+      MCN( MNSOFA + MOTVAR(6) ) = NONMTD( '~>>>XYZSOMMET' )
+C
+C     GENERATION DU TABLEAU 'NSEF' DE LA SURFACE TRIANGULEE
+C     -----------------------------------------------------
+      CALL LXTSOU( NTLXSU, 'NSEF', NTFASU, MNFASU )
+      IF( NTFASU .GT. 0 ) THEN
+         CALL LXTSDS( NTLXSU, 'NSEF' )
+      ENDIF
+      IF( NBTGLG .EQ. 0 .OR. NBARTG .EQ. 0 ) THEN
+C        PAS DE TG STOCKEES
+         NBTGEF = 0
+         NBEFTG = 0
+         NBEFAP = 0
+      ELSE
+C        AU MOINS UNE ARETE AVEC TG => 8 PAR TRIANGLE=QUADRANGLE!
+         NBTGEF = 8
+C        COMME UN EF PEUT AVOIR PLUSIEURS ARETES A TANGENTES
+C        NBEFTG EST POUR L'INSTANT SURESTIME
+         NBEFTG = NBARTG
+         NBEFAP = NBTRIA
+      ENDIF
+C     LE NOMBRE DE MOTS DU TMS 'NSEF'
+      I = WUSOEF + 4*NBTRIA + NBEFAP + NBEFTG*(1+NBTGEF)
+      CALL LXTNDC( NTLXSU, 'NSEF', 'MOTS', I )
+      CALL LXTSOU( NTLXSU, 'NSEF', NTFASU, MNFASU )
+C
+C     MISE A JOUR DU TABLEAU 'NSEF' DE CETTE SURFACE
+C     TYPE DE L'OBJET : SURFACE
+      MCN ( MNFASU + WUTYOB ) = 3
+C     SURFACE NON FERMEE
+      MCN ( MNFASU + WUTFMA ) = 0
+C     LE NOMBRE DE SOMMETS PAR FACE
+      MCN ( MNFASU + WBSOEF ) = 4
+C     LE NOMBRE DE TANGENTES STOCKEES PAR EF : SURFACE C1 OU C0
+      MCN ( MNFASU + WBTGEF ) = NBTGEF
+C     LE NOMBRE D'EF DE LA SURFACE
+      MCN ( MNFASU + WBEFOB ) = NBTRIA
+C     LE NOMBRE D'EF AVEC TANGENTES DE LA SURFACE EST PEUT ETRE SURESTIME
+C     POUR L'INSTANT => INITIALISATION PLUS TARD
+C     LE NOMBRE D'EF AVEC POINTEUR SUR LES EF A TG DE LA SURFACE
+      MCN ( MNFASU + WBEFAP ) = NBEFAP
+C     NUMERO DU TYPE DU MAILLAGE : MAILLAGE NON STRUCTURE
+      MCN( MNFASU + WUTYMA ) = 0
+C
+C     LE NUMERO DES 3 SOMMETS DES TRIANGLES
+      CALL AZEROI( 8, NOTG )
+      NBEFT  = 0
+      MNS    = MNFASU + WUSOEF
+      MNEFAP = MNS + 4 * NBTRIA
+      MNTG   = MNEFAP + NBEFAP + NBEFTG
+      MNC    = MNARTR - MOARTR
+C
+C     BOUCLE SUR LES TRIANGLES OCCUPES (INTERNES ET EXTERNES)
+      DO I=1,MXARTR
+C
+C        LE TRIANGLE I DE NOARTR EST IL INTERNE?
+         MNC = MNC + MOARTR
+         IF( MCN(MNC) .NE. 0 ) THEN
+C
+C           LE TRIANGLE I EST INTERNE => NOSOTR NUMERO DE SES 3 SOMMETS
+            CALL NUSOTR( I, MOSOAR, MCN(MNSOAR), MOARTR, MCN(MNARTR),
+     %                   NOSOTR )
+
+C           LE NOUVEAU NUMERO DE POINT INTERNE DES TRIANGLES INTERNES
+            DO K=1,3
+               NEWNP = MCN( MNARST - 1 + NOSOTR(K) )
+               IF( NEWNP .LE. 0 ) THEN
+                  PRINT *,'SUEX09: PB SOMMET NEWNP=',NEWNP,'<=0, I=',I,
+     %                    ' NOSOTR=',NOSOTR
+               ENDIF
+               MCN( MNS - 1 + K ) = NEWNP
+            ENDDO
+            MCN( MNS + 3 ) = 0
+C
+            IF( NBTGEF .EQ. 0 ) GOTO 5900
+C
+C           TRAITEMENT DES EVENTUELLES TANGENTES DU TRIANGLE I
+C           --------------------------------------------------
+            DO K=1,3
+C              LE NUMERO DE LIGNE DU SOMMET K DU TRIANGLE
+               NOLIGN(K) = MCN( MNSLIG - 1 + NOSOTR(K) )
+            ENDDO
+C           POUR EVITER LES TESTS MODULO 3
+            NOLIGN(4) = NOLIGN(1)
+            NTG = 0
+C
+            DO 5120 K=1,3
+               IF( NOLIGN(K)   .EQ. 0 ) GOTO 5120
+               IF( NOLIGN(K+1) .EQ. 0 ) GOTO 5120
+C              DECODAGE DU NUMERO DE LIGNE ET DE SOMMETS
+C              DANS LA LIGNE DU SOMMET K DU TRIANGLE
+               IF( NOLIGN(K)   .LT. 1 000 000 ) GOTO 5120
+               IF( NOLIGN(K+1) .LT. 1 000 000 ) GOTO 5120
+C              SOMMET D'UNE LIGNE
+               N   = NOLIGN(K)
+               L   = N / 1 000 000
+               NS1 = N - 1 000 000 * L
+               N   = NOLIGN(K+1)
+               LL  = N / 1 000 000
+               NS2 = N - 1 000 000 * LL
+               IF( L .NE. LL ) GOTO 5120
+C              RECHERCHE DU NUMERO DE CETTE ARETE DE SOMMETS (NS1,NS2)
+C              DANS LA LIGNE L FERMEE DONC NON STRUCTUREE MAIS ORDONNEE
+               MNARLI = MCN(MNEFLI-1+L)
+C              SI LIGNE SANS TG, PASSAGE A L'ARETE SUIVANTE
+               IF( MCN(MNARLI+WBEFTG) .LE. 0 ) GOTO 5120
+C              NOMBRE D'ARETES DE LA LIGNE
+               NBARLI = MCN(MNARLI+WBEFOB)
+C              TENTATIVE D'ACCELERATION DE LA RECHERCHE
+               NBPAS = 0
+               N     = MIN(NS1,NS2)
+               MN    = MNARLI + WUSOEF + 2 * N - 2
+ 5110          IF(( MCN(MN) .EQ. NS1 .AND. MCN(MN+1) .EQ. NS2 ) .OR.
+     %            ( MCN(MN) .EQ. NS2 .AND. MCN(MN+1) .EQ. NS1 )) THEN
+C                 ARETE RETROUVEE
+                  MNA    = MNARLI + WUSOEF + 2*NBARLI
+                  NUEFTG = MCN( MNA -1 + N )
+                  IF( NUEFTG .LE. 0 ) GOTO 5120
+C                 NUMERO DES TANGENTES DANS LE TRIANGLE
+                  N1 = 2 * K - 1
+                  N2 = N1 + 3
+                  IF( N2 .GT. 6 ) N2 = 2
+C                 LE NUMERO DE LA DERNIERE TANGENTE DE LA LIGNE QUI PRECEDE
+                  LL = MCN(MNDTGL-1+L)
+C                 LE NUMERO DES 2 TANGENTES DE L'ARETE
+                  NTG1 = MNA + MCN(MNARLI+WBEFAP) + MCN(MNARLI+WBEFTG)
+     %                 + 2 * NUEFTG - 2
+                  NTG2 = MCN( NTG1 + 1 )
+                  NTG1 = MCN( NTG1 )
+                  IF( NTG1 .GT. 0 ) THEN
+                     NTG1 = NTG1 + LL
+                  ELSE
+                     NTG1 = NTG1 - LL
+                  ENDIF
+                  IF( NTG2 .GT. 0 ) THEN
+                     NTG2 = NTG2 + LL
+                  ELSE
+                     NTG2 = NTG2 - LL
+                  ENDIF
+                  IF( MCN(MN) .EQ. NS2 ) THEN
+C                    SENS INDIRECT RECTIFI'E
+                     LL   = NTG1
+                     NTG1 = NTG2
+                     NTG2 = LL
+                  ENDIF
+                  NOTG(N1) = NTG1
+                  NOTG(N2) = NTG2
+                  NTG = NTG + 2
+               ELSE
+C                 ARETE SUIVANTE
+                  N  = N + 1
+                  IF( N .GT. NBARLI ) THEN
+                     IF( NBPAS .EQ. 0 ) THEN
+C                       IL FAUT TESTER TOUTES LES ARETES DE LA LIGNE!
+                        MN = MNARLI + WUSOEF
+                        N  = 1
+C                       COMPTEUR POUR ARRETER L'ITERATION DE RECHERCHE
+                        NBPAS = NBPAS + 1
+                     ELSE
+C                       L'ARETE NS1-NS2 N'EST PAS UNE ARETE DE LA LIGNE L
+                        GOTO 5120
+                     ENDIF
+                  ELSE
+                     MN = MN + 2
+                  ENDIF
+                  GOTO 5110
+               ENDIF
+ 5120       ENDDO
+C           STOCKAGE DES TANGENTES
+            IF( NTG .GT. 0 ) THEN
+C              NOMBRE REEL D'EF A TG (1EF PEUT AVOIR PLUSIEURS ARETES A TG)
+               NBEFT = NBEFT + 1
+C              LE NUMERO DE L'EF A TG
+               MCN(MNEFAP) = NBEFT
+C              COPIE DES 8 NUMEROS DE TANGENTES
+               CALL TRTATA( NOTG, MCN(MNTG), 8 )
+               MNTG = MNTG + 8
+C              REMISE A ZERO
+               CALL AZEROI( 8, NOTG )
+            ELSE
+               MCN(MNEFAP) = 0
+            ENDIF
+            MNEFAP = MNEFAP + 1
+C
+C           LE TRIANGLE SUIVANT
+ 5900       MNS = MNS + 4
+         ENDIF
+
+      ENDDO
+C
+C     TRANSLATION DES NUMEROS DES TG SI NBEFTG DECLARE TROP FORT
+      K = NBEFTG - NBEFT
+      IF( K .GT. 0 ) THEN
+C        TRANSLATION DES NUMEROS DES TANGENTES
+         MNTG = MNTG - 8*NBEFT
+         DO MN=MNTG,MNTG+8*NBEFT-1
+            MCN(MN-K) = MCN(MN)
+         ENDDO
+      ENDIF
+C
+C     CODE GEOMETRIQUE = 0 P3
+      DO MN=MNEFAP,MNEFAP+NBEFT-1
+         MCN(MN) = 0
+      ENDDO
+C
+C     MISE A JOUR DES VARIABLES
+C     LE NOMBRE D'EF AVEC TANGENTES DE LA SURFACE
+      MCN ( MNFASU + WBEFTG ) = NBEFT
+C     LA DATE DE CREATION
+      CALL ECDATE( MCN(MNFASU) )
+C     LE NUMERO DU TABLEAU DESCRIPTEUR
+      MCN( MNFASU + MOTVAR(6) ) = NONMTD( '~>>>NSEF' )
+C
+      IF( K .GT. 0 ) THEN
+C        LE NOMBRE REEL DE MOTS DU TMS 'NSEF'
+         I = WUSOEF + 4*NBTRIA + NBTRIA + NBEFT*(1+NBTGEF)
+C        LE TMS EST RACCOURCI
+         CALL TAMSRA( NTFASU, I )
+         CALL TAMSOU( NTFASU, MNFASU )
+      ENDIF
+C
+CCCC     SUPPRESSION DES TANGENTES DOUBLES DEJA FAITE AU NIVEAU DES LIGNES
+CCC      IF( NBTGEF .GT. 0 ) THEN
+CCC         CALL MOINTG( NTFASU, MNFASU, NTSOFA, MNSOFA, IERR )
+CCC      ENDIF
+C
+C     DESTRUCTION DES TABLEAUX AUXILIAIRES
+C     ------------------------------------
+ 9999 IF( MNDTGL.GT.0 ) CALL TNMCDS( 'ENTIER', NBLFTR+1, MNDTGL )
+      IF( MNARST.GT.0 ) CALL TNMCDS( 'ENTIER', MXSOMM  , MNARST )
+      IF( MNARTR.GT.0 ) CALL TNMCDS( 'ENTIER', MOARTR*MXARTR, MNARTR )
+      IF( MNSOAR.GT.0 ) CALL TNMCDS( 'ENTIER', MOSOAR*MXSOAR, MNSOAR )
+      IF( MNSLIG.GT.0 ) CALL TNMCDS( 'ENTIER', MXSOMM,   MNSLIG )
+      IF( MNEFLI.GT.0 ) CALL TNMCDS( 'ENTIER', 2*NBLFTR, MNEFLI )
+      IF( MNPXYD.GT.0 ) CALL TNMCDS( 'REEL2',  3*MXSOMM, MNPXYD )
+      IF( MNDALF.GT.0 ) CALL TNMCDS( 'ENTIER', NBLFTR  , MNDALF )
+
+      RETURN
+      END

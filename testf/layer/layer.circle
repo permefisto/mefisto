@@ -1,0 +1,41 @@
+{ ====================================================================== }
+{ Software MEFISTO     : Version September 2006                          }
+{ USER's Name          : Alain Perronnet                                 }
+{ Project Name         : layer                                           }
+{ Date                 : 25/09/2006                                      }
+{ ====================================================================== }
+@;
+@;
+
+1; 1;
+c; i; 1;  0;  0; 0;
+a; i; 1; 10;  0; 0;
+b; i; 1;  0; 10; 0;
+@;
+@;
+2;
+circle; i;
+8;  {COMPLETE 3D CIRCLE}
+20; {number of edges of the line}
+2;  {circle defined by centre, point on the circle, point of the plane}
+c;  {name of the point of the centre}
+a;  {name of the point on the circle}
+b;  {name of the point to define the plane of the circle}
+@;
+@;
+3;  {surface}
+ layer; i;
+ 16;     {MAGNIFYING OF A CLOSED LINE INTO LAYERS}
+ circle; {name of the line to be magnify}
+ 5;      {number of first boundary layers}
+ 0.2;    {thickness of ONE first boundary layer}
+ 3;      {number of LAST layers}
+ 3.0;    {thickness of the LAST boundary layer}
+@;
+
+
+10; {DRAWING}
+  8; LAYER; {SURFACE}
+ 90;
+
+CLOSE;

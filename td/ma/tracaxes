@@ -1,0 +1,5 @@
+variable TRACAXES 'Drawing of REFERENCE SYSTEM AXES' entier  
+ (  0 : 'NO drawing of AXES'
+ ,  1 : 'Drawing of a SMALL REFERENCE SYSTEM'
+ ,  2 : 'Drawing of X //Y Z'
+ ,  3 : 'Drawing of X Y Z //X //Y' ) ;

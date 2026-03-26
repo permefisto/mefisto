@@ -1,0 +1,98 @@
+      SUBROUTINE TV1LAG( NBJEUX, JEU,    NODL,   NODLIB,
+     &                   NBPOLY, NPI,    POLY,
+     &                   NOOBLA, NUMILI, NUMALI, LTDELI,
+     &                   F,      POIDEL,
+     &                   UG,     EXPOSANT,
+     &                   VE )
+C ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+C BUT :    CALCUL du VECTEUR ELEMENTAIRE de
+C -----    INTEGRALE t[P(X)] COEF TEMP ([P(X)]{Ue})**EXPOSANT dX
+C          sur l'EF LAGRANGE 1D
+C
+C ENTREES:
+C --------
+C NBJEUX : NOMBRE DE JEUX DE DONNEES
+C JEU    : NUMERO DU JEU  DE DONNEES POUR CE CALCUL DE LA MATRICE ELEMENTAIRE
+C X      : LA COORDONNEE DES NBPOLY POINTS DE L'ELEMENT FINI
+C NODL   : NUMERO DE DEGRE DE LIBERTE GLOBAL DES NBPOLY DL LOCAUX
+C NODLIB : NODLIB(I) = NUMERO DU DEGRE DE LIBERTE S'IL EST LIBRE
+C                     -INDICE DANS LA LISTE DES DL BLOQUES S'IL EST BLOQUE
+C
+C NBPOLY : NOMBRE DE POLYNOMES DE L'ELEMENT FINI
+C NPI    : NOMBRE DE POINTS D INTEGRATION NUMERIQUE DANS L'EF
+C POIDS  : LES NPI POIDS DE LA FORMULE D INTEGRATION
+C POLY   : VALEUR DES POLYNOMES DE BASE AUX POINTS D'INTEGRATION
+C          POLY(I,L)= P(I) (XL)
+C NOOBLA : NUMERO DE L'OBJET LIGNE DE CET ELEMENT FINI
+C NUMILI : NUMERO MINIMAL DES OBJETS LIGNES
+C NUMALI : NUMERO MAXIMAL DES OBJETS LIGNES
+C LTDELI : TABLEAU DES ADRESSES DU TABLEAU DES DONNEES CONDUCTIVITE DES LIGNES
+C
+C F1     : COORDONNEES XX DES NPI POINTS D INTEGRATION DE L ELEMENT FINI
+C F2     : COORDONNEES YY DES NPI POINTS D INTEGRATION DE L ELEMENT FINI
+C POIDEL : DELTA * POIDS(NPI) DES NPI POINTS D INTEGRATION
+C UG     : VECTEUR SOLUTION A ELEVER A LA PUISSANCE EXPOSANT
+C EXPOSANT:ENTIER EXPOSANT DE Ue
+C
+C SORTIE :
+C --------
+C VE     : VECTEUR ELEMENTAIRE du TERME
+C          INTEGRALE t[P(X)] COEF TEMP ([P(X)]{Ue})**EXPOSANT dX sur l'EF
+C ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+C AUTEUR : ALAIN PERRONNET St PIERRE DU PERRAY & LJLL UPMC  FEVRIER 2010
+C23456---------------------------------------------------------------012
+      include"./incl/donthe.inc"
+      include"./incl/cthet.inc"
+C
+      DOUBLE PRECISION POLY(NBPOLY,NPI),
+     %                 F(NPI),POIDEL(NPI), UG(*), VE(NBPOLY)
+      INTEGER          LTDELI( 1:MXDOTH, 1:NBJEUX, NUMILI:NUMALI )
+      INTEGER          EXPOSANT, NODL(NBPOLY), NODLIB(*)
+      DOUBLE PRECISION XYZPI(3), COEFTE, UEL
+C
+      DO I=1,NBPOLY
+         VE(I) = 0D0
+      ENDDO
+C
+C     =========================================================
+C     CONTRIBUTION DE LA LIGNE AU COEFFICIENT DE LA TEMPERATURE
+C     =========================================================
+      IF( LTDELI(LPCOET,JEU,NOOBLA) .GT. 0 ) THEN
+C
+         DO L=1,NPI
+C
+C           CALCUL DE LA SOLUTION AU POINT D'INTEGRATION L
+            UEL = 0D0
+            DO I = 1, NBPOLY
+C              NUMERO DU DL DANS LE MAILLAGE
+               NDL = NODL(I)
+C              NUMERO DU DL DANS LA NUMEROTATION DES DEGRES DE LIBERTE NON FIXES
+C              ATTENTION: LES AUTRES DL FIXES SONT SUPPOSES NULS
+               NDLL = NODLIB( NDL )
+               IF( NDLL .GT. 0 ) THEN
+                  UEL = UEL + POLY(I,L) * UG( NDLL )
+               ENDIF
+            ENDDO
+            TEMPEL = UEL
+C
+C           RECHERCHE DU COEFFICIENT DE LA TEMPERATURE AU POINT D'INTEGRATION L
+            XYZPI(1) = F(L)
+            XYZPI(2) = 0D0
+            XYZPI(3) = 0D0
+            CALL RECOET( 2, NOOBLA, 3, XYZPI,
+     %                   LTDELI(LPCOET,JEU,NOOBLA), COEFTE )
+C
+C           COEF TEMPERATURE = COEFTE * DELTA * POIDS
+            COEFTE = COEFTE * POIDEL(L)
+C
+C           CONTRIBUTION A L'INTEGRALE DE
+C           (  t[Pol(bl] COEFTEMP ([Pol(bl]{ue})**EXPOSANT  )
+            DO I=1,NBPOLY
+               VE(I) = VE(I) + POLY(I,L) * COEFTE * ( UEL**EXPOSANT )
+            ENDDO
+C
+         ENDDO
+      ENDIF
+C
+      RETURN
+      END

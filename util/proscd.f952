@@ -1,0 +1,55 @@
+DOUBLE PRECISION FUNCTION PROSCD( V1, V2, N )
+!++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+! BUT : PRODUIT SCALAIRE DE 2 VECTEURS V1 V2 REELS DOUBLE PRECISION
+! ----- DE N COMPOSANTES AVEC NBTHREAD THREADS
+!       V1 et V2 SONT DANS LA MEMOIRE PARTAGEE A TOUS LES THREADS
+! ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+! AUTEURS: Philippe PARNAUDEAU  LJLL UPMC Paris             Octobre 2012
+!          Alain    PERRONNET   LJLL UPMC Paris & St Pierre du Perray
+!.......................................................................
+!$ USE OMP_LIB
+   IMPLICIT  NONE
+   include"./incl/threads.inc"
+   INTEGER           N, K
+   INTEGER :: ISTART, IEND, CHUNKSIZE, MYTHREAD
+   DOUBLE PRECISION  V1(N), V2(N), PS, S
+
+      PS = 0.d0
+
+      IF( N .LE. 0 ) GOTO 9999
+
+      IF( N .LE. MININDSTHR .OR. N .LE. NBTHREADS*MININD1THR ) THEN
+
+         !EXECUTION AVEC UN SEUL THREAD
+         DO K = 1, N
+            PS = PS + V1(K) * V2(K)
+         ENDDO
+
+      ELSE
+
+!///////////////////////////////////////////////////////////////////////
+!EXECUTION AVEC NBTHREADS
+         CHUNKSIZE = N/NBTHREADS
+!$OMP PARALLEL PRIVATE(K,S,ISTART,IEND) SHARED(N,V1,V2,PS)
+!$OMP SINGLE
+         PS = 0.d0
+!$OMP END SINGLE
+         ISTART = (MYTHREAD-1)*CHUNKSIZE+1
+         IEND   = MYTHREAD*CHUNKSIZE
+         IF (MYTHREAD == NBTHREADS) IEND = N
+!$OMP DO SCHEDULE( STATIC, CHUNKSIZE ) REDUCTION(+:PS)
+         DO K = ISTART, IEND
+            S = V1(K) * V2(K)
+            PS = PS + S
+         ENDDO
+!$OMP END DO
+!$OMP END PARALLEL
+!///////////////////////////////////////////////////////////////////////
+
+      ENDIF
+
+ 9999 PROSCD = PS
+!     print *,'PROSCD: (V1,V2)=',PROSCD,' pour',N,' composantes'
+
+      RETURN
+END FUNCTION PROSCD

@@ -1,0 +1,77 @@
+      SUBROUTINE VOLU2T3T( NS1, NS2, NOSOTR, PTXYZD, NONOUI )
+C+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+C BUT :    LES VOLUMES DES 2 TETRAEDRES NS1-NOSOTR + NS2-NOSOTR ET
+C -----    NS1-NS2-ARETE1 + NS1-NS2-ARETE2 + NS1-NS2-ARETE3
+C          SONT ILS EGAUX SANS VOLUME DE TETRAEDRE NEGATIF OU NUL?
+C          ( => L'ARETE NS1-NS2 INTERSECTE LE TRIANGLE NOSOTR )
+C
+C ENTREES:
+C --------
+C NS1    : LE POINT REGARDANT  LE TRIANGLE DE SOMMETS NOSOTR
+C NS2    : LE POINT AU DESSOUS DU TRIANGLE DE SOMMETS NOSOTR
+C NOSOTR : NUMERO PTXYZD DES 3 SOMMETS DU TRIANGLE
+C PTXYZD : X Y Z DISTANCE SOUHAITEE DES POINTS
+C
+C SORTIE :
+C --------
+C NONOUI : -1 NS1 EST UN SOMMET DU TRIANGLE NOSOTR
+C          -2 NS2 EST UN SOMMET DU TRIANGLE NOSOTR
+C           0 SI NS1-NS2 N'INTERSECTE PAS LE TRIANGLE NOSOTR
+C           1 NS1-NS2 INTERSECTE LE TRIANGLE FERME (ARETES COMPRISES)
+C             LE VOLUME 2T = VOLUME 3T en VALEUR ABSOLUE
+C+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+C AUTEUR : ALAIN PERRONNET ANALYSE NUMERIQUE UPMC PARIS     FEVRIER 1996
+C23456...............................................................012
+      DOUBLE PRECISION  PTXYZD(1:4,1:*)
+      INTEGER           NOSOTR(3)
+      DOUBLE PRECISION  V, VOLUM1, VOLUM2, VOLTET
+      INTRINSIC         ABS
+
+C     NS1 OU NS2 SONT ILS UN SOMMET DU TRIANGLE NOSOTR?
+      DO I=1,3
+         IF( NOSOTR(I) .EQ. NS1 ) THEN
+C           NS1 EST SOMMET DE NOSOTR
+            NONOUI = -1
+            GOTO 9000
+         ENDIF
+         IF( NOSOTR(I) .EQ. NS2 ) THEN
+C           NS2 EST SOMMET DE NOSOTR
+            NONOUI = -2
+            GOTO 9000
+         ENDIF
+      ENDDO
+
+C     COMPARAISON DES 2 VOLUMES 2T ET 3T
+      VOLUM1 = ABS( VOLTET( PTXYZD(1,NOSOTR(1)),
+     %                      PTXYZD(1,NOSOTR(2)),
+     %                      PTXYZD(1,NOSOTR(3)),
+     %                      PTXYZD(1,NS1) )       )
+     %       + ABS( VOLTET( PTXYZD(1,NOSOTR(1)),
+     %                      PTXYZD(1,NOSOTR(3)),
+     %                      PTXYZD(1,NOSOTR(2)),
+     %                      PTXYZD(1,NS2) )       )
+
+C     VOLUME DE CHACUN DES 3T
+      VOLUM2 = VOLTET( PTXYZD(1,NOSOTR(1)), PTXYZD(1,NOSOTR(2)),
+     %                 PTXYZD(1,NS2),       PTXYZD(1,NS1) )
+      VOLUM2 = ABS( VOLUM2 )
+C
+      V = VOLTET( PTXYZD(1,NOSOTR(2)), PTXYZD(1,NOSOTR(3)),
+     %            PTXYZD(1,NS2),       PTXYZD(1,NS1) )
+      VOLUM2 = VOLUM2 + ABS( V )
+
+      V = VOLTET( PTXYZD(1,NOSOTR(3)), PTXYZD(1,NOSOTR(1)),
+     %            PTXYZD(1,NS2),       PTXYZD(1,NS1) )
+      VOLUM2 = VOLUM2 + ABS( V )
+
+C     COMPARAISON DU VOLUME DE L'ETOILE AVANT ET APRES
+      IF( ABS(VOLUM1-VOLUM2) .LE. VOLUM1*1D-8 ) THEN
+C        LE POINT EST INTERNE AU TRIANGLE ARETES COMPRISES
+         NONOUI = 1
+      ELSE
+C        LE POINT EST EXTERNE AU TRIANGLE ARETES COMPRISES
+         NONOUI = 0
+      ENDIF
+
+ 9000 RETURN
+      END

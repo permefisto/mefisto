@@ -1,0 +1,14 @@
+deftms ~>>>VITESSEINIT 'INITIAL VELOCITY'
+variable muet DATE 'date of creation of the TMS' reel2  ;
+variable muet NUTD 'number of the descriptor array TD' entier ;
+variable      LTVIT0 'type of INITIAL Velocity' entier
+(  2 : 'INITIAL Velocity EXISTING'
+,  1 : 'CONSTANT INITIAL Velocity'
+, -1 : 'FUNCTION INITIAL Velocity'
+,  0 : 'DELETE the function INITIAL Velocity' ) ;
+cas LTVIT0
+ 1 : variable NBVIT0 'Component Number of Velocity at a node' entier ;
+     tableau  VAVIT0(1..NBVIT0) 'constant INITIAL Velocity' reel ;
+-1 : variable NFVIT0 'NAME of INITIAL Velocity FUNCTION' ^~>FONCTION ;
+fincas ;
+fintms ;

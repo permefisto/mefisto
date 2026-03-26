@@ -1,0 +1,87 @@
+--------------------------------------------------------------
+NEWS of MEFISTO software     English Version     December 2024
+--------------------------------------------------------------
+3 execution modes:
+- BATCH + OpenMP:
+  Mefisto may be executed by BATCH, without visualization.
+  For example, to mesh, type the command
+  echo ProjectName; MESHER MeshDataFileName  >ListingOrNot
+or
+  cd ProjectName | $MEFISTO/pp/ppmail MeshDataFileName
+  Attention: 99; {Save and Exit}
+  must be the last option in the file MeshDataFileName
+  because it is not possible to come back in interative mode.
+
+- Interactive mode:
+  with drawings, data by keyboard typing or mouse clicking.
+  For example: To execute le MAILLER command, type
+  MAILLER  >ListingOrNot
+
+Idem for ELASTICER FLUIDER THERMICER NLSER ... commands
+INITIER may be executed in BATCH mode without DataFileName
+
+OPENMP directives have been added in Fortran subroutines and programs.
+Don't forget to initialize the environement variable
+OMP_NUM_THREADS (processor threads number:12 for Intel Icore 7 )
+Cf https://www.ann.jussieu.fr/perronnet/OMPLJLL/OMPLJLL.html
+
+MESHER:
+- Improved Option 9 and 19 of volume tetrahedrization
+- Improved option 29 with interactive commands to modify
+  the 2d or 3d surface mesh from menus and mouse clicks
+
+FLUIDER:
+- Under the Boussinesq condition, a computation of the natural convection
+  is prposed. With the pressure and velocity, the temperature is computed
+  with Taylor-Hood finite elements. Cf testa/recth
+- The storage of VELOCITIES+PRESSURES+TEMPERATURES VECTOR at each step
+  time may be very large. Now, Each of them is stored on a FILE.
+  Every drawing demand asks the time interval to use. Cf testa/d123_r
+  ATTENTION: MAIN MEMORY+SWAP may be TOO SMALL!...
+  Cf testa/d123_r/d123_r_12_pad123
+- A User's updated Manual of Mefisto-FLUIDER is loadable
+- Cf https://www.ljll.fr/perronnet/NSROLL/NSROLL.html
+- Cf https://www.ljll.fr/perronnet/COVID/COVID_respiration.html
+- Cf testa/d123_r/
+
+NLSER:
+- Complex solution of the NON-LINEAR SCHRODINGER Equation
+  i dU(t,X)/dt -Alfa Laplacian U(t,X) + N(t,|U(t,X)|**2) U(t,X)
+  -i OmegaZ ( x dU(t,X)/dy - y dU(t,X)/dx ) = F(t,X)
+  Cf the documentation of the initial menu doca/debunlse.
+  Cf https://www.ljll.fr/perronnet/NLSE/NLSE.html
+
+$MEFISTO/bin.lnx64:
+- The libraries contain subroutines fortran.f95 with OpenMP
+  directives and executable on multi-processors as
+  Intel Core i7 (12 threads maximum)
+- The command ended by .f offers a sequential gfortran
+  compilation WITHOUT calls to OpenMP library
+  example: $MEFISTO/bin/cbflui gives $MEFISTO/pp/ppflui
+  a sequential load module for the command FLUIDER
+- The command ended by .f95 offers a MULTI-THREADS gfortran
+  compilation with calls to OpenMP library which replace
+  the previous compilation
+  example: $MEFISTO/bin/cbflui gives $MEFISTO/pp/ppflui
+  a multi-threads load module for the command FLUIDER
+
+testa: test files
+- d123_r: Mefisto data files to obtain the results of
+  https://www.ljll.fr/perronnet/COVID/COVID_respiration.html
+- Flow from 0 to 120 seconds of a 2d or 3d fluid of Reynolds
+  number 300 around a roll in a box by Brezzi-Fortin (bf) or
+  Taylor-Hood (th) finite elements by conjugate gradient:
+  rol2dbfcg, rol3dbfcg,  rol2dthcg,  rol3dthcg
+- Non Linear Schrodinger Equation tests in testa/nlsgpe
+
+EXPORT; Meshed Points, Lines, Surfaces, Volumes, Objects
+may be exported to a software with its specific format
+Mefisto, Nekton, Fidap, FreeFem, OpenFoam, Modulef, LS-Dyna
+or a file.STL to print 3D a triangulated closed surface
+(Cf testa/torusstl)
+
+--------------------------------------------------------------
+If you have a problem, contact Alain PERRONNET
+E-mail  : alain@perronnet.com
+Internet: https://www.ljll.fr/perronnet
+--------------------------------------------------------------

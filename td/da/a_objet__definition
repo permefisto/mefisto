@@ -1,0 +1,12 @@
+deftms   ~>OBJET>>DEFINITION  'Definition of an OBJECT' 
+variable muet DATE 'date of creation of the TMS'    reel2  ;
+variable muet NUTD 'number of the descriptor array' entier ; 
+variable SDOUNO 'type of the treatment' entier
+       ( -1: 'Nodes not renumbered',
+          0: '1D or 2D or 3D classic',
+          1: '2D sub-domains',
+          2: '2D joints' ) ;
+variable NBDOBJ 'number of Points Lines Surfaces Volumes Objects of the object'
+         entier ;
+tableau  NTYOBJ(1..NBDOBJ) 'name of type PLSVO & PLSVO''s name' typeobjet ;
+fintms ;

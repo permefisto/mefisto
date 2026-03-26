@@ -1,0 +1,206 @@
+      SUBROUTINE TR1LAG( X,      PENALI, NBJEUX, JEU,
+     &                   NOOBPS, NUMIPO, NUMAPO, LTDEPO,
+     &                   NOOBLA, NUMILI, NUMALI, LTDELI,
+     &                   NBPOLY, NPI,    POLY,
+     &                   F1,     POIDEL, DP,
+     &                   COND,   COEFTE, CONDUC )
+C ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+C BUT :    CALCUL DE LA MATRICE DE CONDUCTIVITE DES ELEMENTS FINIS 1D
+C -----    LAGRANGE AVEC Fe: e ref -> e  POLYNOME P1
+C
+C ENTREES:
+C --------
+C X      : LA COORDONNEE DES NBPOLY POINTS DE L'ELEMENT FINI
+C PENALI : COEFFICIENT DE PENALISATION DE LA CONDITION DE DIRICHLET
+C NBJEUX : NOMBRE DE JEUX DE DONNEES
+C JEU    : NUMERO DU JEU  DE DONNEES POUR CE CALCUL DE LA MATRICE ELEMENTAIRE
+C
+C NOOBPS : NUMERO DE POINT DES SOMMETS
+C NUMIPO : NUMERO MINIMAL DES OBJETS POINTS
+C NUMAPO : NUMERO MAXIMAL DES OBJETS POINTS
+C LTDEPO : TABLEAU DES ADRESSES DU TABLEAU DES DONNEES THERMIQUES DES POINTS
+C
+C NOOBLA : NUMERO DE L'OBJET LIGNE DE CET ELEMENT FINI
+C NUMILI : NUMERO MINIMAL DES OBJETS LIGNES
+C NUMALI : NUMERO MAXIMAL DES OBJETS LIGNES
+C LTDELI : TABLEAU DES ADRESSES DU TABLEAU DES DONNEES CONDUCTIVITE DES LIGNES
+C
+C NBPOLY : NOMBRE DE POLYNOMES DE L'ELEMENT LIGNE
+C NPI    : NOMBRE DE POINTS D INTEGRATION NUMERIQUE SUR LA LIGNE
+C POLY   : VALEUR DES POLYNOMES DE BASE AUX POINTS D'INTEGRATION
+C          POLY(I,L)= P(I) (XL)
+C
+C F1     : COORDONNEES XX DES NPI POINTS D INTEGRATION DE L ELEMENT FINI
+C POIDEL : DELTA * POIDS(NPI) DES NPI POINTS D INTEGRATION
+C DP     : GRADIENT DES POLYNOMES DE BASE SUR L ELEMENT FINI COURANT
+C
+C SORTIES:
+C --------
+C COND   : TENSEUR SYMETRIQUE DE CONDUCTIVITE (1 COEF mais 6 COEF STOKES)
+C COEFTE : COEFFICIENT DE LA TEMPERATURE AUX POINTS D'INTEGRATION
+C CONDUC : MATRICE ELEMENTAIRE DE CONDUCTIVITE
+C ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+C AUTEUR : ALAIN PERRONNET LJLL UPMC & St PIERRE du PERRAY     JUIN 2009
+C23456---------------------------------------------------------------012
+      include"./incl/gsmenu.inc"
+      include"./incl/donthe.inc"
+      include"./incl/cthet.inc"
+      include"./incl/cnonlin.inc"
+C
+      include"./incl/pp.inc"
+      COMMON            MCN(MOTMCN)
+      REAL              RMCN(1)
+      DOUBLE PRECISION  DMCN(1)
+      EQUIVALENCE      (MCN(1), RMCN(1), DMCN(1))
+C
+      DOUBLE PRECISION POLY(NBPOLY,NPI),
+     %                 F1(NPI), POIDEL(NPI),
+     %                 DP(NBPOLY,NPI), CONDUC(*)
+      DOUBLE PRECISION PENALI, ECHANG, COND(*), CONDP, COEFTE(NPI)
+      REAL             X(NBPOLY)
+      INTEGER          LTDEPO( 1:MXDOTH, 1:NBJEUX, NUMIPO:NUMAPO )
+      INTEGER          LTDELI( 1:MXDOTH, 1:NBJEUX, NUMILI:NUMALI )
+      INTEGER          NOOBPS( 1:2 )
+      DOUBLE PRECISION PROSCD, S, XYZPI(3)
+C
+C     INITIALISATION A ZERO DE LA MATRICE DE CONDUCTIVITE ELEMENTAIRE
+C     ---------------------------------------------------------------
+      CALL AZEROD( NBPOLY*(NBPOLY+1)/2, CONDUC )
+C
+C     ========================
+C     CONTRIBUTION DE LA LIGNE
+C     ========================
+      IF( TESTNL .GT. 0 ) THEN
+C        PB NON LINEAIRE:
+C        RECUPERATION DE LA TEMPERATURE AUX NBPOLY DL DE L ELEMENT FINI
+         MN  = (MNTHET-1)/2
+         MNT = (MNTHDL-1)/2
+         DO 2 I=1,NBPOLY
+            DMCN( MNT+I ) = DMCN( MN + MCN(MNNODL+I-1) )
+ 2       CONTINUE
+      ENDIF
+C
+C     SI LA CONDUCTIVITE N'EST PAS DECLAREE, SAUT DU CALCUL DE LA CONDUCTIVITE
+      IF( LTDELI(LPCOND,JEU,NOOBLA) .EQ. 0 ) GOTO 40
+C
+      DO 30 L=1,NPI
+C
+         IF( TESTNL .GT. 0 ) THEN
+C           PB NON LINEAIRE:
+C           CALCUL DE LA TEMPERATURE AU POINT D'INTEGRATION L
+            TEMPEL = PROSCD( POLY(1,L), MCN(MNTHDL), NBPOLY )
+         ENDIF
+C
+C        RECHERCHE DE LA CONDUCTIVITE AU POINT D'INTEGRATION L
+         XYZPI(1) = F1(L)
+         XYZPI(2) = 0D0
+         XYZPI(3) = 0D0
+         CALL RECOND( 2, NOOBLA, 3, XYZPI,
+     %                LTDELI(LPCOND,JEU,NOOBLA), COND )
+C
+C        COND = CONDUCTIVITE * POIDS * DELTA
+         CONDP = COND(1) * POIDEL(L)
+C
+C        CONDUC = CONDUC + T(DP) * CONDP * (DP)
+         M = 0
+         DO 25 I=1,NBPOLY
+            DO 20 J=1,I
+               M = M + 1
+               CONDUC(M) = CONDUC(M) + DP(I,L) * CONDP * DP(J,L)
+ 20         CONTINUE
+ 25      CONTINUE
+ 30   CONTINUE
+C
+C     CONTRIBUTION DU COEFFICIENT DE LA TEMPERATURE SUR L'ARETE
+ 40   IF( LTDELI(LPCOET,JEU,NOOBLA) .GT. 0 ) THEN
+         DO 50 L=1,NPI
+C
+            IF( TESTNL .GT. 0 ) THEN
+C              PB NON LINEAIRE:
+C              CALCUL DE LA TEMPERATURE AU POINT D'INTEGRATION L
+               TEMPEL=PROSCD( POLY(1,L), MCN(MNTHDL), NBPOLY )
+            ENDIF
+C
+C           RECHERCHE DU COEFFICIENT DE LA TEMPERATURE AU POINT D'INTEGRATION L
+            XYZPI(1) = F1(L)
+            XYZPI(2) = 0D0
+            XYZPI(3) = 0D0
+            CALL RECOET( 2, NOOBLA, 3, XYZPI,
+     %                   LTDELI(LPCOET,JEU,NOOBLA), COEFTE(L) )
+C
+C           COEF TEMPERATURE = COEFTE * POIDS * DELTA
+            COEFTE(L) = COEFTE(L) * POIDEL(L)
+C
+ 50      CONTINUE
+C
+         M = 0
+         DO 80 J=1,NBPOLY
+            DO 70 I=1,J
+               S = 0.D0
+               DO 60 L=1,NPI
+                  S = S + COEFTE(L) * POLY(J,L) * POLY(I,L)
+ 60            CONTINUE
+               M = M + 1
+               CONDUC(M) = CONDUC(M) + S
+ 70         CONTINUE
+ 80      CONTINUE
+      ENDIF
+C
+C     ==================================================
+C     CONTRIBUTION DES 2 SOMMETS SI FRONTIERE DU DOMAINE
+C     ==================================================
+      DO 200 K=1,2
+C
+C        LE NUMERO DE POINT DU SOMMET K
+         NOOB = NOOBPS(K)
+         IF( NOOB .GT. 0 ) THEN
+C
+C           LE SOMMET K EST UN POINT
+            IECHAN = 0
+C
+C           POINT SUPPORT DU COEFFICIENT D'ECHANGE ?
+            IF( LTDEPO(LPECHA,JEU,NOOB) .GT. 0     ) IECHAN = 1
+C
+C           POINT SUPPORT D'UN CONTACT PENALISE ?
+            IF( LTDEPO(LPCONT,JEU,NOOB) .GT. 0 .AND.
+     %          PENALI .NE. 0D0                ) IECHAN = 2
+C
+            IF( IECHAN .EQ. 0 ) GOTO 200
+C
+            IF( IECHAN .EQ. 1 ) THEN
+C
+               IF( TESTNL .GT. 0 ) THEN
+C                 PB NON LINEAIRE:
+C                 RECUPERATION DE LA TEMPERATURE AU SOMMET K
+                  TEMPEL = DMCN( (MNTHET-1)/2 + MCN(MNNODL+K-1) )
+               ENDIF
+C
+C              UN TABLEAU ECHANGE EXISTE POUR CE POINT-SOMMET
+C              CALCUL DU COEFFICIENT D'ECHANGE AU POINT
+               XYZPI(1) = X(K)
+               XYZPI(2) = 0D0
+               XYZPI(3) = 0D0
+               CALL REECHA( 1,NOOB, 3, XYZPI,
+     %                      LTDEPO(LPECHA,JEU,NOOB), ECHANG )
+            ELSE
+C
+C              UN TABLEAU CONTACT PENALISE EXISTE POUR CE POINT-SOMMET
+C              CALCUL DU CONTACT PENALISE AU POINT = COEF ECHANGE
+               ECHANG = PENALI
+C
+            ENDIF
+C
+C           CALCUL DE TRANSPOSEE(P(XK)) * ECHANG * (P(XK)) AVEC P(XK)=1
+C           LES 2 SOMMETS SONT EN PREMIER DANS LES POLYNOMES DE BASE
+            IF( K .EQ. 1 ) THEN
+               NJ = 1
+            ELSE
+               NJ = 3
+            ENDIF
+            CONDUC(NJ) = CONDUC(NJ) + ECHANG
+C
+         ENDIF
+ 200  CONTINUE
+C
+      RETURN
+      END

@@ -1,0 +1,71 @@
+{ ========================================================= }
+{ MEFISTO Version Juin 1999        PROJET: TEST 1 DES ONDES }
+{ Schema DECENTR'E IMPLICITE inconditionnellement STABLE    }
+{ Utilisateur: Alain Perronnet     Date:   23/6/99          }
+{ ========================================================= }
+DefVar TMin,TMax,NombrePasTemps; 
+ TMin=0; TMax=5; NombrePasTemps=50;
+ 
+DefFonc depla0(t,x,y,z,notyob, noob, nc );
+si abs(x-a/2)<1.01 et abs(y-b/2)<1.01
+alors
+  depla0=5*abs(2-sqrt((x-a/2)**2+(y-b/2)**2));
+sinon
+  depla0=0;
+finsi;
+FinFonc;
+
+DefFonc vites0(t,x,y,z,notyob, noob, nc );
+si abs(x-a/2)<1.01 et abs(y-b/2)<1.01
+alors
+  vites0=-3*abs(2-sqrt((x-a/2)**2+(y-b/2)**2));
+sinon
+  vites0=0;
+finsi;
+FinFonc;
+
+2; { ENTREE des DONNEES DES ONDES }
+
+     { SURFACE: S }
+ 1;  { densite de MASSE }
+  1; { constante }
+  1; { densite de MASSE }
+
+ 2;  { CONDUCTIVITE THERMIQUE }
+  3; { materiau 2D homogene isotrope }
+ 2.0;{ CONDUC conductivite du materiau }
+   
+ 4;  { SOURCE de CHALEUR }
+  1; { constante }
+-0.5;{ SOURCE valeur de la source }
+ @;
+
+     { LIGNE: CONTOUR }
+ 3;  { CONTACT temperature imposee }
+  1; { constante }
+  0; { CONTAC temperature imposee }
+ @;
+
+   {===============================}
+5; { RESOUDRE L EQUATION DES ONDES }
+   {===============================}
+   { 1;      Coefficients INDEPENDANTS du TEMPS }
+
+   TMin;   { TEMPS INITIAL }
+
+  -1;      { fonction utilisateur pour le DEPLACEMENT INITIAL }
+   depla0; { DANS LE LEXIQUE ~>FONCTION }
+
+  -1;      { fonction utilisateur pour la VITESSE INITIALE }
+   vites0; { DANS LE LEXIQUE ~>FONCTION }
+
+    TMax;  { TEMPS FINAL  }
+
+ (TMax-TMin)/NombrePasTemps; { PAS DE TEMPS }
+
+ NombrePasTemps/2;  { VECTEURS DEPLACEMENTS A STOCKER en PLUS }
+
+   1;  { RESOLUTION PAR CHOLESKY PROFIL }
+   2;  {Schema DECENTR'E IMPLICITE inconditionnellement STABLE}
+
+FERMER;

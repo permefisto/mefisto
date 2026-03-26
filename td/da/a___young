@@ -1,0 +1,21 @@
+deftms ~>>>YOUNG 'YOUNG''s modulus & POISSON''s coefficient of a SV'
+variable muet DATE 'date of creation of the TMS'   reel2  ;
+variable muet NUTD 'number of the descriptor array TD' entier ; 
+variable    LTYOUN 'type of coefficients' entier
+( 1 : '3D isotropic homogenous material'
+, 2 : '2D axisymmetric isotropic homogenous material'
+, 3 : '2D planes stresses'
+, 4 : '2D planes strains'
+,10 : '2D or 3D anisotropic tensor of elasticity'
+,-1 : 'functions YOUNG & POISSON'
+, 0 : 'delete the YOUNG & POISSON''s coef' ) ;
+cas LTYOUN
+1..4 : variable YOUNG  'YOUNG''s modulus' reel ;
+       variable POISON 'POISSON''s coefficient' reel ;
+10 : variable NVELAS 'number of coefficients of elasticity tensor' entier ;
+     tableau  TEELAS(1..NVELAS)
+    'Coefficients E11,E21,E22,E31,E32,E33,... of elasticity tensor' reel ;
+-1 : variable  NFYOUN 'name of the function YOUNG'   ^~>FONCTION ;
+     variable  NFPOIS 'name of the function POISSON' ^~>FONCTION ;
+fincas ;
+fintms ;

@@ -1,0 +1,339 @@
+      SUBROUTINE TRAJPT( ARETMX, NOFOTI, NUTYSU, RAP2P3,
+     %                   ORIGIN, D2D3,   XMIN,   YMIN,   XYMXMI,
+     %                   MXSOMM, NBSOMM, PXYD,
+     %                   MOSOAR, MXSOAR, N1SOAR, NOSOAR,
+     %                   MOARTR, MXARTR, N1ARTR, NOARTR, NOARST,
+     %                   IERR  )
+C+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+C BUT :    AJOUTER DES POINTS DANS LES TRIANGLES AFIN DE VERIFIER
+C -----    LA TAILLE SOUHAITEE DES ARETES
+C          ET MISE EN DELAUNAY DES TRIANGLES
+C
+C ENTREES:
+C --------
+C ARETMX : LONGUEUR MAXIMALE DES ARETES DES TRIANGLES
+C NOFOTI : NUMERO DANS LE LX DES FONCTIONS DE LA FONCTION TAILLE_IDEALE(X,Y,Z)
+C          >0 SI ELLE EXISTE ET 0 SINON
+C NUTYSU : NUMERO D'OPTION DE GENERATION DU MAILLAGE DE CETTE SURFACE
+C          19 APPEL DIRECT A PARTIR DU SP SUEX19
+C          1 APPEL PAR LE SP SUEX01-QUNSAL (QUADRANGLE ALGEBRIQUE)
+C          3 APPEL PAR LE SP SUEX03        (B-SPLINE POLYNOMIALE )
+C          6 APPEL PAR LE SP SUEX06-TRNSAL (TRIANGLE   ALGEBRIQUE)
+C RAP2P3 : RAPPORT DU PERIMETRE DE L'ENVELOPPE DU DOMAINE PLAN SUR
+C                  LE PERIMETRE DE L'ENVELOPPE DU DOMAINE DE R**3
+C          APPROXIMATION POUR CALCULER RAPIDEMENT LA TAILLE DE L'ARETE
+C          DANS LE PLAN CONNAISSANT SA TAILLE DANS R**3
+C ORIGIN : POINT ORIGINE DANS LE PLAN DE MAILLAGE
+C D2D3   : MATRICE DE PASSAGE DES COORDONNEES 3D EN COORDONNEES 2D
+C XMIN   : ABSCISSE MINIMALE APRES TRANSFORMATION 3D->2D
+C YMIN   : ORDONNEE MINIMALE APRES TRANSFORMATION 3D->2D
+C XYMXMI : ECART MAXIMAL ENTRE XMAX-XMIN ET YMAX-YMIN
+C
+C NBARPI : NOMBRE DE SOMMETS DE LA FRONTIERE + NOMBRE DE POINTS INTERNES
+C          IMPOSES PAR L'UTILISATEUR
+C MXSOMM : NOMBRE MAXIMAL DE SOMMETS DECLARABLES DANS PXYD
+C NBSOMM : NOMBRE DE SOMMETS UTILISES (NBARPI + 4)
+C PXYD   : TABLEAU DES COORDONNEES 2D DES POINTS
+C          PAR POINT : X  Y  DISTANCE_SOUHAITEE
+C
+C MOSOAR : NOMBRE MAXIMAL D'ENTIERS PAR ARETE DU TABLEAU NOSOAR
+C MXSOAR : NOMBRE MAXIMAL D'ARETES STOCKABLES DANS LE TABLEAU NOSOAR
+C MOARTR : NOMBRE MAXIMAL D'ENTIERS PAR ARETE DU TABLEAU NOARTR
+C MXARTR : NOMBRE MAXIMAL DE TRIANGLES STOCKABLES DANS LE TABLEAU NOARTR
+C
+C MODIFIES:
+C ---------
+C N1SOAR : NUMERO DE LA PREMIERE ARETE VIDE DANS LE TABLEAU NOSOAR
+C          UNE ARETE I DE NOSOAR EST VIDE  <=>  NOSOAR(1,I)=0
+C NOSOAR : NUMERO DES 2 SOMMETS , NO LIGNE, 2 TRIANGLES DE L'ARETE,
+C          CHAINAGE DES ARETES FRONTALIERES, CHAINAGE DU HACHAGE DES ARETES
+C          HACHAGE DES ARETES = H(NS1,NS2)=MIN(NS1,NS2)
+C NOARST : NOARST(I) NUMERO DANS NOSOAR D'UNE ARETE DE SOMMET I
+C
+C SORTIES:
+C --------
+C N1ARTR : NUMERO DU PREMIER TRIANGLE VIDE DANS LE TABLEAU NOARTR
+C          LE CHAINAGE DES TRIANGLES VIDES SE FAIT SUR NOARTR(2,.)
+C NOARTR : LES 3 ARETES DES TRIANGLES +-ARETE1, +-ARETE2, +-ARETE3
+C          ARETE1 = 0 SI TRIANGLE VIDE => ARETE2 = TRIANGLE VIDE SUIVANT
+C IERR   : = 0 SI PAS D'ERREUR
+C          =51 SI LE TABLEAU NOSOAR EST SATURE
+C          =52 SI LE TABLEAU NOARTR EST SATURE
+C          =53 SI LE TABLEAU PXYD   EST SATURE
+C+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+C AUTEUR : ALAIN PERRONNET LJLL UPMC & ST PIERRE DU PERRAY  FEVRIER 2008
+C2345X7..............................................................012
+      DOUBLE PRECISION  EPSARETE
+      PARAMETER        (EPSARETE=1D-15)
+      PARAMETER        (LCHAIN=6)
+      DOUBLE PRECISION  D2UXR3
+      PARAMETER        (D2UXR3 = 3.4641016151377544D0)
+C                       D2UXR3 = 2 * SQRT(3)
+C
+      include"./incl/langue.inc"
+      include"./incl/trvari.inc"
+ccc      LOGICAL           TRATRI
+ccc      COMMON / DV2DCO / TRATRI
+      COMMON / UNITES / LECTEU, IMPRIM, INTERA, NUNITE(29)
+C
+      DOUBLE PRECISION  PXYD(3,MXSOMM)
+      DOUBLE PRECISION  RAP2P3
+      DOUBLE PRECISION  D2D3(3,3)
+      REAL              ORIGIN(3), XYZ(3)
+C
+      INTEGER           NOSOAR(MOSOAR,MXSOAR),
+     %                  NOARTR(MOARTR,MXARTR),
+     %                  NOARST(MXSOMM)
+C
+      DOUBLE PRECISION  AIRETR, X1,X2,X3, Y1,Y2,Y3
+      DOUBLE PRECISION  D, DD, A, B, C, P
+      INTEGER           NOSOTR(3), NUTR(4)
+      DOUBLE PRECISION  ARETM2
+C
+      MXITER = 12
+      MXITTR = 5
+ccc      ARETM2 = ARETMX * ARETMX * SQRT(3D0) / 2D0
+      ARETM2 = ARETMX * ARETMX * 0.87D0
+      NBSOM0 = NBSOMM
+C     DERNIER NO DE TRIANGLE ACTIF: BOUCLE SUR LES TRIANGLES
+      DO 2 NTRDE0=MXARTR,1,-1
+         IF( NOARTR(1,NTRDE0) .GT. 0 ) GOTO 4
+ 2    CONTINUE
+C
+C     MXITER ITERATIONS D'AJOUT DU BARYCENTRE DES TRIANGLES D'AIRE IMPORTANTE
+ 4    DO 100 ITER = 1, MXITER
+C
+C        PLUS GRAND NUMERO DE TRIANGLE TRAITE
+         NTRDER = 0
+C
+C        BOUCLE SUR LES TRIANGLES
+         DO 90 NTR=1,NTRDE0
+C
+            IF( NOARTR(1,NTR) .EQ. 0 ) GOTO 90
+C
+C           LE TRIANGLE NTR EST ACTIF
+C           LE NO DES 3 SOMMETS DU TRIANGLE NTR
+            CALL NUSOTR( NTR, MOSOAR, NOSOAR, MOARTR, NOARTR, NOSOTR )
+C
+C           PERMUTATION CIRCULAIRE POUR AMENER EN DEBUT LE PLUS PETIT NO
+C           POUR OBTENIR TOUJOURS LE MEME RESULTAT
+            NSMIN = MIN( NOSOTR(1), NOSOTR(2), NOSOTR(3) )
+            IF( NSMIN .EQ. NOSOTR(2) ) THEN
+               NOSOTR(2) = NOSOTR(3)
+               NOSOTR(3) = NOSOTR(1)
+               NOSOTR(1) = NSMIN
+               NSMIN            = NOARTR( 2, NTR )
+               NOARTR( 2, NTR ) = NOARTR( 3, NTR )
+               NOARTR( 3, NTR ) = NOARTR( 1, NTR )
+               NOARTR( 1, NTR ) = NSMIN
+            ELSE IF( NSMIN .EQ. NOSOTR(3) ) THEN
+               NOSOTR(3) = NOSOTR(2)
+               NOSOTR(2) = NOSOTR(1)
+               NOSOTR(1) = NSMIN
+               NSMIN            = NOARTR( 3, NTR )
+               NOARTR( 3, NTR ) = NOARTR( 2, NTR )
+               NOARTR( 2, NTR ) = NOARTR( 1, NTR )
+               NOARTR( 1, NTR ) = NSMIN
+            ENDIF
+C
+C           CHAINAGE DES ARETES A RENDRE DELAUNAY
+            N1ADEL = 0
+            MODETR = 0
+C
+C           LES 3 COORDONNEES DU TRIANGLE NTR
+            N1 = NOSOTR(1)
+            X1 = PXYD(1,N1)
+            Y1 = PXYD(2,N1)
+C
+            N2 = NOSOTR(2)
+            X2 = PXYD(1,N2)
+            Y2 = PXYD(2,N2)
+C
+            N3 = NOSOTR(3)
+            X3 = PXYD(1,N3)
+            Y3 = PXYD(2,N3)
+C
+C           SURFACE*2 DU TRIANGLE NTR
+            AIRETR=( X2 - X1 ) * ( Y3 - Y1 ) - ( Y2 - Y1 ) * ( X3 - X1 )
+C
+cccC           AMPLIFICATION DE L'AIRE POUR NE PAS TROP GENERER DE TRIANGLES
+cccC           ET PAR HOMOGENEITE AVEC L'AMELIORATION DE LA QUALITE
+ccc            IF( AIRETR .GT. ARETM2*(1.34D0**2) ) THEN
+ccc
+            IF( AIRETR .GT. ARETM2 ) THEN
+C
+C              AJOUT DU BARYCENTRE DU TRIANGLE
+C              NO DANS PXYD DU POINT BARYCENTRE
+               IF( NBSOMM .GE. MXSOMM ) THEN
+C                 TABLEAU PXYD SATURE
+                  WRITE(IMPRIM,*)'TRAJPT: PXYD SATURE.AUGMENTER MXSOMM='
+     %                           ,MXSOMM
+                  IERR = 53
+                  RETURN
+               ENDIF
+C
+               NBSOMM = NBSOMM + 1
+C              COORDONNEES DU POINT NBSOMM
+               PXYD(1,NBSOMM) = ( X1 + X2 + X3 ) / 3D0
+               PXYD(2,NBSOMM) = ( Y1 + Y2 + Y3 ) / 3D0
+C
+C              MISE A JOUR DE LA DISTANCE SOUHAITEE
+               IF( NOFOTI .GT. 0 ) THEN
+C                 LA FONCTION TAILLE_IDEALE(X,Y,Z) EXISTE
+C                 CALCUL DE PXYZD(3,NBSOMM) DANS LE REPERE INITIAL => XYZ(1:3)
+                  CALL TETAID( NUTYSU, NOFOTI, RAP2P3,
+     %                         PXYD(1,NBSOMM), PXYD(2,NBSOMM),
+     %                         ORIGIN, D2D3, XMIN, YMIN, XYMXMI,
+     %                         XYZ,    PXYD(3,NBSOMM), IER )
+               ELSE
+                  PXYD(3,NBSOMM) = ARETMX
+               ENDIF
+               MODETR  = 1
+C
+            ELSE IF( ITER .GT. MXITTR ) THEN
+C
+C              TAILLE D'ARETE MINIMALE DES 3 SOMMETS DU TRIANGLE
+               D = MIN( PXYD(3,N1), PXYD(3,N2), PXYD(3,N3) )
+C
+C              LONGUEUR DES 3 ARETES
+               A = SQRT( (X2-X1)**2 + (Y2-Y1)**2 )
+               B = SQRT( (X3-X2)**2 + (Y3-Y2)**2 )
+               C = SQRT( (X1-X3)**2 + (Y1-Y3)**2 )
+C              MAXIMUM DES LONGUEURS DES 3 ARETES
+               DD = MAX( A, B, C )
+C
+C              CALCUL DE LA QUALITE DU TRIANGLE (cf quatri.f)
+C              LE DEMI-PERIMETRE DU TRIANGLE
+               P = (A+B+C) / 2
+               IF ( A*B*C .NE. 0D0 ) THEN
+C              CRITERE: 2*SQRT(3.) * RAYON_INSCRIT / MAX( LONGUEUR DES ARETES
+C                       RAYON_INSCRIT = SQRT( (P-A) (P-B)(P-C) / P )
+C                       P = PERIMETRE/2
+                  QUALIT = REAL(  D2UXR3 * SQRT(ABS( (P-A) /
+     %                            P * (P-B) * (P-C) )) / DD )
+               ELSE
+C                 TRIANGLE DEGENERE
+                  QUALIT = 0.0
+               ENDIF
+C
+               IF( QUALIT .LT. 0.1 .OR. D .GT. DD ) GOTO 90
+C
+C              AJOUT DU BARYCENTRE DU TRIANGLE
+               IF( NBSOMM .GE. MXSOMM ) THEN
+C                 TABLEAU PXYD SATURE
+                  WRITE(IMPRIM,*)'TRAJPT: PXYD SATURE.AUGMENTER MXSOMM='
+     %                           ,MXSOMM
+                  IERR = 53
+                  RETURN
+               ENDIF
+C
+C              COORDONNEES DU POINT NBSOMM
+               NBSOMM = NBSOMM + 1
+               PXYD(1,NBSOMM) = ( X1 + X2 + X3 ) / 3D0
+               PXYD(2,NBSOMM) = ( Y1 + Y2 + Y3 ) / 3D0
+C
+C              DISTANCE SOUHAITEE AUX VOISINS
+               IF( NOFOTI .GT. 0 ) THEN
+C                 LA FONCTION TAILLE_IDEALE(X,Y,Z) EXISTE
+C                 CALCUL DE PXYZD(3,NBSOMM) DANS LE REPERE INITIAL => XYZ(1:3)
+                  CALL TETAID( NUTYSU, NOFOTI, RAP2P3,
+     %                         PXYD(1,NBSOMM), PXYD(2,NBSOMM),
+     %                         ORIGIN, D2D3, XMIN, YMIN, XYMXMI,
+     %                         XYZ,    PXYD(3,NBSOMM), IER )
+               ELSE
+                  PXYD(3,NBSOMM) = MIN( D*1.1D0, ARETMX )
+               ENDIF
+               MODETR = 2
+C
+            ENDIF
+C
+            IF( MODETR .GT. 0 ) THEN
+C
+C              CHAINAGE DES ARETES DU TRIANGLE NTR A RENDRE DELAUNAY EVENTUELLEM
+               DO 30 I=1,3
+                  N = ABS( NOARTR(I,NTR) )
+                  NOSOAR(LCHAIN,N) = N1ADEL
+                  N1ADEL = N
+ 30            CONTINUE
+C
+C              TRIANGLE NTR EST SUBDIVISE EN 3 SOUS-TRIANGLES DE SOMMET NBSOMM
+               CALL TR3STR( NBSOMM, NTR,
+     %                      MOSOAR, MXSOAR, N1SOAR, NOSOAR,
+     %                      MOARTR, MXARTR, N1ARTR, NOARTR,
+     %                      NOARST,
+     %                      NUTR,   IERR )
+               IF( IERR .NE. 0 ) RETURN
+C
+C              PLUS GRAND NUMERO DE TRIANGLE TRAITE
+               NTRDER = MAX( NTRDER, MAX(NUTR(1),NUTR(2),NUTR(3)) )
+C
+ccc               IF( TRATRI ) THEN
+C     LES TRACES DES TRIANGLES AJOUTES SONT DEMANDES
+CCC   CALL EFFACE
+CCCC  LE CADRE OBJET GLOBAL EN UNITES UTILISATEUR
+CCC   XX1 = MIN(PXYD(1,NOSOTR(1)),PXYD(1,NOSOTR(2)),PXYD(1,NOSOTR(3)))
+CCC   XX2 = MAX(PXYD(1,NOSOTR(1)),PXYD(1,NOSOTR(2)),PXYD(1,NOSOTR(3)))
+CCC   YY1 = MIN(PXYD(2,NOSOTR(1)),PXYD(2,NOSOTR(2)),PXYD(2,NOSOTR(3)))
+CCC   YY2 = MAX(PXYD(2,NOSOTR(1)),PXYD(2,NOSOTR(2)),PXYD(2,NOSOTR(3)))
+CCC   IF( XX1 .GE. XX2 ) XX2 = XX1 + (YY2-YY1)
+CCC   IF( YY1 .GE. YY2 ) YY2 = YY1 + (XX2-XX1)*0.5
+CCC   CALL ISOFENETRE( XX1-(XX2-XX1), XX2+(XX2-XX1),
+CCC  %                 YY1-(YY2-YY1), YY2+(YY2-YY1) )
+ccc                  DO 80 I=1,3
+cccC                    TRACE DU TRIANGLE NUTR(I)
+ccc                     CALL MTTRTR( PXYD, NUTR(I), MOARTR, NOARTR,
+ccc     %                            MOSOAR, NOSOAR, I, NCBLAN )
+ccc 80               CONTINUE
+ccc               ENDIF
+C
+C              MISE EN DELAUNAY DES ARETES PERIPHERIQUES DES SOUS TRIANGLES CREE
+               CALL TEDELA( PXYD,   NOARST,
+     %                      MOSOAR, MXSOAR, N1SOAR, NOSOAR, N1ADEL,
+     %                      MOARTR, MXARTR, NOARTR, MODIFS )
+C
+            ENDIF
+C
+ 90      CONTINUE
+C
+cccC        SAISIE D'UN POINT PAR CLIC DE LA SOURIS
+cccC        OU ENTREE D'UN CARACTERE POUR VOIR LE TRACE
+ccc         CALL SAIPTC( NOTYEV, NX, NY, NOCHAR )
+C
+         NBPTAJ = NBSOMM-NBSOM0
+         IF( LANGAG .EQ. 0 ) THEN
+            WRITE(IMPRIM,10090) ITER, NTRDER, NBPTAJ, NBSOMM
+         ELSE
+            WRITE(IMPRIM,20090) ITER, NTRDER, NBPTAJ, NBSOMM
+         ENDIF
+10090    FORMAT(' TRAJPT: ITER',I3,' DERNIER TRIANGLE=',I8,
+     %           ' NB POINTS AJOUTES=',I8,' NB SOMMETS=',I8)
+20090    FORMAT(' TRAJPT: ITER',I3,' LAST TRIANGLE=',I8,
+     %           ' ADDED POINTS NUMBER=',I8,' VERTICES NUMBER=',I8)
+         NBSOM0 = NBSOMM
+C
+C        ESSAI D'EVITER DES BOUCLES INUTILES
+         IF( NBPTAJ .LE. 0 ) THEN
+            IF( ITER .LE. MXITTR ) THEN
+C              PAS DE POINTS AJOUTES LORS DES SURFACES DE TRIANGLES
+               MXITTR = ITER
+            ELSE
+C              PAS DE POINTS AJOUTES LORS DES TAILLES D'ARETES SOUHAITEES
+               GOTO 9000
+            ENDIF
+         ENDIF
+C
+         NTRDE0 = NTRDER
+C
+cccC     TRACE DE LA TRIANGULATION ACTUELLE
+ccc      TRATRI = .TRUE.
+ccc      CALL TETRMA( NCROUG, NCBLAN,
+ccc     %             COMXMI, PXYD,
+ccc     %             MOSOAR, MXSOAR, NOSOAR,
+ccc     %             MOARTR, MXARTR, NOARTR,
+ccc     %             NBTRIA, QUAMOY, QUAMIN )
+ccc      TRATRI = .FALSE.
+C
+ 100  CONTINUE
+C
+ 9000 RETURN
+      END

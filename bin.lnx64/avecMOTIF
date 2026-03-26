@@ -1,0 +1,26 @@
+#!/bin/bash
+#  Alain PERRONNET   Juin 1997
+#
+# Copier les fichiers .am dans chaque repertoire afin d'obtenir
+# la VERSION AVEC MOTIF des sous-programmes
+#
+echo ==========================================
+echo Construire la version Mefisto  AVEC  Motif
+echo ==========================================
+for i in util xvue
+do
+  cd $mefisto/$i
+  echo Librairie $mefisto/$i
+  for j in `ls *.*.am`
+  do
+    nomsp=`basename $j .am`
+    echo Copie de $mefisto/$i/$j dans $mefisto/$i/$nomsp
+    cp $j $nomsp
+  done
+done
+
+echo Copie de $mefisto/xvue/xvuelc.c.am dans $mefisto/xvue/xvuelc.c
+cp $mefisto/xvue/xvuelc.c.am $mefisto/xvue/xvuelc.c
+
+echo Copie de $mefisto/bin/ccxvue.am dans $mefisto/bin/ccxvue
+cp $mefisto/bin/ccxvue.am $mefisto/bin/ccxvue

@@ -1,0 +1,51 @@
+      SUBROUTINE CLIPSG( NC, R3, S3, R4, S4 ,
+     %                       R1, R2, S1, S2 ,
+     %                       XCM1, XCM2, YCM1, YCM2 )
+C+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+C BUT : CLIPPER ENTRE (R1 R2) (S1 S2)  LE SEGMENT (R3,S3) (R4,S4)
+C ----- TRACER CE SEGMENT DANS LE RECTANGLE (XCM1 XCM2) * (YCM1 YCM2)
+C
+C ENTREES ET SORTIES :
+C --------------------
+C R3,S3 : COORDONNEES DU POINT INITIAL
+C R4,S4 : COORDONNEES DU POINT FINAL
+C
+C ENTREES :
+C ---------
+C NC        : NUMERO DE LA COULEUR DE TRACE DU SEGMENT
+C R1,R2     : MIN ET MAXIMUM DE L'INTERVALLE HORIZONTAL DE CLIPPAGE
+C S1,S2     : MIN ET MAXIMUM DE L'INTERVALLE VERTICAL   DE CLIPPAGE
+C XCM1,XCM2 : X MIN ET MAX EN CENTIMETRES DE LA FENETRE ECRAN
+C YCM1,YCM2 : Y MIN ET MAX EN CENTIMETRES DE LA FENETRE ECRAN
+C
+C SORTIE :
+C --------
+C TRACER : VRAI SI LE SEGMENT EST A TRACER, FAUX SINON
+C+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+C AUTEUR : PERRONNET ALAIN  ANALYSE NUMERIQUE UPMC PARIS        MAI 1990
+C23456---------------------------------------------------------------012
+      LOGICAL TRACER
+C
+C     PASSAGE EN COORDONNEES CM
+      X3 = ( ( R2-R3) * XCM1 + (R3-R1) * XCM2 ) / (R2-R1)
+      Y3 = ( ( S2-S3) * YCM1 + (S3-S1) * YCM2 ) / (S2-S1)
+      X4 = ( ( R2-R4) * XCM1 + (R4-R1) * XCM2 ) / (R2-R1)
+      Y4 = ( ( S2-S4) * YCM1 + (S4-S1) * YCM2 ) / (S2-S1)
+C
+C     CLIP ENTRE XCM1 XCM2
+      CALL CLIPSI( X3, Y3, X4, Y4, XCM1, XCM2, TRACER )
+      IF( .NOT.TRACER ) RETURN
+C
+C     CLIP ENTRE YCM1 ET YCM2
+C     CHANGEMENT DE REPERE   XX=-Y ET YY=X
+      XX3 = -Y3
+      XX4 = -Y4
+      CALL CLIPSI( XX3, X3, XX4, X4, -YCM2, -YCM1, TRACER )
+      IF( .NOT.TRACER ) RETURN
+C     RETOUR AUX AXES INITIAUX
+      Y3 = -XX3
+      Y4 = -XX4
+C
+C     TRACE DU SEGMENT
+      CALL TRAIT2D( NC, X3, Y3, X4, Y4 )
+      END

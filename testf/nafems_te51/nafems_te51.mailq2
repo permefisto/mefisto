@@ -1,0 +1,68 @@
+{TEST 51 NAFEMS DEEP SIMPLY-SUPPORTED SOLID BEAM    }
+
+{fichier TEST CALCUL DES MODES PROPRES EN ELASTICITE}
+{Le maillage en hexaedres de degre 2 HEXA 3Q2C      }
+
+{Le 16 octobre 1998                  Alain PERRONNET}
+
+DefVar nbax,nbay,nbaz;
+nbax=5;
+nbay=1;
+nbaz=1;
+
+1; 1;     { LES POINTS }
+   S1; I; 1; 0; 0; 0;
+   S2; I; 1;10; 0; 0;
+   S3; I; 1;10; 2; 0;
+   S4; I; 1; 0; 2; 0;     
+   H1; I; 1; 0; 0; 2;
+   H2; I; 1;10; 0; 2;
+   H3; I; 1;10; 2; 2;
+   H4; I; 1; 0; 2; 2;
+@;
+2;        { LES LIGNES }
+   B1; I; 2; nbax; 1; S1; S2;
+   B2; I; 2; nbay; 1; S2; S3;
+   B3; I; 2; nbax; 1; S3; S4;
+   B4; I; 2; nbay; 1; S4; S1;  
+   H1; I; 2; nbax; 1; H1; H2;
+   H2; I; 2; nbay; 1; H2; H3;
+   H3; I; 2; nbax; 1; H3; H4;
+   H4; I; 2; nbay; 1; H4; H1; 
+   V1; I; 2; nbaz; 1; S1; H1;
+   V2; I; 2; nbaz; 1; S2; H2;
+   V3; I; 2; nbaz; 1; S3; H3;
+   V4; I; 2; nbaz; 1; S4; H4;
+@;
+3;         { LES SURFACES }
+   BAS;      I; 1; B1; B2; B3; B4; 2;
+   HAUT;     I; 1; H1; H2; H3; H4; 2;
+   GAUCHE;   I; 1; B1; V2; H1; V1; 2;
+   FACE;     I; 1; B2; V3; H2; V2; 2;
+   DROITE;   I; 1; B3; V4; H3; V3; 2;
+   DERRIERE; I; 1; B4; V4; H4; V1; 2;
+@;  
+4;         { LE VOLUME }
+   POUTRE; I; 1;
+       BAS; HAUT; GAUCHE; FACE; DROITE; DERRIERE;
+@;
+
+5; { OBJETS parties de l OBJET }
+ POUTRE; { NOM DE L'OBJET }
+      0; { classique 2D ou 3D }
+      6; { nombre de Points Lignes Surfaces Volumes de l'objet }
+      v;  poutre;
+      s;  droite;
+      l;  b4;
+      l;  b2;
+      p;  s4;
+      p;  s3;
+@;
+
+7; { INTERPOLATION definition noeuds du maillage }
+  POUTRE; 4;  { LAGRANGE de DEGRE 2 }
+@;
+ 10; {trace}
+  5; 1; 90; {tous les objets}
+
+FERMER;

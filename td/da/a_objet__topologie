@@ -1,0 +1,24 @@
+deftms ~>OBJET>>TOPOLOGIE
+'Topology of Finite Elements after INTERPOLATION'
+variable muet DATE 'date of creation of the TMS'    reel2  ;
+variable muet NUTD 'number of the descriptor array' entier ; 
+variable NBOBIN 'number of internal objects (S or V)'   entier ;
+variable NBOBCL 'number of boudary objects (PL or PLS)' entier ;
+variable NBTYEL 'number of Type Finite Elements' entier ; 
+variable NDPGST 'comparison between nodes points & vertices' entier
+ ( 0 : 'nodes = points = vertices only the XYZSOMMET tms exists'
+ , 1 : 'nodes = points # vertices the XYZSOMMET XYZNOEUD tms exist'
+ , 2 : 'nodes # points = vertices the XYZSOMMET XYZNOEUD tms exist'
+ , 3 : 'nodes # points # vertices the XYZSOMMET XYZNOEUD tms exist'
+ ) ; 
+tableau NMTYEL(1..NBTYEL) '4 characters of the name of FE''s types' caractere ;
+tableau NUOBIN(1..NBOBIN) 'type and name of internal objects' typeobjet ;
+tableau NUOBCL(1..NBOBCL) 'type and name of boundary objects' typeobjet ;
+fintms ;
+                                                                       
+
+------------------------------------------------------------------------------- 
+For memory: The interpolation has created also NBTYEL tms 
+            with names ~>OBJET>NomObjet>NPEF"NMTYEL(i)   i=1,...,NBTYEL
+-------------------------------------------------------------------------------
+

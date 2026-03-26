@@ -1,0 +1,6 @@
+variable TRACVOLU 'Drawing of Volumes' entier
+( 1: 'ALL VOLUMES'
+, 2: 'ALL VOLUMES 1 by 1'
+, 3: 'ONE VOLUME'
+, 5: 'ONE VOLUME 1 PLANE of SECTION'
+, 6: 'OPPOSED TETRAHEDRA of a TETRAHEDRIZATION' );

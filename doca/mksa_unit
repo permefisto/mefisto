@@ -1,0 +1,24 @@
+Units MKSA (as Meter Kilogram Second Ampere)
+--------------------------------------------
+
+NEWTON: Force accelerating 1 Kg along 1m by s^-2 :   Kg m s-2
+
+JOULE: Heat quantity able to do a displacement of 1 Newton on 1 m :  Kg m2 s-2
+
+WATT: Heat transfer or power of 1 joule in 1 second :  Kg m2 s-3
+
+PASCAL: Pressure of a 1 Newton force on 1 m2 :  Kg m-1 s-2
+
+KELVIN:  -273.15 CELSIUS degrees  or ZERO ABSOLUTE TEMPERATURE 
+
+CONDUCTIVITY:  w m-1 K-1
+
+VOLUMIC MASS rho:  Kg m-3
+
+SPECIFIC HEAT Cth:  J  Kg-1  K-1
+
+SPECIFIC HEAT CAPACITY  rho x Cth:  J K-1 m-3
+
+HEAT TRANSFER COEFFICIENT:  w m-2 K-1
+
+HEAT FLUX DENSITY:  w m-2

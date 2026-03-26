@@ -1,0 +1,162 @@
+      SUBROUTINE TRFASEOB1( NOAXE,  VNORMAL, COPLAN,
+     %                      NBPOI,  XYZPOI,
+     %                      NBTYEL, MNELEM, NOPTEF,
+     %                      MXFASE, NBFASE, NOSTFA, QUALIEF, XYZBAR )
+C ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+C BUT :  LISTER LES NO DES SOMMETS DES FACES DES EF AYANT UNE
+C -----  INTERSECTION AVEC LE PLAN NOAXE DE COORDONNEE COPLAN
+C
+C ENTREES:
+C --------
+C NOAXE  : =1 AXE X
+C          =2 AXE Y
+C          =3 AXE Z
+C          =4 AXE AVEC VNORMAL=NORMALE AU PLAN
+C VNORMAL: VECTEUR NORMAL AU PLAN POUR NOAXE=4
+C COPLAN : COORDONNEE DU PLAN DE SECTION DANS LA DIRECTION NORMALE DU PLAN
+C NBPOI  : NOMBRE DE POINTS DU MAILLAGE
+C XYZPOI : 3 COORDONNEES DES NBPOI POINTS DU MAILLAGE
+C NBEF   : NOMBRE D'EF 3D DU MAILLAGE
+C NOPTEF : NO DES POINTS DES EF 3D
+C MXFASE : MAXIMUM DE FACES DES EF SECTIONNES PAR LE PLAN
+C
+C SORTIES:
+C --------
+C NBFASE : NOMBRE DE FACES DES EF SECTIONNES
+C NOSTFA : NO DES SOMMETS DANS XYZPOI  DES FACES DES EF SECTIONNES
+C QUALIEF: QUALITE DE L'EF 3D DE CHAQUE FACE (POUR DEFINIR LA COULEUR)
+C XYZBAR : 3 COORDONNEES DU BARYCENTRE DES FACES DES EF SECTIONNES
+C ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+C AUTEUR : ALAIN PERRONNET Laboratoire JL LIONS UPMC Paris Decembre 2006
+C....................................................................012
+      include"./incl/ponoel.inc"
+      include"./incl/a___npef.inc"
+      COMMON / UNITES / LECTEU, IMPRIM, NUNITE(30)
+      COMMON / MSSFTA / MSSF(28),NTADAM
+      include"./incl/pp.inc"
+      COMMON            MCN(MOTMCN)
+      REAL              RMCN(1)
+      EQUIVALENCE      (RMCN(1),MCN(1))
+C
+      REAL     VNORMAL(3), XYZPOI(3,NBPOI)
+      INTEGER  NOPTEF(64)
+      INTEGER  NOSTFA(4,MXFASE)
+      REAL     QUALIEF(MXFASE)
+      REAL     XYZBAR(3,MXFASE)
+C
+      NBFASE = 0
+C
+C     LISTAGE DES FACES DES EF SECTIONNES PAR LE PLAN DE
+C     COORDONNEE COPLAN DANS LA DIRECTION DE LA NORMALE
+      DO 100 NBTYE = 0, NBTYEL-1
+C
+C        L'ADRESSE MCN DU DEBUT DU TABLEAU NPEF DE CE TYPE D'EF
+         MNELE = MCN( MNELEM + NBTYE )
+C
+C        LE NUMERO DU TYPE DES ELEMENTS FINIS
+         NUTYEL = MCN( MNELE + WUTYEL )
+C
+C        LE NOMBRE DE TELS ELEMENTS
+         NBELEM = MCN( MNELE + WBELEM )
+C
+C        LES CARACTERISTIQUES DE L'ELEMENT FINI
+         CALL ELTYCA( NUTYEL )
+C
+C        NBNSOM = Nombre de sommets d'un EF
+C        Nombre de noeuds d'un EF
+C        NCOGEL : CODE GEOMETRIQUE DE L ELEMENT
+C                 1:POINT 2:SEGMENT 3:TRIANGLE 4:QUADRANGLE
+C                 5:TETRAEDRE 6:PENTAEDRE 7:HEXAEDRE >7:ERREUR
+C        NBSOFA : NOMBRE DE SOMMETS DES FACES DE L'EF DE TYPE NCOGEL
+C        NOSOFA : NOSOFA(I,J) NO DU I-EME SOMMET DE LA FACE J DU "CUBE"
+C        NOSOFA : NOSOFA(I,J) NO DU I-EME SOMMET DE LA FACE J
+         CALL ELNUCG( NUTYEL, NCOGEL )
+C
+C        NOMBRE DE FACES DE L'EF 3D
+         NBFAC = NBFACE( NCOGEL )
+C
+C        LA BOUCLE SUR LES ELEMENTS FINIS DE CE TYPE NUTYEL
+C        ==================================================
+         DO 90 NEF = 1, NBELEM
+C
+C           LES NBPGEF POINTS DE L'ELEMENT FINI NUELEM
+            CALL EFPOGE( MNELE, NEF, NBPGEF, NOPTEF )
+C
+C           NBNSOM SOMMETS PLACES EN PREMIER DANS LES NO DE POINTS
+C           RECHERCHE DE LA COORDONNEE NOAXE MIN MAX DES SOMMETS DE L'EF
+C           POUR SAVOIR SI LA COORDONNEE DU PLAN EST ENTRE CES VALEURS
+            IF( NOAXE .LE. 3 ) THEN
+C
+C              PLAN A COORDONNEE NOAXE=Constante
+               CMIN = XYZPOI( NOAXE, NOPTEF(1) )
+               CMAX = CMIN
+               DO 20 NF = 1, NBFAC
+                  DO 15 NS = 1,NBSOFA(NF)
+C                    LE NO DU SOMMET NS DE LA FACE NF DANS L'EF NEF
+                     NOST = NOPTEF( NOSOFA( NS, NF ) )
+                     C = XYZPOI( NOAXE, NOST )
+                     IF( C .LT. CMIN ) CMIN = C
+                     IF( C .GT. CMAX ) CMAX = C
+ 15               CONTINUE
+ 20            CONTINUE
+C
+            ELSE
+C
+C              PLAN DEFINI PAR LE VECTEUR NORMAL
+C              COORDONNEE SELON LA DIRECTION NORMALE PAR PRODUIT SCALAIRE
+               CMIN = PROSCR( XYZPOI(1,NOPTEF(1)), VNORMAL, 3 )
+               CMAX = CMIN
+               DO 30 NF = 1, NBFAC
+                  DO 25 NS = 1,NBSOFA(NF)
+C                    LE NO DU SOMMET NS DE LA FACE NF DANS L'EF NEF
+                     NOST = NOPTEF( NOSOFA( NS, NF ) )
+                     C = PROSCR( XYZPOI( 1, NOST ), VNORMAL, 3 )
+                     IF( C .LT. CMIN ) CMIN = C
+                     IF( C .GT. CMAX ) CMAX = C
+ 25               CONTINUE
+ 30            CONTINUE
+C
+            ENDIF
+            ECART = ( CMAX - CMIN ) * 0.01
+            CMIN = CMIN - ECART
+            CMAX = CMAX + ECART
+C
+            IF( COPLAN .LT. CMIN .OR. COPLAN .GT. CMAX ) GOTO 90
+C
+C           L'EF NEF A UNE INTERSECTION AVEC LE PLAN NOAXE
+C           LISTAGE DES NO DES SOMMETS DE SES FACES POUR LE TRACE
+C           LA QUALITE DE L'EF
+            CALL QUALEF( NCOGEL,   NOPTEF, NBPOI, XYZPOI,
+     %                   SURFVOLU, QUALIT, IERR )
+            IF( IERR .NE. 0 ) RETURN
+C
+            DO 50 NF = 1, NBFAC
+               IF( NBFASE .GE. MXFASE ) GOTO 9000
+C              UNE FACE A TRACER DE PLUS
+               NBFASE = NBFASE + 1
+C              LA QUALITE DE L'EF 3D DE CETTE FACE
+               QUALIEF(NBFASE) = QUALIT
+C              LES 3 COORDONNEES DU BARYCENTRE DE LA FACE
+               XYZBAR(1,NBFASE) = 0
+               XYZBAR(2,NBFASE) = 0
+               XYZBAR(3,NBFASE) = 0
+               NBSTFA = NBSOFA(NF)
+               DO 40 NS = 1, NBSTFA
+C                 LE NO DU SOMMET NS DE LA FACE NF DANS L'EF NEF
+                  NOST = NOPTEF( NOSOFA( NS, NF ) )
+                  NOSTFA(NS, NBFASE) = NOST
+                  XYZBAR(1,NBFASE) = XYZBAR(1,NBFASE) + XYZPOI(1,NOST)
+                  XYZBAR(2,NBFASE) = XYZBAR(2,NBFASE) + XYZPOI(2,NOST)
+                  XYZBAR(3,NBFASE) = XYZBAR(3,NBFASE) + XYZPOI(3,NOST)
+ 40            CONTINUE
+               IF( NBSTFA .EQ. 3 ) NOSTFA(4,NBFASE)=0
+C              LES 3 COORDONNEES DU BARYCENTRE DE LA FACE
+               XYZBAR(1,NBFASE) = XYZBAR(1,NBFASE) / NBSTFA
+               XYZBAR(2,NBFASE) = XYZBAR(2,NBFASE) / NBSTFA
+               XYZBAR(3,NBFASE) = XYZBAR(3,NBFASE) / NBSTFA
+ 50         CONTINUE
+ 90      CONTINUE
+ 100  CONTINUE
+C
+ 9000 RETURN
+      END

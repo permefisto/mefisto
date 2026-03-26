@@ -1,0 +1,9 @@
+deftms ~>>>XYZPOINT 'Les 3 coordonnees des points d''un OBJET'
+ variable muet DATE        'Date de creation du tableau'   reel2  ;
+ variable muet NUTD        'Numero du tableau descripteur' entier ; 
+ variable      NBPOI       'Nombre de points'              entier ;
+ variable      NBTGP       'Nombre de tangentes'           entier ;
+ variable      NBCOOP      'Nombre coordonnees d''un point' entier ;
+ tableau  XYZPOI(1..NBPOI) 'X Y Z de chaque point'         xyz    ;
+ tableau  XYZTGP(1..NBTGP) 'X Y Z de chaque tangente'      xyz    ;
+fintms ;

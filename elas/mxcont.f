@@ -1,0 +1,92 @@
+      SUBROUTINE MXCONT( NTLXOB, NBTYEL, MNELEM,
+     %                   HEXSEC, CONTMX, IERR )
+C+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+C BUT :    CALCULER LA CONTRAINTE PRINCIPALE MAXIMALE DE TOUS LES CAS
+C -----    ET L'HEXAEDRE ENGLOBANT TOUS LES POINTS
+C
+C ENTREES :
+C ---------
+C NTLXOB : LE NUMERO DU TMS LEXIQUE DE L'OBJET A TRAITER
+C NBTYEL : LE NOMBRE DE TYPES D'ELEMENTS DANS CETTE TOPOLOGIE
+C MNELEM : L'ADRESSE MCN DU TABLEAU DES ADRESSES MCN DES TABLEAUX NPEF"
+C NCAS   : LE NUMERO DU CAS A TRAITER
+C
+C RESULTATS :
+C -----------
+C HEXSEC : LES MIN ET MAX DES COORDONNEES DES POINTS OU SONT CALCULEES
+C          LES CONTRAINTES
+C CONTMX : LA VALEUR ABSOLUE DE LA CONTRAINTE MAXIMALE
+C IERR   : 0 SI PAS D'ERREUR >0 SINON
+C+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+C AUTEUR : ALAIN PERRONNET ANALYSE NUMERIQUE UPMC PARIS    NOVEMBRE 1989
+C23456---------------------------------------------------------------012
+      include"./incl/a_objet__topologie.inc"
+      include"./incl/a___npef.inc"
+      include"./incl/a___contrainte.inc"
+      include"./incl/trvari.inc"
+      COMMON / UNITES / LECTEU,IMPRIM,INTERA,NUNITE(29)
+      include"./incl/pp.inc"
+      COMMON            MCN(MOTMCN)
+      REAL              CONTMX, HEXSEC(6,2)
+      CHARACTER*160     KNOM
+      CHARACTER*4       NOMELE(2)
+C
+C     INITIALISATIONS
+      RMAX   = RINFO( 'GRAND' )
+      DO 10 I=1,3
+C        LE MINIMUM
+         HEXSEC(I,1) =  RMAX
+C        LE MAXIMUM
+         HEXSEC(I,2) = -RMAX
+ 10   CONTINUE
+      CONTMX = 0
+C
+C     BOUCLE SUR LES DIFFERENTS TYPES D'ELEMENTS DU MAILLAGE
+      DO 20 I = 0 , NBTYEL-1
+C        L'ADRESSE MCN DU DEBUT DU TABLEAU ELEMENTS
+         MNELE = MCN( MNELEM + I )
+C        LE NOM DU TABLEAU CONTRAINTES ASSOCIE
+         NUTYEL = MCN( MNELE + WUTYEL )
+C        LES CARACTERISTIQUES DE L'ELEMENT FINI
+         CALL ELNUNM( NUTYEL , NOMELE )
+         KNOM = 'CONTRAINTE"' // NOMELE(2)
+C        OUVERTURE DU TABLEAU
+         CALL LXTSOU( NTLXOB , KNOM , NTCONT , MNCONT )
+         IF( NTCONT .LE. 0 ) THEN
+            WRITE(IMPRIM,*) 'CONTRAINTES NON CALCULEES'
+            IERR = 1
+            RETURN
+         ENDIF
+C
+C        RECHERCHE DU MIN MAX DES COORDONNEES ET DES CONTRAINTES
+         LDCOPR = MCN(MNCONT+WDCOPR)
+         CALL MXCON1( MCN(MNCONT+WBELFI), MCN(MNCONT+WBPIEF),
+     %                MCN(MNCONT+WDIMES), MCN(MNCONT+WBJECA),
+     %                MCN(MNCONT+WOPIEF), MCN(MNCONT+LDCOPR),
+     %                HEXSEC, CONTMX )
+ 20   CONTINUE
+C
+      IF( HEXSEC(3,1) .EQ. RMAX ) THEN
+C        DIMENSION 2
+         HEXSEC(3,1) = 0
+         HEXSEC(3,2) = 0
+         NDIMLI = 2
+      ELSE
+         NDIMLI = 3
+      ENDIF
+C
+C     RECHERCHE DE LA DIMENSION MAXIMALE ECAMAX DE L'OBJET
+      ECAMAX = 0.
+      DO 50  I=1,NDIMLI
+         ECAMAX = MAX( ECAMAX , HEXSEC(I,2) - HEXSEC(I,1) )
+ 50   CONTINUE
+      IF( ECAMAX .LE. 0. ) ECAMAX = 1.
+C     UNE MARGE DE 3%
+      ECAMAX = ECAMAX * 0.53
+C
+      DO 60 I=1,NDIMLI
+         RMAX = ( HEXSEC(I,1) + HEXSEC(I,2) ) * 0.5
+         HEXSEC(I,1) = RMAX - ECAMAX
+         HEXSEC(I,2) = RMAX + ECAMAX
+ 60   CONTINUE
+      END

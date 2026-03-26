@@ -1,0 +1,117 @@
+      SUBROUTINE PRGCVP( NBSOM,  NBNOVI, NONOSO,
+     %                   NCODSA, LPLIGN, LPCOLO,
+     %                   MNPTDP, MNLPCP, IERR )
+C ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+C BUT :    GENERER LE STOCKAGE CONDENSE DE LA MATRICE DU MAILLAGE POUR
+C -----    LES SOMMETS (INTERPOLATION P1) CONNAISSANT CELUI
+C          POUR LES NOEUDS P2 A PARTIR D'UN MAILLAGE P2
+
+C ENTREES:
+C --------
+C NBSOM  : NOMBRE DE SOMMETS DU MAILLAGE
+C NBNOVI : NOMBRE DE NOEUDS  DU MAILLAGE
+C NONOSO : NONOSO(I)=NO SOMMET SI SOMMET, 0 SI MILIEU D'ARETE
+C NCODSA : CODE DE STOCKAGE DE LA MATRICE MORSE
+C           0 : MATRICE DIAGONALE
+C          -1 : MATRICE NON SYMETRIQUE
+C           1 : MATRICE SYMETRIQUE
+C LPLIGN : POINTEUR SUR LES COEFFICIENTS DIAGONAUX      DE LA MATRICE
+C LPCOLO : NUMERO DES COLONNES DES COEFFICIENTS STOCKES DE LA MATRICE
+
+C SORTIES:
+C --------
+C MNPTDP : ADRESSE MCN DU POINTEUR SUR LES COEFFICIENTS DIAGONAUX
+C          DE LA MATRICE DU SYSTEME LINEAIRE POUR LES NBSOM SOMMETS
+C          LE NOMBRE DE COLONNES DES SOMMETS VOISINS = MNPTDP(NBSOM)
+C MNLPCP : ADRESSE MCN DE LA LISTE DES NUMEROS DE COLONNES
+C          DES COEFFICIENTS NON NULS DE LA MATRICE POUR LES NBSOM SOMMETS
+C IERR   : 0 SI PAS D'ERREUR, 1 SINON
+C+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+C AUTEUR : ALAIN PERRONNET LJLL UPMC & St PIERRE du PERRAY     Juin 2012
+C MODIFS : ALAIN PERRONNET             St PIERRE du PERRAY     Mars 2021
+C23456---------------------------------------------------------------012
+      include"./incl/pp.inc"
+      COMMON         MCN(MOTMCN)
+      INTEGER        NONOSO(1:NBNOVI), LPLIGN(0:NBSOM), LPCOLO(1:*)
+
+      IERR   = 0
+      MNPTDP = 0
+      MNLPCP = 0
+
+      IF( NCODSA .EQ. 0 ) GOTO 9000
+
+C     POINTEUR SUR LE COEFFICIENT DIAGONAL DE CHAQUE NOEUD
+      CALL TNMCDC( 'ENTIER', NBSOM+1, MNPTDP )
+      IF( MNPTDP .EQ. 0 ) THEN
+         IERR = 1
+         GOTO 9000
+      ENDIF
+
+C     PARCOURS DES NUMEROS DE COLONNES DES NOEUDS
+C     POUR CALCULER LE POINTEUR DIAGONAL DES SOMMETS
+C     ----------------------------------------------
+      MCN( MNPTDP ) = 0
+      NBS     = 0
+      NBCOLS  = 0
+
+      DO NL=1,NBNOVI
+         NUSOM = NONOSO(NL)
+         IF( NUSOM .GT. 0 ) THEN
+
+C           NUSOM EST UN SOMMET
+            NBS = NBS + 1
+
+            DO LC = LPLIGN(NL-1)+1, LPLIGN(NL)
+
+C              NUMERO COLONNE D'UN NOEUD
+               NCL = LPCOLO( LC )
+C              NUMERO SOMMET DE CE NOEUD
+               NCS = NONOSO( NCL )
+
+               IF( NCS .GT. 0 ) THEN
+C                 CE NOEUD EST UN SOMMET: COEFFICIENT EXISTANT
+                  NBCOLS = NBCOLS + 1
+               ENDIF
+
+            ENDDO
+
+C           POINTEUR DIAGONAL
+            MCN( MNPTDP + NBS ) = NBCOLS
+
+         ENDIF
+      ENDDO
+
+C     LE POINTEUR SUR LES COLONNES DES SOMMETS
+      CALL TNMCDC( 'ENTIER', NBCOLS, MNLPCP )
+
+C     PARCOURS DES NUMEROS DE COLONNES DES NOEUDS
+C     POUR CALCULER LE NUMERO DES COLONNES DES SOMMETS
+C     ------------------------------------------------
+      NBCOLS = 0
+
+      DO NL=1,NBNOVI
+         NUSOM = NONOSO(NL)
+         IF( NUSOM .GT. 0 ) THEN
+
+C           NUSOM EST UN SOMMET
+            DO LC = LPLIGN(NL-1)+1, LPLIGN(NL)
+C
+C              NUMERO COLONNE D'UN NOEUD
+               NCL = LPCOLO( LC )
+C              NUMERO SOMMET DE CE NOEUD
+               NCS = NONOSO( NCL )
+
+               IF( NCS .GT. 0 ) THEN
+C                 C'EST UN SOMMET: COEFFICIENT EXISTANT
+                  MCN(MNLPCP+NBCOLS) = NCS
+                  NBCOLS = NBCOLS + 1
+               ENDIF
+
+            ENDDO
+
+         ENDIF
+
+      ENDDO
+
+ 9000 RETURN
+      END

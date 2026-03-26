@@ -1,0 +1,110 @@
+      SUBROUTINE MAXCOMP( NDIM,   NOCOMP, NBPOIN, XYZPOI,
+     %                    NBNOVI, NBVECT, VITXYZ,
+     %                    COIN,   NOEMIN, NCAMIN, VITMIN,
+     %                            NOEMAX, NCAMAX, VITMAX, VITMOY )
+C+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+C BUT :    CALCULER LE MINIMUM ET MAXIMUM DES COORDONNEES DES POINTS
+C -----    DANS LE TABLEAU COIN
+C          CALCULER LE MINIMUM ET MAXIMUM DE LA COMPOSANTE NOCOMP
+C          DU VECTEUR VITESSE(NBNOVI,NBVECT,NOCOMP) 3D AUX NOEUDS
+
+C ENTREES:
+C --------
+C NDIM   : DIMENSION 2 ou 3 DE L'ESPACE
+C NOCOMP : 1      UTILISE LA COMPOSANTE X DE LA VITESSE VITXYZ
+C          2      UTILISE LA COMPOSANTE Y DE LA VITESSE VITXYZ
+C          3      UTILISE LA COMPOSANTE Z DE LA VITESSE VITXYZ
+C          NDIM+1 UTILISE LE MODULE       DE LA VITESSE VITXYZ
+C NBPOIN : NOMBRE DE POINTS DU MAILLAGE DE L'OBJET
+C XYZPOI : LES 3 COORDONNEES DES NBPOIN POINTS (BARYCENTRE COMPRIS)
+C NBNOVI : NOMBRE DE NOEUDS SUPPORT DE LA VITESSE
+C NBVECT : NOMBRE TOTAL DE VECTEURS VITESSE PRESSION
+C VITXYZ  : LA VITESSE (NBNOVI,NBVECT,4) X,Y,Z et MODULE
+
+C SORTIES:
+C --------
+C COIN   : COIN(.,1) MIN DES COORDONNEES DES POINTS
+C          COIN(.,2) MAX DES COORDONNEES DES POINTS
+C NOEMIN : NUMERO DU NOEUD   DE LA NORME DE LA VITESSE MINIMALE
+C NCAMIN : NUMERO DU VECTEUR DE LA NORME DE LA VITESSE MINIMALE
+C VITMIN : NORME             DE LA VITESSE MINIMALE
+C NOEMAX : NUMERO DU NOEUD   DE LA NORME DE LA VITESSE MAXIMALE
+C NCAMAX : NUMERO DU VECTEUR DE LA NORME DE LA VITESSE MAXIMALE
+C VITMAX : NORME             DE LA VITESSE MAXIMALE
+C VITMAX : NORME MOYENNE DE LA VITESSE
+C+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+C AUTEUR : ALAIN PERRONNET LJLL UPMC & St Pierre du Perray  Fevrier 2013
+C.......................................................................
+      REAL              COIN(6,2), XYZPOI(3,NBPOIN)
+      DOUBLE PRECISION  VITXYZ(NBNOVI,NBVECT,NOCOMP),
+     %                  VITMIN, VITMAX, VITMOY, VITE
+
+C     INITIALISATION DES COORDONNEES EXTREMES DU MAILLAGE
+C     ---------------------------------------------------
+      S = XYZPOI(1,1)
+      COIN(1,1) = MIN( XYZPOI(1,1), S )
+      COIN(1,2) = MAX( XYZPOI(1,1), S )
+
+      S = XYZPOI(2,1)
+      COIN(2,1) = MIN( XYZPOI(2,1), S )
+      COIN(2,2) = MAX( XYZPOI(2,1), S )
+
+      IF( NDIM .GT. 2 ) THEN
+         S = XYZPOI(3,1)
+         COIN(3,1) = MIN( XYZPOI(3,1), S )
+         COIN(3,2) = MAX( XYZPOI(3,1), S )
+      ELSE
+         COIN(3,1) = 0
+         COIN(3,2) = 0
+      ENDIF
+C
+C     LES COORDONNEES MIN ET MAX DES POINTS
+      DO J=2,NBPOIN
+         DO I=1,NDIM
+            S = XYZPOI(I,J)
+            COIN(I,1) = MIN( COIN(I,1), S )
+            COIN(I,2) = MAX( COIN(I,2), S )
+         ENDDO
+      ENDDO
+
+C     LA VITESSE MINIMALE ET MAXIMALE SELON LA COMPOSANTE CHOISIE
+C     -----------------------------------------------------------
+      NOEMIN = 1
+      NCAMIN = 1
+      NOEMAX = 1
+      NCAMAX = 1
+
+      VITMIN = VITXYZ(1,1,NOCOMP)
+      VITMAX = VITMIN
+      VITMOY = 0D0
+
+      DO NV=1,NBVECT
+         DO I=1,NBNOVI
+
+C           LA COMPOSANTE NOCOMP DE LA VITESSE
+            VITE = VITXYZ(I,NV,NOCOMP)
+
+C           LA VITESSE MOYENNE
+            VITMOY = VITMOY + VITE
+
+            IF( VITE .LT. VITMIN ) THEN
+C              LA VITESSE MINIMALE
+               VITMIN = VITE
+               NOEMIN = I
+               NCAMIN = NV
+            ELSE IF( VITE .GT. VITMAX ) THEN
+C              LA VITESSE MAXIMALE
+               VITMAX = VITE
+               NOEMAX = I
+               NCAMAX = NV
+            ENDIF
+C
+         ENDDO
+      ENDDO
+
+C     LA MOYENNE AUX NOEUDS DE LA COMPOSANTE NOCOMP DE LA VITESSE
+C     -----------------------------------------------------------
+      VITMOY = VITMOY / (NBVECT*NBNOVI)
+
+      RETURN
+      END

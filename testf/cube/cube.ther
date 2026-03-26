@@ -1,0 +1,115 @@
+{ ==================================================================== }
+{ Logiciel MEFISTO     : Version Decembre 2003                         }
+{ Nom de l'Utilisateur : perronne                                      }
+{ Nom du Projet        : hexaedre                                      }
+{ Date                 : 15/12/2003                                    }
+{ Heure                : 10h 51m 44s                                   }
+{ ==================================================================== }
+DefVar conduc; conduc=332/1.16;
+DefVar echange; echange=50.0;
+
+Deffonc Temperature_Exacte(t,x,y,z);
+Temperature_Exacte = x*x + y*y + z*z;
+FinFonc;
+
+DefFonc UDirichlet(t,x,y,z, NoTPLS, NoPLS, Temper );
+UDirichlet = Temperature_Exacte(t,x,y,z);
+FinFonc;
+
+
+2;
+ { ENTREE des DONNEES du PROBLEME }
+
+ { VOLUME: HEXAEDRE }
+ 2;{ [A] Tenseur CONDUCTIVITE THERMIQUE }
+ 1;{ Materiau 3D homogene isotrope }
+ conduc;{ CONDUC 'Conductivite du materiau' reel ; }
+
+ 4;{ FOmega SOURCE interne de CHALEUR }
+ 1;{ Source constante }
+ -6*conduc; { SOURCE 'Valeur de la Source' reel ; }
+ @;
+
+ { SURFACE: HAUT }
+ 1;{ ECHANGE entre la PAROI et le FLUIDE }
+ 1;{ Echange constant }
+ echange;{ ECHANG 'Coefficient d''Echange' reel ; }
+
+ 2;{ SOURCE Flux IMPOSE a la frontiere }
+ -1;{ Fonction Source  NOM de FONCTION }
+
+ DefFonc UFluide(x,y,z);  {Temperature du Fluide}
+ UFluide = Temperature_Exacte(0,x,y,z)+2*z*conduc/echange;
+ FinFonc;
+
+ DefFonc Fourier(t,x,y,z, NoTPLS, NoPLS, Temper );
+ Fourier = Echange * UFluide(x,y,z);
+ FinFonc;
+
+ Fourier;  {Echange * Temperature du Fluide}
+ @;
+
+ { SURFACE: DROITE }
+ 2;{ SOURCE Flux IMPOSE a la frontiere }
+ -1;{ Fonction Source NOM de FONCTION }
+ DefFonc FGDroite(t,x,y,z, NoTPLS, NoPLS, Temper );
+ FGDroite = conduc * 2 * y;
+ FinFonc;
+ FGDroite;
+ @;
+
+ { SURFACE: DEVANT }
+ 2;{ SOURCE Flux IMPOSE a la frontiere }
+ -1;{ Fonction Source NOM de FONCTION }
+ DefFonc FGDevant(t,x,y,z, NoTPLS, NoPLS, Temper );
+ FGDevant = conduc * 2 * x;
+ FinFonc;
+ FGDevant;
+ @;
+
+ { SURFACE: GAUCHE }
+ 2;{ SOURCE Flux IMPOSE a la frontiere }
+ -1;{ Fonction Source NOM de FONCTION }
+ DefFonc FGGauche(t,x,y,z, NoTPLS, NoPLS, Temper );
+ FGGauche= - conduc * 2 * y;
+ FinFonc;
+ FGGauche;
+ @;
+
+ { SURFACE: DERRIERE }
+ 2;{ SOURCE Flux IMPOSE a la frontiere }
+ -1;{ Fonction Source NOM de FONCTION }
+ DefFonc FGDerriere(t,x,y,z, NoTPLS, NoPLS, Temper );
+ FGDerriere= - conduc * 2 * x;
+ FinFonc;
+ FGDerriere;
+ @;
+
+ { SURFACE: BASE }
+ 3;{ CONTACT Temperature IMPOSEE }
+ -1;{ Fonction Temperature Fixee NOM de FONCTION }
+ UDirichlet; { DANS LE LEXIQUE ~>FONCTION }
+ @;
+
+ { POINT: ORIGINE }
+ 3;{ CONTACT Temperature IMPOSEE }
+ -1;{ Fonction Temperature Fixee NOM de FONCTION }
+ UDirichlet; { DANS LE LEXIQUE ~>FONCTION }
+ @;
+@;
+
+ 3; { CALCUL THERMIQUE STATIONNAIRE }
+ 1; { Coefficients INDEPENDANTS de la TEMPERATURE }
+ 1; { CHOLESKY avec stockage PROFIL }
+
+ 8; { DESSIN des TEMPERATURES et des FLUX }
+ 2; { TEMPERATURE }
+ 1; { ISOTHERMES }
+ 2; { ISO REGULIERES entre MIN et MAX }
+ 26;{ RE-DEFINITION des XYZ EXTREMES }
+ 0; 1;{ X MINIMUM X MAXIMUM }
+ 0; 1;{ Y MINIMUM Y MAXIMUM }
+ 0; 1;{ Z MINIMUM Z MAXIMUM }
+ 90;{ EXECUTER le TRACE }
+
+FERMER;

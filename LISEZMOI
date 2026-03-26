@@ -1,0 +1,103 @@
+Fichier LISEZMOI                                   le 8 octobre 2014    22 Fevrier 2022
+
+=======================================================================================
+Sur un PC avec un systeme LINUX sous bash, installation
+- soit des EXECUTABLES du logiciel MEFISTO 
+  voir https://www.ljll.math.upmc.fr/perronnet/instalbinaire.php
+- soit des SOURCES de MEFISTO, 
+  voir https://www.ljll.math.upmc.fr/perronnet/instalsourcef.php
+=======================================================================================
+
+*******************************************************************************
+REMARQUE PRELIMINAIRE: LA CHARTE D'UTILISATION du logiciel MEFISTO
+
+L'utilisation du logiciel Mefisto et de ses resultats est LIBRE.
+Par contre, il est INTERDIT de le COMMERCIALISER sans accord prealable ECRIT
+des auteurs atteignables a l'adresse electronique: perronnet@ann.jussieu.fr
+
+De plus, toute utilisation conduisant a publication doit mentionner l'emploi
+du logiciel Mefisto et donner sa reference sur le web:
+https://www.ljll.math.upmc.fr/perronnet/mefisto.gene.html
+
+Le BON FONCTIONNEMENT du logiciel n'est en AUCUNE MANIERE GARANTI.
+Toute deterioration provoquee par l'utilisation de ce logiciel ne peut etre
+reprochee aux auteurs ou faire l'objet d'une quelconque demande de paiement
+de dommages.
+
+Toute tentative d'installation entraine implicitement que l'installateur ait
+accept'e cette charte.
+*******************************************************************************
+
+MATERIEL ET LOGICIELS NECESSAIRES:
+==================================
+Pour installer ce logiciel, il est necessaire de disposer au MINIMUM de
+- un ordinateur sous systeme UNIX ou LINUX ou equivalent ...;
+- une memoire centrale d'au moins 1 giga-octets;
+- une memoire libre sur disque de 1 giga-octets pour le logiciel et pour les executions;
+- les librairies du X11-WINDOW SYSTEM;
+- une carte graphique qui permette sous X11 une definition de l'ecran graphique
+  1024x768 ou mieux 1280x1024, ou +, en mode PseudoColor avec 256 couleurs ou TrueColor.
+
+TELECHARGER ET INSTALLER LES SOURCES DU LOGICIEL MEFISTO
+========================================================
+Soit RepMefisto (par exemple $HOME) le repertoire d'accueil du fichier mefistosource.tgz
+- Donner au repertoire RepMefisto les droits d'acces en ecriture
+  chmod 777 RepMefisto
+- Avec n'importe quel navigateur aller a l'URL suivante: 
+  https://www.ljll.math.upmc.fr/perronnet/instalsourcef.php
+- Telecharger dans RepMefisto les 2 fichiers: 
+  . instalsource.bash
+  . mefistosource.tgz
+- Taper cd RepMefisto
+- chmod 755 instalsource.bash
+- Taper ./instalsource.bash sous bash et suivre les instructions indiqu'ees ...
+  notamment choisir le langage des menus (anglais ou francais)
+  Attendre patiemment la fin de la compilation des nombreux sous programmes...
+- Donner les droits d'acces que vous souhaitez au repertoire RepMefisto
+  chmod -R 755 RepMefisto
+
+Au niveau de l'installation, les problemes qui peuvent survenir proviennent du fait que:
+- soit, le nom du repertoire pour ranger Mefisto n'est pas correct (avec des blancs,...)
+- soit, l'acces a ce repertoire n'est pas possible (droits d'acces Cf chmod)
+- soit, la variable d'environnement MEFISTO=RepMefisto/mefisto n'est pas initialisable ou initialisee
+- soit, la variable d'environnement MEFISTOX=$HOME/mefistox n'est pas initialisable ou initialisee
+- soit, les compilateurs gcc ou gfortran ne sont pas disponibles (à charger)
+- soit, les fichiers X11 system developpement ne sont pas installés (charger le paquet X11-dev de Linux)
+- soit, le repertoire $MEFISTO/bin ne contient pas les shell-scripts INITIER MAILLER ...
+- soit, ...?
+
+INSTALLATION D'UN UTILISATEUR DE MEFISTO:
+=========================================
+L'installateur instalsource.bash ajoute dans votre fichier $HOME/.bashrc
+les variables d'environnement
+
+export MEFISTO=RepMefisto/mefistosource
+export MEFISTOX=$HOME/mefistox    (ou tout autre repertoire a choisir au mieux...)
+
+et juste apres la definition de PATH et avant la commande export PATH, ajoute
+export PATH=.:$PATH:$MEFISTO/bin
+export CDPATH=.:$HOME:$MEFISTO:$MEFISTOX
+
+Alors, sous Linux, les frappes des commandes INITIER, MAILLER, ELASTICER, FLUIDER,
+THERMICER, NLSER, cbl_tout, ...  seront retrouv'ees.
+                   
+REMARQUE sur l'emploi du systeme X11:
+=====================================
+Mefisto necessite qu'un serveur X11 WINDOWS SYSTEM soit actif et bien installé.
+Notamment, lors des compilations certains fichiers d'en-tete sont nécessaires.
+Pour cela il est parfois nécessaire de charger le paquet libX11-dev par la commande
+sudo apt-get install libX11-dev.
+De meme, le paquet ImageMagick doit etre installe pour que la commande "convert"
+permette la construction d'un fichier gif anime pour mieux visualiser la solution.
+
+QUELQUES DOCUMENTATIONS DISPONIBLES:
+====================================
+Voir la page https://www.ljll.math.upmc.fr/perronnet
+
+
+SIGNALEZ tout PROBLEME d'ex'ecution ou de compr'ehension de ce fichier LISEZMOI a
+Alain PERRONNET 
+Laboratoire Jacques-Louis LIONS de l'Universite Pierre et Marie CURIE
+Adresse: 4 Place Jussieu 75252  Paris Cedex 05  FRANCE
+E-mail: perronnet@ann.jussieu.fr 
+https://www.ljll.math.upmc.fr/perronnet

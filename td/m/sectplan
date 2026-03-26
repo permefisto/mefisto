@@ -1,0 +1,17 @@
+variable SECTPLAN 'PLANS de SECTIONS' entier
+( 1  : 'X=Constante'
+, 2  : 'Y=Constante'
+, 3  : 'Z=Constante'
+, 4  : 'un PLAN a DEFINIR'
+, 5  : 'COULEUR des ARETES FRONTIERE'
+, 6  : 'TYPE TRAIT des ARETES FRONTIERE'
+, 7  : 'COULEUR des ARETES dans le PLAN'
+, 8  : 'TYPE TRAIT des ARETES dans PLAN'
+, 11 : 'Nombre de PLANS de SECTIONS'  
+, 12 : 'Distance REGULIERE entre MIN-MAX'
+, 13 : 'COORDONNEE MIN et MAX des PLANS'
+, 14 : 'COORDONNEE des PLANS de SECTIONS'
+, 19 : '% de REDUCTION des FACES'
+, 20 : 'SEUIL Minimum Maximum de la SOLUTION'
+, 80 : 'REINITIALISER la DONNEE des PLANS'
+, 90 : 'SUITE du TRACE' ) ;

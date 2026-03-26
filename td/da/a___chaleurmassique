@@ -1,0 +1,12 @@
+deftms ~>>>CHALEURMASSIQUE 'Cp Specific Heat Capacity J/K/kg of a PLSV'
+variable muet DATE 'date of creation of the TMS'   reel2  ;
+variable muet NUTD 'number of the descriptor array TD' entier ; 
+variable      LTCHMA 'type of specific heat capacity '   entier 
+ ( 1 : 'constant specific heat capacity J/K/kg' ,
+  -1 : 'function specific heat capacity ' ,
+   0 : 'delete the specific heat capacity '  ) ;
+cas LTCHMA
+ 1 : variable CHAMAS 'value of specific heat capacity J/K/kg'   reel   ; 
+-1 : variable NFCHMA 'name of specific heat capacity  function' ^~>FONCTION ;
+fincas ;   
+fintms ;

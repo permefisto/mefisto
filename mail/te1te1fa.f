@@ -1,0 +1,4 @@
+      SUBROUTINE TE1TE1FA( NTE0, NFA0 )
+      print *,' TE1TE1FA: NTE0=',NTE0, ' NFA0=',NFA0
+      RETURN
+      END

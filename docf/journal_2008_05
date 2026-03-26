@@ -1,0 +1,43 @@
+-------------------------------------------------------
+Logiciel MEFISTO     Version Francaise      24 mai 2008
+-------------------------------------------------------
+Le menu de traces des maillages a ete modifie au niveau
+des Points, Lignes, Surfaces, Volumes et Objets.
+NOUVEAUTES:
+MAILLER
+- Option 16 des surfaces: un QUADRANGULEUR
+  le long des normales d'une ligne  profil
+- Option 19 des surfaces: un TRIANGULEUR par ajout du
+  barycentre de triangles avec les memes donnees que 9;
+- Option 26 des surfaces 2D: un editeur de maillages
+  plans par des clics de la souris
+- Option 33 des volumes: Un HEXAEDRISEUR d'un CUBE ou
+  d'une SPHERE
+- Option 4 des traces des Volumes: Trace des Elements
+  Finis d'un volume sectionnes par un PLAN
+- Option 5 des traces des Objets: Trace des Elements
+  Finis d'un objet sectionnes par un PLAN
+- Option 16 des traces des gradients, flux, contraintes:
+  Trace des fleches gradients ou flux normaux ou
+  contraintes des EF d'un objet sectionnes par un PLAN
+- Volume 15 par rotation d'une surface maillee:
+  La restriction "AUCUN SOMMET du bord de la surface SUR
+  L'AXE DE ROTATION" a ete levee en creeant des pyramides
+- Volume 19 un TETRAEDRISEUR par ajout du barycentre des
+  tetraedres avec les memes donnees que volume 9;
+- Volume 31 la tetraedrisation decoupe maintenant les
+  pyramides(issues d'un volume 15), pentaedres, hexaedres
+- Volume 39 tout tetraedre ou pentaedre ou hexaedre est
+  decoupe en 8 sous ef du meme type et toute pyramide est
+  decoupee en 6 sous-pyramides et 4 sous tetraedres
+ELASTICER:
+- Trace du critere de plasticite de Von Mises ou Tresca
+FLUIDER:
+- Resolution du probleme de STOKES stationnaire et
+  instationnaire pour un fluide 2D incompressible
+  pour des elements finis de Taylor-Young
+--------------------------------------------------------
+En cas de probleme, prevenir Alain PERRONNET
+E-mail  : perronnet@ann.jussieu.fr
+Internet: http://www.ann.jussieu.fr/~perronnet
+--------------------------------------------------------

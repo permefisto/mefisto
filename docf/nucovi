@@ -1,0 +1,4 @@
+NUCOVI est le tableau des NBCOVI numeros des composantes
+de la VITESSE INITIALE.
+Chaque numero est compris entre 1 et 3 en 3d, ou 1 et 2 en 2d.
+1 represente la direction vitesse en X,  2 Y et  3 Z.

@@ -1,0 +1,74 @@
+      SUBROUTINE SAIPTC ( NOTYEV, NOPXX, NOPXY, NOCHAR )
+C+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+C BUT : SI NOTYEV>0, RESTITUER LES COORDONNEES PIXELS DU CLIC SOURIS
+C ----- SI NOTYEV<0, RESTITUER LE CARACTERE TAPE AU CLAVIER
+C                    ET SI LE CARACTERE EST ECHAPPEMENT METTRE @
+C                    POUR UNE EQUIVALENCE DE L'ABANDON
+C SORTIES :
+C ---------
+C NOTYEV  : NUMERO DU TYPE DE L'EVENEMENT
+C           0        => ABANDON DEMANDE
+C           1 2 ou 3 => NUMERO DU BOUTON DE LA SOURIS ET
+C                       NOPXX, NOPXY INITIALISES AU POINT CLIC DE LA SOURIS
+C          -1        => CARACTERE TAPE AU CLAVIER AVEC NOCHAR
+C NOPXX, NOPXY: SI NOTYEV>0 LES COORDONNEES PIXELS DU POINT CLIQUE
+C NOCHAR      : SI NOTYEV<0 NUMERO ASCII DU CARACTERE TAPE AU CLAVIER
+C+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+C AUTEUR : PERRONNET ALAIN ANALYSE NUMERIQUE UPMC  PARIS        MAI 1994
+C MODIFS : PERRONNET ALAIN Saint Pierre du Perray          decembre 2020
+C2345X7..............................................................012
+
+C     ATTENDRE LA FRAPPE D'UNE TOUCHE DE LA SOURIS OU DU CLAVIER
+C     ==========================================================
+ 10   CALL XVSOURIS( NOTYEV, NOCHAR, NOPXX, NOPXY )
+C     RETOURNE NOTYEV
+C       = 0 Si ABANDON par frappe de la touche Echappement ou @
+C       = 1 Si CLIC ENFONCE et RELACHE D'UN BOUTON DE LA SOURIS
+C              => NOPXX, NOPXY et NOCHAR=NUMERO DU BOUTON
+C       =-1 Si CLIC SEULEMENT ENFONCE  D'UN BOUTON DE LA SOURIS
+C              => NOPXX, NOPXY et NOCHAR=NUMERO DU BOUTON
+C       =-2 Si le pointeur de la souris a bouge
+C              => NOPXX, NOPXY
+C       = 2 Si FRAPPE D'UN CARACTERE AU CLAVIER
+C              => NOCHAR=NUMERO DU CARACTERE DANS LA TABLE ASCII
+
+      IF( NOTYEV .EQ. 0 ) THEN
+C        ABANDON DEMANDE -> RETOUR
+         RETURN
+
+      ELSE IF( NOTYEV .LT. 0 ) THEN
+C        SOURIS BOUGEE -> ON CONTINUE
+         GOTO 10
+
+      ELSE IF( NOTYEV .EQ. 1 ) THEN
+
+C        UN DES 3 BOUTONS DE LA SOURIS
+C        BOUTON 1 OU 2 OU 3 => PAS DE MODIFICATION
+         NOTYEV = NOCHAR
+
+CCC         PRINT *,'SAIPTC: EVENEMENT SOURIS : BOUTON ',NOTYEV,
+CCC     %           ' POSITION DU CLIC X=',NOPXX,' Y=',NOPXY
+
+      ELSE IF( NOTYEV .EQ. 2 ) THEN
+
+C        FRAPPE D'UN CARACTERE AU CLAVIER
+         NOTYEV = -1
+
+CCC         PRINT *,'SAIPTC: EVENEMENT CLAVIER : NO ASCII CARACTERE ',
+CCC     %            NOCHAR,' => CARACTERE=',CHAR(NOCHAR)
+C
+         IF( NOCHAR .EQ. 27 ) THEN
+
+C           LE CARACTERE 'ECHAPPEMENT' DEVIENT LE CARACTERE '@'
+            NOCHAR = 64
+
+         ENDIF
+
+      ELSE
+
+         GOTO 10
+
+      ENDIF
+
+      RETURN
+      END

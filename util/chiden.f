@@ -1,0 +1,83 @@
+      SUBROUTINE CHIDEN( NL , NC , NLD , NCD , NLF , NCF , NOIDEN )
+C+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+C BUT : RETOURNER (NLD,NCD) ET (NLF,NCF) DEBUT ET FIN DANS KTD
+C ----- DU 1-ER CARACTERE ET DERNIER CARACTERE D'UN IDENTIFICATEUR
+C       RETOURNER LE NUMERO DE L'IDENTIFICATEUR S'IL EXISTE DEJA
+C                 0 SINON
+C ENTREES :
+C ---------
+C NL , NC : POSITION DANS KTD DU CARACTERE QUI PRECEDE
+C           LE PREMIER CARACTERE A ANALYSER
+C           RESTENT INCHANGES EN SORTIE
+C
+C SORTIES :
+C ---------
+C NLD,NCD : POSITION DU PREMIER CARACTERE DE L'IDENTIFICATEUR
+C           NLD=0 SI INITIALE DIFFERENTE D'UNE LETTRE
+C NLF,NCF : POSITION DU DERNIER CARACTERE DE L'IDENTIFICATEUR
+C           EN FAIT NLD=NLF L'DENTIFICATEUR DEVANT ETRE
+C           SUR UNE SEULE LIGNE
+C NOIDEN  : NUMERO DE L'IDENTIFICATEUR
+C           0 S'IL N'EST PAS RETROUVE DANS LA TABLE DES IDENTIFICATEURS
+C+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+C AUTEUR : ALAIN PERRONNET ANALYSE NUMERIQUE UPMC PARIS   SEPTEMBRE 1988
+C23456---------------------------------------------------------------012
+      include"./incl/td.inc"
+      include"./incl/gsmenu.inc"
+C.......................................................................
+      COMMON / UNITES / LECTEU,IMPRIM,NUNITE(30)
+      CHARACTER*8       IDENTI
+C
+C     LE 1ER NOM
+      CALL CHNOM( NL,NC,NLD,NCD,NLF,NCF )
+      IF( NLD .LE. 0 ) RETURN
+C
+C     RECHERCHE D'UNE EVENTUELLE PARENTHESE ( OU ) OU , OU ..
+C     -------------------------------------------------------
+C     RECHERCHE DE (
+      N = INDEX( KTD(NLD)(NCD:NCF) , '(' )
+      IF( N .GT. 1 .AND. N .LE. 9 ) THEN
+C        IDENTIFICATEUR DE NCD AU CARACTERE AVANT (
+         NCF = NCD + N - 2
+      ENDIF
+C
+C     RECHERCHE DE ..  (PAR EXEMPLE: IDENT1..IDENT2)
+      N = INDEX( KTD(NLD)(NCD:NCF) , '..' )
+      IF( N .GT. 1 .AND. N .LE. 9 ) THEN
+C        IDENTIFICATEUR DE NCD AU CARACTERE AVANT ..
+         NCF = NCD + N - 2
+      ENDIF
+C
+C     RECHERCHE DE )
+      N = INDEX( KTD(NLD)(NCD:NCF) , ')' )
+      IF( N .GT. 1 .AND. N .LE. 9 ) THEN
+C        IDENTIFICATEUR DE NCD AU CARACTERE AVANT )
+         NCF = NCD + N - 2
+      ENDIF
+C
+C     RECHERCHE DE ,
+      N = INDEX( KTD(NLD)(NCD:NCF) , ',' )
+      IF( N .GT. 1 .AND. N .LE. 9 ) THEN
+C        IDENTIFICATEUR DE NCD AU CARACTERE AVANT )
+         NCF = NCD + N - 2
+      ENDIF
+C
+C     VERIFICATION SUR LE NOMBRE DE CARACTERES DE L'IDENTIFICATEUR
+      IF( NCF - NCD .GE. 8 ) THEN
+         NBLGRC(NRERR) = 1
+         KERR(1) ='CHIDEN:'//KTD(NLD)(NCD:NCF)//
+     %            ' IDENTIFICATEUR TROP LONG'
+         CALL LEREUR
+         NLD = 0
+         RETURN
+      ENDIF
+C
+      IDENTI = KTD(NLD)(NCD:NCF)
+C
+C     RECHERCHE DANS LE TABLEAU KIDENT
+      DO 10 NOIDEN=NBIDEN(LHTMS),1,-1
+         IF( IDENTI .EQ. KIDENT(NOIDEN) ) RETURN
+ 10   CONTINUE
+C
+      NOIDEN = 0
+      END

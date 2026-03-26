@@ -1,0 +1,63 @@
+#!/bin/bash
+ echo
+ echo ==========================================================================
+ echo Test de FERMETURE de la fenetre X11 graphique
+ echo ==========================================================================  
+#     Alain Perronnet    Version LINUX    Janvier 1999
+#
+# le repertoire de travail  $MEFISTO=/usr/local/mefisto
+ cd $MEFISTO
+#
+# le nom du module executable
+ nompp=pp/xvtest4
+ echo construction du module $nompp
+ rm $nompp 
+#
+# compilation de xvuelc.c 
+ echo "compilation de xvuelc.c"
+ ccxvue
+#
+# compilation des sous-programmes Fortran
+ gfortran -m64 -fPIC -I. -c xvue/xvouvrir.f 
+ gfortran -m64 -fPIC -I. -c xvue/xvinit.f 
+ gfortran -m64 -fPIC -I. -c xvue/nudcnb.f 
+ gfortran -m64 -fPIC -I. -c xvue/palcde.f 
+ gfortran -m64 -fPIC -I. -c xvue/coutip.f 
+ gfortran -m64 -fPIC -I. -c xvue/codtei.f 
+ gfortran -m64 -fPIC -I. -c xvue/tiprvb.f 
+ gfortran -m64 -fPIC -I. -c xvue/isofenetre.f 
+ gfortran -m64 -fPIC -I. -c xvue/fenetre.f
+ gfortran -m64 -fPIC -I. -c xvue/chargefonte.f
+ gfortran -m64 -fPIC -I. -c xvue/choixfonte.f
+ gfortran -m64 -fPIC -I. -c xvue/nupxex.f 
+ gfortran -m64 -fPIC -I. -c xvue/nupxey.f 
+ gfortran -m64 -fPIC -I. -c xvue/axonometrie.f
+ gfortran -m64 -fPIC -I. -c xvue/mataxo.f
+ gfortran -m64 -fPIC -I. -c xvue/mataxi.f
+ gfortran -m64 -fPIC -I. -c xvue/xyzide.f
+ gfortran -m64 -fPIC -I. -c xvue/ptvlonlat.f
+ gfortran -m64 -fPIC -I. -c xvue/lonlat.f
+ gfortran -m64 -fPIC -I. -c xvue/xyzaxo.f
+ gfortran -m64 -fPIC -I. -c xvue/face3d.f
+ gfortran -m64 -fPIC -I. -c xvue/trait3d.f
+#
+# compilation et edition de liens
+ gfortran -m64 -fPIC -I. prpr/xvtest4.f *.o xvue/xvuelc.o \
+    -lgfortran -L/usr/X11R6/lib64 -lXt -lX11 -o $nompp
+#
+# destruction des fichiers .o inutiles
+ rm *.o
+#
+# bilan final
+ if test -f $nompp
+ then 
+   ls -l $nompp
+   echo "$nompp est correct et va etre execute"
+   $nompp
+ else
+   echo "$nompp est INCORRECT"
+ fi 
+#
+# destruction du fichier
+echo "destruction du fichier $nompp"
+# rm $nompp

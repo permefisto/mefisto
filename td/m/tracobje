@@ -1,0 +1,4 @@
+variable TRACOBJE 'Trace des Objets' entier
+( 1: 'TOUS les OBJETS 1 par 1'
+, 3: 'UN OBJET'
+, 5: 'UN OBJET est SECTIONNE par UN PLAN' );

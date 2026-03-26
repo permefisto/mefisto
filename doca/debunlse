@@ -1,0 +1,180 @@
+Mefisto-NLSER solves the Non-Linear Schrodinger Equation (NLSE)
+in a 2d or 3d domain, with Lagrange Finite Elements
+(triangles and/or quadrangles in 2d; tetrahedra, pentahedra or hexahedra in 3d)
+Cf the web page https://www.ljll.math.upmc.fr/perronnet/NLSE/NLSE.html
+Cf the test files nlsesqri, nlsecu, cylbreak2d, solitonsph20, nlsecuvv, nlsgpe
+of $MEFISTO/testa executables by the typing of  readf FileName;
+
+The problem is to compute the complex wave U(t,X) = V(t,X) + i W(t,X) solution
+of the NLSE:
+
+Mass i dU(t,X)/dt -Alfa Laplacian U(t,X) + N(|U|**2) U(t,X) 
+   - i OmegaZ (x dU/dy - y dU/dx) = F(t,X)   in the domain
+
+where N(|U|**2)(t,X) = Beta |U(t,X)|**2 or Beta |U(t,X)|**2 + Gama |U(t,X)|**4 or ...
+
+with the boundary conditions
+. U(t,X) = UD(t,X) on the GammaD boundary
+. Alfa dU(t,X)/dn = UN(t,X) on the GammaN boundary
+.-Alfa dU(t,X)/dn = g(X) ( U(t,X) - UR(t,X) ) on the GammaR boundary
+
+and the initial conditions
+U(t=t0,X) = U0  on the domain and its boundary.
+
+One example of the user's function to define N(|U|**2) is:
+DefFunc NLSECoef(t,x,y,z,ntyobj,nuobj,WaveR,WaveI);
+  DefVar nlc; nlc = WaveR**2 + WaveI**2;
+  NLSECoef = nlc * ( Beta + Gama * nlc );
+EndFunc;
+WaveR and WaveI are respectively the real and imaginary parts of the wave U(t,X)
+computed at the previous iteration. Beta and Gama are user's constants.
+
+The time integration uses a one time step, which is adapted to the wave values
+along the time.
+
+To solve the problem, it is necessary
+- to have construct the mesh of the domain, an object for Mefisto and
+  interpolated it with a type of Lagrange polynomials;
+- to give the physical characteristics of the domain:
+  mass, Alfa, N(|U|), force, boundary and initial conditions;
+- to choose what problem to solve: Eigenvalues Ei Eigenvectors Ui,
+  or the wave U(t,X) by a time step algorithm;
+- to visualize the eigenvectors or the wave.
+
+The menu debuNLSE permits to chain the different steps seen above:
+  1; OBJECT NAME to treat   (Necessary only if more of one object exists)
+  2; NLSE INPUT DATA ( mass, Alfa, N(|U|), force, boundary and initial conditions)
+  5; IMPLICIT i dU(t)/dt -Alfa Laplacian U(t) +N(|U|**2)U(t)=F(t,X),
+  6; i-TIME method idU(t)/dt -Alfa Laplacian U(t) +N(|U|**2)U(t)=F(t,X)
+ 11; Drawing of |U(t,X)| NLSE WAVE MODULE
+ 12; Drawing of U(t,X) NLSE WAVE REAL      PART
+ 13; Drawing of U(t,X) NLSE WAVE IMAGINARY PART
+ 14; Drawing of STOP TEST Values of ITERATIONS
+ 15; Drawing of Max|U(Node)|(Time)
+ 16; Drawing of REAL U-ERROR(Time), IMAGINARY U-ERROR(Time)
+ 19; Drawing of PLSVO meshes
+ 20; PRECISION to INVERSE the linear systems A x = b
+ 38; WINDOW PIXEL WIDTH & HEIGHT numbers
+ 39; BACKGROUND COLOR of the window
+ 71; TOOLS on TMS
+ 72; TOOLS on FILES of the MS
+ 73; TOOLS on I/O units
+ 74; DELETE TMS of PLSVO
+ 97; MEFISTO VERSION DATE
+ 99; SAVE DATA and QUIT
+
+
+2; offers the entry of data, volume by volume in 3d or surface by surface in 2d
+(mass density, Alfa, user's function N(|U|), Force F, initial U,
+the boundary conditions UD, UN, g, UR of surfaces, lines, points.
+These data may be given by constants or functions.
+Example of a definition function N(|U|):
+DefFunc NLSECoef(t,x,y,z,ntyobj,nuobj,WaveR,WaveI);
+  r2 = x*x + y*y;
+  Vx = r2 * ( 0.5 + r2 * 0.25 );
+  NLSECoef = -Vx -Beta * ( WaveR**2 + WaveI**2 );
+EndFunc;
+
+Example of a force definition function:
+DefFunc ComplexForce(t,x,y,z,nutyob,nuobjt,partnb,waveRP,waveIP,zero);
+  If partnb=1 then
+    ComplexForce = RealForce(t,x,y,z);
+  Else
+    ComplexForce = ImaginaryForce(t,x,y,z);
+  EndIf;
+EndFunc;
+
+The initial wave may be given by constants or functions,
+or recovers as a wave among previously computed at different times;
+or equal to an eigenvector previously computed as the real part of the wave.
+
+5; IMPLICIT i dU(t)/dt -Alfa Laplacian U(t) +N(t,|U|**2)U(t)=F(t,X)
+The NLSE dof the complex wave U(t,X) = V(t,X) + i W(t,X) is decomposed
+in real part V and imaginary part W and the NLSE becomes
+a coupled system with V and W.
+
+Integration in time by the constant time step Euler Scheme 
+    n=0  V=v0      W=w0
+(3) m=0  Vn+10=Vn  Wn+10=Wn
+(4)-Rho Wn+1m+1 -dt Alfa LAPLACIAN Vn+1m+1 =-Rho Wn -dt Beta (Vn+1m**2+Wn+1m**2) Vn+1m +dt Fr(t,X)
+    Rho Vn+1m+1 -dt Alfa LAPLACIAN Wn+1m+1 = Rho Vn -dt Beta (Vn+1m**2+Wn+1m**2) Wn+1m +dt Fi(t,X)
+    if ||Vn+1m+1-Vm n+1||>Eps||Vm n+1|| or ||Wn+1m+1-Wm n+1||>Eps||Wm+1 n+1||
+    then m=m+1  go to (4)
+    else Vn+1=Vn+1m+1  Wn+1=Wn+1m+1
+    if TPSINI+(n+1)dt < TPSFIN then n=n+1; go to (3)
+    End
+
+In fact, at a time tn+1 and iteration m+1, the problem is to find Un+1 solution of (4)
+[ K(-DeltaT (-Alfa Laplac + Beta(V0,W0));       M(Rho) ] { Vn+1 m+1 } = 
+[ M(Rho)        ; K(DeltaT (-Alfa Laplac +Beta(V0,W0)) ] { Wn+1 m+1 }
+
+{ [N(DeltaT (Beta(Vn+1m,Wn+1m)-Beta(V0,W0))] {Vn+1m} + [M(Rho)]{Wn}    } +
+{ [M(Rho)]{Vn} + [N(-DeltaT (Beta(Vn+1m,Wn+1m))-Beta(V0,W0))]  {Wn+1m} }
+
+{-DeltaT FOmegaR(tn+1,Vn+1m,Wn+1m) } + {-DeltaT FGamaR(tn+1,Vn+1m,Wn+1m) }
+{ DeltaT FOmegaI(tn+1,Vn+1m,Wn+1m) }   { DeltaT FGamaI(tn+1,Vn+1m,Wn+1m) }
+
+The IDEA is to compute ONCE the global matrice
+[ K(-DeltaT (-Alfa Laplac + Beta(V0,W0));       M(Rho) ]
+[ M(Rho)        ; K(DeltaT (-Alfa Laplac +Beta(V0,W0)) ]
+and Crout factorize it ONCE L D Lt.
+After, for every iteration m, the linear system solution is obtained
+by a descent of L, a division by the diagonal matrix D and an ascent of Lt.
+
+The given time step is the initial time step.
+After the time step is adapted from the wave values along the time.
+Cf testa/nlsgpe/nlsgp.imp for the data to give.
+
+Attention, the wave may be STEADY, BLOWS UP or VANISHES...
+
+
+6; i-TIME method idU(t)/dt -Alfa Laplacian U(t) +N(|U|**2)U(t)=F(t,X)
+   SEMI-IMPLICIT SHEME MODIFIED in TIME with a Matrix GLOBALE nxn for
+   the GROSS-PITAEVSKII equation
+   n=0  V=v0      W=w0
+(7)m=0  V0n+1=Vn  W0n+1=Wn
+
+(8)(Rho/dt -LAPLACIAN/2 + ( V +N(V0**2+W0**2) ) Vn+1m+1 =
+        Rho Vn/dt + OmegaZ (x dWn+1m/dy - y dWn+1m/dx) 
+        -( N(Vn+1m**2+Wn+1m**2)-N(V0**2-W0**2) ) Vn+1m + Fr
+
+   (Rho/dt -LAPLACIAN/2 + ( V +N(V0**2+W0**2) ) Wn+1m+1 =
+        Rho Wn/dt - OmegaZ (x dVn+1m/dy - y dVn+1m/dx) 
+        -( N(Vn+1m**2+Wn+1m**2)-N(V0**2-W0**2) ) Wn+1m + Fi
+
+    NormL2 = (Integral |Vn+1m+1**2+Wn+1m+1**2| dX)**1/2
+    Vn+1m+1 = Vn+1m+1 / NormL2, Wn+1m+1 = Wn+1m+1 / NormeL2
+
+    If ||Vn+1m+1-Vn+1m||>Eps||Vn+1m+1|| or ||Wn+1m+1-Wn+1m||>Eps||Wn+1m+1||
+    Then m=m+1  go to (8)
+    Else  Vn+1=Vn+1m+1  Wn+1=Wn+1m+1
+   If TPSINI+(n+1)dt < TPSFIN  then n=n+1; go to (7)
+   End
+
+Cf testa/nlsgpe/nlsgp.itime for the data to give.
+
+11; After the computation of the wave, it is possible to visualize
+either 11; its module, or 12; its real part, or 13; its imaginary part.
+
+To see the movement, choose as zero the case number to visualize,
+to see all the computed wave values during the time steps.
+
+14; The DRAWING of STOP TEST Values of ITERATIONS shows how the wave
+converge during the time iterations.
+
+15; The DRAWING of Max|U(Node)|(Time) shows the oscillations, the increasings
+or decreasings, eventually the explosions during the time.
+
+16; It is possible to compute and draw the errors if the wave expressionis known
+and the 2 following user's funtions are given:
+DefFunc Exact_Real_Part(t,x,y,z);
+   Exact_Real_Part = (1+t*t) * (1-x*x) * (1-y*y); { for example }
+EndFunc;
+
+DefFunc Exact_Imaginary_Part(t,x,y,z);
+   Exact_Imaginary_Part = (1+t) * cos(Pis2*x) * cos(Pis2*y); { for example }
+EndFunc;
+
+19 .. 97; Classic
+
+99; Saves all the results and permits to use again them.

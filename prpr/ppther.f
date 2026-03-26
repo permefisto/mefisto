@@ -1,0 +1,487 @@
+      PROGRAM PPTHER
+C+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+C BUT :  OUVRIR  LA MEMOIRE SECONDAIRE      (OPEN  the SECONDARY MEMORY)
+C -----  TRAITER UN PROBLEME DE THERMIQUE   (TREAT  a  THERMAL PROBLEM )
+C        FERMER  LA MEMOIRE SECONDAIRE      (CLOSE the SECONDARY MEMORY)
+C+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+C AUTEUR : ALAIN PERRONNET ANALYSE NUMERIQUE UPMC PARIS     Janvier 1997
+C MODIFS : ALAIN PERRONNET Laboratoire J-L.LIONS UPMC Paris    Juin 2007
+C MODIFS : ALAIN PERRONNET St Pierre du Perray & LJLL UPMC  Janvier 2010
+C MODIFS : ALAIN PERRONNET St Pierre du Perray & LJLL UPMC     Mars 2013
+C MODIFS : ALAIN PERRONNET St Pierre du Perray                Avril 2020
+C23456---------------------------------------------------------------012
+C$    USE OMP_LIB
+      include"./incl/threads.inc"
+      include"./incl/pp.inc"
+      include"./incl/lu.inc"
+      include"./incl/ppmck.inc"
+      include"./incl/langue.inc"
+      include"./incl/gsmenu.inc"
+      include"./incl/pilect.inc"
+      include"./incl/ntmnlt.inc"
+      include"./incl/typnoobj.inc"
+      include"./incl/mecoit.inc"
+      include"./incl/trvari.inc"
+      include"./incl/traaxe.inc"
+
+      REAL              RMCN(MOTMCN)
+      DOUBLE PRECISION  DMCN(MOTMCN/2)
+      COMMON             MCN(MOTMCN)
+      EQUIVALENCE       (MCN(1),RMCN(1),DMCN(1))
+      COMMON / UNITES /  LECTEU, IMPRIM, INTERA, NUNITE(29)
+      LOGICAL            EXIST
+      CHARACTER*24       KNOMOB
+      DOUBLE PRECISION   EXPOSANT
+
+C     LES ARGUMENTS A L'APPEL DU LOAD MODULE ppflui
+      INTEGER        EXISTNF, NBARGS
+      CHARACTER*128  NMFILEDO, ARGUMENT
+
+C///////////////////////////////////////////////////////////////////////
+      NBTHREADS = 1
+C$OMP PARALLEL
+C$OMP MASTER
+C$    NBTHREADS = OMP_GET_NUM_THREADS()
+C$OMP END MASTER
+C$OMP END PARALLEL
+C///////////////////////////////////////////////////////////////////////
+
+C     RECONNAISSANCE DE LA LANGUE DES DONNEES DE MEFISTO
+      CALL LANGUE
+
+C     NOM DU REPERTOIRE DE TRAVAIL
+      PRINT *
+      IF( LANGAG .EQ. 0 ) THEN
+         PRINT *,'Nom du REPERTOIRE de TRAVAIL :'
+      ELSE
+         PRINT *,'WORKING DIRECTORY NAME :'
+      ENDIF
+      CALL SYSTEM( 'echo `pwd` ' )
+      PRINT *
+
+C     RECUPERATION DU NOM DU PROJET
+C     RECUPERATION OF THE OBJECT NAME
+C     ===============================
+      CALL NOMJOB( EXIST )
+      IF( .NOT. EXIST ) THEN
+         NBLGRC(NRERR) = 1
+         IF( LANGAG .EQ. 0 ) THEN
+            KERR(1) ='ERREUR: EXECUTEZ INITIER AUPARAVANT'
+         ELSE
+            KERR(1) ='ERROR: EXECUTE INITIER BEFORE'
+         ENDIF
+         CALL LEREUR
+         STOP
+      ENDIF
+
+C     NOMBRE DES ARGUMENTS DE LA COMMANDE D'EXECUTION DU LOAD-MODULE
+C     ==============================================================
+      NBARGS = IARGC()
+      print *,'Mefisto-THERMICER: NOMBRE DES ARGUMENTS=',NBARGS+1
+      DO N=0,NBARGS
+C        EXPLORATION DES ARGUMENTS
+         CALL GETARG( N, ARGUMENT )
+         print *,'Mefisto-THERMICER: ARGUMENT',N,' = ',ARGUMENT
+      ENDDO
+
+C     LA COMMANDE Mefisto-THERMICER est elle suivie d'un nom de fichier de donnees?
+C     ===========================================================================
+      CALL NMFIDOCO( 'ppther', EXISTNF, NMFILEDO )
+
+C     LE MODE DES INTER-ACTIONS ENTRE LE PROGRAMME ET L'UTILISATEUR
+C     INTERA=0:BATCH      PAS d' ECRAN GRAPHIQUE PAS de CLAVIER PAS de SOURIS
+C            1:INTERACTIF AVEC   ECRAN GRAPHIQUE PAS de CLAVIER PAS de SOURIS
+C            3:INTERACTIF AVEC   ECRAN GRAPHIQUE AVEC   CLAVIER AVEC   SOURIS
+
+      IF( EXISTNF .EQ. 0 ) THEN
+C        PAS DE NOM DE FICHIER DE DONNEES => INTERACTIF AVEC X11
+         INTERA = IINFO( 'INTERACTIVITE INITIALE' )
+         IF( LANGAG .EQ. 0 ) THEN
+            WRITE(IMPRIM,*) 'Mefisto-THERMICER EN EXECUTION INTERACTIVE'
+         ELSE
+            WRITE(IMPRIM,*) 'Mefisto-THERMICER in INTERACTIVE EXECUTION'
+         ENDIF
+      ELSE
+C        UN NOM DE FICHIER EXISTE => BATCH SANS X11
+         INTERA = 0
+         LAPXFE = 800
+         LHPXFE = 600
+         IF( LANGAG .EQ. 0 ) THEN
+       WRITE(IMPRIM,*)'Mefisto-THERMICER: Nom Fichier Donnees=',NMFILEDO
+            WRITE(IMPRIM,*)'Mefisto-THERMICER s''execute en mode BATCH'
+         ELSE
+            WRITE(IMPRIM,*)'Mefisto-THERMICER: Data File Name=',NMFILEDO
+            WRITE(IMPRIM,*)'Mefisto-THERMICER in BATCH EXECUTION'
+         ENDIF
+      ENDIF
+      LHLECT = 1
+      INTERB(LHLECT) = INTERA
+
+C     INITIALISATIONS
+C     ===============
+      CALL INITIA( EXIST )
+
+C     OUVERTURE DE X11-WINDOW
+C     OPEN OF X11-WINDOW
+      IF( INTERA .GE. 1 ) THEN
+         CALL XTINIT
+C        INITIALISATION DE XVUE
+         CALL XVINIT
+C        TRACE DU LOGO DE MEFISTO
+C        DRAWING OF MEFISTO LOGO
+         IF( LANGAG .EQ. 0 ) THEN
+            CALL LOGO( 'MEFISTO-THERMICER' )
+         ELSE
+            CALL LOGO( 'MEFISTO-HEATER' )
+         ENDIF
+      ENDIF
+
+cccC     INITIALISATION of PETSC   11/12/2009 Cf bin.petsc
+ccc      call PetscIni()
+
+C     OUVERTURE DE LA MS
+C     OPEN THE MS
+ 10   CALL OUVRMS
+
+C     LE LANGAGE UTILISATEUR RETROUVE SES VARIABLES
+C     THE USER LANGUAGE RECOVERS ITS VARIABLES
+      CALL LUOU
+
+C     AFFICHAGE DE LA TAILLE DU SUPER-TABLEAU NUMERIQUE
+C     PRINTING OF THE MEMORY SIZE FOR COMPUTATION
+      IF( LANGAG .EQ. 0 ) THEN
+         WRITE(IMPRIM,10010) MOTMCN
+      ELSE
+         WRITE(IMPRIM,20010) MOTMCN
+      ENDIF
+10010 FORMAT('SUPER-TABLEAU MCN DE',I12,' MOTS-MEMOIRE')
+20010 FORMAT('SUPER-ARRAY MCN WITH',I12,' WORDS of MEMORY')
+
+C     RECUPERATION DU DERNIER OBJET DECLARE
+C     RECUPERATION OF THE LAST DECLARED OBJECT
+C     ----------------------------------------
+ 20   CALL REDEOB( KNOMOB, NUOB, MN )
+
+      IF( NUOB .LE. 0 ) THEN
+C        PAS D'OBJET RETROUVE => ERREUR
+         NBLGRC(NRERR) = 2
+         IF( LANGAG .EQ. 0 ) THEN
+            KERR(1) = 'ERREUR: PAS D''OBJET MAILLE'
+            KERR(2) = 'CREER UN OBJET AVEC MAILLER'
+         ELSE
+            KERR(1) = 'ERROR: NO OBJECT'
+            KERR(2) = 'CREATE AN OBJECT WITH MAILLER'
+         ENDIF
+         CALL LEREUR
+         GOTO 9900
+      ENDIF
+
+      NBPAS  = NUOB
+      NBJEUX = 1
+
+C     EXISTE-T-IL UN FICHIER DE DONNEES POUR THERMICER?
+      IF( EXISTNF .NE. 0 ) THEN
+
+C        UN NOM DE FICHIER EXISTE => BATCH SANS X11
+         KLG(1) = 'READF ' // NMFILEDO
+         N = NUDCNB( NMFILEDO )
+         KLG(1) = 'READF ' // NMFILEDO(1:N) // ' ; '
+         LHKLG  = 1
+         NLPTV1 = 1
+         NCPTV1 = 0
+         NOTYPE = 0
+         print *,'Appel donnmf avec klg=',klg(1)
+         CALL DONNMF( NOTYPE, NOTYPS, NCVALS, DBLVAL, KCHAIN )
+
+      ENDIF
+
+C     LECTURE DU MENU DES MOTS CLE
+C     READING THE MENU OF KEY-WORDS
+C     =============================
+C     L'ANCIEN HISTORIQUE EST EFFACE
+ 30   CALL RECTEF( NRHIST )
+      NBLGRC(NRHIST) = 1
+      IF( LANGAG .EQ. 0 ) THEN
+         KHIST(1) = 'OBJET: ' // KNOMOB
+      ELSE
+         KHIST(1) = 'OBJECT: ' // KNOMOB
+      ENDIF
+      CALL LHISTO
+C     TRACE DES AXES REINITIALISE
+      NETAXE = 0
+
+      CALL LIMTCL( 'debuther', NMTCL )
+      IF( NMTCL .LT.  0 ) GOTO   30
+      IF( NMTCL .EQ.  0 ) GOTO   50
+      IF( NMTCL .EQ. 60 ) GOTO 6000
+      IF( NMTCL .EQ. 70 ) GOTO 7000
+      IF( NMTCL .EQ. 98 ) GOTO 9800
+      IF( NMTCL .EQ. 99 ) GOTO 9900
+      GOTO( 100,  200,  300,  400,  500,  600, 700, 800,  900, 1000,
+     %     1100, 1200, 1300, 1400, 1500, 1600,  30,  30, 1900, 2000
+     %    ), NMTCL
+
+C     Nombre de JEUX de DONNEES (par defaut 1, >1 pour POLYNOMES DE VVP)
+C     Number of INPUT GAMES
+ 50   NCVALS = 4
+      NB     = 1
+      CALL INVITE( 146 )
+      CALL LIRENT( NCVALS, NB )
+      IF( NCVALS .EQ. -1 ) GOTO 30
+      IF( NB .LE. 0 .OR. NB .GT. 9 ) THEN
+C        NOMBRE DE JEUX LIMITE A 9 => POLYNOME DE VVP de DEGRE <=8
+         NBJEUX = 1
+      ELSE
+         NBJEUX = NB
+      ENDIF
+      GOTO 30
+
+C     NOM de L'OBJET a TRAITER
+C     NAME of the OBJECT to TREAT
+ 100  IF( NBPAS .GT. 0 ) THEN
+C        FERMETURE DE L'OBJET PRECEDENT
+C        CLOSING OF THE PREVIOUS OBJECT
+         CALL LXLXFE( NTOBJE, KNOMOB )
+         NBPAS = 0
+C        HISTORIQUE REMIS A ZERO
+C        HISTORY IS ANNULED
+         CALL RECTEF( NRHIST )
+         NBLGRC( NRHIST ) = 0
+      ENDIF
+
+      CALL INVITE( 45 )
+      NCVALS = 0
+      CALL LIRLEX( NTOBJE, NCVALS, KNOMOB, NUOB )
+      IF( NCVALS .EQ. -1 ) GOTO 20
+      IF( NUOB .LE. 0 ) THEN
+         NBLGRC(NRERR) = 1
+         IF( LANGAG .EQ. 0 ) THEN
+            KERR(1) ='ERREUR: OBJET INCONNU:' // KNOMOB
+         ELSE
+            KERR(1) ='ERROR: UNKNOWN OBJECT:' // KNOMOB
+         ENDIF
+         CALL LEREUR
+         GOTO 20
+      ENDIF
+
+C     REMPLISSAGE DES COMMONS de ./incl/typnoobj.inc
+      NUMTYPOBJ = 5
+      NUMOBJLX  = NUOB
+      IF( LANGAG .EQ. 0 ) THEN
+         KNMTYPOBJ = 'Objet'
+      ELSE
+         KNMTYPOBJ = 'Object'
+      ENDIF
+      KNMOBJLX  = KNOMOB
+
+C     MISE A JOUR DES XYZ MIN MAX DANS COOEXT de xyzext.inc
+C     UPDATE OF MIN MAX XYZ OF THE OBJECT in COOEXT of xyzext.inc
+      CALL LXNLOU( NTOBJE, NUOB, NTLXOB, MNLXOB )
+      CALL LXTSOU( NTLXOB, 'XYZPOINT', NTXYZP, MNXYZP )
+      IF( NTXYZP .LE. 0 ) THEN
+         CALL LXTSOU( NTLXOB, 'XYZSOMMET', NTXYZP, MNXYZP )
+         IF( NTXYZP .LE. 0 ) THEN
+            NBLGRC(NRERR) = 2
+            IF( LANGAG .EQ. 0 ) THEN
+               KERR(1) = 'ERREUR: OBJET ' // KNOMOB
+               KERR(2) = 'SANS TMS XYZSOMMET et XYZPOINT'
+            ELSE
+               KERR(1) = 'ERROR: OBJECT ' // KNOMOB
+               KERR(2) = 'WITHOUT TMS XYZSOMMET and XYZPOINT'
+            ENDIF
+            CALL LEREUR
+            GOTO 20
+         ENDIF
+      ENDIF
+      CALL MAJEXT( MNXYZP )
+
+C     TRACE DU NOM DE L'OBJET
+C     DRAWING OF THE OBJECT NAME
+      CALL RECTEF( NRHIST )
+      NBLGRC(NRHIST) = 1
+      IF( LANGAG .EQ. 0 ) THEN
+         KHIST(1) = 'OBJET: ' // KNOMOB
+      ELSE
+         KHIST(1) = 'OBJECT: ' // KNOMOB
+      ENDIF
+      CALL LHISTO
+
+      IF( INTERA .GE. 1 ) THEN
+C        TRACE DE L'OBJET SI CONSOLE GRAPHIQUE INTERACTIVE
+C        DRAWING OF THE OBJECT IF SUFFICIENT INTERACTIVITY
+         CALL VISEE1
+         CALL T1OBJE( KNOMOB )
+      ENDIF
+      NBPAS = 1
+      GOTO 30
+
+C     LECTURE DES NBJEUX DE DONNEES DE L'OPERATEUR 
+C     -DIV( A GRAD u ) ...
+C     READING OF OPERATOR  -DIV( A GRAD u ) DATA
+ 200  IF( NBPAS .EQ. 0 ) GOTO 100
+      CALL DFTHER( KNOMOB, NBJEUX, IERR )
+      GOTO 30
+
+C     THERMIQUE STATIONNAIRE_LINEAIRE
+C     SOLUTION OF STEADY HEAT TRANSFER
+ 300  IF( NBPAS .EQ. 0 ) GOTO 100
+      CALL THESTA( KNOMOB, IERR )
+      GOTO 30
+
+C     THERMIQUE_INSTATIONNAIRE D'ORDRE 1 EN TEMPS
+C     SOLUTION OF UNSTEADY HEAT TRANSFER
+ 400  IF( NBPAS .EQ. 0 ) GOTO 100
+      CALL THEINS( KNOMOB, IERR )
+      GOTO 30
+
+C     THERMIQUE INSTATIONNAIRE D'ORDRE 2 EN TEMPS
+C     OU EQUATION DES ONDES SUR UNE MEMBRANE
+C     SECOND ORDER IN TIME SOLVER OR WAVE EQUATION SOLVER
+ 500  IF( NBPAS .EQ. 0 ) GOTO 100
+      CALL ONDINS( KNOMOB, IERR )
+      GOTO 30
+
+C     CALCUL DES VALEURS ET VECTEURS PROPRES DE
+C     L'OPERATEUR DE LA CHALEUR -DIV( A GRAD . )
+C     EIGEN-VALUES AND VECTORS FOR THE OPERATOR -DIV( A GRAD . )
+ 600  IF( NBPAS .EQ. 0 ) GOTO 100
+      CALL THEVVP( KNOMOB , IERR )
+      GOTO 30
+
+C     DESSIN DES VALEURS ET VECTEURS PROPRES DE
+C     L'OPERATEUR DE LA CHALEUR -DIV( A GRAD . )
+C     DRAWING OF EIGENSOLUTIONS
+ 700  IF( NBPAS .EQ. 0 ) GOTO 100
+      CALL TRTHER( KNOMOB, 2, IERR )
+      GOTO 30
+
+C     DESSIN DES SOLUTIONS TEMPERATURE, GRADIENT, FLUX
+C     DRAWING OF SOLUTIONS, GRADIENTS, FLUXES
+ 800  IF( NBPAS .EQ. 0 ) GOTO 100
+      CALL TRTHER( KNOMOB, 1, IERR )
+      GOTO 30
+
+C     DESSIN de la PROPAGATION d'une ONDE
+C     DRAWING of a WAVE
+ 900  IF( NBPAS .EQ. 0 ) GOTO 100
+      CALL TRONDE( KNOMOB, IERR )
+      GOTO 30
+
+C     TRACE des MAILLAGES
+C     DRAWING of MESHES
+ 1000 CALL TRMAIL
+      GOTO 30
+
+C     DESSIN des ISO-SURFACES f(x,y,z)=Constantes
+C     DRAWING of ISO-SURFACES f(x,y,z)=Constants
+ 1100 IF( NBPAS .EQ. 0 ) GOTO 100
+      CALL ISOSUR( KNOMOB, IERR )
+      GOTO 30
+
+cccC     Courbes Energies(DistanceNeutrons) de H2+ pour Goong CHEN
+cccC     Special study
+ccc 1200 CALL ENEH2P
+ccc      GOTO 30
+
+C     NON ZERO SOLUTION: -DELTA u -(a1 u+a2 u**2+a3 u**3)=0
+ 1200 CALL THEPU3( KNOMOB, NBJEUX, IERR )
+      GOTO 30
+
+C     CALCUL DES ENERGIES (GRADIENT SOLUTION, SOLUTION)...
+C     COMPUTATION of ENERGIES
+ 1300 CALL THENERGI( KNOMOB, IERR )
+      GOTO 30
+
+C     TRACER LA COURBE Log( | KEh / PEh -(-1/2) | )
+C     D'UN ATOME D'HYDROGENE CALCULES PAR SSPACE en FONCTION de h
+C     ou COMPARAISON ENERGIES CINETIQUE et POTENTIELLE
+C     Special study on Hydrogen Atom
+ccc 1400 CALL ENERGY2
+ 1400 CALL ENERGYH0
+      CALL ENERGYH1
+      CALL ENERGYH2
+      CALL ENERGYH3
+      GOTO 30
+
+C     TRACER LA COURBE Som |ue-uc| / Som |ue| sur [-10,10]**3
+C     NORME RELATIVE DE L'ERREUR L1 AUX NOEUDS
+C     Special study
+ 1500 CALL ERR3CUB
+      GOTO 30
+
+cccC     TRACER LA COURBE Som |ue-uc| / Som |ue| sur [-10,10]**6
+cccC     NORME RELATIVE DE L'ERREUR L1 AUX NOEUDS
+cccC     Special study
+ccc 1600 CALL ERR6CUB
+ccc      GOTO 30
+ccc
+cccC
+cccC     TRACER LES ERREURS RELATIVES sur les VALEURS PROPRES sur [0,1]**6
+cccC     Special study
+ccc 1700 CALL ERR6VP
+ccc      GOTO 30
+ccc
+
+C     CALCULER ET AFFICHER LA NORME L1 des SOLUTIONS**EXPOSANT
+C     Special study
+ 1600 CALL INVITE( 140 )
+      NCVALS = 0
+      CALL LIRRDP( NCVALS, EXPOSANT )
+      IF( NCVALS .EQ. -1 ) GOTO 30
+      IF( EXPOSANT .LE. 0D0 ) THEN
+         NBLGRC(NRERR) = 1
+         IF( LANGAG .EQ. 0 ) THEN
+            KERR(1) ='ERREUR: EXPOSANT<=0'
+         ELSE
+            KERR(1) ='ERROR: EXPONENT<=0'
+         ENDIF
+         CALL LEREUR
+         GOTO 30
+      ENDIF
+      CALL THENORM( KNOMOB, EXPOSANT, IERR )
+      GOTO 30
+
+C     POLYNOME DE VALEURS et VECTEURS PROPRES POUR
+C     L'OPERATEUR DE LA CHALEUR -DIV( A GRAD . )
+C     POLYNOMIALS of EIGENVALUES and VECTORS FOR THE OPERATOR -DIV( A GRAD . )
+ 1900 IF( NBPAS .EQ. 0 ) GOTO 100
+ccc      CALL THEPOLEVV( KNOMOB, NBJEUX, IERR )
+      GOTO 30
+
+C     SEUILS DE PRECISION POUR RESOUDRE Ax=b
+C     PRECISION CUTOFFS to SOLVE LINEAR SYSTEM Ax=b
+ 2000 CALL ZEROGC
+      GOTO 30
+
+C     LA GESTION de la FENETRE GRAPHIQUE de Mefisto
+C     LARGEUR HAUTEUR en PIXELS COULEUR du FOND
+ 6000 CALL MANAGFEN
+      GOTO 30
+
+C     LA GESTION DES RESSOURCES DE MEFISTO
+C     MANAGEMENT des TMS Files Unites de Mefisto
+ 7000 CALL MANAGMEF
+      GOTO 30
+
+C     NOM DE LA VERSION DE MEFISTO
+C     MEFISTO VERSION NAME
+ 9800 NBLGRC(NRERR) = 1
+      KERR(1) = ' '
+      CALL VRSION( KERR(1) )
+      CALL LERESU
+      GOTO 30
+
+cccC     SAUVEGARDE DES DONNEES SUR LA MS ET REDEMARRAGE
+cccC     SAVE DATA on MS and RESTART
+ccc 9800 CALL ARRET( -2 )
+ccc      GOTO 10
+
+C     SAUVEGARDE DES DONNEES SUR LA MS ET FIN DU TRAITEMENT
+C     SAVE DATA and QUIT
+ 9900 CALL ARRET(  0 )
+
+cccC     END USING PETSC   11/12/2009   Cf bin.petsc
+ccc      call PetscFinal()
+
+      STOP
+      END

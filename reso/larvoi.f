@@ -1,0 +1,40 @@
+      INTEGER FUNCTION LARVOI( NTDL, LPLIGN, LPCOLO )
+C ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+C BUT :    CALCULER LA PLUS GRANDE DIFFERENCE ENTRE 2 DL VOISINS
+C -----    A PARTIR DES TABLEAUX DU STOCKAGE MORSE DE LA MATRICE
+C
+C ENTREES:
+C --------
+C NTDL   : NOMBRE TOTAL DE DEGRES DE LIBERTE
+C LPLIGN : POINTEUR SUR LES COEFFICIENTS DIAGONAUX DE LA MATRICE PROFIL
+C          LPLIGN(NODL) = ADRESSE DANS LA MATRICE DU COEF DIAGONAL NODL
+C LPCOLO : LPCOLO(N) = NO DE LA COLONNE DU COEFFICIENT N
+C+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+C AUTEUR : ALAIN PERRONNET Laboratoire J-L.LIONS UPMC Paris Octobre 2007
+C23456---------------------------------------------------------------012
+      INTEGER LPLIGN(0:NTDL), LPCOLO(*)
+C
+C     PLUS GRANDE DIFFERENCE ENTRE NO DE DL VOISINS
+      LARVOI = 0
+C
+      DO 20 I=1,NTDL
+C        LES VOISINS DU DL I SONT RANGES ENTRE K1 ET K2 DANS LPCOLO
+         K1 = LPLIGN(I-1)+1
+         K2 = LPLIGN(I)
+         NMIN = NTDL
+         NMAX = 0
+         DO 10 K=K1,K2
+C           LE NO DU DL VOISIN
+            N = LPCOLO(K)
+C           LE NO MIN DES VOISINS
+            NMIN = MIN( NMIN, N )
+C           LE NO MAX DES VOISINS
+            NMAX = MAX( NMAX, N )
+ 10      CONTINUE
+C
+C        LA PLUS GRANDE DIFFERENCE
+         LARVOI = MAX( LARVOI, NMAX - NMIN )
+ 20   CONTINUE
+C
+      RETURN
+      END

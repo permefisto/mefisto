@@ -1,0 +1,127 @@
+      SUBROUTINE HAFTTE( NBTETR, NOTETR, MXFACE, LFACES, IERR )
+C ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+C BUT :    CONSTRUCTION PAR HACHAGE DES FACES TRIANGULAIRES
+C -----    D'UNE TETRAEDRISATION ET
+C          COMPLETION DU NO DU TETRAEDRE OPPOSE AUX FACES DANS NOTETR
+
+C ENTREES:
+C --------
+C NBTETR : NOMBRE DE TETRAEDRES DU VOLUME
+C MXFACE : NOMBRE DECLARE DE FACES DU TABLEAU LFACES
+
+C MODIFIE:
+C --------
+C NOTETR : LES 8 NUMEROS DES SOMMETS DES NBTETR TETRAEDRES DU VOLUME
+C          EN ENTREE: NS1 NS2 NS3 NS4  0 0 0 0
+C          EN SORTIE: NS1 NS2 NS3 NS4 NTOPF1 NTOPF2 NTOPF3 NTOPF4
+C                                     NO TETRAEDRE OPPOSE PAR LA FACE
+C SORTIES:
+C --------
+C LFACES : LFACES(1,I)= NO DU 1-ER  SOMMET DE LA FACE
+C          LFACES(2,I)= NO DU 2-EME SOMMET > 1-ER  SOMMET
+C          LFACES(3,I)= NO DU 3-EME SOMMET DE LA FACE
+C          LFACES(4,I)= CHAINAGE HACHAGE SUR FACE SUIVANTE
+C          LFACES(5,I)= NUMERO DU 1-ER  TETRAEDRE CONTENANT CETTE FACE
+C                       0 SI PAS DE 1-ER  TETRAEDRE
+C          LFACES(6,I)= NUMERO DU 2-EME TETRAEDRE CONTENANT CETTE FACE
+C                       0 SI PAS DE 2-EME TETRAEDRE
+C IERR   : >0 SATURATION DU TABLEAU LFACES. AUGMENTER MXFACE
+C          =0 SI PAS DE PROBLEME RENCONTRE
+C ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+C AUTEUR : ALAIN PERRONNET LJLL UPMC et St PIERRE DU PERRAY    Mars 2016
+C2345X7..............................................................012
+      include"./incl/gsmenu.inc"
+      COMMON / UNITES / LECTEU, IMPRIM, NUNITE(30)
+
+      INTEGER           NOTETR(8,NBTETR), LFACES(6,MXFACE)
+      INTEGER           NOSTTR(3)
+
+C     NO DES 3 SOMMETS DES 4 FACES D'UN TETRAEDRE
+C     NORMALE A LA FACE DIRIGEE VERS L'EXTERIEUR DU TETRAEDRE
+      INTEGER           NOSOFATE(3,4)
+      DATA              NOSOFATE / 1,3,2,  2,3,4,  3,1,4,  4,1,2 /
+
+C     LE TABLEAU DES FACES EST INITIALISE A ZERO
+      CALL AZEROI( 6*MXFACE, LFACES )
+
+C     LA 1-ERE FACE LIBRE DERRIERE CELLES ADRESSEES PAR LE MINIMUM
+      LIBREF = MXFACE
+C
+C     FORMATION DU TABLEAU DES NO DES SOMMETS DES FACES
+C     ==================================================
+      DO 100 NTE = 1, NBTETR
+
+C        BOUCLE SUR LES 4 FACES DU TETRAEDRE NTE
+C        ---------------------------------------
+         DO 50 NF=1,4
+
+C           LE NO GLOBAL DES SOMMETS DE LA FACE NF
+            DO J=1,3
+               NOSTTR(J) = NOTETR( NOSOFATE(J,NF), NTE )
+            ENDDO
+C
+C           TRI CROISSANT DU NUMERO DES 3 SOMMETS
+            CALL TRI3NO( NOSTTR, NOSTTR )
+
+C           RECHERCHE OU ADJONCTION DE LA FACE
+C           ----------------------------------
+            CALL HACHAG( 3,      NOSTTR, 6, MXFACE, LFACES, 4,
+     %                   LIBREF, NOFACE )
+
+            IF( NOFACE .EQ. 0 ) THEN
+C              SATURATION DU TABLEAU LFACES. MXFACE A AUGMENTER
+               IERR = 1
+               RETURN
+            ENDIF
+
+            IF( NOFACE .LT. 0 ) THEN
+C              FACE AJOUTEE
+               NOFACE = -NOFACE
+C              NUMERO DU PREMIER TETRAEDRE CONTENANT CETTE FACE
+               LFACES( 5, NOFACE ) = NTE
+               GOTO 50
+            ENDIF
+
+            IF( LFACES( 6, NOFACE ) .EQ. 0 ) THEN
+C              FACE NOSTTR RETROUVEE DANS LFACES
+C              NUMERO DU SECOND TETRAEDRE CONTENANT CETTE FACE
+               LFACES( 6, NOFACE ) = NTE
+
+C              CETTE FACE APPARTIENT AUX 2 TETRAEDRES NTE et
+               NTE2 = LFACES( 5, NOFACE )
+C              LE NO NOTETR DU TETRAEDRE OPPOSE NTE2 A CETTE FACE DANS NTE
+               NOTETR( 4+NF, NTE ) = NTE2
+
+C              RECHERCHE DU NO LOCAL NF2 DE LA FACE DANS LE TETRAEDRE NT2
+               CALL NUFATRTE( NOSTTR, NOTETR(1,NTE2), NF2 )
+               IF( NF2 .GT. 0 ) THEN
+C                 LE NO NOTETR DU TETRAEDRE OPPOSE NTE A CETTE FACE DANS NTE2
+                  NOTETR( 4+NF2, NTE2 ) = NTE
+               ENDIF
+
+               GOTO 50
+            ENDIF
+
+C           PROBLEME: AU MOINS UN TROISIEME TETRAEDRE CONTIENT CETTE FACE
+            NBLGRC(NRERR) = 1
+            KERR(1) ='haftte: La FACE                          
+     %APPARTIENT a PLUS de 2 TETRAEDRES '
+            WRITE( KERR(1)(17:24),'(I8)') NOSTTR(1)
+            WRITE( KERR(1)(26:33),'(I8)') NOSTTR(2)
+            WRITE( KERR(1)(35:42),'(I8)') NOSTTR(3)
+            CALL SANSDBL( KERR(1), L )
+            CALL LEREUR
+
+            WRITE(IMPRIM,10050) NOSTTR, NTE, (NOTETR(L,NTE),L=1,8)
+            RETURN
+
+   50    ENDDO
+
+10050 FORMAT(' haftte: FACE',3I9,' du TETRAEDRE',I7,':',8I9,
+     %       ' dans PLUS de 2 TETRAEDRES' )
+
+C        PASSAGE AU TETRAEDRE NTE SUIVANT
+  100 ENDDO
+
+      RETURN
+      END

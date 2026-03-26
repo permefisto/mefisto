@@ -1,0 +1,54 @@
+{ ============================================================ }
+{ MEFISTO Version Octobre 2000               PROJET: miroir2d  }
+{ Utilisateur: Perronnet Alain               Date:   15/11/00  }
+{ ============================================================ }
+1;   { NOM de l OBJET a traiter }  miroir_neumann;
+
+2;   { ENTREE des DONNEES du PROBLEME de THERMIQUE }
+
+ { SURFACE: VERRE }
+ 2;{ densite de CONDUCTIVITE THERMIQUE }
+ 3;{ materiau 2D homogene isotrope }
+ 1.67;{ CONDUC  'conductivite du materiau'  reel   ; }
+ @;
+
+ { SURFACE: PAILLE }
+ 2;{ densite de CONDUCTIVITE THERMIQUE }
+ 3;{ materiau 2D homogene isotrope }
+ 10.0;{ CONDUC  'conductivite du materiau'  reel   ; }
+ @;
+
+ { SURFACE: DURAL }
+ 2;{ densite de CONDUCTIVITE THERMIQUE }
+ 3;{ materiau 2D homogene isotrope }
+ 200;{ CONDUC  'conductivite du materiau'  reel   ; }
+ @;
+
+ { LIGNE: SOLEIL }
+ 2;{ SOURCE source de chaleur ou flux impose a la frontiere }
+ 1;{ constante }
+ 540.0;{ SOURCE 'valeur de la source' reel ; }
+ @;
+
+ { LIGNE: CALODUC }
+ 2;{ SOURCE source de chaleur ou flux impose a la frontiere }
+ 1;{ constante }
+ -2592.0;{ SOURCE 'source' reel ; }
+ @;
+
+ { POINT: CBD }
+ 3;{ CONTACT temperature imposee }
+ 1;{ constante }
+ 0;{ CONTAC 'temperature imposee' reel ; }
+ @;
+
+3; 1; { RESOLUTION du probleme de THERMIQUE LINEAIRE }
+   1; { CHOLESKY avec stockage PROFIL }
+
+8; { DESSIN des RESULTATS (Temperatures,Flux,...) }
+   2; { TEMPERATURE }
+   1; { ISOTHERMES }
+   2; { ISO REGULIERES entre MIN et MAX }
+  90; { EXECUTER le TRACE }
+
+FERMER;

@@ -1,0 +1,16 @@
+deftms ~>>>BLVITESSE 'imposed velocity'
+variable muet DATE 'date of creation of the TMS'   reel2  ;
+variable muet NUTD 'number of the descriptor array TD' entier ; 
+variable LTBLVI    'type of the imposed velocity' entier 
+( 1 : 'constant imposed velocity'
+,-1 : 'function imposed velocity'
+, 0 : 'delete the actual imposed velocity'
+, 2 : 'convected velocity at time tn' ) ;
+variable NBCOBV 'component number of the imposed velocity' entier ; 
+tableau  NUCOBV(1..NBCOBV) 'number of imposed velocity components' entier ;
+cas LTBLVI 
+ 1 : tableau  BLVITE(1..NBCOBV) 
+     'values of components of the imposed velocity' reel ;
+-1 : variable NFBLVI 'name of the function BLVITESSE' ^~>FONCTION ; 
+fincas ;
+fintms ;

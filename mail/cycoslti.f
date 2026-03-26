@@ -1,0 +1,478 @@
+      SUBROUTINE CYCOSLTI( NMSFEX, RAYOCI, RAYOCS, XYZB,   XYZH,
+     %                     NOMCER, NUMCER, NOMSFL, NUMSFL, IERR )
+C+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+C BUT:     GENERER LE MAILLAGE DE LA SURFACE LATERALE DE 2/2 CYLINDRE
+C -----    OU D'UN TRONC DE CONE AVEC LA FONCTION TAILLE_IDEALE(X,Y,Z)
+C                                              ou EDGE_LENGTH(X,Y,Z)
+C          EXTRAIRE LE MAILLAGE DES 2 CERCLES INFERIEUR et SUPERIEUR
+C
+C ENTREES:
+C --------
+C NMSFEX : NOM DE LA SURFACE DU CYLINDRE ou CONE
+C RAYOBI : RAYON DU CERCLE INFERIEUR
+C RAYOCS : RAYON DU CERCLE SUPERIEUR
+C XYZB   : XYZ DU CENTRE DU CERCLE INFERIEUR
+C XYZH   : XYZ DU CENTRE DU CERCLE SUPERIEUR
+C
+C SORTIES:
+C --------
+C NOMCER : NOM    DE LA LIGNE DES 2 CERCLES INFERIEUR et SUPERIEUR
+C NUMCER : NUMERO DE LA LIGNE DES 2 CERCLES INFERIEUR et SUPERIEUR
+C NOMSFL : NOM    DE LA SURFACE LATERALE
+C NOMSFL : NUMERO DE LA SURFACE LATERALE
+C IERR   : =0 SI PAS D'ERREUR, >0 SINON
+C+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+C AUTEUR : ALAIN PERRONNET LJUBLJANA SLOVENIE              Novembre 2011
+C2345X7..............................................................012
+      include"./incl/ntmnlt.inc"
+      include"./incl/a___xyzsommet.inc"
+      include"./incl/a___nsef.inc"
+      include"./incl/a_point__definition.inc"
+      include"./incl/a_ligne__definition.inc"
+      include"./incl/a_surface__definition.inc"
+C
+C     LE SUPER-TABLEAU OU TOUS LES TMC ET TMS OUVERTS SONT STOCKES
+C     ICI LE TABLEAU DMCN REEL DOUBLE PRECISION N'EST PAS UTILE
+      include"./incl/pp.inc"
+      COMMON            MCN(MOTMCN)
+      REAL             RMCN(1)
+      DOUBLE PRECISION DMCN(1)
+      EQUIVALENCE     ( MCN(1), RMCN(1), DMCN(1) )
+C
+      REAL              XYZB(3), XYZH(3)
+C
+      CHARACTER*1       KNBRE
+      CHARACTER*24      NMSFEX, NOMCER(2), NOMSFL
+      INTEGER                   NUMCER(2), NUMSFL
+      CHARACTER*24      NOMPOI(4,2), NOMLIG(6), NOMSUR(2)
+      INTEGER           NUMPOI(4,2), NUMLIG(6), NUMSUR(2)
+      REAL              XYZ3PI(3,3), XYZ3PF(3,3), XYZ(3), XYZPT(3,4,2)
+      DOUBLE PRECISION  DMATRI(3,4)
+      INTRINSIC         SQRT
+C
+C     LE VECTEUR AXE DU CYLINDRE
+      X = XYZH(1) - XYZB(1)
+      Y = XYZH(2) - XYZB(2)
+      Z = XYZH(3) - XYZB(3)
+C
+C     LONGUEUR DE L'AXE DU CYLINDRE
+      H = SQRT( X*X + Y*Y + Z*Z )
+C
+C     CONSTRUIRE LA MATRICE DE TRANSFORMATION DES COORDONNEES POUR
+C     PASSER D'UN REPERE DEFINI PAR 3 POINTS INITIAUX NON ALIGNES
+C                               A   3 POINTS FINAUX   NON ALIGNES
+C     ============================================================
+C     LE REPERE INITIAL
+      XYZ3PI(1,1) = 0.
+      XYZ3PI(2,1) = 0.
+      XYZ3PI(3,1) = 0.
+C
+      XYZ3PI(1,2) = H
+      XYZ3PI(2,2) = 0.
+      XYZ3PI(3,2) = 0.
+C
+      XYZ3PI(1,3) = 0.
+      XYZ3PI(2,3) = H
+      XYZ3PI(3,3) = 0.
+C
+C     LE REPERE FINAL
+      XYZ3PF(1,1) = XYZB(1)
+      XYZ3PF(2,1) = XYZB(2)
+      XYZ3PF(3,1) = XYZB(3)
+C
+      IF( SQRT(X*X + Y*Y)/H .LE. 1E-3 ) THEN
+C
+C        AXES X et Y
+         XYZ3PF(1,2) = XYZB(1) + H
+         XYZ3PF(2,2) = XYZB(2)
+         XYZ3PF(3,2) = XYZB(3)
+C
+         XYZ3PF(1,3) = XYZB(1)
+         XYZ3PF(2,3) = XYZB(2) + H
+         XYZ3PF(3,3) = XYZB(3)
+C
+      ELSE
+C
+C        RECHERCHE DE 2 DIRECTIONS ORTHOGONALES A L'AXE DU CYLINDRE
+         XYZ3PF(1,2) = XYZB(1) - Y
+         XYZ3PF(2,2) = XYZB(2) + X
+         XYZ3PF(3,2) = XYZB(3)
+C
+         XYZ3PF(1,3) = XYZB(1) - X * Z / H
+         XYZ3PF(2,3) = XYZB(2) - Y * Z / H
+         XYZ3PF(3,3) = XYZB(3) + ( X * X + Y * Y ) / H
+C
+      ENDIF
+C
+C     CONSTRUCTION DE LA MATRICE DE TRANSFORMATION QUI ENVOIE
+C     LES 3 POINTS INITIAUX SUR LES 3 POINTS FINAUX
+      CALL TR3P3P( XYZ3PI, XYZ3PF, DMATRI, IERR )
+      IF( IERR .NE. 0 ) GOTO 9999
+C
+C     POUR UTILISER LE QUADRANGLE ALGEBRIQUE, 2 DEMI SURFACES LATERALES
+C     SONT CONSTRUITES PUIS, REUNIES
+C     =================================================================
+C
+C     LES CERCLES/2 INFERIEUR ET SUPERIEUR
+C     ------------------------------------
+      NP = 0
+      DO NULG = 1, 2
+C
+C        CONSTRUCTION DES 4 POINTS SUR LE CERCLE
+C        ---------------------------------------
+         IF( NULG .EQ. 1 ) THEN
+            RAY = RAYOCI
+            HAUT= 0.
+         ELSE
+            RAY = RAYOCS
+            HAUT= H
+         ENDIF
+C
+C        POINT INITIAL
+         XYZ(1) = RAY
+         XYZ(2) = 0.
+         XYZ(3) = HAUT
+C        POINT APRES TRANSFORMATION
+C        PASSAGE DU REPERE PROPRE DU CYLINDRE AU REPERE GENERAL
+         CALL ISOMVA( DMATRI, XYZ, XYZPT(1,1,NULG) )
+C
+C        POINT FINAL
+         XYZ(1) =-RAY
+         XYZ(2) = 0.
+         XYZ(3) = HAUT
+C        POINT APRES TRANSFORMATION
+C        PASSAGE DU REPERE PROPRE DU CYLINDRE AU REPERE GENERAL
+         CALL ISOMVA( DMATRI, XYZ, XYZPT(1,2,NULG) )
+C
+C        POINT ENTRE LES 2 EXTREMITES (1-ER DEMI CERCLE)
+         XYZ(1) = 0.
+         XYZ(2) = RAY
+         XYZ(3) = HAUT
+C        POINT APRES TRANSFORMATION
+C        PASSAGE DU REPERE PROPRE DU CYLINDRE AU REPERE GENERAL
+         CALL ISOMVA( DMATRI, XYZ, XYZPT(1,3,NULG) )
+C
+C        POINT ENTRE LES 2 EXTREMITES (2-EME DEMI CERCLE)
+         XYZ(1) = 0.
+         XYZ(2) =-RAY
+         XYZ(3) = HAUT
+C        POINT APRES TRANSFORMATION
+C        PASSAGE DU REPERE PROPRE DU CYLINDRE AU REPERE GENERAL
+         CALL ISOMVA( DMATRI, XYZ, XYZPT(1,4,NULG) )
+C
+         DO K=1,4
+C
+C           CREATION DU POINT K DANS LE LEXIQUE DES POINTS
+C           ----------------------------------------------
+C           NOM DU POINT K SUR LE CERCLE
+            NOMPOI(K,NULG) = NMSFEX
+            N = NUDCNB( NOMPOI(K,NULG) )
+            N = MIN(N,21)
+            NP = NP + 1
+            WRITE(KNBRE,'(I1)') NP
+            NOMPOI(K,NULG) = NOMPOI(K,NULG)(1:N) // '_P' // KNBRE
+C
+C           SI CE POINT EXISTE, IL EST DETRUIT
+            CALL LXLXOU( NTPOIN, NOMPOI(K,NULG), NT1PT, MN1PT )
+            IF( MN1PT .GT. 0 ) CALL LXTSDS( NTPOIN, NOMPOI(K,NULG) )
+C
+C           CONSTRUCTION DU POINT K
+            CALL LXLXDC( NTPOIN, NOMPOI(K,NULG), 24, 8 )
+            CALL LXLXOU( NTPOIN, NOMPOI(K,NULG), NT1PT, MN1PT )
+C           NUMERO DU POINT DANS LE LEXIQUE DES POINTS
+            CALL NUOBNM( 'POINT', NOMPOI(K,NULG), NUMPOI(K,NULG) )
+C
+C           LE POINT A UN TMS DEFINITION DE POINT
+            CALL LXTNDC( NT1PT, 'DEFINITION', 'MOTS', WOORPO+3 )
+            CALL LXTSOU( NT1PT, 'DEFINITION', NT1PDE, MN1PDE )
+C           TRANSFORMATION (I pour IDENTITE)
+            MCN( MN1PDE + WTYTRP ) = 1
+C           TYPE DU POINT
+            MCN( MN1PDE + WUTYPO ) = 1
+C           X Y Z
+            RMCN( MN1PDE + WOORPO   ) = XYZPT(1,K,NULG)
+            RMCN( MN1PDE + WOORPO+1 ) = XYZPT(2,K,NULG)
+            RMCN( MN1PDE + WOORPO+2 ) = XYZPT(3,K,NULG)
+C           AJOUT DU NUMERO DU TABLEAU DESCRIPTEUR
+            MCN( MN1PDE + MOTVAR(6) ) = NONMTD('~>POINT>>DEFINITION')
+C           AJOUT DE LA DATE
+            CALL ECDATE( MCN(MN1PDE) )
+C
+C           LE TMS XYZSOMMET DU POINT K
+            CALL LXTNDC( NT1PT, 'XYZSOMMET', 'MOTS', WYZSOM+3 )
+            CALL LXTSOU( NT1PT, 'XYZSOMMET', NT1XYZ, MN1XYZ )
+             MCN( MN1XYZ + WNBSOM ) = 1
+             MCN( MN1XYZ + WNBTGS ) = 0
+             MCN( MN1XYZ + WBCOOR ) = 3
+            RMCN( MN1XYZ + WYZSOM   ) = XYZPT(1,K,NULG)
+            RMCN( MN1XYZ + WYZSOM+1 ) = XYZPT(2,K,NULG)
+            RMCN( MN1XYZ + WYZSOM+2 ) = XYZPT(3,K,NULG)
+C           AJOUT DU NUMERO DU TABLEAU DESCRIPTEUR
+             MCN( MN1XYZ + MOTVAR(6) ) = NONMTD( '~>>>XYZSOMMET' )
+C           AJOUT DE LA DATE
+            CALL ECDATE( MCN(MN1XYZ) )
+C
+         ENDDO
+C
+      ENDDO
+C
+C     CONSTRUCTION DES 2 LIGNES(1:2) PARALLELES A L'AXE
+C     -------------------------------------------------
+      DO NULG = 1, 2
+C
+C        DROITE POINT INITIAL (FINAL) 1/2 CERCLE INFERIEUR
+C            -> POINT INITIAL (FINAL) 1/2 CERCLE SUPERIEUR
+         NOMLIG(NULG) = NMSFEX
+         N    = NUDCNB( NOMLIG(NULG) )
+         WRITE(KNBRE,'(I1)') NULG
+         N = MIN(N,21)
+         NOMLIG(NULG) = NOMLIG(NULG)(1:N) // '_L' // KNBRE
+C
+C        SI CETTE LIGNE EXISTE, ELLE EST DETRUITE
+         CALL LXLXOU( NTLIGN, NOMLIG(NULG), NT1LG, MN1LG )
+         IF( MN1LG .GT. 0 ) CALL LXTSDS( NTLIGN, NOMLIG(NULG) )
+C
+         CALL LXLXDC( NTLIGN, NOMLIG(NULG), 24, 8 )
+         CALL LXLXOU( NTLIGN, NOMLIG(NULG), NT1LG, MN1LG )
+C        NUMERO DE LA LIGNE DANS LE LX DES LIGNES
+         CALL NUOBNM( 'LIGNE', NOMLIG(NULG), NUMLIG(NULG) )
+C
+C        LA LIGNE A UN TMS DEFINITION DE LIGNE DE TYPE 2: SEGMENT DE DROITE
+         CALL LXTNDC( NT1LG, 'DEFINITION', 'MOTS', WUPTFI+1 )
+         CALL LXTSOU( NT1LG, 'DEFINITION', NT1LDE, MN1LDE )
+C        TRANSFORMATION (I pour IDENTITE)
+         MCN( MN1LDE + WTYTRL ) = 1
+C        TYPE DE LA LIGNE: DROITE
+         MCN( MN1LDE + WUTYLI ) = 2
+C        NOMBRE DE SOMMETS DE LA LIGNE: INACTIF
+         MCN( MN1LDE + WBARLI ) = 16
+C        RAISON GEOMETRIQUE ESPACANT LES SOMMETS: INACTIF
+         RMCN( MN1LDE + WAIGEO ) = 1.
+C        NOM DES 2 POINTS EXTREMITES DU SEGMENT DE DROITE
+C        variable NUPTIN nom point initial
+         MCN( MN1LDE + WUPTIN ) = NUMPOI(NULG,1)
+C        variable NUPTFI nom point final
+         MCN( MN1LDE + WUPTFI ) = NUMPOI(NULG,2)
+C        AJOUT DU NUMERO DU TABLEAU DESCRIPTEUR
+         MCN( MN1LDE + MOTVAR(6) ) = NONMTD( '~>LIGNE>>DEFINITION' )
+C        AJOUT DE LA DATE
+         CALL ECDATE( MCN(MN1LDE) )
+C
+C        CONSTRUCTION DE LA LIGNE DE TYPE 2 SEGMENT DE DROITE
+         CALL LIEX02( NT1LG,  MCN(MN1LDE), RMCN(MN1LDE),
+     %                NTARLI, MNARLI, NTSOLI, MNSOLI, IERR )
+         IF( IERR .NE. 0 ) GOTO 9999
+C
+      ENDDO
+C
+C     CONSTRUCTION DE LA LIGNE(3:6) COMME ARC de CERCLE de R3 (Option 3)
+C     DEFINI PAR 3 POINTS SUR L'ARC DE CERCLE
+C     ------------------------------------------------------------------
+      DO NULG = 3, 6
+C
+         NOMLIG(NULG) = NMSFEX
+         N = NUDCNB( NOMLIG(NULG) )
+         WRITE(KNBRE,'(I1)') NULG
+         N = MIN(N,21)
+         NOMLIG(NULG) = NOMLIG(NULG)(1:N) // '_L' // KNBRE
+C
+C        SI CETTE LIGNE EXISTE, ELLE EST DETRUITE
+         CALL LXLXOU( NTLIGN, NOMLIG(NULG), NT1LG, MN1LG )
+         IF( MN1LG .GT. 0 ) CALL LXTSDS( NTLIGN, NOMLIG(NULG) )
+C
+         CALL LXLXDC( NTLIGN, NOMLIG(NULG), 24, 8 )
+         CALL LXLXOU( NTLIGN, NOMLIG(NULG), NT1LG, MN1LG )
+C        NUMERO DE LA LIGNE DANS LE LX DES LIGNES
+         CALL NUOBNM( 'LIGNE', NOMLIG(NULG), NUMLIG(NULG) )
+C
+C        LA LIGNE A UN TMS DEFINITION DE LIGNE DE TYPE 3 ARC DE CERCLE
+         CALL LXTNDC( NT1LG, 'DEFINITION', 'MOTS', WUPTEN+1 )
+         CALL LXTSOU( NT1LG, 'DEFINITION', NT1LDE, MN1LDE )
+C        TRANSFORMATION (I pour IDENTITE)
+         MCN( MN1LDE + WTYTRL ) = 1
+C        TYPE DE LA LIGNE: ARC DE CERCLE DE R3
+         MCN( MN1LDE + WUTYLI ) = 3
+C        NOMBRE DE SOMMETS DE LA LIGNE: INACTIF
+         MCN( MN1LDE + WBARLI ) = 16
+C        RAISON GEOMETRIQUE ESPACANT LES SOMMETS: INACTIF
+         RMCN( MN1LDE + WAIGEO ) = 1.
+C        NOM DES 3 POINTS SUR LE CERCLE
+         IF( NULG .EQ. 3 ) THEN
+C           variable NUPTIN 'nom point initial de l''arc' ^~>POINT ;
+            MCN( MN1LDE + WUPTIN ) = NUMPOI(1,1)
+C           variable NUPTFI 'nom point final   de l''arc' ^~>POINT ;
+            MCN( MN1LDE + WUPTFI ) = NUMPOI(2,1)
+C           variable NUPTEN 'nom point sur l''arc entre les 2 extremites'
+            MCN( MN1LDE + WUPTEN ) = NUMPOI(3,1)
+         ELSE IF( NULG .EQ. 4 ) THEN
+C           variable NUPTIN 'nom point initial de l''arc' ^~>POINT ;
+            MCN( MN1LDE + WUPTIN ) = NUMPOI(1,2)
+C           variable NUPTFI 'nom point final   de l''arc' ^~>POINT ;
+            MCN( MN1LDE + WUPTFI ) = NUMPOI(2,2)
+C           variable NUPTEN 'nom point sur l''arc entre les 2 extremites'
+            MCN( MN1LDE + WUPTEN ) = NUMPOI(3,2)
+         ELSE IF( NULG .EQ. 5 ) THEN
+C           variable NUPTIN 'nom point initial de l''arc' ^~>POINT ;
+            MCN( MN1LDE + WUPTIN ) = NUMPOI(2,1)
+C           variable NUPTFI 'nom point final   de l''arc' ^~>POINT ;
+            MCN( MN1LDE + WUPTFI ) = NUMPOI(1,1)
+C           variable NUPTEN 'nom point sur l''arc entre les 2 extremites'
+            MCN( MN1LDE + WUPTEN ) = NUMPOI(4,1)
+         ELSE IF( NULG .EQ. 6 ) THEN
+C           variable NUPTIN 'nom point initial de l''arc' ^~>POINT ;
+            MCN( MN1LDE + WUPTIN ) = NUMPOI(2,2)
+C           variable NUPTFI 'nom point final   de l''arc' ^~>POINT ;
+            MCN( MN1LDE + WUPTFI ) = NUMPOI(1,2)
+C           variable NUPTEN 'nom point sur l''arc entre les 2 extremites'
+            MCN( MN1LDE + WUPTEN ) = NUMPOI(4,2)
+         ENDIF
+C
+C        AJOUT DU NUMERO DU TABLEAU DESCRIPTEUR
+         MCN( MN1LDE + MOTVAR(6) ) = NONMTD( '~>LIGNE>>DEFINITION' )
+C        AJOUT DE LA DATE
+         CALL ECDATE( MCN(MN1LDE) )
+C
+C        CONSTRUCTION DE LA LIGNE DE TYPE 3 ARC DE CERCLE de R3
+         CALL LIEX03( NT1LG,  MCN(MN1LDE), RMCN(MN1LDE),
+     %                NTARLI, MNARLI, NTSOLI, MNSOLI, IERR )
+         IF( IERR .NE. 0 ) GOTO 9999
+C
+      ENDDO
+C
+C     QUADRANGULATION DES 2 SURFACE LATERALE/2 DU CYLINDRE ou CONE
+C     ============================================================
+C     CREATION DES TMS DEFINITION, NSEF et XYZSOMMET DE LA SURFACE LATERALE
+      DO NUSF=1,2
+         NOMSUR(NUSF) = NMSFEX
+         N    = NUDCNB( NOMSUR(NUSF) )
+         WRITE(KNBRE,'(I1)') NUSF
+         N = MIN(N,21)
+         NOMSUR(NUSF) = NOMSUR(NUSF)(1:N) // '_S' // KNBRE
+C
+C        SI CETTE SURFACE EXISTE, ELLE EST DETRUITE
+         CALL LXLXOU( NTSURF, NOMSUR(NUSF), NT1SF, MN1SF )
+         IF( MN1SF .GT. 0 ) CALL LXTSDS( NTSURF, NOMSUR(NUSF) )
+C
+C        CONSTRUCTION DE LA SURFACE LATERALE/2 PAR QUADRANGLE TRANSFINI
+         CALL LXLXDC( NTSURF, NOMSUR(NUSF), 24, 8 )
+         CALL LXLXOU( NTSURF, NOMSUR(NUSF), NT1SF, MN1SF )
+C        NUMERO DE LA SURFACE DANS LE LX DES SURFACES
+         CALL NUOBNM( 'SURFACE', NOMSUR(NUSF), NUMSUR(NUSF) )
+C
+C        LA SURFACE A UN TMS DEFINITION DE SURFACE QUADRANGLE TRANSFINI
+         CALL LXTNDC( NT1SF, 'DEFINITION', 'MOTS', WAGHER+1 )
+         CALL LXTSOU( NT1SF, 'DEFINITION', NT1SDE, MN1SDE )
+C
+C        I pour IDENTITE
+         MCN( MN1SDE + WTYTRS ) = 1
+C        QUADRANGLE TRANSFINI
+         MCN( MN1SDE + WUTYSU ) = 1
+C
+C        tableau  NU4COT(1..4)  'nom des 4 lignes des 4 cotes' ^~>LIGNE
+         IF( NUSF .EQ. 1 ) THEN
+            MCN( MN1SDE + WU4COT   ) = NUMLIG(1)
+            MCN( MN1SDE + WU4COT+1 ) = NUMLIG(3)
+            MCN( MN1SDE + WU4COT+2 ) = NUMLIG(2)
+            MCN( MN1SDE + WU4COT+3 ) = NUMLIG(4)
+         ELSE
+            MCN( MN1SDE + WU4COT   ) = NUMLIG(2)
+            MCN( MN1SDE + WU4COT+1 ) = NUMLIG(5)
+            MCN( MN1SDE + WU4COT+2 ) = NUMLIG(1)
+            MCN( MN1SDE + WU4COT+3 ) = NUMLIG(6)
+         ENDIF
+C
+C        variable LAGHER 'type du maillage' entier; 2:maillage irregulier
+         MCN( MN1SDE + WAGHER ) = 2
+C
+C        AJOUT DU NUMERO DU TABLEAU DESCRIPTEUR
+         MCN( MN1SDE + MOTVAR(6) ) = NONMTD( '~>SURFACE>>DEFINITION' )
+C        AJOUT DE LA DATE
+         CALL ECDATE( MCN(MN1SDE) )
+C
+C        TRIANGULATION DE LA SURFACE LATERALE/2
+         CALL SUEX01( NT1SF,  MCN(MN1SDE), RMCN(MN1SDE),
+     %                NTFASU, MNFASU, NTSOFA, MNSOFA, IERR )
+C
+      ENDDO
+C
+C     UNION DES 2 SURFACES LATERALES/2
+C     ================================
+      NOMSFL = NMSFEX
+      N = NUDCNB( NOMSFL )
+      N = MIN(N,21)
+      NOMSFL = NOMSFL(1:N) // '_C1'
+C
+C     SI CETTE SURFACE EXISTE, ELLE EST DETRUITE
+      CALL LXLXOU( NTSURF, NOMSFL, NT1SF, MN1SF )
+      IF( MN1SF .GT. 0 ) CALL LXTSDS( NTSURF, NOMSFL )
+C
+C     CONSTRUCTION DE LA SURFACE UNION DES 2 SURFACES/2
+      CALL LXLXDC( NTSURF, NOMSFL, 24, 8 )
+      CALL LXLXOU( NTSURF, NOMSFL, NT1SF, MN1SF )
+C     NUMERO DE LA SURFACE DANS LE LX DES SURFACES
+      CALL NUOBNM( 'SURFACE', NOMSFL, NUMSFL )
+C
+C     LA SURFACE A UN TMS DEFINITION DE SURFACE UNION
+      CALL LXTNDC( NT1SF, 'DEFINITION', 'MOTS', WUSUUN+2 )
+      CALL LXTSOU( NT1SF, 'DEFINITION', NT1SDE, MN1SDE )
+C
+C     TABLEAU DEFINITION DE L'UNION DES 2 SURFACES LATERALES/2
+C     TRANSFORMATION (I pour IDENTITE)
+      MCN( MN1SDE + WTYTRS ) = 1
+C     TYPE DE LA SURFACE
+      MCN( MN1SDE + WUTYSU ) = 51
+C     NOMBRE DE SURFACES DE LA SURFACE UNION
+      MCN( MN1SDE + WBSUUN ) = 2
+C     LES 2 NUMEROS DES SURFACES DANS LE LEXIQUE SURFACE
+      MCN( MN1SDE + WUSUUN   ) = NUMSUR(1)
+      MCN( MN1SDE + WUSUUN+1 ) = NUMSUR(2)
+C
+C     CREATION DU MAILLAGE UNION DES 2 SURFACES LATERALES/2
+      CALL UNPLSV( 51,  3, NUMSFL, 2, NUMSUR,
+     %             NTNSEF, MNNSEF, NTXYZS, MNXYZS,
+     %             NTUNIO, MNUNIO, IERR  )
+C
+C     UNION DES 2 CERCLES/2 INFERIEUR ET SUPERIEUR
+C     ============================================
+      DO NULG = 7, 8
+         NOMCER(NULG-6) = NMSFEX
+         N = NUDCNB( NOMCER(NULG-6) )
+         WRITE(KNBRE,'(I1)') NULG
+         N = MIN(N,21)
+         NOMCER(NULG-6) = NOMCER(NULG-6)(1:N) // '_L' // KNBRE
+C
+C        SI CETTE LIGNE EXISTE, ELLE EST DETRUITE
+         CALL LXLXOU( NTSURF, NOMCER(NULG-6), NT1SF, MN1SF )
+         IF( MN1SF .GT. 0 ) CALL LXTSDS( NTLIGN, NOMCER(NULG-6) )
+C
+C        CONSTRUCTION DE LA LIGNE UNION DES LIGNES
+         CALL LXLXDC( NTLIGN, NOMCER(NULG-6), 24, 8 )
+         CALL LXLXOU( NTLIGN, NOMCER(NULG-6), NT1SF, MN1SF )
+C        NUMERO DE LA LIGNE DANS LE LX DES LIGNES
+         CALL NUOBNM( 'LIGNE', NOMCER(NULG-6), NUMCER(NULG-6) )
+C
+C        LA LIGNE A UN TMS DEFINITION DE LIGNE 51 UNION DE LIGNES
+         CALL LXTNDC( NT1SF, 'DEFINITION', 'MOTS', WULIUN+2 )
+         CALL LXTSOU( NT1SF, 'DEFINITION', NT1SDE, MN1SDE )
+C
+C        TABLEAU DEFINITION DE L'UNION DES 2 LIGNES LATERALES/2
+C        TRANSFORMATION (I pour IDENTITE)
+         MCN( MN1SDE + WTYTRL ) = 1
+C        TYPE DE LA LIGNE
+         MCN( MN1SDE + WUTYLI ) = 51
+C        NOMBRE DE LIGNES DE LA LIGNE UNION
+         MCN( MN1SDE + WBLIUN ) = 2
+C        LES 2 NUMEROS DES LIGNES DANS LE LEXIQUE LIGNE
+C        CERCLE INFERIEUR ou SUPERIEUR
+         MCN( MN1SDE + WULIUN   ) = NUMLIG(NULG-4)
+         MCN( MN1SDE + WULIUN+1 ) = NUMLIG(NULG-2)
+C
+C        CREATION DU MAILLAGE UNION DES 2 CERCLES/2
+         CALL UNPLSV( 51,  2, NUMCER(NULG-6), 2, MCN(MN1SDE+WULIUN),
+     %                NTNSEF, MNNSEF, NTXYZS, MNXYZS,
+     %                NTUNIO, MNUNIO, IERR  )
+C
+      ENDDO
+C
+ 9999 RETURN
+      END

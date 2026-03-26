@@ -1,0 +1,1209 @@
+{====================================================================  
+
+           MAILLAGE DE LA SURFACE D'UNE VOITURE PROTOTYPE
+           ----------------------------------------------  
+
+   Le but de cette etude est de tester l'aptitude du logiciel MEFISTO
+   a mailler un objet complexe de frontiere decrite par des surfaces
+   gauches.    
+
+   La surface a ete decomposee en carreaux avec continuite aux
+   interfaces. Les B-splines utilisees sont polynomiales de degre 
+   2 ou 3. Certaines parties sont planes et triangulees afin de
+   favoriser la transition entre le nombre d'aretes d'un cote de
+   carreau a un autre.                                     
+===================================================================== }
+
+@; @; @;
+{ POUR OBTENIR LES VRAIES GRANDEURS EN MILLIMETRES MULTIPLIER PAR 24  }
+
+DEFVAR NAX1,NAX2,NAX3,NAX4,NAX5,NAX6,NAX7,NAX9,
+       NAY1,NAY2,NAY3,NAY4,NATR,
+       NASOL1,NASOL2,NASOL3,NASOL4,NASOL5,NASOL6,NASOL7,NR;
+NAX1=6; NAX2=6; NAX3=NAX2; NAX4=6; NAX5=9; NAX6=6; NAX7=9; NAX9=6;
+NAY1=9; NAY2=6; NAY3=2;  NAY4=8;  NATR=4;
+NASOL1=4; NASOL2=8; NASOL3=6; NASOL4=12; NASOL5=8; NASOL6=5; NASOL7=3;
+NR=9;  
+        
+20; 1; 0.0001;  { PRECISION POUR IDENTIFIER 2 POINTS NON ORIGINE }
+    2; 0.00001; { PRECISION POUR IDENTIFIER 2 POINTS PRES ORIGINE }
+@; @;
+
+DefFonc Taille_Ideale(x,y,z);
+{ si ABS(x-158)<5
+  alors Taille_Ideale=1;
+  sinon Taille_Ideale=8;
+  finsi; => Correct }
+
+{  si ABS(x-150)<5
+  alors Taille_Ideale=1;
+  sinon Taille_Ideale=8;
+  finsi; => Correct }
+
+si ABS(x-80)<5
+  alors Taille_Ideale=1;
+  sinon Taille_Ideale=10;
+finsi;
+
+FinFonc;
+
+1;  1;  { LES POINTS }
+{LE CAPOT AVANT }
+C1.1;  I;  1;    200;     0;    0;
+C1.2;  I;  1;    200;    10;    0;
+C1.3;  I;  1;    200;    18;    0;
+C1.4;  I;  1;    200;    23;    0;
+C1.5;  I;  1;    200;    32;    0;
+C1.6;  I;  1;    194;    38.5;  0;
+C1.7;  I;  1;    192;    40;    0;   
+
+C2.1;  I;  1;    180;     0;   14.5;
+C2.2;  I;  1;    180;    10;   14.5;
+C2.3;  I;  1;    180;    19;   15;
+C2.4;  I;  1;    180;    23;   19;
+C2.5;  I;  1;    180;    32;   19;
+C2.6;  I;  1;    180;    38.5; 19;
+C2.7;  I;  1;    180;    40;   18;      
+
+C3.1;  I;  1;    165;     0;   22;
+C3.2;  I;  1;    165;    10;   22;
+C3.3;  I;  1;    165;    19;   22;
+C3.4;  I;  1;    165;    23;   25;
+C3.5;  I;  1;    165;    32;   25.5;
+C3.6;  I;  1;    165;    38;   25.5;
+C3.7;  I;  1;    165;    40;   25.5;
+
+C4.1;  I;  1;    162.5;   0;   22.5;
+C4.2;  I;  1;    160;    10;   22.5;
+C4.3;  I;  1;    155;    19;   22.5;
+C4.4;  I;  1;    152.5;  23;   23;
+C4.5;  I;  1;    150;    32;   22.8;
+C4.6;  I;  1;    150;    38;   22.6;
+
+C5.1;  I;  1;    158;     0;   23;
+C5.2;  I;  1;    154;    10;   22.5;
+C5.3;  I;  1;    140;    19;   21.7;
+C5.4;  I;  1;    128;    23;   20.5;
+C5.5;  I;  1;    130;    32;   20;
+C5.6;  I;  1;    132;    38;   20; 
+
+{LE SOUS PAREBRISE }
+SPB.1;   I; 1;    155.5;   0;   24;
+SPB.2;   I; 1;    152;    10;   24;
+SPB.3;   I; 1;    140;    20;   24;
+SPB.4;   I; 1;    126.5;  23.3;   24;    
+SPB.5;   I; 1;    116;    23.2; 24.2;      
+SPB.6;   I; 1;    107;    23.1; 24.5;
+SPB.7;   I; 1;     97;    23;   25;
+                                       
+{LA BASE DU PAREBRISE }
+BPB.1;   I; 1;    153;     0;   25;
+BPB.2;   I; 1;    150;    10;   25;
+BPB.3;   I; 1;    139;    19;   25;
+BPB.4;   I; 1;    125;    23;   26;
+BPB.5;   I; 1;    116;    22.8; 27;
+BPB.6;   I; 1;    107;    22.4; 28;
+{ BPB.7 = AL.4 } 
+BPB.8;   I; 1;     89;    20.6; 30;
+BPB.9;   I; 1;     80;    19.2; 31;
+BPB.10;  I; 1;     74;    17.5; 31.3;     
+BPB.11;  I; 1;     65;    15.5; 31.7;
+
+{LE PAREBRISE ET LE TOIT }
+TOIT1.1;    I; 1;    139;   0;   32;
+TOIT1.2;    I; 1;    123.6; 0;   40.2;
+TOIT1.3;    I; 1;    112;   0;   41.2;
+TOIT1.4;    I; 1;    105;   0;   40.6;
+TOIT1.5;    I; 1;     99;   0;   40.1;
+TOIT1.6;    I; 1;     89;   0;   38.8;
+TOIT1.7;    I; 1;     80;   0;   37.5;
+TOIT1.8;    I; 1;     72;   0;   36.3;
+TOIT1.9;    I; 1;     64;   0;   35.3;
+TOIT1.10;   I; 1;     54;   0;   33.5;
+TOIT1.11;   I; 1;     51;   0;   32.8;
+TOIT1.12;   I; 1;     48;   0;   32;             
+
+TOIT2.1;    I; 1;    136;   8.5;   32;
+TOIT2.2;    I; 1;    123;   7;     40;
+TOIT2.3;    I; 1;    112;   7;     41;
+TOIT2.4;    I; 1;    105;   7;     40.4;
+TOIT2.5;    I; 1;     99;   7;     39.8;
+TOIT2.6;    I; 1;     89;   6;     38.6;
+TOIT2.7;    I; 1;     80;   5;     37.3;
+TOIT2.8;    I; 1;     72;   5;     36.2;
+TOIT2.9;    I; 1;     64;   5;     35.3;
+TOIT2.10;   I; 1;     55;   5;     33.6;
+TOIT2.11;   I; 1;     52;   5.5;   32.8;
+TOIT2.12;   I; 1;     49;   6;     32;        
+
+TOIT3.1;    I; 1;    128;  16;   32;
+TOIT3.2;    I; 1;    121;  12;   39.8;
+TOIT3.3;    I; 1;    112;  11;   40.8;
+TOIT3.4;    I; 1;    105;  11;   40.2;
+TOIT3.5;    I; 1;     99;  11;   39.6;
+TOIT3.6;    I; 1;     89;  10;   38.3;
+TOIT3.7;    I; 1;     80;   9;   37.0;
+TOIT3.8;    I; 1;     72;   9;   36.1;
+TOIT3.9;    I; 1;     64;   8.5; 35.3;
+TOIT3.10;   I; 1;     57;   8;   33.4;
+TOIT3.11;   I; 1;     54;   9;   32.8;
+TOIT3.12;   I; 1;     51;  10;   32;
+                                                
+TOIT4.1;    I; 1;    122;  20.3;  32;
+TOIT4.2;    I; 1;    116;  15;    39.6;
+TOIT4.3;    I; 1;    110;  16;    39.2;
+TOIT4.4;    I; 1;    104;  16.5;  38.9;
+TOIT4.5;    I; 1;     98;  16.5;  38.5;
+TOIT4.6;    I; 1;     90;  16;    37.7;
+TOIT4.7;    I; 1;     80;  15;    36.7;
+TOIT4.8;    I; 1;     73;  13.8;  35.7;
+TOIT4.9;    I; 1;     65;  12;    34.8;
+TOIT4.10;   I; 1;     60;  11;    33.8;
+TOIT4.11;   I; 1;     58.5;12;    32.9;
+TOIT4.12;   I; 1;     56;  13;    32;   
+
+TOIT5.1;    I; 1;    115;  21.0;  32;
+TOIT5.2;    I; 1;    105;  20.0;  32.5;
+TOIT5.3;    I; 1;     98;  19.2;  33;
+TOIT5.4;    I; 1;     89;  18.1;  33.4;
+TOIT5.5;    I; 1;     80;  17.0;  33.8;
+TOIT5.6;    I; 1;     73;  15.8;  33.4;
+TOIT5.7;    I; 1;     64;  13.8;  33;
+
+{LA FUITE DU PAREBRISE REBORD PLAT} 
+{FPB1.1 = AL.34 }
+{FPB2.1 = AL.3 }
+FPB2.2;  I; 1;     68.5;    22;    31.5;
+FPB2.3;  I; 1;     57.5;    22;    32;
+
+{L'AILETTE }
+AL.1;    I; 1;     98;    36;   29;
+AL.2;    I; 1;     80;    36;   31; 
+AL.12;   I; 1;     89;    36;   27;
+AL.3;    I; 1;     80;    22;   31;
+AL.4;    I; 1;     98;    22;   29; 
+AL.34;   I; 1;     89;    22;   27; 
+
+{L'ARRIERE CENTRAL}
+{ARC1.1 = PB6.4}
+ARC1.2;    I; 1;     25;   0;  32.5;
+ARC1.3;    I; 1;      3;   0;  30;
+
+ARC2.1;    I; 1;     48;  11;  32;
+ARC2.2;    I; 1;     25;  11;  32.5;
+ARC2.3;    I; 1;      3;  11;  30;      
+
+ARC3.1;    I; 1;     48;  22;  32;
+ARC3.2;    I; 1;     25;  22;  32.5;
+ARC3.3;    I; 1;      3;  22;  30;         
+
+{L'ENTREE D'AIR}
+EA1.1;    I; 1;    120;  24;   19.7;
+EA1.2;    I; 1;    110;  24;   19.4;
+EA1.3;    I; 1;    100;  23;   19;
+
+EA2.1;    I; 1;    122;   33;  19.7;
+EA2.2;    I; 1;    111;   33;  19.4;
+EA2.3;    I; 1;    100;   33;  19;
+
+EA3.1;    I; 1;    124;   37;  19.7;
+EA3.2;    I; 1;    112;   36;  19.4;
+EA3.3;    I; 1;    100;   36;  19; 
+
+{SOUS-AILETTE BASE PLANE AU LIEU DE L'ENTREE MOTEUR}
+SOA1.1;   I; 1;     90;   22;  19;
+SOA1.2;   I; 1;     80;   22;  19;
+SOA1.3;   I; 1;     77.6; 22;  19;
+SOA1.4;   I; 1;     75.3; 22;  19;
+
+SOA2.1;   I; 1;     90;   29;  19;
+SOA2.2;   I; 1;     80;   29;  19;
+SOA2.3;   I; 1;     77.6; 29;  19;
+SOA2.4;   I; 1;     75.3; 29;  19;   
+
+SOA3.1;   I; 1;     90;   36;  19;
+SOA3.2;   I; 1;     80;   36;  19;
+SOA3.3;   I; 1;     77.6; 36;  19;
+SOA3.4;   I; 1;     75.3; 36;  19;  
+
+{QUADRANGLE GAUCHE SOUS AILETTE}
+QGSA.1;   I; 1;     90;     22;  24.5;
+QGSA.2;   I; 1;     80;     22;  24.5;
+QGSA.3;   I; 1;     70.6;   22;  24.5;
+QGSA.4;   I; 1;     65.3;   22;  24.5;  
+
+{QUADRANGLE DROIT SOUS AILETTE}
+QDSA.1;   I; 1;     90;     36;  24.5;
+QDSA.2;   I; 1;     80;     36;  24.5;
+QDSA.3;   I; 1;     70.6;   36;  24.5;
+QDSA.4;   I; 1;     65.3;   36;  24.5;
+       
+{LA SORTIE D'AIR}
+SA1.1;    I; 1;    72;   22;  19;
+SA1.2;    I; 1;    60.5; 22;  25.5;
+{SA1.3=ARC3.1 , ... }
+
+SA2.1;    I; 1;    72;   30;   19;
+SA2.2;    I; 1;    60.5; 30;   25.5;
+SA2.3;    I; 1;    48;   30;   32;   
+SA2.4;    I; 1;    25;   30;   32.5;
+SA2.5;    I; 1;     3;   30;   30;  
+
+SA3.1;    I; 1;    72;   36;   19;
+SA3.2;    I; 1;    60.5; 36;   25.5;
+SA3.3;    I; 1;    48;   36;   32;   
+SA3.4;    I; 1;    25;   35;   32.5;
+SA3.5;    I; 1;     3;   34;   30;
+
+{LE BORD}        
+BRD0.1;   I; 1;    132;  38;   23.5;
+BRD0.2;   I; 1;    120;  37;   23.5;
+BRD0.3;   I; 1;    110;  36;   23.5;
+BRD0.4;   I; 1;     98;  36;   24.5;
+
+BRD1.1;   I; 1;    150;  38;     25.5;
+BRD1.2;   I; 1;    132;  38;     26;
+BRD1.3;   I; 1;    121;  37;     26.8;
+BRD1.4;   I; 1;    110;  36;     28; 
+{BRD1.5=AL.1}
+BRD1.6;   I; 1;     89;  36;     30;  
+{BRD1.7=AL.2}
+BRD1.8;   I; 1;     69;  36;     32;
+BRD1.9;   I; 1;     57;  36;     32.3;
+       
+BRD2.1;   I; 1;    150;  40;  25.5;
+BRD2.2;   I; 1;    132;  40;  26;
+BRD2.3;   I; 1;    121;  40;  26.8;
+BRD2.4;   I; 1;    110;  40;  28;     
+BRD2.5;   I; 1;     97;  40;  28.8;
+BRD2.6;   I; 1;    88.5; 40;  29.8;
+BRD2.7;   I; 1;     80;  40;  30.8;
+BRD2.8;   I; 1;     69;  40;  31.4;
+BRD2.9;   I; 1;     57;  40;  31.8;
+BRD2.10;   I; 1;    48;  40;  32;
+BRD2.11;   I; 1;    25;  40;  32.5;
+BRD2.12;   I; 1;     3;  40;  30; 
+
+{LE COTE GAUCHE} 
+{LE SOL}
+CS1.1;   I; 1;  175;  40;   0;     
+CS1.2;   I; 1;  142;  32;   0;
+CS1.3;   I; 1;  134;  34.66; 0;  
+CS1.4;   I; 1;  126;  37.33; 0;
+CS1.5;   I; 1;  118;  40;   0;
+CS1.6;   I; 1;   60;  40;   0;
+CS1.7;   I; 1;   30;  40;   5;     
+CS1.8;   I; 1;   10;  40;  12;      
+CS1.9;   I; 1;    8;  40;  18;    
+CS1.10;  I; 1;    4;  40;  26; 
+
+{LA ROUE}
+CRV.1;   I; 1;  175;  40;  10;
+CRV.2;   I; 1;  172;  40;  17;
+CRV.3;   I; 1;  164;  40;  20;
+CRV.4;   I; 1;  142;  40;  18.4;
+CRV.5;   I; 1;  134;  40;  17.6;
+CRV.6;   I; 1;  126;  40;  16.8;
+CRV.7;   I; 1;  118;  40;  16; 
+
+{DERRIERE LA ROUE AVANT SUR LE COTE}
+FRV1.1;  I; 1;  142;  32;   12;
+FRV1.2;  I; 1;  134;  35;   12;      
+FRV1.3;  I; 1;  126;  38.5; 12;
+FRV1.4;  I; 1;  118;  40;   12;    
+
+FRV2.1;  I; 1;  142;  32;   6;
+FRV2.2;  I; 1;  134;  35;   6;      
+FRV2.3;  I; 1;  126;  38.5; 6;
+FRV2.4;  I; 1;  118;  40;   6; 
+
+{FOND ROUE AVANT}
+PRV.1; I; 1;  175;  23;  0;     
+PRV.2; I; 1;  175;  23; 10;
+PRV.3; I; 1;  172;  23; 17;
+PRV.4; I; 1;  164;  23; 21;
+PRV.5; I; 1;  155;  23; 20.5;
+PRV.6; I; 1;  145;  23; 15;
+PRV.7; I; 1;  142;  23; 10;
+PRV.8; I; 1;  142;  23;  0; 
+                             
+{FOND ROUE ARRIERE}
+PRR.1; I; 1;   60;  23;  0;     
+PRR.2; I; 1;   60;  23; 12;
+PRR.3; I; 1;   54;  23; 22;
+PRR.4; I; 1;   45;  23; 25;
+PRR.5; I; 1;   36;  23; 22;
+PRR.6; I; 1;   30;  23; 12;
+PRR.7; I; 1;   30;  23;  5;  
+
+{BORD ROUE ARRIERE GAUCHE}
+CRR.1; I; 1;   60;  40; 12;
+CRR.2; I; 1;   54;  40; 22;
+CRR.3; I; 1;   45;  40; 25;
+CRR.4; I; 1;   36;  40; 22;
+CRR.5; I; 1;   30;  40; 12; 
+
+{ARRIERE DE LA VOITURE}
+AR1.1; I; 1;   10;  0;  12;
+AR1.2; I; 1;    8;  0;  18;
+AR1.3; I; 1;    4;  0;  26;  
+
+AR2.1; I; 1;   10;  11;  12;
+AR2.2; I; 1;    8;  11;  18;
+AR2.3; I; 1;    4;  11;  26;  
+
+AR3.1; I; 1;   10;  22;  12;
+AR3.2; I; 1;    8;  22;  18;
+AR3.3; I; 1;    4;  22;  26;   
+
+AR4.1; I; 1;   10;  29;  12;
+AR4.2; I; 1;    8;  30;  18;
+AR4.3; I; 1;    4;  30;  26;  
+
+AR5.1; I; 1;   10;  34;  12;
+AR5.2; I; 1;    8;  34;  18;
+AR5.3; I; 1;    4;  34;  26; 
+
+{LES POINTS SUR L'AXE DU PLANCHER}  
+PSY0; I; 1;   175; 0; 0;       
+PSY1; I; 1;    60; 0; 0;
+PSY2; I; 1;    30; 0; 5; 
+
+@;            
+
+{LES TRANSFORMATIONS}  6;  
+SYMETRIE_PLAN_XZ;
+  3 { SYMETRIE PAR RAPPORT AU PLAN XZ} ;
+  4; C1.1; TOIT1.2; TOIT1.12;
+@;
+
+3;
+BORD_CAPOT1; I;  
+   3   {LE TYPE QUADRANGLE B-SPLINE};
+   NAX1 {SOMMETS EN X}; NAY3 {SOMMETS EN Y };
+   1    {RAISON EN X};   1   {RAISON  EN Y };  
+   2    {DEGRE  EN X};   1   {DEGRE   EN Y };
+   3    {POINTS EN X};   2   {POINTS  EN Y }; 
+   C3.6; C2.6; C1.6;
+   C3.7; C2.7; C1.7; 
+BORD_CAPOT2; I;  
+   3   {LE TYPE QUADRANGLE B-SPLINE};
+   NAX2 {SOMMETS EN X}; NAY3 {SOMMETS EN Y };
+   1    {RAISON EN X};   1   {RAISON  EN Y };  
+   2    {DEGRE  EN X};   1   {DEGRE   EN Y };
+   3    {POINTS EN X};   2   {POINTS  EN Y }; 
+   BRD1.2; BRD1.1; C3.6;
+   BRD2.2; BRD2.1; C3.7;      
+@;
+
+{LES LIGNES} 2;
+TRIA.1; I; 11;  {COURBE B-SPLINE D'INTERPOLATION}
+   NAX2 {SOMMETS }; 
+   1    {RAISON }; 
+   2    {DEGRE };
+   3    {POINTS D'INTERPOLATION};
+   C3.6; BRD1.1; BRD1.2;
+          
+TRIA.2; I; 11;  {COURBE B-SPLINE D'INTERPOLATION}
+   NAX2 {SOMMETS }; 
+   1    {RAISON }; 
+   2    {DEGRE };
+   3    {POINTS D'INTERPOLATION};
+   BRD1.2; BRD0.1; C5.6;
+
+TRIA.3; I; 11;  {COURBE B-SPLINE D'INTERPOLATION}
+   NAX2 {SOMMETS }; 
+   1    {RAISON }; 
+   2    {DEGRE };
+   3    {POINTS D'INTERPOLATION};
+   C5.6; C4.6; C3.6;
+
+CONTOUR_TRIANGLE; I; 51;  {LE CONTOUR DU TRIANGLE}
+   3; TRIA.1; TRIA.2; TRIA.3; 
+
+AL.4BPB.8BPB.9; I; 11; NAX6; 1; 2; 3; AL.4; BPB.8; BPB.9;
+
+BPB.9AL.3; I; 11; NATR; 1; 1; 2; BPB.9; AL.3;
+AL.4AL.3;  I; 11; NAX6; 1; 1; 2; AL.4; AL.3;
+
+TOIT4.12ARC3.1; I;  11; NATR; 1; 1; 2; TOIT4.12; ARC3.1;
+ARC3.1ARC2.1TOIT1.12; I; 11; NAY4; 1; 2; 3; ARC3.1; ARC2.1; TOIT1.12;
+TOIT1.12TOIT2.12TOIT3.12TOIT4.12; I; 11; NAY1; 1; 2; 4;
+          TOIT1.12; TOIT2.12; TOIT3.12; TOIT4.12;
+        
+{LE CONTOUR DU COTE}
+SOL1;          I; 11; NASOL1; 1; 1; 2; C1.7;  CS1.1;
+DV_ROUE_AV;    I; 11; NAX1;   1; 2; 4; CS1.1; CRV.1; CRV.2; CRV.3;
+S_ROUE_AV;     I; 11; NAX3;   1; 1; 2; CRV.3; CRV.4;
+H_DR_ROUE_AV;  I; 11; NASOL3; 1; 2; 4; CRV.4; CRV.5; CRV.6; CRV.7;
+DS_DR_ROUE_AV; I; 11; NAX1;   1; 2; 4; CRV.7; FRV1.4; FRV2.4; CS1.5;
+ENTRE_ROUES;   I; 11; NASOL4; 1; 1; 2; CS1.5; CS1.6;
+CS1.6CRR.1;    I; 11; NASOL7; 1; 1; 2; CS1.6; CRR.1;
+CRR.1CRR.2CRR.3CRR.4CRR.5; I; 11; NASOL5; 1; 2; 5; 
+                     CRR.1; CRR.2; CRR.3; CRR.4; CRR.5;
+CRR.5CS1.7;    I; 11; NASOL7; 1; 1; 2; CRR.5; CS1.7;
+S_ROUE_AR;     I; 11; NASOL6; 1; 1; 2; CS1.7; CS1.8;
+R_AR;          I; 11; NR;     1; 2; 4; CS1.8; CS1.9; CS1.10; BRD2.12;
+
+DEFFONC BC(X,Y,Z); BC=Y>=39.9; FINFONC;    
+C3.7C2.7C1.7; I; 11; NAX1; 1;  2; 3;  C3.7; C2.7; C1.7; 
+BRD2.2BRD2.1C3.7; I; 11; NAX2; 1; 2; 3;  BRD2.2; BRD2.1; C3.7;
+
+BRD2.2BRD2.3BRD2.4BRD2.5;  I; 11; NAX5; 1; 2; 4; BRD2.2; BRD2.3; BRD2.4; BRD2.5;
+BRD2.5BRD2.6BRD2.7;        I; 11; NAX6; 1; 2; 3; BRD2.5; BRD2.6; BRD2.7;
+BRD2.7BRD2.8BRD2.9BRD2.10; I; 11; NAX7; 1; 2; 4; BRD2.7; BRD2.8; BRD2.9; BRD2.10;
+BRD2.10BRD2.11BRD2.12;     I; 11; NAX9; 1; 2; 3; BRD2.10; BRD2.11; BRD2.12;
+CONTOUR_COTE; I; 51;  17;
+     SOL1; DV_ROUE_AV; S_ROUE_AV; H_DR_ROUE_AV; DS_DR_ROUE_AV; ENTRE_ROUES;
+     CS1.6CRR.1; CRR.1CRR.2CRR.3CRR.4CRR.5; CRR.5CS1.7; S_ROUE_AR; R_AR;
+     BRD2.10BRD2.11BRD2.12; BRD2.7BRD2.8BRD2.9BRD2.10; BRD2.5BRD2.6BRD2.7;
+     BRD2.2BRD2.3BRD2.4BRD2.5; BRD2.2BRD2.1C3.7; C3.7C2.7C1.7;
+
+{LE PLANCHER ROUE AVANT}
+CS1.1PRV.1; I; 11; NAY2;   1; 1; 2; CS1.1; PRV.1;
+PRV.1PRV.8; I; 11; NASOL2; 1; 1; 2; PRV.1; PRV.8;
+PRV.8CS1.2; I; 11; NAY2;   1; 1; 2; PRV.8; CS1.2;  
+@;
+
+3;
+DR_ROUE_AV; I;  
+   3   {LE TYPE QUADRANGLE B-SPLINE};
+   NASOL3 {SOMMETS EN X}; NAX1 {SOMMETS EN Y };
+   1    {RAISON EN X};   1   {RAISON  EN Y };  
+   2    {DEGRE  EN X};   2   {DEGRE   EN Y };
+   4    {POINTS EN X};   4   {POINTS  EN Y }; 
+   CS1.2; CS1.3; CS1.4; CS1.5;
+   FRV2.1; FRV2.2; FRV2.3; FRV2.4;
+   FRV1.1; FRV1.2; FRV1.3; FRV1.4;
+   CRV.4; CRV.5; CRV.6; CRV.7; 
+@;
+
+2;                
+PLRV4; I; 37; DR_ROUE_AV; DEFFONC DRR(X,Y,Z); DRR=Z<=0.1; FINFONC; DRR; 1;
+
+{LE PLANCHER ROUE ARRIERE}
+PLRR1; I; 11; NAY2;   1; 1; 2; CS1.6; PRR.1;
+PLRR2; I;  2; NASOL5; 1; PRR.1; PRR.7;
+PLRR3; I; 11; NAY2;   1; 1; 2; PRR.7; CS1.7;
+                                    
+{LE PLANCHER ARRIERE}
+AR3; I; 11; NAY3; 1; 1; 2; CS1.8; AR5.1;
+AR2; I; 11; NAY2; 1; 2; 3; AR5.1; AR4.1; AR3.1;
+AR1; I; 11; NAY4; 1; 2; 3; AR3.1; AR2.1; AR1.1;  
+
+{AXE PLANCHER}
+AX_PLANCHER; I; 2; NASOL1+NASOL2+NASOL3+NASOL4; 1; C1.1; PSY1;
+
+{AVANT PLANCHER}
+AV1; I; 11; NAY1; 1; 2; 4; C1.1; C1.2; C1.3; C1.4;
+AV2; I; 11; NAY2; 1; 2; 3; C1.4; C1.5; C1.6;
+AV3; I; 11; NAY3; 1; 1; 2; C1.6; C1.7; 
+
+{LIGNE PLANCHER ROUE ARRIERE}
+PL1;    I;  2; (NAY1+NAY2)*0.5; 1; PRR.1; PSY1;
+PL2;    I;  2; (NAY1+NAY2)*0.5; 1; PRR.7; PSY2;
+PSY.1;  I;  2; NASOL5; 1; PSY1; PSY2;
+PSY.2;  I;  2; NASOL6; 1; PSY2; AR1.1;  
+PLANC3; I; 51; 7; PL2; PLRR3; S_ROUE_AR; AR3; AR2; AR1; PSY.2;
+
+{PASSAGE ROUE AVANT}
+PARV.1; I; 11; NAX1; 1; 2;  4; PRV.1; PRV.2; PRV.3; PRV.4;
+PARV.2; I; 11; NAX3; 1; 1;  2; PRV.4; PRV.5;
+PARV.3; I; 11; NAX1; 1; 2;  4; PRV.5; PRV.6; PRV.7; PRV.8;
+PARV;   I; 51; 4; PRV.1PRV.8; PARV.3; PARV.2; PARV.1; 
+                                
+{PASSAGE ROUE ARRIERE}
+PARR.1; I; 11; NASOL7;  1; 1; 2;  PRR.1; PRR.2;
+PARR.2; I; 11; NASOL5;  1; 2; 5;  PRR.2; PRR.3; PRR.4; PRR.5; PRR.6;
+PARR.3; I; 11; NASOL7;  1; 1; 2;  PRR.6; PRR.7;
+PARR;   I; 51; 4; PLRR2; PARR.3; PARR.2; PARR.1;
+@;
+
+3;  { LES SURFACES B-SPLINES et autres }   
+
+CENTRE_CAPOT;  I;
+   3   {LE TYPE QUADRANGLE B-SPLINE};
+   NAX1 {SOMMETS EN X}; NAY1 {SOMMETS EN Y };
+   1    {RAISON EN X};   1   {RAISON  EN Y };  
+   2    {DEGRE  EN X};   2   {DEGRE   EN Y };
+   3    {POINTS EN X};   4   {POINTS  EN Y };
+   C3.1; C2.1; C1.1;     
+   C3.2; C2.2; C1.2;
+   C3.3; C2.3; C1.3;
+   C3.4; C2.4; C1.4;
+
+DROITE_CAPOT;  I;
+   3   {LE TYPE QUADRANGLE B-SPLINE};
+   NAX1 {SOMMETS EN X}; NAY2 {SOMMETS EN Y };
+   1    {RAISON EN X};   1   {RAISON  EN Y };  
+   2    {DEGRE EN X};    2   {DEGRE   EN Y };
+   3    {POINTS EN X};   3   {POINTS  EN Y };
+   C3.4; C2.4; C1.4;
+   C3.5; C2.5; C1.5;
+   C3.6; C2.6; C1.6;
+
+HAUT_CAPOT;  I;
+   3   {LE TYPE QUADRANGLE B-SPLINE};
+   NAX2 {SOMMETS EN X}; NAY1 {SOMMETS EN Y };
+   1    {RAISON EN X};   1   {RAISON  EN Y };  
+   2    {DEGRE  EN X};   2   {DEGRE   EN Y };
+   3    {POINTS EN X};   4   {POINTS  EN Y }; 
+   C5.1; C4.1; C3.1;
+   C5.2; C4.2; C3.2;
+   C5.3; C4.3; C3.3;
+   C5.4; C4.4; C3.4;
+
+HDR_CAPOT;  I;
+   3   {LE TYPE QUADRANGLE B-SPLINE};
+   NAX2 {SOMMETS EN X}; NAY2 {SOMMETS EN Y };
+   1    {RAISON EN X};   1   {RAISON  EN Y };  
+   2    {DEGRE EN X};    2   {DEGRE   EN Y };
+   3    {POINTS EN X};   3   {POINTS  EN Y };  
+   C5.4; C4.4; C3.4;
+   C5.5; C4.5; C3.5;
+   C5.6; C4.6; C3.6;
+             
+AVANT_SOUS_PAREBRISE; I;
+   3   {LE TYPE QUADRANGLE B-SPLINE};
+   NAX3 {SOMMETS EN X}; NAY1 {SOMMETS EN Y };
+   1    {RAISON EN X};   1   {RAISON  EN Y };  
+   2    {DEGRE  EN X};   2   {DEGRE   EN Y };
+   3    {POINTS EN X};   4   {POINTS  EN Y }; 
+   BPB.1; SPB.1; C5.1;
+   BPB.2; SPB.2; C5.2;
+   BPB.3; SPB.3; C5.3; 
+   BPB.4; SPB.4; C5.4;       
+
+ARRIERE_SOUS_PAREBRISE; I;
+   3   {LE TYPE QUADRANGLE B-SPLINE};
+   NAX3 {SOMMETS EN X}; NAX5 {SOMMETS EN Y };
+   1    {RAISON EN X};   1   {RAISON  EN Y };  
+   2    {DEGRE  EN X};   2   {DEGRE   EN Y };
+   3    {POINTS EN X};   4   {POINTS  EN Y }; 
+   BPB.4; SPB.4; C5.4;
+   BPB.5; SPB.5; EA1.1;
+   BPB.6; SPB.6; EA1.2;
+   AL.4;  SPB.7; EA1.3;
+
+PAREBRISE; I;
+   3   {LE TYPE QUADRANGLE B-SPLINE};
+   NAX4 {SOMMETS EN X}; NAY1 {SOMMETS EN Y };
+   1    {RAISON EN X};   1   {RAISON  EN Y };  
+   2    {DEGRE  EN X};   2   {DEGRE   EN Y };
+   3    {POINTS EN X};   4   {POINTS  EN Y }; 
+   TOIT1.2; TOIT1.1; BPB.1;
+   TOIT2.2; TOIT2.1; BPB.2;     
+   TOIT3.2; TOIT3.1; BPB.3;
+   TOIT4.2; TOIT4.1; BPB.4;
+                              
+DV_TOIT; I;
+   3   {LE TYPE QUADRANGLE B-SPLINE};
+   NAX5 {SOMMETS EN X}; NAY1 {SOMMETS EN Y };
+   1    {RAISON EN X};   1   {RAISON  EN Y };  
+   2    {DEGRE  EN X};   2   {DEGRE   EN Y };
+   4    {POINTS EN X};   4   {POINTS  EN Y }; 
+   TOIT1.5; TOIT1.4; TOIT1.3; TOIT1.2;
+   TOIT2.5; TOIT2.4; TOIT2.3; TOIT2.2;      
+   TOIT3.5; TOIT3.4; TOIT3.3; TOIT3.2;
+   TOIT4.5; TOIT4.4; TOIT4.3; TOIT4.2;
+                                          
+DR_TOIT; I;
+   3   {LE TYPE QUADRANGLE B-SPLINE};
+   NAX6 {SOMMETS EN X}; NAY1 {SOMMETS EN Y };
+   1    {RAISON EN X};   1   {RAISON  EN Y };  
+   2    {DEGRE  EN X};   2   {DEGRE   EN Y };
+   3    {POINTS EN X};   4   {POINTS  EN Y }; 
+   TOIT1.7; TOIT1.6; TOIT1.5;
+   TOIT2.7; TOIT2.6; TOIT2.5;
+   TOIT3.7; TOIT3.6; TOIT3.5;
+   TOIT4.7; TOIT4.6; TOIT4.5;
+
+AR_TOIT; I;
+   3   {LE TYPE QUADRANGLE B-SPLINE};
+   NAX7 {SOMMETS EN X}; NAY1 {SOMMETS EN Y };
+   1    {RAISON EN X};   1   {RAISON  EN Y };  
+   2    {DEGRE  EN X};   2   {DEGRE   EN Y };
+   4    {POINTS EN X};   4   {POINTS  EN Y }; 
+   TOIT1.10; TOIT1.9; TOIT1.8; TOIT1.7;
+   TOIT2.10; TOIT2.9; TOIT2.8; TOIT2.7;      
+   TOIT3.10; TOIT3.9; TOIT3.8; TOIT3.7;
+   TOIT4.10; TOIT4.9; TOIT4.8; TOIT4.7;
+                                              
+PORTE; I;
+   3   {LE TYPE QUADRANGLE B-SPLINE};
+   NAX5 {SOMMETS EN X}; NAX4 {SOMMETS EN Y };
+   1    {RAISON EN X};   1   {RAISON  EN Y };  
+   2    {DEGRE  EN X};   2   {DEGRE   EN Y };
+   4    {POINTS EN X};   3   {POINTS  EN Y }; 
+   TOIT4.5; TOIT4.4; TOIT4.3; TOIT4.2;
+   TOIT5.3; TOIT5.2; TOIT5.1; TOIT4.1;
+   AL.4;    BPB.6;   BPB.5;   BPB.4;
+                                       
+AR_PORTE; I;
+   3   {LE TYPE QUADRANGLE B-SPLINE};
+   NAX6 {SOMMETS EN X}; NAX4 {SOMMETS EN Y };
+   1    {RAISON EN X};   1   {RAISON  EN Y };  
+   2    {DEGRE  EN X};   2   {DEGRE   EN Y };
+   3    {POINTS EN X};   3   {POINTS  EN Y }; 
+   TOIT4.7; TOIT4.6; TOIT4.5;
+   TOIT5.5; TOIT5.4; TOIT5.3;
+   BPB.9;   BPB.8;   AL.4;
+                                   
+SA_TOIT; I;
+   3   {LE TYPE QUADRANGLE B-SPLINE};
+   NAX7 {SOMMETS EN X}; NAX4 {SOMMETS EN Y };
+   1    {RAISON EN X};   1   {RAISON  EN Y };  
+   2    {DEGRE  EN X};   2   {DEGRE   EN Y };
+   4    {POINTS EN X};   3   {POINTS  EN Y };  
+   TOIT4.10; TOIT4.9; TOIT4.8; TOIT4.7;
+   TOIT4.11; TOIT5.7; TOIT5.6; TOIT5.5;
+   TOIT4.12; BPB.11;  BPB.10;  BPB.9;
+                                             
+FIN_TOIT; I;
+   3   {LE TYPE QUADRANGLE B-SPLINE};
+   NAY1 {SOMMETS EN X}; NAX4 {SOMMETS EN Y };
+   1    {RAISON EN X};   1   {RAISON  EN Y };  
+   2    {DEGRE  EN X};   2   {DEGRE   EN Y };
+   4    {POINTS EN X};   3   {POINTS  EN Y };  
+   TOIT1.10; TOIT2.10; TOIT3.10; TOIT4.10;
+   TOIT1.11; TOIT2.11; TOIT3.11; TOIT4.11;
+   TOIT1.12; TOIT2.12; TOIT3.12; TOIT4.12;  
+
+TRIANGLE_AILETTE; I; 6; AL.4BPB.8BPB.9; BPB.9AL.3; AL.4AL.3;
+             
+SA_PLAT; I;
+   3   {LE TYPE QUADRANGLE B-SPLINE};
+   NAX7 {SOMMETS EN X}; NATR {SOMMETS EN Y };
+   1    {RAISON EN X};   1   {RAISON  EN Y };  
+   2    {DEGRE  EN X};   1   {DEGRE   EN Y };
+   4    {POINTS EN X};   2   {POINTS  EN Y };  
+   TOIT4.12; BPB.11; BPB.10; BPB.9;
+   ARC3.1;   FPB2.3; FPB2.2; AL.3;
+
+ENTREE_AIR; I;
+   3   {LE TYPE QUADRANGLE B-SPLINE};
+   NAX5 {SOMMETS EN X}; NAY2 {SOMMETS EN Y };
+   1    {RAISON EN X};   1   {RAISON  EN Y };  
+   2    {DEGRE  EN X};   2   {DEGRE   EN Y };
+   4    {POINTS EN X};   3   {POINTS  EN Y }; 
+   EA1.3; EA1.2; EA1.1; C5.4;         
+   EA2.3; EA2.2; EA2.1; C5.5;
+   EA3.3; EA3.2; EA3.1; C5.6;       
+
+HAUT_AILETTE; I;
+   3   {LE TYPE QUADRANGLE B-SPLINE};
+   NAX6 {SOMMETS EN X}; NAY2 {SOMMETS EN Y };
+   1    {RAISON EN X};   1   {RAISON  EN Y };  
+   1    {DEGRE  EN X};   1   {DEGRE   EN Y };
+   2    {POINTS EN X};   2   {POINTS  EN Y }; 
+   AL.3; AL.4;
+   AL.2; AL.1;              
+
+BAS_AILETTE; I;
+   3   {LE TYPE QUADRANGLE B-SPLINE};
+   NAX6 {SOMMETS EN X}; NAY2 {SOMMETS EN Y };
+   1    {RAISON EN X};   1   {RAISON  EN Y };  
+   2    {DEGRE  EN X};   1   {DEGRE   EN Y };
+   3    {POINTS EN X};   2   {POINTS  EN Y }; 
+   AL.3; AL.34; AL.4;
+   AL.2; AL.12; AL.1;
+
+CENTRE_COFFRE; I;
+   3   {LE TYPE QUADRANGLE B-SPLINE};
+   NAX9 {SOMMETS EN X}; NAY4 {SOMMETS EN Y };
+   1    {RAISON EN X};   1   {RAISON  EN Y };  
+   2    {DEGRE  EN X};   2   {DEGRE   EN Y };
+   3    {POINTS EN X};   3   {POINTS  EN Y }; 
+   ARC1.3; ARC1.2; TOIT1.12;
+   ARC2.3; ARC2.2; ARC2.1;
+   ARC3.3; ARC3.2; ARC3.1; 
+
+TRIANGLE_ARRIERE; I; 6;
+          TOIT4.12ARC3.1;
+          ARC3.1ARC2.1TOIT1.12;
+          TOIT1.12TOIT2.12TOIT3.12TOIT4.12;
+
+DROITE_COFFRE; I;
+   3   {LE TYPE QUADRANGLE B-SPLINE};
+   NAX9 {SOMMETS EN X}; NAY2 {SOMMETS EN Y };
+   1    {RAISON EN X};   1   {RAISON  EN Y };  
+   2    {DEGRE  EN X};   2   {DEGRE   EN Y };
+   3    {POINTS EN X};   3   {POINTS  EN Y }; 
+   ARC3.3; ARC3.2; ARC3.1; 
+   SA2.5; SA2.4; SA2.3;
+   SA3.5; SA3.4; SA3.3;
+
+SORTIE_AIR; I;  
+   3   {LE TYPE QUADRANGLE B-SPLINE};
+   NAX3 {SOMMETS EN X}; NAY2 {SOMMETS EN Y };
+   1    {RAISON EN X};   1   {RAISON  EN Y };  
+   2    {DEGRE  EN X};   2   {DEGRE   EN Y };
+   3    {POINTS EN X};   3   {POINTS  EN Y }; 
+   ARC3.1; SA1.2; SA1.1;
+   SA2.3; SA2.2; SA2.1;
+   SA3.3; SA3.2; SA3.1; 
+                                    
+SOUS_DROITE_AIR; I;  
+   3   {LE TYPE QUADRANGLE B-SPLINE};
+   NAX6 {SOMMETS EN X}; NAX3 {SOMMETS EN Y };
+   1    {RAISON EN X};   1   {RAISON  EN Y };  
+   2    {DEGRE  EN X};   2   {DEGRE   EN Y };
+   3    {POINTS EN X};   3   {POINTS  EN Y }; 
+   AL.3;   AL.34;  AL.4;
+   QGSA.2; QGSA.1; SPB.7;
+   SOA1.2; SOA1.1; EA1.3;  
+
+SOUS_CENTRE_AIR; I;
+   3   {LE TYPE QUADRANGLE B-SPLINE};
+   NAX6 {SOMMETS EN X}; NAY2 {SOMMETS EN Y };
+   1    {RAISON EN X};   1   {RAISON  EN Y };  
+   2    {DEGRE  EN X};   2   {DEGRE   EN Y };
+   3    {POINTS EN X};   3   {POINTS  EN Y }; 
+   SOA1.2; SOA1.1; EA1.3;  
+   SOA2.2; SOA2.1; EA2.3;  
+   SOA3.2; SOA3.1; EA3.3;
+
+SOUS_GAUCHE_AIR; I;  
+   3   {LE TYPE QUADRANGLE B-SPLINE};
+   NAX6 {SOMMETS EN X}; NAX3 {SOMMETS EN Y };
+   1    {RAISON EN X};   1   {RAISON  EN Y };  
+   2    {DEGRE  EN X};   2   {DEGRE   EN Y };
+   3    {POINTS EN X};   3   {POINTS  EN Y }; 
+   SOA3.2; SOA3.1; EA3.3; 
+   QDSA.2; QDSA.1; BRD0.4;
+   AL.2;   AL.12;  AL.1;
+                                    
+DROITE_AIR; I;  
+   3   {LE TYPE QUADRANGLE B-SPLINE};
+   NAX7 {SOMMETS EN X}; NAX3 {SOMMETS EN Y };
+   1    {RAISON EN X};   1   {RAISON  EN Y };  
+   2    {DEGRE  EN X};   2   {DEGRE   EN Y };
+   4    {POINTS EN X};   3   {POINTS  EN Y }; 
+   ARC3.1; FPB2.3; FPB2.2; AL.3;
+   SA1.2;  QGSA.4; QGSA.3; QGSA.2;
+   SA1.1;  SOA1.4; SOA1.3; SOA1.2; 
+
+CENTRE_AIR; I;
+   3   {LE TYPE QUADRANGLE B-SPLINE};
+   NAX7 {SOMMETS EN X}; NAY2 {SOMMETS EN Y };
+   1    {RAISON EN X};   1   {RAISON  EN Y };  
+   2    {DEGRE  EN X};   2   {DEGRE   EN Y };
+   4    {POINTS EN X};   3   {POINTS  EN Y }; 
+   SA1.1;  SOA1.4; SOA1.3; SOA1.2;
+   SA2.1;  SOA2.4; SOA2.3; SOA2.2;
+   SA3.1;  SOA3.4; SOA3.3; SOA3.2;
+
+GAUCHE_AIR; I;  
+   3   {LE TYPE QUADRANGLE B-SPLINE};
+   NAX7 {SOMMETS EN X}; NAX3 {SOMMETS EN Y };
+   1    {RAISON EN X};   1   {RAISON  EN Y };  
+   2    {DEGRE  EN X};   2   {DEGRE   EN Y };
+   4    {POINTS EN X};   3   {POINTS  EN Y }; 
+   SA3.1; SOA3.4; SOA3.3; SOA3.2;
+   SA3.2; QDSA.4; QDSA.3; QDSA.2;
+   SA3.3; BRD1.9; BRD1.8; AL.2;
+
+ENTREE_GAUCHE_AIR; I;
+   3   {LE TYPE QUADRANGLE B-SPLINE};
+   NAX5 {SOMMETS EN X}; NAX3 {SOMMETS EN Y };
+   1    {RAISON EN X};   1   {RAISON  EN Y };  
+   2    {DEGRE  EN X};   2   {DEGRE   EN Y };
+   4    {POINTS EN X};   3   {POINTS  EN Y }; 
+   EA3.3;  EA3.2;  EA3.1;  C5.6;
+   BRD0.4; BRD0.3; BRD0.2; BRD0.1;
+   AL.1;   BRD1.4; BRD1.3; BRD1.2;  
+
+BORD_ENTREE_AIR; I;  
+   3   {LE TYPE QUADRANGLE B-SPLINE};
+   NAX5 {SOMMETS EN X}; NAY3 {SOMMETS EN Y };
+   1    {RAISON EN X};   1   {RAISON  EN Y };  
+   2    {DEGRE  EN X};   1   {DEGRE   EN Y };
+   4    {POINTS EN X};   2   {POINTS  EN Y }; 
+   AL.1; BRD1.4; BRD1.3; BRD1.2;
+   BRD2.5; BRD2.4; BRD2.3; BRD2.2;     
+
+BORD_AILETTE; I;  
+   3   {LE TYPE QUADRANGLE B-SPLINE};
+   NAX6 {SOMMETS EN X}; NAY3 {SOMMETS EN Y };
+   1    {RAISON EN X};   1   {RAISON  EN Y };  
+   2    {DEGRE  EN X};   1   {DEGRE   EN Y };
+   3    {POINTS EN X};   2   {POINTS  EN Y }; 
+   AL.2;   BRD1.6; AL.1;
+   BRD2.7; BRD2.6; BRD2.5;          
+
+BORD_SORTIE_AIR; I;  
+   3   {LE TYPE QUADRANGLE B-SPLINE};
+   NAX7 {SOMMETS EN X}; NAY3 {SOMMETS EN Y };
+   1    {RAISON EN X};   1   {RAISON  EN Y };  
+   2    {DEGRE  EN X};   1   {DEGRE   EN Y };
+   4    {POINTS EN X};   2   {POINTS  EN Y }; 
+   SA3.3; BRD1.9; BRD1.8; AL.2;
+   BRD2.10; BRD2.9; BRD2.8; BRD2.7;
+
+BORD_COFFRE; I;
+   3   {LE TYPE QUADRANGLE B-SPLINE};
+   NAX9 {SOMMETS EN X}; NAY3 {SOMMETS EN Y };
+   1    {RAISON EN X};   1   {RAISON  EN Y };  
+   2    {DEGRE  EN X};   1   {DEGRE   EN Y };
+   3    {POINTS EN X};   2   {POINTS  EN Y }; 
+   SA3.5; SA3.4; SA3.3; 
+   BRD2.12; BRD2.11; BRD2.10;  
+
+TRIANGLE_BORD; I;
+  6;    {TRIANGLE STRUCTURE ALGEBRIQUE} 
+  TRIA.1; TRIA.2; TRIA.3; 
+
+COTE_GAUCHE; I; 9; {TRIANGULATION AUTOMATIQUE}
+  5.1; 1; 0; CONTOUR_COTE;
+
+DC_COFFRE; I; 
+   3   {LE TYPE QUADRANGLE B-SPLINE};
+   NAY4 {SOMMETS EN X}; NR   {SOMMETS EN Y };
+   1    {RAISON EN X};   1   {RAISON  EN Y };  
+   2    {DEGRE  EN X};   2   {DEGRE   EN Y };
+   3    {POINTS EN X};   4   {POINTS  EN Y }; 
+   AR3.1;  AR2.1;  AR1.1;
+   AR3.2;  AR2.2;  AR1.2;    
+   AR3.3;  AR2.3;  AR1.3;
+   ARC3.3; ARC2.3; ARC1.3;        
+
+DA_COFFRE; I; 
+   3   {LE TYPE QUADRANGLE B-SPLINE};
+   NAY2 {SOMMETS EN X}; NR   {SOMMETS EN Y };
+   1    {RAISON EN X};   1   {RAISON  EN Y };  
+   2    {DEGRE  EN X};   2   {DEGRE   EN Y };
+   3    {POINTS EN X};   4   {POINTS  EN Y }; 
+   AR5.1; AR4.1; AR3.1;
+   AR5.2; AR4.2; AR3.2;    
+   AR5.3; AR4.3; AR3.3;
+   SA3.5; SA2.5; ARC3.3;
+
+DB_COFFRE; I; 
+  3   {LE TYPE QUADRANGLE B-SPLINE};
+   NAY3 {SOMMETS EN X}; NR   {SOMMETS EN Y };
+   1    {RAISON EN X};   1   {RAISON  EN Y };  
+   1    {DEGRE  EN X};   2   {DEGRE   EN Y };
+   2    {POINTS EN X};   4   {POINTS  EN Y }; 
+   CS1.8;   AR5.1;
+   CS1.9;   AR5.2;
+   CS1.10;  AR5.3;
+   BRD2.12; SA3.5; 
+
+
+{PASSAGE DE ROUE AVANT}
+PAS_ROUE_AV; I;  9; {TRIANGULATION DELAUNAY}
+   5.1; 1; 0; PARV;
+
+{DESSUS ROUE AVANT}
+DSRV1; I; 
+  3   {LE TYPE QUADRANGLE B-SPLINE};
+   NAY2 {SOMMETS EN X}; NAX1 {SOMMETS EN Y };
+   1    {RAISON EN X};   1   {RAISON  EN Y };  
+   1    {DEGRE  EN X};   2   {DEGRE   EN Y };
+   2    {POINTS EN X};   4   {POINTS  EN Y }; 
+   CS1.1; PRV.1;
+   CRV.1; PRV.2;
+   CRV.2; PRV.3;
+   CRV.3; PRV.4;           
+
+DSRV2; I; 
+  3   {LE TYPE QUADRANGLE B-SPLINE};
+   NAY2 {SOMMETS EN X}; NAX3 {SOMMETS EN Y };
+   1    {RAISON EN X};   1   {RAISON  EN Y };  
+   1    {DEGRE  EN X};   1   {DEGRE   EN Y };
+   2    {POINTS EN X};   2   {POINTS  EN Y }; 
+   CRV.3; PRV.4; 
+   CRV.4; PRV.5;
+                           
+DSRV3; I; 
+  3   {LE TYPE QUADRANGLE B-SPLINE};
+   NAY2 {SOMMETS EN X}; NAX1 {SOMMETS EN Y };
+   1    {RAISON EN X};   1   {RAISON  EN Y };  
+   1    {DEGRE  EN X};   2   {DEGRE   EN Y };
+   2    {POINTS EN X};   4   {POINTS  EN Y }; 
+   CRV.4;  PRV.5;
+   FRV1.1; PRV.6;
+   FRV2.1; PRV.7;
+   CS1.2;  PRV.8;      
+
+{PASSAGE DE ROUE ARRIERE}
+PAS_ROUE_AR; I; 9; 5.1; 1; 0; PARR;
+
+{DESSUS ROUE ARRIERE}
+DSRR1; I; 
+  3   {LE TYPE QUADRANGLE B-SPLINE};
+   NAY2 {SOMMETS EN X}; NASOL7 {SOMMETS EN Y };
+   1    {RAISON EN X};   1   {RAISON  EN Y };  
+   1    {DEGRE  EN X};   1   {DEGRE   EN Y };
+   2    {POINTS EN X};   2   {POINTS  EN Y }; 
+   CS1.6; PRR.1;
+   CRR.1; PRR.2;           
+
+DSRR2; I; 
+  3   {LE TYPE QUADRANGLE B-SPLINE};
+   NAY2 {SOMMETS EN X}; NASOL5 {SOMMETS EN Y };
+   1    {RAISON EN X};   1   {RAISON  EN Y };  
+   1    {DEGRE  EN X};   2   {DEGRE   EN Y };
+   2    {POINTS EN X};   5   {POINTS  EN Y }; 
+   CRR.1; PRR.2;
+   CRR.2; PRR.3;
+   CRR.3; PRR.4;
+   CRR.4; PRR.5;
+   CRR.5; PRR.6; 
+
+DSRR3; I; 
+  3   {LE TYPE QUADRANGLE B-SPLINE};
+   NAY2 {SOMMETS EN X}; NASOL7 {SOMMETS EN Y };
+   1    {RAISON EN X};   1   {RAISON  EN Y };  
+   1    {DEGRE  EN X};   1   {DEGRE   EN Y };
+   2    {POINTS EN X};   2   {POINTS  EN Y }; 
+   CRR.5; PRR.6;     
+   CS1.7; PRR.7;  
+@;  
+{LA ROUE AVANT ET ARRIERE}
+DEFVAR RAYON,LARGEUR,NCERCLE,NLARG;
+RAYON=12.3;  LARGEUR=14;  NLARG=NAY2;
+NCERCLE=24;
+
+1;   1; { LES POINTS }
+AXR1VI;  I; 1; 158;       25;  7;
+XR1VI;   I; 1; 158+RAYON; 25;  7;
+XMR1VI;  I; 1; 158-RAYON; 25;  7;
+ZR1VI;   I; 1; 158;       25;  7+RAYON; 
+ZMR1VI;  I; 1; 158;       25;  7-RAYON;
+
+AXR1V;  I; 1; 158;       25+LARGEUR;  7;
+XR1V;   I; 1; 158+RAYON; 25+LARGEUR;  7;
+XMR1V;  I; 1; 158-RAYON; 25+LARGEUR;  7;
+ZR1V;   I; 1; 158;       25+LARGEUR;  7+RAYON; 
+ZMR1V;  I; 1; 158;       25+LARGEUR;  7-RAYON; 
+  
+AXR1RI;  I; 1;  45;       25;  9;
+XR1RI;   I; 1;  45+RAYON; 25;  9;
+XMR1RI;  I; 1;  45-RAYON; 25;  9;
+ZR1RI;   I; 1;  45;       25;  9+RAYON;
+ZMR1RI;  I; 1;  45;       25;  9-RAYON;
+
+AXR1R;  I; 1;  45;       25+LARGEUR;  9;
+XR1R;   I; 1;  45+RAYON; 25+LARGEUR;  9;
+XMR1R;  I; 1;  45-RAYON; 25+LARGEUR;  9;
+ZR1R;   I; 1;  45;       25+LARGEUR;  9+RAYON;
+ZMR1R;  I; 1;  45;       25+LARGEUR;  9-RAYON;
+@;
+
+2;    {LES LIGNES}
+CHAVI; I; 3; NCERCLE/2; 1.0;  XR1VI; XMR1VI; ZR1VI;
+CBAVI; I; 3; NCERCLE/2; 1.0;  XR1VI; XMR1VI; ZMR1VI;
+CAVI;  I; 51; 2; CHAVI; CBAVI;
+
+CHAV; I; 3; NCERCLE/2; 1.0;  XR1V; XMR1V; ZR1V;
+CBAV; I; 3; NCERCLE/2; 1.0;  XR1V; XMR1V; ZMR1V;
+CAV;  I; 51; 2; CHAV; CBAV;
+
+LARGAV;  I; 2; NLARG; 1; XR1VI;  XR1V;
+LARGAVM; I; 2; NLARG; 1; XMR1VI; XMR1V;
+
+CHARI; I; 3; NCERCLE/2; 1.0;  XR1RI; XMR1RI; ZR1RI;
+CBARI; I; 3; NCERCLE/2; 1.0;  XR1RI; XMR1RI; ZMR1RI;
+CARI;  I; 51; 2; CHARI; CBARI;
+
+CHAR; I; 3; NCERCLE/2; 1.0;  XR1R; XMR1R; ZR1R;
+CBAR; I; 3; NCERCLE/2; 1.0;  XR1R; XMR1R; ZMR1R;
+CAR;  I; 51; 2; CHAR; CBAR;
+
+LARGAR;  I; 2; NLARG; 1; XR1RI;  XR1R;
+LARGARM; I; 2; NLARG; 1; XMR1RI; XMR1R;
+@;
+
+3;  {LES SURFACES DES 2 ROUES AVANT ET ARRIERE}
+CERCLEAVI; I; 9; RAYON*7/NCERCLE; 1; 0; CAVI;
+CERCLEAV;  I; 9; RAYON*7/NCERCLE; 1; 0; CAV;
+
+CERCLEARI; I; 9; RAYON*7/NCERCLE; 1; 0; CARI;
+CERCLEAR;  I; 9; RAYON*7/NCERCLE; 1; 0; CAR;
+
+GOMAVH; I; 1; CHAVI; LARGAV; CHAV; LARGAVM; 2;
+GOMAVB; I; 1; CBAVI; LARGAV; CBAV; LARGAVM; 2;
+
+GOMARH; I; 1; CHARI; LARGAR; CHAR; LARGARM; 2;
+GOMARB; I; 1; CBARI; LARGAR; CBAR; LARGARM; 2;
+
+ROUE_AVANT;   I; 51; 4; CERCLEAVI; GOMAVH; GOMAVB; CERCLEAV;
+ROUE_ARRIERE; I; 51; 4; CERCLEARI; GOMARH; GOMARB; CERCLEAR;
+@;  
+
+{LE SPOILER}
+1;   1; 
+SPLA1.1; I; 1;  20;   0; 40;   
+SPLA1.2; I; 1;  18;   0; 40.5;  
+SPLA1.3; I; 1;  15;   0; 40.7;   
+SPLA1.4; I; 1;  12;   0; 40.7;   
+SPLA1.5; I; 1;   8.5; 0; 41. ;   
+SPLA1.6; I; 1;   6;   0; 41.5;  
+
+SPLA2.2; I; 1;  18;   0; 39.7;
+SPLA2.3; I; 1;  15;   0; 39.9;
+SPLA2.4; I; 1;  12;   0; 40. ;
+SPLA2.5; I; 1;   8.5; 0; 40.8;                  
+
+SPLA3.1; I; 1;  7;   0; 42.5;
+SPLA3.2; I; 1;  5;   0; 43;  
+SPLA3.3; I; 1;  2;   0; 46;
+SPLA3.4; I; 1;  0;   0; 47;
+
+SPLA4.2; I; 1;  5;   0; 42.3;
+SPLA4.3; I; 1;  2;   0; 45.6;              
+
+SPLE1.1; I; 1;  20;   40; 40;   
+SPLE1.2; I; 1;  18;   40; 40.5;  
+SPLE1.3; I; 1;  15;   40; 40.7;   
+SPLE1.4; I; 1;  12;   40; 40.7;   
+SPLE1.5; I; 1;   8.5; 40; 41. ;   
+SPLE1.6; I; 1;   6;   40; 41.5;  
+
+SPLE2.2; I; 1;  18;   40; 39.7;
+SPLE2.3; I; 1;  15;   40; 39.9;
+SPLE2.4; I; 1;  12;   40; 40. ;
+SPLE2.5; I; 1;   8.5; 40; 40.8;                  
+
+SPLE3.1; I; 1;  7;    40; 42.5;   
+SPLE3.2; I; 1;  5;    40; 43;  
+SPLE3.3; I; 1;  2;    40; 46;
+SPLE3.4; I; 1;  0;    40; 47;
+
+SPLE4.2; I; 1;  5;    40; 42.3;
+SPLE4.3; I; 1;  2;    40; 45.6;  
+
+JSPL.1; I; 1;  22;    40; 42;  
+JSPL.2; I; 1;  20;    40; 43;
+JSPL.3; I; 1;  12.5;  40; 45;
+JSPL.4; I; 1;   5;    40; 47;
+{JSPL.5=SPLE3.4}   
+JSPL.6; I; 1;   0;    40; 45;  
+JSPL.7; I; 1;   0;    40; 43;
+JSPL.8; I; 1;   2;    40; 38;
+JSPL.9; I; 1;   9;    40; 37.9;
+JSPL.10; I; 1; 16;    40; 38;
+JSPL.11; I; 1; 20.3;  40; 40;
+@;  
+
+2;
+JSPL; I; 21; 4*NAX9;  1; 2; 11;
+  JSPL.1; JSPL.2; JSPL.3; JSPL.4; SPLE3.4;  JSPL.6; JSPL.7; JSPL.8; JSPL.9;
+  JSPL.10; JSPL.11;       
+
+JSPL1.1; I; 11; NAX9;  1; 2; 6;                                  
+         SPLE1.1; SPLE1.2; SPLE1.3; SPLE1.4; SPLE1.5; SPLE1.6;   
+JSPL1.2; I; 11; NAX9;  1; 2; 6;                                  
+         SPLE1.1; SPLE2.2; SPLE2.3; SPLE2.4; SPLE2.5; SPLE1.6;   
+JSPL1; I; 51; 2; JSPL1.1; JSPL1.2;          
+
+JSPL2.1; I; 11; NAX9/2;  1; 2; 4;
+         SPLE3.1; SPLE3.2; SPLE3.3; SPLE3.4;     
+JSPL2.2; I; 11; NAX9/2;  1; 2; 4;  
+         SPLE3.1; SPLE4.2; SPLE4.3; SPLE3.4; 
+JSPL2; I; 51; 2; JSPL2.1; JSPL2.2;  
+                                   
+{CONTOUR_PLANCHER} 
+PL_AV_1; I; 2; NASOL1; 1; C1.6; PRV.1;
+PL_AV_2; I; 2; NAY1+NAY2; 1; PRV.1; PSY0;
+{ PL_AV_3; I; 2; NASOL1; 1; PSY0; C1.1; }
+AVANT; I; 51; 2; AV1; AV2; 
+DV_ROUE; I; 51; 4; SOL1; CS1.1PRV.1; PL_AV_1; AV3; 
+CONTOUR_PLANCHER; I; 51;  11;
+  AVANT; AV3; SOL1; CS1.1PRV.1; PRV.1PRV.8; PRV.8CS1.2; PLRV4; ENTRE_ROUES;
+  PLRR1; PL1; AX_PLANCHER;   { PL_AV_3; }
+@;
+
+3;  
+    { LE PLANCHER }
+ { PLANCHER0; I;  2; PL_AV_1; PL_AV_2; PL_AV_3; AVANT; 0;  }
+PLANCHER1; I; 9; {TRIANGULATION DELAUNAY}
+  5.1; 1; 0; CONTOUR_PLANCHER;
+PLANCHER2; I; 1; PLRR2; PL2; PSY.1; PL1; 2; 
+PLANCHER3; I; 9; 5.1; 1; 0; PLANC3; 
+ { PLANCHER4; I; 9; 5.1; 1; 0; DV_ROUE; }
+
+   { LE SPOILER }
+SPOILER1.1; I; 3; NAX9; NAY1+NAY2+NAY3;
+          1; 1; 2; 1; 6; 2;
+          SPLA1.1; SPLA1.2; SPLA1.3; SPLA1.4; SPLA1.5; SPLA1.6;     
+          SPLE1.1; SPLE1.2; SPLE1.3; SPLE1.4; SPLE1.5; SPLE1.6;        
+
+SPOILER1.2; I; 3; NAX9; NAY1+NAY2+NAY3;
+          1; 1; 2; 1; 6; 2;
+          SPLA1.1; SPLA2.2; SPLA2.3; SPLA2.4; SPLA2.5; SPLA1.6;     
+          SPLE1.1; SPLE2.2; SPLE2.3; SPLE2.4; SPLE2.5; SPLE1.6;    
+
+SPOILER2.1; I; 3; NAX9/2; NAY1+NAY2+NAY3;
+          1; 1; 2; 1; 4; 2;
+          SPLA3.1; SPLA3.2; SPLA3.3; SPLA3.4;
+          SPLE3.1; SPLE3.2; SPLE3.3; SPLE3.4;     
+
+SPOILER2.2; I; 3; NAX9/2; NAY1+NAY2+NAY3;
+          1; 1; 2; 1; 4; 2;
+          SPLA3.1; SPLA4.2; SPLA4.3; SPLA3.4;
+          SPLE3.1; SPLE4.2; SPLE4.3; SPLE3.4; 
+
+SPOILER1; I; 9;      {TRIANGULATION DELAUNAY}
+          5.1; 1; 0; JSPL1;
+SPOILER2; I; 9;      {TRIANGULATION DELAUNAY}
+          5.1; 1; 0; JSPL2; 
+
+SPOILER; I;  51;  6;  {UNION DE SURFACES }     
+  SPOILER1.1;   SPOILER1.2;      
+  SPOILER2.1;   SPOILER2.2;
+  SPOILER1;     SPOILER2;
+
+ROUES; I;  51;  2;  {UNION DE SURFACES }
+                ROUE_AVANT;   ROUE_ARRIERE;
+
+TOIT;   I;  52;  8;  {UNION G1-CONTINUE DE SURFACES}
+  DV_TOIT;  DR_TOIT;  AR_TOIT;
+  PAREBRISE;  PORTE;  AR_PORTE;  SA_TOIT; FIN_TOIT;
+
+CAPOT;       I;  51;  8;  {UNION C0-CONTINUE DE SURFACES}
+  CENTRE_CAPOT;   HAUT_CAPOT;   AVANT_SOUS_PAREBRISE;
+  DROITE_CAPOT;   HDR_CAPOT; 
+  BORD_CAPOT1;    BORD_CAPOT2;  TRIANGLE_BORD;
+
+COFFRE;  I;  52;  3;  {UNION G1-CONTINUE DE SURFACES}
+ CENTRE_COFFRE;   DROITE_COFFRE;  BORD_COFFRE;
+
+BORD;  I;  51;  3;  {UNION C0-CONTINUE DE SURFACES}
+  BORD_ENTREE_AIR; BORD_AILETTE;   BORD_SORTIE_AIR; 
+
+RESTE_DESSUS; I; 51; 15; {UNION C0-CONTINUE DE SURFACES}
+  ARRIERE_SOUS_PAREBRISE;   TRIANGLE_AILETTE;
+  SA_PLAT;            TRIANGLE_ARRIERE;   
+  HAUT_AILETTE;       BAS_AILETTE;    SORTIE_AIR; 
+  SOUS_CENTRE_AIR;    CENTRE_AIR; 
+  SOUS_GAUCHE_AIR;    GAUCHE_AIR; 
+  SOUS_DROITE_AIR;    DROITE_AIR;
+  ENTREE_GAUCHE_AIR;  ENTREE_AIR;
+
+RESTE_BORD; I; 51; 8; {UNION C0-CONTINUE DE SURFACES}
+  COTE_GAUCHE;    DR_ROUE_AV;
+  DC_COFFRE;      DA_COFFRE;      DB_COFFRE; 
+  DSRR1;          DSRR2;          DSRR3;
+
+RESTE_DESSOUS; I; 51; 8; {UNION C0-CONTINUE DE SURFACES} 
+  PLANCHER1;      PLANCHER2;      PLANCHER3;
+  PAS_ROUE_AV;    DSRV1;          DSRV2;  
+  DSRV3;          PAS_ROUE_AR;
+
+RESTE; I; 51; 3; {UNION C0-CONTINUE DE SURFACES} 
+RESTE_DESSUS; RESTE_BORD; RESTE_DESSOUS;
+
+BM_DROITE; I;  51;  7;  {UNION C0-CONTINUE DE SURFACES}  
+  ROUES; SPOILER; TOIT; CAPOT; COFFRE; BORD; RESTE;
+
+BM_GAUCHE;  SYMETRIE_PLAN_XZ; 50; BM_DROITE;  
+
+BM;  I; 52; 2; BM_DROITE; BM_GAUCHE;  {le prototype complet}
+
+BMT; I; 31; BM; 3;  {coupe du quadrangle selon le plus grand angle}
+@ ;
+
+FERMER;
+

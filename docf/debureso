@@ -1,0 +1,25 @@
+  Pour la  RESOLUTION du systeme lineaire A x = b, il y a deux 
+  possibilites:
+
+1: Resolution par la factorisation de CHOLESKY A = L tL avec un
+   stockage PROFIL.
+   Cette option donne la solution du systeme lineaire a cout sur,
+   mais peut demander beaucoup de place memoire ( surtout en 3D ).
+
+2: Resolution par la methode du GRADIENT CONJUGUE PRECONDITIONNE
+   avec stockage morse. Cette option est optimale pour la place
+   memoire utilisee, mais peut ne pas converger dans certains cas
+   ( problemes d'Elasticite par exemple ). 
+                                                
+   Si l'option 2 est choisie, le code demande une valeur du
+   parametre NIVEAU, qui caracterise la factorisation incomplete
+   de Cholesky utilisee pour le preconditionnement :
+
+   - le niveau 0 correspond a une matrice de preconditionnement
+   ayant le meme squelette que la matrice du systeme a resoudre.
+
+   - les niveaux > 0 correspondent a un preconditionnement 
+   generalement plus efficace, car plus proche de la factorisation
+   exacte, obtenue pour une valeur de niveau n(A) dependante du
+   systeme a resoudre. Si vous entrez une valeur superieure a n(A),
+   le programme envoie un message et continue les calculs avec n(A).

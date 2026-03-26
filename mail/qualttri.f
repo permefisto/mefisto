@@ -1,0 +1,51 @@
+      SUBROUTINE QUALTTRI( XYZSOM, N1TRIA, NBTRIA, NOTRIA,
+     %                     QTRMOY, QTRMIN, NOTRQMIN )
+C+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+C BUT :    CALCUL DES QUALITES MIN et MOYENNE DE LA TRIANGULATION
+C -----
+C ENTREES:
+C --------
+C XYZSOM : X  Y  Z DES SOMMETS DE LA TRIANGULATION
+C N1TRIA : NOMBRE DE MOTS POUR CHAQUE TRIANGLE NOTRIA (6 ou 4)
+C NBTRIA : NOMBRE DE TRIANGLES DU TABLEAU NOTRIA
+C NOTRIA : TABLEAU DU NUMERO DES 3 SOMMETS DES NBTRIA TRIANGLES
+
+C SORTIES:
+C --------
+C QTRMOY : QUALITE MOYENNE  DES NBTRIA TRIANGLES
+C QTRMIN : QUALITE MINIMALE DES NBTRIA TRIANGLES
+C NOTRQMIN: NUMERO NOTRIA DU TRIANGLE DE QUALITE MINIMALE
+C+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+C AUTEUR : ALAIN PERRONNET Saint PIERRE DU PERRAY              MARS 2020
+C2345X7..............................................................012
+      REAL     XYZSOM( 3, * )
+      INTEGER  NOTRIA( N1TRIA, * )
+
+      QTRMOY = 0.
+      QTRMIN = 2.
+      NOTRQMIN = 0
+      NBTR   = 0
+      DO 10 NT = 1, NBTRIA
+
+C        CALCUL DE LA QUALITE DU TRIANGLE NT
+         IF( NOTRIA(1,NT) .LE. 0 ) GOTO 10
+
+         CALL QUATRI( NOTRIA(1,NT), XYZSOM,  QUALTR )
+         IF( QUALTR .LT. QTRMIN ) THEN
+            QTRMIN   = QUALTR
+            NOTRQMIN = NT
+         ENDIF
+
+         QTRMOY = QTRMOY + QUALTR
+         NBTR   = NBTR + 1
+
+ 10   ENDDO
+
+      QTRMOY = QTRMOY / NBTR
+
+      PRINT*,'qualttri:',NBTR,' TRIANGLES de QUALITE MOYENNE=',
+     %        QTRMOY,' QUALITE MIN=',QTRMIN,
+     %       ' No du TRIANGLE QMIN',NOTRQMIN
+
+      RETURN
+      END

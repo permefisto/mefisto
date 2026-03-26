@@ -1,0 +1,241 @@
+{XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX}
+{X   MATRISE DE MATHEMATIQUES - UNIVERSITE PIERRE ET MARIE CURIE (PARIS 6)   X}
+{X   ANNEE UNVERSITAIRE 1995-1996    (WALTER David p6mim19)                  X}
+{X   INITIATION A UNIX ET A L'UTILISATION DES GRANDS CODES                   X}
+{X NATURE DU DOCUMENT: PROJET MAISON SOUS MEFISTO (FICHIER DE THERMICER)     X}
+{X DERNIERE MODIFICATION: 18/04/1996                                         X}
+{XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX}
+
+{========================== DECLARATION DES VARIBLES ========================}
+{*** CONDUCTIVITE ***}
+DEFVAR A_TUI, A_VER, A_ALU, A_BOI, A_BET, A_PAR, A_PLA, A_SSOL, A_HT, A_HM, A_HS;
+ A_TUI = 1.1; A_VER = 3.2; A_ALU = 150; A_BOI = 0.12; A_BET = 1.25; A_PAR = 1.05; 
+ A_PLA = 0.7; A_SSOL = 0.38; A_HT = 0.0317; A_HM = 0.036; A_HS = 0.04;
+
+{*** COEFFICIENT D'ECHANGE ***}
+DEFVAR G_TUI, G_VER, G_ALU, G_BOI, G_BET_EXT, G_BET_INT, G_PAR, G_PLA, G_SSOL, G_HT;
+ G_TUI = 18.5; G_VER = 20; G_ALU = 20; G_BOI = 20; G_BET_EXT = 20; 
+ G_BET_INT = 11; G_PAR = 17; G_PLA = 9; G_SSOL = 20; G_HT = 9.5; 
+
+{*** TEMPERATURE ***}
+DEFVAR T_INT, T_EXT, T_SSOL;
+ T_INT = 20; T_EXT = 0; T_SSOL =13;
+
+{*** SOURCE ***}
+DEFVAR S_VER, S_ALU, S_BOI, S_BET, S_PLA, S_HT;
+ S_VER = G_VER*T_INT; S_ALU = G_ALU*T_INT; S_BOI = G_BOI*T_INT; 
+ S_BET = G_BET_INT*T_INT; S_PLA = G_PLA*T_INT; S_HT = G_HT*T_INT;
+@;
+
+
+{============================= OBJET =====================================} 
+1; maison;
+2;{============= ENTREE des DONNEES du PROBLEME de THERMIQUE =============}
+{ SURFACE: VERRE }
+   2; { densite de CONDUCTIVITE THERMIQUE }
+   3; { materiau 2D homogene isotrope }
+   a_ver; { CONDUC  'conductivite du materiau'  reel   ; }
+@;
+{ SURFACE: TUILE }
+   2; { densite de CONDUCTIVITE THERMIQUE }
+   3; { materiau 2D homogene isotrope }
+   a_tui; { CONDUC  'conductivite du materiau'  reel   ; }
+@;
+{ SURFACE: SOUS_SOL }
+   2; { densite de CONDUCTIVITE THERMIQUE }
+   3; { materiau 2D homogene isotrope }
+   a_ssol; { CONDUC  'conductivite du materiau'  reel   ; }
+@;
+{ SURFACE: PLATRE }
+   2; { densite de CONDUCTIVITE THERMIQUE }
+   3; { materiau 2D homogene isotrope }
+   a_pla; { CONDUC  'conductivite du materiau'  reel   ; }
+@;
+{ SURFACE: PARPAING }
+   2; { densite de CONDUCTIVITE THERMIQUE }
+   3; { materiau 2D homogene isotrope }
+   a_par; { CONDUC  'conductivite du materiau'  reel   ; }
+@;
+{ SURFACE: ISOLATION_T }
+   2; { densite de CONDUCTIVITE THERMIQUE }
+   3; { materiau 2D homogene isotrope }
+   a_ht; { CONDUC  'conductivite du materiau'  reel   ; }
+@;
+{ SURFACE: ISOLATION_S }
+   2; { densite de CONDUCTIVITE THERMIQUE }
+   3; { materiau 2D homogene isotrope }
+   a_hs; { CONDUC  'conductivite du materiau'  reel   ; }
+@;
+{ SURFACE: ISOLATION_M }
+   2; { densite de CONDUCTIVITE THERMIQUE }
+   3; { materiau 2D homogene isotrope }
+   a_hm; { CONDUC  'conductivite du materiau'  reel   ; }
+@;
+{ SURFACE: BOIS }
+   2; { densite de CONDUCTIVITE THERMIQUE }
+   3; { materiau 2D homogene isotrope }
+   a_boi; { CONDUC  'conductivite du materiau'  reel   ; }
+@;
+{ SURFACE: BETON }
+   2; { densite de CONDUCTIVITE THERMIQUE }
+   3; { materiau 2D homogene isotrope }
+   a_bet; { CONDUC  'conductivite du materiau'  reel   ; }
+@;
+{ SURFACE: ALUMINIUM }
+   2; { densite de CONDUCTIVITE THERMIQUE }
+   3; { materiau 2D homogene isotrope }
+   a_alu; { CONDUC  'conductivite du materiau'  reel   ; }
+@;
+{ LIGNE: L_TUI_EXT }
+   1; { ECHANGE coefficient d echange avec le fluide a la paroi }
+   1; { constante }
+   g_tui; { ECHANG 'coefficient d''echange'   reel   ; }
+@;
+{ LIGNE: L_BOIS_EXT }
+   1; { ECHANGE coefficient d echange avec le fluide a la paroi }
+   1; { constante }
+   g_boi; { ECHANG 'coefficient d''echange'   reel   ; }
+@;
+{ LIGNE: L_VER_EXT }
+   1; { ECHANGE coefficient d echange avec le fluide a la paroi }
+   1; { constante }
+   g_ver; { ECHANG 'coefficient d''echange'   reel   ; }
+@;
+{ LIGNE: L_PAR_EXT }
+   1; { ECHANGE coefficient d echange avec le fluide a la paroi }
+   1; { constante }
+   g_par; { ECHANG 'coefficient d''echange'   reel   ; }
+@;
+{ LIGNE: L_BET_EXT }
+   1; { ECHANGE coefficient d echange avec le fluide a la paroi }
+   1; { constante }
+   g_bet_ext; { ECHANG 'coefficient d''echange'   reel   ; }
+@;
+{ LIGNE: L_ALU_EXT }
+   1; { ECHANGE coefficient d echange avec le fluide a la paroi }
+   1; { constante }
+   g_alu; { ECHANG 'coefficient d''echange'   reel   ; }
+@;
+{ LIGNE: L_ISOLT_INT }
+   1; { ECHANGE coefficient d echange avec le fluide a la paroi }
+   1; { constante }
+   g_ht; { ECHANG 'coefficient d''echange'   reel   ; }
+   2; { SOURCE source de chaleur ou flux impose a la frontiere }
+   1; { constante }
+   s_ht; { SOURCE(1..NBJESO) 'les valeurs des sources' reel ; }
+@;
+{ LIGNE: L_BOIS_INT }
+   1; { ECHANGE coefficient d echange avec le fluide a la paroi }
+   1; { constante }
+   g_boi; { ECHANG 'coefficient d''echange'   reel   ; }
+   2; { SOURCE source de chaleur ou flux impose a la frontiere }
+   1; { constante }
+   s_boi; { SOURCE(1..NBJESO) 'les valeurs des sources' reel ; }
+@;
+{ LIGNE: L_DAL2_H_INT }
+   1; { ECHANGE coefficient d echange avec le fluide a la paroi }
+   1; { constante }
+   g_bet_int; { ECHANG 'coefficient d''echange'   reel   ; }
+   2; { SOURCE source de chaleur ou flux impose a la frontiere }
+   1; { constante }
+   s_bet; { SOURCE(1..NBJESO) 'les valeurs des sources' reel ; }
+@;
+{ LIGNE: L_VER2_INT }
+   1; { ECHANGE coefficient d echange avec le fluide a la paroi }
+   1; { constante }
+   g_ver; { ECHANG 'coefficient d''echange'   reel   ; }
+   2; { SOURCE source de chaleur ou flux impose a la frontiere }
+   1; { constante }
+   s_ver; { SOURCE(1..NBJESO) 'les valeurs des sources' reel ; }
+@;
+{ LIGNE: L_BET1_INT }
+   1; { ECHANGE coefficient d echange avec le fluide a la paroi }
+   1; { constante }
+   g_bet_int; { ECHANG 'coefficient d''echange'   reel   ; }
+   2; { SOURCE source de chaleur ou flux impose a la frontiere }
+   1; { constante }
+   s_bet; { SOURCE(1..NBJESO) 'les valeurs des sources' reel ; }
+@;
+{ LIGNE: L_ALU1_INT }
+   1; { ECHANGE coefficient d echange avec le fluide a la paroi }
+   1; { constante }
+   g_alu; { ECHANG 'coefficient d''echange'   reel   ; }
+   2; { SOURCE source de chaleur ou flux impose a la frontiere }
+   1; { constante }
+   s_alu; { SOURCE(1..NBJESO) 'les valeurs des sources' reel ; }
+@;
+{ LIGNE: L_VER1_INT }
+   1; { ECHANGE coefficient d echange avec le fluide a la paroi }
+   1; { constante }
+   g_ver; { ECHANG 'coefficient d''echange'   reel   ; }
+   2; { SOURCE source de chaleur ou flux impose a la frontiere }
+   1; { constante }
+   s_ver; { SOURCE(1..NBJESO) 'les valeurs des sources' reel ; }
+@;
+{ LIGNE: L_PLA1_INT }
+   1; { ECHANGE coefficient d echange avec le fluide a la paroi }
+   1; { constante }
+   g_pla; { ECHANG 'coefficient d''echange'   reel   ; }
+   2; { SOURCE source de chaleur ou flux impose a la frontiere }
+   1; { constante }
+   s_pla; { SOURCE(1..NBJESO) 'les valeurs des sources' reel ; }
+@;
+{ LIGNE: L_BET0_INT }
+   1; { ECHANGE coefficient d echange avec le fluide a la paroi }
+   1; { constante }
+   g_bet_int; { ECHANG 'coefficient d''echange'   reel   ; }
+   2; { SOURCE source de chaleur ou flux impose a la frontiere }
+   1; { constante }
+   s_bet; { SOURCE(1..NBJESO) 'les valeurs des sources' reel ; }
+@;
+{ LIGNE: L_ALU0_INT }
+   1; { ECHANGE coefficient d echange avec le fluide a la paroi }
+   1; { constante }
+   g_alu; { ECHANG 'coefficient d''echange'   reel   ; }
+   2; { SOURCE source de chaleur ou flux impose a la frontiere }
+   1; { constante }
+   s_alu; { SOURCE(1..NBJESO) 'les valeurs des sources' reel ; }
+@;
+{ LIGNE: L_VER0_INT }
+   1; { ECHANGE coefficient d echange avec le fluide a la paroi }
+   1; { constante }
+   g_ver; { ECHANG 'coefficient d''echange'   reel   ; }
+   2; { SOURCE source de chaleur ou flux impose a la frontiere }
+   1; { constante }
+   s_ver; { SOURCE(1..NBJESO) 'les valeurs des sources' reel ; }
+@;
+{ LIGNE: L_PLA0_INT }
+   1; { ECHANGE coefficient d echange avec le fluide a la paroi }
+   1; { constante }
+   g_pla; { ECHANG 'coefficient d''echange'   reel   ; }
+   2; { SOURCE source de chaleur ou flux impose a la frontiere }
+   1; { constante }
+   s_pla; { SOURCE(1..NBJESO) 'les valeurs des sources' reel ; }
+@;
+{ LIGNE: L_SSOL_AIR }
+   1; { ECHANGE coefficient d echange avec le fluide a la paroi }
+   1; { constante }
+   g_ssol; { ECHANG 'coefficient d''echange'   reel   ; }
+@;
+{ LIGNE: L_SSOL_LAT }
+   2; { SOURCE source de chaleur ou flux impose a la frontiere }
+   1; { constante } 
+   0; { SOURCE(1..NBJESO) 'les valeurs des sources' reel ; }
+@;
+{ LIGNE: L_SSOL_BAS }
+   3; { CONTACT temperature imposee }
+   1; { constante }
+   t_ssol;
+@;
+3;{=============== RESOLUTION DU PROBLEME THERMIQUE ======================}
+ 1; { PROBLEME LINEAIRE }
+ 1; { CHOLESKY PROFIL }
+@;
+
+99;
+FERMER;
+
+8;{=============== TRACE DES ISOTHERMES ==================================}
+ 2; 1; 2; 90;
+
+FERMER;

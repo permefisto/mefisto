@@ -1,0 +1,224 @@
+      PROGRAM XVTEST1
+C+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+C BUT : TESTER LE GRAPHISME XV EN MODE PIXEL
+C+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+C AUTEUR : PERRONNET ALAIN ANALYSE NUMERIQUE UPMC  PARIS  SEPTEMBRE 1995
+C2345X7..............................................................012
+C     DECLARATIONS NECESSAIRES POUR LA MANIPULATION DES COULEURS ET FONTES
+      include"./incl/trvari.inc"
+      include"./incl/xvfontes.inc"
+      COMMON /UNITES/  LECTEU,IMPRIM,NUNITE(30)
+      DOUBLE PRECISION DMCN
+      COMMON           DMCN(10000)
+C
+      CHARACTER*50     TEXTE
+      CHARACTER*3      KNMF
+      CHARACTER*1      CHAR
+      PARAMETER       (MAXPTS=50)
+      INTEGER*2        XPOINTS(2,MAXPTS)
+C
+      LECTEU = 5
+      IMPRIM = 6
+C
+      PRINT *
+      PRINT *,'======================================='
+      PRINT *,'Test du mode PIXEL de la librairie XVUE'
+      PRINT *,'======================================='
+C
+C     CREATION OUVERTURE DE LA FENETRE XVUE
+C     =====================================
+      CALL XVOUVRIR
+C
+C     PALETTE 1 DES COULEURS
+      CALL PALCDE( 1 )
+C
+C     DEMANDE DE TRACE POSTSCRIPT
+C     ===========================
+      CALL XVINITIERPS( 0 )
+C
+C     TEST DES COULEURS INITIALES ET DES FONTES XVUE
+C     ==============================================
+C     NOMBRE D'EPAISSEURS DES TRAITS
+      CALL XVEPAISSEUR( 12 )
+      DO 10 I=1,32
+         CALL XVCOULEUR( I )
+         CALL XVTRAIT( 50, I*30,  150, I*30 )
+         NF = 50 + I
+         WRITE( KNMF, '(I3)' ) NF
+         CALL CHARGEFONTE( NF )
+         CALL XVTEXTE('Fonte ', 6, 160, I*30 )
+         CALL XVTEXTE( KNMF,    3, 230, I*30 )
+         CALL XVTEXTE(': ABCDEFGH..XYZabcdefgh..xyz01234129789%#@$',42,
+     %                  270, I*30 )
+         CALL XVNBPIXELTEXTE('WZgjklpqy0',10,NBPXLA,NBPXHA)
+         WRITE(IMPRIM,*) 'CHAINE MESUREE = WZgjklpqy0'
+         WRITE(IMPRIM,*) 'Largeur PIXELS de la chaine =',NBPXLA
+         WRITE(IMPRIM,*) 'Hauteur PIXELS de la chaine =',NBPXHA
+ 10   CONTINUE
+C
+C     TRACE D'UN RECTANGLE
+C     ====================
+      NXR = LAPXFE - 350
+      NYR =  50
+      LAR = 200
+      LHR = 150
+      CALL XVCOULEUR( NCBLEU )
+      CALL XVRECTANGLE( NXR, NYR, LAR, LHR )
+      CALL XVEPAISSEUR( 5 )
+      CALL XVCOULEUR( NCCYAN )
+      CALL XVBORDRECTANGLE( NXR, NYR, LAR, LHR )
+C
+C     TRACE DE TRAITS
+C     ===============
+      CALL XVEPAISSEUR( 2 )
+C     LIGNE POINTILLEE SIMPLE
+      CALL XVTYPETRAIT( 1 )
+      CALL XVCOULEUR( NCJAUN )
+      CALL XVTRAIT( NXR, NYR, NXR+LAR, NYR+LHR )
+C     LIGNE POINTILLEE DOUBLE
+      CALL XVTYPETRAIT( 2 )
+      CALL XVCOULEUR( NCMAGE )
+      CALL XVTRAIT( NXR, NYR+LHR,  NXR+LAR, NYR )
+C     LIGNE SOLIDE PAR DEFAUT
+      CALL XVTYPETRAIT( 0 )
+C
+C     TRACE D'UN POLYGONE
+C     ===================
+      LAR = LAR / 2
+      NXR = NXR + 100
+      NYR = NYR + 300
+      PAS = 3.14159 * 2 / MAXPTS
+      ANGLE = 0.0
+      DO 15 I=1,MAXPTS
+         XPOINTS(1,I) = NXR + LAR * COS( ANGLE )
+         XPOINTS(2,I) = NYR + LAR * SIN( ANGLE )
+         ANGLE = ANGLE + PAS
+ 15   CONTINUE
+C
+C     TRACE PRELIMINAIRE D'UN RECTANGLE DE COULEUR EN FOND
+      CALL PALCDE( 6 )
+      CALL XVCOULEUR( (N1COUL+NDCOUL) / 2 )
+      CALL XVRECTANGLE( INT(NXR-1.25*LAR), NYR, INT(2.5*LAR), 400 )
+C     REMPLISSAGE DE L'INTERIEUR DU POLYGONE EN ROUGE
+      CALL XVCOULEUR( NCROUG )
+      CALL XVFACE( MAXPTS, XPOINTS)
+C     TRACE DU CONTOUR DU POLYGONE EN CYAN
+      CALL XVCOULEUR( NCCYAN )
+      DO 16 I=1,MAXPTS - 1
+         NX1 = XPOINTS(1,I)
+         NY1 = XPOINTS(2,I)
+         NX2 = XPOINTS(1,I+1)
+         NY2 = XPOINTS(2,I+1)
+         CALL XVTRAIT( NX1, NY1, NX2, NY2 )
+ 16   CONTINUE
+      NX1 = XPOINTS(1,MAXPTS)
+      NY1 = XPOINTS(2,MAXPTS)
+      NX2 = XPOINTS(1,1)
+      NY2 = XPOINTS(2,1)
+      CALL XVTRAIT( NX1, NY1, NX2, NY2 )
+      NYR = NYR + 350
+C
+C     TRACE D'ARCS D'ELLIPSE
+C     ======================
+C     REMPLISSAGE DE L'INTERIEUR D'UN SECTEUR D'ELLIPSE
+      CALL XVCOULEUR( NCROUG )
+      CALL XVARCELLIPSE(NXR,NYR,LAR,2*LAR,-45.0,90.0)
+C
+C     TRACE DU CONTOUR D'UN SECTEUR D'ELLIPSE
+      CALL XVCOULEUR( NCCYAN )
+      CALL XVBORDARCELLIPSE(NXR,NYR,LAR,2*LAR,-45.0,-225.0)
+C
+C     TEST DES EVENEMENTS
+C     POSITION DU CLIC SOURIS OU FRAPPE AU CLAVIER
+C     ============================================
+C     CHARGEMENT DE LA FONTE DE HAUTEUR LA PLUS PROCHE DE 20 PIXELS
+C     ET DE PREFERENCE GRASSE ET 'courier'
+      CALL CHOIXFONTE( 20 )
+C     LE NUMERO DE LA FONTE CHARGEE EST NOFONT (cf ~/nef/incl/xvfontes.inc)
+      TEXTE = 'EN ATTENTE D''UN CARACTERE OU CLIC SOURIS.'
+      LAR = INDEX( TEXTE, '.' )
+      CALL XVNBPIXELTEXTE( TEXTE(1:LAR), LAR, NBPXLA, NBPXHA )
+C     TRACE D'UN RECTANGLE ET D'UNE INVITE
+      CALL XVCOULEUR( NCBLAN )
+      NXR = 10
+      NYR = 10
+      CALL XVRECTANGLE( NXR, NYR, NBPXLA+10, NBPXHA+10 )
+      CALL XVEPAISSEUR( 2 )
+      CALL XVCOULEUR( NCNOIR )
+      CALL XVBORDRECTANGLE(  NXR, NYR, NBPXLA+10, NBPXHA+10 )
+      CALL XVTEXTE( TEXTE(1:LAR), LAR, NXR+5, NYR+NBPXHA+5 )
+      CALL MEMPXFENETRE
+      CALL XVVOIR
+      DO 20 I=1,2
+         PRINT*
+         PRINT*,'METTRE LA FLECHE DANS LA FENETRE XV ET '
+         PRINT*,'CLIQUER UN BOUTON OU TAPER UN CARACTERE SUR LE CLAVIER'
+         CALL XVSOURIS( NOTYEV, NC, NPX, NPY )
+C        RETOURNE  NOTYEV=0 SI PAS D'EVENEMENT
+C                        =1 SI CLIC D'UN BOUTON DE LA SOURIS
+C                           => NC=NUMERO DU BOUTON
+C                              NPX, NPY SONT INITIALISES
+C                        =2 SI FRAPPE D'UN CARACTERE AU CLAVIER
+C                           => NC=NUMERO DU CARACTERE DANS LA TABLE ASCII
+         IF( NOTYEV .EQ. 0 ) THEN
+            PRINT *,'PROBLEME AVEC LA SOURIS'
+            STOP
+         ELSE IF( NOTYEV .EQ. 1 ) THEN
+            PRINT *,'EVENEMENT SOURIS : BOUTON= ',NC,
+     %             ' POSITION DU CLIC NPX=',NPX,' NPY=',NPY
+         ELSE IF( NOTYEV .EQ. 2 ) THEN
+            PRINT *,'EVENEMENT CLAVIER : NO ASCII DU CARACTERE=',NC,
+     %              ' CARACTERE=',CHAR(NC)
+         ENDIF
+ 20   CONTINUE
+      PRINT *
+C
+C     TRACE DES 14 PALETTES DE COULEURS
+C     =================================
+      NXR = LAPXFE - 70
+C     NOMBRE D'EPAISSEURS DES TRAITS POUR VISUALISER LES COULEURS
+      NBEP = 3
+      CALL XVEPAISSEUR( NBEP )
+      DO 40 I=1,14
+C        ARRET POUR VOIR LES COULEURS DE LA PALETTE
+         PRINT*,'CLIC SOURIS POUR AVOIR LA PALETTE DE COULEURS ',I
+         CALL XVSOURIS( NOTYEV, NC, NPX, NPY )
+C        LE NUMERO DE LA PALETTE EST EFFACE POUR EVITER LA SUPERPOSITION
+C        DES NUMEROS DES PALETTES
+         CALL XVCOULEUR( NCNOIR )
+         CALL XVTEXTE( KNMF, 3,  LAPXFE-40, 20 )
+C        LE NOUVEAU NUMERO DE LA PALETTE EST TRACE
+         CALL XVCOULEUR( NCBLAN )
+         WRITE( KNMF, '(I3)' ) I
+         CALL XVTEXTE( KNMF, 3,  LAPXFE-40, 20 )
+C        TRACE DE LA PALETTE I
+         CALL PALCDE( I )
+         DO 30 J=1,NDCOUL
+            CALL XVCOULEUR( J )
+            CALL XVTRAIT( NXR-35, 25+J*NBEP, NXR+58, 25+J*NBEP )
+ 30      CONTINUE
+         CALL MEMPXFENETRE
+         CALL XVVOIR
+         CALL XVSOURIS( NOTYEV, NC, NPX, NPY )
+C
+ 40   CONTINUE
+C
+C     ARRET AVANT LA FIN
+C     ==================
+ 100  PRINT *
+      PRINT *,'ENTRER UN CARACTERE POUR FINIR'
+      CALL XVSOURIS( NOTYEV, NC, NPX, NPY )
+      IF( NOTYEV .NE. 2 ) GOTO 100
+C
+C     SAUVEGARDE DU TRACE DANS UN FICHIER POSTSCRIPT
+C     ==============================================
+      CALL XVSAUVERPS( 'XVUEtest1', 9 )
+C
+C     ENVOI SUR L'IMPRIMANTE DU FICHIER POSTSCRIPT
+C     ============================================
+      CALL XVIMPRIMERPS( 'XVUEtest1', 9 )
+C
+C     FERMETURE DE XVUE
+C     =================
+      CALL XVFERMER
+      END

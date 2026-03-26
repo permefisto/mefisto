@@ -1,0 +1,793 @@
+SOME NOTIONS on a MESH of a SURFACE:
+====================================
+
+The mesh of a SURFACE is a set of TRIANGLES and/or QUADRANGLES
+stored in 2 TMS a___xyzsommet  and  a___nsef, defined by:
+
+- NBSOM vertices of coordinates (Xi,Yi,Zi) in the a___xyzsommet TMS
+- the array of
+(number vertex1, number vertex2, number vertex3, number vertex4)
+such that number vertex4=0 if the FE is a TRIANGLE,
+(1<=number vertex<=NBSOM), for the NBEFOB FE (Triangle/Quadrangle)
+
+               *V3                         V4*
+              .    .                        .     .
+             .        .                    .             *V3
+            .           .                 .               .
+           .               .             .                 .
+        V1*..................*V2      V1*..................*V2
+          A straight triangle           A straight quadrangle
+          (P1 interpolation)             (Q1 interpolation)
+
+Eventually,
+- NBTGS 3D tangents of components (TXi,TYi,TZi) in the 
+  a___xyzsommet TMS
+- the array of (number tangent1, ... number tangent8) 
+(to the curved edges) at the 4 vertices of the NBEFTG TRIANGLES
+and/or QUADRANGLES said CURVED FE in the a___nsef TMS
+(For a triangle, number tangent7 and number tangent8 are NULL)
+At each vertex of a curved FE, there are a tangent to the 2 edges
+A NULL value is the tangent vector equal to the edge vector.
+
+This storage permits a parametrization of the FE by polynamials
+of degree 3 (Hermite interpolation)
+
+             ^       ^
+            /         \              ^
+           /    *V3 .  \             |      V4* .
+          /  .       .  \            |   .        .       ^
+         / .            .\           |  .             *V3 |
+        / .              .\          | .                . |
+       /.                 .\         |.                  .|
+      V*...................*V2      V1*..................*V2
+          A curved triangle           A curved quadrangle
+     (P3 piecewise interpolation)   (P3 piecewise interpolation)
+      due to Clough and Tocher   due to Fraeijs de Veubeke and Sander
+
+These FE permit C1-CONTINUOUS INTERPOLATIONS.
+
+In fact, if a TRIANGLE is subdivided into M**2 triangles,
+or if a QUADRANGLE is subdivided into MxN quadrangles
+it is sufficient to store the values of M (eventually N) 
+to compute the number NBSOM of vertices and use an implicit 
+numbering for the 4 vertices (and 8 tangents) of the FE i.
+In this case, the mesh is said STRUCTURED,
+else, it is said UNSTRUCTURED.
+
+The quality of FE DEPENDS of the QUALITY of LINE EDGES
+because the boundary mesh (the line edges) IS RESPECTED in the
+SURFACE mesh => A REGULAR augmentation or diminution of edge
+lengths of lines is required!
+
+Attention:
+To obtain unstructured meshes as for triangulation, the
+User's function TAILLE_IDEALE(x,y,z) MAY BE GIVEN!
+The mesh algorithms compute the edges to satisfy the
+edge length, result of the call of TAILLE_IDEALE(x,y,z).
+The presence of this function is sufficient to its using.
+
+At contrary, for STRUCTURED MESHES as STRUCTURED TRIANGLE or
+STRUCTURED QUADRANGLE, the call of TAILLE_IDEALE(x,y,z) is not
+done because the mesh algorithm is not compatible with!
+
+Example for the input of Taille_Ideale:
+DefVar lxf,lh2,lh3;
+lh2=0.3;
+lh3=0.7;
+lxf=max(lh2,lh3);
+
+DefFunc Taille_Ideale(x,y,z);
+  Taille_Ideale=0.45;
+  If x<lxf and y>-(lh3+lh2)*1.2
+    Then Taille_Ideale=0.15;
+  Else
+    If x<lxf and y>-(lh3+lh2)*1.8
+    Then Taille_Ideale=0.28;
+    EndIf;
+  EndIf;
+EndFunc;
+Here, upper or lower cases are not signifient.
+
+
+A SURFACE MAY BE CONSTRUCTED BY THE FOLLOWING OPTIONS:
+------------------------------------------------------
+
+1 : TRANSFINITE QUADRANGLE STRUCTURED or NOT
+The QUADRANGLE, eventually deformed, is defined from its
+4 line edges of its contour.
+Every line may be an union of lines.
+A POLYNOMIAL INTERPOLATION, with respect to the vertices
+of boundary edges is done.
+
+ATTENTION:
+- either, the EDGE NUMBERS of LINES 1 3 and LINES 2 4 are equal
+        => STRUCTURED QUADRANGULATION;
+- or, the NUMBER of EDGES of LINES 2 4 are equal (N2=N4)
+      and the edges number of lines 1 3 are not same (N1 and N3)
+      but N1<N3 (or N3<N1) such that N3-N1<N2
+      then, the mesh contains triangles and quadrangles as
+        --------L3-----------   Ni edge number of line Li
+        |                   |   either N1=N3 et N2=N4   => case 1
+        L4                 L2   or     N1=N3 et N4<N2 et N1>=N2-N4
+        |                   |   or     N2=N4 et N3<N1 et N2>=N1-N3
+        --------L1-----------                          => case 2
+
+- or, the edge number of LINES 1 2 3 4 are different
+      then , the mesh is an unstructured triangulation => case 3
+      ATTENTION:
+      The length of the max edge MUST BE < Sum of 3 others edges.
+
+2 CAS POSSIBLES :
+ 1. The quadrangulation is the IMAGE of UNIT SQUARE
+    meshed with rectangles     
+ 2. The quadrangulation is the IMAGE of UNIT SQUARE
+    irregular meshed from the curvilinear coordinate 
+    of the 4 edges by the method of COOK, GORDON, HALL     
+
+Example: S1; I; 1; L1; L2; L3; L4; 2;
+         Define an irregular quadrangulation of the
+         quadrangle limited by the 4 lines L1 L2 L3 L4
+         if N1=N3 and N2=N4
+
+ATTENTION: FE may be OVERLAP because the mapping do not give
+necessary a one to one point!...
+Draw the resulting mesh to see if the quadrangulation IS CORRECT.
+Else, try the following option 2 which correct this problem.
+
+2 : 2D STRUCTURED ELLIPTICAL QUADRANGLE
+The QUADRANGLE, eventually deformed, is defined from its
+4 line edges of its contour.
+Every line may be an union of lines.
+The SOLUTION of a NOT LINEAR ELLIPTICAL PARTIAL DIFFERENTIAL EQUATION
+SYSTEM (WINSLOW's method+corrections) maps the UNIT SQUARE onto
+the QUADRANGLE with boundary the 4 INITIAL LINE EDGES
+ATTENTION:
+The EDGE NUMBER of LINES 1 3 must be equals AND
+           --------L3-----------
+           |                   |  
+           L4                 L2
+           |                   |
+           --------L1-----------  
+Example: S2; I; 2; L1; L2; L3; L4;
+         Define a quadrangulation of contour the edges of lines L1 L2 L3 L4
+
+ATTENTION: Here, if quadrangles overlap, a correction is done 
+from a coefficient FADI2D for each of the 4 edges:
+
+
+. After a pure Winslow method, these values are used to improve,
+to control the orthogonality and lengths of the closed sub-quardrangles.
+
+. The value fadi2d in ]0,1]  define the quotient height/length of edges
+near the edges of the curved quadrangles:
+. For example a value=1.  gives "squares"
+.             a value=0.1 gives a sub-quadrangle ten times large than height.
+.
+.              d to compute = fadi2d * (d1+d2)/2
+
+.                       d ?                     
+.                       |                        
+.              --*------*-----*-- 
+.                   d1     d2
+.
+. By convention :
+.   a value=0.  => NO indication on lengths of edges
+.                  The angles will be improved with no other data.
+.   a value=-1  => Distances are conserved during the improvement of angles.
+.   a value=-2  => The distance d is the interpolation from d1 to d2
+.                  on the boundary of this edge
+.
+.       * interpolation function from d1 to d2
+.    d1 |         <--- d ? --->            *
+.       |               |                  | d2
+.       *---*----*------*-----*----*---*---*
+.
+. In all cases, the angles are improved.
+
+Example: S2; I; 2; L1; L2; L3; L4;  5; 0.1; 1; 2; 0;
+         Define a quadrangulation of contour the edges
+         of lines L1 L2 L3 L4 with quadrangles 
+         10 times less height than wide near L1
+         squares around L2
+         2 times more height than wide near L3
+         and without amelioration of jength around L4
+         (but with amelioration of angles to 90 degrees)
+REMARK: Generally, the ELLIPTICAL QUADRANGULATION is MORE
+        "ORTHOGONAL" than the TRANSFINITE QUADRANGULATION
+        but its cost is greater.
+        For a RECTANGLE, use the TRANSFINITE QUADRANGULATION
+        which gives sub-rectangles and is cheaper.
+
+3 : SPLINE QUADRANGLE BY INTERPOLATION of POINTS
+The UNIFORM POLYNOMIAL SPLINE SURFACE is defined from
+- the U edges number and its V edges number
+  (In fact,U and V are the 2 parameters of the spline surface)
+- the geometrical ratio for consecutive edge length for U and V
+- the polynomial degree for U and V
+- the interpolation point number for U and V (>degree>=1)
+
+ATTENTION: To obtain that the spline pass by the interpolation points
+it is NECESSARY to choose
+edge number = k ( interpolation point number - 1 ) (for U and for V)
+The surface pass by the interpolation points but not necessary the
+mesh which is an approximation of the spline surface!
+Example: ROOF_CAR;  I; 3;
+         defvar nax1,nay1; nax1=6; nay1=9; {variables utilisateur}
+         nax1 {U VERTICES}; nay1 {V VERTICES};
+         1    {U RATIO };   1;   {V RATIO }
+         2    {U DEGREE};   3;   {V DEGREE}
+         3    {U POINTS};   4;   {V POINTS}
+         C3.1; C2.1; C1.1;  C3.2; C2.2; C1.2;
+         C3.3; C2.3; C1.3;  C3.4; C2.4; C1.4; 
+         {the interpolation points}
+
+4 : SPLINE QUADRANGLE BY INTERPOLATION of LINES
+The UNIFORM POLYNOMIAL SPLINE SURFACE is defined from
+- the U edges number and its V edges number
+  (In fact,U and V are the 2 parameters of the spline surface)
+- the geometrical ratio for consecutive edge length for U and V
+- the polynomial degree for U and V
+- the number in V of interpolation lines(U)
+- the name of interpolation lines(U)
+
+6 : TRANSFINITE TRIANGLE
+The triangle is defined by the 3 line edges.
+The number of line edges (>0) may be the same for the 3 edges or not.
+If the 3 numbers are equals a STRUCTURED triangulation is done.
+Else an unstructured triangulation is created.
+
+ATTENTION: The Maximum of edge length must be less than the sum
+of the 2 other edges.
+
+ATTENTION: With large oscillations on the edges, some triangles
+may overlap! Draw the mesh to see if it is correct!
+Example:   S6; I; 6; EDGE1; EDGE2; EDGE3;
+La triangulation de la surface S9 respecte les sommets et aretes
+du contour forme des 3 lignes EDGE1 EDGE2 EDGE3, l'ensemble devant
+constituer une ligne fermee, pas trop distante d'un triangle.
+
+8: QUADRANGULATION of a SQUARE or a CIRCLE
+A central square or circle (or kernel) is regularly subdivided
+Around homothetic layers beyond the kernel are constructed.
+the DATA are:
+-the NUMBER of EDGES in a direction of KERNEL
+-the NUMBER of HOMOTHETIC LAYERS beyond KERNEL
+-the LENGTH of square or circle KERNEL
+-the TOTAL LENGTH of the square or circle
+
+9 : TRIANGULATION BETWEEN CLOSED LINES
+The DELAUNAY triangulation of a contour of closed lines
+is obtained from a recovering of the domain by a quad-tree
+of REGULAR TRIANGLES.
+
+The number NBLFTR of CLOSED LINES of the BOUNDARY must be >=1.
+The first line must be this one which contains all others.
+Example:                 L1            (said ENVELOPE)
+          ------------------------------------------------------
+         |                                                      |
+         |                                 /\                   | 
+         |    ---------                   /  \ L3               | 
+         |   |         |                 /    \                 |   
+         |   |         |L2               \    /                 |
+         |   |         |                  \  /                  | 
+         |    ---------                    \/                   | 
+         |                                                      |  
+          ------------------------------------------------------  
+Here, NBLFTR=3 LINES L1; L2; L3; to give with L1 ahead because
+L1 "contains" L2 and L3.
+The"HOLES" are given after the "ENVELOPE".
+
+ARETMX is the length of a regular triangles which covers
+completely the object.
+Regular triangles with an edge length ARETMX will be created.
+
+If the User has NOT given the 
+DefFunc Taille_Ideale(x,y,z); ...  (as wished length!...)
+then
+  the triangles with a too great surface will be
+  reduced by the introduction of their barycentre.
+else
+  The triangles will be made with edge lengths which
+  verify Taille_Ideale(x,y,z)
+
+This is the way to indicate around the point (x,y,z) what
+the length of edges has to be!
+
+Example for the input of Taille_Ideale:
+DefVar lxf,lh2,lh3;
+lh2=0.3;
+lh3=0.7;
+lxf=max(lh2,lh3);
+
+DefFunc Taille_Ideale(x,y,z);
+  Taille_Ideale=0.45;
+  If x<lxf and y>-(lh3+lh2)*1.2
+    Then Taille_Ideale=0.15;
+  Else
+    If x<lxf and y>-(lh3+lh2)*1.8
+    Then Taille_Ideale=0.28;
+    EndIf;
+  EndIf;
+EndFunc;
+
+INTERNAL POINTS may be imposed as vertices of the triangulation
+with a distance imposed to the neighboring vertices.
+
+Example: CIRCLE; I; 9;
+1.5; 2; 1; CIRCLE_LINE; HOLE; INTERNAL_PT; 0.01;
+Define a triangulation of the domain interior limited by
+the closed lines CIRCLE_LINE and HOLE;
+with an edge length 1.5 of regular triangles and
+an internal point INTERNAL_PT around of which the edges
+of triangles must have a length < 0.01
+
+10: INPUT DATA OF XYZSOMMET & NSEF TMS
+These 2 arrays must be initialized, value by value
+Example: REGULAR_TRIANGLE; I; 10;
+         3;0;3; 0;0;0; 1;0;0;  0.5;sqrt(3)/2;0; {3 vertices Otg}
+         3; 0; 4; 0; {surface notclosed 4vertices/FE 0tg}
+         1; 0; 0; 0; {1triangle 0tg unstructured}
+         1; 2; 3; 0; {4 numbers of the vertices}
+define a regular triangle as a meshed surface.
+
+11: 2D STRUCTURED RECTANGLE OF EDGES 1
+La QUADRANGULATION du RECTANGLE [0,NBINQX] * [0,NBINQY] est
+formee de carres de cotes de longueur 1.
+Example: RECTANGLE11; I; 11; 7; 4;
+Definit 7*4=28 carres de longueur 1, avec 7 ARETES en X et 4 en Y
+Toute TRANSFORMATION est ensuite utilisable sur ce rectangle.
+
+12: 2D STRUCTURED RECTANGULAR TRIANGLE
+La TRIANGULATION du TRIANGLE (0,0) (NBINTR,0) (0,NBINTR) est
+formee de TRIANGLES RECTANGLES UNITES.
+Example: TRIANGLE12; I ; 12; 6;
+Definit 6*6=36 triangles rectangles unites  
+Toute TRANSFORMATION est ensuite utilisable sur ce triangle.
+
+13: QUADRANGULATION OF A CONVEX CLOSED CURVE
+with an EVEN NUMBER of EDGES
+Quadrangulation d'une ligne convexe fermee avec un
+nombre PAIR d'aretes. 2 aretes consecutives de la ligne sont
+jointes au barycentre des sommets pour former un quadrangle.
+Au total, le nombre de quadrangles est egal a la moitie du nombre
+des aretes de la ligne convexe fermee.
+
+14: SLICES FROM A GENERIC LINE or EXTRUSION
+The GENERATRIC LINE is DISPLACED N times to create N slices.
+The M generic line edges define NxM quadrangles
+ATTENTION: these QUADRANGLES must NOT degenerate into
+TRIANGLES or EDGES or POINTS.
+The last displaced line may be the first line to form a crown.
+
+The DISPLACEMENT of the GENERIC LINE may be defined by 7 options:
+
+0: 3 points for each slice define the displacements
+From the generic line is associated an orthonormal reference
+system E0 defined by 3 points P01 P02 P03
+.P01 is the origin
+.P01-P02 define the first  vector E1
+.P01-P03 define the second vector E2, thus
+ E3 = E1 PRODUIT VECTORIEL E2
+ E2 = E3 PRODUIT VECTORIEL E1
+Norm(E1)=Norm(E2)=Norm(E3)=1
+Each displacement I is defined by 3 points which define
+a reference system EI as above.
+The DISPLACEMENT of the GENERIC LINE is the MAPPING from E0 to Ei
+The vertices from 2 consecutive lines are joined to define quadrangles
+Example: S14.0; I; 14; GENERIC_LINE; 0; 2; {slide number}
+         P01;P02;P03;  P11;P12;P13;   P21;P22;P23;
+         {the 3 definition points of reference systems}
+
+1: 3 line vertices define the mappings of the line
+The reference sytems EI are defined as above with the I vertices
+of the 3 lines.
+E0 is defined by the first vertex of line 1 2 3
+Ei is defined by the i-th  vertex of line 1 2 3 ...
+Example: S14.1; I; 14; GENERIC_LINE; 1; L1; L2; L3;
+        {the 3 lines of vertices definig the reference systems
+         and the displacements of the generic line}
+
+2: translation of a constant cote z>0 (a stack)
+The generic line is translated of a constant cote Z>0 (stack)
+Example: S14.2; I; 14; GENERIC_LINE; 2; 3; {slices}
+         6; {cote maximum to cut into 3 slices of thickness Z=2}
+
+3: translation of a cote z>0 for each displacement
+The generic line is translated of a variable cote z>0 input
+for each displacement
+ATTENTION: This is an ABSOLUTE cote Z, NOT a RELATIVE cote
+to the previous displacement
+Example: S14.3; I; 14; GENERIC_LINE; 3; 2; {slices}
+         4; 7; {absolute cote Z displacement of 2 slices}
+
+4: translation vector (x y z) valuable for all slices
+The previous line is translated of a CONSTANT VECTOR (NOT NULL!)
+Example: S14.4; I; 14; GENERIC_LINE; 4; 5; {slices}
+         1; 2; 3; {the 3 constant components of translation vector}
+
+5: translation vectors (x y z) defined one by slice
+The previous line is translated of a NON CONSTANT VECTOR,
+ONE by slice.
+Example: S14.5; I; 14; GENERIC_LINE; 5; 2; {slices}
+1; 2; 3; {first translation of the generic line}
+1; 2; 5; {translation of the previous line.  Translations add}
+
+6: 3 functions X Y Z(no_slice,x,y,z) displace the generic line
+The vertices of the generic line are mapped by these 3 functions
+from R3 to R3.
+For example: ABSCISSE(no_slice,x,y,z)
+             ORDINATE(no_slice,x,y,z)
+             COTE    (no_slice,x,y,z)
+Each vertex (x,y,z) of the generic line becomes the vertex of coordinates
+(ABSCISSE(no_slice,x,y,z), ORDINATE(no_slice,x,y,z),
+ COTE    (no_slice,x,y,z) )  of the no_slice-th line
+Example: 
+DefFunc ABSCISSE(no_slice,x,y,z); ABSCISSE=no_slice*x; EndFunc;
+DefFunc ORDINATE(no_slice,x,y,z); ORDINATE=no_slice*y; EndFunc;
+DefFunc COTE(    no_slice,x,y,z); COTE    =no_slice*z; EndFunc;
+S14.6; I; 14; GENERIC_LINE; 6; 5; {slices}
+ABSCISSE; ORDINATE; COTE; {the 3 function names}
+
+15: ROTATION OF A LINE AROUND AN AXIS
+The generic line is rotated N times to create N slices.
+The M edges of the generic line create N*M quadrangles.
+Vertices may be on the rotation axis.
+Then, the quadrangles become triangles. 
+The total rotation angle<=360 degrees.
+Examples: 
+S15.0; I; 15; GENERIC_LINE; P1_AXE; P2_AXE; 36; {rotations}
+0; {constant angles} 10; {degrees} 
+Define a surface by 36 cumulated rotations of 10 degrees 
+of GENERIC_LINE edges.                           
+
+S15.1; I; 15; GENERIC_LINE; P1_AXE; P2_AXE; 4; {rotations}
+1; {one angles by rotation}
+20; 30; 40; 50; {degrees}
+{rotations add from the generic line}
+Define a surface by 4 rotations of 20 then 50 then 90
+then 140 degrees of the GENERIC_LINE around the axis
+defined by the points P1_AXE and P2_AXE
+
+16: MAGNIFYING or EXTRUSING A LINE INTO LAYERS
+The initial line must have all edges in the same sens.
+In the normal direction to edges, a quadrangulation of NBCOLI(>0)
+layers is done around.
+All of layers have a small thickness EPCOLI to represent boundary layers
+Then, NBDECO other layers are quadrangulated with a thickness which varies
+linearly from EPCOLI to EPDECO.
+Attention: If the normals cross each others, the quadrangulation may be
+INCORRECT!... and the quadrangulation must be restricted in a vicinity
+of the line.
+If one of the thicknesses is negative, the 2 thicknesses are imposed
+negative and the layers are made on the other side of the initial line.
+
+17: 1/8 OF THE SURFACE OF A SPHERE
+The regular triangulation is obtained by a regular subdivision
+of the triangle 
+of vertex 1 Centre + Rayon * (1,0,0)
+of vertex 2 Centre + Rayon * (0,1,0)
+of vertex 3 Centre + Rayon * (0,0,1) 
+and projection of vertices on the sphere
+Example: DEFVAR NT; NT=6; SPHERE_8; I; 17; NT**2; 1; CENTRE;
+Define 36 triangles of vertices on the sphere/8 centred
+at point CENTRE and of radius 1 situe in the sector X Y Z >0
+
+18: 1/1 OF THE SURFACE OF A SPHERE
+The regular triangulation is the regular subdivision
+of 20 regular triangles of an icosahedron with its
+12 vertices on the sphere and the projection of added
+vertices on the sphere.
+Example: DEFVAR N; N=5; SPHERE18; I; 18; 20*N**2; 1; CENTRE;
+Define 500 triangles of vertices on the sphere centred
+at point CENTRE and of radius 1. 
+ATTENTION: The triangles, excepted case N=1,
+are not exactly regular
+ 
+19: TRIANGULATION2  OF CLOSED LINES BY SUBDIVISION
+Data are same as option 9: TRIANGULATION1.
+Only the triangulation algorithm changes.
+It creates triangles from the edges of the closed lines of the
+boundary. After, it adds the internal points of a regular grid
+from the data of the value ARETMX of the edge length or
+the function EDGE_LENGTH(x,y,z). Then, the triangulation quality
+is augmented.
+
+20: EXTRUDED SURFACES of a PLANE POLYGON
+An opened or closed polygon is translated of the vector defined
+by 2 points. If the polygon is closed, the final surface is closed
+and defined the boundary of a solid.
+2 possibilities to indicate the length of edges:
+. Option 0 of debut menu: the constant length is used
+. Option the function EDGE_LENGTH(x,y,z) at the point x,y,z
+
+21: CLOSED SURFACE of a BOX or RECTANGULAR PARALLELIPIPEDRON
+From a CENTRE point , a X LENGTH, a Y WIDTH, a Z HEIGHT,
+the surface of a RECTANGULAR PARALLELIPIPEDRON, i.e. its
+6 rectangular faces, is triangulated from the data
+. Option 0 of debut menu: the constant edge length is used
+. Option the function EDGE_LENGTH(x,y,z) at the point x,y,z
+
+22: CLOSED SURFACE of a CYLINDER or a CONE
+The axis is defined by 2 points, inferior and superior.
+In the perpendicular plan to the axis, the radii, inferior and
+superior define the 2 circles. With 2 different radii, the cylinder
+becomes a trunc of a CONE. The edge length is defined by
+. Option 0 of debut menu: the constant length is used
+. Option the function EDGE_LENGTH(x,y,z) at the point x,y,z
+
+23: CLOSED SURFACE of a TORUS
+The torus centre point, a X axis point, a Y axis point,
+the GREAT and SMALL radius define the TORUS.
+The constant length (option 0 of debut menu) gives a
+quadrangulation of the torus.
+The edge length defined by the function EDGE_LENGTH(x,y,z)
+at the point x,y,z creates a triangulation on the tore.
+
+27: ANGULAR SECTOR OF A CYLINDER
+The surface is that of a quadrangle on a cylinder
+in the plane Z=0 an arc of circle and 
+in the plane Z>0 an other arc of circle (=> truncated cone)
+The degree constant angle is measured from the X-axis.
+The cylinder axis is defined from the origin of reference system
+and a point (to define also the superior plane).
+The edge length in the height or in the sector angular may be
+computed with a geometrical ratio or not.
+Example: S21; i; 21;
+18; {edges for the angle}
+1;  {constant length}
+2; 3; {circle radius in planes Z=O and superior}
+180;  {degrees for 1/2 cylindre (360 is available)}
+5;{height edges} 1.2; {geometrical ratio for angles}
+CENTRE_CIRCLE_SUP; {Define axis ORIGIN-this POINT}
+Define an half cylinder, of axis  ORIGINE-CENTRE_CIRCLE_SUP,
+with a mesh of 18*5=90 quadrangles.
+
+28: FILLET SURFACE WITH TANGENT CYLINDER
+A FILLET surface is defined by 2 lines, them selves
+define by 3 points and a radius of a tangent arc circle
+The FILLET is a RULED SURFACE on these 2 lines.
+A structured quadrangulation is created.  
+                              P4--------------- .      *P5
+                                                   .
+                                                     .
+                        /                /            .
+              THICKNESS/                /              |
+                      /                /               |
+                                                       |
+                                                       P6
+                P1--------------- .      *P2      
+                                      .           /
+                                        .       /
+                                              /     /
+                                         .        /
+                                         |      /
+                                         |  
+                                         |
+                                         P3
+Example: S28; I; 28; 
+2.2; 2.5; {radius of circle 1 and 2}
+25; {edges on each of the 2 lines}
+10; {edges in the thickness}
+P1_L1; P2_L1; P3_L1; 
+{line 1 from P1_L1 to P2_L1 thus tangents to the arc of circle
+thus tangents to P2_L1 P3_L1 and finishing at P3_L1 and does not
+passing through P2_L1}      
+P1_L2; P2_L2; P3_L2; 
+{line 2 from P1_L2 to P2_L2 thus tangents to the arc of circle
+thus tangents to P2_L2 P3_L2 and finishing at P3_L2 and does not
+passing through P2_L2}      
+
+
+29: MODIFY a 2D or 3D MESH WITH MENUS AND MOUSE
+From a mesh of triangles and/or quadrangles (divided into 2 triangles)
+it is possible with the mouse and its buttons to define point or vertex
+or triangle and modify the mesh with the options:
+
+ 1: 'DISPLACE(Button1) or ORBIT(button2) or ZOOM(Button3) the MESH'
+     Exit by Escape
+
+  2: 'MOVE a VERTEX'
+     2 clicks: First to define the vertex, Second to define the new position
+
+  3: 'BACK to the INITIAL XYZ of the VERTEX'
+      Return to the initial XYZ of the last moved vertex
+
+  4: 'DELETE a VERTEX'
+      If internal vertex, triangulation of the triangles with this vertex
+      If external vertex, suppression of the triangles with this vertex
+
+  5: 'ADD a VERTEX INSIDE a TRIANGLE'
+      1 click inside a triangle => 3 sub-triangles into this triangle
+
+  6: 'CUT a COMMON EDGE of 2 TRIANGLES'
+      1 click defines the edge. Creation of a vertex, middle of the edge.
+      A triangle gives 2 sub-triangles.
+
+  7: 'EXCHANGE a DIAGONAL of 2 TRIANGLES'
+      1 click inside a triangle => Swap the diagonals
+
+  8: 'DELAUNAY TRIANGULATION'
+      From a common edge to 2 triangles, Swap the diagonals if
+      R1+R2 > R3+R4 where R is the circomcribed circle radius of a triangle
+      for the 2 choices of 2 triangles
+
+  9: '3 VERTICES CREATE 1 TRIANGLE'
+      3 clicks to define the 3 vertices of the new triangle
+
+ 10: '1 EXTERNAL POINT+2 VERTICES CREATE 1 TRIANGLE'
+      in 2D: 1 click define a new vertex outside the mesh
+      in 3D: Type the X Y Z of the new vertex, outside the mesh
+      2 clicks to define the 2 other vertices of the new triangle
+
+ 11: 'DELETE a 3D TRIANGLE'
+      1 click inside a triangle and the triangle is deleted
+
+ 90: 'STOP and SAVE the MODIFICATIONS'
+
+
+30: QUALITY IMPROVEMENT OF A TRIANGULATION
+For a TRIANGLE the QUALITY = c * r /R where
+r is the inscribed     radius circle of the triangle
+R is the circumscribed radius circle of the triangle
+c is a coefficient to have 1 for the regular triangle.
+Its value is between 0 (degenerated FE) and 1 (regular FE).
+
+The triangles of bad quality may be suppressed
+- either by swapping of diagonals of quadrangle formed by 2 triangles
+with a common edge
+- or if its smaller angle is very small
+- or by subdivision into 2 triangles with the adjacent triangle
+  by the greatest edge opposed to the greatest angle (>160 degres)
+If triangle quality<QUALMN then, it is deleted
+If QUALMN=0, only the swapping of diagonals is tried.
+The adjacent triangulation is improved if the angle between
+their 2 planes <= ANGL2P.
+Example: S30_IMPROVED_TRIANGULATION; I; 30; TRIANGULATION;
+         0.1; {QUALMN}  6; {degrees for ANGL2P}  
+ATTENTION: The geometrie is approached and not strictly respected.
+
+
+31: TRIANGULATION OF A QUADRANGULATION
+Each of quadrangles    S4------S3
+                       |       |
+                       S1------S2
+of the surface mesh are cut into 2 triangles as the options:
+1: S1-S2-S3  and  S1-S3-S4
+2: S1-S2-S4  and  S2-S3-S4
+3: the geatest angle is cut
+Example: S31_TRIANGULATION; I; 31; QUADRANGULATION; 3; 
+
+32: JUNCTION 1 POINT TO EDGES OF A LINE
+the triangle vertices are the point and the 2 vertices of
+each edge of the line. This option permits to close surfaces
+by a cone or a trucated cone.
+Example: S32; I; 32; CENTRE; LINE_TO_JOIN;
+
+33: JONCTION BETWEEN EDGES OF LINES
+Attention:
+- The lines are supposed almost parallel, and do NOT cut
+  each others
+- The edge number between 2 successive lines may be equal
+(creation of quadrangles) or be different of 1
+(creation of triangles).
+Example: S33; I; 33;  5; {lines}
+L1;L2;L3;L4;L5; {names of lines}
+
+34: STRUCTURED QUADRANGLE FROM A STRUCTURED HEXAHEDRON
+2 intervals of vertex numbers among the 3 intervals of variation 
+of vertex indexes of a STRUCTURED HEXAHEDRON are given to define
+the extracted quadrangle.
+One of the 3 required intervals must be reduced to one value
+For a direction (I or J or K), the minimum vertex number is 1
+and the maximum vertex number is the edge number + 1.
+Example: S34; I; 34; STRUCTURED_VOLUME;
+         2;5; 4;8;  1;1; {extracted intervals}
+Extract the quadrangle S34 with the vertices 2 to 5 of I-index,
+the vertices 4 to 8 of J-index and K-index=1.
+
+35: STRUCTURED QUADRANGLE FROM A STRUCTURED QUADRANGLE
+Extrct a quadrangulation defined by 2 intervalles of edge number
+among the 2 edge indexes of the structured quadrangle
+Example: S35; I; 35; STRUCTURED_QUADRANGLE; 2;5; 4;5;
+Extract the quadrangle of 3 slices 2 to 5 in the I-direction of edges
+and  4 to 5 in the J-direction of edges.
+                                  
+36: EXTRACTED SURFACE FROM A SURFACE from a criterion FUNCTION
+Any triangle or quadrangle with all their vertices giving true
+for the logical User's function belongs to the extracted surface
+Example: S36; I; 36; INITIAL_SURFACE;
+deffunc PLANE_X_POSITIF(x,y,z); 
+  PLANE_X_POSITIF = (x>=-0.00001);
+endfunc;
+PLANE_X_POSITIF;
+extract the triangles and/or quadrangles with all vertices
+which have an abscisse >= -0.00001 (for troncature errors)
+                                      
+37: EXTRACTED SURFACE FROM FACES OF A VOLUME
+Any triangle or quadrangle, FE face of the volume mesh
+with all their vertices giving true
+for the logical User's function belongs to the extracted surface
+Example: S37; I; 37; VOLUME;
+deffunc Z_POSITIF(x,y,z);
+        Z_POSITIF = z>0.00001; finfonc;
+        Z_POSITIF;
+        3; {type of extracted FE faces}
+extract the triangles or quadrangles with all vertices of Z>0 
+faces dont les sommets ont une cote >0
+The TYPE of EXTRACTED FE faces may be
+1 : ONLY boundary faces (belongs to one and only one FE)
+2 : ONLY internal faces (belongs to 2 and only 2 FE)
+3 : boundary and internal faces
+
+38: EXTRACT SURFACE BY CLICKING FROM A SURFACE
+The triangles or quadrangles, such that all vertices are inside a
+rectangle defined by 2 clicks, are extracted
+In 3D, the using of the normal vector, avoid to obtain the not
+visible triangles.
+
+39: SUBDIVISION INTO 4 SUB FINITE ELEMENTS of EVERY 2D FINITE ELEMENT
+
+40: EXTRACT SURFACE = SURFACE1 - SURFACE2
+The FE of surface2 are suppressed of the FE of surface1.
+Attention, the FE of surface2 must belong of surface1
+
+41: EXTRACT 3D SURFACE if (NORMAL,VECTOR)>=0
+Extract a triangle or quadrangle of a surface if the dot
+product (NORMAL,VECTOR)>=0 at all its vertices.
+
+42: G1-CONTINUITY OF SURFACES WITH TANGENTS
+At each vertex with tangents to the adjacent edges, a plane is
+defined to pass trough this vertex and minimize the square of
+distances of the extremities of tangents.
+Thus, these extremities are projected to this plane.
+Thus, the surface mesh at this vertex becomes G1-CONTINUOUS.
+Example: S42; i; 42; abcde;
+The surface S42 has at each vertex all its tangents in a same plane
+
+45: LOGICAL OPERATORS ON 2 2D-SURFACE MESHES or 3D-SURFACE MESHES
+In R3, the 2 SURFACES must be CLOSED, i.e. , every edge belongs to
+2 triangles, boundary of 2 solids.
+From 2 meshed surfaces S1 and S2 of plane XoY or R3, it is
+possible to construct a triangulation of the surfaces
+S1 intersection S2, or S1 + S2, or S1 - S2.
+The resulting mesh is a triangulation.
+  
+48: IMPOSED POINTS ONTO the NEAREST VERTEX of the SURFACE
+    The 3 coordinates of the nearest vertex to a named point
+    are replaced by the 3 coordinates of the point.
+    Attention, the quality of finite elements may be modified.
+
+50: MAPPING OF A SURFACE
+An existing surface is transformed by a predefined MAPPING
+Example: S50; PLANE_SYMMETRY; 50; INITIAL_SURFACE;
+The vertices of the SURFACE S50 are the images of vertices
+of INITIAL_SURFACE by the mapping PLANE_SYMMETRY
+
+51: C0-CONTINUITY UNION OF SURFACES
+The resulting surface will be an UNION of surfaces grouped
+under a same name.
+An UNION of surfaces is handled after as any other surface
+The common vertices of 2 surfaces are identified
+to form an unique vertex. If this identification is NOT
+correct, modify the identification precision EPZERO and EPSXYZ
+of vertices by the option 20 of the Debut menu.
+Example: S51; I; 51; 5; S1;S2;S3;S4;S5;
+
+52: G1-CONTINUITY UNION OF SURFACES
+At each vertex of the surface union, with tangents to the adjacent
+edges, a plane is defined to pass trough this vertex and minimize
+the square of distances of the extremities of tangents.
+Thus, these extremities are projected to this plane.
+Thus, the union surface mesh at this vertex becomes G1-CONTINUOUS.
+Example: S52; i; 52; 2; abe; bcde;
+The surface S52, union of surfaces abe and bcde, has at each of its
+vertices all its tangents in a same plane.
+
+81: RENAME THE SURFACE
+    ATTENTION TO THE ORDER OF INPUT!
+    Example: NEW_NAME; I; 81; OLD_NAME;
+    Rename the surface OLD_NAME into NEW_NAME
+
+82: DELETE THIS SURFACE
+    Delete the surface from the input of its name done previously
+    Example: S82; I; 82;   delete the surface S82 if it existed

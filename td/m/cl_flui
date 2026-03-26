@@ -1,0 +1,6 @@
+variable CL_FLUI 'Condition Limite du FLUIDE' entier
+( 1 : 'FORCE Force externe sur la frontiere'
+, 2 : 'BLocage de la VITESSE imposee'
+, 3 : 'BLocage de la PRESSION imposee' 
+, 4 : 'Vitesses initiales'
+, 5 : 'Pressions initiales' ) ;

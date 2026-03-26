@@ -1,0 +1,5 @@
+variable TRACLIGN 'Drawing of Lines' entier
+( 1: 'ALL LINES and ALL POINTS'
+, 2: 'ALL LINES'
+, 3: 'One LINE'
+, 6: 'One LINE NOT CLOSED Its SINGLE VERTICES' ) ;

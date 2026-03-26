@@ -1,0 +1,304 @@
+      SUBROUTINE LIEX05( NTLXLI, LADEFI, RADEFI,
+     %                   NTARLI, MNARLI, NTSOLI, MNSOLI, IERR )
+C+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+C BUT :    GENERER LES ARETES D'UN ARC D'ELLIPSE ( TYPE DE LIGNE 5 )
+C -----    GEOMETRIE C1 (TOUTES LES ARETES ONT MEME ANGLE AU CENTRE)
+C
+C ENTREES:
+C --------
+C LADEFI : TABLEAU ENTIER DE DEFINITION DE LA LIGNE
+C RADEFI : idem        CF ~/td/d/a_ligne__definition
+C NTLXLI : NUMERO DU TABLEAU TS DU LEXIQUE DE LA LIGNE
+C
+C SORTIES:
+C --------
+C NTARLI : NUMERO      DU TMS 'NSEF' DES NUMEROS DES ARETES DE LA LIGNE
+C MNARLI : ADRESSE MCN DU TMS 'NSEF' DES NUMEROS DES ARETES DE LA LIGNE
+C          CF ~/td/d/a___nsef
+C NTSOLI : NUMERO      DU TMS 'XYZSOMMET' DE LA LIGNE
+C MNSOLI : ADRESSE MCN DU TMS 'XYZSOMMET' DE LA LIGNE
+C          CF ~/td/d/a___xyzsommet
+C IERR   : 0 SI PAS D'ERREUR
+C          > 0 SINON
+C+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+C AUTEUR:ALAIN PERRONNET ANALYSE NUMERIQUE LJLL UPMC PARIS NOVEMBRE 2003
+C2345X7..............................................................012
+      COMMON / UNITES / LECTEU , IMPRIM , INTERA , NUNITE(29)
+      include"./incl/langue.inc"
+      include"./incl/gsmenu.inc"
+      include"./incl/a_ligne__definition.inc"
+      include"./incl/a___xyzsommet.inc"
+      include"./incl/a___nsef.inc"
+      include"./incl/ntmnlt.inc"
+      include"./incl/pp.inc"
+      COMMON            MCN(MOTMCN)
+      REAL              RMCN(1)
+      EQUIVALENCE      (MCN(1),RMCN(1))
+C
+      INTEGER           LADEFI(0:*)
+      REAL              RADEFI(0:*)
+      REAL              XYC(2), XYI(2), XYF(2)
+      DOUBLE PRECISION  ANGLE, A
+C
+C     LE TYPE DE LA LIGNE
+      N = LADEFI( WUTYLI )
+      IF( N .NE. 5 ) THEN
+         NBLGRC(NRERR) = 1
+         WRITE(KERR(MXLGER)(1:4),'(I4)') N
+         IF( LANGAG .EQ. 0 ) THEN
+            KERR(1) = 'LIEX05:TYPE INCORRECT '//KERR(MXLGER)(1:4)
+         ELSE
+            KERR(1) = 'LIEX05: INCORRECT TYPE '//KERR(MXLGER)(1:4)
+         ENDIF
+         CALL LEREUR
+         IERR = 1
+         GOTO 9999
+      ENDIF
+C
+C     LE NOMBRE D'ARETES ET DE SOMMETS DE LA LIGNE
+      NBARLI = LADEFI( WBARLI )
+      IF( NBARLI .LT. 3 ) THEN
+         NBLGRC(NRERR) = 1
+         WRITE(KERR(MXLGER)(1:8),'(I8)') NBARLI
+         IF( LANGAG .EQ. 0 ) THEN
+            KERR(1)='NOMBRE INCORRECT D''ARETES '//KERR(MXLGER)(1:8)
+     %               //' <2'
+         ELSE
+            KERR(1)='INCORRECT EDGE NUMBER'//KERR(MXLGER)(1:8)//' <2'
+         ENDIF
+         CALL LEREUR
+         IERR = 1
+         GOTO 9999
+      ENDIF
+C
+C     LE POINT CENTRE DE L'ELLIPSE
+      NUCELL = LADEFI( WUCELL )
+      IF( NUCELL .LE. 0 ) THEN
+         NBLGRC(NRERR) = 1
+         IF( LANGAG .EQ. 0 ) THEN
+            KERR(1) = 'LIEX05: POINT CENTRE INCORRECT'
+         ELSE
+            KERR(1) = 'LIEX05: INCORRECT POINT FOR CENTRE'
+         ENDIF
+         CALL LEREUR
+         IERR = 2
+         GOTO 9999
+      ENDIF
+      CALL LXNLOU( NTPOIN, NUCELL, NTPOI, MN )
+      CALL LXTSOU( NTPOI, 'XYZSOMMET', NTSOM, MNSOM )
+      MN = MNSOM + WYZSOM
+      XYC(1) = RMCN( MN )
+      XYC(2) = RMCN( MN + 1 )
+C
+C     DEMI AXE EN X
+      AXXELL = ABS( RADEFI( WXXELL ) )
+      IF( AXXELL .LE. 0 ) THEN
+         NBLGRC(NRERR) = 1
+         IF( LANGAG .EQ. 0 ) THEN
+            KERR(1) = 'LIEX05: DEMI-AXE EN X NUL'
+         ELSE
+            KERR(1) = 'LIEX05: X HALF AXIS is ZERO'
+         ENDIF
+         CALL LEREUR
+         IERR = 3
+         GOTO 9999
+      ENDIF
+C
+C     DEMI AXE EN Y
+      AXYELL = ABS( RADEFI( WXYELL ) )
+      IF( AXYELL .LE. 0 ) THEN
+         NBLGRC(NRERR) = 1
+         IF( LANGAG .EQ. 0 ) THEN
+            KERR(1) = 'LIEX05: DEMI-AXE EN Y NUL'
+         ELSE
+            KERR(1) = 'LIEX05: Y HALF AXIS is ZERO'
+         ENDIF
+         CALL LEREUR
+         IERR = 4
+         GOTO 9999
+      ENDIF
+C
+C     ANGLE INITIAL POUR CALCULER LE PREMIER POINT DE L'ELLIPSE
+      ANGLEI = RADEFI( WNGLEI )
+      IF( ANGLEI .LT. -180.0 ) THEN
+         NBLGRC(NRERR) = 1
+         IF( LANGAG .EQ. 0 ) THEN
+            KERR(1) = 'LIEX05: ANGLE INITIAL < 180 DEGRES'
+         ELSE
+            KERR(1) = 'LIEX05: INITIAL ANGLE < 180 DEGREES'
+         ENDIF
+         CALL LEREUR
+         IERR = 5
+         GOTO 9999
+      ENDIF
+C
+      IF( ANGLEI .GT. 180.0 ) THEN
+         NBLGRC(NRERR) = 1
+         IF( LANGAG .EQ. 0 ) THEN
+            KERR(1) = 'LIEX05: ANGLE INITIAL > 180 DEGRES'
+         ELSE
+            KERR(1) = 'LIEX05: INITIAL ANGLE > 180 DEGREES'
+         ENDIF
+         CALL LEREUR
+         IERR = 5
+         GOTO 9999
+      ENDIF
+C
+C     ANGLE FINAL POUR CALCULER LE DERNIER POINT DE L'ELLIPSE
+      ANGLEF = RADEFI( WNGLEF )
+      IF( ANGLEF .LT. -180.0 ) THEN
+         NBLGRC(NRERR) = 1
+         KERR(1) = 'LIEX05: ANGLE FINAL < 180 DEGRES'
+         CALL LEREUR
+         IERR = 5
+         GOTO 9999
+      ENDIF
+      IF( ANGLEF .GT. 180.0 ) THEN
+         NBLGRC(NRERR) = 1
+         IF( LANGAG .EQ. 0 ) THEN
+            KERR(1) = 'LIEX05: ANGLE FINAL < 180 DEGRES'
+         ELSE
+            KERR(1) = 'LIEX05: FINAL ANGLE < 180 DEGREES'
+         ENDIF
+         CALL LEREUR
+         IERR = 5
+         GOTO 9999
+      ENDIF
+      IF( ANGLEI .EQ. ANGLEF ) THEN
+         NBLGRC(NRERR) = 1
+         IF( LANGAG .EQ. 0 ) THEN
+            KERR(1) = 'LIEX05: ANGLE INITIAL = ANGLE FINAL'
+         ELSE
+            KERR(1) = 'LIEX05: INITIAL ANGLE = FINAL ANGLE'
+         ENDIF
+         CALL LEREUR
+         IERR = 5
+         GOTO 9999
+      ENDIF
+C
+C     LES ANGLES DE L'ARC EN RADIANS
+      ANGLRI = REAL( ANGLEI * ATAN(1D0) * 4D0 / 180D0 )
+      ANGLRF = REAL( ANGLEF * ATAN(1D0) * 4D0 / 180D0 )
+C
+C     POUR RESPECTER LE POINT INITIAL DE L'ARC
+      IF( ANGLRI .GT. ANGLRF ) THEN
+         ANGLRI = REAL( ANGLRI -  ATAN(1D0) * 8D0 )
+      ENDIF
+C
+C     COORDONNEES DANS LE REPERE PROPRE DE L'ELLIPSE DU 1-ER POINT DE L'ARC
+      XYI(1) = XYC(1) + AXXELL * COS( ANGLRI )
+      XYI(2) = XYC(1) + AXYELL * SIN( ANGLRI )
+C
+C     COORDONNEES DANS LE REPERE PROPRE DE L'ELLIPSE DU DERNIER POINT DE L'ARC
+      XYF(1) = XYC(1) + AXXELL * COS( ANGLRF )
+      XYF(2) = XYC(1) + AXYELL * SIN( ANGLRF )
+C
+C     1 TG EN CHAQUE SOMMET
+      NBSOLI = NBARLI + 1
+      NBTGS  = NBSOLI
+C
+C     CONSTRUCTION DU TABLEAU 'XYZSOMMET'
+C     -----------------------------------
+      CALL LXTNDC( NTLXLI, 'XYZSOMMET', 'ENTIER',
+     %             WYZSOM + 3*NBSOLI + 3*NBTGS )
+      CALL LXTSOU( NTLXLI, 'XYZSOMMET',  NTSOLI, MNSOLI )
+C
+C     LE NOMBRE DE SOMMETS
+      MCN( MNSOLI + WNBSOM ) = NBSOLI
+C     LE NOMBRE DE TANGENTES
+      MCN( MNSOLI + WNBTGS ) = NBTGS
+C
+C     ADRESSE DU DEBUT DES COORDONNEES DU 1-ER SOMMET DE LA LIGNE
+      MNS  = MNSOLI + WYZSOM
+C     ADRESSE DU DEBUT DES 3 COMPOSANTES DE LA 1-ERE TANGENTE
+      MNTG = MNS + 3 * NBSOLI
+C
+C     LES COORDONNEES DES NBARLI POINTS ET TANGENTES DE L'ELLIPSE
+C     ===========================================================
+C     FONCTION TAILLE_IDEALE NON PRISE EN COMPTE
+C     ANGLE CONSTANT ENTRE LES SOMMETS
+      A     = DBLE( ANGLRF - ANGLRI ) / NBARLI
+      ANGLE = ANGLRI
+      DO 40 I=1,NBSOLI
+C
+C        LES COORDONNEES 2D DU POINT I
+         RMCN( MNS     ) = REAL( XYC(1) + AXXELL * COS( ANGLE ) )
+         RMCN( MNS + 1 ) = REAL( XYC(2) + AXYELL * SIN( ANGLE ) )
+         RMCN( MNS + 2 ) = 0
+         MNS = MNS + 3
+C
+C        LA TANGENTE AU POINT INITIAL DE L'ARETE I
+C        L'INTERVALLE DU PARAMETRE T EST [0,1] POUR TOUTE L'ELLIPSE
+C        LE PARAMETRE T DE L'ARETE I EST DANS [(i-1)/NBARLI, i/NBARLI]
+         RMCN( MNTG     ) = REAL( - A * AXXELL * SIN(ANGLE) )
+         RMCN( MNTG + 1 ) = REAL(   A * AXYELL * COS(ANGLE) )
+         RMCN( MNTG + 2 ) = 0
+         MNTG = MNTG + 3
+C
+C        L'ANGLE OX POINT I
+         ANGLE = ANGLE + A
+C
+ 40   CONTINUE
+C
+C     AJOUT DE LA DATE
+      CALL ECDATE( MCN(MNSOLI) )
+C
+C     AJOUT DU NUMERO DU TABLEAU DESCRIPTEUR
+      MCN( MNSOLI + WBCOOR ) = 3
+      MCN( MNSOLI + MOTVAR(6) ) = NONMTD( '~>>>XYZSOMMET' )
+C
+C     CONSTRUCTION DU TABLEAU 'NSEF' LIGNE STRUCTUREE
+C     -----------------------------------------------
+      CALL LXTNDC( NTLXLI, 'NSEF', 'ENTIER', WBARSE + 1 + 4*NBARLI )
+      CALL LXTSOU( NTLXLI, 'NSEF',  NTARLI , MNARLI )
+C
+C     LE TYPE DE L'OBJET : ICI LIGNE
+      MCN( MNARLI + WUTYOB ) = 2
+C     LE TYPE NON-FERME DE FERMETURE DU MAILLAGE
+      MCN( MNARLI + WUTFMA ) = 0
+C     LE NOMBRE DE SOMMETS PAR EF
+      MCN( MNARLI + WBSOEF ) = 2
+C     LE NOMBRE DE TANGENTES PAR EF
+      MCN( MNARLI + WBTGEF ) = 2
+C     LE NOMBRE D'ARETES DU SEGMENT STRUCTURE
+      MCN( MNARLI + WBEFOB ) = NBARLI
+C     LE NOMBRE D'EF AVEC TANGENTES
+      MCN( MNARLI + WBEFTG ) = NBARLI
+C     LE NOMBRE D'EF AVEC POINTEUR = NBEFTG = NBARLI
+      MCN( MNARLI + WBEFAP ) = NBARLI
+C     LE TYPE DU MAILLAGE : ICI SEGMENT STRUCTURE
+      MCN( MNARLI + WUTYMA ) = 2
+C     LE NOMBRE D'ARETES DU SEGMENT STRUCTURE
+      MCN( MNARLI + WBARSE ) = NBARLI
+C
+C     LE NUMERO DE L'EF AVEC TANGENTES
+      MNS = MNARLI + WBARSE
+      DO 30 I=1,NBARLI
+C        LE POINTEUR SUR LES EF A TG : L'ARETE I EST L'EF I AVEC 2 TGS
+         MCN( MNS + I ) = I
+C        LE NUMERO GEOMETRIQUE EST ICI L'ELLIPSE : 2
+         MCN( MNS + NBARLI + I ) = 2
+ 30   CONTINUE
+C
+C     LE NUMERO DES TGS DE CHAQUE ARETE
+C     UNE TANGENTE EN CHAQUE SOMMET
+      MNS = MNS + 2 * NBARLI + 1
+      DO 70 I=1,NBARLI
+C        NUMERO DE LA TANGENTE AU SOMMET INITIAL DE L'ARETE I
+         MCN(MNS  ) = I
+C       -NUMERO DE LA TANGENTE AU SOMMET FINAL  DE L'ARETE I
+         MCN(MNS+1) = -(I+1)
+         MNS = MNS + 2
+ 70   CONTINUE
+C
+C     AJOUT DE LA DATE
+      CALL ECDATE( MCN(MNARLI) )
+C
+C     AJOUT DU NUMERO DU TABLEAU DESCRIPTEUR
+      MCN( MNARLI + MOTVAR(6) ) = NONMTD( '~>>>NSEF' )
+      IERR = 0
+C
+C     ERREUR
+C     ======
+ 9999 RETURN
+      END

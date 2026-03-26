@@ -1,0 +1,23 @@
+From the INITIAL SURFACE is associated an orthonormal reference system E0
+defined by the 3 points P01 P02 P03 
+.P01 is the origin
+.P01-P02 define the first  vector E1
+.P01-P03 define the second vector E2, thus
+ E3 = E1 PRODUIT VECTORIEL E2
+ E2 = E3 PRODUIT VECTORIEL E1
+Norm(E1)=Norm(E2)=Norm(E3)=1
+
+For every slice i, an orthonormal reference system Ei is defined
+from the 3 points i, in a same way.
+
+
+The MAPPING of the INITIAL SURFACE is the MAPPING of the DISPLACEMENT
+from E0 to Ei
+
+The vertices of triangles or quadrangles of displaced surfaces 
+are link to by 2 to form pentahedra and hexahedra.
+
+Example: V14.0; I; 14; INIT_SURFACE; 0; 2; {slices number}
+         P01;P02;P03;  P11;P12;P13;   P21;P22;P23;
+        {the 3 points i define the reference system Ei}
+

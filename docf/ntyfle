@@ -1,0 +1,5 @@
+La valeur de cet entier definit le type des aretes a extraire
+ 1 : seulement parmi les aretes frontalieres (appartenant a 1 seul EF)
+ 2 : seulement parmi les aretes internes     (appartenant a 2 EF)
+ 3 : n'importe quel type d'arete
+

@@ -1,0 +1,81 @@
+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+tubo2d Results on the time interval [0,5] for the FLOW on the rectangle [0,10]x[0,4]  INCOMPRESSIBLE NAVIER-STOKES EQUATIONS
+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+Cf $MEFISTO/testf/tubo2d/tubo2d.*c*
+
+The Mesh is done with
+   tubo2d.mailth to create TAYLOR-HOOD   Finite Element Triangles on the rectangle [0,10]x[0,4]
+or tubo2d.mailbf to create BREZZI-FORTIN Finite Element Triangles on the rectangle [0,10]x[0,4]
+
+The Flow Characteristics is chosen as one of the 3 followings
+
+DefVar RhoAir; RhoAir=1.2;         { kg/m3 Wet Air Mass Density at sea level}
+DefVar MuAir;  MuAir=18.5E-6;      { kg/(m.s) or Pa.s Air Dynamic Viscosity=18.5 10-6}
+DefVar NuAir;  NuAir=MuAir/RhoAir; { m2/s Air Kinematic Viscosity=15.6 10-6 a 20 C}
+
+DefVar RhoWater; RhoWater=1000;    { kg/m3 MASS Density of WATER  cf wikipedia}
+DefVar MuWater;  MuWater=1.002e-3; { Pa.s=kg/(m s) at 20C WATER DYNAMIC VISCOSITY}
+DefVar NuWater;  NuWater=MuWater/RhoWater; { m2/s WATER KINEMATIC VISCOSITY }
+
+DefVar RhoClassic; RhoClassic=1;                   {kg/m3    CLASSIC MASS      DENSITY }
+DefVar MuClassic;  MuClassic=1;                    {kg/(m s) CLASSIC DYNAMIC   VISCOSITY}
+DefVar NuClassic;  NuClassic=MuClassic/RhoClassic; {m2/s     CLASSIC KINEMATIC VISCOSITY}
+
+DefVar CoGrPr;  CoGrPr=1.;    { Coefficient du Gradient de Pression CoGrPr
+                                 dans l'equation de NAVIER-STOKES incompressible }
+
+{ The initial conditions }
+DefFunc InitVelocity(t,x,y,z,ntyob,numob,nocomp);
+if nocomp=1 then
+   InitVelocity=0;
+else
+   InitVelocity=0;
+EndIf;
+EndFunc;
+
+DefFunc InitPressure(t,x,y,z,ntyob,numob);
+  InitPressure=0;
+EndFunc;
+
+
+The Flow Solver Program Result Name is defined from 
+th    : TAYLOR-HOOD   Finite Element Type thanks to tubo2d.meshth
+bf    : BREZZI-FORTIN Finite Element TYpe thanks to tubo2d.meshbf
+ns    : Resolution of INCOMPRESSIBLE NAVIER-STOKES EQUATIONS
+7     : Option 7 of debuflui Menu: 7; IMPLICIT   UNSTEADY NAVIER-STOKES SOLVER
+8     : Option 8 of debuflui Menu: 8; FRACTIONAL UNSTEADY NAVIER-STOKES SOLVER
+cr    : Option 1 of methrecr Menu: Ax=b are SOLVED by SKYLINE CROUT FACTORIZATION A=L D tL
+cg    : Option 2 of methrecr Menu: Ax=b are SOLVED by CONDENSED CONJUGATE GRADIENT method
+EpsRGC: Value to STOP Conjugate Gradient Iterations
+
+All Flow Solver DataFiles contain
+    1;  { SKYLINE CROUT FACTORIZATION L D tL }
+or  2;  { CONDENSED MATRIX CONJUGATE GRADIENT }  1; { FACTORIZATION LEVEL VALUE (0 or 1 or 2) }
+
+  0.0;  { INITIAL TIME }
+  5.0;  { FINAL   TIME }
+ 0.01;  { STEP of TIME }
+   50;  { NUMBER of ADDED SOLUTION VECTOR FILES }
+
+
+ALL NUMERICAL RESULTS are DONE at TIME=5.0 :
+
+tubo2d.ns7crth_Classic.List_Laminaire:  Time STEP      500 at Time=   5.00002     VelocMean=   1.97501     VelocMax=   3.00020     PressMean=   9.71437     PressMax-Min=   19.2721     Flux-=  -8.00003     Flux+=   8.00003     Flux-+=   0.00000    
+tubo2d.ns7crth_Classic.List_Laminaire:  Time STEP      500 at Time=   5.00002     VelocMean=   1.15145     VelocMax=   3.00020     PressMean=   6.95696     PressMax-Min=   378.319     Flux-=  -4.66667     Flux+=   4.66667     Flux-+= -0.496387E-16
+tubo2d.ns7crth_Classic.List_Laminaire:  Time STEP      500 at Time=   5.00002     VelocMean=   1.97501     VelocMax=   3.00020     PressMean=   9.71437     PressMax-Min=   19.2721     Flux-=  -8.00003     Flux+=   8.00003     Flux-+=   0.00000    
+tubo2d.ns7crth_Classic.List_Laminaire:  Time STEP      500 at Time=   5.00002     VelocMean=   1.15145     VelocMax=   3.00020     PressMean=   6.95696     PressMax-Min=   378.319     Flux-=  -4.66667     Flux+=   4.66667     Flux-+= -0.496387E-16
+tubo2d.ns8crth_Classic.List_Laminaire:  Time STEP      500 at Time=   5.00002     VelocMean=   1.15148     VelocMax=   3.00001     PressMean=   6.86546     PressMax-Min=   350.392     Flux-=  -4.66667     Flux+=   4.66667     Flux-+=  0.177281E-16
+
+tubo2d.stoke56crth_Water_List_Laminaire:Time STEP      500 at Time=   5.00002     VelocMean=   1.97146     VelocMax=   3.00001     PressMean=   1792.96     PressMax-Min=   3585.92     Flux-=  -8.00003     Flux+=   8.00003     Flux-+=   0.00000    
+tubo2d.stoke56crth_Water_List_Laminaire:Time STEP      500 at Time=   5.00002     VelocMean=   1.14988     VelocMax=   3.00001     PressMean=   1789.27     PressMax-Min=   3587.70     Flux-=  -4.66401     Flux+=   4.66401     Flux-+= -0.496387E-16
+
+tubo2d.ns7crth_Water.List_h0.05_Turbul: Time STEP      500 at Time=   5.00002     VelocMean=   2.00275     VelocMax=   5.85662     PressMean=   4779.41     PressMax-Min=   7877.96     Flux-=  -8.00003     Flux+=   8.00003     Flux-+=   0.00000    
+tubo2d.ns7crth_Water.List_h0.05_Turbul: Time STEP      500 at Time=   5.00002     VelocMean=   1.16176     VelocMax=   6.86666     PressMean=   3092.11     PressMax-Min=   361084.     Flux-=  -4.66667     Flux+=   4.66667     Flux-+=  0.709124E-17
+tubo2d.ns7crth_Water.List_h0.05_Turbul: Time STEP      500 at Time=   5.00002     VelocMean=   2.00275     VelocMax=   5.85662     PressMean=   4779.41     PressMax-Min=   7877.96     Flux-=  -8.00003     Flux+=   8.00003     Flux-+=   0.00000    
+tubo2d.ns7crth_Water.List_h0.05_Turbul: Time STEP      500 at Time=   5.00002     VelocMean=   1.16176     VelocMax=   6.86666     PressMean=   3092.11     PressMax-Min=   361084.     Flux-=  -4.66667     Flux+=   4.66667     Flux-+=  0.709124E-17
+tubo2d.ns7crth_Water.List_h0.1_Turbul:  Time STEP      500 at Time=   5.00002     VelocMean=   2.02542     VelocMax=   6.89954     PressMean=   2949.31     PressMax-Min=   9451.50     Flux-=  -8.00003     Flux+=   8.00003     Flux-+=   0.00000    
+tubo2d.ns7crth_Water.List_h0.1_Turbul:  Time STEP      500 at Time=   5.00002     VelocMean=   1.19186     VelocMax=   11.8129     PressMean=   3416.85     PressMax-Min=   361779.     Flux-=  -4.66667     Flux+=   4.66667     Flux-+= -0.496387E-16
+tubo2d.ns7crth_Water.List_h0.1_Turbul:  Time STEP      500 at Time=   5.00002     VelocMean=   2.02542     VelocMax=   6.89954     PressMean=   2949.31     PressMax-Min=   9451.50     Flux-=  -8.00003     Flux+=   8.00003     Flux-+=   0.00000    
+tubo2d.ns7crth_Water.List_h0.1_Turbul:  Time STEP      500 at Time=   5.00002     VelocMean=   1.19186     VelocMax=   11.8129     PressMean=   3416.85     PressMax-Min=   361779.     Flux-=  -4.66667     Flux+=   4.66667     Flux-+= -0.496387E-16
+tubo2d.ns8crth_Water.List_h0.1_Turbul:  Time STEP      500 at Time=   5.00002     VelocMean=   1.19097     VelocMax=   11.4435     PressMean=   3146.13     PressMax-Min=   358436.     Flux-=  -4.66667     Flux+=   4.66667     Flux-+= -0.638212E-16
+

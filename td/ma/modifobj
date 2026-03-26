@@ -1,0 +1,4 @@
+variable MODIFOBJ 'Modify definition OBJECT' entier
+( 1 : 'SUPPRESS this OBJECT',
+  2 : 'ADD a PLSV',
+  3 : 'REMOVE a PLSV' ) ;

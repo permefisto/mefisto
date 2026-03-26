@@ -1,0 +1,12 @@
+deftms  ~>OBJET>>DEFINITION  'Definition d''un OBJET' 
+variable muet DATE 'date de creation du tableau'   reel2  ;
+variable muet NUTD 'numero du tableau descripteur' entier ; 
+variable SDOUNO 'mode de traitement' entier
+      ( -1: 'Noeuds NON renumerotes' ,
+         0: 'Classique 1D ou 2D ou 3D',
+         1: 'Sous-domaines 2D',
+         2: 'Joints 2D' ) ;
+variable NBDOBJ 'nombre des Points Lignes Surfaces Volumes Objets de l''objet'
+         entier ;
+tableau  NTYOBJ(1..NBDOBJ) 'nom du type PLSVO et nom du PLSVO' typeobjet ;
+fintms ;

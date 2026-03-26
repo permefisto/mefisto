@@ -1,0 +1,13 @@
+16: COUCHES GROSSIES D'UNE LIGNE
+La ligne initiale doit avoir ses aretes toutes decrites dans le meme sens
+Dans la direction normale aux aretes une quadrangulation est effectuee
+composee de NBCOLI couches, chacunes d'une petite epaisseur EPCOLI
+pour representer des couches limites. 
+Ensuite NBDECO autres couches sont quadrangulees avec pour epaisseur une
+variation lineaire entre EPCOLI et la derniere epaisseur EPDECO a fournir
+Attention: Si les normales aux aretes se croisent, la quadrangulation
+eloignee de la ligne initiale peut devenir INCORRECTE par croisements...
+Il faut se limiter a un voisinage de la ligne...
+Les 2 epaisseurs fournies doivent etre de meme signe.
+Si l'epaisseur EPCOLI est negative, les couches sont faites de l'autre
+cote de la ligne initiale.

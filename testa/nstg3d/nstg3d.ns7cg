@@ -1,0 +1,151 @@
+{ ====================================================================== }
+{ MEFISTO Software     : April 23-th 2011 Version                        }
+{ USER's  Name         : Alain Perronnet                                 }
+{ Project Name         : ns3d Navier-Stokes TAYLOR-GREEN vortex solution }
+{ Date                 : 2011/04/23                                      }
+{ ====================================================================== }
+
+DefVar  RhoWater; RhoWater=1000; { kg/m3 WATER MASS Density }
+DefVar  nu;       nu=8.9E-4;    { WATER VISCOSITY in Pa.s cf wikipedia}
+
+{The Taylor-Green Vortex Solution 2d Cf. wikipedia}
+{The exact-solutions: ZVelocity is ZERO => Solution 2d is 3d}
+DefFunc F(t); F=exp(- 2 * nu * t);  EndFunc;
+DefFunc XVelocity(t,x,y,z); XVelocity= sin(x)*cos(y)*F(t); EndFunc;
+DefFunc YVelocity(t,x,y,z); YVelocity=-cos(x)*sin(y)*F(t); EndFunc;
+DefFunc ZVelocity(t,x,y,z); ZVelocity=0; EndFunc;
+DefFunc Pressure (t,x,y,z); 
+   Pressure=RhoWater*(cos(2*x)+cos(2*y))*(F(t)**2)/4;
+EndFunc;
+
+DefFunc Exact_Velocity(t,x,y,z,nocomp);
+if nocomp=1 then
+   Exact_Velocity=XVelocity(t,x,y,z);
+else
+   if nocomp=2 then
+     Exact_Velocity=YVelocity(t,x,y,z);
+   else
+     Exact_Velocity=ZVelocity(t,x,y,z);
+   EndIf;
+EndIf;
+EndFunc;
+
+DefFunc Exact_Pressure(t,x,y,z);
+  Exact_Pressure = Pressure(t,x,y,z);
+EndFunc;
+
+
+{ The boundary conditions }
+DefFunc FixVelocity(t,x,y,z,ntyob,numob,nocomp);
+if nocomp=1 then
+   FixVelocity=XVelocity(t,x,y,z);
+else if nocomp=2 then
+       FixVelocity=YVelocity(t,x,y,z);
+     else
+       FixVelocity=ZVelocity(t,x,y,z);
+     EndIf;
+EndIf;
+EndFunc;
+
+DefFunc FixPressure(t,x,y,z,ntyob,numob);
+  FixPressure=Pressure(t,x,y,z);
+EndFunc;
+
+{ The initial conditions }
+DefFunc InitVelocity(t,x,y,z,ntyob,numob,nocomp);
+if nocomp=1 then
+   InitVelocity=XVelocity(t,x,y,z);
+else if nocomp=2 then
+       InitVelocity=YVelocity(t,x,y,z);
+     else
+       InitVelocity=ZVelocity(t,x,y,z);
+     EndIf;
+EndIf;
+EndFunc;
+
+DefFunc InitPressure(t,x,y,z,ntyob,numob);
+  InitPressure=Pressure(t,x,y,z);
+EndFunc;
+
+
+2;  { FLUID INPUT DATA }
+
+ { VOLUME CubePi }{ The Fluid Characteristics ========================}
+ 1;  { Rot MASS Density }
+ 1;  { Mass Constant }
+ 1.0;{ DMASSE Value of the constant mass density }
+
+ 2;  { nu  FLUID VISCOSITY }
+ 1;  { Constant Viscosity }
+ nu; { VISCOS WATER VISCOSITY in Pa.s  cf wikipedia }
+     { The dynamic viscosity nu of water is 8.90 × 10**-4 Pa·s at about 25 °C
+       As a function of temperature T(K): nu(Pa·s) = A × 10**(B/(T-C))
+       where A=2.414 × 10**-5 Pa·s; B = 247.8 K; and C = 140 K. }
+
+ 3;  { FOmega INTERIOR FORCES }
+ 0;  { Delete the Interior Force }
+
+ 8;  { PRESSURE Coefficient }
+ 1;  { Constant Pressure Coefficient }
+ 1/RhoWater; { Pressure Coefficient Value of fluid }
+
+ 4;    { INITIAL VELOCITIES ==========================================}
+-1;    { Initial Velocity Function }
+ 3;    { NBCOVI Number of Initial Velocity Components at a node }
+ 1; 2; 3;{ NUCOVI(1..NBCOVI) Number of Initial Velocity Components }
+ InitVelocity; { NAME of the Initial Velocity FUNCTION m/s }
+
+ 5;    { INITIAL PRESSURE ============================================}
+ -1;   { INITIAL PRESSURE FUNCTION }
+ InitPressure; { VAPRE0 Initial Pressure Function Name }
+
+ @;
+
+ { SURFACE CubeSurf } { The Boundary Conditions ======================}
+ 2; { Fixation of the VELOCITY }
+-1; { Fixed Velocity FUNCTION }
+ 3; { NBCOBV number of components of the fixed Velocity }
+ 1; 2; 3;{ NUCOBV(1..NBCOBV) nb of each component of the fixed velocity}
+ FixVelocity;
+
+ 3; { BLOCKING-UP the IMPOSED PRESSURE }
+-1; { Fixed Pressure FUNCTION }
+ FixPressure; {Name of Pressure Function }
+ @;
+
+
+20;    { PRECISION DATA  to STOP the CONJUGATE GRADIENT ITERATIONS }
+ 1e-6; { EPSILON   VALUE to STOP the CONJUGATE GRADIENT ITERATIONS }
+@;
+
+7;  { UNSTEADY IMPLICIT NAVIER-STOKES FLUID SOLVER ========================}
+   2;   { CONDENSED MATRIX CONJUGATE GRADIENT + FACTORIZATION LEVEL }
+     1; { FACTORIZATION LEVEL VALUE (0 or 1 or 2) }
+ 0.0;   { INITIAL TIME }
+ 1.0;   { FINAL   TIME }
+ 0.01;  { STEP of TIME }
+  10;   { NUMBER of ADDED SOLUTION VECTORS }
+@;
+@;
+
+10; { DRAWING of VELOCITIES PRESSURES ===========================}
+ 2; { INITIAL and FINAL TIME of SOLUTIONS VECTORS to DRAW }
+    { INITIAL TIME? } 0.0;
+    { FINAL TIME?   } 2.0;
+
+ 2; { The VELOCITY is drawn with ARROWS }
+ 90;{ DRAWING of VELOCITY ARROWS }
+ 90;{ Continue the DRAWING }
+ @;
+ @;
+
+ 1; { The PRESSURE drawings }
+ 2; { ISO-PRESSURES COLOR ZONES }
+ 90;{ Drawing of ZONES of COLORS }
+ 90;{ Continue the DRAWING }
+ @;
+ @;
+ @;
+ @;
+ @;
+CLOSE;

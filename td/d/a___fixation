@@ -1,0 +1,14 @@
+deftms ~>>>FIXATION 'Deplacements a IMPOSER'
+variable muet DATE 'date de creation du tableau'   reel2  ;
+variable muet NUTD 'numero du tableau descripteur' entier ; 
+variable LTFIXA    'Type de la Fixation' entier 
+( 1 : 'Fixation constante'
+,-1 : 'Fonction Fixation'
+, 0 : 'Fixation a supprimer' ) ;
+variable NBCOFI 'Nombre de composantes du deplacement fixe' entier ; 
+tableau  NUCOFI(1..NBCOFI) 'No des composantes du deplacement fixe' entier ;
+cas LTFIXA 
+ 1 : tableau  FIXAT(1..NBCOFI) 'Valeur des composantes deplacement fixe' reel ;
+-1 : variable NFFIXA 'Nom de la fonction FIXATION'  ^~>FONCTION ; 
+fincas ;
+fintms ;

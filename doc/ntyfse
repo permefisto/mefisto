@@ -1,0 +1,4 @@
+The value of this integer define the type of FACES which will be extracted
+ 1 : ONLY the BOUNDARY FACES (belong to only one Finite Element)
+ 2 : ONLY the INTERIOR FACES (belong to      two Finite Elements)
+ 3 : ANY TYPE of FACES (INTERIOR or on BOUNDARY)

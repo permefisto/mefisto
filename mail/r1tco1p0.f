@@ -1,0 +1,146 @@
+      SUBROUTINE R1TCO1P0( NPt,     PTXYZD, NOTEIN, NOTETR, NUDTETR,
+     %                     NOTET1,  COBARY )
+C+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+C BUT :    RECHERCHE A PARTIR DU TETRAEDRE NOTEIN D'UN TETRAEDRE NOTET1
+C -----    CONTENANT LE POINT NPt
+
+C ENTREES :
+C ---------
+C NPt    : NUMERO DU POINT PTXYZD DE TETRAEDRE LE CONTENANT A TROUVER
+C PTXYZD : X Y Z DISTANCE SOUHAITEE DES POINTS
+
+C NOTEIN : NUMERO DU TETRAEDRE INITIAL DE RECHERCHE
+C NOTETR : LISTE DES TETRAEDRES
+C          SOMMET1,    SOMMET2,    SOMMET3,    SOMMET4,
+C          TETRAEDRE1, TETRAEDRE2, TETRAEDRE3, TETRAEDRE4
+C          DE L'AUTRE COTE DE LA FACE
+C          1: 123      2: 234      3: 341      4: 412
+C NUDTETR: PLUS GRAND NUMERO DANS NOTETR DE TETRAEDRE ACTIF OCCUPE
+
+C SORTIES :
+C ---------
+C NOTET1 : >0 NUMERO NOTETR DU TETRAEDRE CONTENANT LE PTXYZD(1,NPt)
+C          =0 SI NON RETROUVE
+C COBARY : LES 4 COORDONNEES BARYCENTRIQUES DE PTXYZD(1,NPt) DANS
+C          LE TETRAEDRE NOTET1 SI NOTET1>0
+C+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+C AUTEUR : ALAIN PERRONNET ANALYSE NUMERIQUE UPMC PARIS        Juin 1992
+C MODIFS : ALAIN PERRONNET Saint PIERRE du PERRAY           Octobre 2018
+C MODIFS : ALAIN PERRONNET Saint PIERRE du PERRAY          Novembre 2018
+C23456...............................................................012
+      include"./incl/langue.inc"
+      INTEGER           NOTETR(8,*)
+      DOUBLE PRECISION  PTXYZD(1:4,1:*), COBARY(4), CBSOM, VTE
+
+C     RECHERCHE D'UN TETRAEDRE NOTET1 CONTENANT LE POINT NPt
+C     A PARTIR DU TETRAEDRE NOTEIN
+      IF( NOTEIN .LE. 0           ) GOTO 20
+      IF( NOTETR(1,NOTEIN) .LE. 0 ) GOTO 20
+
+      NBTEVU = 0
+      NTOP   = -1
+      NOTEM6 = -6
+      NOTEM5 = -5
+      NOTEM4 = -4
+      NOTEM3 = -3
+      NOTEM2 = -2
+      NOTEM1 = -1
+      NOTET0 = 0
+      NOTET1 = NOTEIN
+
+C     LE POINT NPt EST IL DANS LE TETRAEDRE NOTET1?
+C     ---------------------------------------------
+ 10   NBTEVU = NBTEVU + 1
+      CALL PTDSTE( PTXYZD(1,NPt), PTXYZD, NOTETR(1,NOTET1),
+     %             NONOUI, VTE, COBARY )
+
+      IF( NONOUI .GT. 0 ) THEN
+C        OUI: LE TETRAEDRE NOTET1 CONTIENT LE POINT NPt
+         GOTO 100
+      ENDIF
+
+ccc      IF( NONOUI .LT. 0 ) THEN
+cccC        LE TETRAEDRE NOTET1 EST DE VOLUME NUL
+ccc         IF( LANGAG .EQ. 0 ) THEN
+ccc            PRINT*,'r1tco1p0: NoPOINT=',NPt,
+ccc     %             ' TETRAEDRE ',NOTET1,' DE VOLUME=',VTE,'! A PROBLEME'
+ccc         ELSE
+ccc            PRINT*,'r1tco1p0: NoPOINT=',NPt,
+ccc     %         ' TETRAHEDRON ',NOTET1,' of VOLUME=',VTE,'! WITH PROBLEM'
+ccc         ENDIF
+ccc         PRINT*,'r1tco1p0: NOTETR=',(NOTETR(K,NOTET1),K=1,8)
+ccc         GOTO 9999
+ccc      ENDIF
+
+C     LE TETRAEDRE NOTET1 NE CONTIENT PAS LE POINT NPt
+C     RECHERCHE DE SA FACE NOFMAX QUI REGARDE DIRECTEMENT LE POINT NPt
+C     ----------------------------------------------------------------
+      CALL FAVRPT( PTXYZD(1,NPt), NOTET1, NOTETR, PTXYZD,  NOFMAX )
+
+C     LE TETRAEDRE DE L'AUTRE COTE DE LA FACE POUR PROGRESSER VERS NPT
+      NOTEM6 = NOTEM5
+      NOTEM5 = NOTEM4
+      NOTEM4 = NOTEM3
+      NOTEM3 = NOTEM2
+      NOTEM2 = NOTEM1
+      NOTEM1 = NOTET0
+      NOTET0 = NOTET1
+      IF( NOFMAX .EQ. 0 ) GOTO 20
+
+C     LE TETRAEDRE OPPOSE A LA FACE NOFMAX DE NOTET1
+      NTOP = NOTETR( 4+NOFMAX, NOTET1 )
+      IF( NTOP .GT. 0 ) THEN
+C        LA FACE N'EST PAS FRONTIERE
+         NOTET1 = NTOP
+      ELSE
+C        LA FACE EST FRONTIERE
+         GOTO 20
+      ENDIF
+
+C     EXISTE T IL UNE BOUCLE INFINIE PERIODIQUE A MOINS DE 7 TETRAEDRES
+      IF( NOTET1 .NE. NOTEM1 .AND. NOTET1 .NE. NOTEM2 .AND.
+     %    NOTET1 .NE. NOTEM3 .AND. NOTET1 .NE. NOTEM4 .AND.
+     %    NOTET1 .NE. NOTEM5 .AND. NOTET1 .NE. NOTEM6 ) THEN
+C        PAS DE BOUCLE PERIODIQUE DETECTEE
+         IF( NBTEVU .LE. 1000 ) THEN
+            GOTO 10
+         ENDIF
+      ENDIF
+
+C     ICI BOUCLE INFINIE PERIODIQUE A 2 ou 3 ou 4 ou 5 ou 6 ou 7 TETRAEDRES
+C     => PARCOURS EXHAUSTIF DES TETRAEDRES NUDTETR A 1 POUR TROUVER
+C     UN TETRAEDRE NOTET1 CONTENANT LE POINT NPt (NON SOMMET)
+C     ---------------------------------------------------------------------
+ 20   CALL ETOIL1TET( NPt,    PTXYZD(1,NPt), PTXYZD, NUDTETR, NOTETR,
+     %                NOTET1, COBARY )
+
+ 100  IF( NOTET1 .GT. 0 ) THEN
+
+C        LE TETRAEDRE NOTET1 CONTIENT LE POINT NPt
+C        -----------------------------------------
+         CBSOM = ABS( COBARY(1) ) + ABS( COBARY(2) ) +
+     %           ABS( COBARY(3) ) + ABS( COBARY(4) )
+
+         IF( CBSOM .GT. 1.01D0 ) THEN
+            print*,'r1tco1p0: ATTENTION sortie avec NPt=',NPT,
+     %             ' TETRAEDRE',NOTET1,
+     %             ' COBARY=',COBARY,' CBSOM=', CBSOM,' >1'
+         ENDIF
+         GOTO 9999
+
+      ENDIF
+
+
+C     PAS DE TETRAEDRE CONTENANT LE POINT NPt
+C     ---------------------------------------
+      IF( LANGAG .EQ. 0 ) THEN
+         PRINT*,'r1tco1p0: Probleme POINT', NPt, (PTXYZD(1,NPt),L=1,4),
+     %   ' EXTERIEUR AUX',NUDTETR,' TETRAEDRES ACTUELS...'
+      ELSE
+         PRINT*,'r1tco1p0: Problem POINT', NPt, (PTXYZD(1,NPt),L=1,4),
+     %   ' OUTSIDE the',NUDTETR,' TETRAHEDRA...'
+      ENDIF
+      NOTET1 = 0
+
+ 9999 RETURN
+      END

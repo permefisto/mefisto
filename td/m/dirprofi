@@ -1,0 +1,7 @@
+variable DIRPROFI 'Direction du PROFIL' entier
+( 1 : 'Selon X'
+, 2 : 'Selon Y'
+, 3 : 'Selon Z'
+, 4 : 'ORTHOGONAL a la DROITE et X'
+, 5 : 'ORTHOGONAL a la DROITE et Y'
+, 6 : 'ORTHOGONAL a la DROITE et Z' );

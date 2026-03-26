@@ -1,0 +1,18 @@
+The User's function (of any name to choose)
+gives the real value of the FINAL ABSCISSE X 
+of the INITIAL POINT of coordinates x,y,z. 
+
+This function must have the 4 parameters  no_slice x y z
+in this order and programmed with respect to the LU language grammar.
+(cf documentation of menu debut)
+
+For the execution, the parameters no_slice x y z will be initialized.
+They may be used or not to compute the ABSCISSE value.
+            
+EXAMPLE:
+deffunc ABSCISSE( no_slice , x , y , z ) ; 
+   if    (no_slice>2)
+   then  ABSCISSE = x + 1;
+   else  ABSCISSE = x * 1.2;
+   endif;  
+endfunc; 

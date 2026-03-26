@@ -1,0 +1,12 @@
+deftms ~>>>VISCOSITE 'Mhu Viscosite Dynamique du Fluide'
+variable muet DATE   'date de creation du tableau'   reel2  ;
+variable muet NUTD   'numero du tableau descripteur' entier ;  
+variable      LTVISC 'Type de la Viscosite' entier
+( 1 : 'Viscosite Dynamique CONSTANTE'
+,-1 : 'FONCTION Viscosite Dynamique'
+, 0 : 'Viscosite a supprimer' ) ;
+cas LTVISC
+ 1: variable VISCOS 'VALEUR de la Viscosite Dynamique du Fluide'  reel ;
+-1: variable NFVISC 'NOM de la fonction Viscosite Dynamique' ^~>FONCTION ;
+fincas ;   
+fintms ;

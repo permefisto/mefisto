@@ -1,0 +1,65 @@
+{==========================================================}
+{  MEEFISTO  VERSION August 2006   PROJECT: nafems_le1     }
+{  CONSTRUCTION of the MESH of ELLIPTIC MEMBRANE           }
+{==========================================================}
+
+1; 1;  {POINTS} 
+ A; I; 1;  0. ; 1.  ; 0.;
+ D; I; 1;  2. ; 0.  ; 0.;
+ B; I; 1;  0. ; 2.75; 0.;
+ C; I; 1; 3.25; 0.  ; 0.;
+ Q; I; 1;  0. ; 0.  ; 0.; { PROJECTION CENTRE }
+ @;      
+                          { The DEFINITION of ELLIPSES }
+ DEFFONC  F1(X,Y,Z);
+ F1 = (X/2.)**2+Y**2-1.;
+ FINFONC;
+ DEFFONC  F3(X,Y,Z);             
+ F3 = (X/3.25)**2+(Y/2.75)**2-1.;       
+ FINFONC;
+ @;      
+
+ 6; {MAPPINGS}     { PROJECTIONS from the CENTRE Q }
+ PR1; 4; F1; 4;  Q;
+ PR3; 4; F3; 4;  Q;
+ @;      
+         
+ DEFVAR NBARD,NBARC;
+ NBARD =  10;             { EDGE NUMBER on STRAIGHT EDGES }
+ NBARC =  20;             { EDGE NUMBER on EDGES of ELLIPSES }
+   
+ 2; {LINES} AB; I;   2; NBARD; 1.; B; A;
+ BC; PR3; 2; NBARC; 1.; C; B;
+ CD; I;   2; NBARD; 1.; D; C; 
+ DA; PR1; 2; NBARC; 1.; A; D;
+ @;           
+
+ 3; {SURFACES}
+ ABCD; I; 1; DA; CD; BC; AB;  2;
+ @;    
+
+ 5; {OBJECTS}
+ MEMBRANE;
+ 0;        {CLASSICAL TREATMENT with RENUMBERING of NODES}
+ 8;        {OBJECT NUMBER with CHARACTERISTICS or BOUNDARY CONDITIONS}
+ SURFACE; ABCD;
+ LIGNE; AB;
+ LIGNE; BC;
+ LIGNE; CD;
+ POINT; A;      { TO FIX the DISPLACEMENTS }  
+ POINT; B;
+ POINT; C;
+ POINT; D; 
+ @;
+
+ 7;             { OBJECT INTERPOLATION }
+ MEMBRANE;      { NAME of the INTERPOLATED OBJECT }
+ 4;             { LAGRANGE INTERPOLATION of DEGREE 2 }
+ @;
+
+10;    { DRAWING of PLSVO MESHES }
+ 5;    { All OBJECTS }
+90;    { EXECUTION of DRAWING }
+ @;
+
+CLOSE;

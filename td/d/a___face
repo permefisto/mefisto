@@ -1,0 +1,28 @@
+deftms ~>>>FACE
+'les faces d''un maillage 3D traitees par hachage c''est a dire que la position 
+de la face est la somme des numeros des sommets si la place est libre et sinon 
+un chainage donne la face suivante. les faces frontalieres sont aussi chainees'
+variable muet DATE 'date de creation du tableau'          reel2  ;
+variable muet NUTD 'numero du tableau descripteur'        entier ;
+variable MOFACE 'nombre d''entiers stockes par face(>=8)' entier ;
+variable MXFACE 'nombre maximal de faces'                 entier ;
+variable L1FAFR 'numero de la 1-ere face frontaliere'     entier ;
+variable NBFAFR 'nombre de faces frontalieres'            entier ;
+variable L1FA2M 'numero de la 1-ere face interface'       entier ;
+variable NBFA2M 'nombre de faces interfaces'              entier ;
+variable NBFATG 'nombre de faces avec des tangentes'      entier ;
+tableau  LFACES(1..MOFACE,1..MXFACE)
+'no 4 sommets,lien,ef1,ef2 ou no face frontaliere suivante,no face a tg'
+         entier ;
+tableau  NUTGFA(1..8,1..NBFATG) 'no des 8 tangentes des faces a tg' entier ;
+fintms ;
+         
+
+Pour memoire :
+NBFATG=0 signifie que le tableau des numeros des tangentes est absent
+NBSTFA=0 signifie que le tableau des coordonnees des sommets est absent
+
+Pour une SURFACE ou un VOLUME, MOFACE>=8 (pas de no de type de l'EF).
+Pour un OBJET (et non pas un PLSV), le sp hachob ajoute en position 9 de LFACES
+le type (1 a NBTYEL) du dernier ef de l'objet contenant la face 
+=> fixe l'interpolation de la face et entraine MOFACE>=9 pour un OBJET

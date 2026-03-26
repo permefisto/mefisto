@@ -1,0 +1,56 @@
+#!/bin/bash
+#  compilation et edition de liens de ppadap.f 
+#  Alain Perronnet                    Juillet 2000
+# 
+echo     
+echo =======================================================
+echo "$MEFISTO: Compilation -g Edition de liens de ppadap.f"
+echo =======================================================
+cd $MEFISTO
+#Creation du repertoire pp s'il n'existe pas
+if test -d pp
+then
+   echo pp existe
+else 
+   mkdir pp
+fi
+# 
+# compilation de xvuelc.c
+if test -f xvue/xvuelc.o
+then
+   echo "xvue/xvuelc.o NON recompile"
+else 
+   bin/ccgxvue
+fi 
+
+nompp=pp/ppadap
+if test -f $nompp
+then
+  rm $nompp
+fi
+ 
+#
+# compilation   
+echo "Un peu de patience: Compilation -g ppadap et Edition de liens en cours ..."
+
+#f77 +ppu -g prpr/ppadap.f ther/lib reso/lib mail/lib util/lib xvue/lib xvue/xvuelc.o \
+#            /usr/lib/Motif1.2/libXm.sl /usr/lib/X11R5/libXhp11.sl /usr/lib/X11R5/libXt.sl \
+#            /usr/lib/X11R5/libXext.a /usr/lib/X11R5/libX11.sl \
+#            /usr/lib/X11R5/libX11.a \
+#           -o $nompp
+
+gfortran -g -I. prpr/ppadap.f ther/lib reso/lib mail/lib util/lib xvue/lib xvue/xvuelc.o \
+         -lgfortran    -L/usr/X11R6/lib -lX11 \
+         -o $nompp
+
+rm ppadap.o
+if test -f $nompp
+then 
+   chmod 755 $nompp
+   echo "Le repertoire $MEFISTO/pp"
+   ls -l $MEFISTO/pp
+   echo "$MEFISTO/$nompp est PRET a l'emploi" 
+else
+   echo "$nompp est INCORRECT"
+fi  
+

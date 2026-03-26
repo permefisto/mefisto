@@ -1,0 +1,8 @@
+In order to not transform the initial geometry, defined by
+the initial triangulation, some transformations will be 
+forbidden if the angle defined by the the normal vectors
+of 2 triangles with a common edge exceed the value ANEN2P
+in degrees.
+
+A realistic value does not exceed some degrees.
+If more, the geometry can be strongly modified.

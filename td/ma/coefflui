@@ -1,0 +1,9 @@
+variable COEFFLUI 'FLUID INPUT DATA' entier
+( 1 : 'Rot MASS Density'
+, 2 : 'nu  FLUID VISCOSITY'
+, 3 : 'FOmega INTERIOR FORCES'
+, 4 : 'INITIAL VELOCITIES'
+, 5 : 'INITIAL PRESSURES'
+, 8 : 'PRESSURE Coefficient'
+, 9 : 'Angular Velocity'
+,10 : 'BOUSSINESQ Coefficient' ) ;

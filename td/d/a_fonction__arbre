@@ -1,0 +1,11 @@
+deftms ~>FONCTION>>ARBRE 'arbre des operations pour executer une fonction'
+ variable muet DATE 'date de creation du tableau'   reel2  ;
+ variable muet NUTD 'numero du tableau descripteur' entier ; 
+ variable L1ARBR 'valeur maximale du 1-er  indice de LARBRE' entier ;
+ variable L2ARBR 'valeur maximale du 2-eme indice de LARBRE' entier ;
+ variable NBPAFO 'nombre de parametres de la fonction' entier ;      
+ variable NBVALO 'nombre de variables locales de la fonction' entier ;
+ variable LRARBR 'position dans LARBRE de la racine de l''arbre' entier ;
+ tableau  LARBRE(1..L1ARBR,1..L2ARBR)
+         'les codes operations de l''arbre de la fonction' entier ;
+fintms ;

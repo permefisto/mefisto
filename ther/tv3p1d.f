@@ -1,0 +1,91 @@
+      SUBROUTINE TV3P1D( NBJEUX, JEU, X, DELTA,  NODL,   NODLIB,
+     &                   NOOBVC, NUMISU, NUMASU, LTDEVO,
+     &                   UG,     EXPOSANT,
+     &                   VE )
+C ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+C BUT :    CALCUL du VECTEUR ELEMENTAIRE de
+C -----    INTEGRALE t[P(X)] COEF TEMP ([P(X)]{Ue})**EXPOSANT dX sur l'EF
+C          LAGRANGE TETRAEDRE 3P1D DE DEGRE 1 AVEC
+C          INTEGRATION NUMERIQUE AUX 4 SOMMETS DU TETRAEDRE
+C
+C ENTREES:
+C --------
+C NBJEUX : NOMBRE DE JEUX DE DONNEES
+C JEU    : NUMERO DU JEU  DE DONNEES POUR CE CALCUL DE LA MATRICE ELEMENTAIRE
+C X      : LES 3 COORDONNEES DES 4 SOMMETS DE L'ELEMENT FINI
+C DELTA  : DETERMINANT DE LA MATRICE DF JACOBIENNE DU TETRAEDRE
+C NODL   : NUMERO DE DEGRE DE LIBERTE GLOBAL DES 4 DL LOCAUX
+C NODLIB : NODLIB(I) = NUMERO DU DEGRE DE LIBERTE S'IL EST LIBRE
+C                     -INDICE DANS LA LISTE DES DL BLOQUES S'IL EST BLOQUE
+C NOOBVC : NUMERO DE L'OBJET VOLUME DE CET ELEMENT
+C NUMISU : NUMERO MINIMAL DES OBJETS VOLUMES
+C NUMASU : NUMERO MAXIMAL DES OBJETS VOLUMES
+C LTDEVO : TABLEAU DES ADRESSES DU TABLEAU DES DONNEES CONDUCTIVITE DES VOLUMES
+C
+C UG     : VECTEUR SOLUTION A ELEVER A LA PUISSANCE EXPOSANT
+C EXPOSANT:ENTIER EXPOSANT DE Ue
+C
+C SORTIE :
+C --------
+C VE     : VECTEUR ELEMENTAIRE du TERME
+C          INTEGRALE t[P(X)] COEF TEMP ([P(X)]{Ue})**EXPOSANT dX sur l'EF
+C ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+C AUTEUR : ALAIN PERRONNET St PIERRE DU PERRAY & LJLL UPMC  FEVRIER 2010
+C23456---------------------------------------------------------------012
+      include"./incl/donthe.inc"
+      include"./incl/cthet.inc"
+C
+      DOUBLE PRECISION UG(*), VE(4)
+      REAL             X(4,3)
+      INTEGER          LTDEVO( 1:MXDOTH, 1:NBJEUX, NUMISU:NUMASU )
+      INTEGER          EXPOSANT, NODL(4), NODLIB(*)
+      DOUBLE PRECISION DELTA, XYZPI(3), COEFTE, UEL
+C
+      IF( LTDEVO(LPCOET,JEU,NOOBVC) .GT. 0 ) THEN
+C
+C        CONTRIBUTION DU VOLUME AU COEFFICIENT DE LA TEMPERATURE
+C        =======================================================
+         DO L=1,4
+C
+C           CALCUL DE LA SOLUTION AU POINT D'INTEGRATION L = SOMMET L
+C           NUMERO DU DL DANS LE MAILLAGE
+            NDL = NODL(L)
+C           NUMERO DU DL DANS LA NUMEROTATION DES DEGRES DE LIBERTE NON FIXES
+            NDLL = NODLIB( NDL )
+            IF( NDLL .GT. 0 ) THEN
+C              DL NON FIXE
+               UEL = UG( NDLL )
+            ELSE
+C              ATTENTION: LES AUTRES DL FIXES SONT SUPPOSES NULS
+               UEL = 0D0
+            ENDIF
+            TEMPEL = UEL
+C
+C           RECHERCHE DU COEFFICIENT DE LA TEMPERATURE AU POINT D'INTEGRATION L
+            XYZPI(1) = X(L,1)
+            XYZPI(2) = X(L,2)
+            XYZPI(3) = X(L,3)
+            CALL RECOET( 4, NOOBVC, 3, XYZPI,
+     %                   LTDEVO(LPCOET,JEU,NOOBVC), COEFTE )
+C
+C           COEF TEMPERATURE = COEFTE * DELTA * POIDS
+            COEFTE = COEFTE * DELTA / 24D0
+C
+C           CONTRIBUTION A L'INTEGRALE DE
+C           (  t[Pol(bl] COEFTEMP ([Pol(bl]{ue})**EXPOSANT  )
+            VE(L) = COEFTE * ( UEL**EXPOSANT )
+C
+         ENDDO
+C
+      ELSE
+C
+C        PAS DE CONTRIBUTION DU VOLUME AU COEFFICIENT DE LA TEMPERATURE
+C        ==============================================================
+         DO L=1,4
+            VE(L) = 0D0
+         ENDDO
+C
+      ENDIF
+C
+      RETURN
+      END

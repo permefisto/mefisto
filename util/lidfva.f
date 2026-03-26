@@ -1,0 +1,178 @@
+      SUBROUTINE LIDFVA( NLD , NCD , NLF , NCF , NRETOU )
+C+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+C BUT : LIRE ET DECLARER DES NOMS DE VARIABLES SEPARES PAR
+C ----- DES VIRGULES ET TERMINES PAR ;
+C
+C       CF ~LU/GRAMMAIRE DE DEFINITION DU LANGAGE UTILISATEUR
+C
+C ENTREES :
+C ---------
+C NLD NCD : NUMERO DE LIGNE ET COLONNE DANS KLG DE LA CHAINE DEFVAR
+C
+C SORTIES :
+C ---------
+C NLF NCF : NUMERO DE LIGNE ET COLONNE DANS KLG DU ; FINAL
+C NRETOU  : =0 SI PAS D'ERREUR
+C           >0 SI UNE ERREUR A ETE RENCONTREE
+C+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+C AUTEUR : PERRONNET ALAIN  ANALYSE NUMERIQUE UPMC PARIS  OCTOBRE 1988
+C23456---------------------------------------------------------------012
+      include"./incl/lu.inc"
+      include"./incl/langue.inc"
+      include"./incl/gsmenu.inc"
+      include"./incl/ntmnlt.inc"
+      COMMON / UNITES /  LECTEU,IMPRIM,INTERA,NUNITE(29)
+      CHARACTER*1        CAR
+      CHARACTER*(NBCAVA) KVARUT
+C
+C     LE DERNIER CARACTERE DE DEFVAR
+      NL = NLD
+      NC = NCD + 5
+C
+C     LECTURE DE L'ITEM SUIVANT
+ 100  CALL CARPNB( NL , NC )
+      IF( NL .EQ. 0 ) GOTO 9000
+C
+C     RECHERCHE DU NOM DE LA VARIABLE
+      NCID = NC
+      CAR  = KLG(NL)(NC:NC)
+      IF(.NOT. ( (CAR .GE. 'A' .AND. CAR .LE. 'Z') .OR.
+     %            CAR .EQ. '_' ) ) THEN
+C        LE 1-ER CARACTERE N'EST PAS  UNE LETTRE LICITE
+         NBLGRC(NRERR) = 1
+         IF( LANGAG .EQ. 0 ) THEN
+         KERR(1)='LU: NOM INCORRECT DE VARIABLE' // KLG(NL)(NC:NBCALI)
+         ELSE
+         KERR(1)='LU: INCORRECT NAME OF VARIABLE' // KLG(NL)(NC:NBCALI)
+         ENDIF
+         CALL LEREUR
+         GOTO 9000
+      ENDIF
+C
+C     LES CARACTERES SUIVANTS PEUVENT ETRE DES LETTRES OU CHIFFRES
+      IF( NC .EQ. NBCALI ) GOTO 300
+C     NC N'EST PAS LE DERNIER CARACTERE DE LA LIGNE
+ 110  NC  = NC + 1
+      CAR = KLG(NL)(NC:NC)
+C
+      IF( CAR .EQ. ' ' .OR. CAR .EQ. ',' .OR. CAR .EQ. ';' ) THEN
+C        FIN D'IDENTIFICATEUR
+         NC = NC - 1
+         GOTO 300
+      ENDIF
+C
+      IF(.NOT. ( (CAR .GE. 'A' .AND. CAR .LE. 'Z') .OR.
+     %           (CAR .GE. '0' .AND. CAR .LE. '9') .OR.
+     %            CAR .EQ. '_' ) ) THEN
+C        REMARQUE : LES MINUSCULES N'EXISTENT PAS CAR TOUTE LIGNE
+C                   EST MISE EN MAJUSCULES CF SP LIRLIG
+C        LE CARACTERE EST ILLICITE
+         NBLGRC(NRERR) = 1
+         IF( LANGAG .EQ. 0 ) THEN
+         KERR(1)='LU: NOM INCORRECT DE VARIABLE' // KLG(NL)(NC:NBCALI)
+         ELSE
+         KERR(1)='LU: INCORRECT NAME OF VARIABLE' // KLG(NL)(NC:NBCALI)
+         ENDIF
+         CALL LEREUR
+         GOTO 9000
+      ENDIF
+C     LE CARACTERE EST LICITE : PASSAGE AU SUIVANT
+      GOTO 110
+C
+C     TRAITEMENT DE FIN DE NOM DE VARIABLE KLG(NL)(NCID:NCF)
+C     CETTE VARIABLE A T ELLE ETE DECLAREE ?
+ 300  KVARUT = KLG(NL)(NCID:NC)
+      DO 310 I=1,NBVARU
+         IF( KVARUT .EQ. KVARU(I) ) THEN
+            NBLGRC(NRERR) = 1
+            IF( LANGAG .EQ. 0 ) THEN
+               KERR(1) = 'LU: VARIABLE DEJA DECLAREE ' // KVARUT
+            ELSE
+               KERR(1) = 'LU: ALREADY DECLARED VARIABLE ' // KVARUT
+            ENDIF
+            CALL LERESU
+            GOTO 400
+         ENDIF
+ 310  CONTINUE
+C
+C     CETTE VARIABLE NE DOIT PAS AVOIR UN NOM DE FONCTION USUELLE
+      CALL CHNMO1( KVARUT(1:5), I )
+      IF( I .NE. 0 ) GOTO 345
+      CALL CHNMO2( KVARUT(1:6), I )
+      IF( I .NE. 0 ) GOTO 345
+C
+C     CETTE VARIABLE NE DOIT PAS AVOIR UN NOM DE FONCTION UTILISATEUR
+      CALL LXLXOU( NTFONC , KVARUT , NTLXFO , MNLXFO )
+      IF( NTLXFO .GT. 0 ) THEN
+C        KVARUT EST UNE FONCTION UTILISATEUR
+         GOTO 345
+      ELSE
+         GOTO 350
+      ENDIF
+C
+C     ERREUR
+ 345  NBLGRC(NRERR) = 3
+      IF( LANGAG .EQ. 0 ) THEN
+         KERR(1) = 'LU: LA VARIABLE ' // KVARUT
+         KERR(2) = 'LU: A MEME NOM QU''UNE FONCTION'
+         KERR(3) = 'LU: CE QUI EST INTERDIT'
+      ELSE
+         KERR(1) = 'LU: THE VARIABLE ' // KVARUT
+         KERR(2) = 'LU: HAS THE SAME NAME AS A FUNCTION'
+         KERR(3) = 'LU: IT IS FORBIDDEN'
+      ENDIF
+      CALL LEREUR
+      GOTO 9000
+C
+C     VARIABLE NON RETROUVEE
+ 350  IF( NBVARU .GE. MXVARU ) THEN
+         NBLGRC(NRERR) = 1
+         IF( LANGAG .EQ. 0 ) THEN
+            KERR(1) = 'LU: PILE SATUREE DES VARIABLES UTILISATEUR'
+         ELSE
+            KERR(1) = 'LU: SATURATED STACK OF USER''s VARIABLES'
+         ENDIF
+         CALL LEREUR
+         GOTO 9000
+      ENDIF
+C
+C     AJOUT DE LA VARIABLE
+      NBVARU = NBVARU + 1
+      KVARU(NBVARU) = KVARUT
+      NBLGRC(NRERR) = 1
+      IF( LANGAG .EQ. 0 ) THEN
+         KERR(1) = 'LU: AJOUT DE LA VARIABLE ' // KVARU(NBVARU)
+      ELSE
+         KERR(1) = 'LU: ADDED VARIABLE ' // KVARU(NBVARU)
+      ENDIF
+      CALL LERESU
+C
+C     PASSAGE AU CARACTERE NON BLANC SUIVANT
+ 400  CALL CARPNB( NL , NC )
+      CAR = KLG(NL)(NC:NC)
+      IF( CAR .EQ. ',' ) THEN
+         GOTO 100
+      ELSE IF( CAR .EQ. ';' ) THEN
+C        LE ; FINAL
+         NLF = NL
+         NCF = NC
+         NRETOU = 0
+         RETURN
+      ENDIF
+C
+C     ERREUR DETECTEE
+ 9000 NBLGRC(NRERR) = 4
+      IF( LANGAG .EQ. 0 ) THEN
+         KERR(1) ='LU lidfva: GRAMMAIRE DE DEFINITION D''UNE VARIABLE'
+         KERR(2) ='DEFVAR NOM_VARIABLE{,NOM_VARIABLE} ;'
+         KERR(3) = KLG(NLD)
+         KERR(4) ='EST ICI INCORRECT'
+      ELSE
+         KERR(1) ='LU lidfva: DEFINITION GRAMMAR OF A VARIABLE'
+         KERR(2) ='DEFVAR VARIABLE_NAME{,VARIABLE_NAME} ;'
+         KERR(3) = KLG(NLD)
+         KERR(4) ='IS HERE FORBIDDEN'
+      ENDIF
+      CALL LEREUR
+      NRETOU = 1
+      END

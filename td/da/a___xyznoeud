@@ -1,0 +1,9 @@
+deftms ~>>>XYZNOEUD '3 coordinates of nodes of an interpolated object'
+variable muet DATE 'date of creation of the TMS'   reel2  ;
+variable muet NUTD 'number of the descriptor array TD' entier ; 
+ variable      NBNOE       'number of nodes'           entier ;
+ variable      NBTGN       'number of tangents'        entier ;
+ variable      NBCOON      'number of node coordinates' entier ;
+ tableau  XYZNOE(1..NBNOE) 'X Y Z of each node'    xyz ;
+ tableau  XYZTGN(1..NBTGN) 'X Y Z of each tangent' xyz ;
+fintms ;

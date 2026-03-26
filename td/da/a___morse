@@ -1,0 +1,14 @@
+deftms ~>>>MORSE 'Assemblage of FE matrices into a global matrix
+Only the non zero coefficients of the matrix are stored
+LPLIGN(i) i diagonal coefficient pointer on the vector MORSE
+and by extension LPLIGN(0)=0'
+variable muet DATE 'date of creation of the TMS' reel2  ;
+variable muet NUTD 'number of the descriptor array TD' entier ; 
+variable NBLIMO 'line number of the matrix MORSE'  entier ;
+variable LPMORS 'even number of words to point on MORSE' entier ;
+tableau  LPLIGN(0..NBLIMO)
+'pointer on MORSE of each diagonal coefficient & LPLIGN(0)=0' entier ;
+tableau  LPCOLO(1..LPLIGN(NBLIMO))
+'pointer on MORSE of the number of column of each non zero coefficient' entier ;
+tableau  MORSE(1..LPLIGN(NBLIMO)) 'coefficients of the matrix MORSE' reel2  ;
+fintms ;

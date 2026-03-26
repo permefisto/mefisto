@@ -1,0 +1,14 @@
+deftms ~>>>COEFDEPLACEMENT     'Coefficients of DISPLACEMENT'
+variable muet DATE   'date of creation of the TMS'       reel2  ;
+variable muet NUTD   'number of the descriptor array TD' entier ;
+variable      LTCOED 'Type of Coefficients' entier 
+(  1 : 'Constant Coefficients'
+, -1 : 'Function Coefficients'
+,  0 : 'delete the Coefficients' ) ;
+variable NBCOED 'Number of Coefficients' entier ; 
+tableau  NUCOED(1..NBCOED) 'Number of the component of coefficients' entier ;
+cas LTCOED
+ 1 : tableau  COEDEP(1..NBCOED) 'Values of Coefficients' reel ;
+-1 : variable NFCOED 'Name of Coefficients Function'  ^~>FONCTION ;
+fincas ;
+fintms ;

@@ -1,0 +1,17 @@
+variable DebuAdap 'ADAPTATION en THERMIQUE des OBJETS' entier
+(1  : 'NOM de l''OBJET a traiter', 
+ 2  : 'INTERPOLATION definition NOEUDS du maillage',
+ 3  : 'ENTREE des DONNEES du PROBLEME de THERMIQUE', 
+ 4  : 'RESOUDRE un probleme de THERMIQUE LINEAIRE',
+ 7  : 'ADAPTATION du MAILLAGE d''un objet',
+ 8  : 'DESSIN des RESULTATS (Temperatures,Flux,...)',
+ 10 : 'TRACE du maillage d''un ou des objets',
+ 20 : 'PRECISION pour IDENTIFIER des POINTS',
+ 39 : 'COULEUR du FOND',
+ 71 : 'SUIVI des TMS AFFICHAGE ou MODIFICATION ...',
+ 72 : 'SUIVI des FICHIERS de la Memoire Secondaire',
+ 73 : 'GESTION des unites de lecture et affichages',
+ 74 : 'TUER des TMS PLSVO... mais A VOS RISQUES...',
+ 97 : 'Nom de la version de Mefisto',
+ 98 : 'Sauvegarde des donnees et REDEMARRAGE',
+ 99 : 'SAUVEGARDE des donnees et FIN du TRAITEMENT' ) ;

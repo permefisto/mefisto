@@ -1,0 +1,89 @@
+      SUBROUTINE NTNOTRCF( NOSOTR, NBTRCF, NOTRCF, LEFACO, NO0FAR,
+     %                     NFLEF )
+C+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+C BUT :    LE TRIANGLE DE SOMMETS NOSOTR EST IL UN TRIANGLE DES
+C -----    NBTRCF FACES NOTRCF DE LEFACO ou NO0FAR
+
+C ENTREES:
+C --------
+C NOSOTR : NUMERO PTXYZD DES 3 SOMMETS DU TRIANGLE
+C NBTRCF : NOMBRE DE FACES DE NOTRCF
+C NOTRCF : NUMERO DANS LEFACO DES NBTRCF FACES
+C          >0 FACE DE LEFACO
+C          <0 FACE DE NO0FAR
+C LEFACO : FACE DU CONTOUR OU INTERFACES ENTRE VOLUMES
+C          IL CONTIENT DANS CET ORDRE
+C          1:   =0 POUR UNE FACE VIDE
+C          123: NO (DANS PTXYZD) DU SOMMET 1, SOMMET 2, SOMMET 3
+C          45:  NO (DANS NUVOPA 0 SINON) DU VOLUME1 , VOLUME2 DE LA FACE
+C          678: NO (DANS LEFACO) DE LA FACE ADJACENTE PAR L'ARETE 1 2 3
+
+C          9: ATTENTION: UNE ARETE PEUT APPARTENIR A PLUS DE 2 FACES
+C             => CHAINAGE CIRCULAIRE DE CES FACES DANS LEFACO
+C             LEFACO(9,*) -> FACE SUIVANTE (*=0:VIDE, *<>0:NON VIDE)
+
+C          10: HACHAGE AVEC LA SOMME DES 3 SOMMETS MODULO MXFACO
+C              LF = MOD( NOSOFA(1)+NOSOFA(2)+NOSOFA(3) , MXFACO ) + 1
+C              NF = LEFACO( 10, LF ) LE NUMERO DE LA 1-ERE FACE DANS LEFACO
+C              SI LA FACE NE CONVIENT PAS. PASSAGE A LA SUIVANTE
+C              NF = LEFACO( 9, NF )  ...
+
+C          11: >0  NO NOTETR D'UN TETRAEDRE AYANT CETTE FACE,
+C              =0  SINON
+
+cccC          12: = NO FACEOC DE 1 A NBFACES D'OC
+C NO0FAR : NUMERO DES 3 SOMMETS DE LA FACE AJOUTEE AU CF
+
+C SORTIE :
+C --------
+C NFLEF  : >0 NO LEFACO DU TRIANGLE NOSOTR
+C          <0 NO NO0FARDU TRIANGLE NOSOTR
+C          =0 SI LE TRIANGLE NOSOTR N'EST PAS UN DES NBTRCF TRIANGLES
+C+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+C AUTEUR : ALAIN PERRONNET  Saint Pierre du Perray             Mars 2018
+C2345X7..............................................................012
+      INTEGER    NOSOTR(3), LEFACO(11,0:*), NOTRCF(NBTRCF), NO0FAR(3,*),
+     %           NOSOTR2(3)
+
+      CALL TRI3NO( NOSOTR, NOSOTR )
+
+      DO K = 1, NBTRCF
+
+C        LE TRIANGLE K DE NOTRCF
+         NFLEF = NOTRCF( K )
+
+         DO NF=1,4
+
+C           L'ARETE NARET DE NFLEFA
+            IF( NFLEF .GT. 0 ) THEN
+
+C              FACE DE LEFACO
+               CALL TRI3NO( LEFACO(1,NFLEF), NOSOTR2 )
+
+            ELSE
+
+C              FACE NO0FAR
+               CALL TRI3NO( NO0FAR(1,-NFLEF), NOSOTR2 )
+
+            ENDIF
+
+            CALL TRI3NO( NOSOTR2, NOSOTR2 )
+
+            IF( NOSOTR2(1) .EQ. NOSOTR(1) .AND.
+     %          NOSOTR2(2) .EQ. NOSOTR(2) .AND.
+     %          NOSOTR2(3) .EQ. NOSOTR(3) ) THEN
+
+C              TRIANGLE RETROUVE
+               GOTO 9999
+
+            ENDIF
+
+         ENDDO
+
+      ENDDO
+
+C     TRIANGLE NON RETROUVE
+      NFLEF = 0
+
+ 9999 RETURN
+      END

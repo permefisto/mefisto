@@ -1,0 +1,273 @@
+      SUBROUTINE TAMCDC( KTYPE, NBVARI, REZLMC, MCTABL )
+C+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+C BUT : DECLARER ET OUVRIR UN TABLEAU MC DE NBVARI VARIABLES DE TYPE
+C ----- KTYPE . LES ZONES LIBRES DE MC SONT DECLAREES DANS LE TABLEAU
+C       REZLMC
+
+C ENTREE :
+C --------
+C KTYPE  : NOM DU TYPE DES VARIABLES DU TABLEAU SELON
+C          LOGIQUE  CARACTERE  ENTIER/2  ENTIER  REEL  REEL2  REEL4
+C          COMPLEXE  COMPLEXE2
+C NBVARI : NOMBRE DE VARIABLES DU TABLEAU
+C          ATTENTION:CE N EST PAS LE NOMBRE DE MOTS
+C                    SI COMPLEXE2  LE NOMBRE DE MOTS=4*NBVARI
+C REZLMC : TABLEAU REPERTOIRE DES ZONES LIBRES DANS MC
+C          REZLMC(1,0)=VALEUR MAXIMALE DU 2-EME INDICE DU TABLEAU REZLMC
+C                      OU NOMBRE MAXIMAL DE ZONES LIBRES PERMISES
+C                      DANS LE SUPER-TABLEAU
+C          REZLMC(2,0)=VALEUR DU 2-EME INDICE DE REZLMC DESIGNANT LA
+C                      1-ERE ZONE LIBRE.DEPART DU CHAINAGE ZONES LIBRES
+C          REZLMC(3,0)=NUMERO DE LA 1-ERE COLONNE DE REZLMC NON OCCUPEE
+C                      PAR UNE ZONE LIBRE.CHAINAGE DES COLONNES NON
+C                      OCCUPEES DE REZLMC
+C          POUR N COMPRIS ENTRE 1 ET REZLMC(1,0)
+C          REZLMC(1,N)=ADRESSE MOT         DE LA N-EME ZONE LIBRE DE MC
+C          REZLMC(2,N)=NOMBRE  DE MOTS     DE LA N-EME ZONE LIBRE DE MC
+C          REZLMC(3,N)=CHAINAGE SUCCESSEUR DE LA N-EME ZONE LIBRE DE MC
+
+C ENTREE ET SORTIE :
+C ------------------
+C MCTABL : 0   EN ENTREE DEMANDE UN ARRET SI LE NOMBRE DE MOTS LIBRES
+C                        OU DE ZONES LIBRES EST INSUFFISANT
+C                        TOUTEFOIS LA MEMOIRE SECONDAIRE EST ALORS FERME
+C          /=0 EN ENTREE DEMANDE LE RETOUR AU PROGRAMME APPELANT MEME
+C                        EN CAS D ERREUR
+C
+C          >0  EN SORTIE SAUF SI UNE ERREUR A ETE DETECTEE
+C              ADRESSE EN MOTS DU 1-ER MOT DU TABLEAU DE TYPE KTYPE
+C              DANS LE SUPER-TABLEAU
+C              ADRESSE OBLIGATOIREMENT IMPAIRE
+C              UN NOMBRE PAIR DE MOTS EST RESERVE POUR FACILITER
+C              L'ALIGNEMENT DES VARIABLES DOUBLE PRECISION ET
+C              REDUIRE LE NOMBRE DE ZONES LIBRES DE 1 MOT
+C
+C              EN CAS D ERREUR MCTABL EST INFERIEUR OU EGAL A ZERO
+C          = 0 SI NBVARI =<0 EN ENTREE
+C          =-1 SI PAS ASSEZ DE PLACE LIBRE DANS MC. MC EST SATUREE
+C              OU SI PAS ASSEZ DE ZONES LIBRES DANS REZLMC
+C+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+C PROGRAMMEUR : PERRONNET ALAIN ANALYSE NUMERIQUE PARIS    NOVEMBRE 1983
+C00001..................................................................
+      include"./incl/langue.inc"
+      include"./incl/pp.inc"
+      include"./incl/gsmenu.inc"
+      COMMON / UNITES / LECTEU,IMPRIM,NUNITE(30)
+      COMMON / MSIMTA / NOIMPR
+      INTEGER           REZLMC(3,0:*)
+      CHARACTER*(*)     KTYPE
+
+C     RECHERCHE DU MODE DE SORTIE DU SOUS PROGRAMME SELON MCTABL
+C     ----------------------------------------------------------
+      IF( MCTABL .EQ. 0 ) THEN
+C        ARRET SI ERREUR
+         NSORTI = 0
+      ELSE
+C        RETOUR MEME SI ERREUR
+         NSORTI = 1
+      ENDIF
+
+C     LE NOMBRE DE VARIABLES EST-IL >0?
+      IF( NBVARI .LE. 0 ) THEN
+         NBLGRC(NRERR) = 1
+         WRITE(KERR(MXLGER)(1:15),'(I15)') NBVARI
+         IF( LANGAG .EQ. 0 ) THEN
+            KERR(1) ='tamcdc: NOMBRE NEGATIF OU NUL DE VARIABLES='
+     %             //KERR(MXLGER)(1:15)
+         ELSE
+            KERR(1) ='tamcdc: NEGATIVE OR NULL NUMBER OF VARIABLES='
+     %             //KERR(MXLGER)(1:15)
+         ENDIF
+         CALL LEREUR
+         MCTABL = 0
+         GOTO 9000
+      ENDIF
+
+C     LE NOMBRE DE MOTS NECESSAIRES A CE TABLEAU
+C     ------------------------------------------
+      NUMTYV = NUMTYP( KTYPE )
+      MOTABL = MOTTAB( NUMTYV , NBVARI )
+C     CE NOMBRE EST RENDU PAIR POUR L'ALIGNEMENT
+C     DES VARIABLES DOUBLE PRECISION
+      MOTABL =(MOTABL+1)/2
+      MOTABL = MOTABL * 2
+
+C     LE CHAINAGE DES ZONES LIBRES
+C     NAVANT LE PREDECESSEUR
+C     NZONE  L ELEMENT: ICI LE NUMERO DE LA ZONE LIBRE DANS REZLMC
+C     LE TEST DE FIN DE CHAINE EST FAIT AVANT TOUT APPEL DE REZLMC
+      NAVANT = 0
+      NZONE  = REZLMC(2,0)
+
+C     EXISTE-T-IL ENCORE UNE ZONE LIBRE EN MC?
+C     ****************************************
+ 10   IF( NZONE .GT. 0 ) THEN
+
+C        LE NOMBRE DE MOTS DE LA ZONE LIBRE NZONE
+         MOTLIB = REZLMC(2,NZONE)
+
+         IF( MOTLIB .LT. MOTABL ) THEN
+
+C           LA ZONE EST TROP PETITE.PASSAGE A LA ZONE SUIVANTE
+C           ==================================================
+            NAVANT = NZONE
+            NZONE  = REZLMC(3,NZONE)
+            GOTO 10
+
+         ELSE
+
+C           LA ZONE EST SUFFISANTE
+C           =======================
+C           SON ADRESSE
+            MCTABL = REZLMC(1,NZONE)
+
+C           ADRESSE CORRECTE?
+            IF( MCTABL .LE. 0 ) THEN
+               NBLGRC(NRERR) = 2
+               IF( LANGAG .EQ. 0 ) THEN
+                  KERR(1) ='tamcdc:ADRESSE DEBUT ZONE INTER-TABLEAU <=0'
+                  KERR(2) ='tamcdc:ADRESSE DU TABLEAU A DECLARER=0'
+               ELSE
+                  KERR(1) ='tamcdc:ZONE BETWEEN ARRAYS with ADDRESS<=0'
+                  KERR(2) ='tamcdc:ADDRESS=0 of the ARRAY TO DECLARE'
+               ENDIF
+               CALL LEREUR
+               MCTABL = 0
+               GOTO 9000
+            ENDIF
+
+            IF( MOTLIB .EQ. MOTABL ) THEN
+
+C              LE TABLEAU OCCUPE EXACTEMENT LA ZONE LIBRE
+C              PAS DE ZONE LIBRE NI DEVANT NI DERRIERE
+C              .......................................
+               IF( NAVANT .EQ. 0 ) THEN
+C                 LA ZONE LIBRE REMPLACEE PAR LE TABLEAU ETAIT LA 1-ERE
+C                 LE 1-ER CHAINAGE EST MIS A JOUR
+                  REZLMC(2,0) = REZLMC(3,NZONE)
+               ELSE
+C                 LA ZONE LIBRE REMPLACEE PAR LE TABLEAU N'ETAIT PAS LA
+C                 PREMIERE.UN CHAINAGE EST SAUTE
+                  REZLMC(3,NAVANT) = REZLMC(3,NZONE)
+               ENDIF
+
+C              LA COLONNE NZONE DE REZLMC REDEVIENT LA PREMIERE LIBRE
+               REZLMC(3,NZONE) = REZLMC(3,0)
+               REZLMC(3,0    ) = NZONE
+
+            ELSE
+
+C              LE TABLEAU N OCCUPE PAS EXACTEMENT LA ZONE LIBRE.
+C              IL Y A UNE ZONE LIBRE DERRIERE LE TABLEAU.
+C              CETTE ZONE LIBRE SUCCEDE A L ANCIENNE DANS REZLMC MAIS
+C              ELLE EST ECOURTEE
+C              ......................................................
+               REZLMC(1,NZONE) = MCTABL + MOTABL
+               REZLMC(2,NZONE) = MOTLIB - MOTABL
+            ENDIF
+         ENDIF
+         GOTO 9000
+      ENDIF
+
+C     IL N Y A PLUS DE ZONES LIBRES DE TAILLE SUFFISANTE DANS REZLMC
+C     => LE TABLEAU REZLMC EST SATURE
+C     ==============================================================
+      MCTABL = -1
+
+C     CALCUL DE LA PLUS GRANDE ZONE LIBRE
+      NZONE  = REZLMC(2,0)
+      MXPLIB = 0
+ 100  IF( NZONE .GT. 0 ) THEN
+C        LE NOMBRE DE MOTS DE LA ZONE LIBRE NZONE
+         MOTLIB = REZLMC(2,NZONE)
+C        LE NOMBRE DE MOTS DE LA ZONE LIBRE MAXIMALE
+         MXPLIB = MAX( MXPLIB, MOTLIB )
+C        LA ZONE LIBRE SUIVANTE
+         NZONE  = REZLMC(3,NZONE)
+         GOTO 100
+      ENDIF
+
+C     DANS LE CAS D UNE SATURATION DUE A LA FERMETURE DE TABLEAUX MS
+C     LE RETOUR AU PROGRAMME APPELANT DOIT ETRE FAIT.CELUI CI DOIT
+C     ALORS CONTROLER LA VALEUR DE RETOUR MCTABL ET AGIR SELON.
+      IF( MXPLIB .LT. MOTABL ) THEN
+
+C        TABLEAU DEMANDE PLUS GRAND QUE LA PLUS GRANDE ZONE LIBRE
+         NBLGRC(NRERR) = 6
+         WRITE(KERR(6)(1:15),'(I15)') MOTMCN
+         WRITE(KERR(7)(1:15),'(I15)') MOTABL
+         WRITE(KERR(8)(1:15),'(I15)') MXPLIB
+
+         IF( LANGAG .EQ. 0 ) THEN
+      KERR(1)='tamcdc: Demande de                 VARIABLES de TYPE ' //
+     %         KTYPE
+      WRITE(KERR(1)(20:34),'(I15)') NBVARI
+      KERR(2)='SATURATION du NOMBRE de MOTS du SUPER-TABLEAU MCN=' //
+     %         KERR(6)(1:15) // ' A AUGMENTER.'
+      KERR(3)='NOMBRE         de MOTS DEMANDES   =' // KERR(7)(1:15)
+      KERR(4)='NOMBRE MAXIMUM de MOTS DISPONIBLES=' // KERR(8)(1:15)
+      KERR(5)='AUGMENTER le NOMBRE de MOTS du SUPER-TABLEAU MCN' //
+     %         KERR(6)(1:15)
+         ELSE
+      KERR(1)='tamcdc: REQUEST of                 VARIABLES of TYPE ' //
+     %         KTYPE
+      WRITE(KERR(1)(19:33),'(I15)') NBVARI
+      KERR(2)='SATURATION of SUPER-ARRAY MCN: NUMBER of WORDS=' //
+     %         KERR(6)(1:15) // ' to AUGMENT.'
+      KERR(3)='REQUESTED WORDS NUMBER=' // KERR(7)(1:15)
+      KERR(4)='ALLOWABLE WORDS NUMBER=' // KERR(8)(1:15)
+      KERR(5)='AUGMENT the MCN SUPER-ARRAY WORDS NUMBER=' //
+     %         KERR(6)(1:15)
+         ENDIF
+      KERR(6)='Cf $MEFISTO/incl/pp.inc'
+ 
+      ELSE
+
+C        SATURATION DES ZONES INTER-TABLEAUX
+         NBLGRC(NRERR) = 3
+         WRITE(KERR(9)(1:15),'(I15)') REZLMC(1,0)
+
+         IF( LANGAG .EQ. 0 ) THEN
+      KERR(1)='tamcdc: Demande de                 VARIABLES de TYPE ' //
+     %         KTYPE
+      WRITE(KERR(1)(20:34),'(I15)') NBVARI
+      KERR(2)='SATURATION des TABLES de GESTION DU SUPER-TABLEAU'
+      KERR(3)='AUGMENTER le NOMBRE de ZONES LIBRES='//KERR(9)(1:15)
+         ELSE
+      KERR(1)='tamcdc: REQUEST of                 VARIABLES of TYPE ' //
+     %         KTYPE
+      WRITE(KERR(1)(19:33),'(I15)') NBVARI
+      KERR(2)='SATURATION of SUPER-ARRAY MANAGEMENT TABLES'
+      KERR(3)='AUGMENT the FREE ZONES NUMBER='//KERR(9)(1:15)
+         ENDIF
+
+      ENDIF
+      CALL LEREUR
+
+cccc     13/4/2015 pour deboguer voex19
+ccc      NSORTI = 0
+
+      IF( NSORTI .EQ. 0 ) THEN
+C        ARRET du CALCUL avec TENTATIVE de SAUVEGARDE
+         CALL IMZLMC( 'MCN' , REZLMC )
+         CALL ARRET( 100 )
+      ELSE
+C        MCTABL<0 A CONTROLER EN SORTIE
+         GOTO 9999
+      ENDIF
+
+ 9000 IF( NOIMPR .NE. 0 )THEN
+         IF( LANGAG .EQ. 0 ) THEN
+            WRITE(IMPRIM,19000) NBVARI,KTYPE,MCTABL
+         ELSE
+            WRITE(IMPRIM,29000) NBVARI,KTYPE,MCTABL
+         ENDIF
+      ENDIF
+
+19000 FORMAT(' DECLARATION TABLEAU Memoire Centrale de',I15,A10,
+     %' => ADRESSE MCN',I15)
+29000 FORMAT(' DECLARATION of Main Memory ARRAY of',I15,A10,
+     %' => MCN ADRESS',I15)
+
+ 9999 RETURN
+      END

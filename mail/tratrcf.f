@@ -1,0 +1,140 @@
+      SUBROUTINE TRATRCF( NT1,    NBTRS1, NUSTS1, XYZS1,
+     %                    XYZPTA, NBTRA0, NBTRA1, NUSTRA )
+C+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+C BUT :    TRACE LE TRIANGLE NT1 ET SES SOUS-TRIANGLES NBTRA0 a NBTRA1
+C -----    POUR UN CONTOUR FERME DE SOUS-ARETES INTERNES
+C
+C ENTREES:
+C --------
+C NT1    : NUMERO NUSTS1 DU TRIANGLE A TRACER
+C NBTRS1 : NOMBRE DE TRIANGLES DE NUSTS1
+C NUSTS1 : (4,*) NUMERO DANS XYZS1 DES 3 SOMMETS + 0 EN POSITION 4
+C          (1,N)<0 SI LE TRIANGLE N EST ELIMINE
+C XYZS1  : 3 XYZ DES SOMMETS DE LA SURFACE 1
+C XYZPTA : 3 XYZ DES POINTS AJOUTES, SOMMET DES ARETES D'INTERSECTION
+C NBTRA0 : NUMERO DU PREMIER SOUS-TRIANGLE A TRACER
+C NBTRA1 : NUMERO DU DERNIER SOUS-TRIANGLE A TRACER
+C NUSTRA : (3,NBTRA) NO DANS XYZPTA DES 3 SOMMETS DES SOUS-TRIANGLES
+C+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+C AUTEUR : PERRONNET Alain LJLL UPMC & St Pierre du Perray Novembre 2011
+C2345X7..............................................................012
+      include"./incl/trvari.inc"
+C
+      DOUBLE PRECISION  XYZS1(3,*),  XYZPTA(3,*)
+      INTEGER           NUSTS1(4,NBTRS1), NUSTRA(3,*)
+C
+      REAL              XYZB(3)
+      REAL              XYZ1(3), XYZ2(3), XYZ3(3), XYZTR(3,3)
+      EQUIVALENCE      (XYZ1(1),XYZTR(1,1)),
+     %                 (XYZ2(1),XYZTR(1,2)),
+     %                 (XYZ3(1),XYZTR(1,3))
+C
+C     LES TRACES SONT DEMANDES
+C     INITIALISATION DE L'ORBITE ZOOM DEPLACEMENT
+      IF( LORBITE .NE. 0 ) THEN
+         CALL ORBITE0( NOTYEV )
+         IF( NOTYEV .EQ. 0 ) GOTO 9900
+      ENDIF
+C
+C     LA MEMOIRE PIXEL EST EFFACEE
+ 10   CALL EFFACEMEMPX
+C
+C     TRACE DES AXES
+      CALL TRAXE3
+C
+C     TRACE DES TRIANGLES DE NUSTS1
+C     -----------------------------
+      DO NT = 1, NBTRS1
+C
+C        TRACE DES 3 ARETES DU TRIANGLE NT
+C        ---------------------------------
+C        LES X,Y DES 3 SOMMETS POUR LE TRACE DU TRIANGLE NT
+         NS1     = NUSTS1(1,NT)
+         XYZ1(1) = REAL( XYZS1(1,NS1) )
+         XYZ1(2) = REAL( XYZS1(2,NS1) )
+         XYZ1(3) = REAL( XYZS1(3,NS1) )
+C
+         NS2     = NUSTS1(2,NT)
+         XYZ2(1) = REAL( XYZS1(1,NS2) )
+         XYZ2(2) = REAL( XYZS1(2,NS2) )
+         XYZ2(3) = REAL( XYZS1(3,NS2) )
+C
+         NS3     = NUSTS1(3,NT)
+         XYZ3(1) = REAL( XYZS1(1,NS3) )
+         XYZ3(2) = REAL( XYZS1(2,NS3) )
+         XYZ3(3) = REAL( XYZS1(3,NS3) )
+C
+C        LE TRACE DES 3 ARETES DE NT
+         IF( NT .NE. NT1 ) THEN
+            NC = NCCYAN
+         ELSE
+            NC = NCBLEU
+         ENDIF
+         CALL TRAIT3D( NC, XYZ1, XYZ2 )
+         CALL TRAIT3D( NC, XYZ2, XYZ3 )
+         CALL TRAIT3D( NC, XYZ3, XYZ1 )
+C
+C        TRACE DU NUMERO DES SOMMETS DU TRIANGLE NT
+         CALL ENTIER3D( NCNOIR, XYZ1, NS1 )
+         CALL ENTIER3D( NCNOIR, XYZ2, NS2 )
+         CALL ENTIER3D( NCNOIR, XYZ3, NS3 )
+C
+C        LE BARYCENTRE DE NT
+         XYZB(1) = (XYZ1(1) + XYZ2(1) + XYZ3(1) ) / 3
+         XYZB(2) = (XYZ1(2) + XYZ2(2) + XYZ3(2) ) / 3
+         XYZB(3) = (XYZ1(3) + XYZ2(3) + XYZ3(3) ) / 3
+         CALL ENTIER3D( NC, XYZB, NT )
+C
+      ENDDO
+C
+C     LES SOUS-TRIANGLES DU TRIANGLE NT1
+C     ----------------------------------
+      DO 100 NT=NBTRA0,NBTRA1
+C
+C        TRACE DE LA FACE DU TRIANGLE NT
+C        LES X,Y DES 3 SOMMETS POUR LE TRACE DU TRIANGLE NT
+C        NUMERO DU SOMMET DANS CE TABLEAU
+         NS1     = NUSTRA(1,NT)
+         XYZ1(1) = REAL( XYZPTA(1,NS1) )
+         XYZ1(2) = REAL( XYZPTA(2,NS1) )
+         XYZ1(3) = REAL( XYZPTA(3,NS1) )
+C
+C        NUMERO DU SOMMET 2 DANS CE TABLEAU
+         NS2     = NUSTRA(2,NT)
+         XYZ2(1) = REAL( XYZPTA(1,NS2) )
+         XYZ2(2) = REAL( XYZPTA(2,NS2) )
+         XYZ2(3) = REAL( XYZPTA(3,NS2) )
+C
+C        NUMERO DU SOMMET 3 DANS CE TABLEAU
+         NS3     = NUSTRA(3,NT)
+         XYZ3(1) = REAL( XYZPTA(1,NS3) )
+         XYZ3(2) = REAL( XYZPTA(2,NS3) )
+         XYZ3(3) = REAL( XYZPTA(3,NS3) )
+C
+C        LE TRACE DE LA FACE ET DES 3 ARETES DU TRIANGLE NT
+         CALL FACE3D( NCBLAN, NCNOIR, 3, XYZTR )
+C
+C        TRACE DU NUMERO DES SOMMETS DU TRIANGLE NT
+         CALL ENTIER3D( NCMAGE, XYZ1, NS1 )
+         CALL ENTIER3D( NCMAGE, XYZ2, NS2 )
+         CALL ENTIER3D( NCMAGE, XYZ3, NS3 )
+C
+C        LE BARYCENTRE DE NT
+         XYZB(1) = (XYZ1(1) + XYZ2(1) + XYZ3(1) ) / 3
+         XYZB(2) = (XYZ1(2) + XYZ2(2) + XYZ3(2) ) / 3
+         XYZB(3) = (XYZ1(3) + XYZ2(3) + XYZ3(3) ) / 3
+         CALL ENTIER3D( NCROUG, XYZB, NT )
+C
+ 100  CONTINUE
+C
+C     COPIE DE MEMPX DANS FENETRE
+      CALL MEMPXFENETRE
+C
+C     REPRISE DE L'ORBITE
+      IF( LORBITE .GT. 0 ) THEN
+         CALL ORBITE1( NOTYEV )
+         IF( NOTYEV .NE. 0 ) GOTO 10
+      ENDIF
+C
+ 9900 RETURN
+      END

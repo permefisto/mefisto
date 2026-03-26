@@ -1,0 +1,191 @@
+         SUBROUTINE  REXYQU( NF, I0, J0, XP, YP, NX, NY, XYSCA,
+     %                       COSO, XYZ )
+C+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+C BUT :    RETROUVER DANS LE CARRE UNITE STRUCTUR'E
+C -----    REGULIEREMENT, LE SOUS-QUADRANGLE CONTENANT LE POINT
+C          PUIS, CALCULER SES 3 COORDONNEES SUR LE QUADRANGLE COURBE
+C          PAR INTERPOLATION Q1 EN REPASSANT PAR LE CARRE UNITE
+C
+C ENTREES:
+C --------
+C NF     : NUMERO DE LA FACE OU LE POINT (XP,.,YP) DOIT ETRE PROJETE
+C I0,J0  : INDICES "PROBABLES" DANS LE QUADRANGLE DU SOMMET A CALCULER
+C NX     : NOMBRE DE SOMMETS PAR ARETE "X" DU QUADRANGLE
+C NY     : NOMBRE DE SOMMETS PAR ARETE "Y" DU QUADRANGLE
+C XYSCA  : LES 2 COORDONNEES DES SOMMETS DES SOUS-QUADRANGLES DU CARRE UNITE
+C COSO   : LES 3 COORDONNEES DES SOMMETS DU QUADRANGLE COURBE CORRESPONDANT
+C
+C SORTIES:
+C --------
+C XYZ    : LES 3 COORDONNEES DU POINT SUR LE QUADRANGLE COURBE
+C+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+C AUTEUR : PERRONNET ALAIN ANALYSE NUMERIQUE UPMC PARIS    NOVEMBRE 1997
+C23456---------------------------------------------------------------012
+      REAL         XYSCA(2,NX,NY), COSO(3,*), XYZ(3), ST(2,4), PRV(4)
+      EQUIVALENCE (PRV(1),PRV1), (PRV(2),PRV2), (PRV(3),PRV3),
+     %            (PRV(4),PRV4)
+C
+C     LES FONCTIONS FORMULES DES NUMEROS DES SOMMETS DU TRIANGLE ET PENTAEDRE
+      NUSOPE(I,J,K) = J + ( I * I - I + (K-1) * ( NX * NX + NX ) ) / 2
+C
+C     LE PREMIER QUADRANGLE SUSCEPTIBLE DE CONTENIR LE POINT (XP,YP)
+C     QUADRANGLE AVEC SOMMET 1 "VERS L'ORIGINE"
+      I   = I0 - 1
+      J   = J0
+      NX1 = NX - 1
+      NY1 = NY - 1
+C
+C     BOUCLE SUR LES SOUS-QUADRANGLES SUSCEPTIBLES DE CONTENIR LE POINT
+C     NUMERO DES 3 SOMMETS DE CE SOUS-QUADRANGLE POSSIBLE
+ 5    I1 = I + 1
+      J1 = J + 1
+C
+C     LE POINT (XP,YP) EST IL INTERNE AU SOUS-QUADRANGLE DE
+C     SOMMETS NS1, NS2, NS3, NS4?
+C     CALCUL DES 4 PRODUITS VECTORIELS (P,Si)x(P,Si+1)
+      NB = 0
+      PRV1 = (XYSCA(1,I,J)-XP) * (XYSCA(2,I1,J)-YP)
+     %     - (XYSCA(2,I,J)-YP) * (XYSCA(1,I1,J)-XP)
+C
+      PRV2 = (XYSCA(1,I1,J)-XP) * (XYSCA(2,I1,J1)-YP)
+     %     - (XYSCA(2,I1,J)-YP) * (XYSCA(1,I1,J1)-XP)
+C
+      PRV3 = (XYSCA(1,I1,J1)-XP) * (XYSCA(2,I,J1)-YP)
+     %     - (XYSCA(2,I1,J1)-YP) * (XYSCA(1,I,J1)-XP)
+C
+      PRV4 = (XYSCA(1,I,J1)-XP) * (XYSCA(2,I,J)-YP)
+     %     - (XYSCA(2,I,J1)-YP) * (XYSCA(1,I,J)-XP)
+C
+C     CALCUL DU NOMBRE DE PRODUITS VECTORIELS NEGATIFS
+      NB = 0
+      DO 10 K=1,4
+         IF( ABS(PRV(K)) .LT. 1E-6 ) PRV(K)=0
+         IF( PRV(K) .LT. 0 ) NB = NB + 1
+ 10   CONTINUE
+C
+C     LE POINT EST IL DERRIERE UN SOMMET? C-A-D
+C     EXISTE T IL 2 PRODUITS VECTORIELS<0
+      IF( NB .EQ. 2 ) THEN
+C
+         IF( PRV1 .LT. 0 .AND. PRV2 .LT. 0 ) THEN
+C           LE POINT EST DERRIERE LE SOMMET S2
+C           LES NOUVEAUX INDICES DU SOUS-QUADRANGLE SUIVANT
+            IF( I .GE. NX1 .OR. J .LE. 1 ) GOTO 50
+            I = I + 1
+            J = J - 1
+            GOTO 5
+C
+         ELSE IF( PRV2 .LT. 0 .AND. PRV3 .LT. 0 ) THEN
+C
+C           DERRIERE LE SOMMET 3
+C           LES NOUVEAUX INDICES DU SOUS-QUADRANGLE SUIVANT
+            IF( I .GE. NX1 .OR. J .GE. NY1 ) GOTO 50
+            I = I + 1
+            J = J + 1
+            GOTO 5
+C
+         ELSE IF( PRV3 .LT. 0 .AND. PRV4 .LT. 0 ) THEN
+C
+C           DERRIERE LE SOMMET 4
+C           LES NOUVEAUX INDICES DU SOUS-QUADRANGLE SUIVANT
+            IF( I .LE. 1 .OR. J .GE. NY1 ) GOTO 50
+            I = I - 1
+            J = J + 1
+            GOTO 5
+C
+         ELSE
+C
+C           DERRIERE LE SOMMET 1
+C           LES NOUVEAUX INDICES DU SOUS-QUADRANGLE SUIVANT
+            IF( I .LE. 1 .OR. J .LE. 1 ) GOTO 50
+            I = I - 1
+            J = J - 1
+            GOTO 5
+         ENDIF
+C
+      ELSE IF( NB .EQ. 1 ) THEN
+C
+         IF( PRV1 .LT. 0 ) THEN
+C           LE POINT EST DERRIERE LE COTE 1
+C           LES NOUVEAUX INDICES DU SOUS-QUADRANGLE SUIVANT
+            IF( J .LE. 1 ) GOTO 50
+            J = J - 1
+            GOTO 5
+C
+         ELSE IF( PRV2 .LT. 0 ) THEN
+C           LE POINT EST DERRIERE LE COTE 2
+C           LES NOUVEAUX INDICES DU SOUS-QUADRANGLE SUIVANT
+            IF( I .GE. NX1 ) GOTO 50
+            I = I + 1
+            GOTO 5
+C
+         ELSE IF( PRV3 .LT. 0 ) THEN
+C           LE POINT EST DERRIERE LE COTE 3
+C           LES NOUVEAUX INDICES DU SOUS-QUADRANGLE SUIVANT
+            IF( J .GE. NY1 ) GOTO 50
+            J = J + 1
+            GOTO 5
+C
+         ELSE
+C           LE POINT EST DERRIERE LE COTE 2
+C           LES NOUVEAUX INDICES DU SOUS-QUADRANGLE SUIVANT
+            IF( I .LE. 1 ) GOTO 50
+            I = I - 1
+            GOTO 5
+         ENDIF
+      ENDIF
+C
+C     PAS DE PRODUITS VECTORIELS<0 =>
+C     POINT INTERNE OU SUR UN DES 4 COTES DU SOUS-QUADRANGLE
+C
+C     LE POINT EST DANS LE SOUS-QUADRANGLE DE SOMMETS
+C     (I,J), (I+1,J), (I+1,J+1), (I,J+1)
+C     CALCUL DES COORDONNEES DU POINT (XP,YP) DANS LE
+C     CARRE UNITE FE-1(XP,YP) : SSQU-->CARRE UNITE
+ 50   DO 60 K=1,2
+         ST(K,1) = XYSCA(K,I ,J )
+         ST(K,2) = XYSCA(K,I1,J )
+         ST(K,3) = XYSCA(K,I1,J1)
+         ST(K,4) = XYSCA(K,I ,J1)
+ 60   CONTINUE
+      CALL FQ1INV( XP, YP, ST, XC, YC, IERR )
+C
+      NS1 = 0
+      NS2 = 0
+      NS3 = 0
+      NS4 = 0
+      IF( NF .EQ. 2 ) THEN
+C        LE NUMERO DANS LE PENTAEDRE DES 4 SOMMETS
+C        DU SOUS-QUADRANGLE DE LA FACE 2
+         NS1 = NUSOPE(I ,1,J )
+         NS2 = NUSOPE(I1,1,J )
+         NS3 = NUSOPE(I1,1,J1)
+         NS4 = NUSOPE(I ,1,J1)
+      ELSE IF( NF .EQ. 3 ) THEN
+C        LE NUMERO DANS LE PENTAEDRE DES 4 SOMMETS
+C        DU SOUS-QUADRANGLE DE LA FACE 3
+         NS1 = NUSOPE(NX,I ,J )
+         NS2 = NUSOPE(NX,I1,J )
+         NS3 = NUSOPE(NX,I1,J1)
+         NS4 = NUSOPE(NX,I ,J1)
+      ELSE IF( NF .EQ. 4 ) THEN
+C        LE NUMERO DANS LE PENTAEDRE DES 4 SOMMETS
+C        DU SOUS-QUADRANGLE DE LA FACE 4
+         K   = NX - I
+         NS2 = NUSOPE(K,K,J )
+         NS3 = NUSOPE(K,K,J1)
+         K   = K + 1
+         NS1 = NUSOPE(K,K,J )
+         NS4 = NUSOPE(K,K,J1)
+      ENDIF
+C
+C     CALCUL DE L'INTERPOLATION Q1 DU POINT DANS LE SOUS-QUADRANGLE
+      PRV1 = 1 - XC
+      PRV2 = 1 - YC
+      DO 70 K=1,3
+         XYZ(K) = PRV1 * ( PRV2 * COSO(K,NS1) + YC * COSO(K,NS4) )
+     %          +  XC  * ( PRV2 * COSO(K,NS2) + YC * COSO(K,NS3) )
+ 70   CONTINUE
+C
+      RETURN
+      END

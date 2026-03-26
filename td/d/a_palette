@@ -1,0 +1,12 @@
+deftms ~>PALETTE 'Une PALETTE de COULEURS'
+ variable muet DATE 'date de creation du tableau'   reel2  ;
+ variable muet NUTD 'numero du tableau descripteur' entier ; 
+ variable L1COUL 'numero de la premiere couleur de la palette' entier ;
+ variable LDCOUL 'numero de la derniere couleur de la palette' entier ;
+ tableau  TEINTE(1..2,L1COUL..LDCOUL) 'les 2 COULEURS de la teinte' entier 
+ ( 1: 'rouge' , 2: 'vert'    , 3: 'bleu'  , 4: 'cyan'
+ , 5: 'jaune' , 6: 'magenta' , 7: 'blanc' , 8: 'noir' , 9:'rien') ;
+ tableau  PTEINT(L1COUL..LDCOUL) 'pourcentage de la premiere couleur' reel ;
+ tableau  PINTEN(L1COUL..LDCOUL) 'pourcentage de l''intensite' reel ;
+ tableau  PURETE(L1COUL..LDCOUL) 'pourcentage de la purete' reel ;
+fintms ;

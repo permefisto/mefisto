@@ -1,0 +1,739 @@
+      SUBROUTINE VOEX30( NUMVOL, NTLXVO, LADEFI, RADEFI,
+     %                   NTFATA, MNFATA, NTSOTA, MNSOTA, IERR )
+C+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+C BUT :     AMELIORER LA TETRAEDRISATION D'UN VOLUME
+C -----     PAR MAXIMISATION DU MINIMUM DE LA QUALITE
+C           DES TETRAEDRES DE TROP MAUVAISE QUALITE
+
+C ENTREES:
+C --------
+C NUMVOL : NUMERO DU VOLUME FINAL DANS LE LEXIQUE DES VOLUMES
+C NTLXVO : NUMERO DU TABLEAU TMS DU VOLUME
+C LADEFI : TABLEAU DE DEFINITION DU VOLUME VU EN ENTIER
+C RADEFI : TABLEAU DE DEFINITION DU VOLUME VU EN REEL
+C          CF '$MEFISTO/td/d/a_volume__definition'
+
+C SORTIES:
+C --------
+C NTFATA : NUMERO      DU TMS 'NSEF' DES NUMEROS DES TETRAEDRES AMELIORES
+C MNFATA : ADRESSE MCN DU TMS 'NSEF' DES NUMEROS DES TETRAEDRES AMELIORES
+C          CF '$MEFISTO/td/d/a___nsef'
+C NTSOTA : NUMERO      DU TMS 'XYZSOMMET' DU VOLUME
+C MNSOTA : ADRESSE MCN DU TMS 'XYZSOMMET' DU VOLUME
+C          CF '~/td/d/a___xyzsommet'
+C IERR   : 0 SI PAS D'ERREUR
+C        > 0 SINON
+C+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+C AUTEUR : ALAIN PERRONNET LABO D'ANALYSE NUMERIQUE PARIS  Decembre 1991
+C MODIFS : ALAIN PERRONNET LJLL UPMC et St Pierre du Perray    Juin 2008
+C MODIFS : ALAIN PERRONNET LJLL UPMC et St Pierre du Perray    Mars 2016
+C2345X7..............................................................012
+      include"./incl/langue.inc"
+      include"./incl/gsmenu.inc"
+      include"./incl/ntmnlt.inc"
+      include"./incl/a___materiaux.inc"
+      include"./incl/a___xyzsommet.inc"
+      include"./incl/a___nsef.inc"
+      include"./incl/darete.inc"
+      include"./incl/a_volume__definition.inc"
+      COMMON / UNITES / LECTEU, IMPRIM, INTERA, NUNITE(29)
+      COMMON / TRTETR / STOPTE,TRACTE
+      LOGICAL           STOPTE,TRACTE,TRACTE0
+
+      include"./incl/pp.inc"
+      COMMON             MCN(MOTMCN)
+      REAL              RMCN(MOTMCN)
+      EQUIVALENCE      (MCN(1),RMCN(1))
+      INTEGER           LADEFI(0:*)
+      REAL              RADEFI(0:*)
+
+      INTEGER, allocatable, dimension(:) :: NOSOET
+      REAL,    allocatable, dimension(:) :: VOLUMT
+      REAL,    allocatable, dimension(:) :: QUALIT
+      REAL,    allocatable, dimension(:) :: QUALII
+
+      CHARACTER*24      NMOBJT
+      CHARACTER*80      KINFO
+      DOUBLE PRECISION  DINFO, DCPUTO, VOLTER, VOLT
+
+
+C     pour voir les ZONES INTER-TABLEAUX
+      call imtamc
+
+
+C     INITIALISATION DU TEMPS CALCUL
+C     ------------------------------
+      DCPUTO = DINFO( 'DELTA CPU' )
+
+      TRACTE0 = TRACTE
+      TRACTE = .FALSE.
+      IERR = 0
+      IERANOSOET = 1
+      IERAVOLUMT = 1
+      IERAQUALIT = 1
+      IERAQUALII = 1
+      
+      MNLXTEIN = 0
+      MN1TSO = 0
+      MNTESO = 0
+      MNFAET = 0
+      MNVOET = 0
+      MNQUET = 0
+      MNTEXA = 0
+      MNSOTR = 0
+      MNFATR = 0
+      MNSOTA = 0
+      MNFATA = 0
+      MNSOFR = 0
+      MNDMEF = 0
+
+C     ARETGR 'LONGUEUR MAX de l'ARETE des TETRAEDRES'
+C     -----------------------------------------------
+      ARETGR = ABS( RADEFI( WRETGR ) )
+      DARETE = ARETGR
+
+C     QUALITE MINIMALE AU DESSOUS DE LAQUELLE LA QUALITE DOIT ETRE
+C     AMELIOREE
+C     ------------------------------------------------------------
+      QUTEMN = ABS( RADEFI( WUTEMN ) )
+      QUTEMN = MIN( QUTEMN, 0.15 )
+
+      IF( QUTEMN .LT. 1E-6 ) THEN
+         NBLGRC(NRERR) = 2
+         WRITE(KERR(MXLGER)(1:15),'(G15.6)') QUTEMN
+         IF( LANGAG .EQ. 0 ) THEN
+            KERR(1) = 'QUALITE MINIMALE EXIGEE INCORRECTE'
+            KERR(2) = 'QUALITE=' // KERR(MXLGER)(1:15) // '<1e-6'
+         ELSE
+            KERR(1) = 'INCORRECT QUALITY MINIMUM REQUIRED'
+            KERR(2) = 'QUALITY=' // KERR(MXLGER)(1:15) // '<1e-6'
+         ENDIF
+         CALL LEREUR
+         IERR = 8
+         RETURN
+      ENDIF
+C
+C     ANGLE AU DESSOUS DUQUEL 2 FACES DE TETRAEDRES SONT PLANES
+C     ---------------------------------------------------------
+      ANTE2P = ABS( RADEFI( WNTE2P ) )
+      IF( ANTE2P .GT. 60.0 ) THEN
+         NBLGRC(NRERR) = 2
+         WRITE(KERR(MXLGER)(1:15),'(G15.6)') ANTE2P
+         IF( LANGAG .EQ. 0 ) THEN
+            KERR(1) = 'ANGLE COPLANEARITE INCORRECT'
+            KERR(2) = KERR(MXLGER)(1:15) // ' DEGRES >60'
+         ELSE
+            KERR(1) = 'INCORRECT COPLANEARITY ANGLE'
+            KERR(2) = KERR(MXLGER)(1:15) // ' DEGREES >60'
+         ENDIF
+         CALL LEREUR
+         IERR = 7
+         RETURN
+      ENDIF
+C
+C     NOMBRE D'ITERATIONS POUR AMELIORER LA TETRAEDRISATION
+C     -----------------------------------------------------
+      NBITAT = LADEFI(WBITAT)
+      IF( NBITAT .LE. 0  ) NBITAT = 1
+      IF( NBITAT .GT. 16 ) NBITAT = 16
+C
+C     NUMERO DU VOLUME TETRAEDRISE A TRAITER
+C     --------------------------------------
+      NUVOIN = LADEFI(WUVOIN)
+      IF( NUVOIN .LE. 0 ) THEN
+         NBLGRC(NRERR) = 1
+         KERR(1) = 'VOLUME INCONNU'
+         CALL LEREUR
+         IERR = 1
+         RETURN
+      ENDIF
+C
+C     RECUPERATION DES TABLEAUX DE LA TETRAEDRISATION INITIALE
+C     ========================================================
+      CALL LXNLOU( NTVOLU, NUVOIN, NTLXTEIN, MNLXTEIN )
+      IF( NTLXTEIN .LE. 0 ) THEN
+         NBLGRC(NRERR) = 1
+         IF( LANGAG .EQ. 0 ) THEN
+            KERR(1) = 'TETRAEDRISATION INITIALE INCONNUE'
+         ELSE
+            KERR(1) = 'UNKNOWN INITIAL TETRAHEDRIZATION'
+         ENDIF
+         CALL LEREUR
+         IERR = 1
+         RETURN
+      ENDIF
+C
+C     LE TABLEAU 'MATERIAUX'
+      CALL LXTSOU( NTLXTEIN, 'MATERIAUX', NTMATE, MNMATE )
+      IF( NTMATE .LE. 0 ) THEN
+C        EN FAIT UN SEUL MATERIAU = PAS DE NUMERO DE MATERIAU DE CHAQUE EF
+         NBDMAT = 0
+         NBDMEF = 0
+         MNUDMEF= 0
+      ELSE
+C        EN FAIT PLUSIEURS MATERIAUX = VOLUMES
+C        CHAQUE EF A SON NUMERO DE MATERIAU=VOLUME RANGE A L'ADRESSE MNUDMEF
+C        NOMBRE DE MATERIAUX
+         NBDMAT = MCN( MNMATE + WNBDM )
+C        NOMBRE D''ELEMENTS FINIS DU MAILLAGE AVEC NO DE MATERIAU
+         NBDMEF = MCN( MNMATE + WBDMEF )
+C        ADRESSE MCN DU NO DE MATERIAU DE CHAQUE EF
+         MNUDMEF= MNMATE + WUDMEF
+      ENDIF
+C
+C     AFFICHAGE DE L'OBJECTIF DE QUALITE DE LA TETRAEDRISATION
+      WRITE(IMPRIM,*)
+      NBLGRC(NRERR) = 5
+      WRITE(KERR(MXLGER  )(1:15),'(G15.6)') QUTEMN
+      WRITE(KERR(MXLGER-1)(1:15),'(G15.6)') ANTE2P
+      WRITE(KERR(MXLGER-2)(1:15),'(I15)'  ) NBITAT
+      WRITE(KERR(MXLGER-3)(1:15),'(I15)'  ) NBDMAT
+      IF( LANGAG .EQ. 0 ) THEN
+         KERR(1) = 'voex30: AMELIORATION de la QUALITE de la TETRAEDRISA
+     %TION'
+         KERR(2) = 'QUALITE SOUHAITEE   =' // KERR(MXLGER  )(1:15)
+         KERR(3) = 'ANGLE COPLANEARITE  =' // KERR(MXLGER-1)(1:15)
+         KERR(4) = 'NOMBRE D''ITERATIONS=' // KERR(MXLGER-2)(1:15)
+         KERR(5) = 'NOMBRE de MATERIAUX =' // KERR(MXLGER-3)(1:15)
+      ELSE
+         KERR(1) = 'voex30: TETRAHEDRIZATION QUALITY IMPROVEMENT'
+         KERR(2) = 'WISHED QUALITY     =' // KERR(MXLGER  )(1:15)
+         KERR(3) = 'COPLANEARITY ANGLE =' // KERR(MXLGER-1)(1:15)
+         KERR(4) = 'ITERATION NUMBER   =' // KERR(MXLGER-2)(1:15)
+         KERR(5) = 'MATERIAL NUMBER    =' // KERR(MXLGER-3)(1:15)
+      ENDIF
+      CALL LERESU
+C
+C     LE TABLEAU 'XYZSOMMET'
+      CALL LXTSOU( NTLXTEIN, 'XYZSOMMET', NTSOTR, MNSOTR )
+      IF( NTSOTR .LE. 0 ) THEN
+         NBLGRC(NRERR) = 1
+         IF( LANGAG .EQ. 0 ) THEN
+            KERR(1) = 'VOLUME SANS LE TMS XYZSOMMET'
+         ELSE
+            KERR(1) = 'VOLUME WITHOUT the XYZSOMMET TMS'
+         ENDIF
+         CALL LEREUR
+         IERR = 2
+         RETURN
+      ENDIF
+
+C     LE NOMBRE DE SOMMETS ET DE COORDONNEES
+      NBSOTA = MCN( MNSOTR + WNBSOM )
+      NBCOOR = MCN( MNSOTR + WBCOOR )
+C
+C     LE TABLEAU 'NSEF'
+      CALL LXTSOU( NTLXTEIN, 'NSEF', NTSSTR, MNFATR )
+      IF( NTSSTR .LE. 0 ) THEN
+         NBLGRC(NRERR) = 1
+         IF( LANGAG .EQ. 0 ) THEN
+            KERR(1) = 'VOLUME SANS LE TMS NSEF'
+         ELSE
+            KERR(1) = 'VOLUME WITHOUT NSEF TMS'
+         ENDIF
+         CALL LEREUR
+         IERR = 3
+         RETURN
+      ENDIF
+C
+C     LES CARACTERISTIQUES DES NSEF DE CETTE TETRAEDRISATION
+      CALL NSEFPA( MCN(MNFATR) ,
+     %             NUTYMA, NBSOEL, NBSOEF, NBTGEF,
+     %             LDAPEF, LDNGEF, LDTGEF, NBTETR,
+     %             NX,     NY,     NZ,
+     %             IERR   )
+C     NUTYMA : 'NUMERO DE TYPE DU MAILLAGE'    ENTIER
+C              0 : 'NON STRUCTURE'       , 2 : 'SEGMENT    STRUCTURE',
+C              3 : 'TETRAEDRE  STRUCTURE', 4 : 'TETRAEDRE  STRUCTURE',
+C              5 : 'TETRAEDRE STRUCTURE' , 6 : 'PENTAEDRE  STRUCTURE',
+C              7 : 'HEXAEDRE  STRUCTURE'
+C     NBSOEL : NOMBRE DE SOMMETS DES EF
+C              0 SI MAILLAGE NON STRUCTURE
+C     NBSOEF : NOMBRE DE SOMMETS DE STOCKAGE DES NSEF
+C              ( TETRAEDRE NBSOEF=8 )
+C     NBTETR : NOMBRE DE EF DU MAILLAGE
+C     NX, NY, NZ : LE NOMBRE D'ARETES DANS LES DIRECTIONS X Y Z
+C                CF LE TMS ~td/d/a___nsef
+C
+      IF( LANGAG .EQ. 0 ) THEN
+         WRITE(IMPRIM,*) 'NOMBRE INITIAL de SOMMETS   =',NBSOTA
+         WRITE(IMPRIM,*) 'NOMBRE INITIAL de TETRAEDRES=',NBTETR
+      ELSE
+         WRITE(IMPRIM,*) 'INITIAL NUMBER of VERTICES  =',NBSOTA
+         WRITE(IMPRIM,*) 'INITIAL NUMBER of TETRAHEDRA=',NBTETR
+      ENDIF
+C
+      IF( NBSOEF .NE. 8 .OR. NUTYMA .NE. 0 ) THEN
+         NBLGRC(NRERR) = 1
+         IF( LANGAG .EQ. 0 ) THEN
+            KERR(1) = 'MAILLAGE DIFFERENT d''une TETRAEDRISATION'
+         ELSE
+            KERR(1) = 'MESH is NOT a TETRAHEDRIZATION'
+         ENDIF
+         CALL LEREUR
+         IERR = 4
+         RETURN
+      ENDIF
+C
+      IF( NBDMAT .GT. 0 .AND. NBTETR .NE. NBDMEF ) THEN
+         NBLGRC(NRERR) = 1
+         IF( LANGAG .EQ. 0 ) THEN
+            KERR(1) = 'NOMBRE DE TETRAEDRES NON EGAL ENTRE VOLUME et MAT
+     %ERIAUX'
+         ELSE
+            KERR(1) = 'NUMBER of TETRAHEDRA NOT EQUAL BETWEEN VOLUME and
+     % MATERIALS'
+         ENDIF
+         CALL LEREUR
+         IERR = 5
+         RETURN
+      ENDIF
+
+C     MAXIMUM DU PREMIER INDICE DU TABLEAU NSTETR
+      NBSOTE = 8
+
+C     TRACE DES TETRAEDRES INITIAUX EN FILAIRE
+      CALL MAJEXT( MNSOTR )
+      MXTET  = NBTETR
+      CALL TRNSTETR( NBSOTE, MXTET, MCN(MNFATR+WUSOEF),
+     %               NBCOOR, RMCN(MNSOTR+WYZSOM),
+     %               NBTETR, VOLET0, QUAET0, QUAMO0 )
+
+C     CONSTRUCTION DU TABLEAU 'XYZSOMMET' 1.333 FOIS PLUS GRAND
+C     ---------------------------------------------------------
+      MXSOTA = NINT( NBSOTA * 1.333 )
+      L      = WYZSOM + 3 * MXSOTA
+      print*,'voex30: XYZSOMMET augmente demande',L,' mots'
+      CALL LXTNDC( NTLXVO, 'XYZSOMMET', 'MOTS', L )
+      CALL LXTSOU( NTLXVO, 'XYZSOMMET',  NTSOTA, MNSOTA )
+      IF( MNSOTA .LE. 0 ) GOTO 9999
+C     COPIE DU TABLEAU 'XYZSOMMET' DANS CELUI QUI SERA MODIFIE
+      CALL TRTATA( MCN(MNSOTR), MCN(MNSOTA), WYZSOM + 3 * NBSOTA )
+C
+C     CONSTRUCTION DU TABLEAU 'NSEF' AUGMENTE
+C     ---------------------------------------
+      MXTETA = NINT( MXSOTA * 5.5 )
+      NBTETA = NBTETR
+      L = WUSOEF+MXTETA*NBSOTE
+      print*,'voex30: NSEF augmente demande',L,' mots'
+      CALL LXTNDC( NTLXVO, 'NSEF', 'MOTS', L )
+      CALL LXTSOU( NTLXVO, 'NSEF',  NTFATA, MNFATA )
+      IF( MNFATA .LE. 0 ) GOTO 9999
+C
+C     GENERATION DU TABLEAU DES XYZSOMMET DES TETRAEDRES
+C     --------------------------------------------------
+      MNTR = MNFATA + WUSOEF
+      DO 10 NUELEM = 1, NBTETR
+C
+C        REMPLISSAGE DU TABLEAU NSEF DE LA TETRAEDRISATION AMELIOREE
+         CALL NSEFNS( NUELEM, NUTYMA, NBSOEF, NBTGEF,
+     %                LDAPEF, LDNGEF, LDTGEF,
+     %                MNFATR, NX, NY, NZ ,
+     %                NCOGEL, NUGEEF, NUEFTG, MCN(MNTR), IERR )
+         IF( IERR .NE. 0 ) GOTO 9999
+C
+         IF( MCN(MNTR+5) .GT. 0 ) THEN
+            NBLGRC(NRERR) = 1
+            IF( LANGAG .EQ. 0 ) THEN
+               KERR(1) = 'PRESENCE INTERDITE d''UN EF NON TETRAEDRE'
+            ELSE
+               KERR(1) = 'FORBIDDEN PRESENCE of a NOT TETRAHEDRON'
+            ENDIF
+            CALL LEREUR
+            IERR = 4
+            GOTO 9999
+         ENDIF
+C
+C        PASSAGE AU TETRAEDRE SUIVANT
+         MNTR = MNTR + NBSOTE
+C
+ 10   CONTINUE
+C
+C     GENERATION DU TABLEAU NPSOFR(1:NBSOMM)
+C     =0 SI SOMMET INTERNE
+C     =1 SI SOMMET FRONTALIER
+C     =2 SI SOMMET SUR INTERFACE ENTRE 2 MATERIAUX
+C     --------------------------------------------
+      CALL NMOBNU( 'VOLUME', NUVOIN, NMOBJT )
+      CALL PTSUFR(  NMOBJT,  NBSOTA, MNSOFR )
+      IF( MNSOFR .LE. 0 ) GOTO 9999
+C     AUGMENTATION DE LA TAILLE DU TABLEAU SOFR
+      CALL TNMCAU( 'ENTIER', NBSOTA, MXSOTA, NBSOTA, MNSOFR )
+C     PAR DEFAUT LE POINT A AJOUTER EST INTERNE
+      DO I=MNSOFR+NBSOTA, MNSOFR-1+MXSOTA
+         MCN(I)=0
+      ENDDO
+C
+C     UNE COPIE AGRANDIE DU TABLEAU NO DE 'MATERIAUX'
+      IF( NBDMAT .GT. 0 ) THEN
+         CALL LXTSOU( NTLXVO, 'MATERIAUX', NTMATS, MNMATS )
+         IF( NTMATS .GT. 0 ) CALL LXTSDS( NTLXVO, 'MATERIAUX' )
+         MOTS2M = WUDMEF + MXTETA
+         print*,'voex30: MATERIAUX augmente demande',MOTS2M,' mots'
+         CALL LXTNDC( NTLXVO, 'MATERIAUX', 'ENTIER', MOTS2M )
+         CALL LXTSOU( NTLXVO, 'MATERIAUX',  NTMATS , MNMATS )
+         IF( MNMATS .LE. 0 ) GOTO 9999
+         MNDMEF = MNMATS + WUDMEF
+C        LE NUMERO DE MATERIAU DE CHAQUE TETRAEDRE ACTUEL
+         CALL TRTATA( MCN(MNUDMEF), MCN(MNDMEF), NBTETR )
+         CALL AZEROI( MXTETA-NBTETR, MCN(MNDMEF+NBTETR) )
+      ENDIF
+C
+C     LES DECLARATIONS AUXILIAIRES
+C     MAJORATION DU NOMBRE TOTAL DE TETRAEDRES ASSOCIES AUX SOMMETS
+C     NOSOTE(4,MXTETA) => NOTESO(4*MXTETA)
+      MXTESO = MXTETA * 4
+C     MAJORATION DU NOMBRE TOTAL DE FACES D'UNE ETOILE
+      MXFAET = 2048
+C     TABLEAU SERVANT AU TRI
+      MXTEXA = MAX( MXSOTA, MXTETA / 4 )
+
+      IF( LANGAG .EQ. 0 ) THEN
+         PRINT*,'DEMANDE  ALLOCATION NOSOET(',MXTETA,') ENTIERS'
+         ALLOCATE ( NOSOET( 1:MXTETA ), STAT=IERANOSOET )
+         IF( IERANOSOET .NE. 0 ) THEN
+            PRINT*,'ERREUR ALLOCATION NOSOET(',MXTETA,') ENTIERS'
+            IERR = IERANOSOET
+            GOTO 9999
+         ENDIF
+         PRINT*,'CORRECTE ALLOCATION NOSOET(',MXTETA,') ENTIERS'
+      ELSE
+         PRINT*,'ALLOCATION DEMAND  NOSOET(',MXTETA,') INTEGERS'
+         ALLOCATE ( NOSOET( 1:MXTETA ), STAT=IERANOSOET )
+         IF( IERANOSOET .NE. 0 ) THEN
+            PRINT*,'ALLOCATION ERROR NOSOET(',MXTETA,') INTEGERS'
+            IERR = IERANOSOET
+            GOTO 9999
+         ENDIF
+         PRINT*,'CORRECT ALLOCATION NOSOET(',MXTETA,') INTEGERS'
+      ENDIF
+
+      IF( LANGAG .EQ. 0 ) THEN
+
+         PRINT*,'DEMANDE  ALLOCATION VOLUMT(',MXTETA,') REELS'
+         ALLOCATE ( VOLUMT( 1:MXTETA ), STAT=IERAVOLUMT )
+         IF( IERAVOLUMT .NE. 0 ) THEN
+            PRINT*,'ERREUR ALLOCATION VOLUMT(',MXTETA,') REELS'
+            IERR = IERAVOLUMT
+            GOTO 9999
+         ENDIF
+         PRINT*,'CORRECTE ALLOCATION VOLUMT(',MXTETA,') REELS'
+
+         PRINT*,'DEMANDE  ALLOCATION QUALIT(',MXTETA,') REELS'
+         ALLOCATE ( QUALIT( 1:MXTETA ), STAT=IERAQUALIT )
+         IF( IERAQUALIT .NE. 0 ) THEN
+            PRINT*,'ERREUR ALLOCATION QUALIT(',MXTETA,') REELS'
+            IERR = IERAQUALIT
+            GOTO 9999
+         ENDIF
+         PRINT*,'CORRECTE ALLOCATION QUALIT(',MXTETA,') REELS'
+
+         PRINT*,'DEMANDE  ALLOCATION QUALII(',MXTETA,') REELS'
+         ALLOCATE ( QUALII( 1:MXTETA ), STAT=IERAQUALII )
+         IF( IERAQUALII .NE. 0 ) THEN
+            PRINT*,'ERREUR ALLOCATION QUALII(',MXTETA,') REELS'
+            IERR = IERAQUALII
+            GOTO 9999
+         ENDIF
+         PRINT*,'CORRECTE ALLOCATION QUALII(',MXTETA,') REELS'
+
+       ELSE
+
+         PRINT*,'ALLOCATION DEMAND  VOLUMT(',MXTETA,') REALS'
+         ALLOCATE ( VOLUMT( 1:MXTETA ), STAT=IERAVOLUMT )
+         IF( IERAVOLUMT .NE. 0 ) THEN
+            PRINT*,'ALLOCATION ERROR VOLUMT(',MXTETA,') REALS'
+            IERR = IERAVOLUMT
+            GOTO 9999
+         ENDIF
+         PRINT*,'CORRECT ALLOCATION VOLUMT(1:',MXTETA,') REALS'
+
+         PRINT*,'ALLOCATION DEMAND  QUALIT(',MXTETA,') REALS'
+         ALLOCATE ( QUALIT( 1:MXTETA ), STAT=IERAQUALIT )
+         IF( IERAQUALIT .NE. 0 ) THEN
+            PRINT*,'ALLOCATION ERROR QUALIT(',MXTETA,') REALS'
+            IERR = IERAQUALIT
+            GOTO 9999
+         ENDIF
+         PRINT*,'CORRECT ALLOCATION QUALIT(1:',MXTETA,') REALS'
+
+         PRINT*,'ALLOCATION DEMAND  QUALII(',MXTETA,') REALS'
+         ALLOCATE ( QUALII( 1:MXTETA ), STAT=IERAQUALII )
+         IF( IERAQUALII .NE. 0 ) THEN
+            PRINT*,'ALLOCATION ERROR QUALII(',MXTETA,') REALS'
+            IERR = IERAQUALII
+            GOTO 9999
+         ENDIF
+         PRINT*,'CORRECT ALLOCATION QUALII(1:',MXTETA,') REALS'
+
+      ENDIF
+
+      L = MXSOTA +MXTESO*2 +MXFAET*7 +MXTEXA
+      print*,'voex30: les TABLEAUX AUXILIAIRES demandent',L,' mots'
+      CALL TNMCMX( 'ENTIER', MAXVAR )
+      IF( L .GT. MAXVAR ) THEN
+         IF( LANGAG .EQ. 0 ) THEN
+           PRINT*,'voex30: ',MAXVAR,' MOTS DISPONIBLES DANS MCN(MOTMCN)'
+           PRINT*,'voex30: MOTMCN=',MOTMCN,
+     %             ' a AUGMENTER ou REDUIRE le MAILLAGE'
+         ELSE
+           PRINT*,'voex30: ',MAXVAR,' DISPONBLE WORDS in MCN(MOTMCN)'
+           PRINT*,'voex30: AUGMENT MOTMCN=',MOTMCN,' or REDUCE the MESH'
+         ENDIF
+         IERR = 1
+         GOTO 9999
+      ENDIF
+
+      CALL TNMCDC( 'ENTIER', MXSOTA,   MN1TSO )
+      CALL TNMCDC( 'ENTIER', MXTESO*2, MNTESO )
+      CALL TNMCDC( 'ENTIER', MXFAET*5, MNFAET )
+      CALL TNMCDC( 'REEL',   MXFAET,   MNVOET )
+      CALL TNMCDC( 'REEL',   MXFAET,   MNQUET )
+      CALL TNMCDC( 'ENTIER', MXTEXA,   MNTEXA )
+      IF( MNTEXA .LE. 0 ) GOTO 9999
+C
+C     AMELIORATION DE LA QUALITE DE LA TETRAEDRISATION
+C     ================================================
+      CALL AMQUTETRA( QUTEMN, ANTE2P, NBITAT,
+     %                NBCOOR, NBSOTA, MXSOTA,
+     %                RMCN(MNSOTA+WYZSOM), MCN(MNSOFR),
+     %                NBSOTE, MXTETA, NBTETA, MCN(MNFATA+WUSOEF),
+     %                NBDMAT, MCN(MNDMEF),
+     %                VOLUMT, QUALIT, QUALII,
+     %                MCN(MN1TSO), MXTESO, MCN(MNTESO),
+     %                MXFAET, MCN(MNFAET), RMCN(MNVOET), RMCN(MNQUET),
+     %                NOSOET, MXTEXA, MCN(MNTEXA),
+     %                DCPUTO, IERR )
+      PRINT*,'voex30: sortie amqutetra avec IERR=',IERR
+      IF( IERR .GT. 0 ) GOTO 9999
+
+C     LES SOMMETS RESTANTS APRES L'AMELIORATION
+C     LE TABLEAU NO1TSO VA CONTENIR LE NOUVEAU NUMERO DE SOMMET
+C     ---------------------------------------------------------
+      MN1TSO1= MN1TSO - 1
+      MNS    = MNSOTA + WYZSOM - 3
+      NBS    = 0
+      DO I=1,NBSOTA
+         MN0 = MN1TSO1 + I
+         IF( ABS(MCN(MN0)) .GT. 0 ) THEN
+C           LE SOMMET I VA DEVENIR LE SOMMET NBS
+            NBS = NBS + 1
+            MCN(MN0) = NBS
+C           TRANSFERT DE SES 3 COORDONNEES
+            MN1 = MNS + 3 * I
+            MN2 = MNS + 3 * NBS
+            RMCN( MN2     ) = RMCN( MN1     )
+            RMCN( MN2 + 1 ) = RMCN( MN1 + 1 )
+            RMCN( MN2 + 2 ) = RMCN( MN1 + 2 )
+         ELSE
+            MCN(MN0) = 0
+         ENDIF
+      ENDDO
+C     LE VRAI NOMBRE DE SOMMETS DE LA TETRAEDRISATION
+      NBSOTA = NBS
+
+C     RENUMEROTATION DES NUMEROS DES SOMMETS DES EF
+C     ---------------------------------------------
+      VOLT   = 0D0
+      NBTETA = 0
+      MN     = MNFATA + WUSOEF - 8
+      MN1    = MN
+      DO 40 I=1,MXTETA
+C        POSITION SUR LE TETRAEDRE I
+         MN = MN + 8
+         IF( MCN(MN) .GT. 0 ) THEN
+C           UN TETRAEDRE A CONSERVER: SES 4 SOMMETS SONT RENUMEROTES
+            NBTETA = NBTETA + 1
+            MN1    = MN1 + 8
+            DO J=0,3
+C              SON VRAI NUMERO DANS NPSOFR
+               NS = MCN( MN1TSO1+MCN(MN+J) )
+               IF( NS .LE. 0 ) THEN
+C                 UNE ERREUR RENCONTREE
+                  IF( LANGAG .EQ. 0 ) THEN
+                     WRITE(IMPRIM,*)'voex30:PB TETRA',I,' J=',J,
+     %             ' NBTETA=',NBTETA,' SOMMETS',(MCN(MN+K),k=0,3),
+     %             ' NS=',NS,' => TETRAEDRE SUPPRIME'
+                  ELSE
+                     WRITE(IMPRIM,*)'voex30:PB TETRA',I,' J=',J,
+     %             ' NBTETA=',NBTETA,' VERTICES',(MCN(MN+K),k=0,3),
+     %             ' NS=',NS,' => TETRAHEDRON DELETED'
+                  ENDIF
+C                 LE TETRAEDRE EST ELIMINE
+                  NBTETA = NBTETA - 1
+                  MN1    = MN1 - 8
+                  GOTO 40
+               ENDIF
+C              SA VALEUR DANS NSEF
+               MCN(MN1+J) = NS
+            ENDDO
+C           LES 4 AUTRES SOMMETS SONT NULS
+            DO J=4,7
+               MCN(MN1+J) = 0
+            ENDDO
+C
+C           LE VOLUME TOTAL DES TETRAEDRES
+            VOLT = VOLT + VOLTER( RMCN( MNS + 3 * MCN(MN1)   ),
+     %                            RMCN( MNS + 3 * MCN(MN1+1) ),
+     %                            RMCN( MNS + 3 * MCN(MN1+2) ),
+     %                            RMCN( MNS + 3 * MCN(MN1+3) ) )
+C
+C           EVENTUEL NO DE MATERIAU
+            IF( NBDMAT .GT. 0 ) THEN
+               MCN( MNDMEF-1 + NBTETA ) = MCN( MNDMEF-1 + I )
+            ENDIF
+         ENDIF
+ 40   CONTINUE
+C     LE VOLUME TOTAL DES TETRAEDRES EST VOLT
+      print *,'voex30: Volume du Maillage=',volt
+C
+C     MISE A JOUR DU TABLEAU 'XYZSOMMET' DE CE VOLUME
+C     -----------------------------------------------
+C     NOMBRE DE SOMMETS DE LA TETRAEDRISATION
+      MCN( MNSOTA + WNBSOM ) = NBSOTA
+C     NOMBRE DE TANGENTES DE LA TETRAEDRISATION
+      MCN( MNSOTA + WNBTGS ) = 0
+C     NOMBRE DE COORDONNEES PAR SOMMET
+      MCN( MNSOTA + WBCOOR ) = 3
+C     LA DATE DE CREATION
+      CALL ECDATE( MCN(MNSOTA) )
+C     LE NUMERO DU TABLEAU DESCRIPTEUR
+      MCN( MNSOTA + MOTVAR(6) ) = NONMTD( '~>>>XYZSOMMET' )
+C     IL EST EVENTUELLEMENT RACOURCI
+      CALL TAMSRA( NTSOTA, WYZSOM+3*NBSOTA )
+C
+C     MISE A JOUR DU TABLEAU 'NSEF' DE CE VOLUME
+C     ------------------------------------------
+C     TYPE DE L'OBJET : VOLUME
+      MCN( MNFATA + WUTYOB ) = 4
+C     LE TYPE INCONNU DE FERMETURE DU MAILLAGE
+      MCN( MNFATA + WUTFMA ) = -1
+C     NOMBRE DE SOMMETS PAR EF
+      MCN( MNFATA + WBSOEF ) = 8
+C     PAS DE TANGENTES STOCKEES
+      MCN( MNFATA + WBTGEF ) = 0
+C     NOMBRE DE TETRAEDRES
+      MCN( MNFATA + WBEFOB ) = NBTETA
+C     NOMBRE DE TETRAEDRES A TG
+      MCN( MNFATA + WBEFTG ) = 0
+C     NOMBRE D'EF AVEC POINTEUR SUR LES EF A TG
+      MCN( MNFATA + WBEFAP ) = 0
+C     NUMERO DU TYPE DU MAILLAGE : NON STRUCTURE
+      MCN( MNFATA + WUTYMA ) = 0
+C     LA DATE DE CREATION
+      CALL ECDATE( MCN(MNFATA) )
+C     LE NUMERO DU TABLEAU DESCRIPTEUR
+      MCN( MNFATA + MOTVAR(6) ) = NONMTD( '~>>>NSEF' )
+C     IL EST EVENTUELLEMENT RACOURCI
+      CALL TAMSRA( NTFATA, WUSOEF+8*NBTETA )
+
+C     TRACE DES TETRAEDRES FINAUX EN FILAIRE
+      MXTET = NBTETA
+      CALL TRNSTETR( NBSOTE, MXTET, MCN(MNFATA+WUSOEF),
+     %               NBCOOR, RMCN(MNSOTA+WYZSOM),
+     %               NBTETA, VOLET1, QUAET1, QUAMO1 )
+      IF( VOLET0 .GT. 0 ) THEN
+         PRINT *,'voex30: VOLUME0=',VOLET0,' QUALITE0=',QUAET0,
+     %           ' QUALMOYEN0=',QUAMO0
+         PRINT *,'voex30: VOLUME1=',VOLET1,' QUALITE1=',QUAET1,
+     %           ' QUALMOYEN1=',QUAMO1
+         PRINT *,'voex30: Difference Volumes=',
+     %            ABS(VOLET0-VOLET1)/VOLET0*100,' %'
+      ENDIF
+
+C     MISE A JOUR DU TABLEAU 'MATERIAUX' DE CE VOLUME
+C     -----------------------------------------------
+      IF( NBDMAT .GT. 0 ) THEN
+C        NOMBRE DE MATERIAUX
+         MCN( MNMATS + WNBDM ) = NBDMAT
+C        NOMBRE D'ELEMENTS FINIS DU MAILLAGE AVEC NO DE MATERIAU
+         MCN( MNMATS + WBDMEF ) = NBTETA
+C        LA DATE DE CREATION
+         CALL ECDATE( MCN(MNMATS) )
+C        LE NUMERO DU TABLEAU DESCRIPTEUR
+         MCN( MNMATS + MOTVAR(6) ) = NONMTD( '~>>>MATERIAUX' )
+C        IL EST EVENTUELLEMENT RACOURCI
+         CALL TAMSRA( NTMATS, WUDMEF+NBTETA )
+      ENDIF
+C
+C     MISE A JOUR DES ELEMENTS FINIS DES VOLUMES MATERIAUX
+C     SI CE VOLUME EST MULTI-MATERIAUX
+C     ----------------------------------------------------
+      IF( NBDMAT .GT. 1 ) THEN
+         CALL MAJVOL( NUMVOL, IERR )
+C        SI ERREUR => PAS DE MODIFICATION DES VOLUMES
+C                     PAS DE PROBLEME CREE => ERREUR ANNULEE
+         IERR = 0
+      ENDIF
+C
+C     TEMPS CPU EXECUTION
+C     -------------------
+      DCPUTO = DCPUTO + DINFO('DELTA CPU')
+      IF( LANGAG .EQ. 0 ) THEN
+         WRITE(IMPRIM,19999) DCPUTO,NBSOTA,NBTETA,VOLT,KINFO('MACHINE')
+      ELSE
+         WRITE(IMPRIM,29999) DCPUTO,NBSOTA,NBTETA,VOLT,KINFO('MACHINE')
+      ENDIF
+19999 FORMAT(/' voex30: TEMPS CPU TOTAL DE L''AMELIORATION DE LA TETRAED
+     %RISATION',F11.2,' SECONDES'/' pour',I8,' SOMMETS et',I9,
+     %' TETRAEDRES et un VOLUME TOTAL de ',G15.7,' sur l''ordinateur ',A
+     %/ 150('='))
+29999 FORMAT(/' voex30: TETRAHEDRIZATION IMPROVEMENT TOTAL CPU TIME',
+     %F11.2,' SECONDS'/' for',I8,' VERTICES and',I9,' TETRAHEDRA of TOTA
+     %L VOLUME',G15.7,' on COMPUTER ',A/ 150('='))
+
+C     DESTRUCTION DES TABLEAUX MCN DEVENUS INUTILES
+ 9999 IF( MNSOFR .GT. 0 ) CALL TNMCDS( 'ENTIER', MXSOTA,   MNSOFR )
+      IF( MNTEXA .GT. 0 ) CALL TNMCDS( 'ENTIER', MXTEXA,   MNTEXA )
+      IF( MNQUET .GT. 0 ) CALL TNMCDS( 'REEL',   MXFAET,   MNQUET )
+      IF( MNVOET .GT. 0 ) CALL TNMCDS( 'REEL',   MXFAET,   MNVOET )
+      IF( MNFAET .GT. 0 ) CALL TNMCDS( 'ENTIER', MXFAET*5, MNFAET )
+      IF( MNTESO .GT. 0 ) CALL TNMCDS( 'ENTIER', MXTESO*2, MNTESO )
+      IF( MN1TSO .GT. 0 ) CALL TNMCDS( 'ENTIER', MXSOTA,   MN1TSO )
+
+      IF( IERANOSOET .EQ. 0 ) then
+         IF( LANGAG .EQ. 0 ) THEN
+            PRINT*,'NOSOET est DESALLOUE'
+         ELSE
+            PRINT*,'NOSOET is DESALLOCATED'
+         ENDIF
+         DEALLOCATE( NOSOET )
+         IERANOSOET = 1
+      ENDIF
+
+      IF( IERAVOLUMT .EQ. 0 ) then
+         IF( LANGAG .EQ. 0 ) THEN
+            PRINT*,'VOLUMT est DESALLOUE'
+         ELSE
+            PRINT*,'VOLUMT is DESALLOCATED'
+         ENDIF
+         DEALLOCATE( VOLUMT )
+         IERAVOLUMT = 1
+      ENDIF
+
+      IF( IERAQUALIT .EQ. 0 ) then
+         IF( LANGAG .EQ. 0 ) THEN
+            PRINT*,'QUALIT est DESALLOUE'
+         ELSE
+            PRINT*,'QUALIT is DESALLOCATED'
+         ENDIF
+         DEALLOCATE( QUALIT )
+         IERAQUALIT = 1
+      ENDIF
+
+      IF( IERAQUALII .EQ. 0 ) then
+         IF( LANGAG .EQ. 0 ) THEN
+            PRINT*,'QUALII est DESALLOUE'
+         ELSE
+            PRINT*,'QUALII is DESALLOCATED'
+         ENDIF
+         DEALLOCATE( QUALII )
+         IERAQUALII = 1
+      ENDIF
+
+C     pour voir les ZONES INTER-TABLEAUX NUMERIQUES
+      call imtamc
+
+      TRACTE0 = TRACTE
+      RETURN
+      END

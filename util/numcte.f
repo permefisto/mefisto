@@ -1,0 +1,48 @@
+      SUBROUTINE NUMCTE( DBLVAL , NOCTE )
+C+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+C BUT : RETROUVER LE NUMERO DE LA CONSTANTE REELLE DOUBLE PRECISION
+C ----- ET SINON AJOUT DANS LA TABLE DES CONSTANTES
+C
+C       CF ~LU/GRAMMAIRE DE DEFINITION DU LANGAGE UTILISATEUR
+C
+C ENTREES :
+C ---------
+C DBLVAL : VALEUR REELLE DOUBLE PRECISION
+C
+C SORTIES :
+C ---------
+C NOCTE   : NUMERO DANS LA TABLE DE LA CONSTANTE DBLVAL
+C           0 SI LA TABLE DES CONSTANTES EST SATUREE
+C+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+C AUTEUR : PERRONNET ALAIN  ANALYSE NUMERIQUE UPMC PARIS  OCTOBRE 1988
+C23456---------------------------------------------------------------012
+      include"./incl/lu.inc"
+      include"./incl/gsmenu.inc"
+      COMMON / UNITES / LECTEU,IMPRIM,INTERA,NUNITE(29)
+      DOUBLE PRECISION  DBLVAL
+C
+C     RECHERCHE DE CETTE CONSTANTE DANS LA TABLE
+      DO 10 NOCTE=1,NBCTE
+         IF( DBLVAL .EQ. DCTE(NOCTE) ) THEN
+C           CONSTANTE RETROUVEE
+            RETURN
+         ENDIF
+ 10   CONTINUE
+C
+C     AJOUT DE LA CONSTANTE DANS LA TABLE
+      IF( NBCTE .GE. MXDCTE ) THEN
+         NBLGRC(NRERR) = 2
+         KERR(1) =  'LU: TABLE DES CONSTANTES SATUREE'
+         KERR(2) =  'LU: AUGMENTER MXDCTE DANS LU.INC'
+         CALL LEREUR
+         NOCTE = 0
+         RETURN
+      ENDIF
+C
+C     IL RESTE DE LA PLACE
+      NBCTE = NBCTE + 1
+      NOCTE = NBCTE
+      DCTE( NBCTE ) = DBLVAL
+
+      RETURN
+      END

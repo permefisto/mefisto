@@ -1,0 +1,79 @@
+      SUBROUTINE AFGR123( NOMELE, NBELFI, NBPIEF, NDIMES, NBCAS,
+     %                    NCAS0,  NCAS1,  COPIEF, GRATEM )
+C+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+C BUT :    AFFICHER LES VECTEURS GRADIENTS DES EF D'UN TYPE DONNE
+C -----    OBJET 1D ou 2D ou 3D
+C
+C ENTREES:
+C --------
+C NOMELE : NOM DU TYPE D'ELEMENT FINI
+C NBELFI : NOMBRE D'ELEMENTS FINIS DU TYPE A TRAITER
+C NBPIEF : NOMBRE DE POINTS DE CALCUL DES GRADIENTS PAR ELEMENT
+C NDIMES : ESPACE DE TRAVAIL 1 OU 2 OU 3
+C NBCAS  : NOMBRE TOTAL DE CAS TRAITES
+C NCAS0  : NUMERO DU PREMIER JEU DE SOLUTION A AFFICHER
+C NCAS1  : NUMERO DU DERNIER JEU DE SOLUTION A AFFICHER
+C COPIEF : LES NDIMES COORDONNEES DES POINTS DE CALCUL DES GRADIENTS
+C GRATEM : LES GRADIENTS DE SOLUTION AUX POINTS D'INTEGRATION
+C+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+C AUTEUR : ALAIN PERRONNET TIMS NTU TAIPEI TAIWAN           Octobre 2009
+C MODIFS : ALAIN PERRONNET LJLL UPMC & St PIERRE du PERRAY Novembre 2010
+C23456---------------------------------------------------------------012
+      include"./incl/langue.inc"
+      COMMON / UNITES / LECTEU, IMPRIM, INTERA, NUNITE(29)
+      REAL              COPIEF(1:NBELFI,1:NBPIEF,1:NDIMES)
+      DOUBLE PRECISION  GRATEM(1:NBELFI,1:NDIMES,1:NBPIEF,1:NBCAS)
+      CHARACTER*4       NOMELE(2)
+      CHARACTER*2       EF
+C
+C     AFFICHAGE DES GRADIENTS DES SOLUTIONS
+C     -------------------------------------
+      WRITE(IMPRIM,*)
+      IF( LANGAG .EQ. 0 ) THEN
+         EF = 'EF'
+         WRITE(IMPRIM,*) 'Les GRADIENTS de SOLUTION aux POINTS d''INTEGR
+     %ATION DES EF ', NOMELE
+      ELSE
+         EF = 'FE'
+         WRITE(IMPRIM,*) 'The SOLUTION GRADIENT at QUADRATURE FORMULA PO
+     %INTS of FE ', NOMELE
+      ENDIF
+C
+      IF( NDIMES .EQ. 1 ) THEN
+C
+C        DIMENSION 1
+         DO 15 K=1,NBELFI
+            DO 10 L=1,NBPIEF
+               WRITE(IMPRIM,10015) EF,K,COPIEF(K,L,1),
+     %                            (GRATEM(K,1,L,NCAS),NCAS=NCAS0,NCAS1)
+ 10         CONTINUE
+ 15      CONTINUE
+10015    FORMAT(A2,I6,': X=',G14.6,(T27,' dT/dX=',G15.7) )
+C
+      ELSE IF( NDIMES .EQ. 2 ) THEN
+C
+C        DIMENSION 2
+         DO 25 K=1,NBELFI
+            DO 20 L=1,NBPIEF
+               WRITE(IMPRIM,10025) EF,K,COPIEF(K,L,1),COPIEF(K,L,2),
+     %          (GRATEM(K,1,L,NCAS),GRATEM(K,2,L,NCAS),NCAS=NCAS0,NCAS1)
+ 20         CONTINUE
+ 25      CONTINUE
+10025    FORMAT(A2,I6,': X=',G14.6,' Y=',G14.6,
+     %         (T44,' dT/dX=',G15.7,' dT/dY=',G15.7) )
+C
+      ELSE IF( NDIMES .EQ. 3 ) THEN
+C
+C        DIMENSION 3
+         DO 35 K=1,NBELFI
+            DO 30 L=1,NBPIEF
+                  WRITE(IMPRIM,10035) EF,K,(COPIEF(K,L,M),M=1,3),
+     %                     ((GRATEM(K,M,L,NCAS),M=1,3),NCAS=NCAS0,NCAS1)
+ 30         CONTINUE
+ 35      CONTINUE
+10035    FORMAT(A2,I6,': X=',G14.6,' Y=',G14.6,' Z=',G14.6,
+     %         (T61,' dT/dX=',G15.7,' dT/dY=',G15.7,' dT/dZ=',G15.7) )
+      ENDIF
+C
+      RETURN
+      END

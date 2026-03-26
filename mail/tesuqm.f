@@ -1,0 +1,255 @@
+      SUBROUTINE TESUQM( QUAMAL, NBARPI, PXYD,   NOARST,
+     %                   MOSOAR, MXSOAR, N1SOAR, NOSOAR,
+     %                   MOARTR, MXARTR, N1ARTR, NOARTR,
+     %                   MXARCF, N1ARCF, NOARCF,
+     %                   LARMIN, NOTRCF, LIARCF,
+     %                   QUAMIN )
+C+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+C BUT :    SUPPRIMER DE LA TRIANGULATION LES TRIANGLES DE QUALITE
+C -----    INFERIEURE A QUAMAL
+C
+C ENTREES:
+C --------
+C QUAMAL : QUALITE DES TRIANGLES AU DESSOUS DE LAQUELLE SUPPRIMER DES SOMMETS
+C NBARPI : NUMERO DU DERNIER POINT INTERNE IMPOSE PAR L'UTILISATEUR
+C PXYD   : TABLEAU DES COORDONNEES 2D DES POINTS
+C          PAR POINT : X  Y  DISTANCE_SOUHAITEE
+C MOSOAR : NOMBRE MAXIMAL D'ENTIERS PAR ARETE ET
+C          INDICE DANS NOSOAR DE L'ARETE SUIVANTE DANS LE HACHAGE
+C MXSOAR : NOMBRE MAXIMAL D'ARETES STOCKABLES DANS LE TABLEAU NOSOAR
+C          ATTENTION: MXSOAR>3*MXSOMM OBLIGATOIRE!
+C MOARTR : NOMBRE MAXIMAL D'ENTIERS PAR ARETE DU TABLEAU NOARTR
+C
+C MODIFIES:
+C ---------
+C NOARST : NOARST(I) NUMERO D'UNE ARETE DE SOMMET I
+C N1SOAR : NO DE L'EVENTUELLE PREMIERE ARETE LIBRE DANS LE TABLEAU NOSOAR
+C          CHAINAGE DES VIDES SUIVANT EN 3 ET PRECEDANT EN 2 DE NOSOAR
+C NOSOAR : NUMERO DES 2 SOMMETS , NO LIGNE, 2 TRIANGLES DE L'ARETE,
+C          CHAINAGE DES ARETES FRONTALIERES, CHAINAGE DU HACHAGE DES ARETES
+C          HACHAGE DES ARETES = MIN(NOSOAR(1),NOSOAR(2))
+C          AVEC MXSOAR>=3*MXSOMM
+C          UNE ARETE I DE NOSOAR EST VIDE <=> NOSOAR(1,I)=0 ET
+C          NOSOAR(2,ARETE VIDE)=L'ARETE VIDE QUI PRECEDE
+C          NOSOAR(3,ARETE VIDE)=L'ARETE VIDE QUI SUIT
+C N1ARTR : NUMERO DU PREMIER TRIANGLE VIDE DANS LE TABLEAU NOARTR
+C          LE CHAINAGE DES TRIANGLES VIDES SE FAIT SUR NOARTR(2,.)
+C NOARTR : LES 3 ARETES DES TRIANGLES +-ARETE1, +-ARETE2, +-ARETE3
+C          ARETE1 = 0 SI TRIANGLE VIDE => ARETE2 = TRIANGLE VIDE SUIVANT
+C
+C AUXILIAIRES :
+C -------------
+C N1ARCF : TABLEAU (0:MXARCF) AUXILIAIRE D'ENTIERS
+C NOARCF : TABLEAU (3,MXARCF) AUXILIAIRE D'ENTIERS
+C LARMIN : TABLEAU (MXARCF)   AUXILIAIRE D'ENTIERS
+C NOTRCF : TABLEAU (MXARCF)   AUXILIAIRE D'ENTIERS
+C LIARCF : TABLEAU (MXARCF)   AUXILIAIRE D'ENTIERS
+C
+C SORTIE :
+C --------
+C QUAMIN : QUALITE MINIMALE DES TRIANGLES
+C+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+C AUTEUR : ALAIN PERRONNET LABORATOIRE JL LIONS UPMC PARIS  OCTOBRE 2006
+C MODIFS : ALAIN PERRONNET LJLL UPMC & ST PIERRE DU PERRAY  FEVRIER 2008
+C....................................................................012
+      PARAMETER       ( LCHAIN=6, MXTRQM=1024 )
+      COMMON / UNITES / LECTEU,IMPRIM,INTERA,NUNITE(29)
+      DOUBLE PRECISION  PXYD(3,*)
+      REAL              QUALIT
+      INTEGER           NOSOAR(MOSOAR,MXSOAR),
+     %                  NOARTR(MOARTR,MXARTR),
+     %                  NOARST(*)
+      INTEGER           NOSOTR(3), NOTRAJ(3)
+      DOUBLE PRECISION  SURTD2, S123, S142, S143, S234,
+     %                  S12, S34, A12, D
+      INTEGER           NOTRQM(MXTRQM)
+      DOUBLE PRECISION  QUTRQM(MXTRQM)
+      INTEGER           N1ARCF(0:MXARCF),
+     %                  NOARCF(3,MXARCF),
+     %                  LARMIN(MXARCF),
+     %                  NOTRCF(MXARCF),
+     %                  LIARCF(MXARCF)
+C
+      IERR = 0
+C
+C     INITIALISATION DU CHAINAGE DES ARETES DES CF => 0 ARETE DE CF
+      DO 5 NARETE=1,MXSOAR
+         NOSOAR( LCHAIN, NARETE ) = -1
+ 5    CONTINUE
+C
+C     RECHERCHE DU TRIANGLE NTQMIN DE PLUS BASSE QUALITE
+      QUAMIN = 2.0
+      NBTRQM = 0
+      DO 10 NT=1,MXARTR
+         IF( NOARTR(1,NT) .EQ. 0 ) GOTO 10
+C        LE NUMERO DES 3 SOMMETS DU TRIANGLE NT
+         CALL NUSOTR( NT, MOSOAR, NOSOAR, MOARTR, NOARTR, NOSOTR )
+C        LA QUALITE DU TRIANGLE NS1 NS2 NS3
+         CALL QUTR2D( PXYD(1,NOSOTR(1)), PXYD(1,NOSOTR(2)),
+     %                PXYD(1,NOSOTR(3)), QUALIT )
+         IF( QUALIT .LT. QUAMIN ) THEN
+            QUAMIN = QUALIT
+            NTQMIN = NT
+         ENDIF
+         IF( QUALIT .LT. QUAMAL ) THEN
+            IF( NBTRQM .GE. MXTRQM ) GOTO 10
+            NBTRQM = NBTRQM + 1
+            NOTRQM(NBTRQM) = NT
+            QUTRQM(NBTRQM) = QUALIT
+         ENDIF
+ 10   CONTINUE
+C
+C     TRI CROISSANT DES QUALITES MINIMALES DES TRIANGLES
+      CALL TRITAS( NBTRQM, QUTRQM, NOTRQM )
+C
+      DO 100 N=1,NBTRQM
+C
+C        NO DU TRIANGLE DE MAUVAISE QUALITE
+         NTQMIN = NOTRQM( N )
+C
+C        LE TRIANGLE A T IL ETE TRAITE?
+         IF( NOARTR(1,NTQMIN) .EQ. 0 ) GOTO 100
+C
+C        LE NUMERO DES 3 SOMMETS DU TRIANGLE NTQMIN
+         CALL NUSOTR( NTQMIN, MOSOAR, NOSOAR, MOARTR, NOARTR, NOSOTR )
+C
+C        RECHERCHE DES TRIANGLES ADJACENTS PAR LES ARETES DE NTQMIN
+         NAOP = 0
+         NBT  = 0
+         DO 20 J=1,3
+C           LE NO DE L'ARETE J DANS NOSOAR
+            NOAR = ABS( NOARTR(J,NTQMIN) )
+C           LE TRIANGLE ADJACENT A L'ARETE J DE NTQMIN
+            IF( NOSOAR(4,NOAR) .EQ. NTQMIN ) THEN
+               NOTRAJ(J) = NOSOAR(5,NOAR)
+            ELSE
+               NOTRAJ(J) = NOSOAR(4,NOAR)
+            ENDIF
+            IF( NOTRAJ(J) .GT. 0 ) THEN
+C              1 TRIANGLE ADJACENT DE PLUS
+               NAOP = J
+               NBT  = NBT + 1
+            ELSE
+C              PAS DE TRIANGLE ADJACENT
+               NOTRAJ(J) = 0
+            ENDIF
+ 20      CONTINUE
+C
+ 25      IF( NBT .EQ. 1 ) THEN
+C
+C           NTQMIN A UN SEUL TRIANGLE OPPOSE PAR L'ARETE NAOP
+C           LE TRIANGLE A 2 ARETES FRONTALIERES EST PLAT
+C           L'ARETE COMMUNE AUX 2 TRIANGLES EST RENDUE DELAUNAY
+C           ---------------------------------------------------
+            NOAR = ABS( NOARTR(NAOP,NTQMIN) )
+            IF( NOSOAR(3,NOAR) .NE. 0 ) THEN
+C              ARETE FRONTALIERE
+               GOTO 100
+            ENDIF
+C
+C           L'ARETE APPARTIENT A DEUX TRIANGLES ACTIFS
+C           LE NUMERO DES 4 SOMMETS DU QUADRANGLE DES 2 TRIANGLES
+            CALL MT4SQA( NOAR, MOARTR, NOARTR, MOSOAR, NOSOAR,
+     %                   NS1, NS2, NS3, NS4 )
+            IF( NS4 .EQ. 0 ) GOTO 100
+C
+C           CARRE DE LA LONGUEUR DE L'ARETE NS1 NS2
+           A12=(PXYD(1,NS2)-PXYD(1,NS1))**2+(PXYD(2,NS2)-PXYD(2,NS1))**2
+C
+C           COMPARAISON DE LA SOMME DES AIRES DES 2 TRIANGLES
+C           -------------------------------------------------
+C           CALCUL DES SURFACES DES TRIANGLES 123 ET 142 DE CETTE ARETE
+            S123=SURTD2( PXYD(1,NS1), PXYD(1,NS2), PXYD(1,NS3) )
+            S142=SURTD2( PXYD(1,NS1), PXYD(1,NS4), PXYD(1,NS2) )
+            S12 = ABS( S123 ) + ABS( S142 )
+            IF( S12 .LE. 0.001*A12 ) GOTO 100
+C
+C           CALCUL DES SURFACES DES TRIANGLES 143 ET 234 DE CETTE ARETE
+            S143=SURTD2( PXYD(1,NS1), PXYD(1,NS4), PXYD(1,NS3) )
+            S234=SURTD2( PXYD(1,NS2), PXYD(1,NS3), PXYD(1,NS4) )
+            S34 = ABS( S234 ) + ABS( S143 )
+C
+            IF( ABS(S34-S12) .GT. 1D-14*S34 ) GOTO 100
+C
+C           QUADRANGLE CONVEXE
+C           ECHANGE DE LA DIAGONALE 12 PAR 34 DES 2 TRIANGLES
+C           -------------------------------------------------
+            CALL TE2T2T( NOAR,   MOSOAR, N1SOAR, NOSOAR, NOARST,
+     %                   MOARTR, NOARTR, NOAR34 )
+C
+         ELSE IF( NBT .EQ. 2 ) THEN
+C
+C           NTQMIN A 2 TRIANGLES OPPOSES PAR L'ARETE NAOP
+C           ESSAI DE SUPPRIMER LE SOMMET NON FRONTALIER
+C           ---------------------------------------------
+            DO 30 J=1,3
+               IF( NOTRAJ(J) .EQ. 0 ) GOTO 33
+ 30         CONTINUE
+C
+C           ARETE FRONTALIERE
+ 33         NOAR = ABS( NOARTR(J,NTQMIN) )
+            IF( NOAR .LE. 0 ) GOTO 100
+C
+C           SES 2 SOMMETS
+            NS1 = NOSOAR(1,NOAR)
+            NS2 = NOSOAR(2,NOAR)
+C
+C           NS3 L'AUTRE SOMMET NON FRONTALIER
+            DO 36 J=1,3
+               NS3 = NOSOTR(J)
+               IF( NS3 .NE. NS1 .AND. NS3 .NE. NS2 ) GOTO 40
+ 36         CONTINUE
+C
+ 40         IF( NS3 .GT. NBARPI ) THEN
+C
+C              LE SOMMET NS3 NON FRONTALIER VA ETRE SUPPRIME
+               CALL TE1STM( NS3,    NBARPI, PXYD,   NOARST,
+     %                      MOSOAR, MXSOAR, N1SOAR, NOSOAR,
+     %                      MOARTR, MXARTR, N1ARTR, NOARTR,
+     %                      MXARCF, N1ARCF, NOARCF,
+     %                      LARMIN, NOTRCF, LIARCF,
+     %                      IERR )
+ccc               IF( IERR .EQ. 0 ) THEN
+ccc                  PRINT *,'TESUQM: ST SUPPRIME NS3=',NS3
+ccc               ELSE
+ccc                PRINT *,'TESUQM: ST NON SUPPRIME NS3=',NS3,' IERR=',IERR
+ccc               ENDIF
+            ENDIF
+C
+         ELSE IF( NBT .EQ. 3 ) THEN
+C
+C           AJOUT 20 fevrier 2008 pour supprimer un triangle plat
+C                    de sommet un des points internes imposes
+C           NTQMIN A 3 TRIANGLES OPPOSES A CES 3 COTES
+C           ECHANGE DES DIAGONALES AVEC LE TRIANGLE
+C           ------------------------------------------
+C           RECHERCHE DE L'ARETE EGALE A LA SOMME DES 2 AUTRES
+C           C'EST AUSSI LA PLUS LONGUE DES 3 ARETES
+            A12 = 0D0
+            DO 50 J=1,3
+               NS1 = NOSOTR(J)
+               IF( J .EQ. 3 ) THEN
+                  NS2 = 1
+               ELSE
+                  NS2 = J+1
+               ENDIF
+               NS2 = NOSOTR(NS2)
+               D   = (PXYD(1,NS2)-PXYD(1,NS1))**2
+     %             + (PXYD(2,NS2)-PXYD(2,NS1))**2
+               IF( D .GT. A12 ) THEN
+                  A12  = D
+                  NAOP = J
+               ENDIF
+ 50         CONTINUE
+
+C           NAOP EST L'ARETE LA PLUS LONGUE
+C           ESSAI D'ECHANGE DE LA DIAGONALE NAOP
+            NBT = 1
+            GOTO 25
+C
+         ENDIF
+C
+ 100  CONTINUE
+C
+      RETURN
+      END

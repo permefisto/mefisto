@@ -1,0 +1,403 @@
+{ ==================================================================== }
+{ MEFISTO Software     : January 15, 2013 Version                      }
+{ USER's Name          : Alain Perronnet                               }
+{ Project Name         : 3d Flow around a cylinder in a box            }
+{ Date                 : January 15, 2013                              }
+{ ==================================================================== }
+
+ DefVar xc;   xc=5;
+ DefVar rc;   rc=0.5;
+ DefVar xmax; xmax=25;  DefVar xmaxs2; xmaxs2=xmax/2;
+ DefVar ymax; ymax=3.5;
+ DefVar zmax; zmax=6;
+
+ DefVar edgmin, edgmax;  edgmin=0.07; edgmax=0.6;
+ DefVar edgy;   edgy=ymax/7*1.4;
+ DefFunc edge_length(x,y,z);
+ DefVar d; d=sqrt((x-xc)**2+z**2);
+ if x<xmaxs2; then
+    edge_length=(edgmin*(xmaxs2-xc-d)+edgmax*d)/(xmaxs2-xc);
+ else
+    edge_length=edgmax;
+ endif;
+ EndFunc;
+@;
+
+ 0;      { EDGE LENGTH by DEFAULT --------------------------}
+ edgmax; { LENGTH by DEFAULT of MESH EDGES? }
+@;
+
+ 1;   { POINTS vertices of the object---------------------- }
+ 1;   { TYPING of VALUES }
+ a;   { NAME of the POINT or ESCAPE? }
+ i;   { in LEXICON ~>TRANSFO }
+ 1;   { X Y Z COORDINATES }
+ 0; -ymax; 0; { COORPO 'X Y Z of a point' xyz ; }
+
+ b; i; 1; xc-rc; -ymax; 0;
+ { in LEXICON ~>TRANSFO }
+ { X Y Z COORDINATES }
+ { COORPO 'X Y Z of a point' xyz ; }
+ { NAME of the POINT or ESCAPE? }
+
+ c; i; 1; xc; -ymax; rc;
+ { in LEXICON ~>TRANSFO }
+ { X Y Z COORDINATES }
+ { COORPO 'X Y Z of a point' xyz ; }
+ { NAME of the POINT or ESCAPE? }
+
+ d; i; 1; xc+rc; -ymax; 0;
+ { in LEXICON ~>TRANSFO }
+ { X Y Z COORDINATES }
+ { COORPO 'X Y Z of a point' xyz ; }
+ { NAME of the POINT or ESCAPE? }
+
+ e; i; 1; xmax; -ymax; 0;
+ { in LEXICON ~>TRANSFO }
+ { X Y Z COORDINATES }
+ { COORPO 'X Y Z of a point' xyz ; }
+ { NAME of the POINT or ESCAPE? }
+
+ f; i; 1; xmax; -ymax; zmax;
+ { in LEXICON ~>TRANSFO }
+ { X Y Z COORDINATES }
+ { COORPO 'X Y Z of a point' xyz ; }
+ { NAME of the POINT or ESCAPE? }
+
+ g; i; 1; 0; -ymax; zmax;
+ { in LEXICON ~>TRANSFO }
+ { X Y Z COORDINATES }
+ { COORPO 'X Y Z of a point' xyz ; }
+ { NAME of the POINT or ESCAPE? }
+
+ h; i; 1; 0; ymax; zmax;
+ { in LEXICON ~>TRANSFO }
+ { X Y Z COORDINATES }
+ { COORPO 'X Y Z of a point' xyz ; }
+ { NAME of the POINT or ESCAPE? }
+
+ i; i; 1; 0; ymax; -zmax;
+ { in LEXICON ~>TRANSFO }
+ { X Y Z COORDINATES }
+ { COORPO 'X Y Z of a point' xyz ; }
+ { NAME of the POINT or ESCAPE? }
+
+ Orig; i; 1; 0; 0; 0;
+
+ @;
+@;
+
+
+6;{ MAPPINGS R3-->R3 --------------------------------------------}
+ { NAME of the TRANSFORMATION or ESCAPE? }
+ symxy;
+ 3;{ isometry R3 -> R3 }
+ 5;{ symmetry line defined by 2 points }
+ a; b;{ in LEXICON ~>POINT }
+ @;
+
+ 2; { LINES edges of the object ---------------------------------}
+ { NAME of the LINE or ESCAPE? }
+ ab; i;{ in LEXICON ~>TRANSFO }
+ 2;{ STRAIGHT LINE }
+ 10;{ NBARLI 'number of edges of the line' entier ; }
+ 0.9;{ RAIGEO 'geometrical ratio between the edges' reel ; }
+ a; b; { NAME of POINT }
+
+ bcd; i;
+ { in LEXICON ~>TRANSFO }
+ 3;
+ { ARC OF CIRCLE PASSING BY 3 POINTS OF R**3 }
+ 20;
+ { NBARLI 'number of edges of the line' entier ; }
+ 1;
+ { RAIGEO 'geometrical ratio between the vertices' reel ; }
+ { NAME of POINT }
+ b;
+ { in LEXICON ~>POINT }
+ { NAME of POINT }
+ d;
+ { in LEXICON ~>POINT }
+ { NAME of POINT }
+ c;
+
+ de; i;{ in LEXICON ~>TRANSFO }
+ 2;{ STRAIGHT LINE }
+ 40;{ NBARLI 'number of edges of the line' entier ; }
+ 1.05;{ RAIGEO 'geometrical ratio between the edges' reel ; }
+ d; e;{ in LEXICON ~>POINT }
+
+ ef; i; 2; 15; 1; e; f;
+ { in LEXICON ~>TRANSFO }
+ { STRAIGHT LINE }
+ { NBARLI 'number of edges of the line' entier ; }
+ { RAIGEO 'geometrical ratio between the edges' reel ; }
+ { in LEXICON ~>POINT }
+ { in LEXICON ~>POINT }
+ { NAME of the LINE or ESCAPE? }
+
+ fg; i; 2; 50; 1; f; g;
+ { in LEXICON ~>TRANSFO }
+ { STRAIGHT LINE }
+ { NBARLI 'number of edges of the line' entier ; }
+ { RAIGEO 'geometrical ratio between the edges' reel ; }
+ { in LEXICON ~>POINT }
+ { in LEXICON ~>POINT }
+ { NAME of the LINE or ESCAPE? }
+
+ ga; i; 2;15; 1; a; g;
+ { in LEXICON ~>TRANSFO }
+ { STRAIGHT LINE }
+ { NBARLI 'number of edges of the line' entier ; }
+ { RAIGEO 'geometrical ratio between the edges' reel ; }
+ { in LEXICON ~>POINT }
+ { in LEXICON ~>POINT }
+ { NAME of the LINE or ESCAPE? }
+
+ haut; i; 51;
+ { in LEXICON ~>TRANSFO }
+ { UNION OF SEVERAL LINES }
+ 6;
+ { NBLIUN 'number of lines of the union' entier ; }
+ { NAME of LINE }
+ AB;
+ { in LEXICON ~>LIGNE }
+ { NAME of LINE }
+ BCD;
+ { in LEXICON ~>LIGNE }
+ { NAME of LINE }
+ DE;
+ { in LEXICON ~>LIGNE }
+ { NAME of LINE }
+ EF;
+ { in LEXICON ~>LIGNE }
+ { NAME of LINE }
+ FG;
+ { in LEXICON ~>LIGNE }
+ { NAME of LINE }
+ GA;
+ { in LEXICON ~>LIGNE }
+ { NAME of the LINE or ESCAPE? }
+ @;
+@;
+
+3;{ SURFACES faces of the object -------------------------------------}
+ hautxz; i;{ in LEXICON ~>TRANSFO }
+ 9;{ TRIANGULATION1 BETWEEN CLOSED LINES }
+ edgmax;{ ARETMX 'MAX length of edges of regular triangles' reel ; }
+ 1;{ NBLFTR 'NUMBER of closed lines contour of the surface' entier ; }
+ 0;{ NBPTIT 'NUMBER of internal points future vertices' entier ; }
+ { NAME of LINE }
+ haut;
+ { in LEXICON ~>LIGNE }
+ { NUPTIT(1..NBPTIT) 'NAME of internal points future vertices' }
+ { DISOSV(1..NBPTIT) 'wished distance to the near vertices' reel ; }
+ { NAME of the SURFACE or ESCAPE? }
+ 
+basxz;
+ symxy;   { in LEXICON ~>TRANSFO }
+ 50;      { MAPPING of a SURFACE }
+ hautxz;  { in LEXICON ~>SURFACE }
+
+slice; i; 51; 2; basxz; hautxz;
+@;
+
+4;  { VOLUMES materials of the object ---------------------------------}
+ air0; i;{ in LEXICON ~>TRANSFO }
+ 14;    { PATH 3D of a GENERIC SURFACE (EXTRUSION) }
+slice;  { in LEXICON ~>SURFACE }
+  4;    { translation vector (x y z) valuable for all slices }
+ nint(2*ymax/edgy); { NBTRCS 'NUMBER of slices of the final volume' entier ; }
+ 0; edgy; 0;        { translation vector (x y z) }
+
+ air1; i; 48; {IMPOSED POINTS ONTO the NEAREST VERTEX of the VOLUME}
+        air0; {NAME of the initial volume}
+           1; {NUMBER of POINTS becoming VERTICES}
+        Orig; {NUMBER of POINTS becoming VERTICES}
+
+ air; i; 31; {tetra of a pentahedrization } air1;
+
+{
+ air; i; 30; { QUALITY IMPROVEMENT of a TETRAHEDRIZATION }
+  air2;  { NAME of tetrahedrized volume }
+   0.4;  { MAX QUALITY to be improved }
+     0;  { MAX DEGREES of COPLANEARITY }
+    15;  { NUMBER of IMPROVEMENT ITERATIONS }
+}
+
+@;
+
+3; { SURFACES faces of the object -------------------------------------}
+ inlet; i; { in LEXICON ~>TRANSFO }
+ 37;  { EXTRACT SURFACE FROM FACES OF A VOLUME }
+ air; { in LEXICON ~>VOLUME }
+ { NAME of FUNCTION }
+ DefFunc inlet(x,y,z);
+   inlet=x<0.0001;
+ EndFunc;
+ inlet; { in LEXICON ~>FONCTION }
+ 1;     { BOUNDARY FACES }
+
+ outlet; i; { in LEXICON ~>TRANSFO }
+ 37;  { EXTRACT SURFACE FROM FACES OF A VOLUME }
+ air; { in LEXICON ~>VOLUME }
+ { NAME of FUNCTION }
+ DefFunc outlet(x,y,z);
+   outlet=x>xmax-0.0001;
+ EndFunc;
+ outlet;  { in LEXICON ~>FONCTION }
+ 1;     { BOUNDARY FACES }
+
+ top; i; { in LEXICON ~>TRANSFO }
+ 37;  { EXTRACT SURFACE FROM FACES OF A VOLUME }
+ air; { in LEXICON ~>VOLUME }
+ { NAME of FUNCTION }
+ DefFunc top(x,y,z);
+   top=z>zmax-0.0001;
+ EndFunc;
+ top;   { in LEXICON ~>FONCTION }
+ 1;     { BOUNDARY FACES }
+
+ bottom; i; { in LEXICON ~>TRANSFO }
+ 37;  { EXTRACT SURFACE FROM FACES OF A VOLUME }
+ air; { in LEXICON ~>VOLUME }
+ { NAME of FUNCTION }
+ DefFunc bottom(x,y,z);
+   bottom=z<-zmax+0.0001;
+ EndFunc;
+ bottom;{ in LEXICON ~>FONCTION }
+ 1;     { BOUNDARY FACES }
+
+ left; i; { in LEXICON ~>TRANSFO }
+ 37;  { EXTRACT SURFACE FROM FACES OF A VOLUME }
+ air; { in LEXICON ~>VOLUME }
+ { NAME of FUNCTION }
+ DefFunc left(x,y,z);
+   left=y>ymax-0.0001;
+ EndFunc;
+ left;  { in LEXICON ~>FONCTION }
+ 1;     { BOUNDARY FACES }
+
+ right; i; { in LEXICON ~>TRANSFO }
+ 37;  { EXTRACT SURFACE FROM FACES OF A VOLUME }
+ air; { in LEXICON ~>VOLUME }
+ { NAME of FUNCTION }
+ DefFunc right(x,y,z);
+   right=y<-ymax+0.0001;
+ EndFunc;
+ right; { in LEXICON ~>FONCTION }
+ 1;     { BOUNDARY FACES }
+
+ roll; i; { in LEXICON ~>TRANSFO }
+ 37;  { EXTRACT SURFACE FROM FACES OF A VOLUME }
+ air; { in LEXICON ~>VOLUME }
+ { NAME of FUNCTION }
+ DefFunc roll(x,y,z);
+   roll=(x-xc)**2 + z**2 < (rc+0.0001)**2;
+ EndFunc;
+ roll; { in LEXICON ~>FONCTION }
+ 1;      { BOUNDARY FACES }
+
+ @;
+
+2; { LINES ------------------------------------------------------}
+LInlet; i; 37; { EXTRACT INTERNAL OR BOUNDARY EDGES OF A SURFACE }
+ Inlet;        { name of the surface to extract the line }
+ DefFunc LInlet(x,y,z);
+   LInlet=1;
+ EndFunc;
+ LInlet;  { name of the criterion function }
+  1;      { name of the criterion function  boundary edges }
+
+LOutlet; i; 37; { EXTRACT INTERNAL OR BOUNDARY EDGES OF A SURFACE }
+ Outlet;        { name of the surface to extract the line }
+ DefFunc LOutlet(x,y,z);
+   LOutlet=1;
+ EndFunc;
+ Outlet;  { name of the criterion function }
+  1;      { name of the criterion function  boundary edges }
+
+LRoll; i;  37; { EXTRACT INTERNAL OR BOUNDARY EDGES OF A SURFACE }
+ roll;         { name of the surface to extract the line }
+ DefFunc LRoll(x,y,z);
+   LRoll=1;
+ EndFunc;
+ LRoll;   { name of the criterion function }
+  1;        { name of the criterion function  boundary edges }
+
+YmaxZmax; i; 37; { EXTRACT INTERNAL OR BOUNDARY EDGES OF A SURFACE }
+ top;            { name of the surface to extract the line }
+ DefFunc YmaxZmax(x,y,z);
+   YmaxZmax=Y>(ymax-0.001);
+ EndFunc;
+ YmaxZmax;   { name of the criterion function }
+  1;         { name of the criterion function  boundary edges }
+
+YminZmax; i; 37; { EXTRACT INTERNAL OR BOUNDARY EDGES OF A SURFACE }
+ top;            { name of the surface to extract the line }
+ DefFunc YminZmax(x,y,z);
+   YminZmax=Y<(-ymax+0.001);
+ EndFunc;
+ YminZmax;   { name of the criterion function }
+  1;         { name of the criterion function  boundary edges }
+
+YmaxZmin; i; 37; { EXTRACT INTERNAL OR BOUNDARY EDGES OF A SURFACE }
+ bottom;         { name of the surface to extract the line }
+ DefFunc YmaxZmin(x,y,z);
+   YmaxZmin=Y>(ymax-0.001);
+ EndFunc;
+ YmaxZmin;   { name of the criterion function }
+  1;         { name of the criterion function  boundary edges }
+
+YminZmin; i; 37; { EXTRACT INTERNAL OR BOUNDARY EDGES OF A SURFACE }
+ bottom;         { name of the surface to extract the line }
+ DefFunc YminZmin(x,y,z);
+   YminZmin=Y<(-ymax+0.001);
+ EndFunc;
+ YminZmin;   { name of the criterion function }
+  1;         { name of the criterion function  boundary edges }
+
+@;
+
+5;{ OBJECTS parts of the object ---------------------------------}
+ air;
+ 0;{ 1D or 2D or 3D classic }
+20;{ NBDOBJ number of Points Lines Surfaces Volumes Objects of the object}
+   { POINT or LINE or SURFACE or VOLUME or OBJECT? }
+ v; air;
+ s; inlet;
+ s; outlet;
+ s; top;
+ s; bottom;
+ s; left;
+ s; right;
+ s; roll;
+ l; LInlet;
+ l; LOutlet;
+ l; LRoll;
+ l; YmaxZmax;
+ l; YminZmax;
+ l; YmaxZmin;
+ l; YminZmin;
+ p; a;
+ p; g;
+ p; h;
+ p; i;
+ p; Orig;
+ @;
+
+ 7; { INTERPOLATION nodes of the mesh --------------------------}
+ air; { NAME of the OBJECT to be INTERPOLATED? }
+ 3;   { LAGRANGE of DEGREE 1 => Tetrahedra Brezzi-Fortin }
+ @;
+99;  { Save data and Exit }
+
+
+ 10; { DRAWING of PLSVO meshes ---------------------------------}
+ 5;  { OBJECT or OBJECTS }
+ 1;  { ALL OBJECTS 1 by 1 }
+ 75; { Activate TRANSLATION ORBIT ZOOM }
+ 90; { Continue the DRAWING }
+
+CLOSE;
+

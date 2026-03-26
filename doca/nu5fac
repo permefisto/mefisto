@@ -1,0 +1,6 @@
+Give the NAME or click the 2 STRUCTURED TRIANGLES
+and 3 STRUCTURED QUADRANGLES which form the 4 faces
+of the PENTAHEDRON.
+If M is the CONSTANT number of sub-edges of
+the 2 triangles, N the number of segments of the 3 other edges
+then M x M x N sub-pentahedra will be created

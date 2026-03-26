@@ -1,0 +1,4 @@
+NBCOFI is the number of displacement components to be imposed.
+This positive value is 1 or 2 in 2d; 1 or 2 or 3 in 3d.
+After, it will be necessary to give the number of each imposed
+component with values either 1 2 in 2d, or 1 2 3 in 3d.

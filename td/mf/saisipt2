@@ -1,0 +1,11 @@
+variable SAISIPT2 'OPTIONS SAISIE des POINTS 2D' entier
+(1: 'NOM GENERIQUE des POINTS a saisir'
+,2: 'NOM TRANSFORMATION des POINTS a saisir'
+,3: 'ABSCISSES MIN MAX et PAS du CADRE'
+,4: 'ORDONNEES MIN MAX et PAS du CADRE'
+,5: '3 POINTS definissent le PLAN des points'
+,6: 'PLAN a X=Constante des points a saisir'
+,7: 'PLAN a Y=Constante des points a saisir'
+,8: 'PLAN a Z=Constante des points a saisir'
+,9: 'Pas de definition du plan des points'
+,20: 'SAISIE a la SOURIS des POINTS' );

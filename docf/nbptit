@@ -1,0 +1,16 @@
+Des POINTS dits INTERNES peuvent etre donnes pour ajuster
+la taille des aretes des triangles de sommet ce point.
+La DISTANCE SOUHAITEE autour du POINT est un MAJORANT
+de cette taille  
+   
+Exemple:
+1; {ligne fermee enveloppe}
+2; {points internes}
+L1; {la ligne fermee}
+PTI1; PTI2; {les points internes}
+0.01; 0.5; {les distances souhaitees autour de PTI1 et PTI2}
+
+Definit 2 POINTS INTERNES, futurs sommets de la triangulation
+avec des aretes de sommet ce point, respectivement de
+longueur 0.01 et 0.5.
+PTI1 et PTI2 ne peuvent etre sur une des lignes de la frontiere.

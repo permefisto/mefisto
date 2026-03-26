@@ -1,0 +1,18 @@
+C ======================================================================
+C = DECLARATION DES VARIABLES DU DICTIONNAIRE  
+C = VOIRE LA DOC SUR LA SD DICO
+C ======================================================================
+C * NUMERO DU FICHIER DES SORTIES ===
+      INTEGER IMP
+      PARAMETER(IMP=6)
+C * Parametres de longueur maximum *
+      INTEGER MXDICO,MAXMOT
+      PARAMETER( MXDICO=10000, MAXMOT=1000 )
+C * Dimensionnement des tableaux de la SD *
+      INTEGER PNTMOT(MAXMOT),CODPNT(MXDICO)
+      CHARACTER*1 CARACT(MXDICO)
+C * Autres parametres *
+      INTEGER NBMOT,LTABPT,LONDIC 
+C * Les commons ( toutes les variables ci dessus ) *
+      COMMON / DICVAR / NBMOT,LTABPT,LONDIC,PNTMOT,CODPNT
+      COMMON / DICCAR / CARACT

@@ -1,0 +1,4 @@
+For N the degree of polynomials,
+the number of CONTROL POINTS of the 
+BEZIER TRIANGLE is equal to
+(N+1) * (N+2) / 2

@@ -1,0 +1,37 @@
+      SUBROUTINE EXTHEX( NBSOMM, NUSOMM, PTXYZD, HEXA, NONOUI )
+C+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+C BUT : LES NBSOMM SOMMETS DE PTXYZD SONT ILS TOUS EXTERIEURS
+C ----- A L'HEXAEDRE DEFINI PAR SES COORDONNEES MIN MAX
+C
+C ENTREES:
+C --------
+C NBSOMM : NOMBRE DE SOMMETS
+C NUSOMM : NUMERO PTXYZD DES NBSOMM SOMMETS
+C PTXYZD : LES XYZ ET DISTANCE SOUHAITEE DES SOMMETS
+C HEXA   : XYZ DES COORDONNEES MINIMALES ET MAXIMALES
+C
+C SORTIE :
+C --------
+C NONOUI : 1 SI TOUS LES SOMMETS SONT EXTERIEURS
+C          0 SI AU MOINS UN SOMMET EST INTERNE A L'HEXAEDRE
+C+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+C AUTEUR : ALAIN PERRONNET  ANALYSE NUMERIQUE PARIS UPMC   NOVEMBRE 1992
+C2345X7..............................................................012
+      INTEGER           NUSOMM(NBSOMM)
+      DOUBLE PRECISION  PTXYZD(4,*)
+      REAL              HEXA(6,2)
+C
+      DO 30 I=1,3
+         DO 20 J=1,NBSOMM
+            IF( PTXYZD(I,NUSOMM(J)) .GT. HEXA(I,1) .AND.
+     &          PTXYZD(I,NUSOMM(J)) .LT. HEXA(I,2) ) THEN
+C               SOMMET INTERIEUR A L'HEXAEDRE
+                NONOUI = 0
+                RETURN
+            ENDIF
+ 20      CONTINUE
+ 30   CONTINUE
+C
+C     TOUS LES SOMMETS SONT EXTERIEURS
+      NONOUI = 1
+      END

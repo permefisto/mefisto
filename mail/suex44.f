@@ -1,0 +1,291 @@
+      SUBROUTINE SUEX44( NUSURF, NTLXSU,
+     %                   NTNSEF, MNNSEF, NTXYZS, MNXYZS, IERR )
+C+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+C BUT : LIRE SUR 2 FICHIERS NomSurface.xyzlsd et NomSurface.nselsd
+C ----- UN MAILLAGE D'UNE SURFACE ISSU DE LS-DYNA
+C       LES 3 COORDONNEES DES SOMMETS
+C       LES NUMEROS DES SOMMETS DES EF D'UNE SURFACE
+C       ET EN CONSTITUER UNE SURFACE MEFISTO
+
+C ENTREES:
+C --------
+C NUSURF : NUMERO DE LA SURFACE DANS LE LEXIQUE DES SURFACES
+C NTLXSU : NUMERO DU TABLEAU TMS DU LEXIQUE  DE LA SURFACE
+
+C SORTIES:
+C --------
+C NTNSEF : NUMERO      DU TMS 'NSEF' DES NUMEROS DES FACES DE LA SURFACE
+C MNNSEF : ADRESSE MCN DU TMS 'NSEF' DES NUMEROS DES FACES DE LA SURFACE
+C          CF ~td/d/a___nsef
+C NTXYZS : NUMERO      DU TMS 'XYZSOMMET' DE LA SURFACE
+C MNXYZS : ADRESSE MCN DU TMS 'XYZSOMMET' DE LA SURFACE
+C          CF ~td/d/a___xyzsommet
+C IERR   : 0 SI PAS D'ERREUR
+C          > 0 SINON
+C+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+C AUTEUR : ALAIN PERRONNET LJLL UPMC & St PIERRE du PERRAY  Octobre 2015
+C23456---------------------------------------------------------------012
+      include"./incl/langue.inc"
+      include"./incl/gsmenu.inc"
+      include"./incl/ntmnlt.inc"
+      include"./incl/a_surface__definition.inc"
+      include"./incl/a___xyzsommet.inc"
+      include"./incl/a___nsef.inc"
+      include"./incl/a___texte.inc"
+      include"./incl/pp.inc"
+      COMMON             MCN(MOTMCN)
+      COMMON / UNITES /  LECTEU, IMPRIM, INTERA, NUNITE(29)
+      REAL               RMCN(1)
+      EQUIVALENCE       (MCN(1),RMCN(1))
+      CHARACTER*24       NMSURF
+      CHARACTER*32       NMFICH
+      CHARACTER*80       LINEFILE
+      LOGICAL            LEXIST,LOPEN
+
+C     LE NOM DE LA SURFACE A CONSTRUIRE A PARTIR DU MAILLAGE DE LS-DYNA
+      CALL NMOBNU( 'SURFACE', NUSURF, NMSURF )
+
+C     NOM DU FICHIER .xyzlsd ISSU DE LS-DYNA
+C     --------------------------------------
+      L = NUDCNB( NMSURF )
+      NMFICH = NMSURF(1:L) // '.xyzlsd'
+      CALL MINUSC( NMFICH )
+C
+C     SI LE FICHIER NMFICH EXISTE ALORS IL EST OUVERT
+      INQUIRE( FILE=NMFICH, EXIST=LEXIST, OPENED=LOPEN )
+      IF( LEXIST ) THEN
+C        LE FICHIER NMFICH EXISTE
+         IF( .NOT. LOPEN ) THEN
+C           OUVERTURE DU FICHIER NMFICH
+            CALL TRUNIT( NFXYZ )
+            OPEN( FILE=NMFICH, UNIT=NFXYZ, STATUS='OLD' )
+         ENDIF
+      ELSE
+         IERR = 1
+         GOTO 9010
+      ENDIF
+
+C     LECTURE DES 3 PREMIERES LIGNES COMMENTAIRES DATE CREATION...
+      READ(UNIT=NFXYZ,FMT='(A)',ERR=9020,END=9030) LINEFILE
+      READ(UNIT=NFXYZ,FMT='(A)',ERR=9020,END=9030) LINEFILE
+      READ(UNIT=NFXYZ,FMT='(A)',ERR=9020,END=9030) LINEFILE
+
+C     LECTURE DU NOMBRE et NUMERO MAXIMUM des SOMMETS
+      READ(UNIT=NFXYZ,FMT='(2I8)',ERR=9020,END=9030) NBXYZS, MXXYZS
+      PRINT*,'LECTURE FICHIER',NMFICH,' NBXYZS=',NBXYZS,
+     %       ' MXXYZS=',MXXYZS
+      IF( NBXYZS .LE. 0 .OR. MXXYZS .LT. NBXYZS ) GOTO 9020
+
+C     LECTURE D'UNE LIGNE COMMENTAIRE nid x y z ...
+      READ(UNIT=NFXYZ,FMT='(A)',ERR=9020,END=9030) LINEFILE
+
+C     CONSTRUCTION DU TABLEAU DE RENUMEROTATION ET DES XYZ DES SOMMETS
+      MNNXYZ = 0
+      MNRXYZ = 0
+      CALL TNMCDC('ENTIER',  MXXYZS+1, MNNXYZ )
+      CALL AZEROI( MXXYZS+1, MCN(MNNXYZ) )
+      CALL TNMCDC('REEL',    3*MXXYZS, MNRXYZ )
+
+C     LECTURE DES 3 COORDONNEES DES NBXYZS SOMMETS
+      MN = MNRXYZ - 4
+      DO K=1,NBXYZS
+         READ(UNIT=NFXYZ,FMT='(I8,3G16.7)',ERR=9020,END=9030)
+     %             NUST,(RMCN(MN+3*K+L),L=1,3)
+         MCN( MNNXYZ + NUST ) = NUST
+      ENDDO
+
+C     FERMETURE DU FICHIER
+      CLOSE( NFXYZ )
+
+C     RENUMEROTATION DES SOMMETS DANS LE TABLEAU NXYZ
+      NBSOM = 0
+      DO K = 1, MXXYZS
+         IF( MCN(MNNXYZ+K) .NE. 0 ) THEN
+C           UN SOMMET DE PLUS
+            NBSOM = NBSOM + 1
+            MCN( MNNXYZ + K ) = NBSOM
+         ENDIF
+      ENDDO
+      IF( NBSOM .NE. NBXYZS ) THEN
+         PRINT*,'POBLEME: APRES RENUMEROTATION NOMBRE SOMMETS=',NBSOM,
+     %          ' NON EGAL a NBXYZS=',NBXYZS
+         IERR = 2
+      ENDIF
+
+C     CONSTRUCTION DU TMS XYZSOMMET DE LA SURFACE
+C     -------------------------------------------
+      CALL LXTNDC( NTLXSU, 'XYZSOMMET', 'MOTS', WYZSOM+3*NBSOM )
+      CALL LXTSOU( NTLXSU, 'XYZSOMMET', NTXYZS, MNXYZS )
+
+C     LE NOMBRE DE SOMMETS DE CE MAILLAGE
+      MCN( MNXYZS + WNBSOM ) = NBSOM
+C     LE NOMBRE DE TANGENTES DE CE MAILLAGE
+      MCN( MNXYZS + WNBTGS ) = 0
+C     LE NOMBRE DE COORDONNEES PAR SOMMET
+      MCN( MNXYZS + WBCOOR ) = 3
+
+C     COPIE DES 3 COORDONNEES DES NBSOM SOMMETS
+      CALL TRTATA( RMCN(MNRXYZ), RMCN(MNXYZS+WYZSOM), 3*NBSOM )
+
+C     AJOUT DE LA DATE
+      CALL ECDATE( MCN(MNXYZS) )
+C     AJOUT DU NUMERO DU TABLEAU DESCRIPTEUR
+      MCN( MNXYZS + MOTVAR(6) ) = NONMTD( '~>>>XYZSOMMET' )
+
+
+C     NOM DU FICHIER .nselsd ISSU DE LS-DYNA
+C     --------------------------------------
+      L = NUDCNB( NMSURF )
+      NMFICH = NMSURF(1:L) // '.nselsd'
+      CALL MINUSC( NMFICH )
+
+C     SI LE FICHIER NMFICH EXISTE ALORS IL EST OUVERT
+      INQUIRE( FILE=NMFICH, EXIST=LEXIST, OPENED=LOPEN )
+      IF( LEXIST ) THEN
+C        LE FICHIER NMFICH EXISTE
+         IF( .NOT. LOPEN ) THEN
+C           OUVERTURE DU FICHIER NMFICH
+            CALL TRUNIT( NFNSE )
+            OPEN( FILE=NMFICH, UNIT=NFNSE, STATUS='OLD' )
+         ENDIF
+      ELSE
+         IERR = 3
+         GOTO 9010
+      ENDIF
+
+C     LECTURE DES 3 PREMIERES LIGNES COMMENTAIRES DATE CREATION...
+      READ(UNIT=NFNSE,FMT='(A)',ERR=9020,END=9030) LINEFILE
+      READ(UNIT=NFNSE,FMT='(A)',ERR=9020,END=9030) LINEFILE
+      READ(UNIT=NFNSE,FMT='(A)',ERR=9020,END=9030) LINEFILE
+
+C     LECTURE 
+      READ(UNIT=NFNSE,FMT='(I8)',ERR=9020,END=9030) NBQUAD
+      IF( NBQUAD .LE. 0 ) GOTO 9020
+
+C     LECTURE D'UNE LIGNE COMMENTAIRE nid x y z ...
+      READ(UNIT=NFNSE,FMT='(A)',ERR=9020,END=9030) LINEFILE
+
+C     CONSTRUCTION DU TMS NSEF DE LA SURFACE
+C     --------------------------------------
+      CALL LXTNDC( NTLXSU, 'NSEF', 'MOTS',
+     %             WUSOEF + 4*NBQUAD )
+      CALL LXTSOU( NTLXSU, 'NSEF', NTNSEF, MNNSEF )
+
+C     LE TYPE DE L'OBJET
+      MCN( MNNSEF + WUTYOB ) = 3
+C     FERMETURE INCONNUE DE CETTE SURFACE
+      MCN( MNNSEF + WUTFMA ) = -1
+C     LE NOMBRE DE SOMMETS DES EF
+      MCN( MNNSEF + WBSOEF ) = 4
+C     LE NOMBRE DE TANGENTES DES EF   ICI PAS DE TG STOCKEES
+      MCN( MNNSEF + WBTGEF ) = 0
+C     LE NOMBRE D'EF DU MAILLAGE
+      MCN( MNNSEF + WBEFOB ) = NBQUAD
+C     LE NOMBRE D EF POINT'ES
+      MCN( MNNSEF + WBEFAP ) = 0
+C     LE NOMBRE D EF A TG
+      MCN( MNNSEF + WBEFTG ) = 0
+
+C     LE TYPE DU MAILLAGE: ICI NON STRUCTURE
+      MCN( MNNSEF + WUTYMA ) = 0
+
+C     COPIE DES 4 NUMEROS DES SOMMETS DES NBQUAD QUADRANGLES
+      MN = MNNSEF + WUSOEF -1
+      DO K=1,NBQUAD
+         READ(UNIT=NFNSE,FMT='(6I8)',ERR=9020,END=9030)
+     %        NUEF, NUOB, (MCN(MN+L),L=1,4)
+         MN = MN + 4
+      ENDDO
+
+C     RENUMEROTATION DES SOMMETS DES QUADRANGLES ET
+C     VERIFICATION DE NUMEROS DOUBLES
+      NBT = 0
+      MN  = MNNSEF + WUSOEF -1
+      DO K=1,NBQUAD
+
+         DO L=1,4
+C           ANCIEN NUMERO
+            NUST = MCN(MN+L)
+C           NOUVEAU NUMERO
+            MCN(MN+L) = MCN( MNNXYZ + NUST )
+         ENDDO
+
+         DO L=1,3
+            NUST = MCN(MN+L)
+            DO LL=L+1,4
+               N = MCN(MN+LL)
+               IF( N .EQ. NUST ) THEN
+C                 2 SOMMETS IDENTIQUES POUR CE QUADRANGLE
+ccc                  PRINT *,'EF ',K,L,LL,' NO SOMMETS:',
+ccc     %                    (MCN(MN+LLL),LLL=1,4)
+C                 LE SECOND SOMMET IDENTIQUE DEVIENT 0
+                  MCN(MN+LL)=0
+                  NBT = NBT + 1
+               ENDIF
+            ENDDO
+         ENDDO
+
+C        PRESENTATION DU SOMMET 0 EN 4-EME POSITION
+         LDECAL = 0
+         DO L=1,4
+C           NUMERO DU SOMMET L DU QUADRANGLE
+            N = MCN(MN+L)
+            IF( N .EQ. 0 ) THEN
+               LDECAL = LDECAL + 1
+            ELSE
+               MCN(MN+L-LDECAL) = N
+            ENDIF
+         ENDDO
+         IF( LDECAL .NE. 0 ) THEN
+            MCN(MN+4) = 0
+ccc            PRINT *,'EF FINAL',K,' NO SOMMETS:',(MCN(MN+LLL),LLL=1,4)
+         ENDIF
+
+         MN = MN + 4
+      ENDDO
+      PRINT*,'NOMBRE DE TRIANGLES  =',NBT
+      PRINT*,'NOMBRE DE QUADRANGLES=',NBQUAD-NBT
+
+C     AJOUT DE LA DATE
+      CALL ECDATE( MCN(MNNSEF) )
+C     AJOUT DU NUMERO DU TABLEAU DESCRIPTEUR
+      MCN( MNNSEF + MOTVAR(6) ) = NONMTD( '~>>>NSEF' )
+
+C     FERMETURE DU FICHIER
+      CLOSE( NFNSE )
+
+C     DESTRUCTION DES TMC INUTILES
+ 9000 CALL TNMCDS('ENTIER',  MXXYZS+1, MNNXYZ )
+      CALL TNMCDS('REEL',    3*MXXYZS, MNRXYZ )
+
+      GOTO 9999
+
+ 9010 NBLGRC(NRERR) = 1
+      IF( LANGAG .EQ. 0 ) THEN
+         KERR(1) = NMFICH // ' FICHIER INCONNU'
+      ELSE
+         KERR(1) = NMFICH // ' UNKNOWN FILE'
+      ENDIF
+      CALL LEREUR
+      IF( IERR .GE. 2 ) GOTO 9000
+      GOTO 9999
+
+ 9020 NBLGRC(NRERR) = 1
+      IF( LANGAG .EQ. 0 ) THEN
+         KERR(1) = NMFICH // ' PROBLEME de LECTURE du FICHIER'
+      ELSE
+         KERR(1) = NMFICH // ' IMPOSSIBLE READING of this FILE'
+      ENDIF
+      CALL LEREUR
+      GOTO 9999
+
+ 9030 NBLGRC(NRERR) = 1
+      IF( LANGAG .EQ. 0 ) THEN
+         KERR(1) = NMFICH // ' FIN de LECTURE du FICHIER'
+      ELSE
+         KERR(1) = NMFICH // ' END of READING of this FILE'
+      ENDIF
+      CALL LEREUR
+
+ 9999 RETURN
+      END

@@ -1,0 +1,49 @@
+      SUBROUTINE REARTRI( NPA1, NPA2, NBTRA, NUSTRA, NUTRAR, NUAT )
+C+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+C BUT : RETROUVER SI L'ARETE DE SOMMETS NPA1-NPA2 FAIT PARTIE DES ARETES
+C ----- DES NBTRA TRIANGLES DONT LES 3 NO DE SOMMETS SONT DANS NUSTRA
+C
+C ENTREES:
+C --------
+C NPA1   : NUMERO DU PREMIER SOMMET DE L'ARETE
+C NPA2   : NUMERO DU SECOND  SOMMET DE L'ARETE
+C NBTRA  : NOMBRE DE TRIANGLES AJOUTES
+C NUSTRA : (3,NBTRA) NO XYZPTA DES 3 SOMMETS DES NBTRA TRIANGLES
+C
+C SORTIES:
+C --------
+C NUTRAR : = 0 SI L'ARETE NPA1-NPA2 N'EST PAS UNE ARETE
+C          =NO DANS NUSTRA DU TRIANGLE AVEC CETTE ARETE
+C NUAT   : =NO DE L'ARETE RETROUVEE DANS LE TRIANGLE NUTRAR, 0 SINON
+C+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+C AUTEUR : PERRONNET Alain LJLL UPMC & St Pierre du Perray Novembre 2011
+C2345X7..............................................................012
+      INTEGER NPA1, NPA2, NBTRA, NUSTRA(3,NBTRA), NUTRAR, NUAT
+C
+      DO NUTRAR=1,NBTRA
+C
+         DO NUAT=1,3
+C
+            IF( NUAT .LT. 3 ) THEN
+               NUA1 = NUAT + 1
+            ELSE
+               NUA1 = 1
+            ENDIF
+C
+c           LE NO DES 2 SOMMETS DE L'ARETE NUAT DU TRIANGLE NUSTRA
+            NS1 = NUSTRA( NUAT, NUTRAR )
+            NS2 = NUSTRA( NUA1, NUTRAR )
+C
+            IF( ( NPA1 .EQ. NS1 .AND. NPA2 .EQ. NS2 )  .OR.
+     %          ( NPA1 .EQ. NS2 .AND. NPA2 .EQ. NS1 ) ) GOTO 9000
+C
+         ENDDO
+C
+      ENDDO
+C
+C     ARETE NON RETROUVEE
+      NUTRAR = 0
+      NUAT   = 0
+C
+ 9000 RETURN
+      END

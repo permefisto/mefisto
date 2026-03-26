@@ -1,0 +1,13 @@
+deftms ~>>>DTEMPERATURE 'Gradient Temperature aux POINTS INTEGRATION'
+variable muet DATE 'date de creation du tableau'   reel2 ;
+variable muet NUTD 'numero du tableau descripteur' entier ;  
+variable NBJECD 'Nombre de jeux de calculs des gradients'        entier ; 
+variable NDIMED 'Dimension de l''espace de l''Objet 1 ou 2 ou 3' entier ; 
+variable NUTYED 'Numero du type des Elements Finis'              entier ;  
+variable NBELFD 'Nombre d''Elements Finis de ce type'            entier ;
+variable NBPEFD 'Nombre de Points calcul du Gradient sur 1 ef'   entier ; 
+tableau  DTEMPE(1..NBELFD,1..NDIMED,1..NBPEFD,1..NBJECD)
+'Gradient de Temperature aux Points d''Integration de chaque EF' reel2 ; 
+tableau  COPEFD(1..NBELFD,1..NBPEFD,1..NDIMED)
+'les NDIMED coordonnees des NBPEFD points d''integration des EF' reel ;  
+fintms ;

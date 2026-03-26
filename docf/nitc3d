@@ -1,0 +1,6 @@
+Ce nombre NITC3D controle les corrections souhaitees a partir du resultat acquis
+avec la methode de WINSLOW pure. 
+   NITC3D <=0   : aucune correction a effectuer. ( methode de WINSLOW pure )
+0< NITC3D <=100 : nombre d'iterations de correction souhaite.
+En fait, si la convergence est detectee (plus de modifications entre 2 iterations)
+ce nombre d'iterations pourra ne pas etre atteint.

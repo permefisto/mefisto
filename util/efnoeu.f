@@ -1,0 +1,41 @@
+      SUBROUTINE EFNOEU( MNNPEF, NUELEM,   NBNOEF, NONOEF )
+C+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+C BUT :   RETROUVER LE NUMERO DES NBNOEF NOEUDS DE L'ELEMENT FINI NUELEM
+C -----
+
+C ENTREES:
+C --------
+C MNNPEF : ADRESSE MCN DU TABLEAU  'NPEF"NOM_ELEMENT_FINI'
+C NUELEM : NUMERO DE L'ELEMENT FINI DANS CE TYPE
+
+C SORTIES:
+C --------
+C NBNOEF : NOMBRE  EFFECTIF  DE NOEUDS DE L'ELEMENT FINI
+C NONOEF : LE NUMERO DES NBNOEF NOEUDS DE L'ELEMENT
+C+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+C AUTEUR : ALAIN PERRONNET ANALYSE NUMERIQUE UPMC PARIS     OCTOBRE 1989
+C23456---------------------------------------------------------------012
+      include"./incl/a___npef.inc"
+      include"./incl/pp.inc"
+      COMMON         MCN(MOTMCN)
+      INTEGER        NONOEF(1:NBNOEF)
+
+C     LE NOMBRE DE NOEUDS DE L'ELEMENT FINI
+      NBNOEF = MCN( MNNPEF + WBNDEL )
+
+C     LE NOMBRE D'ELEMENTS FINIS
+      NBELEM = MCN( MNNPEF + WBELEM )
+
+C     L'ADRESSE du 1-ER NOEUD DE L'ELEMENT NUELEM
+      MN = MNNPEF + WUNDEL - 1 + NUELEM
+
+C     COPIE DU NUMERO DES NBNOEF NOEUDS
+      DO I=1,NBNOEF
+C        LE NUMERO DU I-EME NOEUD
+         NONOEF(I) = MCN(MN)
+C        L'ADRESSE MCN du NUMERO de NOEUD SUIVANT PAR INCREMENT de NBELEM
+         MN = MN + NBELEM
+      ENDDO
+
+      RETURN
+      END

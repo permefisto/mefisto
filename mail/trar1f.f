@@ -1,0 +1,44 @@
+      SUBROUTINE TRAR1F( XYZSOM, L1ARFA, L2ARFA, NARFA, NBAR1F, NOAR1F )
+C+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+C BUT :    TRACER EN VERT TOUTES LES ARETES APPARTENANT A  1 FACE
+C -----
+C XYZSOM : LES 3 COORDONNEES DES SOMMETS DU MAILLAGE
+C L1ARFA : NOMBRE DE MOTS POUR UNE ARETE DU TABLEAU NARFA
+C L2ARFA : NOMBRE MAXIMUM D'ARETES DU TABLEAU NARFA
+C NARFA  : TABLEAU NARFA DES ARETES DU MAILLAGE
+C          NARFA(1,I)= NO DU 1-ER  SOMMET DE L'ARETE
+C          NARFA(2,I)= NO DU 2-EME SOMMET > 1-ER  SOMMET
+C          NARFA(3,I)= CHAINAGE HACHAGE SUR L'ARETE SUIVANTE
+C          NARFA(4:L2ARFA,I)= NO NOSOEF DE LA FACE CONTENANT L'ARETE I
+C          SI NB FACES > L2ARFA-3 NARFA(4:L1ARFA)=-NO FACE
+C NBAR1F : NOMBRE D'ARETE DANS NARFA APPARTENANT A UNE SEULE FACE
+C NOAR1F : NUMERO NARFA DES NBAR1F ARETES
+C+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+C AJOUTS : Alain PERRONNET  Saint PIERRE du PERRAY            AVRIL 2020
+C2345X7..............................................................012
+      include"./incl/trvari.inc"
+      REAL       XYZSOM(3,*)
+      INTEGER    NARFA(L1ARFA,L2ARFA), NOAR1F(NBAR1F)
+
+      DO K = 1, NBAR1F
+
+C        TRACE DE L'ARETE SIMPLE EN VERT
+C        -------------------------------
+C        NUMERO DANS LARETE DE LA K-EME ARETE 1F
+         NA = NOAR1F( K )
+
+C        LE NUMERO DES 2 SOMMETS DE L'ARETE NA
+         NS1 = NARFA(1,NA)
+         NS2 = NARFA(2,NA)
+         CALL XVEPAISSEUR( 4 )
+         CALL TRAIT23D( NCVERT, XYZSOM(1,NS1), XYZSOM(1,NS2) )
+
+C        TRACE en BLEU du NO XYZSOM DES 2 SOMMETS DE L'ARETE
+C        ---------------------------------------------------
+         CALL TRST23D( NCBLEU, NS1, XYZSOM )
+         CALL TRST23D( NCBLEU, NS2, XYZSOM )
+
+      ENDDO
+
+      RETURN
+      END

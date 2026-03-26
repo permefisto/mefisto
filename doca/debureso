@@ -1,0 +1,19 @@
+For the solving of a linear system A x = b, there are 2 possibilities:
+
+1: The CHOLESKY FACTORIZATION A = L Lt, with a SKYLINE storage.
+   If the matrix is inversible, the solution is always obtained.
+   But, this method uses a big memory, notably in 3D.
+
+2: The PRECONDITIONED CONJUGATE GRADIENT with a SPARSE storage
+   occupies less memories than the skyline storage, but, this method
+   may not converge in some cases (in Elasticity for example).
+                                                
+   If this option 2 is chosen, the value of LEVEL is requested
+   It characterizes the storage of the incomplete Cholesky factorization
+   used for the preconditionement:
+
+   - LEVEL=0 The matrix of preconditionement has the same storage than A.
+
+   - LEVEL>0 The matrix of preconditionement has a growing storage
+     which leads to have a matrix nearer of the complete Cholesky matrix
+     and the preconditionement is better.

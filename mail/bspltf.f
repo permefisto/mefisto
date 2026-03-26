@@ -1,0 +1,246 @@
+      SUBROUTINE BSPLTF( KDEGRE, LR, R, NBINBS, S, NBPCBL, XYZPC,
+     %                   NOFOTI,
+     %                   MXSOLI, NBSOLI, MXTGS, NBTGS,
+     %                   MNXYZS, MNXYZT, IERR )
+C++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+C BUT :    CALCULER LES 3 COORDONNEES DES NBSOLI SOMMETS DE LA LIGNE
+C -----    D'UNE B-SPLINE POLYNOMIALE UNIFORME FERMEE
+C          TELS QUE LES LONGUEURS DES ARETES VERIFIENT LA FONCTION
+C          TAILLE_IDEALE(X,Y,Z)
+C
+C ENTREES:
+C --------
+C KDEGRE : DEGRE DES POLYNOMES DE LA B-SPLINE
+C LR     : NOMBRE DE PARAMETRES DIFFERENTS DE T
+C NBINBS : NOMBRE D'INTERVALLES DE CALCUL DE LA B-SPLINE
+C R      : LES ABSCISSES PARAMETRE AYANT POUR IMAGE LES POINTS CONTROLE
+C S      : LES COEFFICIENTS DES POLYNOMES SUR CHAQUE INTERVALLE
+C NBPCBL : NOMBRE DE POINTS DE CONTROLE
+C XYZPC  : LES 3 COORDONNEES DES NBPCBL POINTS DE CONTROLE
+C NOFOTI : NUMERO DE LA FONCTION TAILLE_IDEALE DANS LE LEXIQUE FONCTION
+C
+C SORTIES:
+C --------
+C MXSOLI : NOMBRE MAXIMAL DE SOMMETS DECLARABLES DE LA LIGNE
+C NBSOLI : NOMBRE DE SOMMETS DE LA LIGNE
+C MXTGS  : NOMBRE MAXIMAL DE TANGENTES DECLARABLES DE LA LIGNE
+C NBTGS  : NOMBRE DE TANGENTES DE LA LIGNE
+C MNXYZS : ADRESSE MCN DU DEBUT DES COORDONNEES DES NBSOLI SOMMETS DE LA LIGNE
+C MNXYZT : ADRESSE MCN DU DEBUT DES COORDONNEES DES NBTGS TANGENTES DE LA LIGNE
+C IERR   : 0 SI PAS D'ERREUR, >0 SINON
+C+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+CAUTEUR : A.PERRONNET  ANALYSE NUMERIQUE UPMC PARIS         JUILLET 1996
+C2345X7..............................................................012
+      include"./incl/gsmenu.inc"
+      COMMON / UNITES / LECTEU, IMPRIM, INTERA, NUNITE(29)
+      include"./incl/pp.inc"
+      COMMON            MCN(MOTMCN)
+      REAL              RMCN(1)
+      EQUIVALENCE      (MCN(1),RMCN(1))
+      REAL              R(0:LR),
+     %                  S(0:KDEGRE,0:NBINBS-1,1:3),
+     %                  XYZPC(1:3,1:NBPCBL),
+     %                  TG0(3), TG1(3)
+      DOUBLE PRECISION  XYZD(3), DTAILL, DTAIL2
+C
+C     DECLARATION DU TABLEAU XYZS
+      MXSOLI = 128
+      CALL TNMCDC( 'REEL', 3*MXSOLI, MNXYZS )
+C
+C     DECLARATION DU TABLEAU XYZT
+      MXTGS  = 256
+      CALL TNMCDC( 'REEL', 3*MXTGS , MNXYZT )
+C
+C     LES 3 COORDONNEES DU PREMIER SOMMET DE LA LIGNE FERMEE
+C     C'EST LE PREMIER POINT DE CONTROLE  DE LA LIGNE FERMEE
+      RMCN(MNXYZS  ) = S(0,0,1)
+      RMCN(MNXYZS+1) = S(0,0,2)
+      RMCN(MNXYZS+2) = S(0,0,3)
+      XYZD(1) = S(0,0,1)
+      XYZD(2) = S(0,0,2)
+      XYZD(3) = S(0,0,3)
+C     LA TANGENTE INITIALE DU PREMIER ARC
+      TG1(1) = S(1,0,1)
+      TG1(2) = S(1,0,2)
+      TG1(3) = S(1,0,3)
+C
+C     LA SOMME DES LONGUEURS ENTRE POINTS DE CONTROLE
+      D0 = 0
+      H0 = 0
+      DO 1 I=1,NBPCBL-1
+         H0 = H0 + DIST2P( XYZPC(1,I), XYZPC(1,I+1) )
+ 1    CONTINUE
+      H  = H0
+      R1 = R(0)
+C
+      NBSOLI = 1
+      NBTGS  = 0
+C
+C     LA TAILLE_IDEALE AUTOUR DU SOMMET XYZD
+ 3    CALL FONVAL( NOFOTI, 3, XYZD,  NCODEV, DTAILL )
+      IF( NCODEV .EQ. 0 ) THEN
+C        NCODEV  : 0 DTAILL N'EST PAS INITIALISEE EN SORTIE
+C                  1 DTAILL   EST     INITIALISEE EN SORTIE
+         NBLGRC(NRERR) = 2
+         KERR(1) = 'FONCTION TAILLE_IDEALE INCALCULABLE AU POINT'
+         KERR(2) = ' '
+         WRITE(KERR(2)(1:15), '(E15.7)') XYZD(1)
+         WRITE(KERR(2)(18:32),'(E15.7)') XYZD(2)
+         WRITE(KERR(2)(35:49),'(E15.7)') XYZD(3)
+         CALL LEREUR
+         IERR = 1
+         RETURN
+      ENDIF
+C
+C     ESSAI DE CREER UN ARC DE LONGUEUR CETTE TAILLE
+      DTAILL = ABS( DTAILL )
+      IF( DTAILL .LT. H*0.65 ) THEN
+C        CREATION D'UN POINT INTERMEDIAIRE => UN SOMMET DE PLUS SUR LA B-SPLINE
+         NBSOLI = NBSOLI + 1
+         IF( NBSOLI .GE. MXSOLI ) THEN
+C           SATURATION DU TABLEAU XYZS => IL EST AUGMENTE
+            CALL TNMCAU( 'REEL', 3*MXSOLI, 3*(MXSOLI+128),
+     %                    3*NBSOLI-3, MNXYZS )
+            MXSOLI = MXSOLI + 128
+         ENDIF
+C
+C        LA TANGENTE INITIALE
+         TG0(1) = TG1(1)
+         TG0(2) = TG1(2)
+         TG0(3) = TG1(3)
+         IPAS   = 0
+C
+C        LA VALEUR INITIALE DU PARAMETRE DU NOUVEAU POINT
+ 4       R0     = R1
+         RMIN   = R1
+         RMAX   = R(LR)
+         R1     = ( RMIN + RMAX ) / 2
+         NBITER = 0
+C
+C        LES ITERATIONS POUR OBTENIR UN ARC DE TAILLE_IDEALE
+ 5       NBITER = NBITER + 1
+         IF( NBITER .GT. 256 ) THEN
+            NBLGRC(NRERR) = 1
+            KERR(1) = 'BSPLTF: ARC DE TAILLE NON IDEALE'
+            CALL LEREUR
+            GOTO 50
+         ENDIF
+C
+         I = 0
+ 10      IF( R1 .GE. R(I+1) ) THEN
+C           PASSAGE A L'INTERVALLE SUIVANT DE R
+            I = I + 1
+            GOTO 10
+         ENDIF
+C
+C        R1 EST DANS L'INTERVALLE R(I) R(I+1)
+         RR = R1 - R(I)
+C        LES 3 COORDONNES DU SOMMET NBSOLI DE LA B-SPLINE
+         MN = MNXYZS - 4 + 3 * NBSOLI
+         DO 30 J=1,3
+            A = S(KDEGRE,I,J)
+            DO 20 M=KDEGRE-1,0,-1
+               A = A * RR + S(M,I,J)
+ 20         CONTINUE
+            RMCN(MN+J) = A
+ 30      CONTINUE
+C
+C        LONGUEUR APPROXIMATIVE DE L'ARC
+         HA = DIST2P( RMCN(MN-2), RMCN(MN+1) )
+         IF( ABS(HA-DTAILL) .GT. 0.01*DTAILL ) THEN
+C           CONVERGENCE NON ASSUREE => UNE ITERATION DE PLUS
+            IF( HA .GT. DTAILL ) THEN
+C              ARC TROP GRAND
+               RMAX = R1
+               R1   = ( RMIN + R1 ) / 2
+            ELSE
+C              ARC TROP PETIT
+               RMIN = R1
+               R1   = ( RMAX + R1 ) / 2
+            ENDIF
+            GOTO 5
+         ENDIF
+C
+C        CONVERGENCE ASSUREE
+         IF( IPAS .LE. 4 ) THEN
+C           TAILLE_IDEALE AU POINT CALCULE
+            XYZD(1) = RMCN(MN+1)
+            XYZD(2) = RMCN(MN+2)
+            XYZD(3) = RMCN(MN+3)
+            CALL FONVAL( NOFOTI, 3, XYZD,  NCODEV, DTAIL2 )
+            DTAIL2 = ABS( DTAIL2 )
+            IF( DTAIL2 .LT. DTAILL ) THEN
+               DTAILL = DTAIL2
+               R1     = R0
+C              NOMBRE DE PASSAGE SUR LE CALCUL DU MIN
+               IPAS   = IPAS + 1
+               GOTO 4
+            ENDIF
+         ENDIF
+C
+C        CALCUL EFFECTIF DE LA TANGENTE AU POINT DEFINITIF
+ 50      IF( KDEGRE .GT. 1 ) THEN
+C
+C           LES 2 TANGENTES DE CETTE ARETE
+            IF( NBTGS+2 .GE. MXTGS ) THEN
+C              SATURATION DU TABLEAU XYZT => IL EST AUGMENTE
+               CALL TNMCAU( 'REEL', 3*MXTGS, 3*(MXTGS+256),
+     %                       3*NBTGS, MNXYZT )
+               MXTGS = MXTGS + 256
+            ENDIF
+C
+C           LA TANGENTE INITIALE DE L'ARC
+            PAS = R1 - R0
+            MNT = MNXYZT - 1 + 3*NBTGS
+            RMCN(MNT+1) = TG0(1) * PAS
+            RMCN(MNT+2) = TG0(2) * PAS
+            RMCN(MNT+3) = TG0(3) * PAS
+            MNT = MNT + 3
+C
+C           LA TANGENTE FINALE DE L'ARC
+            RR = R1 - R(I)
+            DO 80 J=1,3
+               A = KDEGRE * S(KDEGRE,I,J)
+               DO 60 M=KDEGRE-1,1,-1
+                  A = A * RR + M * S(M,I,J)
+ 60            CONTINUE
+               TG1(J) = A
+               RMCN(MNT+J) = -A * PAS
+ 80         CONTINUE
+C
+            NBTGS = NBTGS + 2
+         ENDIF
+C
+C        PASSAGE AU CALCUL DU SOMMET SUIVANT
+         XYZD(1) = RMCN(MN+1)
+         XYZD(2) = RMCN(MN+2)
+         XYZD(3) = RMCN(MN+3)
+C        LA SOMME DES TAILLES APPROXIMATIVES DES ARCS ACTUELS
+         D = DIST2P( RMCN(MN+1), RMCN(MN-2) )
+         D0 = D0 + D
+C        LA TAILLE APPROXIMATIVE DE L'ARC RESTANT
+         IF( D0 .GT. H0/4 ) THEN
+C           LE SOMMET REVIENT VERS LE SOMMET INITIAL
+            H = DIST2P( RMCN(MN+1), RMCN(MNXYZS) )
+         ENDIF
+         GOTO 3
+      ENDIF
+C
+C     LE DERNIER SOMMET EST LE PREMIER SOMMET
+C     CALCUL DES COMPOSANTES DE LA TANGENTE INITIALE DU DERNIER ARC
+      IF( KDEGRE .GT. 1 ) THEN
+         PAS = R(LR) - R1
+         MNT = MNXYZT + 3*NBTGS - 1
+         RMCN(MNT+1) = TG1(1) * PAS
+         RMCN(MNT+2) = TG1(2) * PAS
+         RMCN(MNT+3) = TG1(3) * PAS
+         MNT = MNT + 3
+C
+C        LES COMPOSANTES DE LA TANGENTE DU DERNIER SOMMET DU DERNIER ARC
+C        SONT CELLES DE LA LA TANGENTE INITIALE DU PREMIER ARC
+         DO 90 J=1,3
+            RMCN(MNT+J) = -S(1,0,J) * PAS
+ 90      CONTINUE
+         NBTGS = NBTGS + 2
+      ENDIF
+      END

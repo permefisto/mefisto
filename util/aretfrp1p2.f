@@ -1,0 +1,58 @@
+      SUBROUTINE ARETFRP1P2( KNOMOB, NBSOMT, SONO )
+C+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+C BUT :    TRANSFORMER LE NO (1 a NBSOMT) DES SOMMETS DES ARETES FRONTIERE
+C -----     D'UN OBJET EN LE NO DE NOEUD (1 a NBNOEU)
+C
+C ENTREES:
+C --------
+C KNOMOB : NOM DE L'OBJET
+C NBSOMT : NOMBRE DE SOMMETS DU MAILLAGE DE L'OBJET
+C NBNOEU : NOMBRE DE NOEUDS  DU MAILLAGE DE L'OBJET
+C NOSO   : NUMERO DE SOMMET DE CHAQUE NOEUD, 0 SI CE N'EST PAS UN SOMMET
+C+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+C AUTEUR : ALAIN PERRONNET LJLL UPMC ST PIERRE DU PERRAY SEPTEMBRE  2013
+C23456---------------------------------------------------------------012
+      include"./incl/pp.inc"
+      COMMON            MCN(MOTMCN)
+      REAL              RMCN(1)
+      EQUIVALENCE      (MCN(1),RMCN(1))
+
+      include"./incl/a___aretefr.inc"
+
+      CHARACTER*(*)     KNOMOB
+      INTEGER           SONO(NBSOMT)
+
+      IERR = 0
+C
+C     CREATION OU REDECOUVERTE DU HACHAGE DES ARETES
+C     DES FACES FRONTALIERES DE L'OBJET
+      CALL HACHAF( KNOMOB, 0, NTFAOB, MNFAOB,
+     %             NTAFOB, MNAFOB, IERR )
+      IF( IERR .NE. 0 ) GOTO 9900
+C     TABLEAU  LAREFR(1..MOARFR,1..MXARFR)
+C     NUMERO DES 2 SOMMETS DE L'ARETE, NUMERO DE LA SUIVANTE
+C
+C     LE NOMBRE D'ENTIERS PAR ARETE FRONTALIERE
+      MOARFR = MCN( MNAFOB + WOARFR )
+C     LE NUMERO DANS LAREFR DE LA PREMIERE ARETE FRONTIERE
+      L1ARFR = MCN( MNAFOB + W1ARFR )
+C
+C     TRANSFORMATION DU NO DE NOEUD EN NO DE SOMMET
+      N = L1ARFR
+ 10   IF( N .GT. 0 ) THEN
+C
+         MNA = MNAFOB + WAREFR + MOARFR * (N-1)
+         DO M = 0,1
+            NS = MCN( MNA + M )
+C           LE NUMERO DE SOMMET EST REMPLACE PAR CELUI DE NOEUD
+            MCN( MNA + M ) = SONO( NS )
+         ENDDO
+
+C        PASSAGE A L'ARETE FRONTALIERE SUIVANTE
+         N = MCN( MNA + 2 )
+         GOTO 10
+
+      ENDIF
+C
+ 9900 RETURN
+      END

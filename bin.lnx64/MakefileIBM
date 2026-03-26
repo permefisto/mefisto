@@ -1,0 +1,23 @@
+#
+# Makefile pour obtenir xvtest1 le TEST de xvue
+# Alain Perronnet   Fevrier 1996
+#
+LIBS=-lXm -lXt -lX11 -lXext
+
+F77=    gfortran
+
+FFLAGS= -g -I../
+
+all:    xvtest1
+        rm *.o
+
+xvtest1:xvuelc.o xvouvrir.o xvinit.o palcde.o coutip.o \
+        codtei.o tiprvb.o chargefonte.o choixfonte.o
+        $(F77) $(FFLAGS) xvtest1.f *.o $(LIBS) -o $@
+
+.f.o:   xvouvrir.f xvinit.f palcde.f coutip.f \
+        codtei.f tiprvb.f chargefonte.f choixfonte.f
+        $(F77) $(FFLAGS) -c $<
+
+.c.o:   xvuelc.c
+        ccxvue

@@ -1,0 +1,6 @@
+variable TYP3FACE 'Types of drawings of 3 FACES' entier
+( 0: 'NO DRAWING'
+, 1: '8 GLOBAL EDGES'
+, 2: 'QUADRILATERAL GRIDS'
+, 3: 'BACKGROUND of 3 FACES'
+, 4: 'CHESS-BOARD with 2 COLORS' ) ;

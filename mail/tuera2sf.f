@@ -1,0 +1,74 @@
+      SUBROUTINE TUERA2SF( L1ARFA, MNARFA, NBA2SF, MNA2SF, MNNSEF )
+C+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+C BUT :     DETRUIRE TOUTES LES FACES des ARETES de RAPPORT
+C -----     DES SURFACES ADJACENTES TROP FAIBLE
+
+C ENTREES:
+C --------
+C L1ARFA : NOMBRE DE MOTS PAR ARFA DU TABLEAU NARFA
+C MNARFA : ADRESSE DANS MCN DU TABLEAU NARFA DES QTANGLES DU MAILLAGE
+C          NARFA(1,I)= NO DU 1-ER  SOMMET DE L'ARETE
+C          NARFA(2,I)= NO DU 2-EME SOMMET > 1-ER  SOMMET
+C          NARFA(3,I)= CHAINAGE HACHAGE SUR LE QTANGLE SUIVANT
+C          NARFA(4:L1ARFA,I)= NO NOSTQT DU QTANGLE CONTENANT L'ARETE
+C          SI UNE ARETE APPARTIENT A PLUS DE L1ARFA-3 QTANGLES, 
+C          LE DERNIER NUMERO DE QTANGLE EST RENDU NEGATIF POUR INDIQUER
+C          QUE LA LISTE DES QTANGLES EST INCOMPLETE
+C NBA2SF : NOMBRE D'ARETES APPARTENANT A AU MOINS 3 FACES
+C MNA2SF : >0 ADRESSE MCN DU TMC NA2SF NO NARFA DES ARETES TRIPLES
+C          =0 SI NBA2SF=0
+C MNNSEF : ADRESSE DU TABLEAU NSEF DE LA SURFACE
+
+C MODIFIE:
+C --------
+C le TMS NSEF avec des FACES de NUMEROS de SOMMETS MIS A ZERO
+C+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+C AUTEUR : Alain PERRONNET Saint PIERRE du PERRAY               Mai 2020
+C2345X7..............................................................012
+      include"./incl/a___nsef.inc"
+      include"./incl/pp.inc"
+      COMMON         MCN(MOTMCN)
+      REAL          RMCN(1)
+      EQUIVALENCE  (RMCN(1),MCN(1))
+
+      IF( NBA2SF .LE. 0 ) GOTO 9999
+
+C     SUPPRESSION DES FACES DES NBA2SF ARETES
+      NBFASU   = 0
+      MNNOSOEF = MNNSEF + WUSOEF
+      MNAR     = MNA2SF - 1
+      DO N = 1, NBA2SF
+
+C        LA N-EME ARETE A2SF
+         MNAR  = MNAR + 1
+         NA2SF = MCN( MNAR )
+         MNAR  = MNARFA - L1ARFA + L1ARFA * NA2SF - 1
+
+C        NOMBRE DE FACES DE CETTE ARETE NA2SF
+         NBF  = 0
+         DO K = 4, L1ARFA
+            NOTQ = MCN( MNAR+K )
+            IF( NOTQ .NE. 0 ) THEN
+C              UNE FACE TQ DE PLUS
+               NBF = NBF + 1
+            ENDIF
+         ENDDO
+
+C        L'ARETE APPARTIENT APPARTIENT A NBF FACES
+C        DESTRUCTION DE CES NBF FACES
+         DO K = 4, 3+NBF
+            NOTQ = ABS( MCN( MNAR+K ) )
+            MN1  = MNNOSOEF + 4 * NOTQ - 5
+            DO L=1,4
+               MCN(MN1+L) = 0
+            ENDDO
+            NBFASU = NBFASU + 1
+         ENDDO
+
+      ENDDO
+
+ 9999 PRINT*,'tuera2sf:',NBA2SF,' ARETES de RAPPORT des SURFACES TROP FA
+     %IBLE'
+      PRINT*,'tuera2sf:',NBFASU,' TRIANGLES SUPPRIMES'
+      RETURN
+      END

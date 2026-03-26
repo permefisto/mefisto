@@ -1,0 +1,54 @@
+      SUBROUTINE GS3P1BP1( NTDL, NUEF, BE, BG )
+C ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+C BUT :    STOCKAGE DES DEGRES DE LIBERTE VITESSE 5 10 15 DANS BG
+C -----    (VITESSE1 2 3 en moyenne sur e dits au BARYCENTRE)
+C          INTERNES ATTACHES AU TETRAEDRE BREZZI-FORTIN
+C          COMPRESSION DU SECOND MEMBRE ELEMENTAIRE BE
+C
+C ENTREES:
+C --------
+C NTDL   : NOMBRE DE DEGRES DE LIBERTE SANS LES BARYCENTRES DES EF
+C NUEF   : NUMERO DE L'EF BREZZI-FORTIN A TRAITER
+C
+C MODIFIE:
+C --------
+C BE     : EN ENTREE SECOND MEMBRE ELEMENTAIRE (19)
+C          EN SORTIE SECOND MEMBRE ELEMENTAIRE (16) REDUIT
+C BG     : VECTEUR GLOBAL SECOND MEMBRE APRES ASSEMBLAGE DES DL BARYCENTRES
+C+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+C AUTEUR: ALAIN PERRONNET LJLL UPMC Saint Pierre du Perray Decembre 2008
+C23456---------------------------------------------------------------012
+      DOUBLE PRECISION  BE(19), BG(*)
+C
+C     LE DEGRE DE LIBERTE 5 DE BE ELIMINE ENSUITE PAR GAUSS SUR [AG]
+C     EST ASSEMBLE DANS BG
+      N = NTDL + 3*NUEF
+      BG( N - 2 ) = BE(5)
+C
+C     LE DEGRE DE LIBERTE 10 DE BE ELIMINE ENSUITE PAR GAUSS SUR [AG]
+C     EST ASSEMBLE DANS BG
+      BG( N - 1 ) = BE(10)
+C
+C     LE DEGRE DE LIBERTE 15 DE BE ELIMINE ENSUITE PAR GAUSS SUR [AG]
+C     EST ASSEMBLE DANS BG
+      BG( N     ) = BE(15)
+C
+C     RECONSTRUCTION DANS BE AVEC SEULEMENT 16 DEGRES DE LIBERTE
+C     REDUCTION DES DL VITESSE 5 10 15
+      BE( 5) = BE( 6)
+      BE( 6) = BE( 7)
+      BE( 7) = BE( 8)
+      BE( 8) = BE( 9)
+C
+      BE( 9) = BE(11)
+      BE(10) = BE(12)
+      BE(11) = BE(13)
+      BE(12) = BE(14)
+C
+      BE(13) = BE(16)
+      BE(14) = BE(17)
+      BE(15) = BE(18)
+      BE(16) = BE(19)
+C
+      RETURN
+      END

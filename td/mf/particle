@@ -1,0 +1,6 @@
+variable PARTICLE 'Trace des PARCOURS de PARTICULES' entier
+ ( 1 : 'Donnees Longitudes Latitudes Rayon Temps0 des PARTICULES'
+,  2 : 'Donnees XYZ VitesseXYZ Rayon Temps0 des PARTICULES'
+,  3 : 'CALCUL du PARCOURS des PARTICULES donnees'
+,  4 : 'CALCUL du PARCOURS des PARTICULES-COVID dans l''AIR'
+,  5 : 'TRACE du PARCOURS deja CALCULE de CHAQUE PARTICULE' ) ;

@@ -1,0 +1,80 @@
+Une surface maillee est tracee selon l'algorithme du PEINTRE:  
+
+Les triangles ou quadrangles les plus eloignes sont traces 
+avant les plus proches qui les superposent ensuite,
+offrant ainsi un aspect de MATIERE SOLIDE.  
+
+Malheureusement, le resultat N'est PAS toujours correct. 
+L'eloignement est celui du barycentre de la face.
+Il peut arriver qu'une face allongee soit tracee apres une
+autre qui aurait du l'effacer.  
+
+Dans ce cas, essayer une autre direction de visee.
+
+1 : bascule NOIR et BLANC ou COULEURS  
+Les traces s'effectuent ensuite avec 2 ou 256 couleurs
+    
+2 : bascule TRACE ou NON des Aretes des FACES
+Le trace des faces se fait selon le remplissage avec une couleur
+limite par les aretes. Ces aretes sont ou non tracees
+
+3 : COULEUR des ARETES des FACES  
+Definit la couleur des aretes si leur trace est demande.
+
+4 : bascule TRACE ou NON des FACES 
+Le trace des faces est ou non effectue selon le cas.
+Si les faces ne doivent pas etre tracees, il faut demander
+le trace des aretes sous peine d'obtenir aucun trace geometrique
+
+5 : POURCENTAGE de REDUCTION des FACES 
+Le trace des faces peut etre reduit pour voir
+- les aretes manquantes
+- derriere les faces les plus apparentes pour la direction de visee
+
+6 : bascule ELOIGNEMENT ou NON 
+Avec ELOIGNEMENT, du NOIR est ajoute a la couleur en fonction de
+l'eloignement par rapport a l'OEIL. Ainsi les faces d'un meme plan
+deviennent plus noires au fur et a mesure qu'elles s'eloignent.
+Par contre, pour detecter si des faces sont dans un meme plan, il
+est preferable de ne pas tenir compte de leur eloignement
+
+7 : COULEUR de trace du NOM des SURFACES
+
+8 : bascule TRACE ou NON du NOM de la SURFACE
+
+9 : bascule TRACE ou NON du trace du TITRE
+
+10: bascule TRACE ou NON du NUMERO des SOMMETS 
+
+11: COULEUR des CARACTERES des NUMEROS des SOMMETS des EF
+
+12: bascule TRACE ou NON du NUMERO des EF 
+
+13: COULEUR des CARACTERES des NUMEROS des EF
+
+14: Max DIVISION 1ARETE des FACES P3
+    Selon cette valeur >1 et <16 le trace des faces 
+    est plus moins precis
+
+15: TRACE ou NON des TANGENTES des FACES
+
+16: COULEUR du trace des TANGENTES
+
+17: TYPE de TRAIT des TANGENTES des FACES continu ou pointille
+
+20: NOMBRE D'EPAISSEURS du TRAIT necessaire au TRACE des ARETES
+
+50: EFFACER le trace actuel
+
+75: Activer la TRANSLATION ORBITE ZOOM alors
+un mouvement de la souris donne avec le
+bouton 1 de la souris une translation de la surface
+bouton 2 de la souris une orbite de la surface
+bouton 3 de la souris un zoom de la surface
+Pour ABANDONNER, frapper la touche ECHAPPEMENT.
+
+76: Arreter la TRANSLATION ORBITE ZOOM commandee par la souris
+Revient au mode sans mouvement de la surface avec la souris
+
+90: EXECUTION du TRACE 
+selon les couleurs et options definies auparavant

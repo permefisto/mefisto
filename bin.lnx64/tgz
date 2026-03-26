@@ -1,0 +1,7 @@
+#!/bin/bash
+cd $MEFISTO
+for i in `ls -1 *.tgz`
+do
+   tar xzvf $i
+done
+

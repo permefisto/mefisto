@@ -1,0 +1,8 @@
+variable CONTDEPL 'Drawing possibilities' entier
+ (  0 : 'CASE NUMBER of SOLUTIONS'
+ ,  1 : 'STRESSES'
+ ,  2 : 'DISPLACEMENTS'
+ ,  3 : 'VON MISES Criterion'
+ ,  4 : 'TRESCA Criterion'
+ ,  6 : 'MOVEMENT of the EIGENMODES'
+ ,  8 : 'ERROR from 2D EXACT_DISPLACEMENT() GIVEN' ) ;

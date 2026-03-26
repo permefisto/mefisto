@@ -1,0 +1,28 @@
+Fenetre topologique (indices topologiques) des points du maillage
+affectes par la projection. Tout  quadrangle  exterieur  a  cette
+fenetre n'est pas modifie et est  calcule par  une  interpolation
+transfinie simple.
+
+Donner Imin-IMAX Jmin-JMAX pour chaque projection (avec  la  con-
+vention 0; 0; pour la totalite (1 a MAX)) 
+
+Exemple:
+S7; I; 7; COTE1; COTE2; COTE3; COTE4; 
+2; {nombre projections}
+0; 1;  {les types de projection}
+3;6;   1;5;   {Imin IMAX et Jmin JMAX}
+0;0;   8;12;  {1 a NMAX en I et Jmin JMAX} 
+P1_AXE_CYL; P2_AXE_CYL;  P1_AXE_CER; P2_AXE_CER;
+1;                       2.5;
+Definit une quadrangulation de contour les aretes
+des lignes COTE1 COTE2 COTE3 COTE4  avec 
+-une projection sur le CYLINDRE d'axe defini par
+ les 2 points P1_AXE_CYL; P2_AXE_CYL; et
+ de rayon 1. en P1_AXE_CYL et de telle sorte que 
+ les points les plus proches soient projetes sur le cylindre
+ et les autres sommets de la fenetre 3-6 1-5 deplaces au mieux 
+-une projection sur le CERCLE d'axe normal defini par
+ les 2 points P1_AXE_CER; P2_AXE_CER; et de centre P1_AXE_CER
+ de rayon 2.5 et de telle sorte que les points les plus
+ proches soient projetes sur le cercle et 
+ les autres sommets de la fenetre 1-IMAX 8-12 deplaces au mieux 

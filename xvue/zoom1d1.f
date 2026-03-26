@@ -1,0 +1,104 @@
+      SUBROUTINE ZOOM1D1( NOTYEV )
+C ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+C BUT :    MISE A JOUR DU TRACE 1D AVEC ZOOM ET TRANSLATION
+C -----
+C SORTIE :
+C --------
+C NOTYEV : NO DE L'EVENEMENT =0 SI ABANDON DEMANDE, NON NUL SINON
+C ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+C AUTEUR:ALAIN PERRONNET LJLL UPMC PARIS & St Pierre du Perray JUIN 2009
+C23456---------------------------------------------------------------012
+      include"./incl/trvari.inc"
+      REAL  DX, DY
+C
+C     EN ATTENTE D'EVENEMENT
+ 10   CALL XVSOURIS( NOTYEV, NBC, NOPX, NOPY )
+C     NOTYEV= 0 SI ABANDON DEMANDE PAR CLIC DU BOUTON 2 DE LA SOURIS
+C                       OU PAR FRAPPE DE LA TOUCHE ECHAPPEMENT OU @
+C           = 1 SI CLIC ENFONCE ET RELACHE D'UN BOUTON DE LA SOURIS => NOPX, NOP
+C           =-1 SI CLIC SEULEMENT ENFONCE  D'UN BOUTON DE LA SOURIS => NOPX, NOP
+C           =-2 SI LE POINTEUR DE LA SOURIS A BOUGE                 => NOPX, NOP
+C           = 2 SI FRAPPE D'UN CARACTERE AU CLAVIER
+C
+      IF( NOTYEV .EQ. 0 .OR. NOTYEV .EQ. 2 ) THEN
+C        ABANDON DEMANDE PAR FRAPPE AU CLAVIER OU BOUTON 2
+         NOBOUTON = 2
+         NOETATBOUTON = 0
+         NOTYEV = 0
+         NORBITE = 0
+         RETURN
+      ENDIF
+C
+      IF( NOETATBOUTON .EQ. 0 ) THEN
+C        EN ATTENTE D'UN BOUTON ENFONCE
+         IF( NOTYEV .EQ. -1 ) THEN
+C           LE NO DE BOUTON ENFONCE ET L'ETAT CHANGE
+            NOBOUTON = NBC
+            NOETATBOUTON = 1
+            NOPX0 = NOPX
+            NOPY0 = NOPY
+         ENDIF
+         GOTO 10
+      ENDIF
+C
+C     LE BOUTON NOBOUTON EST ACTUELLEMENT ENFONCE
+      IF( NOTYEV .EQ. 1 ) THEN
+C        LE NO DE BOUTON EST RELACHE ET L'ETAT CHANGE
+         NOBOUTON = NBC
+         NOETATBOUTON = 0
+         GOTO 10
+      ELSE IF( NOTYEV .EQ. -2 ) THEN
+C
+C        SOURIS BOUGEE BOUTON NOBOUTON ENFONCE
+         IF( NOBOUTON .EQ. 1 ) THEN
+C
+C           BOUTON 1 ENFONCE: => TRANSLATION SELON CELLE EN PIXELS
+C           TRANSLATION EN X
+            DX = 2 * ( NOPX0 - NOPX ) * (XOBMAX-XOBMIN) / FLOAT(LAPXFE)
+C           TRANSLATION EN Y
+            DY = 2 * ( NOPY - NOPY0 ) * (YOBMAX-YOBMIN) / FLOAT(LHPXFE)
+C           DECALAGE DE LA FENETRE
+            XOBMIN = XOBMIN + DX
+            XOBMAX = XOBMAX + DX
+            YOBMIN = YOBMIN + DY
+            YOBMAX = YOBMAX + DY
+C
+         ELSE IF( NOBOUTON .EQ. 3 ) THEN
+C
+C           BOUTON 3 ENFONCE: => ZOOM => CALCUL DE LA LARGEUR ET HAUTEUR
+C           RAPPORT DU DEPLACEMENT DE LA SOURIS EN X
+            DX = 2 * ( NOPX - NOPX0 ) * (XOBMAX-XOBMIN) / FLOAT(LAPXFE)
+C           RAPPORT DU DEPLACEMENT DE LA SOURIS EN Y
+            DY = 2 * ( NOPY - NOPY0 ) * (YOBMAX-YOBMIN) / FLOAT(LHPXFE)
+ccc            XOBMIN = XOBMIN - DY
+ccc            XOBMAX = XOBMAX + DY
+            XOBMIN = XOBMIN - DX
+            XOBMAX = XOBMAX + DX
+            YOBMIN = YOBMIN - DY
+            YOBMAX = YOBMAX + DY
+C
+         ENDIF
+C
+      ELSE
+C        AUTRE VALEUR DE NOTYEV
+         GOTO 10
+      ENDIF
+C
+      NOPX0 = NOPX
+      NOPY0 = NOPY
+C
+C     FENETRE POUR VOIR L'OBJET
+      CALL FENETRE( XOBMIN, XOBMAX, YOBMIN, YOBMAX )
+C
+      AXOPTV(1) = ( XOBMIN + XOBMAX ) / 2
+      AXOPTV(2) = ( YOBMIN + YOBMAX ) / 2
+      AXOPTV(3) = 0
+C
+C     LA MEMOIRE PIXELS EST EFFACEE
+      CALL EFFACEMEMPX
+C
+C     NOMBRE DE PASSAGES SUR ORBITE1
+      NORBITE = NORBITE + 1
+C
+      RETURN
+      END

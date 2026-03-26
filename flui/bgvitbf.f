@@ -1,0 +1,283 @@
+      SUBROUTINE BGVITBF( tn, tn1, Rho, CoGrPr, NDIM, NBSOM, NBNOVI,
+     %                    NDDLNO, XYZSOM,
+     %                    NUTYEL, NBNOEF, NBELEM, NUNOEF, NTDLHB,
+     %                    NBVVEF, NBSFEF, NBLAEF,
+     %                    NUVVEF, NUSFEF, NULAEF,
+     %                    NUMILI, NUMALI, LTDELI,
+     %                    NUMISU, NUMASU, LTDESU,
+     %                    NUMIVO, NUMAVO, LTDEVO,
+     %                    MOARET, MXARET, MNLARE,
+     %                    MOFACE, MXFACE, LFACES,
+     %                    VXYZPNtn, VITMXtn, PRESStn, NOBARY, AGGAUSS,
+     %                    BG,     NBCHTL, IERR )
+C ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+C BUT: CONSTRUIRE ET ASSEMBLER LE SECOND MEMBRE GLOBAL BG DU PROBLEME
+C ---- VG U(tn+1) = (Rho - dt Mhu Laplacien ) U(tn+1) =
+C      = Rho U(tn,X(tn+1,x) - dt CoGrPr GRAD P(tn) + dt Force(tn+1)
+C      CALCUL DU SECOND MEMBRE DU SYSTEME LINEAIRE:
+C      Integrale Rho tP1B Ui(tn,X(tn;tn+1,bl) dX
+C    - Integrale tP1B dt CoGrPr GRAD P(tn) dX + dt Integrale tP1B Force(tn) dX
+
+C ENTREES:
+C --------
+C tn, tn1: INTERVALLE DE TEMPS tn tn+1  => DT PAS du TEMPS = tn1-tn
+C DT     : PAS CONSTANT DU TEMPS
+C Rho    : DENSITE DE MASSE  Integrale Rho P1B P1B dX
+C CoGrPr : COEFFICIENT DU GRADIENT DE PRESSION DANS LES EDP
+C NDIM   : DIMENSION DE L'ESPACE DES COORDONNEES 2 ou 3
+C NBSOM  : NOMBRE DE SOMMETS DU MAILLAGE
+C NBNOVI : NOMBRE DE NOEUDS VITESSE SOMMETS et BARYCENTRE DES EF
+C XYZSOM : XYZSOM(3,NBNOVI)  3 COORDONNEES DES NOEUDS DU MAILLAGE
+C NDDLNO : NUMERO DU DERNIER DL DE CHAQUE NOEUD VITESSE (0:NBNOVI)
+C          A UTILISER POUR RETROUVER LES DL PRESSION DES VECTEURS VXYZPNtn
+C NUTYEL : NUMERO DU TYPE D'EF ( 13 TRIANGLE, 19 TETRAEDRE BREZZI-FORTIN
+C NBNOEF : NOMBRE DE SOMMETS D'UN EF DE CE TYPE
+C          ( 3 POUR LE TRIANGLE, 4 POUR LE TETRAEDRE)
+C NBELEM : NOMBRE D'EF DU MAILLAGE
+C NUNOEF : NUNOEF(NBELEM,NBNOEF) NO DES NOEUDS DES NBELEM EF
+C NTDLHB : NOMBRE TOTAL DE DEGRES DE LIBERTE DE L'OBJET HORS BARYCENTRES
+C          (NDIM+1) NBSOM (SANS BARYCENTRES)
+
+C NBVVEF : NOMBRE DE VOLUME  POUR 1 EF DE CE TYPE
+C NBSFEF : NOMBRE DE FACES   POUR 1 EF DE CE TYPE
+C NBLAEF : NOMBRE D'ARETES   POUR 1 EF DE CE TYPE
+C NUVVEF : TABLEAU DU NUMERO DE VOLUME DE CHAQUE ELEMENT FINI
+C NUSFEF : TABLEAU DU NUMERO DE SURFACE DES FACES   DE CHAQUE EF
+C NULAEF : TABLEAU DU NUMERO DE LIGNE   DES ARETES  DE CHAQUE EF
+
+C NUMILI : NUMERO MINIMAL DES OBJETS LIGNES
+C NUMALI : NUMERO MAXIMAL DES OBJETS LIGNES
+C LTDELI : TABLEAU DES ADRESSES DU TABLEAU DES DONNEES DU FLUIDE
+C          DES OBJETS LIGNES
+
+C NUMISU : NUMERO MINIMAL DES OBJETS SURFACES
+C NUMASU : NUMERO MAXIMAL DES OBJETS SURFACES
+C LTDESU : TABLEAU DES ADRESSES DU TABLEAU DES DONNEES DU FLUIDE
+C          DES OBJETS SURFACES
+
+C NUMIVO : NUMERO MINIMAL DES OBJETS VOLUMES
+C NUMAVO : NUMERO MAXIMAL DES OBJETS VOLUMES
+C LTDEVO : TABLEAU DES ADRESSES DU TABLEAU DES DONNEES DU FLUIDE
+C          DES OBJETS VOLUMES
+
+C MOARET : NOMBRE DE MOTS POUR LES INFO D'UNE ARETE
+C MXARET : NOMBRE MAXIMAL D'ARETES DECLAREES
+C MNLARE : EN 2D SEULEMENT ADRESSE MCN DU 1-ER MOT DU TABLEAU LARETE
+
+C MOFACE : NOMBRE DE MOTS POUR LES INFO D'UNE FACE
+C MXFACE : NOMBRE MAXIMAL D'FACES DECLAREES
+C LFACES : TABLEAU DES FACES DU MAILLAGE  (cf hachag.f)
+C          LFACES(1,I)= NO DU 1-ER  SOMMET DE LA FACE
+C          LFACES(2,I)= NO DU 2-EME SOMMET > 1-ER  SOMMET
+C          LFACES(3,I)= NO DU 3-EME SOMMET DE LA FACE
+C          LFACES(4,I)= NO DU 4-EME SOMMET DE LA FACE
+C                       0 SI TRIANGLE
+C          LFACES(5,I)= CHAINAGE HACHAGE SUR FACE SUIVANTE
+C                       1 CUBE EST UN TETRA ou PENTA ou HEXAEDRE
+C          LFACES(6,I)= NUMERO DU 1-ER  CUBE CONTENANT CETTE FACE
+C                       0 SI PAS DE 1-ER  CUBE
+C          LFACES(7,I)= NUMERO DU 2-EME CUBE CONTENANT CETTE FACE
+C                       ou CHAINAGE SUR LA FACE FRONTALIERE SUIVANTE
+C          LFACES(8,I)= NUMERO DE LA FACE A TANGENTE DANS LE TABLEAU NUTGFA
+C          LFACES(9,I)= NUMERO DU TYPE DU DERNIER EF DE CETTE FACE
+
+C VXYZPNtn: VECTEUR GLOBAL des DL VITESSES-PRESSIONS (1:NTDL) au TEMPS tn
+C VITMXtn : NORME DE LA VITESSE MAXIMALE AU TEMPS PRECEDANT
+C PRESStn : DL DE LA PRESSION AUX SOMMETS DE LA TETRAEDRISATION
+C NTDLVP  : NOMBRE TOTAL DE DL VITESSE (NDIM*NBNOVI) + PRESSION NBSOM
+
+C SORTIES:
+C --------
+C BG     : VECTEUR GLOBAL SECOND MEMBRE ASSEMBLE
+C NBCHTL : NOMBRE DE REMONTEES DE LA CARACTERISTIQUE TROP LONGUES
+C IERR   : 0 PAS DE PROBLEME, >0 PROBLEME RENCONTRE
+C+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+C AUTEUR : ALAIN PERRONNET LJLL UPMC & St Pierre du Perray  Octobre 2012
+C23456---------------------------------------------------------------012
+      IMPLICIT NONE
+      include"./incl/donflu.inc"
+      REAL              tn, tn1, DT, XYZSOM(3,NBSOM)
+      DOUBLE PRECISION  DELTAT, Rho, CoGrPr,
+     %                  BG(NBNOVI*NDIM), AGGAUSS(NOBARY,NBELEM)
+      INTEGER           NUNOEF(NBELEM,NBNOEF), NDDLNO(0:NBNOVI)
+      INTEGER           NUMILI,NUMALI,LTDELI(1:MXDOFL,NUMILI:NUMALI)
+      INTEGER           NUMISU,NUMASU,LTDESU(1:MXDOFL,NUMISU:NUMASU)
+      INTEGER           NUMIVO,NUMAVO,LTDEVO(1:MXDOFL,NUMIVO:NUMAVO)
+      INTEGER           NUVVEF(NBVVEF,NBELEM), NUSFEF(NBSFEF,NBELEM),
+     %                  NULAEF(NBLAEF,NBELEM), LFACES(MOFACE,MXFACE)
+      INTEGER           NDIM,   NBSOM, NOBARY, NTDLHB,
+     %                  NBVVEF, NBSFEF, NBLAEF,
+     %                  NUTYEL, NBELEM, NBNOEF,
+     %                  MOARET, MXARET, MNLARE,
+     %                  MOFACE, MXFACE,
+     %                  NBNOVI, NBCHTL, IERR, NUELEM,
+     %                  M, K, MEK, NSK
+
+      INTEGER           NONOEF(5)
+      DOUBLE PRECISION  BE1(19), BE2(15)
+      DOUBLE PRECISION  PRESStn(NBSOM), VXYZPNtn(1:*), VITMXtn
+      DOUBLE PRECISION  t_cpu_0, t_cpu_1
+
+      call cpu_time(t_cpu_0)
+      print*,'ENTREE de bgvitbf.f sans OpenMP'
+
+C     PAS DE TEMPS ENTRE tn et tn+1
+      DT = tn1 - tn
+
+C     LE PAS DE TEMPS EN DOUBLE PRECISION
+      DELTAT = DT
+
+CCC   NO DU DEGRE DE LIBERTE DU BARYCENTRE
+CCC   NOBARY = NBNOEF+1
+
+C     MISE A ZERO DE BG
+      CALL AZEROD( NBNOVI*NDIM, BG )
+
+C     BOUCLE SUR LES EF
+      DO 10 NUELEM = 1, NBELEM
+
+C        NO DES NOEUDS DE L'ELEMENT FINI NUELEM
+         DO M = 1, NBNOEF
+            NONOEF(M) = NUNOEF(NUELEM,M)
+         ENDDO
+C        NO DU BARYCENTRE
+         NONOEF(NOBARY) = NBSOM + NUELEM
+C
+         IF( NUTYEL .EQ. 13 ) THEN
+
+C           TRIANGLE BREZZI_FORTIN
+C           1) Integrale Rho tP1B ui(tn,X(tn;tn+1,x) dx
+C           SECOND MEMBRE ELEMENTAIRE du TRANSPORT pour NAVIER-STOKES
+C           avec 4+4 COEFFICIENTS
+            CALL F2SNVP1BP1( NUELEM, 1,       NBELEM, NUNOEF,
+     %                       MOARET, MXARET,  MNLARE,
+     %                       DT,     Rho,     XYZSOM, NDDLNO,
+     %                       NTDLHB, VXYZPNtn, VITMXtn,
+     %                       BE1,    IERR )
+            IF( IERR .EQ. 4 ) THEN
+               NBCHTL = NBCHTL + 1
+               GOTO 10
+C              ABANDON DE L'EF NUELEM
+            ENDIF
+
+C           ASSEMBLAGE DES DEGRES DE LIBERTE 4 ET 8 DE BE1 DANS BG
+C           COMPRESSION DE 8 A 6 DEGRES DE LIBERTE DE BE1
+            CALL GAS2P1BP1( NBSOM, NUELEM, BE1, NBNOVI, BG )
+
+C           2) -Integrale tP1B dt CoGrPr GRAD P(tn) + dt tP1B Force(tn) dX
+            CALL F2EX2P1BP1( XYZSOM, NONOEF,
+     %                       NULAEF(1,NUELEM), NUMILI, NUMALI, LTDELI,
+     %                       NUSFEF(1,NUELEM), NUMISU, NUMASU, LTDESU,
+     %                       DELTAT, CoGrPr,   NBSOM,  PRESStn,
+     %                       BE2 )
+
+C           ASSEMBLAGE DES DEGRES DE LIBERTE 4 ET 8 DE BE2 DANS BG
+C           COMPRESSION DE 8 A 6 DEGRES DE LIBERTE DE BE2
+            CALL GAS2P1BP1( NBSOM, NUELEM, BE2, NBNOVI, BG )
+
+         ELSE
+
+C           TETRAEDRE BREZZI-FORTIN
+C           1) Integrale Rho tP1B ui(tn,X(tn;tn+1,x) dx
+C           SECOND MEMBRE ELEMENTAIRE du TRANSPORT pour NAVIER-STOKES
+C           avec 5+5+5 COEFFICIENTS
+            CALL F3SNVP1BP1( NUELEM, NBELEM,  NUNOEF,
+     %                       MOFACE, MXFACE,  LFACES,
+     %                       DT,     Rho,     XYZSOM, NDDLNO,
+     %                       NTDLHB, VXYZPNtn, VITMXtn,
+     %                       BE1,    IERR )
+            IF( IERR .EQ. 4 ) THEN
+               NBCHTL = NBCHTL + 1
+C              ABANDON DE L'EF NUELEM
+               GOTO 10
+            ENDIF
+
+C           ASSEMBLAGE  DES DEGRES DE LIBERTE 5 10 15 DE BE1 DANS BG
+C           COMPRESSION DES DEGRES DE LIBERTE 5 10 15 DE BE1
+            CALL GAS3P1BP1( NBSOM, NUELEM, BE1, NBNOVI, BG )
+
+C           2) -Integrale tP1B dt CoGrPr GRAD P(tn) + dt tP1B Force(tn) dX
+            CALL F3EX2P1BP1( XYZSOM, NONOEF,
+     %                       NUSFEF(1,NUELEM), NUMISU, NUMASU, LTDESU,
+     %                       NUVVEF(1,NUELEM), NUMIVO, NUMAVO, LTDEVO,
+     %                       DELTAT, CoGrPr,   NBSOM,  PRESStn,
+     %                       BE2 )
+
+C           ASSEMBLAGE  DES DEGRES DE LIBERTE 5 10 15 DE BE2 DANS BG
+C           COMPRESSION DES DEGRES DE LIBERTE 5 10 15 DE BE2
+            CALL GAS3P1BP1( NBSOM, NUELEM, BE2, NBNOVI, BG )
+
+         ENDIF
+
+ccc         IF( NUELEM .EQ. 5 ) THEN
+ccc            call affvect( 'NEF=5 BE1 X(tn;tn+1,x)', NDIM*NOBARY, BE1 )
+ccc            call affvect( 'NEF=5 BE2', NDIM*NOBARY, BE2 )
+ccc         ENDIF
+
+C        ASSEMBLAGE DE BE1 + BE2 dans BG = VITX1, VITY1, VITZ1
+C        Rho U(tn,X(tn+1,x)) - dt CoGrPr GRAD P(tn) + dt FOmega(tn+1)
+ccc         CALL ASMEEX2( NDIM, NBNOEF, NONOEF, BE1, BE2, NBNOVI,  BG )
+         DO M=1,NBNOEF
+
+!           NUMERO DU M-EME NOEUD DE L'ELEMENT FINI
+            NSK = NONOEF(M)
+            MEK = M
+
+!           ASSEMBLAGE DES 2 COEFFICIENTS ELEMENTAIRES DANS LE COEFFICIENT GLOBAL
+            DO K=1,NDIM
+               BG( NSK ) = BG( NSK ) + BE1( MEK ) + BE2( MEK )
+               NSK = NSK + NBNOVI
+               MEK = MEK + NBNOEF
+            ENDDO
+
+         ENDDO
+ 10   ENDDO
+C     FIN DE LA BOUCLE SUR LES EF DE LA CONSTRUCTION DE BG
+
+C     LA BOUCLE SUR LES ELEMENTS FINIS BREZZI-FORTIN POUR FAIRE GAUSS
+C     SUR LE SECOND MEMBRE DU SYSTEME LINEAIRE A RESOUDRE
+C     ---------------------------------------------------------------
+      DO NUELEM = 1, NBELEM
+
+C        NO DES NOEUDS DE L'ELEMENT FINI NUELEM
+         DO M = 1, NBNOEF
+            NONOEF(M) = NUNOEF(NUELEM,M)
+         ENDDO
+C        NO DU BARYCENTRE
+         NONOEF(NOBARY) = NBSOM + NUELEM
+
+         IF( NUTYEL .EQ. 13 ) THEN
+
+C           TRIANGLE BREZZI-FORTIN P1BULLEP3 EN VITESSE et P1 EN PRESSION
+C           -------------------------------------------------------------
+C           METHODE DE GAUSS SUR LES 2 DL VITESSE DU BARYCENTRE SUR LE
+C           SECOND MEMBRE DU SYSTEME A RESOUDRE
+            CALL GAR2P1BP1( NBSOM, NUELEM, NONOEF, AGGAUSS(1,NUELEM),
+     %                      NBNOVI, BG )
+C
+         ELSE
+
+C           TETRAEDRE BREZZI-FORTIN P1BULLEP4 EN VITESSE et P1 EN PRESSION
+C           --------------------------------------------------------------
+C           METHODE DE GAUSS SUR LES 3 DL VITESSE DU BARYCENTRE SUR LE
+C           SECOND MEMBRE DU SYSTEME A RESOUDRE
+            CALL GAR3P1BP1( NBSOM, NUELEM, NONOEF, AGGAUSS(1,NUELEM),
+     %                      NBNOVI, BG )
+
+         ENDIF
+
+C     FIN DE LA BOUCLE DES EF POUR ASSEMBLER LE SECOND MEMBRE BG
+      ENDDO
+C
+ccc      call affvect( 'BGVITBF VECTEUR BG', 20, BG )
+ccc      call afl1ve(  'BGVITBF VECTEUR BG', NDIM*NBNOVI, BG )
+
+C     Le TEMPS CPU donne par le systeme en fin d'execution de bgvitbf.f
+      call cpu_time(t_cpu_1)
+ 
+      print*,'SORTIE de bgvitbf.f sans OpenMP en',
+     %        t_cpu_1-t_cpu_0,' CPU secondes'
+
+      IERR = 0
+      RETURN
+      END

@@ -1,0 +1,7 @@
+variable EntrSort 'Gestion des UNITES d''ENTREES SORTIES' entier
+( 1: 'Mode d''INTERACTIVITE du TERMINAL'
+, 2: 'Niveau de BAVARDAGE  des AFFICHAGES'
+, 3: 'Affichage ou non des ADRESSAGES des tableaux'
+, 4: 'ECHO ou non de la VALEUR des DONNEES tapees'
+, 5: 'AFFICHAGE RESULTATS REDIRIGE sur un FICHIER'
+, 6: 'ENTREE des DONNEES REDIRIGEE sur un FICHIER' ) ;

@@ -1,0 +1,2 @@
+variable SUIVI_MS 'MS File MANAGEMENT' entier
+ ( 1  : 'ADD a file to the MS' ) ;

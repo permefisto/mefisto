@@ -1,0 +1,288 @@
+      SUBROUTINE PITRFF( NTDL,   NCAS0,  NCAS1,  NCAS,
+     %                   NTYP,   TEMPER, dptemp,
+     %                   MNELEM, MNPOGE, MNFAOB, NDPGST,
+     %                   MNTRFF, NBTRFF, MNBAQ2, NBBAQ2 )
+C ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+C BUT :    CREER A PARTIR DES FACES FRONTALIERES LE TABLEAU DE LEURS
+C -----    SOUS-TRIANGLES EN CREANT LE BARYCENTRE DES QUADRANGLES Q2
+C ENTREES:
+C --------
+C NTDL   : NOMBRE TOTAL DE NOEUDS=POINTS OU EST CONNUE LA TEMPERATURE
+C NCAS0:NCAS1: CAS DE CALCULS DE LA TEMPERATURE
+C NCAS   : NUMERO DU CAS A TRACER
+C TEMPER : LES NTDL * NCAS0:NCAS1 TEMPERATURES
+C MNELEM : ADRESSE MCN DES TABLEAUX ELEMENTS DE CETTE TOPOLOGIE
+C MNPOGE : ADRESSE MCN DU TABLEAU POINTS GEOMETRIQUES DE L'OBJET
+C MNNOEU : ADRESSE MCN DU TABLEAU NOEUDS D'INTERPOLATION DU MAILLAGE
+C NTFAOB : NUMERO DU TMS DES FACES DU VOLUME
+C          0 SI NON CREE PAR CAUSE D'ERREUR
+C MNFAOB : ADRESSE MCN DU TABLEAU DES FACES DU VOLUME
+C          cf ~/td/d/a___face
+C NDPGST : CODE TRAITEMENT DES POINTS=NOEUDS DE L'OBJET
+C          0 : NOEUDS=POINTS=SOMMETS
+C          1 : NOEUDS=POINTS#SOMMETS
+C          2 : NOEUDS#POINTS=SOMMETS
+C          3 : NOEUDS#POINTS#SOMMETS
+C SORTIES:
+C --------
+C MNTRFF : ADRESSE MCN DU TABLEAU DES TRIANGLES DES FACES FRONTALIERES
+C NBTRFF : NOMBRE DE TRIANGLES DES FACES FRONTALIERES
+C MNBAQ2 : ADRESSE MCN DU TABLEAU DES XYZ + VALEUR DES POINTS SUPPLEMENTAIRES
+C NBBAQ2 : NOMBRE DE POINTS SUPPLEMENTAIRES SOMMETS DES TRIANGLES
+C          ET NON POINT DU MAILLAGE GLOBAL
+C EN SORTIE
+C NSTRFF(1:3,1:NBTRFF) = NUMERO DES 3 SOMMETS DE CHAQUE TRIANGLE
+C XTBAQ2(1:3,1:NBBAQ2) = XYZ         DU BARYCENTRE DE LA FACE J TYPE Q2
+C XTBAQ2( 4 ,1:NBBAQ2) = TEMPERATURE DU BARYCENTRE DE LA FACE J TYPE Q2
+C ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+C AUTEUR : PERRONNET ALAIN ANALYSE NUMERIQUE UPMC PARIS    NOVEMBRE 1994
+C ...................................................................012
+      include"./incl/gsmenu.inc"
+      include"./incl/a___face.inc"
+      include"./incl/a___npef.inc"
+      include"./incl/ntmnlt.inc"
+      include"./incl/ponoel.inc"
+      include"./incl/a___xyzpoint.inc"
+
+      include"./incl/pp.inc"
+      COMMON            MCN(MOTMCN)
+      REAL              RMCN(1)
+      EQUIVALENCE      (MCN(1),RMCN(1))
+      DOUBLE PRECISION  TEMPER(NTDL,NCAS0:NCAS1)
+      type typ_dptab
+         DOUBLE PRECISION, dimension(:), pointer :: dptab
+      end type typ_dptab
+      type( typ_dptab ),dimension(NCAS0:NCAS1) :: dptemp
+
+      INTEGER           NOSOEL(64),NONOFK(8)
+      DOUBLE PRECISION  PROSCD, FBASE(8), XYZREF(3),
+     %                  COPOFK(8,3), TEMPFK(8)
+
+C     NOMBRE DE COORDONNEES D'UN POINT
+      NBCOOR = MCN(MNPOGE+WBCOOP)
+
+C     NOMBRE DE TRIANGLES DES FACES FRONTALIERES DECLARABLES
+      MOFACE = MCN( MNFAOB + WOFACE )
+      MXFACE = MCN( MNFAOB + WXFACE )
+      NBFAFR = MCN( MNFAOB + WBFAFR )
+
+cccC     LE QUADRANGLE DEGRE 2 DONNE AU PLUS 8 TRIANGLES
+ccc      MXTRFF = NBFAFR * 8
+cccC     LES XYZ ET VALEUR DES BARYCENTRES DES QUADRANGLES DE DEGRE 2
+cccC     ADRESSAGE ET OUVERTURE DU TABLEAU NSTRFF
+ccc      CALL TNMCDC( 'ENTIER', 3*MXTRFF, MNTRFF )
+ccc      CALL TNMCDC( 'REEL',   4*NBFAFR, MNBAQ2 )
+
+C     LA BOUCLE SUR LES FACES FRONTALIERES
+C     ====================================
+      MNFACE = MNFAOB + WFACES - MOFACE - 1
+      NUFAFR = MCN( MNFAOB + W1FAFR )
+
+      NBTRFF = 0
+      MNTRF  = MNTRFF - 1
+      NBBAQ2 = 0
+      MNPTF  = MNBAQ2
+
+      DO 100 NA=1,NBFAFR
+         IF( NUFAFR .LE. 0 ) GOTO 100
+
+C        ADRESSE MCN DE LA FACE NUFAFR DANS LFACES
+         MNF = MNFACE + NUFAFR * MOFACE
+         IF( MCN( MNF + 4 ) .EQ. 0 ) THEN
+            NBS = 3
+         ELSE
+            NBS = 4
+         ENDIF
+
+C        LE NUMERO DE NOEUD DES SOMMETS DE LA FACE
+         DO 10 I=1,NBS
+            NOSOEL(I) = MCN( MNF + I )
+ 10      ENDDO
+         CALL TRIENT( NBS, NOSOEL )
+
+C        NUMERO DE L'EF DANS SON TYPE
+         NEF = ABS( MCN(MNF+6) )
+
+C        NUMERO DU TYPE DE L'EF DANS CETTE TOPOLOGIE
+         NTYEF = MCN(MNF+9)
+
+C        L'ADRESSE MCN DU DEBUT DU TABLEAU NPEF DE CE TYPE D'EF
+         MNELE = MCN( MNELEM - 1 + NTYEF )
+
+C        LE NUMERO DE CE TYPE D'ELEMENT FINI
+         NUTYEL = MCN( MNELE + WUTYEL )
+
+C        NCOGEL LE CODE GEOMETRIQUE
+         CALL ELNUCG( NUTYEL, NCOGEL )
+
+C        LE NOMBRE DE TELS ELEMENTS FINIS
+         NBELEM = MCN(MNELE + WBELEM )
+
+C        LES CARACTERISTIQUES DE CE TYPE D'EF
+         CALL ELTYCA( NUTYEL )
+
+C        L'ADRESSE MCN DES NUMEROS DES POINTS GEOMETRIQUES DES EF
+         MNPGEL = MNELE + WUNDEL
+         IF( NDPGST .GE. 2 ) THEN
+            MNPGEL = MNPGEL + MCN(MNELE+WBELEM) * MCN(MNELE+WBNDEL)
+         ENDIF
+         MNPGEL = MNPGEL - 1 + NEF - NBELEM
+
+         DO 90 I=1,NFACE
+
+            IF( NBS .NE. NBSOFA(I) ) GOTO 90
+
+C           LE NUMERO DES NBS SOMMETS DE LA FACE
+            DO 15 J=1,NBS
+               NONOFK(J) = MCN( MNPGEL + NBELEM * NOSOFA(J,I) )
+ 15         ENDDO
+            CALL TRIENT( NBS, NONOFK )
+
+C           COMPARAISON DES SOMMETS DE LA FACE I
+            DO 18 J=1,NBS
+               IF( NOSOEL(J) .NE. NONOFK(J) ) GOTO 90
+ 18         ENDDO
+
+C           FACE RETROUVEE
+C           RECHERCHE DU NUMERO DES POINTS=NOEUDS DE LA FACE I
+            CALL ELNOFA( NUTYEL, I, NBN, NONOFK )
+
+C           LE NUMERO GLOBAL DES POINTS=NOEUDS DE LA FACE I
+            DO 20 K=1,NBN
+               NONOFK(K) = MCN( MNPGEL + NBELEM * NONOFK(K) )
+ 20         ENDDO
+
+C           CONSTRUCTION DU TABLEAU DES SOMMETS DES SOUS-TRIANGLES
+            GOTO ( 30, 35, 40, 45 ) , NOTYFA(I)-5
+
+C           FACE TRIANGLE P1 => 1 TRIANGLE DANS LA PILE
+ 30         MCN( MNTRF+1 ) =  NONOFK(1)
+            MCN( MNTRF+2 ) =  NONOFK(2)
+            MCN( MNTRF+3 ) =  NONOFK(3)
+            MNTRF  = MNTRF  + 3
+            NBTRFF = NBTRFF + 1
+            GOTO 95
+
+C           FACE TRIANGLE P2  => 4 TRIANGLES DANS LA PILE
+ 35         MCN( MNTRF+1 ) =  NONOFK(1)
+            MCN( MNTRF+2 ) =  NONOFK(4)
+            MCN( MNTRF+3 ) =  NONOFK(6)
+
+            MCN( MNTRF+4 ) =  NONOFK(4)
+            MCN( MNTRF+5 ) =  NONOFK(5)
+            MCN( MNTRF+6 ) =  NONOFK(6)
+
+            MCN( MNTRF+7 ) =  NONOFK(4)
+            MCN( MNTRF+8 ) =  NONOFK(2)
+            MCN( MNTRF+9 ) =  NONOFK(5)
+
+            MCN( MNTRF+10) =  NONOFK(6)
+            MCN( MNTRF+11) =  NONOFK(5)
+            MCN( MNTRF+12) =  NONOFK(3)
+            MNTRF  = MNTRF  + 12
+            NBTRFF = NBTRFF + 4
+            GOTO 95
+
+C           FACE QUADRANGLE P1 => 2 TRIANGLES DANS LA PILE
+ 40         MCN( MNTRF+1 ) =  NONOFK(1)
+            MCN( MNTRF+2 ) =  NONOFK(2)
+            MCN( MNTRF+3 ) =  NONOFK(3)
+C
+            MCN( MNTRF+4 ) =  NONOFK(1)
+            MCN( MNTRF+5 ) =  NONOFK(3)
+            MCN( MNTRF+6 ) =  NONOFK(4)
+            MNTRF  = MNTRF  + 6
+            NBTRFF = NBTRFF + 2
+            GOTO 95
+
+C           FACE QUADRANGLE Q2  => 8 TRIANGLES  DANS LA PILE
+C                               => CONSTRUCTION D'UN NOUVEAU BARYCENTRE Q2
+ 45         NBBAQ2 = NBBAQ2 + 1
+
+C           NUMERO D'INTERPOLATION LAGRANGE Q2 (A 8 NOEUDS)
+            NUINTF = 2032
+
+C           LA VALEUR DES NBN FONCTIONS DE BASE EN (0.5D0, 0.5D0, 0D0)
+            XYZREF(1) = 0.5D0
+            XYZREF(2) = 0.5D0
+            XYZREF(3) = 0D0
+            CALL INTERP( NUINTF, XYZREF(1), XYZREF(2), XYZREF(3),
+     %                   NBN,    FBASE )
+
+C           EXTRACTION DES COORDONNEES DES POINTS DE L'ELEMENT FINI
+            MNCP = MNPOGE+WYZPOI-1-NBCOOR
+            DO 55 K=1,NBN
+               DO 52 J=1,3
+                  COPOFK(K,J) = RMCN(MNCP+NBCOOR*NONOFK(K)+J)
+ 52            ENDDO
+ 55         ENDDO
+
+C           LES 3 COORDONNEES DU BARYCENTRE DE LA FACE
+            CALL FPOXYZ( 3, NBN, NUINTF, COPOFK, XYZREF, FBASE,
+     %                   RMCN(MNPTF) )
+
+C           EXTRACTION DE LA TEMPERATURE NCAS DE TEMPER
+            DO 60 K=1,NBN
+               J = NONOFK(K)
+               IF( NTYP .EQ. 0 ) THEN
+                  TEMPFK( K ) = TEMPER( J, NCAS )
+               ELSE
+                  TEMPFK( K ) = dptemp( NCAS )%dptab( J )
+               ENDIF
+ 60         ENDDO
+C           LA VALEUR DE LA TEMPERATURE EN CE BARYCENTRE
+            RMCN(MNPTF+3) = REAL( PROSCD( FBASE, TEMPFK, NBN ) )
+
+C           DECALAGE DE NTDL POUR SAVOIR OU CHERCHER SES XYZ ET VALEUR
+            NOPTBA = NTDL + NBBAQ2
+
+            MCN( MNTRF+1 ) =  NONOFK(1)
+            MCN( MNTRF+2 ) =  NONOFK(5)
+            MCN( MNTRF+3 ) =  NONOFK(8)
+
+            MCN( MNTRF+4 ) =  NONOFK(5)
+            MCN( MNTRF+5 ) =  NOPTBA
+            MCN( MNTRF+6 ) =  NONOFK(8)
+
+            MCN( MNTRF+7 ) =  NONOFK(5)
+            MCN( MNTRF+8 ) =  NONOFK(2)
+            MCN( MNTRF+9 ) =  NOPTBA
+
+            MCN( MNTRF+10) =  NONOFK(8)
+            MCN( MNTRF+11) =  NOPTBA
+            MCN( MNTRF+12) =  NONOFK(4)
+
+            MCN( MNTRF+13) =  NONOFK(2)
+            MCN( MNTRF+14) =  NONOFK(6)
+            MCN( MNTRF+15) =  NOPTBA
+
+            MCN( MNTRF+16) =  NOPTBA
+            MCN( MNTRF+17) =  NONOFK(6)
+            MCN( MNTRF+18) =  NONOFK(7)
+
+            MCN( MNTRF+19) =  NONOFK(6)
+            MCN( MNTRF+20) =  NONOFK(3)
+            MCN( MNTRF+21) =  NONOFK(7)
+
+            MCN( MNTRF+22) =  NOPTBA
+            MCN( MNTRF+23) =  NONOFK(7)
+            MCN( MNTRF+24) =  NONOFK(4)
+
+            MNTRF  = MNTRF  + 24
+            NBTRFF = NBTRFF + 8
+            MNPTF  = MNPTF  + 4
+            GOTO 95
+ 90      ENDDO
+
+C        PASSAGE A LA FACE FRONTALIERE SUIVANTE
+ 95      NUFAFR = MCN( MNF + 7 )
+ 100  ENDDO
+
+cccC   REDUCTION DE LA TAILLE RESERVEE DU TABLEAU NSTRFF
+ccc    CALL TNMCRA( 'ENTIER', 3*MXTRFF, 3*NBTRFF, MNTRFF )
+CCC    LES XYZ ET VALEUR DES BARYCENTRES DES QUADRANGLES DE DEGRE 2
+CCC    REDUCTION NON FAITE CAR SOUVENT NBBAQ2=0 => PB ENSUITE AVEC MNBAQ2=0
+CCC    CALL TNMCRA( 'REEL', 4*NBFAFR, 4*NBBAQ2, MNBAQ2 )
+
+      RETURN
+      END

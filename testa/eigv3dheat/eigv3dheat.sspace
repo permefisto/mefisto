@@ -1,0 +1,37 @@
+{========================================================================}
+{ MEFISTO Version July 2007    PROJECT: eigv3d  Mesh 3Q2C                }
+{ User: Perronnet Alain        Date:   4 August 2007                     }
+{ TEST of COMPUTATION of EIGENVALUES and EIGENVECTORS for HEAT PROBLEM   }
+{ Many mutiple eigenvalues: vp=(n**2 + m**2 + p**2) Pi**2                }
+{ The eigenvalues 12 and 27 have a 6 multiplicity => Some iterations     }
+{========================================================================}
+1; CUBE;
+
+2;
+
+ {volume CUBE}
+  1; {mass density}
+  1; 1.0;
+
+  7; {massic heat}
+  1; 1.0;
+
+  2; {heat conductivity}
+  3; 1.0;
+ @;
+
+ {surface BOUNDARY}
+ 3;  {contact}
+  1; {constant}
+  0; {fixed value}
+ @;
+@;
+
+6; {COMPUTATION of EIGENVALUES and EIGENVECTORS of the HEAT OPERATOR}
+  1; {SUB-SPACE METHOD}
+  0; {inferior limit of eigenvalues}
+220; {superior limit of eigenvalues}
+
+8; {Drawing of the EIGENVALUE 11}
+ 1; 11; 2; 1; 2; 90;
+CLOSE;

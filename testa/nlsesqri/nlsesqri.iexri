@@ -1,0 +1,135 @@
+{ ======================================================================== }
+{ Software MEFISTO  : 2011 August 20 Version                               }
+{ USER's  Name      : Alain Perronnet                                      }
+{ Project Name      : nlsei   the Unsteady NLSE on a square [-1,1]**2      }
+{ IMPLICIT Method on  idu(t,X)/dt -Alfa Laplacian u(t,X) +Beta u(t,X)**3=0 }
+{                     Data of the Unsteady NLSE problem                    }
+{                     Comparison Exact and Computed Solution               }
+{                     u=v+iw with Exact_Imaginary_Part /= Exact_Real_Part  }
+{ Date              : 2011/08/20                                           }
+{ ======================================================================== }
+DefVar Pi;    Pi    = atan(1) * 4;
+DefVar Pis2;  Pis2  = Pi/2;
+DefVar Pis24; Pis24 = Pis2**2;
+DefVar Mass;  Mass  = 1.0;
+DefVar Alfa;  Alfa  =-1.0;
+DefVar Beta;  Beta  = 1.0;
+
+DefFunc NLSECoef(t,x,y,z,ntyobj,nuobj,WaveR,WaveI);
+  NLSECoef = Beta * ( WaveR**2 + WaveI**2 );
+EndFunc;
+
+{To display the errors }
+DefFunc Exact_Real_Part(t,x,y,z);
+  Exact_Real_Part = (1+t*t) * (1-x*x) * (1-y*y);
+EndFunc;
+
+DefFunc Exact_Imaginary_Part(t,x,y,z);
+  Exact_Imaginary_Part = (1+t) * cos(Pis2*x) * cos(Pis2*y);
+EndFunc;
+
+DefFunc ervdt(t,x,y,z);
+  ervdt = 2 * t * (1-x*x) * (1-y*y);
+EndFunc;
+
+DefFunc ervddx(t,x,y,z);
+  ervddx = -2 * (1+t*t) * (1-y*y);
+EndFunc;
+
+DefFunc ervddy(t,x,y,z);
+  ervddy = -2 * (1+t*t) * (1-x*x);
+EndFunc;
+
+DefFunc eiwdt(t,x,y,z);
+  eiwdt = cos(Pis2*x) * cos(Pis2*y);
+EndFunc;
+
+DefFunc eiwddx(t,x,y,z);
+  eiwddx = - (1+t) * Pis24 * cos(Pis2*x) * cos(Pis2*y); 
+EndFunc;
+
+DefFunc eiwddy(t,x,y,z);
+  eiwddy = - (1+t) * Pis24 * cos(Pis2*x) * cos(Pis2*y); 
+EndFunc;
+
+DefFunc RealForce(t,x,y,z);
+DefVar ERP, EIP;
+  ERP = Exact_Real_Part(t,x,y,z);
+  EIP = Exact_Imaginary_Part(t,x,y,z);
+  RealForce = - Mass * eiwdt(t,x,y,z)
+              - Alfa * (ervddx(t,x,y,z)+ervddy(t,x,y,z))
+              + NLSECoef(t,x,y,z,3,0,ERP,EIP) * ERP;
+EndFunc;
+
+DefFunc ImaginaryForce(t,x,y,z);
+DefVar ERP, EIP;
+  ERP = Exact_Real_Part(t,x,y,z);
+  EIP = Exact_Imaginary_Part(t,x,y,z);
+  ImaginaryForce = Mass * ervdt(t,x,y,z)
+                 - Alfa * (eiwddx(t,x,y,z)+eiwddy(t,x,y,z))
+                 + NLSECoef(t,x,y,z,3,0,ERP,EIP) * EIP;
+EndFunc;
+
+DefFunc ComplexForce(t,x,y,z,nutyob,nuobjt,partnb,waveRP,waveIP,zero);
+  If partnb=1 then
+    ComplexForce = RealForce(t,x,y,z);
+  Else
+    ComplexForce = ImaginaryForce(t,x,y,z);
+  EndIf;
+EndFunc;
+
+{ The initial conditions of the Wave }
+DefFunc InitWave(t,x,y,z,ntyob,nuobjt,partnb);
+  If partnb=1 then
+    InitWave = Exact_Real_Part(t,x,y,z);
+  else
+    InitWave = Exact_Imaginary_Part(t,x,y,z);
+  EndIf;
+EndFunc;
+
+
+{DATA for the Non Linear Schrodinger Equations}
+
+1; SQUARE;
+
+2; { HEAT INPUT DATA }
+  {Surface SQUARE}
+  1;    { Mass density }
+  1;    { Mass density is a Constant }
+  Mass; { Mass density Value }
+
+  2;    { Alfa heat conductivity Coefficient of Laplacians }
+  3;    { 2D material Homogenous isotropic constant conductivity }
+  Alfa; { Constant Coefficient of Laplacians }
+
+  6;    { NLSE Coefficient of U: Beta * ( WaveR**2 + WaveI**2 ) }
+  -1;        { Function }
+   NLSECoef; { Function Name }
+
+  4; { Density of Force }
+ -1; { user function Force }
+  2; { number of components of the force }
+  1; 2; {number of each component of the force }
+ ComplexForce; {Name of the Force Function}
+ @;
+
+ {Line BOUNDARY  Dirichlet Condition}
+ 3;  { Fixation }
+  1; { constant }
+  2; { Number of Fixed Parts }
+  1; 2; { Part real and Imaginary}
+  0; 0; { Fixed Values }
+ @;
+@;
+
+5; {Scheme2: IMPLICIT idu(t,X)/dt -Alfa Laplacian u(t,X) +Beta u(t,X)**3=0 }
+  0;       { Initial TIME }
+ -1;       { Real & Imaginary Part of INITIAL Wave FUNCTION of SQUARE }
+ InitWave; { NAME of the Initial Wave FUNCTION }
+  3;       { Final TIME }
+  0.01;    { Step of TIME }
+  200;     { Number of Wave Vectors to Store }
+  1;       { Skyline Crout Factorization A=L D tL }
+@;
+
+CLOSE;

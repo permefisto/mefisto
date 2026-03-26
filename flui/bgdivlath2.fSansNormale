@@ -1,0 +1,179 @@
+      SUBROUTINE BGDIVLATH2( NBSOM,  NBNOVI, XYZNOE,
+     %                       NBEF,   NONOEF, NONOSO,
+     %                       VITEXY, Rho, dtMhu, TP2P2, TDP2DP2,
+     %                       BG )
+C ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+C BUT:     CONSTRUIRE ET ASSEMBLER LE SECOND MEMBRE GLOBAL DU PROBLEME
+C ----     -dt CoGrPr LAPLACIEN P=-(Rho-dt Mhu Laplacien) Div VITEXY*
+C          POUR L'ELEMENT FINI TRIANGLE TAYLOR-HOOD
+C
+C ENTREES:
+C --------
+C NBSOM  : NOMBRE DE SOMMETS DU MAILLAGE
+C NBNOVI : NOMBRE DE NOEUDS SUPPORT DE LA VITESSE
+C XYZNOE : 3 COORDONNEES DES NBNOVI NOEUDS DU MAILLAGE
+C NBEF   : NOMBRE D'EF DU MAILLAGE
+C NONOEF : NUMERO DES 6 NOEUDS DES NBEF EF
+C NONOSO : NONOSO(I) = NUMERO DU SOMMET 1 A NBSOM DU NOEUD GLOBAL I
+C Rho    : DENSITE DE MASSE
+C dtMhu  : dt Mhu Coefficient du Laplacien
+C VITEXY : 2 COMPOSANTES X Y DE LA VITESSE EN LES NBNOVI NOEUDS VITESSE
+C          DE LA TRIANGULATION
+C TP2P2  : INTEGRALE SUR L'EF REFERENCE des  pi  pj dX avec p=P2
+C TDP2DP2: INTEGRALE SUR L'EF REFERENCE des dpi dpj dX avec p=P2
+C
+C SORTIE :
+C ---------
+C BG     : VALEUR DES COEFFICIENTS DU VECTEUR GLOBAL SECOND MEMBRE
+C+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+C AUTEUR : ALAIN PERRONNET TEXAS A & M UNIVERSITY at QATAR  Fevrier 2012
+C23456---------------------------------------------------------------012
+      IMPLICIT NONE
+      INTEGER           NBSOM, NBEF, NBNOVI
+      REAL              XYZNOE(3,NBNOVI), XYEF(6,2)
+      INTEGER           NONOEF(NBEF,6), NONOSO(NBNOVI)
+      DOUBLE PRECISION  Rho, dtMhu, VITEXY(NBNOVI,2), BG(NBSOM)
+      DOUBLE PRECISION  TP2P2(6,6), TDP2DP2(2,6,2,6)
+      DOUBLE PRECISION  AE(21), CE(6), DIVUP2(6)
+      DOUBLE PRECISION  DELTA, X21, X31, Y21, Y31, DFM1(2,2), S
+C
+      INTEGER           I, J, K, L, M, NS1, NS2, NS3, NEF, NS, N
+C
+C     [DP2(3Sommets)]   SUR LE TRIANGLE de REFERENCE
+      DOUBLE PRECISION  DP2S(2,6,3)
+      DATA              DP2S /
+     % -0.3D+01, -0.3D+01,
+     % -0.1D+01,  0.0D+00,
+     %  0.0D+00, -0.1D+01,
+     %  0.4D+01,  0.0D+00,
+     %  0.0D+00,  0.0D+00,
+     %  0.0D+00,  0.4D+01,
+     %  0.1D+01,  0.1D+01,
+     %  0.3D+01,  0.0D+00,
+     %  0.0D+00, -0.1D+01,
+     % -0.4D+01, -0.4D+01,
+     %  0.0D+00,  0.4D+01,
+     %  0.0D+00,  0.0D+00,
+     %  0.1D+01,  0.1D+01,
+     % -0.1D+01,  0.0D+00,
+     %  0.0D+00,  0.3D+01,
+     %  0.0D+00,  0.0D+00,
+     %  0.4D+01,  0.0D+00,
+     % -0.4D+01, -0.4D+01  /
+C
+cccC     MATRICE POUR PASSER D'UNE INTERPOLATION P2 RESTREINTE A P1
+ccc      DOUBLE PRECISION  P2P1(6,3)
+ccc      DATA   P2P1 /   1D0,   0D0,   0D0,
+ccc     %                0D0,   1D0,   0D0,
+ccc     %                0D0,   0D0,   1D0,
+ccc     %              0.5D0, 0.5D0,   0D0,
+ccc     %                0D0, 0.5D0, 0.5D0,
+ccc     %              0.5D0,   0D0, 0.5D0 /
+C
+C     MISE A ZERO DU VECTEUR GLOBAL
+      DO I = 1, NBSOM
+         BG( I ) = 0D0
+      ENDDO
+C
+      DO NEF = 1, NBEF
+C
+C        NUMERO DES 3 SOMMETS DU TRIANGLE NEF
+         NS1 = NONOEF(NEF,1)
+         NS2 = NONOEF(NEF,2)
+         NS3 = NONOEF(NEF,3)
+C
+C        CALCUL DE LA MATRICE JACOBIENNE ET DE SON INVERSE
+         X21 = XYZNOE(1,NS2) - XYZNOE(1,NS1)
+         X31 = XYZNOE(1,NS3) - XYZNOE(1,NS1)
+C
+         Y21 = XYZNOE(2,NS2) - XYZNOE(2,NS1)
+         Y31 = XYZNOE(2,NS3) - XYZNOE(2,NS1)
+C
+C        CALCUL DU DETERMINANT DE LA JACOBIENNE DFe
+         DELTA = ABS( X21*Y31 - X31*Y21 )
+C
+C        LE TRIANGLE EST SUPPOSE DE SURFACE NON NULLE
+C        LES 4 COEFFICIENTS DE LA MATRICE INVERSE DFM1
+         DFM1(1,1) =  Y31 / DELTA
+         DFM1(2,1) = -X31 / DELTA
+C
+         DFM1(1,2) = -Y21 / DELTA
+         DFM1(2,2) =  X21 / DELTA
+C
+C        CALCUL de -Div [P2] {U(3 Sommets)}
+         DO M = 1, 3
+C           AU SOMMET M
+            S = 0D0
+            DO I = 1, 2
+C              dUi/dxi
+               DO J = 1, 2
+                  DO L = 1, 6
+C                    NO GLOBAL DU NOEUD J DU TRIANGLE NEF
+                     NS = NONOEF(NEF,L)
+                     S = S - DFM1(I,J) * DP2S(J,L,M) * VITEXY(NS,I)
+                  ENDDO
+               ENDDO
+            ENDDO
+            DIVUP2( M ) = S
+         ENDDO
+C
+C        CALCUL de -Div [P2] {U(3 Milieux des ARETES)}
+         DIVUP2( 4 ) = ( DIVUP2(1) + DIVUP2(2) ) / 2D0
+         DIVUP2( 5 ) = ( DIVUP2(2) + DIVUP2(3) ) / 2D0
+         DIVUP2( 6 ) = ( DIVUP2(3) + DIVUP2(1) ) / 2D0
+C
+C        COORDONNEES DES 6 NOEUDS
+         DO K=1,6
+            NS = NONOEF(NEF,K)
+            XYEF(K,1) = XYZNOE( 1, NS )
+            XYEF(K,2) = XYZNOE( 2, NS )
+         ENDDO
+C
+C        CALCUL MATRICE DE VISCOSITE Ae(6,6) SYMETRIQUE DE LA VITESSE P2
+C        Ae = Integrale Rho P2 P2 + dtMhu DP2 DP2 dX
+         CALL FR2P2P2( Rho, dtMhu, XYEF, TP2P2, TDP2DP2, AE )
+C
+C        CE(6,1) = [AE](6,6) ([P2P1] {-Div U*})(6,1)
+C
+C                  [  1   0   0  ]
+C                  [  0   1   0  ]
+C         [P2P1] = [  0   0   1  ]  pour PASSER de P2 a P1
+C                  [ 1/2 1/2  0  ]
+C                  [  0  1/2 1/2 ]
+C                  [ 1/2  0  1/2 ]
+C
+         N = 0
+         DO K = 1, 6
+            S = 0D0
+            DO L = 1, K
+C              LA PARTIE STOCKEE BASSE DE Ae
+               N = N + 1
+               S = S + AE(N) * DIVUP2(L)
+            ENDDO
+C
+C           LA PARTIE TRANSPOSEE de Ae NON STOCKEE
+            NS = N
+            DO L = K+1, 6
+               NS = NS + L - 1
+               S = S + AE(NS) * DIVUP2(L)
+            ENDDO
+            CE(K) = S
+         ENDDO
+C
+C        BG = BG + Be(3,1) =  BG + t[P2P1](3,6)  CE(6,1)
+C        ASSEMBLAGE DE BE(1) DANS BG( NONOSO( NOSOMMET1 ) )
+         NS = NONOSO( NS1 )
+         BG(NS) = BG(NS) + CE(1) + ( CE(4) + CE(6) ) / 2D0
+C
+C        ASSEMBLAGE DE BE(2) DANS BG( NONOSO( NOSOMMET2 ) )
+         NS = NONOSO( NS2 )
+         BG(NS) = BG(NS) + CE(2) + ( CE(4) + CE(5) ) / 2D0
+C
+C        ASSEMBLAGE DE BE(3) DANS BG( NONOSO( NOSOMMET3 ) )
+         NS = NONOSO( NS3 )
+         BG(NS) = BG(NS) + CE(3) + ( CE(5) + CE(6) ) / 2D0
+C
+      ENDDO
+C
+      RETURN
+      END

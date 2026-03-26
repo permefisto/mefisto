@@ -1,0 +1,138 @@
+      SUBROUTINE DVAMQU( NBITAQ, MXSOMM, NBSOMM, PXYD,
+     %                   MXTRIA, NDTRIA, N1TRVI, NOTRIA, CETRIA,
+     %                   NOTRSO, NLSOFR,
+     %                   NBTRIA, QUAMOY, QUAMIN )
+C+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+C BUT :    AMELIORATION DE LA QUALITE DES TRIANGLES
+C -----
+C
+C ENTREES:
+C --------
+C NBITAQ : NOMBRE D'ITERATIONS POUR AMELIORER LA QUALITE DU MAILLAGE
+C MXSOMM : NOMBRE MAXIMAL DE SOMMETS PERMIS POUR LA TRIANGULATION
+C NBSOMM : NOMBRE ACTUEL DE SOMMETS ( INTERNES ET EXTERNES )
+C PXYD   : X Y DISTANCE SOUHAITEE DES SOMMETS
+C MXTRIA : NOMBRE MAXIMAL DE TRIANGLES DECLARABLES
+C N1TRVI : NUMERO DU PREMIER TRIANGLE VIDE DANS LE TABLEAU NOTRIA
+C          LE CHAINAGE DES TRIANGLES VIDES SE FAIT SUR NOTRIA(4,.)
+C NOTRIA : LISTE CHAINEE DES TRIANGLES
+C                 ------- ------- ------- -------- -------- --------
+C  PAR TRIANGLE : SOMMET1 SOMMET2 SOMMET3 TR_VOIS1 TR_VOIS2 TR_VOIS3
+C                 ------- ------- ------- -------- -------- --------
+C                 SOMMET    EST LE NUMERO DU SOMMET
+C                 TR_VOIS i EST LE NUMERO DANS NOTRIA DU TRIANGLE
+C                          ADJACENT PAR L'ARETE i
+C CETRIA : COORDONNEES DU CENTRE DU CERCLE CIRCONSCRIT ET
+C          CARRE DU RAYON
+C NOTRSO : NOTRSO(I) NUMERO D'UN TRIANGLE AYANT POUR SOMMET I
+C NLSOFR : NUMERO DE LA LIGNE FERMEE (1 A NBLFTR) DE CHAQUE SOMMET
+C         -NUMERO DE POINT INTERNE UTILISATEUR IMPOSE
+C          0 SI LE POINT EST INTERNE OU EXTERNE
+C
+C ENTREE ET SORTIE :
+C ------------------
+C NBTRIA : NOMBRE DE TRIANGLES GENERES
+C NDTRIA : NUMERO MAXIMAL DANS NOTRIA D'UN TRIANGLE INTERNE
+C
+C SORTIE :
+C --------
+C QUAMOY : QUALITE MOYENNE DE LA TRIANGULATION
+C QUAMIN : QUALITE MINIMALE DU PLUS MAUVAIS TRIANGLE DE LA TRIANGULATION
+C+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+C AUTEUR : ALAIN PERRONNET  ANALYSE NUMERIQUE PARIS UPMC  SEPTEMBRE 1994
+C....................................................................012
+      include"./incl/trvari.inc"
+      COMMON / UNITES / LECTEU,IMPRIM,INTERA,NUNITE(29)
+      include"./incl/pp.inc"
+      COMMON            MCN(MOTMCN)
+      INTEGER           NOTRIA(6,MXTRIA),
+     %                  NOTRSO(MXSOMM),
+     %                  NLSOFR(MXSOMM)
+      DOUBLE PRECISION  PXYD(3,MXSOMM),
+     %                  CETRIA(1:3,1:MXTRIA)
+C
+C     MISE A JOUR DU TABLEAU CETRIA
+C     =============================
+      DO 10 NT=1,NDTRIA
+         IF( NOTRIA(1,NT) .GT. 0 ) THEN
+C           CALCUL DU CENTRE ET RAYON DU CERCLE CIRCONSCRIT A NT
+            IER = 1
+            CALL CENCED( PXYD(1,NOTRIA(1,NT)),
+     %                   PXYD(1,NOTRIA(2,NT)),
+     %                   PXYD(1,NOTRIA(3,NT)),
+     %                   CETRIA(1,NT), IER )
+            IF( IER .GT. 0 ) THEN
+               WRITE(IMPRIM,*) 'TRIANGLE',NT,' DEGENERE DE SOMMETS :',
+     %                         (' ',NOTRIA(I,NT),I=1,6)
+            ENDIF
+         ENDIF
+ 10   CONTINUE
+C
+C     TENTATIVE D'AMELIORATION VERS UNE TRIANGULATION DELAUNAY
+C     ========================================================
+      CALL DVAMQT( MXSOMM, PXYD,
+     %             MXTRIA, NDTRIA, NOTRIA, CETRIA, NOTRSO,
+     %             NBCHGT )
+C
+C     DECLARATION DE 2 TABLEAUX AUXILIAIRES
+      MNNOTR = 0
+      MXNOTR = 256
+      CALL TNMCDC( 'ENTIER', 2*MXNOTR, MNNOTR )
+      MNNOFI = MNNOTR + MXNOTR
+C
+      QUAMO0 = 2.
+      QUAMI0 = 2.
+      DO 100 ITER=1,NBITAQ
+C
+C        ITERATIONS DE BARYCENTRAGE DES SOMMETS CREES INTERNES
+C        LES 3 TRIANGLES D'UN TRIANGLE SONT SUPPRIMES
+C        DECOUPAGE DES 4 TRIANGLES DE SOMMET COMMUN EN 2 TRIANGLES
+C        TRAITEMENT DE 2 SOMMETS D'UNE ARETE AYANT CHACUN 5 VOISINS
+C        SUPPRESSION DU SOMMET S'IL A TROP DE VOISINS
+C        ==========================================================
+         CALL DVAMQS( ITER  , NBITAQ, MXSOMM, NBSOMM, NLSOFR,
+     %                MXTRIA, NDTRIA, N1TRVI, NOTRIA, CETRIA, NOTRSO,
+     %                MXNOTR, MCN(MNNOTR), MCN(MNNOFI), PXYD)
+C
+C        TENTATIVE D'AMELIORATION VERS UNE TRIANGULATION DELAUNAY
+C        ========================================================
+         CALL DVAMQT( MXSOMM, PXYD,
+     %                MXTRIA, NDTRIA, NOTRIA, CETRIA, NOTRSO,
+     %                NBCHGT )
+C
+C        CALCUL DE LA QUALITE DE LA TRIANGULATION A LA FIN DE CETTE ITERATION
+C        ====================================================================
+         NBTRIA = 0
+         QUAMOY = 0
+         QUAMIN = 2.0
+         NDTRI0 = NDTRIA
+         DO 80 NT=1,NDTRI0
+            IF( NOTRIA(1,NT) .GT. 0 ) THEN
+               CALL QUTR2D( PXYD(1,NOTRIA(1,NT)),
+     %                      PXYD(1,NOTRIA(2,NT)),
+     %                      PXYD(1,NOTRIA(3,NT)), QUALIT )
+C              UN TRIANGLE DE PLUS
+               NDTRIA = NT
+               NBTRIA = NBTRIA + 1
+C              LA QUALITE MOYENNE
+               QUAMOY = QUAMOY + QUALIT
+C              LA QUALITE MINIMALE
+               QUAMIN = MIN( QUAMIN, QUALIT )
+            ENDIF
+ 80      CONTINUE
+         QUAMOY = QUAMOY / NBTRIA
+C        IMPRESSIONS DE LA QUALITE
+         WRITE(IMPRIM,10100) ITER,QUAMOY,QUAMIN,NBCHGT
+10100 FORMAT(' AMELIORATION',I3,' QUALITE MOYENNE=',F6.3,
+     %   ' MINIMALE=',F6.3,I5,' ECHANGES DIAGONALES')
+C
+C        SI QUALITE STAGNANTE OU DEGRADEE ARRET
+         IF( ITER .GT. 3 .AND.
+     %       QUAMO0 .GE. QUAMOY .AND. QUAMI0 .GE. QUAMIN ) GOTO 9999
+         QUAMO0 = QUAMOY
+         QUAMI0 = QUAMIN
+ 100  CONTINUE
+C
+ 9999 CALL TNMCDS( 'ENTIER', 2*MXNOTR, MNNOTR )
+      RETURN
+      END

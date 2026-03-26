@@ -1,0 +1,24 @@
+      SUBROUTINE TNFERM( KNOM )
+C+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+C BUT :    FERMER LE LEXIQUE OU TABLEAU MS OU TABLEAU DE TABLEAUX
+C -----    DEFINI PAR SON NOM KNOM
+C
+C ATTENTION : LES LEXIQUES POUR ATTEINDRE KNOM RESTENT OUVERTS
+C
+C ENTREES :
+C ---------
+C KNOM   : LE NOM A FERMER.IL EST DEFINI PAR PLUSIEURS MOTS SEPARES
+C          PAR LE CARACTERE > . PAR EXEMPLE  ADAM>LIGNE
+C+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+C AUTEUR : ALAIN PERRONNET ANALYSE NUMERIQUE UPMC PARIS SEPTEMBRE 1988
+C23456---------------------------------------------------------------012
+      CHARACTER*(*)      KNOM
+C
+C     LE LEXIQUE PERE DE CE KNOM
+      CALL LXNTPN( KNOM , NTLX , MNLX , N1 , L )
+      IF( N1 .LE. 0 ) RETURN
+C
+C     KNOM(N1:L) EST LE NOM TERMINAL DANS LE LEXIQUE NTLX
+C     FERMETURE DE CE NOM
+      CALL LXNMFE( NTLX , KNOM(N1:L) )
+      END

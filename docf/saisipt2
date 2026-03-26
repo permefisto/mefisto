@@ -1,0 +1,54 @@
+1: Pour definir un nom generique de point qui sera concatene
+   avec un numero croissant a partir de 1.
+   Exemple : P => P1 P2 P3 ...
+2: Si la TRANSFORMATION donnee est differente de I, tous les
+   points saisis ensuite subiront la transformation indiquee.
+   Cette transformation a du etre definie auparavant.   
+
+   Les bornes MINIMALE et MAXIMALE du CADRE de SAISIE de 
+   l'ensemble des points saisis peuvent etre fournies :
+3: pour les abscisses X
+4: pour les ordonnees Y
+
+5: 3 POINTS P1 P2 P3 definissent le plan de saisie  
+   Le POINT P1 est la nouvelle ORIGINE du plan de saisie. 
+   La direction P1-P2 definit l'axe X.
+   La direction Z est definie par P1P2 vectoriel P1P3 . 
+   La direction Y est definie par Z    vectoriel X . 
+6: Le plan de saisie est YZ .
+   La 3-eme coordonnee Z des points saisis est le reel
+   fourni ensuite      
+7: Le plan de saisie est XZ .
+   La 2-eme coordonnee Y des points saisis est le reel
+   fourni ensuite 
+8: Le plan de saisie est XY .
+   La 2-eme coordonnee X des points saisis est le reel
+   fourni ensuite 
+9: SUPPRESSION des options fournies auparavant. 
+
+20: provoque le trace du cadre et la saisie peut commencer
+    Deplacer la souris.
+    Cliquer pour definir les 2 coordonnees
+
+  Pour detruire un point :
+   Deplacer la souris dans le cadre TUER LE POINT et cliquer.
+   Deplacer la souris pres du point a detruire et cliquer.   
+  Pour deplacer un point :
+   Deplacer la souris dans le cadre TUER LE POINT et cliquer.
+   Deplacer la souris pres du point a detruire et cliquer.
+   Deplacer la souris au point choisi et cliquer.
+
+  ATTRACTER en X :     
+   Deplacer la souris dans le cadre ATTRACTER EN X et cliquer.
+   Tout POINT saisi sera projete sur la graduation la plus
+   proche en X  
+ 
+  NE PAS ATTRACTER EN X apparait a la place de ATTRACTER EN X
+   et il suffit de cliquer dans ce cadre pour supprimer cette
+   projection ...
+
+   De meme en Y.
+
+   Pour ABANDONNER 
+   Deplacer la souris dans le cadre ABANDONNER et cliquer.
+   L'execution remonte d'un niveau dans l'arbre des menus.

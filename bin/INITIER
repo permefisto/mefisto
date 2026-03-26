@@ -1,0 +1,126 @@
+#!/bin/bash
+#      creation des fichiers d'un projet Mefisto
+#      A. Perronnet Septembre 2009 Version PC sous LINUX 64bits
+# 
+if test -f $MEFISTO/td/m/anglais
+then
+  LANGAGE=1
+  echo
+  echo '==============================================================='
+  echo '       MEFISTO: INIT a PROJECT on 64bits LINUX PC'
+  echo '==============================================================='
+  echo 
+  echo Present state of PC memory
+else
+  LANGAGE=0
+  echo
+  echo '==============================================================='
+  echo '       MEFISTO: INITIALISER un projet sur PC LINUX 64bits'
+  echo '==============================================================='
+  echo 
+  echo Etat actuel de la memoire du PC
+fi
+free
+echo
+if [ $LANGAGE = 0 ]
+then
+  echo Espace libre sur les disques
+else
+  echo Free spaces on disks
+fi
+df
+#echo
+#echo Les variables d environnement
+#env
+
+if [ $LANGAGE = 0 ]
+then
+  echo
+  echo 'Les modules executables de MEFISTO'
+else
+  echo
+  echo Present Mefisto load modules
+fi
+ls -l $MEFISTO/pp
+#
+# creation eventuelle du repertoire $MEFISTOX
+if test -d $MEFISTOX
+then
+  cd    $MEFISTOX
+else
+  mkdir $MEFISTOX
+  cd    $MEFISTOX
+fi
+cd $MEFISTOX
+
+if [ $LANGAGE = 0 ]
+then
+  echo
+  echo "Les projets actuels dans MEFISTOX=$MEFISTOX"
+else
+  echo
+  echo "Present projects in MEFISTOX=$MEFISTOX"
+fi
+ls -l
+#
+# mise sous le directory
+echo
+if [ $LANGAGE = 0 ]
+then
+  echo 'MEFISTO INITIER: nom (en minuscules) du projet' \?
+else
+  echo 'MEFISTO INITIER: Project (low case) name' \?
+fi
+
+read nomproj 
+#
+# creation eventuelle du repertoire $MEFISTOX/$nomproj
+direxec=$MEFISTOX/$nomproj
+if test -d $direxec
+then
+  cd    $direxec     
+else
+  mkdir $direxec
+  cd    $direxec
+fi
+#
+# creation eventuelle du repertoire $HOME/mefistox/core
+# pour eviter la creation inutile de ce fichier en cas de TILT
+#if test -d core
+#then
+#  echo
+#else
+#  mkdir core
+#  chmod 500 core
+#fi          
+# 
+# destruction des fichiers  frappe et ms du repertoire          
+if [ $LANGAGE = 0 ]
+then
+  echo Destruction des fichiers ms* et frappe*
+else
+  echo Files ms1* and frappe.* are deleted
+fi
+rm -f frappe.*
+rm -f ms1*
+#
+# appel du programme
+echo
+if [ $LANGAGE = 0 ]
+then
+  echo Execution MEFISTO INITIER dans le repertoire $direxec
+else
+  echo Execution MEFISTO INITIER in directory $direxec
+fi
+#time $MEFISTO/pp/ppinit
+$MEFISTO/pp/ppinit
+
+echo
+if [ $LANGAGE = 0 ]
+then
+  echo "Contenu actuel du repertoire $direxec"
+else
+  echo "Present content of directory $direxec"
+fi
+ls $direxec
+echo

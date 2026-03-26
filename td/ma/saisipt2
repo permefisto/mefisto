@@ -1,0 +1,11 @@
+variable SAISIPT2 '2D POINTS INPUT OPTIONS' entier
+(1: 'GENERIC NAME of POINTS'
+,2: 'NAME of the MAPPING of the POINTS'
+,3: 'ABSCISSE MIN MAX & STEP of FRAME'
+,4: 'ORDINATE MIN MAX & STEP of FRAME'
+,5: '3 POINTS define the PLANE of POINTS'
+,6: 'PLANE of POINTS at X=Constant'
+,7: 'PLANE of POINTS at Y=Constant'
+,8: 'PLANE of POINTS at Z=Constant'
+,9: 'NO PLANE of POINTS'
+,20: 'MOUSE INPUT of POINTS' );

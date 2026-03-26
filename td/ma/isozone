@@ -1,0 +1,3 @@
+variable ISOZONE 'Drawing types of ISO' entier
+( 1 :  'ISOVALUES'
+, 2 :  'COLORED ZONES' ) ;

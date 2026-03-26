@@ -1,0 +1,40 @@
+2 fonctions doivent etre donnees:
+1 pour la DILATITION et 1 pour la TEMPERATURE de REFERENCE
+
+La fonction utilisateur donnant la valeur de la DILATATION
+THERMIQUE du materiau, a l'instant TEMPS, au point X,Y,Z, 
+pour l'objet de numero de type NO_TYPE_OBJET
+(1:POINT, 2:LIGNE, 3:SURFACE, 4:VOLUME, 5:OBJET )
+a la temperature TEMPER connue ou non (cas non lineaire)
+et de numero dans ce lexique  NO_OBJET .
+
+Elle doit comprendre dans cet ordre les parametres 
+
+DILATA( TEMPS, X, Y, Z, NO_TYPE_OBJET, NO_OBJET, TEMPER ) 
+
+et etre programmee selon la grammaire du langage LU
+(cf documentation et exemples du menu de depart )
+
+Ces parametres sont tous initialises en entree.
+Ils peuvent ou non servir a calculer la valeur de la dilatation.
+ 
+EXEMPLE:
+deffonc dilatation( t, x, y, z, no_type_objet, materiau, temper ) ;
+si    materiau=nuobjt( 'volume' , 'acier' )
+alors dilatation=12e-6;
+sinon si    materiau=nuobjt( 'volume' , 'cuivre' )
+      alors dilatation=16.0e-6 ;
+      sinon dilatation=10.5e-6 ;
+      finsi;  
+finsi;
+finfonc;
+
+deffonc TempRefMate( t, x, y, z, no_type_objet, materiau, temper ) ;
+si    materiau=nuobjt( 'volume' , 'acier' )
+alors TempRefMate=20.0;
+sinon si    materiau=nuobjt( 'volume' , 'cuivre' )
+      alors TempRefMate=18.5;
+      sinon TempRefMate=22.5;
+      finsi;  
+finsi;
+finfonc; 

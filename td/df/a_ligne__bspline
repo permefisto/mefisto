@@ -1,0 +1,10 @@
+deftms ~>LIGNE>>BSPLINE 'coefficients d''une courbe BSPLINE'
+variable muet DATE   'date de creation du tableau'   reel2 ;
+variable muet NUTD   'numero du tableau descripteur' entier ;  
+variable DEGRBS 'degre des polynomes de la BSPLINE' entier ;
+variable NBCOBS 'nombre de composantes de la BSPLINE 3 ou 4' entier ;
+variable NBINBS 'nombre d''intervalles de definition' entier ;
+tableau  PARABS(0..NBINBS) 'valeurs du parametre de la BSPLINE' reel ;
+tableau  SPLIBS(0..DEGRBS,1..NBINBS,1..NBCOBS) 'coefficients des polynomes'
+         reel ;
+fintms ;

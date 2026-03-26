@@ -1,0 +1,17 @@
+The generic line is rotated N-times which create N slices
+or levels. The M edges of the line generate N*M quadrangles.
+
+If a vertex of the line is on the rotation axis, the edge
+with this vertex, produces a triangle.
+
+The total rotation angle can reach 360 degrees.
+
+Example:
+S15.1; I; 15; INITIAL_LINE; P1_AXIS; P2_AXIS; 4; {rotations}
+1; {angle for each rotation}
+20; 30; 40; 50; {variable angles}
+{The rotations add from the initial line}
+
+Define a surface by 4 successive rotations of 20, 50, 90
+and 140 degrees of the initial line around the axis defined by the
+points P1_AXIS and P2_AXIS

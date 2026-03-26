@@ -1,0 +1,375 @@
+      SUBROUTINE ADAJ4T( NS,     NBTRNS, NOTRNS, NOARNS,
+     %                   MXSOMM, NBSOMM, PXYD,   NUPLIS, NUISOP,
+     %                   MXTRIA, N1TRVI, NOTRIA, NOTRSO,
+     %                   IERR )
+C+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+C BUT :    AJOUTER UN TRIANGLE CENTRAL ABC + 3 ADJACENTS A LA PLACE DE
+C -----    L'ETOILE DES TRIANGLES DE SOMMET NS
+C
+C ENTREES:
+C --------
+C NS     : NUMERO DU SOMMET CENTRE DE L'ETOILE DES NBS TRIANGLES
+C NBTRNS : NOMBRE DE TRIANGLES DE SOMMET NS
+C NOTRNS : NUMERO NOTRIA DES NBTRNS TRIANGLES DE SOMMET NS
+C NOARNS : NUMERO DE L'ARETE OPPOSEE AU SOMMET NS DANS CHACUN DES
+C          NBTRNS SOMMETS
+C MXSOMM : NOMBRE MAXIMAL DE SOMMETS PERMIS POUR LA TRIANGULATION
+C MXTRIA : NOMBRE MAXIMAL DE TRIANGLES DECLARABLES DANS NOTRIA
+C
+C MODIFIES :
+C ----------
+C NBSOMM : NOMBRE ACTUEL DE SOMMETS ( INTERNES ET EXTERNES )
+C PXYD   : TABLEAU DES COORDONNEES 2D DES POINTS
+C NUPLIS : NUMERO DE POINT OU LIGNE OU ISO DE CHACUN DES SOMMETS
+C          -2 000 000 SI LE SOMMET A DEJA ETE SUPPRIME
+C          -NP SI NP EST LE NUMERO DU POINT UTILISATEUR DE CE SOMMET
+C          -1 234 567 SI LE SOMMET APPARTIENT A 2 LIGNES (SOMMET INITIAL)
+C          NU LIGNE SI LE SOMMET EST SUR UNE LIGNE UTILISATEUR
+C          0        SINON
+C NUISOP : NUMERO DE L'ISO DU POINT ET 0 SINON
+C N1TRVI : POINTE DANS NOTRIA VERS LE PREMIER TRIANGLE VIDE
+C MXTRIA : NOMBRE MAXIMAL DE TRIANGLES DECLARABLES DANS NOTRIA
+C NOTRIA : LISTE CHAINEE DES TRIANGLES
+C                 ------- ------- ------- -------- -------- --------
+C  PAR TRIANGLE : SOMMET1 SOMMET2 SOMMET3 TR_VOIS1 TR_VOIS2 TR_VOIS3
+C                 ------- ------- ------- -------- -------- --------
+C                 SOMMET    EST LE NUMERO DU SOMMET
+C                 TR_VOIS i EST LE NUMERO DANS NOTRIA DU TRIANGLE
+C                           ADJACENT PAR L'ARETE I
+C NOTRSO : NOTRSO(I) NUMERO D'UN TRIANGLE AYANT POUR SOMMET I
+C
+C SORTIES:
+C --------
+C IERR   : 0 SI PAS D'ERREUR
+C          1 SATURATION DES SOMMETS
+C          3 SATURATION DES TRIANGLES
+C+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+C AUTEUR : ALAIN PERRONNET  ANALYSE NUMERIQUE PARIS UPMC       MARS 1995
+C....................................................................012
+      include"./incl/gsmenu.inc"
+      include"./incl/trvari.inc"
+      LOGICAL           TRATRI
+      COMMON / DV2DCO / TRATRI
+C     TRACE OU NON DES TRIANGLES GENERES DANS LA TRIANGULATION(CF DVTR2D)
+      COMMON / UNITES / LECTEU,IMPRIM,INTERA,NUNITE(29)
+      INTEGER           NOTRIA(6,MXTRIA),
+     %                  NOTRSO(MXSOMM),
+     %                  NUPLIS(MXSOMM),
+     %                  NUISOP(*)
+      DOUBLE PRECISION  PXYD(3,MXSOMM)
+      INTEGER           NOTRNS(NBTRNS+4),NOARNS(NBTRNS)
+      DOUBLE PRECISION  SURTD2, S, SMX, X, Y, XX, YY
+C
+      INTEGER           NPXYBA(4), NUMIN(4), NUMAX(4)
+CCC      REAL              COMXMI(2,2)
+C
+      NBT3 = NBTRNS / 3
+      NBT6 = NBT3 / 2
+      NRT3 = MOD( NBTRNS, 3 )
+      NDCT = NRT3 / 2
+      NMX  = 0
+C
+CCCC     RECHERCHE DU MIN ET MAX DES COORDONNEES POUR LE TRACE
+CCC      COMXMI(1,1) =  1E28
+CCC      COMXMI(2,1) =  1E28
+CCC      COMXMI(1,2) = -1E28
+CCC      COMXMI(2,2) = -1E28
+C
+      SMX = 0
+      DO 10 I=1,NBTRNS
+C        LE TRIANGLE I DE SOMMET NS
+         NT = NOTRNS(I)
+C        LA SURFACE DE CE TRIANGLE NT
+         S = SURTD2( PXYD(1,NOTRIA(1,NT)),
+     %               PXYD(1,NOTRIA(2,NT)),
+     %               PXYD(1,NOTRIA(3,NT)) )
+C        LE TRIANGLE DE SURFACE MAXIMALE
+         IF( S .GT. SMX ) THEN
+C           LE NUMERO DANS NOTRNS DU TRIANGLE DE BARYCENTRE A
+            NMX = I
+            SMX = S
+         ENDIF
+CCCC        RECHERCHE DU MIN ET MAX DES COORDONNEES POUR LE TRACE
+CCC         DO 8 J=1,3
+CCC            NS1 = NOTRIA(J,NT)
+CCC            DO 6 L=1,2
+CCC               D = PXYD(L,NS1)
+CCC               IF( D .GT. COMXMI(L,2) ) COMXMI(L,2) = D
+CCC               IF( D .LT. COMXMI(L,1) ) COMXMI(L,1) = D
+CCC 6          CONTINUE
+CCC 8       CONTINUE
+ 10   CONTINUE
+C
+      IF( TRATRI ) THEN
+CCCC        LES TRACES SONT DEMANDES
+CCC         CALL EFFACE
+CCCC        LE CADRE OBJET GLOBAL EN UNITES UTILISATEUR
+CCC         X = COMXMI(1,2) - COMXMI(1,1)
+CCC         Y = COMXMI(2,2) - COMXMI(2,1)
+CCC         CALL ISOFENETRE( COMXMI(1,1)-X/20, COMXMI(1,2)+X/20,
+CCC     %                    COMXMI(2,1)-Y/20, COMXMI(2,2)+Y/20 )
+         DO 15 I=1,NBTRNS
+            CALL DVTRTR( PXYD, NOTRIA, NOTRNS(I), NCBLAN, NCNOIR )
+ 15      CONTINUE
+      ENDIF
+C
+C     RECHERCHE DE 2 SOMMETS LIBRES DANS PXYD
+      NPXYBA(1) = NS
+      NPXYBA(4) = NS
+      L = NBSOMM
+      DO 30 J=2,3
+         I = L
+ 20      IF( I .GT. 0 ) THEN
+C           A LA RECHERCHE D'UN SOMMET LIBRE DANS PXYD
+            IF( NOTRSO(I) .EQ. 0 ) THEN
+               NPXYBA(J) = I
+               L = I-1
+               GOTO 30
+            ENDIF
+            I = I - 1
+            GOTO 20
+         ELSE
+C           AJOUT D'UN NOUVEAU POINT DE PXYD
+            IF( NBSOMM .GE. MXSOMM ) THEN
+C              SATURATION DES SOMMETS
+               IERR = 1
+               NBLGRC(NRERR) = 1
+               KERR(1) = 'SATURATION DES SOMMETS'
+               CALL LEREUR
+               GOTO 9999
+            ENDIF
+            NBSOMM = NBSOMM + 1
+            NPXYBA(J) = NBSOMM
+            GOTO 30
+         ENDIF
+ 30   CONTINUE
+C
+C     RECHERCHE DE 4 TRIANGLES LIBRES
+      DO 36 I=1,4
+         IF( N1TRVI .LE. 0 ) THEN
+C           SATURATION DES TRIANGLES
+            IERR = 3
+            NBLGRC(NRERR) = 1
+            KERR(1) = 'SATURATION DES TRIANGLES'
+            CALL LEREUR
+            GOTO 9999
+         ENDIF
+         NOTRNS(NBTRNS+I) = N1TRVI
+C        LE NOUVEAU TRIANGLE VIDE
+         N1TRVI = NOTRIA(4,N1TRVI)
+ 36   CONTINUE
+C
+C     LES COORDONNEES DU BARYCENTRE DES 3 TRIANGLES
+C     (SOMMETS A B C DANS LE SENS INDIRECT COMME NOTRNS !)
+      N = NMX
+      DO 40 I=1,3
+C
+C        LE NUMERO PXYD DU BARYCENTRE
+         NP = NPXYBA(I)
+C        LE NUMERO NOTRIA DU TRIANGLE
+         NT = NOTRNS( N )
+C        LE BARYCENTRE DU TRIANGLE NT
+         DO 38 J=1,3
+            PXYD(J,NP) = ( PXYD(J,NOTRIA(1,NT))
+     %                   + PXYD(J,NOTRIA(2,NT))
+     %                   + PXYD(J,NOTRIA(3,NT)) ) / 3D0
+ 38      CONTINUE
+C
+C        LE NUMERO DANS NOTRNS DU TRIANGLE DU BARYCENTRE SUIVANT
+         N = N + NBT3 + NDCT
+         IF( N .GT. NBTRNS ) N = N - NBTRNS
+ 40   CONTINUE
+C
+C     LE NUMERO PXYD DES 3 BARYCENTRE A B C
+      NPA = NPXYBA(1)
+      NPB = NPXYBA(2)
+      NPC = NPXYBA(3)
+C
+C     DEFINITION DES NUMEROS NOTRNS DES ARETES ASSOCIEES A : A B C
+      N = NMX - NBT6 - NDCT
+      IF( N .LE. 0 )  N = N + NBTRNS
+      ITER = 0
+      SMX  = 3
+      NMX  = N
+C
+C     VERIFICATION SINUS (AN, AC) POSITIF
+C     NUMERO PXYD DU SOMMET DE L'ARETE OPPOSEE A NS DANS NOTRNS(N)
+ 55   IF( NOARNS(N) .LT. 3 ) THEN
+         I = NOARNS(N) + 1
+      ELSE
+         I = 1
+      ENDIF
+      NS1 = NOTRIA( I, NOTRNS(N) )
+      XX  = PXYD(1,NS1) - PXYD(1,NPA)
+      YY  = PXYD(2,NS1) - PXYD(2,NPA)
+      X   = PXYD(1,NPC) - PXYD(1,NPA)
+      Y   = PXYD(2,NPC) - PXYD(2,NPA)
+C     SINUS DE L'ANGLE ( AN, AC )
+      S   = ( XX * Y - YY * X ) / SQRT( (X*X+Y*Y) * (XX*XX+YY*YY) )
+      IF( S .LE. 0.15 ) THEN
+C        ANGLE INFERIEUR A 10 DEGRES => REJET
+         IF( S .GT. 0 ) THEN
+            IF( S .LT. SMX ) THEN
+               SMX = S
+               NMX = N
+            ENDIF
+         ENDIF
+C
+         ITER = ITER + 1
+         IF( ITER .GT. NBTRNS ) THEN
+C           POUR EVITER UNE BOUCLE INFINIE
+            N = NMX
+            GOTO 58
+         ENDIF
+C
+C        PASSAGE A L'ARETE SUIVANTE DE L'ETOILE
+         N = N + 1
+         IF( N .GT. NBTRNS ) N = N - NBTRNS
+         GOTO 55
+      ENDIF
+C
+ 58   N0 = N
+C
+C     LA PREMIERE ARETE A ASSOCIER AU BARYCENTRE A
+      NUMIN(1) = N
+      N = N + NBT3 - 1
+      IF( N .GT. NBTRNS ) N = N - NBTRNS
+C     LA DERNIERE ARETE A ASSOCIER AU BARYCENTRE A
+      NUMAX(1) = N
+      DO 60 J=2,3
+         N = N + 1
+         IF( N .GT. NBTRNS ) N = N - NBTRNS
+C        LA PREMIERE ARETE A ASSOCIER AU BARYCENTRE AJ
+         NUMIN(J) = N
+         N = N + NBT3 - 1 + NDCT
+         IF( N .GT. NBTRNS ) N = N - NBTRNS
+C        LA DERNIERE ARETE A ASSOCIER AU BARYCENTRE AJ
+         NUMAX(J) = N
+ 60   CONTINUE
+C     AJUSTAGE DU DERNIER TRIANGLE
+      N = N0 - 1
+      IF( N .LE. 0 )  N = N + NBTRNS
+      NUMAX(3) = N
+      NUMIN(4) = NUMIN(1)
+      NUMAX(4) = NUMAX(1)
+C
+C     CREATION DU TRIANGLE ABC
+      NT = NOTRNS(NBTRNS+4)
+      NOTRIA(1,NT) = NPA
+      NOTRIA(2,NT) = NPC
+      NOTRIA(3,NT) = NPB
+      NOTRIA(4,NT) = NOTRNS(NBTRNS+3)
+      NOTRIA(5,NT) = NOTRNS(NBTRNS+2)
+      NOTRIA(6,NT) = NOTRNS(NBTRNS+1)
+C
+      NOTRSO( NPA ) = NT
+      NOTRSO( NPB ) = NT
+      NOTRSO( NPC ) = NT
+C
+      NUPLIS( NPA ) = 0
+      NUPLIS( NPB ) = 0
+      NUPLIS( NPC ) = 0
+C
+C     CREATION DES 3 TRIANGLES D'ARETES AB BC CA
+      DO 70 I=1,3
+C        L'INDICE APRES I
+         IF( I .LE. 2 ) THEN
+            II = I + 1
+         ELSE
+            II = 1
+         ENDIF
+C        LE TRIANGLE A TRAITER
+         NT = NOTRNS(NBTRNS+I)
+C
+C        LE NUMERO DES 3 SOMMETS
+         NOTRIA(1,NT) = NPXYBA(I)
+         NOTRIA(2,NT) = NPXYBA(II)
+C        LE NUMERO DANS NOTRNS DU DERNIER TRIANGLE ASSOCIE AU BARYCENTRE I
+         N = NUMAX(I)
+         NOTRIA(3,NT) = NOTRIA( NOARNS(N), NOTRNS(N) )
+C
+C        LE NUMERO DES 3 TRIANGLES OPPOSES PAR LES ARETES
+         NOTRIA(4,NT) = NOTRNS( NBTRNS+4  )
+         NOTRIA(5,NT) = NOTRNS( NUMIN(II) )
+         NOTRIA(6,NT) = NOTRNS( NUMAX(I)  )
+ 70   CONTINUE
+C
+C     MODIFICATION DES NBTRNS TRIANGLES
+      DO 100 I=1,3
+C        L'INDICE AVANT I
+         IF( I .GE. 2 ) THEN
+            II = I - 1
+         ELSE
+            II = 3
+         ENDIF
+C
+C        LE PREMIER TRIANGLE ASSOCIE AU BARYCENTRE I
+         N  = NUMIN(I)
+C
+C        PARCOURS A PARTIR DU MIN DANS LE SENS INDIRECT ( COMME NOTRNS )
+C        LE TRIANGLE AVANT EST EN FAIT EXCEPTIONNELLEMENT
+         NAV = NBTRNS + II
+C
+C        LE TRIANGLE APRES
+ 80      NAP = N + 1
+         IF( NAP .GT. NBTRNS ) NAP = NAP - NBTRNS
+C
+C        LE TRIANGLE A RE-INITIALISER
+         NT = NOTRNS(N)
+C        LE NUMERO PXYD DES 2 SOMMETS DE L'ARETE OPPOSEE A NS
+         L   = NOARNS(N)
+         IF( L .LT. 3 ) THEN
+            LL = L + 1
+         ELSE
+            LL = 1
+         ENDIF
+         NS2 = NOTRIA( LL, NT )
+         NS1 = NOTRIA(  L, NT )
+C
+C        LE TRIANGLE OPPOSE A NS
+         NTOP = NOTRIA( 3+L, NT )
+C
+C        LES 3 SOMMETS
+         NOTRSO( NS1) = NT
+         NOTRIA(1,NT) = NS2
+         NOTRIA(2,NT) = NPXYBA(I)
+         NOTRIA(3,NT) = NS1
+C
+C        LES 3 TRIANGLES OPPOSES
+         NOTRIA(4,NT) = NOTRNS(NAV)
+         NOTRIA(5,NT) = NOTRNS(NAP)
+         NOTRIA(6,NT) = NTOP
+C
+C        MISE A JOUR POUR LE SUIVANT
+         IF( N .NE. NUMAX(I) ) THEN
+C           LE TRIANGLE AVANT
+            NAV = N
+C           LE NOUVEAU TRIANGLE A TRAITER
+            N   = N + 1
+            IF( N .GT. NBTRNS ) N = N - NBTRNS
+            GOTO 80
+         ENDIF
+C
+C        RECTIFICATION POUR LE DERNIER
+         NOTRIA(5,NT) = NOTRNS( NBTRNS + I )
+ 100  CONTINUE
+C
+C     REMISE SOUS FORME DE TRIANGULATION DELAUNAY
+      DO 130 L=1,NBTRNS+4
+          NT = NOTRNS(L)
+          DO 120 I=1,3
+             CALL AD2T2T( I,      NT,
+     %                    NOTRIA, NOTRSO, PXYD, NUISOP,
+     %                    NT1,    NBCHGT )
+ 120      CONTINUE
+ 130  CONTINUE
+C
+C     TRACE
+      IF( TRATRI ) THEN
+         DO 150 I=1,NBTRNS+4
+            CALL DVTRTR( PXYD, NOTRIA, NOTRNS(I), NCVERT, NCBLAN )
+ 150     CONTINUE
+      ENDIF
+C
+ 9999 RETURN
+      END

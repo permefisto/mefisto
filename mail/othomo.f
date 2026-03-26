@@ -1,0 +1,268 @@
+      SUBROUTINE OTHOMO( NOFOTI, ARETGR, ARETOCG, HEXA,
+     %                   MXARBO, LARBRO, MXARBT, LARBRT, NUOTPT,
+     %                   NBSOMM, MXSOMM, PTXYZD,
+     %                   MXQUEU, MNQUEU, LAVIDE, MXARET, LARETE, IERR )
+C+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+C BUT :    HOMOGENEISATION DES OT POUR OBTENIR AU PLUS 1 SAUT
+C -----    A TRAVERS LES FACES
+C
+C ENTREES:
+C --------
+C NOFOTI : NUMERO DE LA FONCTION TAILLE_IDEALE(x,y,z) DES ARETES
+C ARETGR : TAILLE DE L'ARETE MAXIMALE DES OT
+C ARETOCG: DISTANCE SOUHAITEE des SOMMETS DE L'OCTAEDRE ENGLOBANT
+C HEXA   : MIN ET MAX DES 3 COORDONNEES D'UN HEXAEDRE ENGLOBANT
+C          LES POINTS DE L'OBJET A MAILLER
+C MXARBO : NOMBRE MAXIMAL D'OCTAEDRES DANS LARBRO
+C MXARBT : NOMBRE MAXIMAL DE TETRAEDRES DANS LARBRT
+C MXSOMM : NOMBRE MAXIMAL DE SOMMETS PERMIS POUR LA TETRAEDRISATION
+C MXARET : NOMBRE MAXIMAL D'ARETES DES OT
+C
+C ENTREES ET SORTIES:
+C -------------------
+C NBSOMM : NOMBRE ACTUEL DE POINTS DECLARES DANS PTXYZD
+C LARBRO : ARBRE-14 DES OCTAEDRES ( FOND DE LA TETRAEDRISATION )
+C      LARBRO(0,0) : NO DU 1-ER OCTAEDRE VIDE DANS LARBRO
+C      LARBRO(1,0) : MAXIMUM DU 1-ER INDICE DE LARBRO (ICI -1:20)
+C      LARBRO(2,0) : MAXIMUM DECLARE DU 2-EME INDICE DE LARBRO
+C                    (ICI = MXARBO)
+C
+C      LARBRO(-1:20,1) : RACINE DE L'ARBRE (OCTAEDRE SANS PERE)
+C
+C      LARBRO(-1,J) : NO DU PERE DE L'OCTAEDRE J DANS UN DES 2 ARBRES
+C                     >0 => DANS LARBRO
+C                     <0 => DANS LARBRT
+C      LARBRO(0,J)  : 1 A 14 NO DE FILS DE L'OCTAEDRE J POUR SON PERE
+C                     + 100 * NO TYPE DE L'OT J
+C                     NO TYPE DE L'OT : 0 SI OCTAEDRE
+C                                       1 SI TETRAEDRE T RONDE (T1)
+C                                       2 SI TETRAEDRE T       (T2)
+C   SI LARBRO(0,J)>0 ALORS J EST UN OCTAEDRE OCCUPE
+C      SI LARBRO(1,.)>0 ALORS
+C         LARBRO(1:14,J): NO (>0) LARBRO DES 14 SOUS-OCTA-TETRAEDRES
+C      SINON
+C         LARBRO(1:14,J):-NO PTXYZD DES 0 A 14 POINTS INTERNES DE L'OCTA J
+C                         0  SI PAS DE POINT
+C                        ( J EST ALORS UNE FEUILLE DE L'ARBRE )
+C
+C      LARBRO(15:20,J) : NO PTXYZD DES 6 SOMMETS DE L'OCTAEDRE J
+C   SINON
+C      LARBRO(0,J): -ADRESSE DANS LARBRO DE L'OCTAEDRE VIDE SUIVANT
+C
+C LARBRT : ARBRE-5 DES TETRAEDRES ( FOND DE LA TETRAEDRISATION )
+C      LARBRT(0,0) : NO DU 1-ER TETRAEDRE VIDE DANS LARBRT
+C      LARBRT(1,0) : MAXIMUM DU 1-ER INDICE DE LARBRT (ICI -1:9)
+C      LARBRT(2,0) : MAXIMUM DECLARE DU 2-EME INDICE DE LARBRT
+C                     (ICI = MXARBT)
+C
+C      LARBRT(-1,J) : NO DU PERE DU TETRAEDRE J DANS UN DES 2 ARBRES
+C                     >0 => DANS LARBRO
+C                     <0 => DANS LARBRT
+C      LARBRT(0,J) : 0 A 4 NO DE FILS DU TETRAEDRE J POUR SON PERE
+C                    + 100 * NO TYPE DE L'OT J
+C                     NO TYPE DE L'OT : 0 SI OCTAEDRE
+C                                       1 SI TETRAEDRE T RONDE (T1)
+C                                       2 SI TETRAEDRE T       (T2)
+C
+C   SI LARBRT(0,J)>0 ALORS J EST UN TETRAEDRE OCCUPE
+C      SI LARBRT(1,J)>0 ALORS
+C         LARBRT(1:5,J): NO (>0) LARBRT DES 5 SOUS-OCTA-TETRAEDRES
+C      SINON
+C         LARBRT(1:5,J):-NO PTXYZD DES 0 A 5 POINTS INTERNES AU TETRA J
+C                         0  SI PAS DE POINT
+C                        ( J EST ALORS UNE FEUILLE DU ARBRE )
+C
+C      LARBRT(6:9,J) : NO PTXYZD DES 4 SOMMETS DU TETRAEDRE J
+C   SINON
+C      LARBRT(0,J): ADRESSE DANS LARBRT DU TETRAEDRE VIDE SUIVANT
+C
+C NUOTPT : NUMERO D'OT (>0 SI LARBRO, <0 SI LARBRT) DE CHAQUE POINT PTXYZD
+C PTXYZD : X Y Z DISTANCE SOUHAITEE DES POINTS
+C NPSOFR : (I) =  0  SI POINT AJOUTE NON SUR LA SURFACE DE L'OBJET
+C              =  1 SI LE POINT EST AJOUTE SUR UNE ARETE DE LA SURFACE
+C              =  2 SI LE POINT EST AJOUTE COMME BARYCENTRE SUR LA SURFACE
+C              =  1 000 000  + NUMERO DU  POINT INTERNE UTILISATEUR
+C              = (1 000 000) * (NO SURFACE + 1) + NUMERO DU SOMMET DANS
+C                   LA NUMEROTATION DES SOMMETS DE LA SURFACE
+C              = -4 SI LE POINT EST EXTERIEUR A L'OBJET
+C              = -NPSOFR(I) SI POINT DEPLACE SUR LA SURFACE
+C LAVIDE : PREMIERE ADRESSE LARETE A EXPLORER POUR TROUVER UNE ARETE VIDE
+C MXQUEU : NOMBRE D'ENTIERS DE LA QUEUE . CE NOMBRE DOIT ETRE PAIR
+C MNQUEU : ADRESSE MCN DU TABLEAU DE LA QUEUE
+C
+C SORTIES:
+C --------
+C LARETE : TABLEAU DE HACHAGE DES ARETES DES OT
+C          LARETE(1,J) = SOMMET 1 DANS PTXYZD
+C          LARETE(2,J) = SOMMET 2 DANS PTXYZD
+C          LARETE(3,J) = NUMERO DANS LARETE DE L'ARETE SUIVANTE
+C          LARETE(4,J) = MILIEU DE L'ARETE DANS PTXYZD
+C          HACHAGE(NS1,NS2) = (NS1 + NS2) MODULO MXARET + 1
+C IERR   : 0  SI PAS D'ERREUR,  >0 SI ERREUR
+C+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+C AUTEUR : ALAIN PERRONNET  ANALYSE NUMERIQUE PARIS UPMC   NOVEMBRE 1992
+C2345X7..............................................................012
+      include"./incl/pp.inc"
+      COMMON            MCN(MOTMCN)
+      INTEGER           LARBRO(-1:20,0:MXARBO),
+     %                  LARBRT(-1:9 ,0:MXARBT),
+     %                  NUOTPT(1:MXSOMM),
+     %                  LARETE(1:4 ,1:MXARET)
+      DOUBLE PRECISION  PTXYZD(4,MXSOMM)
+      REAL              ARETOCG, HEXA(6,2)
+C
+C     PARCOURS DES FACES DES OT AVEC UNE QUEUE POUR TRAITER LES OT
+C     LES PLUS GRANDS D'ABORD.
+C     ============================================================
+      ARETG2 = ( ARETGR ** 2 ) * 2
+      LHQUEU = 1
+C     L'OT RACINE EST MISE DANS LA QUEUE
+      MCN( MNQUEU ) = 1
+C     L'ADRESSE MCN DE LA FIN DE QUEUE
+      MNQ    = MNQUEU
+C     LA FIN DE L'ANNEAU DANS MCN POUR LA QUEUE CIRCULAIRE
+      MNQFIN = MNQUEU + MXQUEU - 1
+C
+C     TANT QUE LA QUEUE N'EST PAS VIDE FAIRE
+C     ======================================
+ 10   IF( LHQUEU .GT. 0 ) THEN
+C
+C        L'OT A TRAITER
+         NUOT   = MCN( MNQ )
+C
+C        L'OT EST RETIRE DE LA QUEUE
+         LHQUEU = LHQUEU - 1
+         MNQ    = MNQ + 1
+         IF( MNQ .GT. MNQFIN ) THEN
+C           FIN DE L'ANNEAU
+            MNQ = MNQUEU
+         ENDIF
+C
+C        LES FILS DE L'OT SONT MIS DANS LA QUEUE
+         IF( NUOT .GT. 0 ) THEN
+C
+C           OCTAEDRE
+            NBFACE = 8
+            IF( LARBRO(1,NUOT) .GT. 0 ) THEN
+C              NUOT N'EST PAS UNE FEUILLE
+C              LES 14 FILS SONT MIS DANS LA QUEUE
+               IF( LHQUEU + 14 .GT. MXQUEU ) THEN
+C                 SATURATION DE LA QUEUE => ELLE EST AGRANDIE
+                  CALL TNMCDC( 'ENTIER', MXQUEU+2048, MNQQ )
+C                 LA QUEUE REDEMARRE AU DEBUT DU TABLEAU
+                  DO 15 I=0,LHQUEU-1
+                     MN = MNQ + I
+                     IF( MN .GT. MNQFIN ) MN = MN - MXQUEU
+                     MCN(MNQQ+I) = MCN(MN)
+ 15               CONTINUE
+                  CALL TNMCDS( 'ENTIER', MXQUEU, MNQUEU )
+                  MNQUEU = MNQQ
+                  MXQUEU = MXQUEU + 2048
+                  MNQFIN = MNQUEU + MXQUEU - 1
+C                 LE POINTEUR SUR LA FIN DE QUEUE
+                  MNQ    = MNQUEU
+               ENDIF
+               MN = MNQ + LHQUEU - 1
+               DO 20 I=1,14
+                  MN = MN + 1
+                  IF( MN .GT. MNQFIN ) MN = MN - MXQUEU
+                  MCN( MN ) = LARBRO(I,NUOT)
+ 20            CONTINUE
+               LHQUEU = LHQUEU + 14
+               GOTO 10
+            ENDIF
+C
+         ELSE
+C
+C           TETRAEDRE
+            NBFACE = 4
+            NUOTT  = -NUOT
+            IF( LARBRT(1,NUOTT) .GT. 0 ) THEN
+C              NUOT N'EST PAS UNE FEUILLE
+C              LES 5 FILS SONT MIS DANS LA QUEUE
+               IF( LHQUEU + 5 .GT. MXQUEU ) THEN
+C                 SATURATION DE LA QUEUE => ELLE EST AGRANDIE
+                  CALL TNMCDC( 'ENTIER', MXQUEU+2048, MNQQ )
+                  DO 25 I=0,LHQUEU-1
+                     MN = MNQ + I
+                     IF( MN .GT. MNQFIN ) MN = MN - MXQUEU
+                     MCN(MNQQ+I) = MCN(MN)
+ 25               CONTINUE
+                  CALL TNMCDS( 'ENTIER', MXQUEU, MNQUEU )
+                  MNQUEU = MNQQ
+                  MXQUEU = MXQUEU + 2048
+                  MNQFIN = MNQUEU + MXQUEU - 1
+C                 LE POINTEUR SUR LA FIN DE QUEUE
+                  MNQ    = MNQUEU
+               ENDIF
+               MN = MNQ + LHQUEU - 1
+               DO 30 I=1,5
+                  MN = MN + 1
+                  IF( MN .GT. MNQFIN ) MN = MN - MXQUEU
+                  MCN( MN ) = LARBRT(I,NUOTT)
+ 30            CONTINUE
+               LHQUEU = LHQUEU + 5
+               GOTO 10
+            ENDIF
+         ENDIF
+C
+C        LA TAILLE DES ARETES DE L'OT FEUILLE NUOT
+C        ARETE2 = CARRE DE LA LONGUEUR DE L'ARETE DE L'OT NUOT
+         CALL LOAROT( NUOT, LARBRO, LARBRT, PTXYZD, ARETE2 )
+         IF( NOFOTI .LE. 0 ) THEN
+C           LA TAILLE DE L'ARETE DU TE EST COMPAREE A CELLE DE LA GRILLE
+            IF( ARETE2 .GT. ARETG2 ) GOTO 10
+C           NUOT N'EST PAS EXTERNE
+         ENDIF
+C
+C        OT FEUILLE D'ARETE <= ARETGR
+         DO 40 I=1,NBFACE
+C
+C           RECHERCHE DE L'OT VOISIN PAR LA FACE I DE NUOT
+            CALL OTVOFA( NUOT, I, LARBRO, LARBRT, NUOTVO, NBNIVO )
+C
+C           SI SAUT > 1 A TRAVERS LA FACE ALORS SUBDIVISION
+            IF( NUOTVO .EQ. 0 ) GOTO 40
+            IF( NBNIVO .LE. 1 ) GOTO 40
+C
+C           SUBDIVISION DE L'OT VOISIN INTERNE A L'HEXAEDRE
+CCCC16/6/97    D'ARETE AU MOINS 2 FOIS PLUS GRANDE QUE L'ARETE DE NUOT
+CCCC           DE PLUS NUOTVO EST UNE FEUILLE PUISQUE NBNIVO>1
+CCCC
+CCCC           ARET2 = CARRE DE LA LONGUEUR DE L'ARETE DE L'OT NUOTVO
+CCC            CALL LOAROT( NUOTVO, LARBRO, LARBRT, PTXYZD, ARET2 )
+CCC            IF( ARET2 .GT. ARETG2 ) GOTO 40
+C           NUOTVO N'EST PAS EXTERNE
+            NBS0 = NBSOMM
+            CALL SBOT( 1,      HEXA,   NUOTVO,
+     %                 MXARBO, LARBRO, MXARBT, LARBRT, NUOTPT,
+     %                 NBSOMM, MXSOMM, PTXYZD,
+     %                 LAVIDE, MXARET, LARETE,
+     %                 IERR )
+            IF( IERR .NE. 0 ) RETURN
+C
+            IF( NOFOTI .GT. 0 .AND. NBS0 .LT. NBSOMM ) THEN
+C              MISE A JOUR DE TAILLE_IDEALE DES NOUVEAUX SOMMETS
+               DO J=NBS0+1,NBSOMM
+                  CALL OTTAID( NOFOTI, ARETOCG, HEXA, PTXYZD(1,J),
+     %                         PTXYZD(4,J), IERR )
+                  IF( IERR .NE. 0 ) RETURN
+               ENDDO
+            ENDIF
+C
+C           CET OT EST MIS EN TETE DE QUEUE POUR ETRE RETRAITE
+            LHQUEU = LHQUEU + 1
+            MNQ    = MNQ - 1
+            IF( MNQ .LT. MNQUEU ) THEN
+C              FIN DE L'ANNEAU
+               MNQ = MNQFIN
+            ENDIF
+            MCN(MNQ) = NUOTVO
+ 40      CONTINUE
+C
+C        RETOUR EN TETE DE QUEUE
+         GOTO 10
+      ENDIF
+
+      RETURN
+      END

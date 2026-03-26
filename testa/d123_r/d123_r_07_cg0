@@ -1,0 +1,59 @@
+{ ========================================================================== }
+{ MEFISTO Software     : December 2, 2021 Version                            }
+{ USER's  Name         : Alain Perronnet                                     }
+{ Project Name         : Air around 3 Dennis: 1-st Conjugate Gradient Solver }
+{ Date                 : December 2, 2021 18h 58                             }
+{ ========================================================================== }
+@;
+{
+readf d123_r_fldata;  { read the physical characteristics of air ... }
+}
+@;
+@;
+@;
+@;
+
+20;    { PRECISION DATA  to STOP the CONJUGATE GRADIENT ITERATIONS }
+ 1e-6; { EpsRCG    VALUE to STOP the CONJUGATE GRADIENT ITERATIONS }
+@;
+
+DefVar InitTime,        FinalTime;
+       InitTime=0.0;    FinalTime=10;
+
+DefVar StepTime,        StoreStepTime;
+       StepTime=0.005; {CHOSEN to obtain at 10m/s a 0.05m DISPLACEMENT }
+       StoreStepTime=20*StepTime; { 1/20 computed vectors are stored on files}
+
+
+8; {=== FRACTIONAL UNSTEADY NAVIER-STOKES SOLVER Algorithm2 ============}
+
+   2;   { CONDENSED MATRIX CONJUGATE GRADIENT + FACTORIZATION LEVEL }
+     1;   { + FACTORIZATION LEVEL VALUE (0 or 1 or 2) }
+
+   InitTime;  { INITIAL TIME }
+   FinalTime; { FINAL   TIME }
+   StepTime;  { CONSTANT STEP of TIME (seconds) }
+   (FinalTime-InitTime)/StoreStepTime;  { NUMBER of STORED SOLUTION VECTORS }
+              { TIME THETA METHOD: 1/2<=THETA<=1 here THETA=1 IS IMPOSED }
+@;
+@;
+
+CLOSE;
+
+
+
+
+{ Other possibility to start ... ----------------------------------- }
+ 2; { From the DATA of INITIAL VELOCITY-PRESSURE on OBJECT }
+
+ 1; { Constant Initial Velocity }
+ 3; { NBCOVI 'Number of Initial Velocity Components at a node' entier }
+ 1;   2; 3; { NUCOVI(1..NBCOVI) 'Number of Initial Velocity Components'}
+ VX0; 0; 0; { VACOVI(1..NBCOVI) 'Constant Initial Velocity' reel ; }
+
+ 1;      { CONSTANT INITIAL PRESSURE }
+ PrISA;  { CONSTANT INITIAL PRESSURE VALUE }
+
+@;
+@;
+CLOSE;

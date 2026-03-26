@@ -1,0 +1,83 @@
+{ =========================================================== }
+{              PROBLEME DE LA LAME DU TELESCOPE               }
+{                  DONNEES THERMIQUES                         }
+{ =========================================================== }      
+{ Definition des variables }
+ DefVar FLUX;
+ FLUX = 0.;
+
+1;  { NOM de l OBJET a traiter }
+ LAME;
+
+2;  { ENTR'EE des DONN'EES du PROBL`EME de THERMIQUE }
+
+    { ENTR'EE DES DONN'EES POUR LA SURFACE FROID }
+ 2; { densite de CONDUCTIVIT'E THERMIQUE }
+ 2; { materiau axisymetrique homogene isotrope }
+ 1.38; { conductivite du verre }
+ @;
+
+    { ENTR'EE DES DONN'EES POUR LA SURFACE CHAUD }
+ 2; { densite de CONDUCTIVIT'E THERMIQUE }
+ 2; { materiau axisymetrique homogene isotrope }
+ 1.38; { conductivite du verre }
+ 4; { densite SOURCE de CHALEUR }
+ 1; { constante }
+ 1.382; { SOURCE 'la valeurs de la source' }
+ @;
+
+    {  ENTR'EE DES DONN'EES POUR LA LIGNE BORD }
+ 2; { FLUX de chaleur impose a la paroi }
+ 1; { constant }       
+ FLUX; { Flux }
+ @;
+                                      
+    {  ENTR'EE DES DONN'EES POUR LA LIGNE INTERNE }
+ 1; { ECHANGE coefficient d echange avec le fluide a la paroi }
+ 1; { constante }
+ 3.7; { ECHANG 'coefficient d'echange'   reel   ; }
+ 2; { SOURCE }
+ 1; { constante }
+ 0.;{ La temperature externe * coefficient d'echange }
+ @;
+
+    {  ENTR'EE DES DONN'EES POUR LA LIGNE EXTERNE }
+ 1; { ECHANGE coefficient d echange avec le fluide a la paroi }
+ 1; { constante }
+ 7.7; { ECHANG 'coefficient d'echange'   reel   ; }
+ 2; { SOURCE }
+ 1; { constante }
+ 0.;{ La temperature externe * coefficient d'echange }
+ @;
+@;  { Fin de l'entree des donnees thermiques }
+
+ 3; { R'ESOLUTION du systeme lineaire }
+ 1; { Coefficients independants de la temperature }
+ 1; { Cholesky }
+@;
+
+ 3; { R'ESOLUTION du systeme lineaire }
+ 1; { Coefficients independants de la temperature }
+ 2; { Gradient conjugue }
+ 0; { NIVEAU(X) de preconditionnement }
+@;
+
+ 3; { R'ESOLUTION du systeme lineaire }
+ 1; { Coefficients independants de la temperature }
+ 2; { Gradient conjugue }
+ 1; { NIVEAU(X) de preconditionnement }
+@;
+
+ 3; { R'ESOLUTION du systeme lineaire }
+ 1; { Coefficients independants de la temperature }
+ 2; { Gradient conjugue }
+ 2; { NIVEAU(X) de preconditionnement }
+@;
+
+ 3; { R'ESOLUTION du systeme lineaire }
+ 1; { Coefficients independants de la temperature }
+ 2; { Gradient conjugue }
+ 3; { NIVEAU(X) de preconditionnement }
+@;
+
+FERMER;

@@ -1,0 +1,40 @@
+      SUBROUTINE DVTRAR( PXYD, NS1, NS2, NCARE, NCNUM )
+C+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+C BUT :    TRACER L'ARETE NS1, NS2, SELON LES COULEURS NCARE ET NCNUM
+C -----
+C ENTREES:
+C --------
+C PXYD   : TABLEAU DES COORDONNEES 2D DES POINTS
+C          PAR POINT : X  Y  DISTANCE_SOUHAITEE
+C NS1,NS2: NUMERO PXYD DES 2 SOMMETS DE L'ARETE A TRACER
+C NCARE  : NUMERO DE LA COULEUR DE L'ARETE A TRACER
+C NCNUM  : NUMERO DE LA COULEUR DES 2 NUMEROS A TRACER
+C+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+C AUTEUR : ALAIN PERRONNET  ANALYSE NUMERIQUE PARIS UPMC  SEPTEMBRE 1994
+C....................................................................012
+      DOUBLE PRECISION  PXYD(3,*)
+C     TRACE OU PAS DE TRACE ?
+      LOGICAL           TRATRI
+      COMMON / DV2DCO / TRATRI
+C
+      IF( TRATRI ) THEN
+C
+C        COORDONNEES SIMPLE PRECISION DES 2 EXTREMITES DE L'ARETE
+         X1 = REAL( PXYD(1,NS1) )
+         Y1 = REAL( PXYD(2,NS1) )
+C
+         X2 = REAL( PXYD(1,NS2) )
+         Y2 = REAL( PXYD(2,NS2) )
+C
+C        TRACE DE L'ARETE SELON LA COULEUR NCARE
+         CALL TRAIT2D( NCARE, X1,Y1, X2,Y2 )
+C
+C        TRACE DU NUMERO DES 2 SOMMETS
+         CALL ENTIER2D( NCNUM, X1, Y1, NS1 )
+         CALL ENTIER2D( NCNUM, X2, Y2, NS2 )
+C
+         CALL MEMPXFENETRE
+      ENDIF
+C
+      RETURN
+      END

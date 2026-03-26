@@ -1,0 +1,6 @@
+variable TRACPOIN 'Trace des POINTS' entier
+( 1: 'TOUS les POINTS AVEC translation orbite zoom'
+, 2: 'TOUS les POINTS SANS translation orbite zoom'
+, 3: 'UN unique POINT SANS translation orbite zoom'
+, 7: 'La COULEUR du NOM des POINTS' 
+, 8: 'Le TRACE ou NON du NOM des POINTS' );

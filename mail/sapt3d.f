@@ -1,0 +1,1155 @@
+      SUBROUTINE SAPT3D
+C+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+C BUT : SAISIR A LA SOURIS DES POINTS 3D
+C ----- SIMULER SUR LE FICHIER FRAPPE LA FRAPPE DE CES POINTS
+C                        VERSION xvue
+C+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+C AUTEUR : ALAIN PERRONNET ANALYSE NUMERIQUE UPMC PARIS        JUIN 1994
+C2345X7..............................................................012
+      IMPLICIT           INTEGER(W)
+      PARAMETER        ( ECART=0.1, ECARCA=0.2 )
+      include"./incl/langue.inc"
+      include"./incl/gsmenu.inc"
+      include"./incl/trvari.inc"
+      include"./incl/mecoit.inc"
+      include"./incl/ntmnlt.inc"
+      include"./incl/pilect.inc"
+      include"./incl/xyzext.inc"
+      include"./incl/a___xyzsommet.inc"
+      include"./incl/a_point__definition.inc"
+      include"./incl/cm4vue.inc"
+      COMMON / EPSSSS / EPZERO,EPSXYZ
+      REAL              RMCN(1)
+      include"./incl/pp.inc"
+      COMMON             MCN(MOTMCN)
+      EQUIVALENCE       (MCN(1),RMCN(1))
+      INTEGER            NBPAS(3)
+      EQUIVALENCE       (NBPAS(1),NBPASX),(NBPAS(2),NBPASY),
+     %                  (NBPAS(3),NBPASZ)
+      COMMON / UNITES /  LECTEU,IMPRIM,INTERA,NFDOCU,NFFRAP,NUNITE(27)
+      CHARACTER*24       KNOMPO,KNOMPT,KNOMTR,KTXT
+      CHARACTER*4        KENTIE
+      CHARACTER*24       KAIMAX,KAIMAY,KAIMAZ
+      CHARACTER*25       CARSYM
+      REAL               CADRS0(3,3)
+      LOGICAL            AIMANX,AIMANY,AIMANZ
+      SAVE               NBPOIN,KNOMPO
+      DATA               KNOMPO / 'P   ' /
+C
+C     VALEURS PAR DEFAUT
+C     ==================
+C     CADRE DE SAISIE CADRSA(X Y Z, MIN MAX PAS)
+      IF( COOEXT(1,1) .LT. RINFO('GRAND') )  THEN
+         ECAMAX = MAX(COOEXT(1,2)-COOEXT(1,1), COOEXT(2,2)-COOEXT(2,1))
+         ECAMAX = MAX( ECAMAX                , COOEXT(3,2)-COOEXT(3,1))
+         IF( ECAMAX .LE. 0. ) ECAMAX = 1.
+         ECAMAX = ECAMAX * 0.1
+C        ABSCISSES
+         CADRS0(1,1) = COOEXT(1,1) - ECAMAX
+         CADRS0(1,2) = COOEXT(1,2) + ECAMAX
+C        ORDONNEES
+         CADRS0(2,1) = COOEXT(2,1) - ECAMAX
+         CADRS0(2,2) = COOEXT(2,2) + ECAMAX
+C        COTES
+         CADRS0(3,1) = COOEXT(3,1) - ECAMAX
+         CADRS0(3,2) = COOEXT(3,2) + ECAMAX
+C        PAS
+         NBPASX = 10
+         CADRS0(1,3) = ABS( ( CADRS0(1,2) - CADRS0(1,1) ) / NBPASX )
+         NBPASY = 10
+         CADRS0(2,3) = ABS( ( CADRS0(2,2) - CADRS0(2,1) ) / NBPASY )
+         NBPASZ = 10
+         CADRS0(3,3) = ABS( ( CADRS0(3,2) - CADRS0(3,1) ) / NBPASZ )
+      ELSE
+C        ABSCISSES
+         CADRS0(1,1) =-1.0
+         CADRS0(1,2) = 11.0
+C        ORDONNEES
+         CADRS0(2,1) =-1.0
+         CADRS0(2,2) = 11.0
+C        COTES
+         CADRS0(3,1) =-1.0
+         CADRS0(3,2) = 11.0
+C        PAS
+         NBPASX = 12
+         CADRS0(1,3) = 1.0
+         NBPASY = 12
+         CADRS0(2,3) = 1.0
+         NBPASZ = 12
+         CADRS0(3,3) = 1.0
+      ENDIF
+C
+C     ATTRACTION PAR DEFAUT
+      IF( LANGAG .EQ. 0 ) THEN
+         KAIMAX = 'NE PAS ATTRACTER en X'
+         KAIMAY = 'NE PAS ATTRACTER en Y'
+         KAIMAZ = 'NE PAS ATTRACTER en Z'
+      ELSE
+         KAIMAX = 'NO X-ATTRACTION'
+         KAIMAY = 'NO Y-ATTRACTION'
+         KAIMAZ = 'NO Z-ATTRACTION'
+      ENDIF
+      AIMANX = .TRUE.
+      AIMANY = .TRUE.
+      AIMANZ = .TRUE.
+C
+C     LE NOM GENERIQUE DE LA TRANSFORMATION
+      KNOMTR = 'I'
+      NUTRAN = 1
+C
+C     LECTURE DES DONNEES
+ 10   CALL LIMTCL( 'saisipt3', NUMTCL )
+      IF( NUMTCL .EQ. -1 ) GOTO 9900
+      IF( NUMTCL .EQ. 20 ) GOTO 500
+      GOTO( 100, 200, 300, 400, 450 ), NUMTCL
+C
+C     LA DEMANDE DE NOM GENERIQUE DES POINTS
+C     ======================================
+ 100  CALL INVITE( 62 )
+      NCVALS = 2
+      KNOMPO = 'P                       '
+      CALL LIRCAR( NCVALS, KNOMPO )
+      NBPOIN = 0
+      GOTO 10
+C
+C     LA DEMANDE DE NOM DE LA TRANSFORMATION
+C     ======================================
+ 200  CALL INVITE( 44 )
+      NCVALS = 2
+      CALL LIRCAR( NCVALS, KNOMTR )
+      GOTO 10
+C
+C     ABSCISSES MINIMALE MAXIMALE et PAS du CADRE des POINTS a saisir
+C     ================================================================
+ 300  CALL INVITE( 110 )
+      NCVALS = 5
+      CALL LIRRSP( NCVALS, CADRS0(1,1) )
+      IF( NCVALS .LE. 0 ) GOTO 10
+      CALL INVITE( 109 )
+      NCVALS = 5
+      CALL LIRRSP( NCVALS, CADRS0(1,2) )
+      IF( NCVALS .LE. 0 ) GOTO 10
+      IF( CADRS0(1,1) .GT. CADRS0(1,2) ) THEN
+         X = CADRS0(1,1)
+         CADRS0(1,1) = CADRS0(1,2)
+         CADRS0(1,2) = X
+      ENDIF
+      IF( CADRS0(1,1) .EQ. CADRS0(1,2) ) THEN
+         CADRS0(1,1) = 0.0
+         CADRS0(1,2) = 1.0
+      ENDIF
+      CALL INVITE( 87 )
+      NCVALS = 5
+      CALL LIRRSP( NCVALS, X )
+      CADRS0(1,3) = ABS( X )
+      NBPASX = NINT( ( CADRS0(1,2) - CADRS0(1,1) ) / CADRS0(1,3) )
+      IF( NBPASX .LE. 1 .OR. NBPASX .GT. 100 ) THEN
+          CADRS0(1,3) = (CADRS0(1,2)-CADRS0(1,1)) / 5
+      ENDIF
+      GOTO 10
+C
+C     ORDONNEES MINIMALE MAXIMALE et PAS du CADRE des POINTS a saisir
+C     ================================================================
+ 400  CALL INVITE( 119 )
+      NCVALS = 5
+      CALL LIRRSP( NCVALS, CADRS0(2,1) )
+      IF( NCVALS .LE. 0 ) GOTO 10
+      CALL INVITE( 118 )
+      NCVALS = 5
+      CALL LIRRSP( NCVALS, CADRS0(2,2) )
+      IF( NCVALS .LE. 0 ) GOTO 10
+      IF( CADRS0(2,1) .GT. CADRS0(2,2) ) THEN
+         X = CADRS0(2,1)
+         CADRS0(2,1) = CADRS0(2,2)
+         CADRS0(2,2) = X
+      ENDIF
+      IF( CADRS0(2,1) .EQ. CADRS0(2,2) ) THEN
+         CADRS0(2,1) = 0.0
+         CADRS0(2,2) = 1.0
+      ENDIF
+      CALL INVITE( 88 )
+      NCVALS = 5
+      CALL LIRRSP( NCVALS, X )
+      CADRS0(2,3) = ABS( X )
+      NBPASY = NINT( ( CADRS0(2,2) - CADRS0(2,1) ) / CADRS0(2,3) )
+      IF( NBPASY .LE. 1 .OR. NBPASY .GT. 100 ) THEN
+          CADRS0(2,3) = (CADRS0(2,2)-CADRS0(2,1)) / 5
+      ENDIF
+      GOTO 10
+C
+C     COTES MINIMALE MAXIMALE et PAS du CADRE des POINTS a saisir
+C     ================================================================
+ 450  CALL INVITE( 128 )
+      NCVALS = 5
+      CALL LIRRSP( NCVALS, CADRS0(3,1) )
+      IF( NCVALS .LE. 0 ) GOTO 10
+      CALL INVITE( 127 )
+      NCVALS = 5
+      CALL LIRRSP( NCVALS, CADRS0(3,2) )
+      IF( NCVALS .LE. 0 ) GOTO 10
+      IF( CADRS0(3,1) .GT. CADRS0(3,2) ) THEN
+         X = CADRS0(3,1)
+         CADRS0(3,1) = CADRS0(3,2)
+         CADRS0(3,2) = X
+      ENDIF
+      IF( CADRS0(3,1) .EQ. CADRS0(3,2) ) THEN
+         CADRS0(3,1) = 0.0
+         CADRS0(3,2) = 1.0
+      ENDIF
+      CALL INVITE( 89 )
+      NCVALS = 5
+      CALL LIRRSP( NCVALS, X )
+      CADRS0(3,3) = ABS( X )
+      NBPASZ = NINT( ( CADRS0(3,2) - CADRS0(3,1) ) / CADRS0(3,3) )
+      IF( NBPASZ .LE. 1 .OR. NBPASZ .GT. 100 ) THEN
+          CADRS0(3,3) = (CADRS0(3,2)-CADRS0(3,1)) / 5
+      ENDIF
+      GOTO 10
+C
+C     =============================
+C     SAISIE a la SOURIS des POINTS
+C     =============================
+C     LE NUMERO DE LA TRANSFORMATION
+ 500  CALL NUOBNM( 'TRANSFO', KNOMTR, NUTRAN )
+      IF( NUTRAN .LE. 0 ) THEN
+         NBLGRC(NRERR) = 1
+         KERR(1) = 'TRANSFORMATION INCONNUE'
+         CALL LEREUR
+         GOTO 200
+      ENDIF
+C
+C     LE CADRE OBJET 3D
+C     RECHERCHE DE LA DIMENSION MAXIMALE ECAMAX DE L'OBJET
+      ECAMAX = 0.
+      DO 505 I=1,3
+         IF( CADRS0(I,1) .GT. CADRS0(I,2) ) THEN
+            X = CADRS0(I,1)
+            CADRS0(I,1) = CADRS0(I,2)
+            CADRS0(I,2) = X
+         ENDIF
+         ECAMAX = MAX( ECAMAX, CADRS0(I,2) - CADRS0(I,1) )
+ 505  CONTINUE
+      IF( ECAMAX .LE. 0. .OR. ECAMAX .GT. 1E30 ) ECAMAX = 10.
+C
+      DO 508 I=1,3
+C        LE MILIEU
+         X = ( CADRS0(I,1) + CADRS0(I,2) ) * 0.5
+         CADRSA(I,1) = X - ECAMAX * 0.5
+         CADRSA(I,2) = X + ECAMAX * 0.5
+C        LE NOMBRE D'INTERVALLES
+         CADRSA(I,3) = CADRS0(I,3)
+         IF( CADRSA(I,3) .LE. 0 ) CADRSA(I,3) = 1.0
+         X = ECAMAX / CADRSA(I,3)
+         X = MIN( 20.0, X )
+         X = MAX(  2.0, X )
+         NBPAS(I) = NINT( X )
+ 508  CONTINUE
+C
+C     EFFACAGE DE L'ECRAN
+ 509  CALL EFFACE
+      CALL ITEMS0
+C
+C     DEFINITION DU CADRE OBJET=IMAGE=ECRAN EN CM
+C     ===========================================
+      XMIN = 0
+      YMIN = 0
+      XMAX = LAPXFE / CXMMPX * 0.1
+      YMAX = LHPXFE / CYMMPX * 0.1
+C     LE CENTRE DE L'ECRAN GRAPHIQUE
+      XM = ( XMIN + XMAX ) * 0.5
+      YM = ( YMIN + YMAX ) * 0.5
+      CALL FENETRE( XM-XMAX*0.5, XM+XMAX*0.5,
+     %              YM-YMAX*0.5, YM+YMAX*0.5 )
+C
+C     A PARTIR DE MAINTENANT TRACE EN COORDONNEES ECRAN EN CENTIMETRES
+C     LE CLIPPING DOIT ETRE DEFINI ET L'AXONOMETRIE AUSSI
+C
+C     L'ECRAN EST DIVISE EN 4 PARTIES EGALES DE MIN ET MAX
+      AXX1 = ECART
+      AXY1 = ECART
+      AXX2 = XM - ECART
+      AXY2 = YM - ECART
+C
+      XYX1 = XM + ECART
+      XYY1 = ECART
+      XYX2 = XMAX - ECART
+      XYY2 = YM   - ECART
+C
+      XZX1 = ECART
+      XZY1 = YM   + ECART
+      XZX2 = XM   - ECART
+      XZY2 = YMAX - ECART
+C
+      YZX1 = XM   + ECART
+      YZY1 = YM   + ECART
+      YZX2 = XMAX - ECART
+      YZY2 = YMAX - ECART
+C
+C     LES AXES XZ DANS LE COIN SUPERIEUR GAUCHE  X EST RETROGRADE
+C     -----------------------------------------
+C     COORDONNEES OBJET DU MILIEU
+      XM = ( CADRSA(1,1) + CADRSA(1,2) ) * 0.5
+C     COORDONNEES OBJET DE L'INTERVALLE
+      HX = CADRS0(1,3)
+      NBPASX = NINT( (CADRS0(1,2) - CADRS0(1,1) ) / HX )
+C     COORDONNEES CM ECRAN
+      EXM = ( XZX1 + XZX2 ) * 0.5
+      EHX = ( XZX1 - XZX2 ) / NBPASX
+C     LE CADRE OBJET FINAL EN X
+      CADRSA(1,1) = ( EXM - XZX1 ) * HX / EHX + XM
+      CADRSA(1,2) = ( EXM - XZX2 ) * HX / EHX + XM
+C     LE POINT DE DEPART DU TRACE
+      EX = ( CADRS0(1,2) - XM ) * EHX / HX + EXM
+      X  =   CADRS0(1,2)
+      DO 510 I=0,NBPASX
+C        LE SEGMENT X=CTE Z=Z1 A Z2
+         CALL TRAIT2D( NCGRIS, EX, XZY1, EX, XZY2 )
+C        LA VALEUR DE X OBJET EN HAUT
+         WRITE(KTXT,'(G9.2)') X
+         CALL TEXTE2D( NCGRIS, EX-0.9, XZY2-0.6 + ECARCA, KTXT )
+C        LA VALEUR DE X OBJET EN BAS
+         CALL TEXTE2D( NCGRIS, EX-0.9, XZY1+0.4+ECARCA, KTXT )
+C        PASSAGE AU SUIVANT
+         EX = EX - EHX
+         X  = X  - HX
+         IF( EX .GT. XZX2 ) GOTO 512
+ 510  CONTINUE
+C
+C     LES VALEURS SUR L'AXE Z
+C     COORDONNEES OBJET DU MILIEU
+ 512  ZM = ( CADRSA(3,1) + CADRSA(3,2) ) * 0.5
+C     COORDONNEES OBJET DE L'INTERVALLE
+      HZ = CADRS0(3,3)
+      NBPASZ = NINT( (CADRS0(3,2) - CADRS0(3,1) ) / HZ )
+C     COORDONNEES CM ECRAN
+      EZM = ( XZY1 + XZY2 ) * 0.5
+      EHZ = ( XZY2 - XZY1 ) / NBPASZ
+C     LE CADRE OBJET FINAL EN Z
+      CADRSA(3,1) = ( XZY1 - EZM ) * HZ / EHZ + ZM
+      CADRSA(3,2) = ( XZY2 - EZM ) * HZ / EHZ + ZM
+C     LE POINT DE DEPART DU TRACE
+      EZ = ( CADRS0(3,1) - ZM ) * EHZ / HZ + EZM
+      Z  =   CADRS0(3,1)
+      DO 520 I=0,NBPASZ
+C        LE SEGMENT Z=CTE Y=Y1 A Y2
+         CALL TRAIT2D( NCGRIS, XZX1, EZ, XZX2, EZ )
+C        LA VALEUR DE Z OBJET A DROITE
+         WRITE(KTXT,'(G9.2)') Z
+         CALL TEXTE2D( NCGRIS, XZX2-2.0, EZ+0.15, KTXT )
+C        LA VALEUR DE Z OBJET A GAUCHE
+         CALL TEXTE2D( NCGRIS, XZX1+0.1, EZ+0.15, KTXT )
+C        PASSAGE AU SUIVANT
+         EZ = EZ + EHZ
+         Z  = Z  + HZ
+         IF( EZ .GT. XZY2 ) GOTO 522
+ 520  CONTINUE
+C
+C     LE RECTANGLE ENGLOBANT
+ 522  CALL XVEPAISSEUR( 2 )
+      EC2 = ECART * 0.5
+      CALL TRAIT2D( NCORAN, XZX1-EC2, XZY1-EC2, XZX2+EC2, XZY1-EC2 )
+      CALL TRAIT2D( NCORAN, XZX2+EC2, XZY1-EC2, XZX2+EC2, XZY2+EC2 )
+      CALL TRAIT2D( NCORAN, XZX2+EC2, XZY2+EC2, XZX1-EC2, XZY2+EC2 )
+      CALL TRAIT2D( NCORAN, XZX1-EC2, XZY2+EC2, XZX1-EC2, XZY1-EC2 )
+C     L'AXE X
+      CALL TRAIT2D( NCROUG, XZX2-0.5, XZY1+0.5, XZX1+0.2, XZY1+0.5 )
+      CALL TEXTE2D( NCROUG, XZX1+0.2, XZY1+0.5, ' X ' )
+C     L'AXE Z
+      CALL TRAIT2D( NCBLEU, XZX2-0.5, XZY1+0.5, XZX2-0.5, XZY2-0.8 )
+      CALL TEXTE2D( NCBLEU, XZX2-0.5, XZY2-0.8, ' Z ' )
+      CALL XVEPAISSEUR( 1 )
+C
+C     LES AXES YZ DANS LE COIN SUPERIEUR DROIT
+C     ----------------------------------------
+C     LES VALEURS SUR L'AXE Y
+C     COORDONNEES OBJET DU MILIEU
+      YM = ( CADRSA(2,1) + CADRSA(2,2) ) * 0.5
+C     COORDONNEES OBJET DE L'INTERVALLE
+      HY = CADRS0(2,3)
+      NBPASY = NINT( (CADRS0(2,2) - CADRS0(2,1) ) / HY )
+C     COORDONNEES CM ECRAN
+      EYM = ( YZX1 + YZX2 ) * 0.5
+      EHY = ( YZX2 - YZX1 ) / NBPASY
+C     LE CADRE OBJET FINAL EN Y
+      CADRSA(2,1) = ( YZX1 - EYM ) * HY / EHY + YM
+      CADRSA(2,2) = ( YZX2 - EYM ) * HY / EHY + YM
+C     LE POINT DE DEPART DU TRACE
+      EY = ( CADRS0(2,1) - YM ) * EHY / HY + EYM
+      Y  =   CADRS0(2,1)
+      DO 530 I=0,NBPASY
+C        LE SEGMENT Y=CTE Z=Z1 A Z2
+         CALL TRAIT2D( NCGRIS, EY, YZY1, EY, YZY2 )
+         IF( I .GT. 0 ) THEN
+C           LA VALEUR DE Y OBJET EN HAUT
+            WRITE( KTXT, '(G9.2)' ) Y
+            CALL TEXTE2D( NCGRIS, EY-0.9, YZY2-0.6+ECARCA, KTXT )
+C           LA VALEUR DE Y OBJET EN BAS
+            CALL TEXTE2D( NCGRIS, EY-0.9, YZY1+0.4+ECARCA, KTXT )
+         ENDIF
+C        PASSAGE AU SUIVANT
+         EY = EY + EHY
+         Y  = Y  + HY
+         IF( EY .GT. YZX2 ) GOTO 532
+ 530  CONTINUE
+C
+C     LES VALEURS SUR L'AXE Z
+C     COORDONNEES OBJET DE L'INTERVALLE
+ 532  HZ = CADRS0(3,3)
+      NBPASZ = NINT( (CADRS0(3,2) - CADRS0(3,1) ) / HZ )
+C     COORDONNEES CM ECRAN
+      EZM = ( YZY1 + YZY2 ) * 0.5
+      EHZ = ( YZY2 - YZY1 ) / NBPASZ
+C     LE POINT DE DEPART DU TRACE
+      EZ = ( CADRS0(3,1) - ZM ) * EHZ / HZ + EZM
+      Z  =   CADRS0(3,1)
+      DO 540 I=0,NBPASZ
+C        LE SEGMENT Z=CTE Y=Y1 A Y2
+         CALL TRAIT2D( NCGRIS, YZX1, EZ, YZX2, EZ )
+C        LA VALEUR DE Z OBJET A DROITE
+         WRITE( KTXT, '(G9.2)' ) Z
+         CALL TEXTE2D( NCGRIS,  YZX2-2.0, EZ+0.15, KTXT )
+C        LA VALEUR DE Z OBJET A GAUCHE
+         CALL TEXTE2D( NCGRIS,  YZX1+0.25, EZ+0.15, KTXT )
+C        PASSAGE AU SUIVANT
+         EZ = EZ + EHZ
+         Z  = Z  + HZ
+         IF( EZ .GT. YZY2 ) GOTO 542
+ 540  CONTINUE
+C
+C     LE RECTANGLE ENGLOBANT
+ 542  CALL XVEPAISSEUR( 2 )
+      CALL TRAIT2D( NCORAN, YZX1-EC2, YZY1-EC2, YZX2+EC2, YZY1-EC2 )
+      CALL TRAIT2D( NCORAN, YZX2+EC2, YZY1-EC2, YZX2+EC2, YZY2+EC2 )
+      CALL TRAIT2D( NCORAN, YZX2+EC2, YZY2+EC2, YZX1-EC2, YZY2+EC2 )
+      CALL TRAIT2D( NCORAN, YZX1-EC2, YZY2+EC2, YZX1-EC2, YZY1-EC2 )
+C     L'AXE Y
+      CALL TRAIT2D( NCVERT, YZX1+0.5, YZY1+0.5, YZX2-1.0, YZY1+0.5 )
+      CALL TEXTE2D( NCVERT, YZX2-1.0, YZY1+0.5, ' Y ' )
+C     L'AXE Z
+      CALL TRAIT2D( NCBLEU, YZX1+0.5, YZY1+0.5, YZX1+0.5, YZY2-0.8 )
+      CALL TEXTE2D( NCBLEU, YZX1+0.5, YZY2-0.8, ' Z ' )
+      CALL XVEPAISSEUR( 0 )
+C
+C     LES AXES XY DANS LE COIN INFERIEUR DROIT
+C     ----------------------------------------
+C     LES VALEURS SUR L'AXE Y ( HORIZONTAL )
+C     LE POINT DE DEPART DU TRACE
+      EY = ( CADRS0(2,1) - YM ) * EHY / HY + EYM
+      Y  =   CADRS0(2,1)
+      DO 550 I=0,NBPASY
+C        LE SEGMENT Y=CTE Z=Z1 A Z2
+         CALL TRAIT2D( NCGRIS, EY, XYY1, EY, XYY2 )
+         IF( I .GT. 0 ) THEN
+C           LA VALEUR DE Y OBJET EN HAUT
+            WRITE( KTXT, '(G9.2)' ) Y
+            CALL TEXTE2D( NCGRIS, EY-0.9, XYY2-0.8+ECARCA, KTXT )
+C           LA VALEUR DE Y OBJET EN BAS
+            CALL TEXTE2D( NCGRIS, EY-0.9, XYY1+0.1+ECARCA, KTXT )
+         ENDIF
+C        PASSAGE AU SUIVANT
+         EY = EY + EHY
+         Y  = Y  + HY
+         IF( EY .GT. XYX2 ) GOTO 552
+ 550  CONTINUE
+C
+C     LES VALEURS SUR L'AXE X ( VERTICAL DIRIGE VERS LE BAS )
+C     COORDONNEES CM ECRAN
+ 552  EXM  = ( XYY1 + XYY2 ) * 0.5
+      EHXY = ( XYY1 - XYY2 ) / NBPASX
+C     LE CADRE OBJET FINAL EN X DE XY
+      CADRX1 = ( EXM - XYY1 ) * HX / EHXY + XM
+      CADRX2 = ( EXM - XYY2 ) * HX / EHXY + XM
+C     LE POINT DE DEPART DU TRACE
+      EXY = ( CADRS0(1,1)  - XM ) * EHXY / HX + EXM
+      XY  =   CADRS0(1,1)
+      DO 560 I=0,NBPASX
+C        LE SEGMENT X=CTE Y=Y1 A Y2
+         CALL TRAIT2D( NCGRIS, XYX1, EXY, XYX2, EXY )
+         IF( I .NE. 0 .AND. I .NE. NBPASX ) THEN
+C           LA VALEUR DE X OBJET A DROITE
+            WRITE( KTXT, '(G9.2)' ) XY
+            CALL TEXTE2D( NCGRIS, XYX2-2.0, EXY+0.15, KTXT )
+C           LA VALEUR DE X OBJET A GAUCHE
+            CALL TEXTE2D( NCGRIS, XYX1+0.25, EXY+0.15, KTXT )
+         ENDIF
+C        PASSAGE AU SUIVANT
+         EXY = EXY + EHXY
+         XY  = XY  + HX
+         IF( EXY .LT. XYY1 ) GOTO 562
+ 560  CONTINUE
+C
+C     LE RECTANGLE ENGLOBANT
+ 562  CALL XVEPAISSEUR( 2 )
+      CALL TRAIT2D( NCORAN, XYX1-EC2, XYY1-EC2, XYX2+EC2, XYY1-EC2 )
+      CALL TRAIT2D( NCORAN, XYX2+EC2, XYY1-EC2, XYX2+EC2, XYY2+EC2 )
+      CALL TRAIT2D( NCORAN, XYX2+EC2, XYY2+EC2, XYX1-EC2, XYY2+EC2 )
+      CALL TRAIT2D( NCORAN, XYX1-EC2, XYY2+EC2, XYX1-EC2, XYY1-EC2 )
+C     L'AXE X      EST VERS LE BAS
+      CALL TRAIT2D( NCROUG,  XYX1+0.5, XYY2-0.25, XYX1+0.5, XYY1+0.5 )
+      CALL TEXTE2D( NCROUG, XYX1+0.5, XYY1+0.5, ' X ' )
+C     L'AXE Y
+      CALL TRAIT2D( NCVERT, XYX1+0.5, XYY2-0.25, XYX2-1.0, XYY2-0.25 )
+      CALL TEXTE2D( NCVERT, XYX2-1.0, XYY2-0.25, ' Y ' )
+C
+C     AXONOMETRIE DANS LE COIN INFERIEUR GAUCHE
+C     -----------------------------------------
+C     LE RECTANGLE ENGLOBANT
+      CALL TRAIT2D( NCROUG, AXX1-EC2, AXY1-EC2, AXX2+EC2, AXY1-EC2 )
+      CALL TRAIT2D( NCROUG, AXX2+EC2, AXY1-EC2, AXX2+EC2, AXY2+EC2 )
+      CALL TRAIT2D( NCROUG, AXX2+EC2, AXY2+EC2, AXX1-EC2, AXY2+EC2 )
+      CALL TRAIT2D( NCROUG, AXX1-EC2, AXY2+EC2, AXX1-EC2, AXY1-EC2 )
+      CALL XVEPAISSEUR(0)
+C
+C     POINT VISE  LE BARYCENTRE DU PARALLELIPIPEDE MAXIMAL
+      PV(1) = ( CADRSA(1,1) + CADRSA(1,2) ) * 0.5
+      PV(2) = ( CADRSA(2,1) + CADRSA(2,2) ) * 0.5
+      PV(3) = ( CADRSA(3,1) + CADRSA(3,2) ) * 0.5
+C     POSITION DE L'OEIL
+      OEIL(1) =  CADRSA(1,2) + (CADRSA(1,2)-CADRSA(1,1))*0.05
+      OEIL(2) =  PV(2) + (CADRSA(2,2)-CADRSA(2,1))*0.35
+      OEIL(3) =  PV(3) + (CADRSA(3,2)-CADRSA(3,1))*0.25
+C
+C     CALCUL DES 3 AXES LE PREMIER EST LA DIRECTION PV-OEIL
+      DO 625 I=1,3
+         PTAXE3(I,1) = OEIL(I) - PV(I)
+         PTAXE3(I,3) = 0D0
+ 625  CONTINUE
+      IF( PTAXE3(1,1) .EQ. 0 .AND. PTAXE3(2,1) .EQ. 0 ) THEN
+C        DIRECTION DE VISEE PARALLELE A Z  AXE1 = X
+         PTAXE3(1,3) = 1D0
+      ELSE
+C        AXE3 =Z
+         PTAXE3(3,3) = 1D0
+      ENDIF
+      CALL NORME1( 3, PTAXE3( 1, 1 ), IERR )
+C     PTAXE3( ., 2 )
+      CALL PROVEC( PTAXE3( 1, 3 ), PTAXE3( 1, 1 ), PTAXE3( 1, 2 ) )
+      CALL NORME1( 3, PTAXE3( 1, 2 ), IERR )
+C     PTAXE3( ., 3 )
+      CALL PROVEC( PTAXE3( 1, 1 ), PTAXE3( 1, 2 ), PTAXE3( 1, 3 ) )
+      CALL NORME1( 3, PTAXE3( 1, 3 ), IERR )
+C
+C     RECHERCHE DU MIN ET MAX DU CADRE DE SAISIE DANS LE PLAN D'AXONOMETRIE
+      YAXMIN = RINFO( 'GRAND' )
+      YAXMAX = -YAXMIN
+      ZAXMIN =  YAXMIN
+      ZAXMAX =  YAXMAX
+      DO 638 K=1,2
+         DO 636 J=1,2
+            DO 634 I=1,2
+               CALL AXOYZ( CADRSA(1,I),CADRSA(2,J),CADRSA(3,K),
+     %                     YAX, ZAX )
+               IF( YAX .LT. YAXMIN ) YAXMIN = YAX
+               IF( YAX .GT. YAXMAX ) YAXMAX = YAX
+               IF( ZAX .LT. ZAXMIN ) ZAXMIN = ZAX
+               IF( ZAX .GT. ZAXMAX ) ZAXMAX = ZAX
+ 634        CONTINUE
+ 636     CONTINUE
+ 638  CONTINUE
+      HH = ( YAXMAX - YAXMIN ) / 100
+      YAXMIN = YAXMIN - HH
+      YAXMAX = YAXMAX + HH
+      HH = ( ZAXMAX - ZAXMIN ) / 100
+      ZAXMIN = ZAXMIN - HH
+      ZAXMAX = ZAXMAX + HH
+C
+C     LES 12 ARETES DE L'HEXAEDRE DE SAISIE
+C     -------------------------------------
+      CALL XVEPAISSEUR( 3 )
+C     L'AXE DES X
+      CALL AXONSG( NCROUG, CADRS0(1,1), CADRS0(2,1), CADRS0(3,1) ,
+     %                     CADRS0(1,2), CADRS0(2,1), CADRS0(3,1) )
+      CALL AXOXYCM( CADRS0(1,2), CADRS0(2,1), CADRS0(3,1), YAX, ZAX )
+      CALL TEXTE2D( NCROUG, YAX, ZAX, ' X ' )
+C     L'AXE DES Y
+      CALL AXONSG( NCVERT, CADRS0(1,1), CADRS0(2,1), CADRS0(3,1) ,
+     %                     CADRS0(1,1), CADRS0(2,2), CADRS0(3,1) )
+      CALL AXOXYCM( CADRS0(1,1), CADRS0(2,2), CADRS0(3,1), YAX, ZAX )
+      CALL TEXTE2D( NCVERT, YAX, ZAX, ' Y ' )
+C     L'AXE DES Z
+      CALL AXONSG( NCBLEU,  CADRS0(1,1), CADRS0(2,1), CADRS0(3,1) ,
+     %             CADRS0(1,1), CADRS0(2,1), CADRS0(3,2) )
+      CALL AXOXYCM( CADRS0(1,1), CADRS0(2,1), CADRS0(3,2), YAX, ZAX )
+      CALL TEXTE2D( NCBLEU, YAX, ZAX, ' Z ' )
+C
+C     LE RESTE DU QUADRANGLE INFERIEUR
+      CALL XVEPAISSEUR( 2 )
+      CALL AXONSG( NCMAGE, CADRS0(1,2), CADRS0(2,1), CADRS0(3,1) ,
+     %                     CADRS0(1,2), CADRS0(2,2), CADRS0(3,1) )
+      CALL AXONSG( NCMAGE, CADRS0(1,2), CADRS0(2,2), CADRS0(3,1) ,
+     %                     CADRS0(1,1), CADRS0(2,2), CADRS0(3,1) )
+C
+C     LE QUADRANGLE SUPERIEUR
+      CALL AXONSG( NCMAGE, CADRS0(1,1), CADRS0(2,1), CADRS0(3,2) ,
+     %                     CADRS0(1,2), CADRS0(2,1), CADRS0(3,2) )
+      CALL AXONSG( NCMAGE, CADRS0(1,2), CADRS0(2,1), CADRS0(3,2) ,
+     %                     CADRS0(1,2), CADRS0(2,2), CADRS0(3,2) )
+      CALL AXONSG( NCMAGE, CADRS0(1,2), CADRS0(2,2), CADRS0(3,2) ,
+     %                     CADRS0(1,1), CADRS0(2,2), CADRS0(3,2) )
+      CALL AXONSG( NCMAGE, CADRS0(1,1), CADRS0(2,2), CADRS0(3,2) ,
+     %                     CADRS0(1,1), CADRS0(2,1), CADRS0(3,2) )
+C
+C     LES 3 ARETES VERTICALES MANQUANTES
+      CALL AXONSG( NCMAGE, CADRS0(1,2), CADRS0(2,1), CADRS0(3,1) ,
+     %                     CADRS0(1,2), CADRS0(2,1), CADRS0(3,2) )
+      CALL AXONSG( NCMAGE, CADRS0(1,2), CADRS0(2,2), CADRS0(3,1) ,
+     %                     CADRS0(1,2), CADRS0(2,2), CADRS0(3,2) )
+      CALL AXONSG( NCMAGE, CADRS0(1,1), CADRS0(2,2), CADRS0(3,1) ,
+     %                     CADRS0(1,1), CADRS0(2,2), CADRS0(3,2) )
+C
+C     LES 3 CARACTERES X Y Z DES AXES
+      CALL AXOXYCM( CADRS0(1,1), CADRS0(2,1), CADRS0(3,2), YAX, ZAX )
+      CALL TEXTE2D( NCROUG, YAX, ZAX, ' X ' )
+      CALL AXOXYCM( CADRS0(1,1), CADRS0(2,2), CADRS0(3,1), YAX, ZAX )
+      CALL TEXTE2D( NCVERT, YAX, ZAX, ' Y ' )
+      CALL AXOXYCM( CADRS0(1,1), CADRS0(2,1), CADRS0(3,2), YAX, ZAX )
+      CALL TEXTE2D( NCBLEU, YAX, ZAX, ' Z ' )
+      CALL XVEPAISSEUR( 0 )
+C
+C     TRACE DU RECTANGLE DU MENU
+C     ==========================
+C     LA HAUTEUR ET LARGEUR EN CM D'UNE LIGNE DU MENU
+      CMHLIG = 0.8
+C     LE COIN SUPERIEUR DROIT DU MENU
+      XMENU2 = AXX2
+      YMENU2 = AXY2
+C     LE COIN INFERIEUR GAUCHE DU MENU
+      XMENU1 = XMENU2 - 4.0
+      YMENU1 = YMENU2 - CMHLIG * 5
+C
+C     LE TRACE DU RECTANGLE DU MENU
+      DO 670 I=1,5
+         Y = YMENU1 + I * CMHLIG
+         CALL TRAIT2D( NCVERT, XMENU1, Y, XMENU2, Y )
+ 670  CONTINUE
+C
+C     LES COTES VERTICAUX
+      CALL TRAIT2D( NCVERT, XMENU2, Y,      XMENU2, YMENU1 )
+      CALL TRAIT2D( NCVERT, XMENU2, YMENU1, XMENU1, YMENU1 )
+      CALL TRAIT2D( NCVERT, XMENU1, YMENU1, XMENU1, YMENU2 )
+C
+C     LE TEXTE DU MENU
+      Y = YMENU1 + 0.2
+      IF( LANGAG .EQ. 0 ) THEN
+      CALL TEXTE2D( NCVERT, XMENU1+0.3, Y, 'ABANDONNER' )
+      Y = Y + CMHLIG
+      CALL TEXTE2D( NCVERT, XMENU1+0.3, Y, KAIMAZ )
+      Y = Y + CMHLIG
+      CALL TEXTE2D( NCVERT, XMENU1+0.3, Y, KAIMAY )
+      Y = Y + CMHLIG
+      CALL TEXTE2D( NCVERT, XMENU1+0.3, Y, KAIMAX )
+      Y = Y + CMHLIG
+      CALL TEXTE2D( NCVERT, XMENU1+0.3, Y, 'TUER un POINT' )
+      ELSE
+      CALL TEXTE2D( NCVERT, XMENU1+0.3, Y, 'ESCAPE' )
+      Y = Y + CMHLIG
+      CALL TEXTE2D( NCVERT, XMENU1+0.3, Y, KAIMAZ )
+      Y = Y + CMHLIG
+      CALL TEXTE2D( NCVERT, XMENU1+0.3, Y, KAIMAY )
+      Y = Y + CMHLIG
+      CALL TEXTE2D( NCVERT, XMENU1+0.3, Y, KAIMAX )
+      Y = Y + CMHLIG
+      CALL TEXTE2D( NCVERT, XMENU1+0.3, Y, 'DELETE a POINT' )
+      ENDIF
+C
+C     TRACE DES POINTS EXISTANTS
+C     ==========================
+C     LE DEBUT DU CHAINAGE DES POINTS OCCUPES DANS LE LEXIQUE
+      CALL TAMSOU( NTPOIN, MNPOIN )
+      NUPOIN = MCN( MNPOIN + 5 )
+C     NOMBRE D'ENTIERS POUR STOCKER UN NOM DE POINT
+      NBENNM = MCN( MNPOIN + 2 )
+C
+C     LA BOUCLE SUR LES POINTS OCCUPES
+ 700  IF( NUPOIN .GT. 0 ) THEN
+C        ADRESSE MCN DU DEBUT DU POINT DANS LE LEXIQUE
+         MNOBJ = MNPOIN + MCN(MNPOIN) * NUPOIN
+C        LE LEXIQUE DE CE POINT EXISTE-T-IL ?
+         NTOBJ = MCN( MNOBJ + NBENNM + 2 )
+         IF( NTOBJ .GT. 0 ) THEN
+C           CE POINT EXISTE : RECHERCHE DE SON NOM
+            CALL ENTNOM( NBENNM, MCN( MNOBJ ), KNOMPT )
+C           TRACE DE CE POINT DE NOM KNOMPT
+            CALL LXTSOU( NTOBJ, 'XYZSOMMET', NTSOM, MNSOM )
+            IF( NTSOM .GT. 0 ) THEN
+C              TRACE DU POINT DANS LE MODE 4 VUES
+               CALL PT4VUE( NCBLEU,RMCN(MNSOM+WYZSOM),KNOMPT,NUPOIN )
+            ENDIF
+         ENDIF
+C        PASSAGE AU POINT SUIVANT
+         NUPOIN = MCN( MNOBJ + NBENNM )
+         GOTO 700
+      ENDIF
+C
+C     LE NOMBRE DE CARACTERES NON BLANCS DU NOM DU POINT
+      NBCAPO = NUDCNB( KNOMPO )
+      NBCAPO = MIN( NBCAPO, 20 )
+C
+C     SAISIE D'UN POINT PAR CLIC DE LA SOURIS
+C     =======================================
+ 800  KNOMPT = KNOMPO
+      CALL MEMPXFENETRE
+ 799  CALL SAIPTC( NOTYEV, NX, NY, NOCHAR )
+      IF( NOTYEV .EQ. 0 ) GOTO 9900
+      IF( NOTYEV .LT. 0 ) GOTO 799
+      X = XOB2PX( NX )
+      Y = YOB2PX( NY )
+C
+C     LE POINT SAISI EST IL DANS LE MENU ?
+ 801  IF( X .GE. XMENU1 .AND. X .LE. XMENU2 .AND.
+     %    Y .GE. YMENU1 .AND. Y .LE. YMENU2 ) THEN
+C
+C        OUI  : DANS QUELLE LIGNE ?
+         IF( Y .LE. YMENU1 + CMHLIG ) THEN
+C           ABANDON DE LA SAISIE
+            GOTO 10
+C
+         ELSE IF( Y .LE. YMENU1+2*CMHLIG ) THEN
+C           ATTRACTER OU NON EN Z
+            AIMANZ = .NOT. AIMANZ
+            IF( AIMANZ ) THEN
+               IF( LANGAG .EQ. 0 ) THEN
+                  KAIMAZ = 'NE PAS ATTRACTER EN Z'
+               ELSE
+                  KAIMAZ = 'NO Z-ATTRACTION'
+               ENDIF
+            ELSE
+               IF( LANGAG .EQ. 0 ) THEN
+                  KAIMAZ = 'ATTRACTER EN Z'
+               ELSE
+                  KAIMAZ = 'Z-ATTRACTION'
+               ENDIF
+            ENDIF
+            GOTO 509
+C
+         ELSE IF( Y .LE. YMENU1+3*CMHLIG ) THEN
+C           ATTRACTER OU NON EN Y
+            AIMANY = .NOT. AIMANY
+            IF( AIMANY ) THEN
+               IF( LANGAG .EQ. 0 ) THEN
+                  KAIMAY = 'NE PAS ATTRACTER EN Y'
+               ELSE
+                  KAIMAY = 'NO Y-ATTRACTION'
+               ENDIF
+            ELSE
+               IF( LANGAG .EQ. 0 ) THEN
+                  KAIMAY = 'ATTRACTER EN Y'
+               ELSE
+                  KAIMAY = 'Y-ATTRACTION'
+               ENDIF
+            ENDIF
+            GOTO 509
+C
+         ELSE IF( Y .LE. YMENU1+4*CMHLIG )THEN
+C           ATTRACTER OU NON EN X
+            AIMANX = .NOT. AIMANX
+            IF( AIMANX ) THEN
+               IF( LANGAG .EQ. 0 ) THEN
+                  KAIMAX = 'NE PAS ATTRACTER EN X'
+               ELSE
+                  KAIMAX = 'NO X-ATTRACTION'
+               ENDIF
+            ELSE
+               IF( LANGAG .EQ. 0 ) THEN
+                  KAIMAX = 'ATTRACTER EN X'
+               ELSE
+                  KAIMAX = 'X-ATTRACTION'
+               ENDIF
+            ENDIF
+            GOTO 509
+C
+         ELSE
+C
+C           TUER OU DEPLACER UN POINT A CLIQUER
+            CALL PTPLPR( 1, NUPOIN )
+            IF( NUPOIN .LE. 0 ) GOTO 509
+C           DESTRUCTION DU LEXIQUE DU POINT
+            CALL NMOBNU( 'POINT', NUPOIN, KNOMPT )
+            CALL LXLXDS(  NTPOIN, KNOMPT )
+C           SAUVEGARDE DE L'OPERATION DESTRUCTION SUR LE FICHIER FRAPPE
+            KERR(MXLGER) = KNOMPT//' ; I; 82;'
+            CALL SANSDBL( KERR(MXLGER), I )
+            WRITE(NFFRAP,*) KERR(MXLGER)(1:I)
+            GOTO 509
+         ENDIF
+      ENDIF
+C
+      IF( X .GE. XZX1 .AND. X .LE. XZX2 .AND.
+     %    Y .GE. XZY1 .AND. Y .LE. XZY2 ) THEN
+C         PLAN X Z
+          NOVUE = 1
+      ELSE IF( X .GE. YZX1 .AND. X .LE. YZX2 .AND.
+     %         Y .GE. YZY1 .AND. Y .LE. YZY2 ) THEN
+C         PLAN Y Z
+          NOVUE = 2
+      ELSE IF( X .GE. XYX1 .AND. X .LE. XYX2 .AND.
+     %         Y .GE. XYY1 .AND. Y .LE. XYY2 ) THEN
+C         PLAN X Y
+          NOVUE = 4
+      ELSE
+          GOTO 800
+      ENDIF
+C
+C     RECHERCHE DU NUMERO POUR LE NOM DU POINT
+C     ========================================
+C     RECHERCHE DU PLUS PETIT ENTIER TEL QUE LE NOM GENERIQUE CONCATENE
+C     AVEC CET ENTIER NE SOIT PAS DEJA LE NOM D'UN POINT
+      NBPOIN = 0
+ 802  NBPOIN = NBPOIN + 1
+      WRITE( KENTIE, '(I4)' ) NBPOIN
+      DO 805 J=4,1,-1
+         IF( KENTIE(J:J) .EQ. ' ' ) GOTO 807
+ 805  CONTINUE
+      J = 0
+ 807  KNOMPT(NBCAPO+1:NBCAPO+4-J) = KENTIE(J+1:4)
+      CALL LXLXOU( NTPOIN, KNOMPT, NTLXPO, MNLXPO )
+      IF( NTLXPO .GT. 0 ) GOTO 802
+C
+C     ICI LE POINT NBPOIN EST LIBRE  SON SYMBOLE EST + POUR LE POINT
+      CARSYM = '+' // KNOMPT
+C
+C     LE CLIC EST DANS UNE VUE : AFFICHAGE DU POINT ET DES 2 DROITES
+C
+      IF( NOVUE .EQ. 1 ) THEN
+C
+C        LE POINT EST CLIQUE DANS LE PLAN XZ  X INVERSE
+C        ----------------------------------------------
+C        TRACE EFFECTIF DU POINT DANS LE PLAN YZ
+C        (X,Y) SAISI EST EN FAIT (Y,Z) OBJET
+         CALL SYMBOLE2D( NCBLEU, X, Y, CARSYM )
+C        TRACE EFFECTIF DE LA DROITE Z=CTE DANS LE PLAN YZ
+         CALL TRAIT2D( NCROUG, YZX1,Y, YZX2, Y )
+C        TRACE EFFECTIF DE LA DROITE X=CTE DANS LE PLAN XY
+         YY = XYY2 - ( XZX2 - X )
+         CALL TRAIT2D( NCROUG,  XYX1, YY, XYX2, YY )
+C        C1,C2,C3 SONT LES COORDONNEES OBJET DU POINT CLIQUE
+         C1 = ( (XZX2-X) * CADRSA(1,2) + (X-XZX1) * CADRSA(1,1) )
+     %        / (XZX2-XZX1)
+         C3 = ( (YZY2-Y) * CADRSA(3,1) + (Y-YZY1) * CADRSA(3,2) )
+     %        / (YZY2-YZY1)
+C
+         IF( AIMANX ) THEN
+C           OUI: ATTRACTION SUR LA GRILLE EN X
+            I  = NINT( ( C1 - CADRS0(1,1) ) / CADRS0(1,3) )
+            C1 = CADRS0(1,1) + I * CADRS0(1,3)
+         ENDIF
+         IF( AIMANZ ) THEN
+C           OUI: ATTRACTION SUR LA GRILLE EN Z
+            I  = NINT( ( C3 - CADRS0(3,1) ) / CADRS0(3,3) )
+            C3 = CADRS0(3,1) + I * CADRS0(3,3)
+         ENDIF
+C
+C        TRACE EN AXONOMETRIE DU SEGMENT
+         CALL AXONSG( NCROUG, C1,CADRSA(2,1),C3, C1,CADRSA(2,2),C3 )
+         CALL MEMPXFENETRE
+C
+C        SAISIE DE LA COORDONNEE C1 MANQUANTE
+ 810     CALL SAIPTC( NOTYEV, NXX, NYY, NOCHAR )
+         IF( NOTYEV .EQ. 0 ) GOTO 9900
+         IF( NOTYEV .LT. 0 ) GOTO 810
+         XX = XOB2PX( NXX )
+         YY = YOB2PX( NYY )
+C
+         IF( XX .GE. XMENU1 .AND. XX .LE. XMENU2 .AND.
+     %       YY .GE. YMENU1 .AND. YY .LE. YMENU2 ) THEN
+C           CLIC DANS LE MENU AVANT LE SECOND CLIC
+C           EFFACEMENT DU POINT APRES LE 1-ER CLIC
+            CALL SYMBOLE2D( NCOFON, X, Y, CARSYM )
+            X = XX
+            Y = YY
+            GOTO 801
+         ENDIF
+         IF( XX .GE. YZX1 .AND. XX .LE. YZX2 .AND.
+     %       YY .GE. YZY1 .AND. YY .LE. YZY2 ) THEN
+C           PLAN Y Z   LA VALEUR REELLE DE Y EST COMPLETEE
+            C2 = ( (YZX2-XX) * CADRSA(2,1) + (XX-YZX1) * CADRSA(2,2) )
+     %           / (YZX2-YZX1)
+         ELSE IF( XX .GE. XYX1 .AND. XX .LE. XYX2 .AND.
+     %            YY .GE. XYY1 .AND. YY .LE. XYY2 ) THEN
+C           PLAN X Y  LA VALEUR REELLE DE Y EST COMPLETEE
+            C2 = ( (XYX2-XX) * CADRSA(2,1) + (XX-XYX1) * CADRSA(2,2) )
+     %           / (XYX2-XYX1)
+         ELSE
+C           CLIC DANS UNE VUE INCORRECTE
+            GOTO 810
+         ENDIF
+C
+         IF( AIMANY ) THEN
+C           OUI: ATTRACTION SUR LA GRILLE EN Y
+            I  = NINT( ( C2 - CADRS0(2,1) ) / CADRS0(2,3) )
+            C2 = CADRS0(2,1) + I * CADRS0(2,3)
+         ENDIF
+C
+C        EFFACEMENT DES LIGNES
+C        TRACE EFFECTIF DE LA DROITE Z=CTE DANS LE PLAN YZ
+         CALL TRAIT2D( NCOFON, YZX1, Y, YZX2, Y )
+C        TRACE EFFECTIF DE LA DROITE X=CTE DANS LE PLAN XY
+         YY = XYY2 - ( XZX2 - X )
+         CALL TRAIT2D( NCOFON,  XYX1, YY, XYX2, YY )
+C        TRACE EN AXONOMETRIE DU SEGMENT
+         CALL AXONSG( NCOFON, C1,CADRSA(2,1),C3, C1,CADRSA(2,2),C3 )
+         CALL MEMPXFENETRE
+C
+      ELSE IF( NOVUE .EQ. 2 ) THEN
+C
+C        LE POINT EST CLIQUE DANS LE PLAN YZ DIRECT
+C        ------------------------------------------
+C        TRACE EFFECTIF DU POINT DANS LE PLAN YZ
+C        (X,Y) SAISI EST EN FAIT (Y,Z) OBJET
+         CALL SYMBOLE2D( NCBLEU, X, Y, CARSYM )
+C        TRACE EFFECTIF DE LA DROITE Z=CTE DANS LE PLAN XZ
+         CALL TRAIT2D( NCROUG, XZX1, Y, XZX2, Y )
+C        TRACE EFFECTIF DE LA DROITE Y=CTE DANS LE PLAN XY
+         CALL TRAIT2D( NCROUG, X, XYY2, X, XYY1 )
+C        C1,C2,C3 SONT LES COORDONNEES OBJET DU POINT CLIQUE
+         C2 = ( (YZX2-X) * CADRSA(2,1) + (X-YZX1) * CADRSA(2,2) )
+     %        / (YZX2-YZX1)
+         C3 = ( (YZY2-Y) * CADRSA(3,1) + (Y-YZY1) * CADRSA(3,2) )
+     %        / (YZY2-YZY1)
+C
+         IF( AIMANY ) THEN
+C           OUI: ATTRACTION SUR LA GRILLE EN Y
+            I  = NINT( ( C2 - CADRS0(2,1) ) / CADRS0(2,3) )
+            C2 = CADRS0(2,1) + I * CADRS0(2,3)
+         ENDIF
+         IF( AIMANZ ) THEN
+C           OUI: ATTRACTION SUR LA GRILLE EN Z
+            I  = NINT( ( C3 - CADRS0(3,1) ) / CADRS0(3,3) )
+            C3 = CADRS0(3,1) + I * CADRS0(3,3)
+         ENDIF
+C
+C        TRACE EN AXONOMETRIE DU SEGMENT
+         CALL AXONSG( NCROUG, CADRSA(1,1),C2,C3, CADRSA(1,2),C2,C3 )
+         CALL MEMPXFENETRE
+C
+C        SAISIE DE LA COORDONNEE C1 MANQUANTE
+ 820     CALL SAIPTC( NOTYEV, NXX, NYY, NOCHAR )
+         IF( NOTYEV .EQ. 0 ) GOTO 9900
+         IF( NOTYEV .LT. 0 ) GOTO 820
+         XX = XOB2PX( NXX )
+         YY = YOB2PX( NYY )
+C
+         IF( XX .GE. XMENU1 .AND. XX .LE. XMENU2 .AND.
+     %       YY .GE. YMENU1 .AND. YY .LE. YMENU2 ) THEN
+C           CLIC DANS LE MENU AVANT LE SECOND CLIC
+C           EFFACEMENT DU POINT APRES LE 1-ER CLIC
+            CALL SYMBOLE2D( NCOFON, X, Y, CARSYM )
+            X = XX
+            Y = YY
+            GOTO 801
+         ENDIF
+         IF( XX .GE. XZX1 .AND. XX .LE. XZX2 .AND.
+     %       YY .GE. XZY1 .AND. YY .LE. XZY2 ) THEN
+C           PLAN X Z   LA VALEUR REELLE DE X EST COMPLETEE
+            C1 = ( (XZX2-XX) * CADRSA(1,2) + (XX-XZX1) * CADRSA(1,1) )
+     %           / (XZX2-XZX1)
+         ELSE IF( XX .GE. XYX1 .AND. XX .LE. XYX2 .AND.
+     %            YY .GE. XYY1 .AND. YY .LE. XYY2 ) THEN
+C           PLAN X Y  LA VALEUR REELLE DE X EST COMPLETEE
+            C1 = ( (XYY2-YY) * CADRX2 + (YY-XYY1) * CADRX1 )
+     %           / (XYY2-XYY1)
+         ELSE
+C           CLIC DANS UNE VUE INCORRECTE
+            GOTO 820
+         ENDIF
+C
+         IF( AIMANX ) THEN
+C           OUI: ATTRACTION SUR LA GRILLE EN X
+            I  = NINT( ( C1 - CADRS0(1,1) ) / CADRS0(1,3) )
+            C1 = CADRS0(1,1) + I * CADRS0(1,3)
+         ENDIF
+C
+C        EFFACEMENT DES LIGNES
+C        TRACE EFFECTIF DE LA DROITE Z=CTE DANS LE PLAN XZ
+         CALL TRAIT2D( NCOFON,  XZX1, Y,  XZX2, Y )
+C        TRACE EFFECTIF DE LA DROITE Y=CTE DANS LE PLAN XY
+         CALL TRAIT2D( NCOFON, X, XYY2, X, XYY1 )
+C        TRACE EN AXONOMETRIE DU SEGMENT
+         CALL AXONSG( NCOFON, CADRSA(1,1),C2,C3, CADRSA(1,2),C2,C3 )
+         CALL MEMPXFENETRE
+C
+      ELSE IF( NOVUE .EQ. 4 ) THEN
+C
+C        LE POINT EST CLIQUE DANS LE PLAN XY  X INVERSE
+C        ----------------------------------------------
+C        TRACE EFFECTIF DU POINT DANS LE PLAN XY
+C        (X,Y) SAISI EST EN FAIT (Y,Z) OBJET
+         CALL SYMBOLE2D( NCBLEU, X, Y, CARSYM )
+C        TRACE EFFECTIF DE LA DROITE X=CTE DANS LE PLAN XZ
+         XX = XZX2 - ( XYY2 - Y )
+         CALL TRAIT2D( NCROUG, XX, XZY1, XX, XZY2 )
+C        TRACE EFFECTIF DE LA DROITE Y=CTE DANS LE PLAN YZ
+         CALL TRAIT2D( NCROUG, X, YZY1, X, YZY2 )
+C        C1,C2,C3 SONT LES COORDONNEES OBJET DU POINT CLIQUE
+         C1 = ( (XYY2-Y) * CADRX2 + (Y-XYY1) * CADRX1 )
+     %        / (XYY2-XYY1)
+         C2 = ( (XYX2-X) * CADRSA(2,1) + (X-XYX1) * CADRSA(2,2) )
+     %        / (XYX2-XYX1)
+C
+         IF( AIMANX ) THEN
+C           OUI: ATTRACTION SUR LA GRILLE EN X
+            I  = NINT( ( C1 - CADRS0(1,1) ) / CADRS0(1,3) )
+            C1 = CADRS0(1,1) + I * CADRS0(1,3)
+         ENDIF
+         IF( AIMANY ) THEN
+C           OUI: ATTRACTION SUR LA GRILLE EN Y
+            I  = NINT( ( C2 - CADRS0(2,1) ) / CADRS0(2,3) )
+            C2 = CADRS0(2,1) + I * CADRS0(2,3)
+         ENDIF
+C
+C        TRACE EN AXONOMETRIE DU SEGMENT
+         CALL AXONSG( NCROUG, C1,C2,CADRSA(3,1),  C1,C2,CADRSA(3,2) )
+         CALL MEMPXFENETRE
+C
+C        SAISIE DE LA COORDONNEE C3 MANQUANTE
+ 840     CALL SAIPTC( NOTYEV, NXX, NYY, NOCHAR )
+         IF( NOTYEV .EQ. 0 ) GOTO 9900
+         IF( NOTYEV .LT. 0 ) GOTO 840
+         XX = XOB2PX( NXX )
+         YY = YOB2PX( NYY )
+C
+         IF( XX .GE. XMENU1 .AND. XX .LE. XMENU2 .AND.
+     %       YY .GE. YMENU1 .AND. YY .LE. YMENU2 ) THEN
+C           CLIC DANS LE MENU AVANT LE SECOND CLIC
+C           EFFACEMENT DU POINT APRES LE 1-ER CLIC
+            CALL SYMBOLE2D( NCOFON, X, Y, CARSYM )
+            X = XX
+            Y = YY
+            GOTO 801
+         ENDIF
+         IF( XX .GE. XZX1 .AND. XX .LE. XZX2 .AND.
+     %       YY .GE. XZY1 .AND. YY .LE. XZY2 ) THEN
+C           PLAN X Z   LA VALEUR REELLE DE Z EST COMPLETEE
+            C3 = ( (XZY2-YY) * CADRSA(3,1) + (YY-XZY1) * CADRSA(3,2) )
+     %           / (XZY2-XZY1)
+         ELSE IF( XX .GE. YZX1 .AND. XX .LE. YZX2 .AND.
+     %            YY .GE. YZY1 .AND. YY .LE. YZY2 ) THEN
+C           PLAN Y Z  LA VALEUR REELLE DE Z EST COMPLETEE
+            C3 = ( (YZY2-YY) * CADRSA(3,1) + (YY-YZY1) * CADRSA(3,2) )
+     %           / (YZY2-YZY1)
+         ELSE
+C           CLIC DANS UNE VUE INCORRECTE
+            GOTO 840
+         ENDIF
+         IF( AIMANZ ) THEN
+C           OUI: ATTRACTION SUR LA GRILLE EN Z
+            I  = NINT( ( C3 - CADRS0(3,1) ) / CADRS0(3,3) )
+            C3 = CADRS0(3,1) + I * CADRS0(3,3)
+         ENDIF
+C
+C        EFFACEMENT DES LIGNES
+C        TRACE EFFECTIF DE LA DROITE X=CTE DANS LE PLAN XZ
+         XX = XZX2 - ( XYY2 - Y )
+         CALL TRAIT2D( NCOFON, XX, XZY1, XX, XZY2 )
+C        TRACE EFFECTIF DE LA DROITE Y=CTE DANS LE PLAN YZ
+         CALL TRAIT2D( NCOFON, X, YZY1, X, YZY2 )
+C        TRACE EN AXONOMETRIE DU SEGMENT
+         CALL AXONSG( NCOFON, C1,C2,CADRSA(3,1),  C1,C2,CADRSA(3,2) )
+         CALL MEMPXFENETRE
+      ENDIF
+C
+C     EFFACEMENT DU POINT APRES LE 1-ER CLIC
+      CALL SYMBOLE2D( NCOFON, X, Y, CARSYM )
+C
+C     DECLARATION DU POINT
+C     ====================
+      CALL LXLXOU( NTPOIN, KNOMPT, NTLXPO, MNLXPO )
+      IF( NTLXPO .GT. 0 ) THEN
+         CALL LXLXDS( NTPOIN, KNOMPT )
+      ENDIF
+      CALL LXLXDC( NTPOIN, KNOMPT, 24, 8 )
+      CALL LXLXOU( NTPOIN, KNOMPT, NTLXPO, MNLXPO )
+      IF( NTLXPO .LE. 0 ) GOTO 9000
+C     LE NUMERO DU POINT DANS LE LEXIQUE DES POINTS
+      CALL NUOBNM( 'POINT', KNOMPT, NUPOIN )
+C
+C     CONSTRUCTION DU TABLEAU 'DEFINITION'
+C     ====================================
+      CALL LXTNDC( NTLXPO, 'DEFINITION', 'MOTS' , WOORPO + 3 )
+      CALL LXTSOU( NTLXPO, 'DEFINITION',  NTDFPO, MNDFPO )
+      IF( NTDFPO .LE. 0 ) GOTO 9000
+C
+C     LA TRANSFORMATION
+      MCN( MNDFPO + WTYTRP ) = NUTRAN
+C
+C     LE TYPE DU POINT
+      MCN( MNDFPO + WUTYPO ) = 1
+C
+C     X Y Z
+      MNO = MNDFPO + WOORPO
+      RMCN( MNO     ) = C1
+      RMCN( MNO + 1 ) = C2
+      RMCN( MNO + 2 ) = C3
+C
+C     AJOUT DE LA DATE
+      CALL ECDATE( MCN(MNDFPO) )
+C
+C     AJOUT DU NUMERO DU TABLEAU DESCRIPTEUR
+      MCN( MNDFPO + MOTVAR(6) ) = NONMTD( '~>POINT>>DEFINITION' )
+C
+C     CONSTRUCTION DU TABLEAU 'XYZSOMMET'
+C     =================================
+      CALL LXTNDC( NTLXPO, 'XYZSOMMET', 'MOTS' , WYZSOM + 3 )
+      CALL LXTSOU( NTLXPO, 'XYZSOMMET',  NTSOPO, MNSOPO )
+      IF( NTSOPO .LE. 0 ) GOTO 9000
+C
+C     LE NOMBRE DE SOMMETS
+      MCN( MNSOPO + WNBSOM ) = 1
+C
+C     X Y Z
+      RMCN( MNSOPO + WYZSOM     ) = C1
+      RMCN( MNSOPO + WYZSOM + 1 ) = C2
+      RMCN( MNSOPO + WYZSOM + 2 ) = C3
+C
+C     MISE A JOUR DES EXTREMES
+      COOEXT(1,1) = MIN( COOEXT(1,1), RMCN( MNO ) )
+      COOEXT(1,2) = MAX( COOEXT(1,2), RMCN( MNO ) )
+      COOEXT(2,1) = MIN( COOEXT(2,1), RMCN( MNO + 1 ) )
+      COOEXT(2,2) = MAX( COOEXT(2,2), RMCN( MNO + 1 ) )
+      COOEXT(3,1) = MIN( COOEXT(3,1), RMCN( MNO + 2 ) )
+      COOEXT(3,2) = MAX( COOEXT(3,2), RMCN( MNO + 2 ) )
+C
+C     AJOUT DE LA DATE
+      CALL ECDATE( MCN(MNSOPO) )
+C
+C     AJOUT DU NUMERO DU TABLEAU DESCRIPTEUR
+      MCN( MNSOPO + WNBTGS ) = 0
+      MCN( MNSOPO + MOTVAR(6) ) = NONMTD( '~>>>XYZSOMMET' )
+C
+C     LA TRANSFORMATION DU POINT
+C     ==========================
+      IF( NUTRAN .GT. 1 ) THEN
+          CALL TRPLSV( 1, NUPOIN, NTSOPO, MNSOPO, IERR )
+      ENDIF
+C
+C     TRACE DU POINT DANS LE MODE 4 VUES
+      CALL PT4VUE( NCBLEU, RMCN(MNSOPO+WYZSOM), KNOMPT, NUPOIN )
+C
+C     SAUVEGARDE DU POINT SUR LE FICHIER FRAPPE
+C     =========================================
+      KERR(MXLGER) = KNOMPT//' ; '// KNOMTR // ' ; '//'1;'
+      CALL SANSDBL( KERR(MXLGER), I )
+      WRITE(NFFRAP,*) KERR(MXLGER)(1:I)
+      WRITE(KERR(MXLGER)(1:25), '(G25.17)' ) RMCN( MNDFPO+WOORPO )
+      KERR(MXLGER)(26:NBCAER) = ' ;  {X du POINT} '
+      CALL SANSDBL( KERR(MXLGER), I )
+      WRITE(NFFRAP,*) KERR(MXLGER)(1:I)
+      WRITE(KERR(MXLGER)(1:25), '(G25.17)' ) RMCN( MNDFPO+WOORPO+1 )
+      KERR(MXLGER)(26:NBCAER) = ' ;  {Y du POINT} '
+      CALL SANSDBL( KERR(MXLGER), I )
+      WRITE(NFFRAP,*) KERR(MXLGER)(1:I)
+      WRITE(KERR(MXLGER)(1:25), '(G25.17)' ) RMCN( MNDFPO+WOORPO+2 )
+      KERR(MXLGER)(26:NBCAER) = ' ;  {Z du POINT} '
+      CALL SANSDBL( KERR(MXLGER), I )
+      WRITE(NFFRAP,*) KERR(MXLGER)(1:I)
+      GOTO 800
+C
+C     ERREUR
+ 9000 NBLGRC(NRERR) = 1
+      KERR(1) =  'PLUS ASSEZ DE PLACE DANS MCN'
+      CALL LEREUR
+C
+C     GENERATION D'UNE REMONTEE AU MENU DE DEPART
+ 9900 WRITE(NFFRAP,*) '@; '
+      RETURN
+      END

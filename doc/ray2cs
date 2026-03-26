@@ -1,0 +1,25 @@
+This second radius must be >0 and reasonable from the
+2 segments which are tangent to the circle.
+
+                              P4--------------- .      *P5
+                                                   .
+                                                   / .
+                        /              /         /    .
+             THICKNESS /              /         /      |
+                      /              /      RADIUS2    |
+                                                       |
+                                                    /  P6
+                P1--------------- .      *P2      
+                                      .           /   /
+                                        .       /
+                                    /         /     /
+                                  /      .        /
+                                /        |      /
+                         RADIUS1         |  
+                                         |
+                                         P3
+
+
+
+Ce rayon doit etre un nombre reel positif, raisonnable
+par rapport aux 2 segments qui sont tangents au cercle.

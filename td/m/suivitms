@@ -1,0 +1,8 @@
+variable SuiviTMS 'Affichage,modification d''un TMS' entier
+ ( 1  : 'AFFICHER  un TMS (Tableau Memoire Secondaire)'  
+ , 2  : 'ENTRER    les VALEURS d''un TMS'
+ , 3  : 'AFFICHER  la VALEUR d''une variable d''un TMS'
+ , 4  : 'IMPOSER   la VALEUR d''une variable d''un TMS' 
+ , 5  : 'CHANGER   un NOM dans un LEXIQUE'
+ , 6  : 'ENVOYER des TMS vers un autre ordinateur(CRAY)'
+ , 7  : 'RECUPERER des TMS venus d''un autre ordinateur' );

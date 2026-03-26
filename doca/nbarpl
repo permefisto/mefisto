@@ -1,0 +1,4 @@
+NBARPL is the number of edges to create in the sense point -> line.
+
+For NBARLI the number>0 of the line edges,
+NBARLI triangles and NBARLI*(NBARPL-1) quadrangles are created.

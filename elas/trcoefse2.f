@@ -1,0 +1,144 @@
+      SUBROUTINE TRCOEFSE2( NBCOOR, NBPOI,  XYZPOI,
+     %                      MOARFR, MXARFR, LAREFR,
+     %                      NBBARY, NOBARY,
+     %                      NBFLEC, XYZFLE,
+     %                      NBAREF, NOAREF, XYZPLAN )
+C ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+C BUT :    TRACER LES ARETES FRONTALIERES, LES FLECHES DES CONTRAINTES
+C -----    PRINCIPALES DES EF 3D SECTIONNES PAR UN PLAN
+C
+C ENTREES:
+C --------
+C NBCOOR : NOMBRE DE COORDONNEES D'UN POINT OU NOEUD (3 ou 6)
+C NBPOI  : NOMBRE DE POINTS STOCKES DANS XYZPOI
+C XYZPOI : XYZ DES POINTS DES EF DU MAILLAGE
+C MOARFR : NOMBRE DE MOTS PAR ARETE FRONTALIERE DU TABLEAU LAREFR
+C MXARFR : NOMBRE DE FACES DU TABLEAU LAREFR
+C LAREFR : TABLEAU NUMERO DES 2 SOMMETS ET LIEN
+C          LAREFR(1,I)= NO DU 1-ER  SOMMET DE L'ARETE FRONTALIERE
+C          LAREFR(2,I)= NO DU 2-EME SOMMET > 1-ER  SOMMET
+C          LAREFR(3,I)= 0 OU NUMERO DE L'ARETE FRONTALIERE SUIVANTE
+C NBBARY : NOMBRE DE BARYCENTRES TRIES
+C NOBARY : NUMERO DE L'ITEM A TRACER SELON SON ORDRE
+C          LES PLUS ELOIGNES D'ABORD (ALGORITHME DU PEINTRE)
+C NBFLEC : NOMBRE DE FLECHES A TRACER
+C XYZDFL : 1:3   XYZ DU POINT DE DEPART DES FLECHES
+C          4:6   XYZ DE LA DIRECTION DE LA FLECHE DE VP1
+C          7     DIMENSION EN CM DU TRACE DE LA FLECHE
+C          8:10  XYZ DE LA DIRECTION DE LA FLECHE DE VP2
+C          11    DIMENSION EN CM DU TRACE DE LA FLECHE
+C          12:14 XYZ DE LA DIRECTION DE LA FLECHE DE VP3
+C          15    DIMENSION EN CM DU TRACE DE LA FLECHE
+C                SON SIGNE DETERMINE LE SENS DU TRIANGLE DE LA FLECHE
+C NBAREF : NOMBRE D'ARETES DES EF SECTIONNES
+C NOAREF : NO DES 2 SOMMETS DES ARETES DES EF SECTIONNES
+C XYZPLAN: 3 COORDONNEES DES 4 SOMMETS DU RECTANGLE DU PLAN DE SECTION
+C ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+C AUTEUR : ALAIN PERRONNET Laboratoire JL LIONS UPMC Paris Decembre 2006
+C ...................................................................012
+      PARAMETER     (LIGCON=0, LIGTIR=1)
+      include"./incl/trvari.inc"
+      include"./incl/mecoit.inc"
+      REAL           XYZPOI(1:NBCOOR,1:NBPOI)
+      INTEGER        LAREFR(1:MOARFR,1:MXARFR)
+      INTEGER        NOBARY(1:NBBARY)
+      REAL           XYZFLE(15,NBFLEC)
+      INTEGER        NOAREF(2,NBAREF)
+      REAL           XYZPLAN(3,4), DIR(3)
+C
+C     LE NOMBRE-1 DE COULEURS DISPONIBLES
+      NBCOUL = NDCOUL - N1COUL
+C
+C     LES ARETES SONT TRACEES EN CONTINU
+      CALL XVTYPETRAIT( LIGCON )
+C
+C     LA DIRECTION DE VISEE PTV-OEIL
+      DIREVI(1) = AXOEIL(1) - AXOPTV(1)
+      DIREVI(2) = AXOEIL(2) - AXOPTV(2)
+      DIREVI(3) = AXOEIL(3) - AXOPTV(3)
+C
+      CALL T3PLAV
+      CALL TRAXES
+C     AUCUN ITEM SUR L'ECRAN
+      CALL ITEMS0
+C
+      DO 200 K = 1, NBBARY
+C
+C        LE NUMERO DE L'ITEM LE PLUS ELOIGNE ET RESTANT A TRACER
+         N = NOBARY( K )
+C
+         IF( N .GE. 0 ) THEN
+C
+C           TRACE DE L' ARETE FRONTALIERE DES VOLUMES DE L'OBJET
+C           ----------------------------------------------------
+C           LE NUMERO DE L'ARETE DANS LE TABLEAU LAREFR
+            CALL XVEPAISSEUR( 1 )
+            CALL TRAIT3D( NCOUAF, XYZPOI(1,LAREFR(1,N)),
+     %                            XYZPOI(1,LAREFR(2,N)) )
+C
+         ELSE
+C
+C           ICI N<0
+            IF( N .GE. -NBFLEC ) THEN
+C
+C              6 FLECHES DES CONTRAINTES DES EF SECTIONNES A TRACER
+C              ----------------------------------------------------
+               N = -N
+               CALL XVEPAISSEUR( 2 )
+C
+C              LES 2 FLECHES OPPOSEES DE VP1
+               CALL T3FLEC( NCOUFL,XYZFLE(1,N),XYZFLE(7,N),XYZFLE(4,N) )
+               DIR(1) = -XYZFLE(4,N)
+               DIR(2) = -XYZFLE(5,N)
+               DIR(3) = -XYZFLE(6,N)
+               CALL T3FLEC( NCOUFL,XYZFLE(1,N),XYZFLE(7,N),DIR )
+C
+C              LES 2 FLECHES OPPOSEES DE VP2
+               CALL T3FLEC(NCOUFL,XYZFLE(1,N),XYZFLE(11,N),XYZFLE(8,N))
+               DIR(1) = -XYZFLE( 8,N)
+               DIR(2) = -XYZFLE( 9,N)
+               DIR(3) = -XYZFLE(10,N)
+               CALL T3FLEC( NCOUFL,XYZFLE(1,N),XYZFLE(11,N),DIR )
+C
+C              LES 2 FLECHES OPPOSEES DE VP3
+               CALL T3FLEC(NCOUFL,XYZFLE(1,N),XYZFLE(15,N),XYZFLE(12,N))
+               DIR(1) = -XYZFLE(12,N)
+               DIR(2) = -XYZFLE(13,N)
+               DIR(3) = -XYZFLE(14,N)
+               CALL T3FLEC( NCOUFL,XYZFLE(1,N),XYZFLE(15,N),DIR )
+C
+            ELSE IF( N .GE. -NBFLEC-NBAREF ) THEN
+C
+C              TRACE DES ARETES DES EF SECTIONNES
+C              L'ARETE EST TRACEE EN CONTINU
+               CALL XVEPAISSEUR( 0 )
+               N = - N - NBFLEC
+               NS0 = NOAREF(1,N)
+               NS1 = NOAREF(2,N)
+               CALL TRAIT3D( NCNOIR, XYZPOI(1,NS0), XYZPOI(1,NS1) )
+C
+            ELSE
+C
+C              TRACE DE L'UNE DES  4 ARETES DU RECTANGLE
+C              DE VISUALISATION DU PLAN DE SECTION DES EF 3D
+C              ---------------------------------------------
+               NS1 = -N - NBFLEC - NBAREF
+               IF( NS1 .GT. 1 ) THEN
+                  NS0 = NS1 - 1
+               ELSE
+                  NS0 = 4
+               ENDIF
+C              L'ARETE EST TRACEE EN CONTINU
+               CALL XVEPAISSEUR( 3 )
+               CALL TRAIT3D( NCROSE, XYZPLAN(1,NS0), XYZPLAN(1,NS1) )
+C
+            ENDIF
+         ENDIF
+ 200  CONTINUE
+C
+C     FINITION DU TRACE DES 3 PLANS PAR TRACE DES 3 ARETES VUES
+      CALL T3PLAP
+      CALL XVEPAISSEUR( 1 )
+C
+      RETURN
+      END

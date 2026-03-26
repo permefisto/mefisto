@@ -1,0 +1,579 @@
+      SUBROUTINE SDTHE4( KNOMOB, NTLXOB, NBLIGF, MNLIGN, MNFLUG, IERR )
+C ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+C BUT :    CALCULER LES FLUX THERMIQUES DANS UN SOUS-DOMAINE
+C -----    A PARTIR DES TEMPERATURES
+C
+C ENTREES:
+C --------
+C KNOMOB : NOM DE L'OBJET DE FLUX A CALCULER
+C NTLXOB : NUMERO DE LEXIQUE DE L'OBJET
+C NBLIGF : NOMBRE DE LIGNES DE L'OBJET GLOBAL
+C MNLIGN : NUMEROS DES LIGNES DE L'OBJET GLOBAL
+C MNFLUG : LES FLUX ASSOCIES
+C
+C SORTIES :
+C ---------
+C IERR   : 0 SI PAS D'ERREUR , NON NUL SINON
+C ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+C AUTEUR : PASCAL JOLY     ANALYSE NUMERIQUE UPMC PARIS  FEVRIER 1990
+C23456---------------------------------------------------------------012
+      IMPLICIT          INTEGER (W)
+      PARAMETER         (MXTYEL=7)
+      PARAMETER         (MOPAGE=512)
+      include"./incl/gsmenu.inc"
+      include"./incl/ntmnlt.inc"
+      include"./incl/donthe.inc"
+      include"./incl/donele.inc"
+      include"./incl/a_objet__definition.inc"
+      include"./incl/a_objet__topologie.inc"
+      include"./incl/a___xyzsommet.inc"
+      include"./incl/a___xyznoeud.inc"
+      include"./incl/a___xyzpoint.inc"
+      include"./incl/a___npef.inc"
+      include"./incl/a___vecteur.inc"
+      include"./incl/a___fluxpt.inc"
+      include"./incl/a___source.inc"
+      include"./incl/a___dtemperature.inc"
+      include"./incl/msvaau.inc"
+      include"./incl/homdir.inc"
+      include"./incl/ponoel.inc"
+C
+      include"./incl/pp.inc"
+      COMMON            MCN(MOTMCN)
+      COMMON / UNITES / LECTEU,IMPRIM,INTERA,NUNITE(29)
+      COMMON / ELFINI / NELFI(512)
+      COMMON / SOUSDO / NORESO,NTDL,NDSM,NDIM,NPIMAX
+C
+      INTEGER           NOMTAB(5),
+     %                  NOOBVC,NOOBSF(6),NOOBLA(12),NOOBPS(8)
+      REAL              RMCN(1)
+      DOUBLE PRECISION  D2PI
+CPU      DOUBLE PRECISION  DINFO,DCPU
+      EQUIVALENCE      (MCN(1),RMCN(1))
+      CHARACTER*(*)     KNOMOB
+      INTEGER           NUMIOB(4),NUMAOB(4),MNDOEL(4)
+      CHARACTER*4       CHARX,NOMELE(2)
+      CHARACTER*160     KNOMFI,KNOM
+      CHARACTER*10      NMTYOB,KNM
+C
+C     QUELQUES INITIALISATIONS
+CPU   DCPU   = DINFO( 'DELTA CPU' )
+      IERR   = 0
+      D2PI   = ATAN( 1D0 ) * 8D0
+C     LE NOMBRE DE MOTS D'UNE VARIABLE REEL2
+      MOREE2 = MOTVAR(6)
+      IATAUX = 0
+      MOAUX  = 0
+C
+C     ADRESSAGE DES ADRESSES DES TABLEAUX ELEMENTS DE CET OBJET
+      MNELEM = 0
+      CALL TNMCDC( 'ENTIER' , 2*MXTYEL , MNELEM )
+      MNTELE = MNELEM + MXTYEL
+C     RECHERCHE DU TABLEAU DEFINITION
+      CALL LXTSOU( NTLXOB , 'DEFINITION' , NTDFOB , MNDFOB )
+C
+C     RECHERCHE DES TABLEAUX SOMMETS NOEUDS POINTS ASSOCIES A L'OBJET
+C     ===============================================================
+      CALL NDPGEL( NTLXOB , NTTOPO , MNTOPO ,
+     %             NTPOGE , MNPOGE , NTNOEU , MNNOEU ,
+     %             NBTYEL , MCN(MNTELE) , MCN(MNELEM) , IERR )
+      IF( IERR .NE. 0 ) RETURN
+C
+C     LE TYPE DE MAILLAGE ET LES OBJETS INTERNES ET AUX LIMITES
+C
+      NDPGST = MCN( MNTOPO + WDPGST )
+      NBOBIN = MCN( MNTOPO + WBOBIN )
+      NBOBCL = MCN( MNTOPO + WBOBCL )
+C
+C     RECHERCHE DU MIN ET MAX DES NUMEROS DES OBJETS IMPLIQUES
+C     ========================================================
+C     DANS L'OBJET ( POINTS , LIGNES , SURFACES , VOLUMES )
+C     LES 4 MINIMA D'ABORD , LES 4 MAXIMA ENSUITE
+      J = IINFO( 'GRAND' )
+      K = - J
+      DO 110 I=1,4
+         NUMIOB(I) = J
+         NUMAOB(I) = K
+ 110  CONTINUE
+C
+C     L'ADRESSE MCN DU DEBUT DU TABLEAU NUOBIN
+      MNOBIN = MNTOPO + WMTYEL + NBTYEL
+      MN     = MNOBIN - 2
+      DO 120 I=1,NBOBIN
+C        LE TYPE DE L'OBJET INTERNE
+         MN   = MN + 2
+         NYOB = MCN( MN )
+         NUOB = MCN( MN + 1 )
+C        LE MINIMUM DES NUMEROS D'OBJETS
+         NUMIOB( NYOB ) = MIN( NUMIOB(NYOB) , NUOB )
+C        LE MAXIMUM DES NUMEROS D'OBJETS
+         NUMAOB( NYOB ) = MAX( NUMAOB(NYOB) , NUOB )
+ 120  CONTINUE
+C
+C     L'ADRESSE MCN DU DEBUT DU TABLEAU NUOBCL
+      MNOBCL = MNOBIN + MOTVAR(13) * NBOBIN
+      MN     = MNOBCL - 2
+      DO 130 I=1,NBOBCL
+C        LE TYPE DE L'OBJET AUX LIMITES
+         MN   = MN + 2
+         NYOB = MCN( MN )
+         NUOB = MCN( MN + 1 )
+C        LE MINIMUM DES NUMEROS D'OBJETS
+         NUMIOB( NYOB ) = MIN( NUMIOB(NYOB) , NUOB )
+C        LE MAXIMUM DES NUMEROS D'OBJETS
+         NUMAOB( NYOB ) = MAX( NUMAOB(NYOB) , NUOB )
+ 130  CONTINUE
+C
+C     DECLARATION DES TABLEAUX DES DONNEES DES OBJETS
+      DO 140 I=1,4
+C        NOMBRE DE VARIABLES DES TABLEAUX
+         IF( NUMIOB(I) .EQ. J ) THEN
+C           OBJET NON REPERTORIE
+            NUMAOB(I) = 0
+            MNDOEL(I) = 0
+         ELSE
+            K = NUMAOB(I) - NUMIOB(I) + 1
+            CALL TNMCDC( 'ENTIER' , K * MXDOTH , MNDOEL(I) )
+            CALL AZEROI( K * MXDOTH , MCN( MNDOEL(I) ) )
+         ENDIF
+ 140  CONTINUE
+C     ICI NUMIOB CONTIENT LES 4 NUMEROS MINIMA DES OBJETS
+C         NUMAOB          LES 4 NUMEROS MAXIMA DES OBJETS
+C     MNDOEL LES 4 ADRESSES MCN DES TABLEAUX DES ADRESSES DES
+C     TABLEAUX DECRIVANT LA THERMIQUE DE L'OBJET COMPLET
+C
+C     OUVERTURE DES TABLEAUX DES DONNEES DES OBJETS
+C     *********************************************
+C
+C     BOUCLE SUR LES OBJETS "INTERNES"
+C     ================================
+      IERR   = 0
+      MN     = MNOBIN - 2
+      DO 200 I=1,NBOBIN
+C        LE TYPE DE L'OBJET
+         MN   = MN + 2
+         NYOB = MCN( MN )
+         NUOB = MCN( MN + 1 )
+C        OUVERTURE DE L'OBJET
+         CALL LXNLOU( NTMN(NYOB) , NUOB , NTOB , MNOB )
+         IF( NTOB .LE. 0 ) THEN
+            KNM = NMTYOB( NYOB )
+            CALL NMOBNU( KNM , NUOB , KNOM )
+            WRITE(IMPRIM,*) ' OBJET INCONNU ',KNOM
+            GOTO 200
+         ENDIF
+C
+C        L'ADRESSE DU DEBUT DES TABLEAUX DES DONNEES DE L'OBJET
+         MN1 = MNDOEL( NYOB )
+         MN1 = MN1 + MXDOTH * ( NUOB - NUMIOB(NYOB) ) - 1
+C        OUVERTURE DU TABLEAU CONDUCTIVITE
+         CALL LXTSOU( NTOB , 'CONDUCTIVITE' , NT , MCN(MN1+LPCOND) )
+         IF( MCN(MN1+LPCOND) .LE. 0 ) THEN
+            KNM = NMTYOB( NYOB )
+            CALL NMOBNU( KNM , NUOB , KNOM )
+            NBLGRC(NRERR) = 2
+            KERR(1) = 'ERREUR : OBJET'// KNOM( 1 : NUDCNB(KNOM) )
+            KERR(2) = 'SANS DONNEE DE CONDUCTIVITE'
+            CALL LEREUR
+            IERR = IERR + 1
+            GOTO 9999
+         ENDIF
+C        OUVERTURE DU TABLEAU DILATATION
+         CALL LXTSOU( NTOB , 'DILATATION' , NT , MCN(MN1+LPDILA) )
+C        OUVERTURE DU TABLEAU SOURCE
+         CALL LXTSOU( NTOB , 'SOURCE'     , NT , MN2 )
+         MCN(MN1+LPSOUR) = MN2
+         IF( MN2 .GT. 0 ) THEN
+C           MISE A JOUR DU NOMBRE DE CAS DE CHARGE
+            NDSM = MAX( NDSM , 1 )
+         ENDIF
+C        OUVERTURE DU TABLEAU VITESSEFLUIDE
+         CALL LXTSOU( NTOB , 'VITESSEFLUIDE' , NT , MCN(MN1+LPVIFL) )
+ 200  CONTINUE
+C
+C     INITIALISATIONS DE VARIABLES ET AFFICHAGES
+C     ==========================================
+C     LE NOMBRE DE POINTS DU MAILLAGE DE L'OBJET
+      NBPOI = MCN( MNPOGE + WNBPOI )
+C     NDIM LA DIMENSION 2 OU 3 DE L'ESPACE DES COORDONNEES
+      CALL DIMCOO( NBPOI , MCN(MNPOGE+WYZPOI) , NDIM )
+C     LE NOMBRE DE NOEUDS DU MAILLAGE DE L'OBJET
+      NBNOEU = MCN(MNNOEU+WNBNOE)
+C     LE NOMBRE TOTAL DE DEGRES DE LIBERTE
+      NTDL   =  NBNOEU
+C
+      WRITE(IMPRIM,10210) NDIM,NBNOEU,NTDL,NDSM
+10210 FORMAT(' DIMENSION 2 OU 3 DE L''ESPACE',T32,'=',I6/
+     %' NOMBRE DE NOEUDS'                    ,T32,'=',I6/
+     %' NOMBRE DE DEGRES DE LIBERTE'         ,T32,'=',I6/
+     %' NOMBRE DE JEUX DE DONNEES'           ,T32,'=',I6)
+C
+C     LES TABLEAUX POBA NECESSAIRES AUX TABLEAUX ELEMENTAIRES
+C     =======================================================
+C     OUVERTURE DU FICHIER DIRECT POBA SUPPORT DE TABLEAUX ELEMENTAIRES
+      CALL TRUNIT( NFPOBA )
+      KNOMFI = HOMDIR // '/pp/pxyz'
+      OPEN( UNIT=NFPOBA , ERR=9900 , STATUS='OLD' ,
+     %      FILE=KNOMFI , ACCESS='DIRECT' , FORM='UNFORMATTED' ,
+     %      RECL=MOPAGE*NBCHMO )
+C     LECTURE DE LA PREMIERE PAGE
+      READ (UNIT=NFPOBA,REC=1) NELFI
+C
+      NBDLMX = 0
+      IATPOB = 0
+      CALL TNMCDC( 'ENTIER' , NBTYEL*MXPOBA , IATPOB )
+      MOAUX  = 1
+      NOAXIS = 0
+      DO 250 NOTYEL=1,NBTYEL
+C        L'ADRESSE DU TABLEAU ELEMENTS
+         MNELE  = MCN( MNELEM - 1 + NOTYEL )
+C        LE NUMERO DU TYPE DE L'ELEMENT FINI
+         NUTYEL = MCN( MNELE + WUTYEL )
+         IF (NUTYEL.LE.4) THEN
+            NOAXIS=1
+         ENDIF
+C        LES CARACTERISTIQUES DE L'ELEMENT FINI
+         CALL ELTYCA( NUTYEL )
+C        LES CARACTERISTIQUES DES TABLEAUX DE L'ELEMENT FINI THERMIQUE
+         CALL ETTAEL( NUTYEL,NDSM,
+     %                NBDL,NCODEM,NTPOBA,NOMTAB,MOTAUX )
+C        NBDL       : NOMBRE DE DL DE L ELEMENT
+C        NTPOBA    : NOMBRE DE TABLEAUX A LIRE SUR LE FICHIER POBA
+C        NOMTAB(J) : NOM DU J-EME TABLEAU DE POBA A LIRE 1<=J<=NTPOBA
+C        MOTAUX    : NOMBRE DE MOTS AUXILIAIRES NECESSAIRES A L ELEMENT
+C
+C        DECLARATION ET LECTURE DES TABLEAUX DE POBA
+         IF( NTPOBA .GT. 0 ) THEN
+            DO 240 J=1,NTPOBA
+               CALL FINDEL(NOMTAB(J),MCN(IATPOB-1+(NOTYEL-1)*MXPOBA+J),
+     &                     NFPOBA,MOPAGE)
+ 240        CONTINUE
+         ENDIF
+C
+C        BILAN DES TABLEAUX AUXILIAIRES ET ELEMENTAIRES
+         IF( MOAUX  .LT. MOTAUX ) MOAUX  = MOTAUX
+         IF( NBDLMX .LT. NBDL   ) NBDLMX = NBDL
+ 250  CONTINUE
+C
+C     ADRESSAGE DES TABLEAUX AUXILIAIRES ET ELEMENTAIRES
+C     ===================================================
+C     LE TABLEAU DES FLUX PAR POINT D'UN EF  (MAX NBPOLY * NPIA )
+      MOFLPT = 270
+C     NBPOLY<=27 ET NPIA<=9
+      MNFLPT = 0
+      CALL TNMCDC( 'REEL2', MOFLPT, MNFLPT )
+C     LE TABLEAU DES FLUXFR PAR OBJET FRONTIERE
+      NTYF = NDIM
+      MOFLTO =  NDSM * ( NUMAOB(NTYF)-NUMIOB(NTYF)+1 )
+      CALL TNMCDC( 'REEL2' , MOFLTO , MNFLTO )
+      CALL AZEROD( MOFLTO , MCN(MNFLTO) )
+      MOTAEL = NBDLMX * (NBDLMX+1) / 2 + NBDLMX * NDSM
+      IATAEL = 0
+      CALL TNMCDC( 'REEL2' , MOTAEL , IATAEL )
+C     LE TABLEAU ELEMENTAIRE DES FLUX SUR LES FACES DES EF
+C     EST IL STOCKABLE DANS TAEL?
+      I = NDSM * 4
+      IF( I .GT. MOTAEL ) THEN
+C        LE TABLEAU TAEL EST TROP PETIT
+C        IL EST DETRUIT ET REDECLARE
+         CALL TNMCDS( 'REEL2' , MOTAEL , IATAEL )
+         MOTAEL = I
+         CALL TNMCDC( 'REEL2' , MOTAEL , IATAEL )
+      ENDIF
+      MNNODL = 0
+      CALL TNMCDC( 'ENTIER' , NBDLMX , MNNODL )
+      IAX    = 0
+      CALL TNMCDC( 'ENTIER' , NBDLMX*NDIM , IAX )
+C     LE TABLEAU DU NUMERO DES POINTS D'UN ELEMENT
+      IAPOEF = 0
+      CALL TNMCDC( 'ENTIER' , MXPOEL , IAPOEF )
+      CALL TNMCDC( 'REEL2' , MOAUX*2 , IATAUX )
+C
+C     OUVERTURE DU VECTEUR TEMPERATURE
+C     ================================
+      CALL LXTSOU( NTLXOB , 'VECTEUR"TEMPERATURE' , NTVECT , MNVECT )
+      IF( NTVECT .EQ. 0) THEN
+C        LE VECTEUR TEMPERATURE N'EXISTE PAS
+         NBLGRC(NRERR) = 1
+         KERR(1) = ' ERREUR : LES TEMPERATURES '
+     %           //'N''ONT PAS ETE CALCULEES'
+         CALL LEREUR
+         IERR = 1
+         GO TO 9999
+      ENDIF
+      IAU0   = MNVECT + WECTEU
+C
+C     LA BOUCLE SUR LES TYPES D'ELEMENTS
+      DO 2000 NOTYEL = 1 , NBTYEL
+C
+C        L'ADRESSE DU TABLEAU ELEMENTS
+         MNELE = MCN( MNELEM - 1 + NOTYEL )
+C        LE NUMERO DU TYPE DE L'ELEMENT FINI
+         NUTYEL = MCN( MNELE + WUTYEL )
+C
+C        LE NOMBRE D'ELEMENTS DE CE TYPE
+         NBELEM = MCN( MNELE + WBELEM )
+C
+C        L'ADRESSE MCN DES NOEUDS ET POINTS GEOMETRIQUES DES ELEMENTS
+         MNNDEL = MNELE + WUNDEL
+         MNPGEL = MNNDEL
+         IF( NDPGST .GE. 2 ) THEN
+            MNPGEL = MNPGEL + NBELEM * MCN(MNELE+WBNDEL)
+         ENDIF
+C
+C        LES CARACTERISTIQUES DE L'ELEMENT FINI
+         CALL ELNUNM( NUTYEL , NOMELE )
+         CALL ELTYCA( NUTYEL )
+C
+C        LES ADRESSAGES POUR RECUPERER LES INFORMATIONS
+C        EN FONCTION DU TYPE DE L'ELEMENT FINI
+C        ----------------------------------------------
+         GOTO(1551,1551,1551,1551,1550,1550,1550,1550,1550,1550,
+     &        1550,1550,1551,1550,1551,1551,1550,1551,1550,1550,
+     &        1550,1550,1550,1550)                       , NUTYEL
+C
+C        ERREUR
+C        ------
+ 1550    NBLGRC(NRERR) = 2
+         KERR(1) ='ERREUR:ELEMENT '// NOMELE(1) // NOMELE(2)
+         KERR(2) ='NON PROGRAMME'
+         CALL LEREUR
+         CALL ARRET(100)
+C
+C        ELEMENTS AXISYMETRIQUES ET NON AXISYMETRIQUES 2D LAGRANGE
+C        *********************************************************
+C        L'ELEMENT FINI : ARETE DE REFERENCE
+ 1551    L      = IATPOB + (NOTYEL-1) * MXPOBA
+         IA     = MCN( L  )
+C        DIMENSION DE L ESPACE
+C        NDIMA  = MCN( IA )
+C        NOMBRE DE POLYNOMES D INTERPOLATION
+         NBPOLA = MCN( IA + 1 )
+C        NOMBRE DE POINTS D INTEGRATION NUMERIQUE
+         NPIA   = MCN( IA + 2 )
+C        ADRESSE DES POIDS DES POINTS DE LA FORMULE D INTEGRATION
+         IAPOIA = IA + 8
+C        ADRESSE DES VALEURS DES POLYNOMES AUX POINTS D INTEGRATION
+         IAPOLA = IAPOIA + MCN( IA + 3 ) * MOREE2 * NPIA
+C        ADRESSE DES VALEURS DES DERIVEES DES POLYNOMES AUX POINTS D I
+         IADPOA = IAPOLA + MCN(IA + 4) * MOREE2 * NBPOLA * NPIA
+C        LA SURFACE REFERENCE
+C        RECHERCHE DU TABLEAU DE POBA ET PARTAGE EN P ET DP
+         L      = L + 1
+         IA     = MCN( L )
+C        DIMENSION DE L ESPACE
+C        NDIM   = MCN( IA )
+C        NOMBRE DE POLYNOMES D INTERPOLATION
+         NBPOLY = MCN( IA + 1 )
+C        NOMBRE DE POINTS D INTEGRATION NUMERIQUE
+         NPI    = MCN( IA + 2 )
+C        ADRESSE DES POIDS DES POINTS DE LA FORMULE D INTEGRATION
+         IAPOID = IA + 8
+C        ADRESSE DES VALEURS DES POLYNOMES AUX POINTS D INTEGRATION
+         IAPOL  = IAPOID + MCN( IA + 3 ) * MOREE2 * NPI
+C        ADRESSE DES VALEURS DES DERIVEES DES POLYNOMES AUX POINTS
+C        D'INTEGRATION DE L'ELEMENT FINI
+         IADPOL = IAPOL  + MCN(IA + 4) * MOREE2 * NBPOLY * NPI
+C
+C        LES DERIVEES DES POLYNOMES AUX POINTS D'INTEGRATION
+C        DES ARETES DE L'ELEMENT DE REFERENCE  DPAR
+         L = L + 1
+C        LE DECALAGE POUR ATTEINDRE CHAQUE ARETE
+         MNDPA1 = MCN(L)
+C        LE DEBUT DU TABLEAU DPAR
+         MNDPA2 = MNDPA1 + 6
+C
+C        LES TABLEAUX AUXILIAIRES
+         IAF1   = IATAUX
+         IAF2   = IAF1   + MOREE2 * NPI
+         IAPDEL = IAF2   + MOREE2 * NPI
+         IADP   = IAPDEL + MOREE2 * NPI
+         IADFM1 = IADP   + MOREE2 * 2 * NBPOLY * NPI
+C        AU TOTAL  = IADFM1 + MOREE2 * 4 * NBPOLY * NPI
+C        GOTO 1590
+C
+C        LA DECLARATION DU TABLEAU 'FLUXPT"NMTYEL'
+C        -----------------------------------------
+C 1590   DES L'AJOUT D'UN ELEMENT FINI SUPPLEMENTAIRE
+         KNOM = 'FLUXPT"' // CHARX( MCN(MNTOPO+WMTYEL+NOTYEL-1) )
+         CALL LXTSOU( NTLXOB , KNOM , NTFLUX , MNFLUX )
+         IF( NTFLUX .GT. 0 ) THEN
+C           LE TABLEAU EST DETRUIT POUR ETRE REDECLARE
+            CALL LXTSDS( NTLXOB , KNOM )
+         ENDIF
+C        DECLARATION OUVERTURE DU TABLEAU 'FLUXPT'
+         IF( NDIM .EQ. 3 ) THEN
+            NBFAFX = NFACE
+C           NBPNFX=NOMBRE DE POINTS OU LES FLUX NORMAUX SONT CALCULES
+            IF( NFACE .EQ. 5 ) THEN
+               IAQ = MCN(L+3)
+               NPIQ = MCN(IA+2)
+               NBPNFX = 3 * NPIQ + 2 * NPIA
+            ELSE
+               NBPNFX = NFACE * NPIA
+            ENDIF
+         ELSE
+            NBFAFX = NARET
+            NBPNFX = NARET * NPIA
+         ENDIF
+         I = MOREE2 * NBPNFX * NBELEM * NDSM
+         L = WLUXNP + I + 6 * NBPNFX * NBELEM
+         CALL LXTNDC( NTLXOB , KNOM , 'MOTS' , L )
+         CALL LXTSOU( NTLXOB , KNOM , NTFLUX , MNFLUX )
+         MNFLNP = MNFLUX + WLUXNP
+         MNCOPN = MNFLNP + I
+C
+C        LA DECLARATION DU TABLEAU 'DTEMPERATURE"NMTYEL'
+C        -----------------------------------------------
+         KNOM = 'DTEMPERATURE"' // CHARX( MCN(MNTOPO+WMTYEL+NOTYEL-1) )
+         CALL LXTSOU( NTLXOB , KNOM , NTDTEM , MNDTEM )
+         IF( NTDTEM .GT. 0 ) THEN
+C           LE TABLEAU EST DETRUIT POUR ETRE REDECLARE
+            CALL LXTSDS( NTLXOB , KNOM )
+         ENDIF
+         NBM = MOREE2 * NBELEM * NPI * NDIM * NDSM
+         L = WTEMPE + NBM
+     %              + NBELEM * NPI * NDIM
+         CALL LXTNDC( NTLXOB , KNOM , 'MOTS' , L )
+         CALL LXTSOU( NTLXOB , KNOM , NTDTEM , MNDTEM )
+C        LES COORDONNEES DES POINTS D'INTEGRATION
+         MNCOPI = MNDTEM + WTEMPE + NBM
+C
+C        LA BOUCLE SUR LES ELEMENTS DE CE TYPE NUTYEL
+C        ============================================
+         DO 1900 NUELEM = 1 , NBELEM
+C
+C           LES NOEUDS DE L'ELEMENT
+C           -----------------------
+CCC            CALL EFNOEU( MNELE , NUELEM , NBNDEL , MCN(MNNODL) )
+C
+C           LES POINTS GEOMETRIQUES DE L'ELEMENT
+C           ------------------------------------
+CCC            CALL EFPOGE( MNELE , NUELEM , NBPGEF , MCN(IAPOEF) )
+C
+C           LE NUMERO DE VOLUME  DE L'EF
+C           LE NUMERO DE SURFACE DES FACES   DE L'EF
+C           LE NUMERO DE LIGNE   DES ARETES  DE L'EF
+C           LE NUMERO DE POINT   DES SOMMETS DE L'EF
+C           ----------------------------------------
+            CALL EFPLSV( MNELE  , NUELEM ,
+     %                   NOVCEL , NOSFEL , NOLAEL , NOPSEL ,
+     %                   NOOBVC , NOOBSF , NOOBLA , NOOBPS )
+C
+C           LES COORDONNEES DES POINTS DE L'ELEMENT
+C           ---------------------------------------
+            DO 1600 I=1,NBPOE
+C              LE NUMERO DU I-EME POINT DE L'ELEMENT NUELEM
+               N    = MCN( MNPGEL-1 + NUELEM + NBELEM*(I-1) )
+               IACE = MNPOGE + WYZPOI + (N-1) * 3
+               L    = IAX - 1 + I
+               RMCN( L         ) = RMCN(IACE)
+               RMCN( L + NBPOE ) = RMCN(IACE+1)
+               IF( NDIM .EQ. 3 ) RMCN(L+NBPOE+NBPOE) = RMCN(IACE+2)
+ 1600       CONTINUE
+C
+C
+C           CALCUL DES TABLEAUX AUXILIAIRES ET DES FLUX
+C           -------------------------------------------
+C           ELEMENTAIRES SELON LE TYPE DE L'ELEMENT FINI
+C           --------------------------------------------
+            GOTO(1601,1601,1601,1601,1550,1550,1550,1550,1550,1550,
+     &           1550,1550,1601,1550,1601,1601,1550,1601,1550,1550,
+     &           1550,1550,1550,1550)                      , NUTYEL
+C
+C           LES TABLEAUX AUXILIAIRES EN 2D
+C           ------------------------------
+ 1601       CALL E12LAG( NBPOLY,NPI ,MCN(IAPOID),
+     %                  MCN(IAPOL) ,MCN(IADPOL),RMCN(IAX),
+     %                  MCN(IAF1)  ,MCN(IAF2),
+     %                  MCN(IAPDEL),MCN(IADP),
+     %                  MCN(IADFM1) )
+C
+C           CALCUL DU FLUX DE CHAQUE ARETE ET DU FLUX DES LIGNES
+C           ----------------------------------------------------
+            CALL TF2LAG( D2PI, NOAXIS, RMCN(IAX), NDSM, NBELEM, NUELEM,
+     %                   NTDL, NBPOLY, MCN(MNNDEL), NBPNFX,
+     %                   NBPOLA, NPIA,
+     %                   MCN(IAPOIA), MCN(IAPOLA), MCN(IADPOA),
+     %                   NARET, NOOBLA, NUMIOB(2), NUMAOB(2),
+     %                   NOOBSF(1), NUMIOB(3), NUMAOB(3),MCN(MNDOEL(3)),
+     %                   MCN(MNDPA1), MCN(MNDPA2), MCN(IAU0),
+     %                   MCN(MNFLPT), MCN(MNCOPN),
+     %                   MCN(MNFLNP), MCN(MNFLTO) )
+C
+C           CALCUL DU GRADIENT DE LA TEMPERATURE AUX POINTS D'INTEGRATION
+C           -------------------------------------------------------------
+            CALL CPINEL( NBELEM,NUELEM,NPI,NDIM,
+     %                   MCN(IAF1),MCN(IAF2),MCN(IAF2),RMCN(MNCOPI) )
+            CALL DERTEM( NBELEM,NUELEM,NDSM,NDIM,NBPOLY,NPI,MCN(IADP),
+     %                   NTDL,MCN(MNNDEL),MCN(IAU0),MCN(MNDTEM+WTEMPE) )
+C
+ 1900    CONTINUE
+C
+C        MISE A JOUR DU TMS 'FLUXPT"NMTYEL'
+C        =======================================
+         MCN( MNFLUX + WBCAFX ) = NDSM
+         MCN( MNFLUX + WDIMFX ) = NDIM
+         MCN( MNFLUX + WUTYFX ) = NUTYEL
+         MCN( MNFLUX + WBELFX ) = NBELEM
+         MCN( MNFLUX + WBPNFX ) = NBPNFX
+C        LA DATE
+         CALL ECDATE( MCN(MNFLUX) )
+C        LE NUMERO DU TABLEAU DESCRIPTEUR
+         MCN( MNFLUX + MOREE2 ) = NONMTD( '~>>>FLUXPT' )
+C
+C        MISE A JOUR DU TMS 'DTEMPERATURE"NMTYEL'
+C        ========================================
+         MCN( MNDTEM + WBJECD ) = NDSM
+         MCN( MNDTEM + WDIMED ) = NDIM
+         MCN( MNDTEM + WUTYED ) = NUTYEL
+         MCN( MNDTEM + WBELFD ) = NBELEM
+         MCN( MNDTEM + WBPEFD ) = NPI
+C        LA DATE
+         CALL ECDATE( MCN(MNDTEM) )
+C        LE NUMERO DU TABLEAU DESCRIPTEUR
+         MCN( MNDTEM + MOREE2 ) = NONMTD( '~>>>DTEMPERATURE' )
+C
+ 2000 CONTINUE
+C
+C     AFFICHAGE DES FLUXFR DE CHALEUR SUR LES OBJETS AUX LIMITES
+C     ==========================================================
+      CALL AFFLUXFR( KNOMOB )
+C
+C     CONTRIBUTION DES FLUX LOCAUX A L'OBJET COMPLET
+C     ==============================================
+      CALL SDFLUX( MCN(MNDFOB+WBDOBJ), MCN(MNDFOB+WTYOBJ), NDIM, NDSM,
+     %             NUMIOB(NTYF), NUMAOB(NTYF), MCN(MNFLTO) ,
+     %             NBLIGF , MCN(MNLIGN) , MCN(MNFLUG) )
+C
+C     DESTRUCTION DES TABLEAUX TEMPORAIRES
+C     ====================================
+9999  IF( MNELEM .GT. 0 ) CALL TNMCDS( 'ENTIER' ,2*MXTYEL , MNELEM )
+      DO 10000 I=1,4
+         IF( MNDOEL(I) .GT. 0 ) THEN
+            KK = NUMAOB(I) - NUMIOB(I) + 1
+            CALL TNMCDS( 'ENTIER' , KK * MXDOTH , MNDOEL(I) )
+         ENDIF
+10000 CONTINUE
+      IF( IATPOB .GT. 0 ) CALL TNMCDS( 'ENTIER' , NBTYEL*MXPOBA ,
+     %                                  IATPOB )
+      IF( IATAUX .GT. 0 ) CALL TNMCDS( 'REEL2'  , MOAUX*2 , IATAUX )
+      IF( IATAEL .GT. 0 ) CALL TNMCDS( 'REEL2'  , MOTAEL , IATAEL )
+      IF( MNNODL .GT. 0 ) CALL TNMCDS( 'ENTIER' , NBDLMX , MNNODL )
+      IF( IAPOEF .GT. 0 ) CALL TNMCDS( 'ENTIER' , MXPOEL , IAPOEF )
+      IF( IAX    .GT. 0 ) CALL TNMCDS( 'ENTIER' , NBDLMX*NDIM , IAX )
+      IF( MNFLPT .GT. 0 ) CALL TNMCDS( 'REEL2'  , MOFLPT , MNFLPT )
+      IF( MNFLTO .GT. 0 ) CALL TNMCDS( 'REEL2'  , MOFLTO , MNFLTO )
+C
+CPU   I = NINT( DINFO( 'DELTA CPU' ) )
+CPU   WRITE(IMPRIM,12000) I
+CPU 12000 FORMAT(/'FIN NORMALE SDTHE4 : COUT=',I12,' SECONDES CPU'/)
+      RETURN
+C
+C     ERREUR A L'OUVERTURE DU FICHIER POBA
+ 9900 NBLGRC(NRERR) = 2
+      KERR(1) = ' IMPOSSIBLE D''OUVRIR LE FICHIER POBA :'
+      KERR(2) = KNOMFI(1:NUDCNB(KNOMFI))
+      CALL LEREUR
+      RETURN
+      END

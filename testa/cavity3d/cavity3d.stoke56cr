@@ -1,0 +1,114 @@
+{ ==================================================================== }
+{ MEFISTO Software     : Version December 2008                         }
+{ USER's Name          : Alain Perronnet                               }
+{ Project Name         : cavity3d                                      }
+{ Date                 : January 6-th 2009                             }
+{ ==================================================================== }
+
+{ The velocity function on the TOP surface of the cube }
+ DefFunc TopVelocity(time, x,y,z, ntypobj, nuobjt, nucomp )
+   TopVelocity = 0;
+   if nucomp=2 and x>eps and x<1-eps and y>eps and y<1-eps and z>1-eps then
+      TopVelocity = time;
+   endif;
+ EndFunc;
+
+ 1;
+ { NAME of the OBJECT to TREAT }
+ cavity3d;
+
+ 2; { DATA INPUT of the FLUID }
+
+ { VOLUME: CUBE }
+ 1;   { Rot  The Mass Density }
+ 1;   { Mass Constant }
+ DefVar roWater; roWater=1000;
+ roWater;{ DMASSE Value of the constant mass density of WATER  kg/m3}
+ 
+ 2;     { nu The FLUID VISCOSITY }
+ 1;     { Constant Viscosity }
+ 0.001; { VISCOS WATER VISCOSITY in Pa.s}
+        { 8.9E-4;  VISCOS WATER VISCOSITY in Pa.s  cf wikipedia 
+          The dynamic viscosity nu of water is 8.90 × 10**-4 Pa·s at about 25 °C
+          As a function of temperature T(K): nu(Pa·s) = A × 10**(B/(T-C))
+          where A=2.414 × 10**-5 Pa·s; B = 247.8 K; and C = 140 K. }
+ 
+ 3;     { -rho g The PESANTOR INTERIOR FORCE DENSITY }
+ 1;     { Constant internal force }
+ 1;     { NBCOFO number of not zero force components }
+ 3;     { number of the component  Z}
+ -roWater*9.8; { internal force density kg/m3 m/s2 (according to -Z) }
+
+ 4;     { INITIAL VELOCITIES }
+ 3;     { NBCOVI 'Number of Initial Velocity Components at a node }
+ -1;    { Function Initial Velocity }
+ 1; 2; 3; { NUCOVI(1..NBCOVI) Number of Initial Velocity Components }
+ TopVelocity; { NAME of FUNCTION }
+
+ 5;     { INITIAL PRESSURES }
+ 1;     { CONSTANT INITIAL PRESSURE }
+ 0;     { VAPRE0 Initial Pressure CONSTANT }
+ @;
+
+ { SURFACE: TOP }
+ 2; { Fixation of the VELOCITY }
+-1; { fixed velocity FUNCTION }
+ 3; { NBCOBV number of components of the fixed velocity }
+ 1; 2; 3; { NUCOBV(1..NBCOBV) nb of each component of the fixed velocity}
+ TopVelocity;
+ @;
+
+ { SURFACE: BASE }
+ 2; { Fixation of the VELOCITY }
+ 1; { constant fixed velocity }
+ 3; { NBCOBV number of components of the fixed velocity }
+ 1; 2; 3; { NUCOBV(1..NBCOBV) nb of each component of the fixed velocity}
+ 0; 0; 0; { BLVITE(1..NBCOBV) Value of the fixation }
+ @;
+
+ { SURFACE: RIGHT }
+ 2; { Fixation of the VELOCITY }
+ 1; { constant fixed velocity }
+ 3; { NBCOBV number of components of the fixed velocity }
+ 1; 2; 3; { NUCOBV(1..NBCOBV) nb of each component of the fixed velocity}
+ 0; 0; 0; { BLVITE(1..NBCOBV) Value of the fixation }
+ @;
+
+ { SURFACE: LEFT }
+ 2; { Fixation of the VELOCITY }
+ 1; { constant fixed velocity }
+ 3; { NBCOBV number of components of the fixed velocity }
+ 1; 2; 3; { NUCOBV(1..NBCOBV) nb of each component of the fixed velocity}
+ 0; 0; 0; { BLVITE(1..NBCOBV) Value of the fixation }
+ @;
+
+ { SURFACE: FRONT }
+ 2; { Fixation of the VELOCITY }
+ 1; { constant fixed velocity }
+ 3; { NBCOBV number of components of the fixed velocity }
+ 1; 2; 3; { NUCOBV(1..NBCOBV) nb of each component of the fixed velocity}
+ 0; 0; 0; { BLVITE(1..NBCOBV) Value of the fixation }
+ @;
+
+ { SURFACE: BACK }
+ 2; { Fixation of the VELOCITY }
+ 1; { constant fixed velocity }
+ 3; { NBCOBV number of components of the fixed velocity }
+ 1; 2; 3; { NUCOBV(1..NBCOBV) nb of each component of the fixed velocity}
+ 0; 0; 0; { BLVITE(1..NBCOBV) Value of the fixation }
+ @;
+@;
+
+5;  { STEADY FLUID SOLVER =======================================}
+    1; { SKYLINE CROUT FACTORIZATION L D tL }
+@;
+
+6;  { UNSTEADY FLUID SOLVER =====================================}
+ 1.0;  { SKYLINE CROUT FACTORIZATION L D tL }
+ 0.0;  { INITIAL TIME }
+ 1.0;  { FINAL   TIME }
+ 0.1;  { STEP of TIME }
+  10;  { NUMBER of ADDED SOLUTION VECTORS }
+@;
+
+CLOSE;

@@ -1,0 +1,548 @@
+SOME NOTIONS on a MESH of a VOLUME:
+===================================
+
+The mesh of a VOLUME is a set of FE,  TETRAHEDRA et/ou
+PENTAHEDRA et/ou HEXAHEDRA stockes dans 2 TMS a___xyzsommet  et  a___nsef,
+defined by:
+
+- NBSOM vertices of coordinates (Xi,Yi,Zi) in the a___xyzsommet TMS
+- the array of 8 vertex numbers (NS1, NS2, ... , NS8) (1<=NS<=NBSOM)
+with  NS7=NS8=0 for a PENTAHEDRON,
+with  NS5=NS6=NS7=NS8=0 for a TETRAHEDRON
+of NBEFOB 3D FE.
+
+Even if the TMS structures support the storage of tangents for 3D FE,
+the absence of an interpolation C1-CONTINUE with respect to
+theirs faces of Clough and Tocher or 
+Fraeijs de Veubeke and Sander, the mesh algorithmswill not store
+the edge tangents.
+For all volumes, the FE will have STRAIGHT EDGES.
+
+                                            *V6
+                                        .   |   .               V8*......*V7
+                                     .      |       .            .         .
+          *V3  --------*V3       V4*........|.........*V5    V5*............*V6          
+         .    .     .  |           |        |         |        |            |
+        .        .     |           |        *V3       |        |            |
+       .      .    .   |           |    .        .    |        |V4*......*V3|
+      .   .           .|           |  .             . |        |.          .|
+   V1*..................*V2      V1*..................*V2    V1*............*V2
+  a straight tetrahedron         a straight pentahedron   a straight hexahedron droit
+     (P1 interpolation)             (R1 interpolation)       (Q1 interpolation)
+
+In fact, if a TETRAHEDRON is subdivided in M**3 tetrahedra,
+or if a  PENTAHEDRON is subdivided in MxMxN pentahedra,
+or if an HEXAHEDRON  is subdivided in MxNxP hexahedra,
+it is sufficient to store these 1 or 2 or 3 integers to obtain
+an implicit numbering of vertices.
+In this case, the mesh is said STRUCTURED,
+else, it is said UNSTRUCTURED.
+
+The quality of FE DEPENDS of quality of boundary triangles or quadrangles
+because these FE will be on the boundary of volume mesh.
+=> A REGULAR augmentation or diminution of the lengths of edges is necessary!
+
+In fact, if a TETRAHEDRON is subdivided into M**3 tetrahedra,
+or if a PENTAHEDRON is subdivided into MxMxN pentahedra,
+or if an HEXAHEDRON is subdivided into MxMxP hexahedra,
+it is sufficient to store the values of M (eventually N, P) 
+to compute the number NBSOM of vertices and use an implicit 
+numbering for the 8 vertices of the FE i.
+In this case, the mesh is said STRUCTURED,
+else, it is said UNSTRUCTURED.
+
+Attention:
+To obtain unstructured meshes as for tetrahedrization, the
+User's function TAILLE_IDEALE(x,y,z) MAY BE GIVEN!
+The mesh algorithms compute the edges to satisfy the
+edge length, result of the call of TAILLE_IDEALE(x,y,z).
+The presence of this function is sufficient to its using.
+
+At contrary, for STRUCTURED MESHES as STRUCTURED TRIANGLE or
+STRUCTURED QUADRANGLE, the call of TAILLE_IDEALE(x,y,z) is not
+done because the mesh algorithm is not compatible with!
+
+Example for the input of Taille_Ideale:
+DefVar lxf,lh2,lh3;
+lh2=0.3;
+lh3=0.7;
+lxf=max(lh2,lh3);
+
+DefFunc Taille_Ideale(x,y,z);
+  Taille_Ideale=0.45;
+  If x<lxf and y>-(lh3+lh2)*1.2
+    Then Taille_Ideale=0.15;
+  Else
+    If x<lxf and y>-(lh3+lh2)*1.8
+    Then Taille_Ideale=0.28;
+    EndIf;
+  EndIf;
+EndFunc;
+Here, upper or lower cases are not signifient.
+
+
+A VOLUME MAY BE CONSTRUCTED BY THE FOLLOWING OPTIONS:
+
+1 : STRUCTURED TRANSFINITE HEXAHEDRON
+The deformed HEXAEDRON is defined from its 6 meshed quadrangular faces.
+Each of faces must be a STRUCTURED QUADRANGLE with respect of
+the number of edges on the 3x4 common edges of the hexahedron.
+A TRANSFINITE INTERPOLATION of degree 1 (COOK, GORDON, HALL method) 
+maps an hexaedrisation of the unit cube onto the hexahedron with respect
+to the quadrangulation of its 6 faces.
+ATTENTION: The edge number of 4 parallel edges must be the same
+Exemple: V1_HEXAEDRON; I; 1; QUADRANGLE1; QUADRANGLE2;QUADRANGLE3;
+QUADRANGLE4; QUADRANGLE5; QUADRANGLE6;
+ATTENTION: With a large deformation of the hexahedron some FE may overlap!
+This overlapping is not detected!
+Draw the resulting mesh to verify if the mesh is correct or not.
+This overlapping problem is solved with the option 2.
+
+2 : STRUCTURED ELLIPTICAL HEXAHEDRON
+The deformed HEXAEDRON is defined from its 6 meshed quadrangular faces.
+Each of faces must be a STRUCTURED QUADRANGLE with respect of
+the number of edges on the 3x4 common edges of the hexahedron.
+The SOLUTION of a NOT LINEAR ELLIPTICAL PARTIAL DIFFERENTIAL EQUATION
+SYSTEM (WINSLOW's method+corrections) maps the UNIT CUBE onto
+the HEXAHEDRON with boundary the 6 INITIAL FACES.
+ATTENTION: The edge number of 4 parallel edges must be the same
+ATTENTION: The overlapping of some internal hexahedra is corrected
+by CONTROL FUNCTIONS located on the boundary and extended at the interior
+It is possible to give
+- the maximum number of iterations to correct the mesh
+- a factor FADI3D (one by face) to indicate what it is prefered near
+  the boundary
+This value is the heigth of normal edges of nearest sub-hexahedra.
+Their input must be in the same order as the 6 surfaces)
+
+. After a pure Winslow method, these values are used to improve,
+to control the orthogonality and lengths of the closed sub-hexaedra.
+
+. The value fadi2d in ]0,1]  define the quotient height/length of edges
+near the edges of the curved quadrangles:
+ For example a value=1.  gives "squares"
+             a value=0.1 gives a sub-quadrangle ten times large than height.
+
+          d computed = fadi3d * (d1+d2+d3+d4)/4
+
+                       d ?/                     
+                   d1  | /d4                      
+              --*------*-----*-- 
+                   d3 /  d2
+
+ By convention :
+   a value=0.  => NO indication on lengths of edges
+                  The angles will be improved with no other data.
+   a value=-1  => Distances are conserved during the improvement of angles.
+   a value=-2  => The distance d is the interpolation from d1 d2 d3 d4
+                  on the boundary of this edge
+
+       d interpolated function from d1 d2 d3 d4
+                          *
+                          | d4
+                          *
+       *                  /
+    d1 |          <--- d ?/ --->          *
+       |               |/                 | d2
+       *---*----*------*-----*----*---*---*
+                   *  /
+                   | /
+                d3 |/
+                   *
+In all cases, the angles of edges are improved.
+
+Example: V2_HEXAHEDRON; I; 2;
+QUADRANGLE1; QUADRANGLE2;QUADRANGLE3;
+QUADRANGLE4; QUADRANGLE5;QUADRANGLE6; {6 quadrangular faces}
+8;  0.1; 1; 2; 0; 0; 0; 
+Define an hexaedrisation of contour the 6 quadrangles
+with hexahedra 10 times less height than large and long 
+near QUADRANGLE1, cubic hexahedra near QUADRANGLE2
+2 times more height than large and long near QUADRANGLE3 and
+without improvement of lengths near the 3 last QUADRANGLEs
+(but, with improvements of angles to 90 degrees).
+
+REMARQUE: Generally, the ELLIPTIC HEXAHEDRISATION is MORE ORTHOGONAL
+than the TRANSFINITE HEXAHEDRISATION but the cost is more elevated!
+For a RECTANGULAR PARALLELIPIPEDE of regular meshes, use the option 1
+which is cheaper and produces, in this case, rectangle parallelipipedes.
+
+3 : STRUCTURED TRANSFINITE TETRAHEDRON
+The tetrahedron is defined by its 4 TRIANGULAR FACES with a 
+STRUCTURED MESH.
+The triangle number (>0) must be the same for any face.
+ATTENTION: With a large deformation of the hexahedron some FE may overlap!
+This overlapping is not detected!
+Draw the resulting mesh to verify if the mesh is correct or not.
+Example:   SV3_TETRAHEDRON; I; 3;
+TRIANGLE1; TRIANGLE2; TRIANGLE3; TRIANGLE4; {the 4 FACES}
+The tetrahedrization respects the vertices, edges and triangles of
+the 6 triangular faces.
+
+4 : STRUCTURED TRANSFINITE PENTAHEDRON
+the pentahedron is defined by its 2 STRUCTURED MESH TRIANGULAR FACES
+and its 3 STRUCTURED MESH QUADRANGULAR FACES.
+The number of triangles(>0) must be the same on the 2 triangular faces.
+The number of quadrangles(>0) in the third direction must be the same 
+on the 3 quadrangular faces.
+Example:   SV3_PENTAHEDRON; I; 4;
+TRIANGLE1; TRIANGLE2; QUADRANGLE1; QUADRANGLE2; QUADRANGLE3;
+The pentahedrization respects the vertices, edges, triangles and
+quadrangles of the 5 faces.
+
+8 : 1 CLOSED VOLUME FOR THE OPTION 9
+A closed volume is used to define a material
+which can be tetrahedrized with the option 9.
+This volume is used to define the materials meshed after with option 9
+This volume 8 is defined by the closed triangulations, boundary
+of the volume 8. 
+CLOSED <=> an edge belongs to 2 and only 2 triangles on the boundary.
+A HOLE is also possible to retire a part of material and is furnished
+as a CLOSED surface.
+This option does not generate directly a mesh. The option 9 will do it!
+
+9 : TETRAHEDRIZATION OF VOLUMES OF TYPE 8
+The volume, union of all the given closed volumes of type 8
+will be TETRAHEDRIZED
+A list of INTERNAL POINTS, future vertices of tetrahedra
+and a list of wished vertex distances around these vertices may be given.
+If the user's function TAILLE_IDEALE(x,y,z) exists, it is used
+to define the edge lengths of tetrahedra.
+
+Example:
+boule8;  i; 8; {the BALL defined as option 8}
+1; {NBSF1V 'nombre de surfaces fermees contour du volume}
+surface_trian_boule; {La SURFACE FERMEE TRIANGULEE}
+
+boule9; i; 9; { union of closed volumes of type 8 }
+10000;  { MXSOVO maximum of tetrahedrization vertices }
+1.5;    { ARETGR max length of edges of the regular grid }
+1;      { NBPTIV user's internal point number }
+1;      { NBVOPA number of volumes of type 8 of the partition}
+boule8; { name of volume option 8 }
+centre; { name internal point }
+0.35;   { wished edge length around point centre }
+Define a tetrahedrization of a boule with edge lengths 0.35 around
+the point centre
+
+10: INPUT DATA OF XYZSOMMET & NSEF TMS
+These 2 arrays are input value by value
+Example: UNITY_CUBE10; I; 10;
+8; 0; 3; {nbsom, nbtg, nbcoor}
+0;0;0; 1;0;0;  1;1;0; 0;1;0;  0;0;1; 1;0;1;  1;1;1; 0;1;1; {8vertices}
+4; 0; 8; 0;  {volume notclosed 8vertices/FE 0tg}
+1; 0; 0; 0;  {1hexahedron 0tg unstructured}
+1;2;3;4;5;6;7;8; {8vertex numbers of the cube}
+
+11: RECTANGULAR HEXAHEDRON WITH EDGES OF LENGTH 1
+HEXAHEDRISATION of UNIT CUBES for [0,NBINHX] * [0,NBINHY] * [0,NBINHZ]
+Example: HEXAHEDRON11; I; 11; 7; 4; 2;
+Define 7*4*2=56 cubes of edge lengths 1 with
+7 edges in  X-direction, 4 in Y and 2 slices.
+Any mapping may be used after...
+
+12: RECTANGULAR TETRAHEDRON WITH EDGES OF LENGTH 1
+Regular TETRAHEDRIZATION of the tetrahedron
+with vertices (0,0,0)  (NBACTE,0,0) (0,NBACTE,0) (0,0,NBACTE)
+Example: TETRAHEDRON12; I; 12; 5;
+Define 5*5*5=125 regular tetrahedra (but not all equals)
+
+13: RECTANGULAR PENTAHEDRON WITH EDGES OF LENGTH 1
+Regular PENTAHEDRIZATION of the tetrahedron
+with vertices
+(0,0,NBARHP)  (NBACTP,0,NBARHP) (0,NBACTP,NBARHP)
+(0,0,NBARHP)  (NBACTP,0,NBARHP) (0,NBACTP,NBARHP)
+Example: PENTAHEDRON13; I; 13; 5; 6;
+Define 5*5*6=150 regular pentahedra
+
+14: SLICES FROM A GENERIC SURFACE (EXTRUSION)
+The GENERATRIC SURFACE is DISPLACED N times to create N slices.
+The M generic surface triangle or quadrangle define NxM pentahedra
+or hexahedra.
+ATTENTION: these QUADRANGLES must NOT degenerate into
+TRIANGLES or EDGES or POINTS.
+The last displaced surface may be the first surface to form a torus.
+
+The DISPLACEMENT of the GENERIC SURFACE may be defined by 7 options:
+
+0: 3 points for each slice to define the displacements
+From the generic surface is associated an orthonormal reference
+system E0 defined by 3 points P01 P02 P03
+.P01 is the origin
+.P01-P02 define the first  vector E1
+.P01-P03 define the second vector E2, thus
+ E3 = E1 PRODUIT VECTORIEL E2
+ E2 = E3 PRODUIT VECTORIEL E1
+Norm(E1)=Norm(E2)=Norm(E3)=1
+Each displacement I is defined by 3 points which define
+a reference system EI as above.
+The DISPLACEMENT of the GENERIC SURFACE is the MAPPING from E0 to Ei
+The vertices from 2 consecutive surfaces are joined to define
+pentahedra and/or hexahedra
+Example: V14.0; I; 14; GENERIC_SURFACE; 0; 2; {slide number}
+         P01;P02;P03;  P11;P12;P13;   P21;P22;P23;
+         {the 3 definition points of reference systems}
+
+1: 3 line vertices to define the mappings of the generic surface
+The reference sytems EI are defined as above with the I vertices
+of the 3 lines.
+E0 is defined by the first vertex of line 1 2 3
+Ei is defined by the i-th  vertex of line 1 2 3 ...
+Example: V14.1; I; 14; GENERIC_SURFACE; 1; L1; L2; L3;
+        {the 3 lines of vertices definig the reference systems
+         and the displacements of the generic surface}
+
+2: translation of a constant cote z>0 (a stack)
+The generic surface is translated of a constant cote Z>0 (stack)
+Example: V14.2; I; 14; GENERIC_SURFACE; 2; 3; {slices}
+         6; {cote maximum to cut into 3 slices of thickness Z=2}
+
+3: translation of a cote z>0 for each displacement
+The generic surface is translated of a variable cote z>0 input
+for each displacement
+ATTENTION: This is an ABSOLUTE cote Z, NOT a RELATIVE cote
+to the previous displacement
+Example: V14.3; I; 14; GENERIC_SURFACE; 3; 2; {slices}
+         4; 7; {absolute cote Z displacement of 2 slices}
+
+4: translation vector (x y z) valuable for all slices
+The previous line is translated of a CONSTANT VECTOR (NOT NULL!)
+Example: V14.4; I; 14; GENERIC_SURFACE; 4; 5; {slices}
+         1; 2; 3; {the 3 constant components of translation vector}
+
+5: translation vectors (x y z) defined one by slice
+The previous line is translated of a NON CONSTANT VECTOR,
+ONE by slice.
+Example: V14.5; I; 14; GENERIC_SURFACE; 5; 2; {slices}
+1; 2; 3; {first translation of the generic surface}
+1; 2; 5; {translation of the previous surface.  Translations add}
+
+6: 3 functions X Y Z(no_slice,x,y,z) displace the generic surface
+The vertices of the generic surface are mapped by these 3 functions
+from R3 to R3.
+For example: ABSCISSE(no_slice,x,y,z)
+             ORDINATE(no_slice,x,y,z)
+             COTE    (no_slice,x,y,z)
+Each vertex (x,y,z) of the generic surface becomes the vertex 
+of coordinates
+(ABSCISSE(no_slice,x,y,z), ORDINATE(no_slice,x,y,z),
+ COTE    (no_slice,x,y,z) )  of the no_slice-th line
+Example: 
+DefFunc ABSCISSE(no_slice,x,y,z); ABSCISSE=no_slice*x; EndFunc;
+DefFunc ORDINATE(no_slice,x,y,z); ORDINATE=no_slice*y; EndFunc;
+DefFunc COTE(    no_slice,x,y,z); COTE    =no_slice*z; EndFunc;
+V14.6; I; 14; GENERIC_SURFACE; 6; 5; {slices}
+ABSCISSE; ORDINATE; COTE; {the 3 function names}
+
+15: ROTATION OF A GENERIC SURFACE AROUND AN AXIS (0 TRIANGLE VERTEX on AXIS)
+The generic surface is rotated N times to create N slices.
+If no vertex of a triangle is on the axis, the triangle becomes a pentahedron
+else, if 2 vertices of a triangle are on the axis, the triangle 
+      becomes a tetrahedron
+else, if 1 vertex of a triangle is on the axis,
+the triangle becomes by rotation a prism which IS NOT a Mefisto FE!
+(and option V31 must be used before the creation of an object)
+If no vertex of a quadrangle is on the axis, the quadrangle becomes
+   an hexahedron
+else, the quadrangle becomes a pentahedron (which is a Mefisto FE)
+The total rotation angle<=360 degrees.
+Examples: 
+V15.0; I; 15; GENERIC_SURFACE; P1_AXIS; P2_AXIS; 36; {rotations}
+0; {constant angles} 10; {degrees} 
+Define a volume by 36 rotations of 10 degrees of FE of GENERIC_SURFACE
+    
+V15.1; I; 15; GENERIC_SURFACE; P1_AXIS; P2_AXIS; 4; {rotations}
+1; {1 angle for each rotation}
+20; 30; 40; 50;
+{the rotations added to obtain finally 140 degrees}
+Define a volume by 4 rotations of 20 thus 50 thus 90
+thus 140 degrees of the generic surface around the axis defined
+points P1_AXIS and P2_AXIS
+
+16: MAGNIFYING or EXTRUSING AN ORIENTABLE SURFACE 3D INTO LAYERS
+In the normal direction to faces, triangles or quadrangles, a 
+PENTA-HEXAEDRISATION of NBCOLA(>0)layers is done around.
+All of layers have a small thickness EPCOLA to represent boundary layers
+Then, NBLACO other layers are penta-hexhedrized with a thickness which
+varies linearly from EPCOLA to EPLACO.
+Attention: If the normals cross each others, the quadrangulation may
+be INCORRECT!... and the penta-hexaedrisation must be restricted in
+a vicinity of the line.
+If one of the thicknesses is negative, the 2 thicknesses are imposed
+negative and the layers are made on the other side of the initial surface
+
+21: 1/1 CYLINDER
+22: 1/2 CYLINDER  
+The CYLINDER is based on the plane Z=0 and centred at ORIGIN.
+The SUPERIOR PLANE is defined by the COTE Z of a POINT. 
+In these 2 planes, the radius of circle must be given.
+The edge lengths may used a geometrical ratio or not.
+Example: CYLINDER_V21; I; 21; 
+10;{edges on the cylinder radius}
+3; {inferior circle radius}
+1; {geometrical ratio centre -> exterior => constant edge length} 
+POINT_CENTRE_SUPERIEUR; {to define the superior plane}
+5; {edges on the height of cylinder}
+1; {geometrical ratio Origine->centre->exterior => constant edge length}
+4; {radius of cylinder in the superior plane}
+24;{number of angular sectors}
+1; {number of angular sectors =>constant edge length}
+
+23: 1/1 CONE
+24: 1/2 CONE  
+The CONE is centred at the ORIGIN and is based in the plane Z=0.
+The VERTEX of the CONE is defined by a POINT of COTE Z>0.
+The edge lengths may used a geometrical ratio or not.
+The number of edges on the circle arc must be EVEN.
+Example: CONE_V23; I; 23; 
+10; {number of edges on the radius}
+2; {number of edges on the radius}
+1;  {geometrical ratio centre->exterior => edge constant length}
+VERTEX_CONE; {name of the point vertex of the cone (Z>0)}
+8;  {number of edges on the height of the cone}
+1;  {geometrical ratio base->vertex => edge constant length}
+18; {EVEN number of cone angular sectors}
+1;  {geometrical ratio X -> -X => edge constant length}
+
+30: QUALITY IMPROVEMENT OF A TETRAHEDRIZATION
+The tetrahedron QUALITY measures its distance to a regular tetrahedron
+For a TETRAHEDRON the QUALITY = c * r /R where
+r is the inscribed     radius circle of the tetrahedron
+R is the circumscribed radius circle of the tetrahedron
+c is a coefficient to have 1 for the regular tetrahedron.
+Its value is between 0 (degenerated FE) and 1 (regular FE).
+
+The tetrahedra with bad qualities are modified, either directly,
+or with the using of vertices in the vicinity.
+
+3 inputs to give:
+- the quality under which the tetrahedron must be improved
+- the coplanearity angle in degrees of 2 triangles to suppose
+  they are in a same plane and may be modified
+- the iteration number to do
+Example: TETRA_BETTER; I; 30; INITIAL_TETRA;
+ 0.1;  {minimum wished quality}
+   3;  {<=3 degrees, 2 faces with a common edge are in a same plane}
+  10;  {iterations to do}
+
+31: TETRAHEDRIZATION OF AN HEXA-PENTAHEDRIZATION
+Each FE of the initial volume mesh is subdivided into tetrahedra.
+Example: TETRAHEDRIZATION_V31; I; HEXA_PENTAHEDRISATION; 
+
+33: HEXAHEDRIZATION of a CUBE or a SPHERE
+A KERNEL is subdivided into CUBSPN**3 cubes with an edge length of
+CUBSPL/CUBSPN where CUBSPL is the length of the kernel.
+CUBSPD is the total length of the kernel+layers formed from
+the boundary of the kernel.
+With the option SPHERE, the vertices of hexahedra are projected on
+co-centric spheres of radii multiples of CUBSPL/CUBSPN,
+after, in geometric ratio to pass from CUBSPL/CUBSPN to the last radius
+Example:
+ cube3; i; 33; { HEXAHEDRIZATION of a SPHERE }
+  2;  {SPHERE }
+  3;  {CUBSPN number of edges in a direction of kernel}
+  4;  {CUBSPC number of homothetic layers}
+  3;  {CUBSPL length of cube or sphere kernel}
+  10; {CUBSPD total length of the cube or sphere}
+Construct an hexahedrization of a sphere of 3*3*3=27 hexahedra
++ 6*9 hexahedra for each of 4 layers.
+
+35: EXTRACT AN HEXAHEDRON OF A STRUCTURED HEXAEDRON
+Extract of a volume the hexahedra defined by 3 intervals
+of edge indexes I J K of the structured hexahedron
+Example: V35; I; 35; STRUCTURED_HEXA; 2;5; 4;8;  1;1;
+Extract the hexahedra of edge 2 to edge 5 in I-direction, 
+edge 4 to edge 8 in J-direction and edge 1 in K-direction.
+                                  
+36: EXTRACT A VOLUME FROM A VOLUME & CRITERION
+Any tetrahedron or pentahedron or hexahedron with all their
+vertices giving true for the logical User's function belongs
+to the extracted volume.
+Example: V36; I; 36; INITIAL_VOLUME;
+deffunc PLANE_X_POSITIF(x,y,z); 
+  PLANE_X_POSITIF = (x>=-0.00001);
+endfunc;
+PLANE_X_POSITIF;
+extract the tetrahedra or pentahedra or hexahedra 
+with all vertices which have an abscisse >= -0.00001
+(for troncature errors)
+
+39: SUBDIVISION of 3d FE into 8 sub-FE
+Any FE of the initial volume is cut into
+1 tetrahedron => 8 sub-tetrahedra
+1 pentahedron => 8 sub-pentahedra
+1 hexahedron  => 8 sub-hexahedra
+1 pyramid     => 6 sub-pyramids and 4 tetrahedra
+(and option V31 must be used before the creation of an object)
+Example: V39; I; 39; INITIAL_VOLUME;
+  
+48: IMPOSED POINTS ONTO the NEAREST VERTEX of the VOLUME
+The 3 coordinates of the nearest vertex to a named point
+are replaced by the 3 coordinates of the point.
+Attention, the quality of finite elements may be modified.
+
+50: MAPPING OF A VOLUME
+An existing volume is transformed by a predefined MAPPING
+Example: V50; PLANE_SYMMETRY; 50; INITIAL_VOLUME;
+The vertices of the VOLUME V50 are the images of vertices
+of INITIAL_VOLUME by the mapping PLANE_SYMMETRY
+
+51: UNION OF SEVERAL VOLUMES
+The resulting volume will be an UNION of volumes grouped
+under a unique name.
+An UNION of volumes is handled after as any other volume
+The common vertices of 2 volumes are identified
+to form an unique vertex. If this identification is NOT
+correct, modify the identification precision EPZERO and EPSXYZ
+of vertices by the option 20 of the Debut menu.
+Example: V51; I; 51;   5; V1;V2;V3;V4;V5;
+
+53: 1 MULTI-MATERIAL VOLUME (union of different volumes)
+GIVES MANY MONO-MATERIAL VOLUMES
+
+54: 1 MULTI-MATERIAL VOLUME (union of different volumes)
+GIVES ONLY ONE MONO-MATERIAL VOLUME
+
+61 : REGULAR 6-CUBE OF TYPE FINITE DIFFERENCES
+In R6, a 6-CUBE [a,b]**6 is meshed with 6-cubes [x,x+h]**6
+of FINITE DIFFERENCE type.
+(orthogonal parallelipipeds generalized in dimension 6)
+
+ATTENTION:
+A 6-cube => 2**6 C06 0-cubes =  64 vertices
+         => 2**5 C16 1-cubes = 192 edges
+         => 2**4 C26 2-cubes = 240 2-cubes
+         => 2**3 C36 3-cubes = 160 3-cubes
+         => 2**2 C46 4-cubes =  60 4-cubes
+         => 2**1 C56 5-cubes =  12 faces 5-cubes
+
+The ORIGIN of AXISES is
+either the centre of the 6-cube,
+or     the minimum of its coordinates.
+The constant number of edges in a direction is required.
+The value h, edge length, are required.
+
+62 : SIMILARITY OF 6-CUBES
+The 6-cube mesh is formed of a central kernel 6-cube.
+Each of its 12 faces (5-cubes) creates by central similarity
+N levels of 12 6-cubes
+The width of the kernel 6-cube is required.
+The number N of levels is required.
+
+63 : 3 FINITE DIFFERENCES AND SIMILARITY OF 6-CUBES
+The mesh is formed of a kernel of 3**6 6-cubes of
+finite difference type  (as option 61) and N levels of
+similarity of the kernel faces to produce 6-cubes.
+The width of the kernel 6-cube is required.
+The total width of the 6-cube is required.
+The number N of levels is required.
+
+
+81: RENAME THE VOLUME
+ATTENTION TO THE ORDER OF INPUT!
+Example: NEW_NAME; I; 81; OLD_NAME;
+Rename the surface OLD_NAME into NEW_NAME
+
+82: DELETE THE VOLUME
+Delete the volume from the input of its name done previously
+Example: V82; I; 82;   delete the volume V82 if it existed

@@ -1,0 +1,31 @@
+variable DebuTHER 'OPERATEUR -div(A grad*)' entier
+(0  : 'Nombre de JEUX de DONNEES (par defaut 1)',
+ 1  : 'NOM de l''OBJET a TRAITER',
+ 2  : 'ENTREE des DONNEES THERMIQUES du PROBLEME',
+ 3  : 'CALCUL THERMIQUE STATIONNAIRE',
+ 4  : 'CALCUL THERMIQUE INSTATIONNAIRE d/dt',
+ 5  : 'CALCUL d''ONDE INSTATIONNAIRE d2/dt2',
+ 6  : 'CALCUL LINEAIRE des VALEURS VECTEURS PROPRES',
+ 7  : 'DESSIN des VALEURS VECTEURS PROPRES',
+ 8  : 'DESSIN des TEMPERATURES et des FLUX',
+ 9  : 'DESSIN de la PROPAGATION d''une ONDE',
+ 10 : 'DESSIN du MAILLAGE des PLSVO',
+ 11 : 'DESSIN des ISO-SURFACES f(x,y,z)=Ctes',
+ 12 : '-DELTA u + a1 u +a2 u**2 +a3 u**3 = 0',
+ 13 : 'ENERGIES des SOLUTIONS',
+ 16 : 'NORME L1 des SOLUTIONS**EXPOSANT',
+ 19 : 'CALCUL POLYNOMIAL de VALEURS VECTEURS PROPRES',
+ 20 : 'PRECISION pour INVERSER A x = b',
+ 38 : 'LARGEUR HAUTEUR PIXELS de la FENETRE',
+ 39 : 'COULEUR du FOND de la FENETRE',
+ 70 : 'MANAGEMENT des TMS Files Unites',
+ 98 : 'DATE de version de Mefisto',
+ 99 : 'SAUVEGARDE des donnees FIN TRAITEMENT' ) ;
+
+
+
+ 12 : 'H2+ Courbes Energies(DistanceNeutrons)',
+ 14 : 'ENERGIES(h) de l''atome d''HYDROGENE',
+ 15 : 'ERREURS sur un 3CUBE',
+ 16 : 'ERREURS sur un 6CUBE',
+ 17 : 'ERREURS Valeurs Propres sur un 6CUBE',

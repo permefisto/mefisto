@@ -1,0 +1,38 @@
+      SUBROUTINE REELPX( NC, NX, NY, REEL, FRMT )
+C+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+C BUT :  TRACE LES CARACTERES DE REEL AVEC LA COULEUR NC
+C -----  A PARTIR DU POINT (X,Y) EN COORDONNEES PIXELS
+C        SANS DECALAGES NI AJOUT DE .
+C
+C ENTREE :
+C --------
+C NC     : NUMERO DE LA COULEUR DES CARACTERES DE REEL
+C NX     : ABSCISSE PIXELS DES CARACTERES DE REEL
+C NY     : ORDONNEE PIXELS DES CARACTERES DE REEL
+C REEL   : VALEUR REELLE A TRACER
+C FRMT   : FORMAT FORTRAN '(E15.6)' ou '(G10.2)' ou '(F5.1)' ...
+C          POUR TRACER LES CARACTERES NON BLANCS DE LA VALEUR DU REEL
+C+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+C AUTEUR : PERRONNET ALAIN ANALYSE NUMERIQUE UPMC  PARIS  SEPTEMBRE 1994
+C2345X7..............................................................012
+      include"./incl/trvari.inc"
+      REAL           REEL
+      CHARACTER*(*)  FRMT
+      CHARACTER*23   KTXT
+C
+C     SI COULEUR NEGATIVE ALORS AUCUN TRACE
+      IF( NC .LT. 0 ) RETURN
+C
+C     TRACE EFFECTIF
+      CALL XVCOULEUR( NC )
+C
+C     LE NOMBRE DE CARACTERES DE REEL
+      KTXT = '    '
+      WRITE( KTXT, FRMT ) REEL
+      DO 10 I=1,23
+         IF( KTXT(I:I) .NE. ' ' ) GOTO 20
+ 10   CONTINUE
+C
+C     LE TRACE XV DE LA CHAINE DES CARACTERES
+ 20   CALL XVTEXTE( KTXT(I:23), 24-I, NX, NY )
+      END

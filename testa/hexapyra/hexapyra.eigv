@@ -1,0 +1,45 @@
+{ ======================================================================== }
+{ Software MEFISTO     : Version September 2006                            }
+{ USER's Name          : Perronnet Alain Weichung WANG and Tsung-Min HWANG }
+{ Project Name         : hexapyra                                          }
+{ Date                 : 21/09/2006                                        }
+{ ======================================================================== }
+2;  { ENTREE des DONNEES du PROBLEME }
+
+{ VOLUME: HEXAV8 }
+ 1;     { MASSE Density }
+ 1;     { type of input: Masse is constant }
+ 1;     { MASSE density value }
+
+ 2;     { [A] coefficient m1 }
+ 1;     { the Material 3D is homogeneous isotropic }
+ 0.067; { Value of m1 }
+
+ 6;     { CT Coefficient before WAVE FUNCTION }
+ 1;     { CT is constant }
+ 0.77;  { value of CT }
+@;
+
+{ VOLUME: PYRAV8 }
+ 1;     { Rot Densite de MASSE }
+ 1;     { Masse constante }
+ 1;     { DMASSE 'Densite de MASSE' reel ; }
+
+ 2;     { [A] coefficient m2 }
+ 1;     { the Material 3D is homogeneous isotropic }
+ 0.024; { Value of m2 }
+@;
+
+{ SURFACE:  hexav8.F }
+ 3;   {CONTACT imposed wave function}
+ 1;   {Wave Function is constant }
+ 0;   {Value of wave function}
+@;
+
+6;       { COMPUTE the EIGENVALUES AND EIGENVECTORS }
+  1;     { SUB-SPACE method }
+  0.01;  { INFERIOR BOUND of EIGENVALUES to COMPUTE }
+  0.11;  { SUPERIOR BOUND of EIGENVALUES to COMPUTE }
+@;
+
+CLOSE;

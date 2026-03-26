@@ -1,0 +1,45 @@
+2 functions must be given:
+one for the DILATATION and one for the REFERENCE TEMPERATURE.
+These 2 functions have the same parameters
+
+The order of 7 parameters of the USER's function
+HEAT DILATATION or REFERENCE TEMPERATURE
+at time TEMPS, at point X,Y,Z, 
+for the PLSVO of type number NO_TYPE_OBJECT
+(1:POINT, 2:LINE, 3:SURFACE, 4:VOLUME, 5:OBJECT )
+the directory number NO_OBJECT
+for a temperature TEMPER, known or unknown (not linear case)
+must be
+
+DILATA( TEMPS, X, Y, Z, NO_TYPE_OBJET, NO_OBJET, TEMPER ) 
+
+and be programmed with respect to LU grammar
+(cf documentation and examples of the debut menu)
+
+All these parameters will be initialized during its call.
+These parameters can be used or not, but have to be present
+in the definition of DILATATION.
+ 
+EXAMPLE:
+deffunc dilatation( t, x, y, z, no_type_objet, material, temper ) ;
+if   material=nuobjt( 'volume' , 'steel' )
+then dilatation=12e-6;
+else if material=nuobjt( 'volume' , 'copper' )
+     then dilatation=16.0e-6 ;
+     else dilatation=10.5e-6 ;
+     endif;  
+endif;
+endfunc;
+
+deffunc MaterialRefTemper( t, x, y, z, no_type_objet, material, temper ) ;
+if   material=nuobjt( 'volume' , 'steel' )
+then MaterialRefTemper=20.0;
+else if material=nuobjt( 'volume' , 'copper' )
+     then MaterialRefTemper=18.0;
+     else MaterialRefTemper=22.5;
+     endif;  
+endif;
+endfunc;
+
+Remark: the LU function nuobjt( p1, p2 ) gives the
+number of the PLSVO of type p1 with the name p2.

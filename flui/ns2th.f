@@ -1,0 +1,2096 @@
+      SUBROUTINE NS2TH( KNOMOB, NAVSTO, NTLXOB, MOREE2, RELMIN, KNOMFIC,
+     %                  NDIM,   MNXYZN, NBSOM,  NBNOVI,
+     %                  NBTYEL, MNNPEF, NUTYEL,
+     %                  NUMIOB, NUMAOB, MNDOEL,  IEBLPR,
+     %                  NORESO, LP2LIGN, LP2COLO, NBCMVG,
+     %                  DT,     DTSTOC, TPSINI,  TPSFIN, MNTIMES,
+     %                  NBPAST, NOVVIPR,NTDLVP, NTDLTE,
+     %                  NDDLNO, VXYZP0, VITMAX, VITMOY, TEMPER0,
+     %                  MXPAST, VPMIMX,
+     %                  DFABG,  DFACTO,  DVITPR, IERR )
+C+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+C BUT : CALCULER LES VITESSES PRESSION DANS UN DOMAINE 2D ou 3D
+C ----- DU PROBLEME DE NAVIER-STOKES EN INSTATIONNAIRE
+C       SELON UNE METHODE SEMI IMPLICITE AVEC PAS DE TEMPS CONSTANT
+C       LA  METHODE DU TRIANGLE ou TETRAEDRE DE TAYLOR-HOOD pour STOKES
+C       LA  METHODE DES CARACTERISTIQUES RETROGRADES pour le TERME de
+C       TRANSPORT du PROBLEME de NAVIER-STOKES
+C       TRIANGLE ou TETRAEDRE de TAYLOR-HOOD P2 EN VITESSE et P1 EN PRESSION
+C
+C       DENSITE DE MASSE Rho, VISCOSITE, Mhu SONT INDEPENDANTS DU TEMPS
+C
+C       FORCE EXTERNE SUR LA FRONTIERE
+C       BLOCAGE DE LA VITESSE  IMPOSEE
+C       BLOCAGE DE LA PRESSION IMPOSEE   PEUVENT DEPENDRE DU TEMPS
+C
+C       RESTRICTION: TOUTES LES NDIM COMPOSANTES DE LA VITESSE EN UN NOEUD
+C       DOIVENT ETRE FIXEES mais avec DES VALEURS NON FORCEMENT EGALES
+C**************************************************************************
+C       NS Option2: Methode des caracteristiques et pas fractionnaires
+C       A L'ETAPE n+1, LE PROBLEME CONSISTE A TROUVER {u(tn+1), p(tn+1)}
+C                      SOLUTION de
+C   1; ( Rho - dt Mhu Laplacien ) {U*i(tn+1,x)} =
+C        Rho {Ui(tn,X(tn;tn+1,x))} -dt CoGrPr gradi p(tn,x) + dt {fgi(tn+1)})
+
+C       ou X(tn;tn+1,x) est la position de la molecule du fluide a tn
+C          qui sera en x a tn+1 (methode des caracteristiques)
+
+C       Condition aux limites
+C       U*i(tn+1,X) = Ui(tn+1,X)        avec X sur Gamma 
+C       U*i(tn+1,X) = Ui(X(tn;tn+1,x))  avec X sur Gamma de sortie de fluide
+C       -dt Mhu dU*i(tn+1,X)/dn = 0     avec X sur Frontiere-Gamma 
+C                                  pour i=1,...,NDIM
+
+C  2. -dt CoGrPr Laplacien {P(tn+1)-P(tn)}=-(Rho-dt Mhu Laplacien)Div{U*(tn+1)}
+C       Condition aux limites
+C       Pn+1,m+1(Gamma) = P(tn+1,Gamma) pour Gamma sur la frontiere
+C      -dt CoGrPr dPn+1,m+1/dn =-n . (Rho-dt Mhu Laplacien){U*(tn+1)}
+C
+C  3. ( Rho - dt Mhu Laplacien ) {U(tn+1)-U*}i = - dt CoGrPr GRADi(P(tn+1)-P(tn))
+C       Condition aux limites
+C       Ui(tn+1,X)-U* = 0   avec X sur Gamma 
+C       -dt Mhu dUi(tn+1,X)/dn = 0     avec X sur Frontiere-Gamma 
+C                                 pour i=1,...,NDIM
+
+C  4.   U(tn+1,Noeuds) = U(tn,Noeuds) + (U(tn+1) - U(tn))(Noeuds)
+
+C  5.   P(tn+1,Noeuds) = P(tn,Noeuds) + ( P(tn+1,Noeuds)-P(tn,Noeuds) )
+
+C       A L'ETAPE 0 IL FAUT RECUPERER U0 et CONSTRUIRE F0
+C       puis, les iterations en temps peuvent demarrer
+C***************************************************************************
+
+C ENTREES:
+C --------
+C KNOMOB : NOM DE L'OBJET A TRAITER
+C NAVSTO : =2 RESOLUTION du PROBLEME DE NAVIER-STOKES PAR PAS FRACTIONNAIRES
+C NTLXOB : NUMERO DU TMS DU LEXIQUE DE L'OBJET KNOMOB
+C MOREE2 : NOMBRE DE MOTS   D'UNE VARIABLE REELLE DOUBLE PRECISION
+C RELMIN : PLUS PETIT REEL SERVANT DE MARQUEUR DE NON UTILISATION
+C KNOMFIC : NOM DU FICHIER SUPPORT DU VECTEUR VITESSE+PRESSION
+
+C NDIM   : DIMENSION DES COORDONNEES DES POINTS ( 2 OU 3 )
+C MNXYZN : ADRESSE MCN DU TABLEAU XYZNOEUD DE L'OBJET KNOMOB
+C          XYZ des SOMMETS+MILIEUX ARETES DES EF TAYLOR-HOOD
+C NBSOM  : NOMBRE DE SOMMETS DU MAILLAGE
+C NBNOVI : NOMBRE DE NOEUDS DU MAILLAGE (SOMMETS ET MILIEUX DES ARETES)
+
+C NBTYEL : NOMBRE DE TYPES D'EF DU MAILLAGE DE CET OBJET
+C MNNPEF : ADRESSE MCN DU TABLEAU DES ADRESSES MCN DES TMS NPEF"TYPE EF
+
+C NUMIOB : NUMERO MINIMAL DU PLSV DANS LA DEFINITION DE L'OBJET
+C NUMAOB : NUMERO MAXIMAL DU PLSV DANS LA DEFINITION DE L'OBJET
+C MNDOEL : LES 4 ADRESSES MCN DES TABLEAUX DES ADRESSES DES
+C          TABLEAUX DECRIVANT LES DONNEES DU FLUIDE DE L'OBJET COMPLET
+C IEBLPR : NOMBRE DE TMS BLPRESSION       DES PLS DE L'OBJET TROUVE
+
+C NORESO : CODE RESOLUTION DES SYSTEMES LINEAIRES AVEC LES MATRICES VG et PG
+C          1 FACTORISATION COMPLETE DE CROUT ET MATRICE PROFIL VG et PG
+C          2 GRADIENT CONJUGUE SIMPLE avec STOCKAGE MORSE DE VG PG
+
+C LP2LIGN: TABLEAU des POINTEURS SUR COEFFICIENTS DIAGONAUX
+C          DE LA MATRICE MORSE VG
+C LP2COLO: NO DES COLONNES DES COEFFICIENTS STOCKES DE CHAQUE LIGNE
+C          DE LA MATRICE MORSE VG
+C NBCMVG : NOMBRE DE COEFFICIENTS STOCKES DE LA MATRICE GLOBALE VG NON DIAGONALE
+
+C DT     : PAS CONSTANT DU TEMPS
+C DTSTOC : PAS CONSTANT DU TEMPS ENTRE 2 STOCKAGES DU VECTEUR"VITESSEPRESSION
+C TPSINI : TEMPS INITIAL DU CALCUL
+C TPSFIN : TEMPS FINAL   DU CALCUL
+C MNTIMES: ADRESSE MCN DES TEMPS DES VECTEURS VITESSE+PRESSION
+
+C NTDLVP : NOMBRE TOTAL DE DEGRES DE LIBERTE DE L'OBJET
+C          DL VITESSES (P2 INTERPOLATION) et PRESSION (P1 INTERPOLATION)
+C NDDLNO : NUMERO DU DERNIER DL DE CHAQUE NOEUD VITESSE (0:NBNOVI)
+C          A UTILISER POUR RETROUVER LES DL PRESSION DES VECTEURS VXYZP
+C VXYZP0 : TABLEAU VITESSEXYZ+PRESSION AUX NOEUDS A L'INSTANT INITIAL
+
+C MXPAST: NOMBRE MAXIMAL DE PAS DE TEMPS CALCULABLE DANS VPMIMX
+
+C MODIFIES:
+C --------
+C NBPAST : NOMBRE DE PAS DE TEMPS D'INTEGRATION des EQUATIONS de NAVIER-STOKES
+C NOVVIPR: NUMERO DU DERNIER VECTEUR VITESSEPRESSION STOCKE
+C VITMAX : NORME MAXIMALE INITIALE PUIS FINALE DE LA VITESSE AUX NOEUDS
+C VITMOY : NORME MOYENNE  INITIALE PUIS FINALE DE LA VITESSE AUX NOEUDS
+
+C SORTIES:
+C --------
+C NBPAST : NOMBRE DE PAS DE TEMPS CALCULES ET DE RESULTATS STOCKES DANS VPMIMX
+C VPMIMX : (TEMPS, VitesseMoyenne, VitesseMax,
+C           PressionMoyenne, Pression Max-Min,
+C           FLUX-, FLUX+) a chaque temps calcule
+C IERR   : 0 SI PAS D'ERREUR D'EXECUTION, NON NUL SINON
+C+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+C AUTEUR : ALAIN PERRONNET LJLL UPMC & St PIERRE du PERRAY     Juin 2011
+C MODIFS : ALAIN PERRONNET LJLL UPMC & St PIERRE du PERRAY  Octobre 2012
+C MODIFS : ALAIN PERRONNET             St PIERRE du PERRAY     Mars 2021
+C23456---------------------------------------------------------------012
+C$    use OMP_LIB
+
+C     VALEUR A METTRE SUR LA DIAGONALE DE LA MATRICE PROFIL
+C     POUR TRAITER LES DL FIXES
+      DOUBLE PRECISION  TGV
+      PARAMETER        (TGV = 1D30)
+
+      include"./incl/lu.inc"
+      include"./incl/xvfontes.inc"
+      include"./incl/langue.inc"
+      include"./incl/gsmenu.inc"
+      include"./incl/ntmnlt.inc"
+      include"./incl/nmproj.inc"
+      include"./incl/donflu.inc"
+      include"./incl/a_objet__topologie.inc"
+      include"./incl/a_objet__definition.inc"
+      include"./incl/a___arete.inc"
+      include"./incl/a___face.inc"
+      include"./incl/a___aretefr.inc"
+      include"./incl/a___xyzsommet.inc"
+      include"./incl/a___xyznoeud.inc"
+      include"./incl/a___npef.inc"
+      include"./incl/a___vecteur.inc"
+      include"./incl/a___profil.inc"
+      include"./incl/a___morse.inc"
+      include"./incl/a___temperinit.inc"
+      include"./incl/msvaau.inc"
+      include"./incl/ponoel.inc"
+      include"./incl/ctemps.inc"
+      include"./incl/cthet.inc"
+      include"./incl/cnonlin.inc"
+      include"./incl/nctyef.inc"
+      include"./incl/trvari.inc"
+      include"./incl/mecoit.inc"
+      include"./incl/traaxe.inc"
+      include"./incl/xyzext.inc"
+      include"./incl/p2p22d.inc"
+      include"./incl/p2p23d.inc"
+      include"./incl/threads.inc"
+      include"./incl/pp.inc"
+
+      COMMON / UNITES / LECTEU, IMPRIM, INTERA, NUNITE(29)
+      COMMON            MCN(MOTMCN)
+      REAL              RMCN(MOTMCN)
+      DOUBLE PRECISION  DMCN(MOTMCN/2)
+      EQUIVALENCE      (MCN(1), RMCN(1), DMCN(1))
+
+      CHARACTER*(*)     KNOMOB, KNOMFIC
+      CHARACTER*4       NOMELE(2)
+      INTEGER           NUMIOB(4), NUMAOB(4), MNDOEL(4)
+      INTEGER           NOOBVC(1), NOOBSF(6), NOOBLA(12), NOOBPS(8)
+      INTEGER           NDDLNO(0:*), LP2LIGN(0:NBSOM), LP2COLO(NBCMVG)
+      INTEGER           NOSOEF(4), NONOEF(10)
+      INTEGER           KGCUET(3), KGCPRE, KGCVIT(3)
+      REAL              DT, DTSTOC, TPSINI, TPSFIN, XYZEF(30)
+
+      DOUBLE PRECISION  VPMIMX(8,0:MXPAST)
+      DOUBLE PRECISION  RELMIN, VXYZP0(NTDLVP), TEMPER0(*)
+      DOUBLE PRECISION  Rho, Mhu, CoGrPr, CoBOUS, dtMhu,
+     %                  VOLUME, INTDIVV,INTPRES
+      DOUBLE PRECISION  VITMIN, VITMAX0,VITMAX, VITMOY0,VITMOY,VITFXMAX,
+     %                  PREMIN, PREMAX, PREMOY,
+     %                  FLUNEG, FLUPOS, SEMINVIT, SEMAXVIT
+      DOUBLE PRECISION  VITECR
+      DOUBLE PRECISION  S, STGV, DELTAT, Pi
+      DOUBLE PRECISION  DINFO, DFABG, DFACTO, DVITPR, DMOTSTO
+      DOUBLE PRECISION  DATE00, DATE0, DATE, SECONDES, TIMEMOY1DT
+      DOUBLE PRECISION  t_cpu_0, t_cpu_1, t_cpu_it0, t_cpu_it1
+      integer           t0, t1, nbclockps
+      DOUBLE PRECISION  tt0
+
+      INTRINSIC         DBLE, ABS
+
+      DOUBLE PRECISION, allocatable, dimension(:,:) :: VXVYVZPR
+      DOUBLE PRECISION, allocatable, dimension(:)   :: PG, VG, V3P2,
+     %                  PRPR, DAUX1, DAUX2, DAUX3, VITC
+ 
+      INTEGER,          allocatable, dimension(:) :: NO1EFN,  NONOSO,
+     %                                               NODPFX,  NODVFX,
+     %                                               LP1LIGN, LP1COLO
+
+      WRITE(IMPRIM,*) 'Start of ns2th FRACTIONAL IMPLICIT NAVIER-STOKES 
+     %SOLVER on the OBJECT ',KNOMOB
+
+C     LA DATE EN SECONDES DEPUIS LE 1/1/70 MINUIT
+      CALL  SECONDES1970( DATE00)
+      call system_clock (count=t0, count_rate=nbclockps)
+
+C     TEMPS CPU donne par le systeme
+      call cpu_time(t_cpu_0)
+
+C     Le TEMPS CPU donne par le systeme a la fin de l'iteration 0
+      call cpu_time(t_cpu_it0)
+
+C///////////////////////////////////////////////////////////////////////
+C$OMP PARALLEL SHARED( tt0 )
+C$    tt0 = OMP_GET_WTIME()
+C$    WRITE(IMPRIM,*)'ns2th.f: OMP_GET_NUM_THREADS=',NBTHREADS
+C$OMP END PARALLEL
+C///////////////////////////////////////////////////////////////////////
+      TIMEMOY1DT = 0D0
+
+      Pi = ATAN( 1D0 ) * 4D0
+
+      IERNO1EFN  = 1
+      IERNONOSO  = 1
+      IERNODPFX  = 1
+      IERNODVFX  = 1
+      IERPGALLOC = 1
+      IERVGALLOC = 1
+      IERVXVYVZPR= 1
+      IERV3P2    = 1
+      IERVITC    = 1
+      IERDAUX1   = 1
+      IERDAUX2   = 1
+      IERDAUX3   = 1
+      IERPRPR    = 1
+      IERLP1LIGN = 1
+      IERLP1COLO = 1
+
+      NBNOTE  = 0
+      NBPRFX  = 0
+      MNVAPRFX= 0
+      MNDLPRFX= 0
+      NBVIFX  = 0
+      MNDLVIFX= 0
+      MNVAVIFX= 0
+      MNFVSF  = 0
+      MOSFOB  = 0
+      NBCMPG  = 0
+
+      MNVVEF  = 0
+      MNSFEF  = 0
+      MNLAEF  = 0
+      MNPSEF  = 0
+
+      MOARET  = 0
+      MXARET  = 0
+      MNLARE  = 0
+      MOFACE  = 0
+      MXFACE  = 0
+      MNLFAC  = 0
+      NBCHTL  = 0
+
+C     PARAMETRES POUR LA FACTORISATION DE CROUT A=L D tL
+C     NENTRE : =0 RETOUR AU PROGRAMME APPELANT SI ABS(PIVOT)<EPS
+C              =1 LES CALCULS SE POURSUIVENT SAUF SI PIVOT=0
+      NENTRE  = 1
+C     SEUIL DES FACTORISATIONS CORRECTES L D tL DES MATRICES PROFIL
+      EPSCROUT = 0.0
+
+      NOFONT0 = NOFONT
+
+C     LE PAS DE TEMPS EN DOUBLE PRECISION
+      DELTAT = DT
+
+C     LA VITESSE MAXIMALE ET MOYENNE INITIALE
+      VITMAX0 = VITMAX
+      VITMOY0 = VITMOY
+
+C     MODE DE PRISE EN COMPTE DES CONDITIONS AUX LIMITES DE DIRICHLET
+C     SUR LES SYSTEMES LINEAIRES avec LES MATRICES VG PG
+C     ---------------------------------------------------------------
+      IF( NORESO .EQ. 1 ) THEN
+C        MATRICE PROFIL
+         STGV = TGV
+      ELSE
+C        MATRICE MORSE
+         STGV = 1D0
+      ENDIF
+
+C     LE TYPE DES EF DU MAILLAGE EST IL TETRAEDRE TAYLOR-HOOD?
+C     --------------------------------------------------------
+C     MNELE : ADRESSE DU TABLEAU NPEF"TYPE EF (TRIA 2P2C ou TETR 3P2C)
+      MNELE  = MCN( MNNPEF )
+
+C     NOMBRE D'ELEMENTS FINIS DE CE TYPE
+      NBELEM = MCN( MNELE + WBELEM )
+
+C     LE NUMERO DU TYPE DE L'ELEMENT FINI (TRIA 2P2C ou TETR 3P2C)
+      NUTYEL = MCN( MNELE + WUTYEL )
+
+C     MNPGEL ADRESSE MCN DES NUMEROS NOEUDS ET POINTS GEOMETRIQUES DES EF
+      MNPGEL = MNELE + WUNDEL
+
+C     LES CARACTERISTIQUES DE L'ELEMENT FINI
+      CALL ELNUNM( NUTYEL, NOMELE )
+      CALL ELTYCA( NUTYEL )
+      IF( NUTYEL .EQ. 15 ) THEN
+
+C        TRIANGLE DE TAYLOR-HOOD
+         NDIM   = 2
+C        NOMBRE DE NO DE NOEUDS D'UN EF DANS NPEF
+         NBNOEF = 6
+C        NOMBRE DE SOMMETS DE L'EF
+         NBPSEF = 3
+C        NOMBRE D'ARETES D'UN EF
+         NBLAEF = 3
+C        NOMBRE DE FACES D'UN EF
+         NBSFEF = 1
+C        NOMBRE DE VOLUME D'UN EF
+         NBVVEF = 0
+
+      ELSE IF( NUTYEL .EQ. 20 ) THEN
+
+C        TETRAEDRE DE TAYLOR-HOOD
+         NDIM   = 3
+C        NOMBRE DE NO DE NOEUDS D'UN EF DANS NPEF
+         NBNOEF = 10
+C        NOMBRE DE SOMMETS DE L'EF
+         NBPSEF = 4
+C        NOMBRE D'ARETES D'UN EF
+         NBLAEF = 6
+C        NOMBRE DE FACES D'UN EF
+         NBSFEF = 4
+C        NOMBRE DE VOLUME D'UN EF
+         NBVVEF = 1
+
+      ELSE
+
+C        MAILLAGE D'EF NON TETRAEDRE DE TAYLOR-HOOD
+         IERR = 1
+         GOTO 9999
+
+      ENDIF
+
+C     NOMBRE DE DL DE LA VITESSE
+      NTDLVI = NDIM * NBNOVI
+
+C     NBSOM EST LE NOMBRE DE DL DE LA PRESSION
+C     NBSOM = NBSOM
+
+C     NOMBRE TOTAL DE DL VITESSE+PRESSION
+      NTDLVP = NTDLVI + NBSOM
+
+      IF( NDIM .EQ. 2 ) THEN
+
+C        TRIANGLES: RECUPERATION DU TMS DES ARETES DE L'OBJET 2D
+c        CONSTRUCTION IMPOSEE DU TMS ARETE
+C        POUR REMONTER LES CARACTERISTIQUES
+C        -------------------------------------------------------
+         CALL LXTSOU( NTLXOB, 'ARETE', NTAROB, MNAROB )
+         IF( NTAROB .GT. 0 ) CALL LXTSDS( NTLXOB, 'ARETE' )
+C
+C        LE TABLEAU N'EXISTE PAS => IL EST CREE
+C        CALCUL PAR HACHAGE DES ARETES DE L'OBJET A PARTIR DE TOPO+NPEF"...
+C        NECESSAIRE POUR CONNAITRE LES EF ADJACENTS PAR ARETE
+         CALL HAC2AF( KNOMOB, 3, NTAROB, MNAROB, IERR )
+         IF( IERR .NE. 0 .OR. NTAROB .LE. 0 ) THEN
+            NBLGRC(NRERR) = 1
+            IF( LANGAG .EQ. 0 ) THEN
+               KERR(1) = 'OBJET SANS TABLEAU DES ARETES'
+            ELSE
+               KERR(1) = 'OBJECT WITHOUT THE ARRAY OF EDGES'
+            ENDIF
+            CALL LEREUR
+            GOTO 9999
+         ENDIF
+C        LE NOMBRE D'ENTIERS PAR ARETE
+         MOARET = MCN( MNAROB + WOARET )
+C        LA MAJORATION DU NOMBRE D'ARETES
+         MXARET = MCN( MNAROB + WXARET )
+C        LE NOMBRE D'ARETES FRONTALIERES NON SUR LIGNES UTILISATEUR
+C        NBARFB = MCN( MNAROB + WBARFB )
+C        LE NOMBRE D'ARETES INTERFACES   NON SUR LIGNES UTILISATEUR
+C        NBARIN = MCN( MNAROB + WBARIN )
+C        LE NUMERO MINIMAL DE LIGNE DE L'OBJET
+         NUMILF = MCN( MNAROB + WUMILF )
+C        LE NUMERO MAXIMAL DE LIGNE DE L'OBJET
+         NUMXLF = MCN( MNAROB + WUMXLF )
+C        LE NUMERO DE LA PREMIERE ARETE FRONTALIERE NON SUR LIGNES DE L'OBJET
+C        L1ARFB = MCN( MNAROB + W1ARFB )
+C        LE NUMERO DE LA PREMIERE ARETE INTERFACE NON SUR LIGNES DE L'OBJET
+C        L1ARIN = MCN( MNAROB + W1ARIN )
+
+C        ADRESSE MCN DU 1-ER MOT DU TABLEAU LARETE
+         MNLARE = MNAROB + W1LGFR + NUMXLF - NUMILF + 1
+C        LARETE : TABLEAU DES ARETES DU MAILLAGE
+C        LARETE(1,I)= NO DU 1-ER  SOMMET DE L'ARETE (0 SI PAS D'ARETE)
+C        LARETE(2,I)= NO DU 2-EME SOMMET > 1-ER  SOMMET
+C        LARETE(3,I)= CHAINAGE HACHAGE SUR ARETE SUIVANTE
+C        LARETE(4,I)= NUMERO DU 1-ER TRIANGLE CONTENANT CETTE ARETE
+C                   + NO TYPE EF (1 a NBTYEF) * 100 000 000
+C                     0 SI PAS DE 1-ER  TRIANGLE
+C        LARETE(5,I)= NUMERO DU 2-EME TRIANGLE CONTENANT CETTE ARETE
+C                   + NO TYPE EF (1 a NBTYEF) * 100 000 000
+C                     0 SI PAS DE 2-EME TRIANGLE
+C        LARETE(6,I)= NUMERO DANS LARETE DE L'ARETE SUIVANTE
+C                 SOIT DANS LE CHAINAGE D'UNE LIGNE J ENTRE NUMILF ET NUMX
+C                 SOIT DANS LE CHAINAGE DES ARETES FRONTALIERES
+C                 0 SI C'EST LA DERNIERE
+
+      ELSE
+
+C        TETRAEDRES: RECUPERATION DU TMS DES FACES DE L'OBJET 3D
+C        CONSTRUCTION IMPOSEE DU TMS FACE
+C        POUR REMONTER LES CARACTERISTIQUES
+C        -------------------------------------------------------
+         CALL LXTSOU( NTLXOB, 'FACE', NTFAOB, MNFAOB )
+         IF( NTFAOB .GT. 0 ) CALL LXTSDS( NTLXOB, 'FACE' )
+
+C        LE TABLEAU N'EXISTE PAS => IL EST CREE
+C        CALCUL PAR HACHAGE DES FACES DE L'OBJET A PARTIR DE TOPO+NPEF"...
+C        NECESSAIRE POUR CONNAITRE LES EF ADJACENTS PAR FACE
+         CALL HACHOB( KNOMOB, 4, NTFAOB, MNFAOB, IERR )
+         IF( IERR .NE. 0 .OR. NTFAOB .LE. 0 ) THEN
+            NBLGRC(NRERR) = 1
+            IF( LANGAG .EQ. 0 ) THEN
+               KERR(1) = 'OBJET SANS TABLEAU DES FACES'
+            ELSE
+               KERR(1) = 'OBJECT WITHOUT THE ARRAY OF FACES'
+            ENDIF
+            CALL LEREUR
+            GOTO 9999
+         ENDIF
+C        LE NOMBRE D'ENTIERS PAR FACE
+         MOFACE = MCN( MNFAOB + WOFACE )
+C        LA MAJORATION DU NOMBRE DE FACES DU TABLEAU LFACES
+         MXFACE = MCN( MNFAOB + WXFACE )
+C        LE NUMERO DE LA PREMIERE FACE FRONTALIERE (DANS UN SEUL EF)
+         L1FAFR = MCN( MNFAOB + W1FAFR )
+C        LE NOMBRE DE FACES FRONTALIERES
+         NBFAFR = MCN( MNFAOB + WBFAFR )
+
+C        ADRESSE MCN DU 1-ER MOT DU TABLEAU LFACES
+         MNLFAC= MNFAOB + WFACES
+
+C        POUR LE TRACE DES FLECHES
+C        CREATION DU HACHAGE DES ARETES DES FACES FRONTALIERES DE L'OBJET
+         CALL HACHAF( KNOMOB, 0, NTFAOB, MNFAOB,
+     %                NTAFOB, MNAFOB, I )
+
+C        LE NOMBRE D'ENTIERS PAR ARETE FRONTALIERE
+         MOARFR = MCN( MNAFOB + WOARFR )
+C        LA MAJORATION DU NOMBRE DES ARETES FRONTALIERES
+         MXARFR = MCN( MNAFOB + WXARFR )
+C        LE NUMERO DANS LAREFR DE LA PREMIERE ARETE FRONTALIERE
+         L1ARFR = MCN( MNAFOB + W1ARFR )
+
+C        ATTENTION: MODIFICATION TEMPORAIRE DU TABLEAU LFACES
+C                   NECESSAIRE POUR IDENTIFIER VITE UNE FACE FRONTALIERE
+C        LES FACES FRONTALIERES RECUPERENT ZERO COMME SECOND EF
+C        AU LIEU DU CHAINAGE DES FACES FRONTALIERES DANS LE TABLEAU LFACES
+C        LFACES(1,I)= NO DU 1-ER  SOMMET DE LA FACE
+C        LFACES(2,I)= NO DU 2-EME SOMMET > 1-ER  SOMMET
+C        LFACES(3,I)= NO DU 3-EME SOMMET DE LA FACE
+C        LFACES(4,I)= NO DU 4-EME SOMMET DE LA FACE
+C                     0 SI TRIANGLE
+C        LFACES(5,I)= CHAINAGE HACHAGE SUR FACE SUIVANTE
+C        LFACES(6,I)= NUMERO DU 1-ER  CUBE CONTENANT CETTE FACE
+C                     0 SI PAS DE 1-ER  CUBE
+C        LFACES(7,I)= NUMERO DU 2-EME CUBE CONTENANT CETTE FACE
+C                     ou CHAINAGE SUR LA FACE FRONTALIERE SUIVANTE
+C        Cette valeur est remise a zero dans ce sous programme
+C        puis remise au lien sur la face frontaliere suivante
+C        LFACES(8,I)= NUMERO DE FACE A TANGENTES
+         CALL MAZFAF( MOFACE, MXFACE, MCN(MNLFAC), L1FAFR )
+
+C        DEFINITION DE LA VISEE AXONOMETRIQUE
+C        ------------------------------------
+C        POINT VU LE CENTRE DE L'HEXAEDRE ENGLOBANT
+         AXOPTV(1) = ( COOEXT(1,1) + COOEXT(1,2) ) * 0.5
+         AXOPTV(2) = ( COOEXT(2,1) + COOEXT(2,2) ) * 0.5
+         AXOPTV(3) = ( COOEXT(3,1) + COOEXT(3,2) ) * 0.5
+C        POSITION DE L'OEIL
+         AXOEIL(1) = AXOPTV(1)
+         AXOEIL(2) = AXOPTV(2) - 0.52 * ( COOEXT(2,2) - COOEXT(2,1) )
+         AXOEIL(3) = AXOPTV(3)
+C        LARGEUR/2 et HAUTEUR/2 de la FENETRE
+         AXOLAR = ( COOEXT(1,2) - COOEXT(1,1) ) * 0.5
+         AXOHAU = ( COOEXT(3,2) - COOEXT(3,1) ) * 0.5
+C        PAS DE PLAN ARRIERE ET AVANT
+         AXOARR = 0
+         AXOAVA = 0
+         IF( INTERA .GE. 1 )
+     %   CALL AXONOMETRIE(AXOPTV, AXOEIL, AXOLAR, AXOHAU, AXOARR,AXOAVA)
+
+      ENDIF
+
+C     A PRIORI: CONSTRUCTION DES TABLEAUX
+C     en 3D: NUVVEF(NBELEM), NUSFEF(NBSFEF,NBELEM), 
+C            NULAEF(NBLAEF,NBELEM), NUPSEF(NBPSEF,NBELEM)
+C     en 2D: NUSFEF(NBELEM), NULAEF(NBLAEF,NBELEM), NUPSEF(NBPSEF,NBELEM)
+
+C     MAIS COMME LE TABLEAU NUPSEF=MCN(MNPSEF) N'EST PAS ENSUITE UTILISE
+C     LE TABLEAU MCN(MNPSEF) N'EST PAS CONSTRUIT
+      NBPSEF = 0
+
+      IF( NDIM .EQ. 3 ) THEN
+C        EN NDIM=3 LE TABLEAU NULAEF=MCN(MNLAEF) N'EST PAS ENSUITE UTILISE
+C        LE TABLEAU MCN(MNPSEF) N'EST PAS CONSTRUIT
+         NBLAEF = 0
+      ENDIF
+
+      CALL EFVFAS( MNELE, NBVVEF, NBSFEF, NBLAEF, NBPSEF,
+     %                    MNVVEF, MNSFEF, MNLAEF, MNPSEF, IERR )
+      IF( IERR .NE. 0 ) GOTO 9993
+
+C     ADRESSE A 1 POUR EVITER LES PROBLEMES D'APPEL de MCN(0)
+      IF( NBVVEF .EQ. 0 ) MNVVEF = 1
+      IF( NBSFEF .EQ. 0 ) MNSFEF = 1
+      IF( NBLAEF .EQ. 0 ) MNLAEF = 1
+      IF( NBPSEF .EQ. 0 ) MNPSEF = 1
+
+C     RECUPERATION DES DONNEES SUPPOSEES CONSTANTES DANS LE FLUIDE
+C     SUR LE PREMIER ELEMENT FINI DU MAILLAGE: Rho, Mhu, CoGrPr
+C     ------------------------------------------------------------
+C     NO DES NOEUDS DE L'ELEMENT FINI 1
+      NUELEM = 1
+      CALL EFNOEU( MNELE, NUELEM, NBNOEF, NONOEF )
+
+C     NO DES POINTS LIGNES SURFACES VOLUMES DES SOMMETS ARETES FACES VOLUME
+      CALL EFPLSV( MNELE , NUELEM,
+     %             NOVCEL, NOSFEL, NOLAEL, NOPSEL,
+     %             NOOBVC, NOOBSF, NOOBLA, NOOBPS, IERR )
+
+C     INTERPOLATION DU FLUIDE avec F: e chapeau->e  P1 ndim
+C     COORDONNEES XYZEF(NBNOEF,3) DES SOMMETS=POINTS DE L'EF
+      CALL EFXYZP( NDIM, MNXYZN, NBELEM, NUELEM, MNPGEL, NBNOEF,
+     %             XYZEF )
+
+C     RECHERCHE DE LA DENSITE DE MASSE Rho, VISCOSITE DYNAMIQUE Mhu,
+C     COEFFICIENT DE LA PRESSION CoGrPr AU BARYCENTRE DE L'EF 1
+C     --------------------------------------------------------------
+      IF( NDIM .EQ. 2 ) THEN
+         CALL REDOFL( NBNOEF, NDIM, XYZEF,
+     %                NOOBSF, NUMIOB(3), NUMAOB(3), MCN(MNDOEL(3)),
+     %                Rho, Mhu, CoGrPr, CoBOUS )
+      ELSE
+         CALL REDOFL( NBNOEF, NDIM, XYZEF,
+     %                NOOBVC, NUMIOB(4), NUMAOB(4), MCN(MNDOEL(4)),
+     %                Rho, Mhu, CoGrPr, CoBOUS )
+      ENDIF
+
+      dtMhu = DELTAT * Mhu
+      IF( LANGAG .EQ. 0 ) THEN
+         WRITE(IMPRIM,10010) Rho, Mhu, CoGrPr
+      ELSE
+         WRITE(IMPRIM,20010) Rho, Mhu, CoGrPr
+      ENDIF
+10010 FORMAT(/' MASSE VOLUMIQUE Rho ET VISCOSITE DYNAMIQUE Mhu NE DEPEND
+     %ENT NI DU TEMPS NI DE LA VITESSE'/
+     %' Rho=',G15.7,'  Mhu=',G15.7,'  CoGrPr=',G15.7/)
+20010 FORMAT(/' Rho DENSITY of MASS and Mhu DYNAMIC VISCOSITY ARE INDEPE
+     %NDENT of TIME and VELOCITY'/
+     %' Rho=',G15.7,'  Mhu=',G15.7,'  CoGrPr=',G15.7/)
+
+C     CONSTRUCTION DU TABLEAU NO NOEUD  => NO SOMMET
+C     ----------------------------------------------
+      ALLOCATE ( NONOSO(1:NBNOVI), STAT=IERNONOSO )
+      IF( IERNONOSO .NE. 0 ) GOTO 9993
+      CALL AZEROI( NBNOVI,  NONOSO )
+
+C     NOMBRE DE SOMMETS DE l'EF TAYLOR-HOOD
+      NDIM1 = NDIM + 1
+      DO NUELEM = 1, NBELEM
+         CALL EFNOEU( MNELE, NUELEM, NBNOEF, NONOEF )
+         DO I = 1, NDIM1
+            NONOSO( NONOEF(I) ) = 1
+         ENDDO
+      ENDDO
+
+      NBSOM = 0
+      DO I = 1, NBNOVI
+         IF( NONOSO( I ) .GT. 0 ) THEN
+            NBSOM = NBSOM + 1
+            NONOSO( I ) = NBSOM
+         ENDIF
+      ENDDO
+
+C     CONSTRUCTION DU TABLEAU NU1EFN(NBNOVI) No 1EF PAR NOEUD
+C     -------------------------------------------------------
+      ALLOCATE ( NO1EFN(1:NBNOVI), STAT=IERNO1EFN )
+      IF( IERNO1EFN .NE. 0 ) GOTO 9993
+      CALL CO1EFN( NBNOEF, NBELEM, MCN(MNELE+WUNDEL), NBNOVI,  NO1EFN )
+
+C     TEMPS CPU DE FABRICATION DES VECTEURS GLOBAUX
+      DFABG = DINFO( 'DELTA CPU' )
+
+C     ================================================================
+C     CONSTRUCTION DE LA MATRICE GLOBALE DE PRESSION [PG(CoGrPr)]
+C     DeltaT CoGrPr Integrale grad P1 grad P1 dX avec INTERPOLATION P1
+C     DeltaT CoGrPr dPression/dn = 0 sur Gamma
+C     ================================================================
+C     MATRICE PRESSION SYMETRIQUE NON DIAGONALE
+      NCODSP = 1
+
+C     CONSTRUCTION DU POINTEUR SUR LA DIAGONALE DE PG (INTERPOLATION P1)
+      ALLOCATE( LP1LIGN(0:NBSOM), STAT=IERLP1LIGN )
+      IF( IERLP1LIGN .NE. 0 ) GOTO 9993
+
+      IF( NORESO .EQ. 1 ) THEN
+
+C        CROUT PROFIL POUR LA PRESSION
+         IF( LANGAG .EQ. 0 ) THEN
+            WRITE(IMPRIM,10001)
+         ELSE
+            WRITE(IMPRIM,20001)
+         ENDIF
+
+C        MAX POUR CALCULER LE MIN DES VOISINS D'UN SOMMET
+         DO N = 1, NBSOM
+            LP1LIGN( N ) = NBSOM
+         ENDDO
+
+         DO NUELEM = 1, NBELEM
+C           LES NUMEROS DES NOEUDS DE L'EF NUELEM
+            CALL EFNOEU( MNELE, NUELEM, NBNOEF, NONOEF )
+C           RECHERCHE DU NUMERO MINIMAL DES NDIM1 SOMMETS DE l'EF
+            NOSOEF(1) = NONOSO( NONOEF(1) )
+            NOMIN     = NOSOEF(1)
+            DO I = 2, NDIM1
+C              NUMERO DU SOMMET I
+               NOSOEF(I) = NONOSO( NONOEF(I) )
+C              NUMERO MINIMAL DES SOMMETS
+               NOMIN = MIN( NOMIN, NOSOEF(I) )
+            ENDDO
+            DO I = 1, NDIM1
+C              NUMERO DU SOMMET I
+               N = NOSOEF(I)
+C              NUMERO MINIMUM DES VOISINS DU SOMMET N
+               LP1LIGN( N ) = MIN( NOMIN, LP1LIGN( N ) )
+            ENDDO
+         ENDDO
+
+C        POINTEUR SUR LE COEFFICIENT DIAGONAL DE LA MATRICE PRESSION
+         LP1LIGN( 0 ) = 0
+         DO N = 1, NBSOM
+C           NOMBRE DE COEFFICIENTS ENTRE LE MIN ET DIAGONAL
+            LP1LIGN( N ) = LP1LIGN( N-1 ) + N - LP1LIGN( N ) + 1
+         ENDDO
+C        NOMBRE DE COEFFICIENTS DE LA MATRICE PG PROFIL DE PRESSION
+         NBCMPG = LP1LIGN( NBSOM )
+
+      ELSE IF( NORESO .EQ. 2 ) THEN
+
+C        GRADIENT CONJUGUE SUR MATRICE MORSE DE LA PRESSION
+         IF( LANGAG .EQ. 0 ) THEN
+            WRITE(IMPRIM,10002)
+         ELSE
+            WRITE(IMPRIM,20002)
+         ENDIF
+
+C        CALCUL   DES POINTEURS DE LA MATRICE MORSE PRESSION P1 PAR SOMMETS
+C        A PARTIR DES POINTEURS DE LA MATRICE MORSE VITESSE  P2 PAR NOEUDS
+         CALL PRGCLP2P1( NBSOM,   NBNOVI,  NONOSO,
+     %                   NCODSP,  LP2LIGN, LP2COLO,
+     %                   LP1LIGN, IERR )
+         IF( IERR .NE. 0 ) GOTO 9993
+
+C        NOMBRE DE COEFFICIENTS DE LA MATRICE MORSE PRESSION AUX SOMMETS
+         NBCMPG = LP1LIGN( NBSOM )
+
+C        LE POINTEUR SUR LES COLONNES DES SOMMETS P1
+         ALLOCATE( LP1COLO(1:NBCMPG), STAT=IERLP1COLO )
+         IF( IERLP1COLO .NE. 0 ) GOTO 9993
+
+         CALL PRGCCP2P1( NBNOVI,  NONOSO,  NBSOM,
+     %                   NCODSP,  LP2LIGN, LP2COLO, NBCMPG,
+     %                   LP1LIGN, LP1COLO, IERR )
+         IF( IERR .NE. 0 ) GOTO 9993
+
+      ELSE
+
+C        ERREUR SUR NORESO
+         IF( LANGAG .EQ. 0 ) THEN
+            WRITE(IMPRIM,10004) NORESO
+         ELSE
+            WRITE(IMPRIM,20004) NORESO
+         ENDIF
+         IERR = 1
+         GOTO 9999
+
+      ENDIF
+
+10001 FORMAT('CONSTRUCTION de la MATRICE PROFIL [PG] de PRESSION'/
+     %'RESOLUTION par FACTORISATION COMPLETE L D tL de CROUT')
+20001 FORMAT(' CONSTRUCTION of the PRESSURE SKYLINE MATRIX [PG]'/
+     %'SOLUTION by COMPLETE CROUT FACTORIZATION L D Lt')
+10002 FORMAT('CONSTRUCTION de la MATRICE MORSE [PG] de PRESSION'/
+     %'RESOLUTION par GRADIENT CONJUGUE')
+20002 FORMAT(' CONSTRUCTION of the PRESSURE CONDENSED MATRIX [PG]'/
+     %'SOLUTION by CONJUGATE GRADIENT')
+10004 FORMAT('CODE DE RESOLUTION INCONNU NORESO=',I5/)
+20004 FORMAT('UNKNOWN SOLUTION CODE NORESO=',I5/)
+
+C     MATRICE DE PRESSION SYMETRIQUE NON DIAGONALE
+C     NBCMPG : NOMBRE DE REELS DOUBLE PRECISION DE LA MATRICE PG P1
+
+C     VERSION ALLOCATION de la MATRICE PG en LANGAGE FORTRAN 90
+      WRITE(IMPRIM,*)
+      WRITE(IMPRIM,*) 'ALLOCATION DEMAND  of',NBCMPG,
+     %                ' DOUBLE PRECISION of the [PG] MATRIX'
+      ALLOCATE ( PG(1:NBCMPG), STAT=IERPGALLOC )
+      IF( IERPGALLOC .NE. 0 ) THEN
+       WRITE(IMPRIM,*)'ALLOCATION ERROR   of',NBCMPG,
+     %                ' DOUBLE PRECISION of the [PG] MATRIX'
+         IERR = IERPGALLOC
+         GOTO 9993
+      ENDIF
+      WRITE(IMPRIM,*) 'ALLOCATION CORRECT of',NBCMPG,
+     %                ' DOUBLE PRECISION of the [PG] MATRIX'
+      WRITE(IMPRIM,*)
+
+C     CONSTRUCTION DES TABLEAUX DES NO ET VALEURS DES PRESSIONS FIXEES
+C     ----------------------------------------------------------------
+      IF( IEBLPR .GT. 0 ) THEN
+         CALL PRESFXST( RELMIN, NBSOM,    NDIM,   MNXYZN, NONOSO,
+     %                  NBTYEL, MNNPEF,   NUMIOB, MNDOEL,
+     %                  NBPRFX, MNDLPRFX, MNVAPRFX )
+      ELSE
+         NBPRFX = 0
+      ENDIF
+C
+C     LE COEFFICIENT DE LA MATRICE DE PRESSION
+      S = DELTAT * CoGrPr
+
+      IF( NORESO .EQ. 1 ) THEN
+
+C        ASSEMBLAGE PROFIL: dt CoGrPr ( GRAD p, GRAD q ) INTERPOLATION P1
+C        DE LA MATRICE GLOBALE DE LA PRESSION
+C        ----------------------------------------------------------------
+         IF( NUTYEL .EQ. 15 ) THEN
+C           TRIANGLE 2D TAYLOR-HOOD
+            CALL P12DAGPR( S,      NBSOM,  MCN(MNXYZN+WYZNOE),
+     %                     NBNOEF, NBELEM, MCN(MNELE+WUNDEL),
+     %                     NONOSO, NBCMPG, LP1LIGN, PG )
+         ELSE
+C           TETRAEDRE TAYLOR-HOOD
+            CALL P13DAGPR( S,      NBSOM,  MCN(MNXYZN+WYZNOE),
+     %                     NBNOEF, NBELEM, MCN(MNELE+WUNDEL),
+     %                     NONOSO, NBCMPG, LP1LIGN, PG )
+         ENDIF
+
+ccc         call affvect( 'PG PROFIL ASSEMBLE avant CL', 20, PG )
+ccc         call afl1ve(  'PG PROFIL ASSEMBLE avant CL', NBCMPG, PG )
+C
+cccC        SUPPRESSION DES COEFFICIENTS D'ERREURS D'ARRONDIS
+cccC        et MULTIPLICATION PAR  dt CoGrPr
+ccc         CALL PRARMU( 1D-4, S, NBCMPG, PG )
+ccc         call affvect( 'PG PROFIL ASSEMBLE corrige', 20, PG )
+
+C        PRISE EN COMPTE DES CONDITIONS AUX LIMITES DES PRESSIONS FIXEES
+         DO I = 1, NBPRFX
+C           LE NO GLOBAL DU DL FIXE
+            NDL = MCN( MNDLPRFX - 1 + I )
+C           LE NO DU COEFFICIENT DIAGONAL NDL
+            NDIAG = LP1LIGN( NDL )
+C           MODIFICATION DU COEFFICIENT DIAGONAL
+C           CETTE VALEUR PEUT SERVIR DE MARQUEUR D'UN DL FIXE POUR PG
+            PG( NDIAG ) = STGV
+         ENDDO
+         call affvect( 'PG PROFIL AVEC CONDITIONS AUX LIMITES', 20, PG )
+         call afl1ve(  'PG PROFIL AVEC CONDITIONS AUX LIMITES', NBCMPG,
+     %                  PG )
+
+C        FACTORISATION COMPLETE DE CROUT  PG = L D tL
+         IF( LANGAG .EQ. 0 ) THEN
+            WRITE(IMPRIM,*) 'DEBUT de FACTORISATION CROUT PG=L D tL Nb 
+     %lignes=',NBSOM
+         ELSE
+            WRITE(IMPRIM,*) 'STARTING of CROUT FACTORIZATION PG=L D tL 
+     %Lines Number=',NBSOM
+         ENDIF
+         CALL CRMC1D( LP1LIGN, PG, NBSOM, EPSCROUT, NENTRE,  PG, IERR )
+         call affvect( 'PG=L D tL PROFIL FACTORISEE', 20, PG )
+
+      ELSE IF( NORESO .EQ. 2 ) THEN
+
+C        ASSEMBLAGE MORSE dt CoGrPr ( GRAD p, GRAD q ) INTERPOLATION P1
+C        DE LA MATRICE GLOBALE PG DE LA PRESSION
+C        RESOLUTION PAR GRADIENT CONJUGUE PRECONDITIONNE
+C        --------------------------------------------------------------
+         IF( NUTYEL .EQ. 15 ) THEN
+C           TRIANGLE 2D  PRESSION P1
+            CALL P12DAGGC( S,      NBSOM,   MCN(MNXYZN+WYZNOE),
+     %                     NBNOEF, NBELEM,  MCN(MNELE+WUNDEL), NONOSO,
+     %                     NBCMPG, LP1LIGN, LP1COLO, PG )
+         ELSE
+C           TETRAEDRE 3D  PRESSION P1
+            CALL P13DAGGC( S,      NBSOM, MCN(MNXYZN+WYZNOE),
+     %                     NBNOEF, NBELEM,MCN(MNELE+WUNDEL),NONOSO,
+     %                     NBCMPG, LP1LIGN, LP1COLO, PG )
+         ENDIF
+ccc         call affvect( 'PG MORSE AVANT CL', 20, PG )
+ccc         call afl1ve(  'PG MORSE AVANT CL', NBCMPG, PG )
+
+C        CONSTRUCTION DU TABLEAU des DL PRESSION FIXES 1 OU NON 0
+         ALLOCATE ( NODPFX(1:NBSOM), STAT=IERNODPFX )
+         IF( IERNODPFX .NE. 0 ) GOTO 9993
+
+C        A PRIORI TOUS LES DL SONT LIBRES => 0
+         CALL AZEROI( NBSOM, NODPFX )
+
+C        MISE AU NUMERO DU DL FIXE DANS LES TABLEAUX
+C        DES DL FIXES DE LA PRESSION
+         DO I = 1, NBPRFX
+C           LE NO GLOBAL DU DL PRESSION FIXEE
+            NDL = MCN( MNDLPRFX - 1 + I )
+C           MISE A I DU DL PRESSION FIXEE NDL
+            NODPFX( NDL ) = I
+C           MODIFICATION DU COEFFICIENT DIAGONAL
+C           LE NO DU COEFFICIENT DIAGONAL NDL
+            NDIAG = LP1LIGN( NDL )
+C           CETTE VALEUR PEUT SERVIR DE MARQUEUR D'UN DL FIXE POUR PG
+            PG( NDIAG ) = 1D0
+         ENDDO
+         call affvect( 'PG MORSE AVEC CL', 20, PG )
+         call afl1ve(  'PG MORSE AVEC CL', NBCMPG, PG )
+
+C        LES 3 TABLEAUX AUXILIAIRES du SOUS PROGRAMME Gcaxbk
+         ALLOCATE ( DAUX1(1:NBNOVI), STAT=IERDAUX1 )
+         IF( IERDAUX1 .NE. 0 ) THEN
+            WRITE(IMPRIM,*)'ALLOCATION ERROR   of',NBNOVI,
+     %                  ' DOUBLE PRECISION REALS of DAUX1'
+            IERR = IERDAUX1
+            GOTO 9993
+         ENDIF
+
+         ALLOCATE ( DAUX2(1:NBNOVI), STAT=IERDAUX2 )
+         IF( IERDAUX2 .NE. 0 ) THEN
+            WRITE(IMPRIM,*)'ALLOCATION ERROR   of',NBNOVI,
+     %                  ' DOUBLE PRECISION REALS of DAUX2'
+            IERR = IERDAUX2
+            GOTO 9993
+         ENDIF
+
+         ALLOCATE ( DAUX3(1:NBNOVI), STAT=IERDAUX3 )
+         IF( IERDAUX3 .NE. 0 ) THEN
+            WRITE(IMPRIM,*)'ALLOCATION ERROR   of',NBNOVI,
+     %                  ' DOUBLE PRECISION REALS of DAUX3'
+            IERR = IERDAUX3
+            GOTO 9993
+         ENDIF
+
+
+         ALLOCATE ( PRPR(1:NBNOVI), STAT=IERPRPR )
+         IF( IERPRPR .NE. 0 ) THEN
+            WRITE(IMPRIM,*)'ALLOCATION ERROR   of',NBNOVI,
+     %                  ' DOUBLE PRECISION REALS of PRPR'
+            IERR = IERPRPR
+            GOTO 9993
+         ENDIF
+
+      ENDIF
+
+C     TEMPS CALCUL FORMATION DE LA MATRICE GLOBALE PG ET FACTORISATION
+      DFACTO = DINFO( 'DELTA CPU' )
+      IF( LANGAG .EQ. 0 ) THEN
+         WRITE(IMPRIM,*)'TEMPS FORMATION FACTORISATION MATRICE PG=',
+     %                   DFACTO
+      ELSE
+        WRITE(IMPRIM,*)'PG MATRIX FORMATION FACTORIZATION TIME=',
+     %                  DFACTO
+      ENDIF
+
+
+C     ===========================================================
+C     DECLARATION DE LA MATRICE VG D'UNE COMPOSANTE DE LA VITESSE
+C     MATRICE SYMETRIQUE NON DIAGONALE => NCODSV = 1
+C     Integrale Rho P2 P2 + deltat Mhu grad P2 grad P2 dX
+C     avec INTEGRATION EXACTE SUR L'ELEMENT FINI
+C     ===========================================================
+      NCODSV = 1
+C     NBCMVG : NOMBRE DE REELS DOUBLE PRECISION DE LA MATRICE VG
+C     VERSION ALLOCATION de la MATRICE VG en LANGAGE FORTRAN 90
+      WRITE(IMPRIM,*)
+      WRITE(IMPRIM,*) 'ALLOCATION DEMAND  of',NBCMVG,
+     %                ' DOUBLE PRECISION of the [VG] MATRIX'
+      ALLOCATE ( VG(1:NBCMVG), STAT=IERVGALLOC )
+      IF( IERVGALLOC .NE. 0 ) THEN
+       WRITE(IMPRIM,*)'ALLOCATION ERROR   of',NBCMVG,
+     %                ' DOUBLE PRECISION of the [VG] MATRIX'
+         IERR = IERVGALLOC
+         GOTO 9993
+      ENDIF
+      WRITE(IMPRIM,*) 'ALLOCATION CORRECT of',NBCMVG,
+     %                ' DOUBLE PRECISION of the [VG] MATRIX'
+
+C     CONSTRUCTION ET ASSEMBLAGE DE LA MATRICE GLOBALE VG
+C     ---------------------------------------------------
+      CALL AGVITTH( Rho,    DELTAT*Mhu,  MCN(MNXYZN+WYZNOE),
+     %              NUTYEL, NBNOEF, NBELEM, MCN(MNELE+WUNDEL),
+     %              NORESO, NBNOVI, NBCMVG, LP2LIGN, LP2COLO, VG )
+      call affvect( 'CONSTRUCTION VG avant CL', 20, VG )
+      call afl1ve(  'CONSTRUCTION VG avant CL', NBCMVG, VG )
+
+C     LISTE DES DL VITESSES FIXEES EN TOUT TEMPS
+C     ATTENTION: CETTE PROGRAMMATION SUPPOSE QUE TOUS LES DL EN UN NOEUD
+C                SONT FIXES ET LES NOEUDS FIXES RESTENT LES MEMES POUR TOUT TEMPS
+C                MAIS PAS FORCEMENT LA VITESSE A FIXER QUI ELLE DEPEND   du TEMPS
+C    ----------------------------------------------------------------------------
+C     LISTE DES DL VITESSES FIXEES EN TOUT TEMPS
+      CALL VITEFX( RELMIN, NTDLVI, NDIM,   MNXYZN,
+     %             NBTYEL, MNNPEF, NUMIOB, MNDOEL,
+     %             NBVCFX, NBVIFX, MNDLVIFX, MNVAVIFX, VITFXMAX )
+      VITMAX0 = MAX( VITMAX0, VITFXMAX )
+
+      IF( NORESO .EQ. 2 ) THEN
+C        GRADIENT CONJUGUE SIMPLE SUR VG MATRICE MORSE
+C        CONSTRUCTION DU TABLEAU des DL 1VITESSE FIXE I OU NON 0
+         ALLOCATE ( NODVFX(1:NBNOVI), STAT=IERNODVFX )
+         IF( IERNODVFX .NE. 0 ) GOTO 9993
+
+C        A PRIORI TOUS LES DL SONT LIBRES => 0
+         CALL AZEROI( NBNOVI, NODVFX )
+
+C        MISE AU NUMERO DU DL FIXE DANS LES TABLEAUX VIFX
+C        DES DL FIXES DE LA 1-ERE COMPOSANTE DE LA VITESSE
+         DO I=1, NBVIFX/NDIM
+C           LE NO GLOBAL DU DL 1VITESSE FIXEE
+            NDL = MCN( MNDLVIFX - 1 + I )
+C           MISE A I DU DL 1 VITESSE FIXEE NDL
+            NODVFX( NDL ) = I
+         ENDDO
+      ENDIF
+
+C     *******************************************************************
+C     RESTRICTION: TOUTES LES NDIM COMPOSANTES DE LA VITESSE EN UN NOEUD
+C                  DOIVENT ETRE FIXEES DE VALEURS POUVANT VARIER EN TEMPS
+C     *******************************************************************
+C     PRISE EN COMPTE DE LA VITESSE FIXEE SUR LA MATRICE VG
+      DO I = 1, NBVIFX/NDIM
+C        LE NO GLOBAL DU DL FIXE DE LA PREMIERE COMPOSANTE DE LA VITESSE
+         NDL = MCN( MNDLVIFX - 1 + I )
+C        LE NO DU COEFFICIENT DIAGONAL NDL
+         NDIAG = LP2LIGN( NDL )
+C        MODIFICATION DU COEFFICIENT DIAGONAL
+C        CETTE VALEUR PEUT SERVIR DE MARQUEUR D'UN DL FIXE POUR VG
+         VG( NDIAG ) = STGV
+      ENDDO
+      call affvect( 'VG AVEC CONDITIONS AUX LIMITES', 20, VG )
+      call afl1ve(  'VG AVEC CONDITIONS AUX LIMITES', NBCMVG, VG )
+
+      IF( NORESO .EQ. 1 ) THEN
+
+C        FACTORISATION COMPLETE DE CROUT  VG = L D tL
+C        ============================================
+         IF( LANGAG .EQ. 0 ) THEN
+            WRITE(IMPRIM,*) 'DEBUT DE FACTORISATION CROUT VG=L D tL  Nb
+     %lignes=',NBNOVI
+         ELSE
+            WRITE(IMPRIM,*) 'STARTING of CROUT FACTORIZATION VG=L D tL 
+     %Lines Number=',NBNOVI
+         ENDIF
+         CALL CRMC1D( LP2LIGN, VG, NBNOVI, EPSCROUT, NENTRE,  VG, IERR )
+         call affvect( 'VG=L D tL PROFIL FACTORISEE', 20, VG )
+         call afl1ve(  'VG=L D tL PROFIL FACTORISEE', NBCMVG, VG )
+
+      ENDIF
+
+C     TEMPS CALCUL DE FORMATION DES MATRICES GLOBALES PG VG ET FACTORISATIONS
+      DFACTO = DFACTO + DINFO( 'DELTA CPU' )
+      IF( LANGAG .EQ. 0 ) THEN
+         WRITE(IMPRIM,*)'TEMPS FORMATION FACTORISATION MATRICES PG VG='
+     %                  ,DFACTO
+      ELSE
+        WRITE(IMPRIM,*)'PG VG MATRICES FORMATION FACTORIZATION TIME=',
+     %                  DFACTO
+      ENDIF
+
+C     DECLARATIONS DES VECTEURS GLOBAUX V3P0 et V3P1(NTDLVP)
+C     ------------------------------------------------------
+C     DECLARATION DU VECTEUR V3P0 SOLUTION AU TEMPS 0 EN 4 VECTEURS VX VY VZ PR
+C     DECLARATION DU VECTEUR V3P1 SOLUTION AU TEMPS 1 EN 4 VECTEURS VX VY VZ PR
+      PRINT*
+      IF( LANGAG .EQ. 0 ) THEN
+         PRINT*,'ns2th: DEMANDE  ALLOCATION VXVYVZPR(',NTDLVP,
+     %          ', 0;1) DREELS'
+         ALLOCATE ( VXVYVZPR( 1:NTDLVP, 0:1 ), STAT=IERVXVYVZPR )
+         IF( IERVXVYVZPR .NE. 0 ) THEN
+            PRINT*,'ns2th: ERREUR ALLOCATION VXVYVZPR(',NTDLVP,
+     %             ', 0;1) DREELS'
+            IERR = IERVXVYVZPR
+            GOTO 9993
+         ENDIF
+         PRINT*,'ns2th: CORRECTE ALLOCATION VXVYVZPR(',NTDLVP,
+     %          ', 0;1) DREELS'
+      ELSE
+         PRINT*,'ns2th: ALLOCATION DEMAND  VXVYVZPR(',NTDLVP,
+     %          ', 0;1) DREALS'
+         ALLOCATE ( VXVYVZPR( 1:NTDLVP, 0:1 ), STAT=IERVXVYVZPR )
+         IF( IERVXVYVZPR .NE. 0 ) THEN
+            PRINT*,'ns2th: ALLOCATION ERROR VXVYVZPR(',NTDLVP,
+     %             ', 0;1) DREALS'
+            IERR = IERVXVYVZPR
+            GOTO 9993
+         ENDIF
+         PRINT*,'ns2th: CORRECT ALLOCATION VXVYVZPR(',NTDLVP,
+     %          ', 0;1) DREALS'
+      ENDIF
+
+C     NUMERO DES VECTEURS VITESSE+PRESSION DANS VXVYVZPR
+C     POUR EVITER DES PERMUTATIONS COUTEUSES...
+      NVP0 = 0
+      NVP1 = 1
+
+C     NO DU PREMIER VITX VITY VITZ PRESSION DANS VXVYVZPR
+      N1X = 1
+      N1Y = N1X + NBNOVI
+      N1Z = N1Y + NBNOVI
+      N1P = N1X + NBNOVI * NDIM
+      N0P = N1P - 1
+
+      CALL VXVYVZPR1( NDIM,   NUTYEL, NDDLNO, 
+     %                NTDLVP, 1,      VXYZP0, NONOSO,
+     %                NBNOVI, VXVYVZPR(N1X,NVP0), VXVYVZPR(N1Y,NVP0),
+     %                        VXVYVZPR(N1Z,NVP0),
+     %                NBSOM,  VXVYVZPR(N1P,NVP0) )
+
+C     TABLEAU AUXILIAIRE V3P2(NTDLVI)
+      ALLOCATE ( V3P2( 1:NTDLVI ), STAT=IERV3P2 )
+      IF( IERV3P2 .NE. 0 ) THEN
+         PRINT*,'ns2th: ERREUR ALLOCATION V3P2(',NTDLVI,') DREELS'
+         IERR = IERV3P2
+         GOTO 9993
+      ENDIF
+
+C     TABLEAU AUXILIAIRE VITC DE LA VITESSE CONVECTEE AUX NOEUDS DU MAILLAGE
+      IF( NBVCFX .GT. 0 ) THEN
+         MOVITC = NTDLVI
+      ELSE
+         MOVITC = 1
+      ENDIF
+      ALLOCATE ( VITC( 1:MOVITC ), STAT=IERVITC )
+      IF( IERVITC .NE. 0 ) THEN
+         PRINT*,'ns2th: ERREUR ALLOCATION VITC(',MOVITC,') DREELS'
+         IERR = IERVITC
+         GOTO 9993
+      ELSE
+         PRINT*,'ns2th: ALLOCATION CORRECTE VITC(',MOVITC,') DREELS'
+      ENDIF
+      CALL AZEROD( MOVITC, VITC )
+
+C     L'ADRESSE DE LA VITESSEPRESSION A L'ITERATION 0 DU POINT FIXE
+C     NON UTILISE ICI PUISQUE LA NON LINEARITE EST PRISE EN COMPTE
+C     PAR L'INTEGRATION RETROGRADE EN TEMPS LE LONG DES CARACTERISTIQUES
+ccc      MNVITI = 0
+
+      IF( NDIM .EQ. 3 ) THEN
+C        FLUX DE LA VITESSE SUR LES SURFACES DE L'OBJET POUR UN TEMPS DONNE
+         MOSFOB = NUMAOB(3) - NUMIOB(3) + 1
+      ELSE
+C        FLUX DE LA VITESSE SUR LES ARETES DE L'OBJET POUR UN TEMPS DONNE
+         MOSFOB = NUMAOB(2) - NUMIOB(2) + 1
+      ENDIF
+      CALL TNMCDC( 'REEL2', MOSFOB, MNFVSF )
+
+C     BILAN DE L'INSTANT INITIAL
+C     LE PROCHAIN TEMPS POUR STOCKER LE VECTEUR VITESSEPRESSION
+      TSTOC = TPSINI + DTSTOC
+C
+C     AFFICHAGE DU VECTEUR"VITESSEPRESSION AU TEMPS INITIAL
+C     -----------------------------------------------------
+      CALL AFVIPR( NUTYEL, NDIM,   NBNOVI, MNXYZN, NDDLNO,
+     %             TEMPS,  NTDLVP, MIN(2,NBNOVI),  VXYZP0,
+     %             VITMIN, VITMAX0, VITMOY0, PREMIN, PREMAX, PREMOY )
+
+cccC     VITESSE D'ECRETAGE INITIALE
+ccc      IF( NBPAST .GT. 0 ) THEN
+cccC        LA VITESSE RECUPEREE A DEJA SUBI DES ECRETAGES
+ccc         VITECR = VITMAX0
+ccc      ELSE
+ccc         VITECR = 10 * VITMOY0 + VITMAX0
+ccc      ENDIF
+
+      IF( NDIM .EQ. 3 ) THEN
+
+C        FLUX DE LA VITESSE A TRAVERS LES FACES DES SURFACES DE L'OBJET
+C        --------------------------------------------------------------
+         CALL FLUXVITSF( NBNOVI, MCN(MNXYZN+WYZNOE),
+     %                   NUTYEL, NBNOEF, NBELEM, MCN(MNELE+WUNDEL),
+     %                   NDDLNO, NBSFEF, MCN(MNSFEF),
+     %                   VXYZP0, NUMIOB(3), NUMAOB(3),
+     %                   FLUNEG, FLUPOS, MCN(MNFVSF) )
+      ELSE
+
+C        FLUX DE LA VITESSE A TRAVERS LES ARETES DES LIGNES DE L'OBJET
+C        -------------------------------------------------------------
+         CALL FLUXVITLG( NBNOVI, MCN(MNXYZN+WYZNOE),
+     %                   NUTYEL, NBNOEF, NBELEM, MCN(MNELE+WUNDEL),
+     %                   NDDLNO, NBLAEF, MCN(MNLAEF),
+     %                   VXYZP0, NUMIOB(2), NUMAOB(2),
+     %                   FLUNEG, FLUPOS, MCN(MNFVSF) )
+      ENDIF
+
+C     STOCKAGE AU TEMPS INITIAL DES MIN-MAX DE VITESSE et PRESSION
+      VPMIMX(1,NBPAST) = TEMPS
+      VPMIMX(2,NBPAST) = VITMOY0
+      VPMIMX(3,NBPAST) = VITMAX0
+      VPMIMX(4,NBPAST) = PREMOY
+      VPMIMX(5,NBPAST) = PREMAX - PREMIN
+      VPMIMX(6,NBPAST) = FLUNEG
+      VPMIMX(7,NBPAST) = FLUPOS
+      VPMIMX(8,NBPAST) = NBPAST
+
+C     TEMPS CPU DE FABRICATION DES VECTEURS GLOBAUX
+      DFABG = DFABG + DINFO( 'DELTA CPU' )
+
+C     LA DATE EN SECONDES DEPUIS LE 1/1/70 MINUIT
+      CALL SECONDES1970( DATE0 )
+      TIMEMOY1DT = 0D0
+
+C     LE NOMBRE D'ITERATIONS DU GC MIS A JOUR APRES CONVERGENCE
+      KGCUET(1) = NBNOVI
+      KGCUET(2) = NBNOVI
+      KGCUET(3) = NBNOVI
+      KGCPRE    = NBSOM
+      KGCVIT(1) = NBNOVI
+      KGCVIT(2) = NBNOVI
+      KGCVIT(3) = NBNOVI
+
+
+C     ##################################################################
+C     ##                                                              ##
+C     ##    LA BOUCLE EN TEMPS AVEC UN PAS DE TEMPS CONSTANT = DT     ##
+C     ##                                                              ##
+C     ##################################################################
+
+C     NOMBRE DE PAS DE TEMPS DT
+ 100  NBPAST = NBPAST + 1
+
+C     LES RESULTATS SONT au TEMPS tn=TEMPS et les CALCULS SUIVANTS
+C     pour le TEMPS tn+1 = tn + DT
+C     ............................................................
+      tn    = TEMPS
+      TEMPS = TEMPS + DT
+      tn1   = TEMPS
+
+      IF( LANGAG .EQ. 0 ) THEN
+         WRITE(IMPRIM,10101) NBPAST, MXPAST, TEMPS
+      ELSE
+         WRITE(IMPRIM,20101) NBPAST, MXPAST, TEMPS
+      ENDIF
+10101 FORMAT(//'ns2th: Au Pas',I7,'/',I7,' Temps ',G14.6,
+     %         ' Calcul de la VITESSE et PRESSION ',80('='))
+20101 FORMAT(//'ns2th: At Step',I7,'/',I7,' Time ',G14.6,
+     %         ' VELOCITY PRESSURE computation ',80('='))
+
+ccc      PRINT*,'sin(Pi*(t/2.5))=',sin( Pi*(temps/2.5) ),
+ccc     %      ' sin(Pi*(t/2.5 + 2./3))=',sin( Pi*(temps/2.5 + 2./3.) ),
+ccc     %      ' sin(Pi*(t/2.5 + 4./3))=',sin( Pi*(temps/2.5 + 4./3.) )
+
+ccc      call affvect( 'V3P0',  20, VXVYVZPR(1,NVP0) )
+ccc      call affvect( 'PRES0', 20, VXVYVZPR(N1P,NVP0) )
+
+C     CALCUL DES VITESSES0 CONVECTEES U(tn,X(tn;tn+1,NOEUDS))
+C     -------------------------------------------------------
+      IF( NBVCFX .GT. 0 ) THEN
+         CALL CONVECTH( tn, tn1, NDIM,  NBNOVI, MCN(MNXYZN+WYZNOE),
+     %                  NBNOEF, NBELEM, MCN(MNELE+WUNDEL), NO1EFN,
+     %                  MOARET, MXARET, MNLARE,
+     %                  MOFACE, MXFACE, MCN(MNLFAC),
+     %                  NDDLNO, VXYZP0, VITMAX0,
+     %                  VITC,   IERR )
+      ENDIF
+
+C     EF TAYLOR-HOOD P2 EN VITESSE et P1 EN PRESSION
+C     VG U(tn+1) = ( Rho - dt Mhu Laplacien ) U(tn+1) =
+C      = Rho U(tn,X(tn;tn+1,x) - dt CoGrPr GRAD P(tn) + dt Force(tn+1)
+
+C     CALCUL du SECOND MEMBRE DU SYSTEME LINEAIRE:
+C     Integrale Rho tP2 Ui(tn,X(tn;tn+1,bl) dX
+C   - Integrale tP2 dt CoGrPr GRAD P(tn) dX + dt Integrale tP2 Force(tn+1) dX
+C     -----------------------------------------------------------------------
+      CALL BGVITTH( tn, tn1, Rho, CoGrPr, NDIM, NBSOM, NBNOVI,
+     %              NDDLNO, NONOSO, RMCN(MNXYZN+WYZNOE),
+     %              NUTYEL, NBNOEF, NBELEM, MCN(MNELE+WUNDEL),
+     %              NBVVEF, NBSFEF, NBLAEF,
+     %              MCN(MNVVEF), MCN(MNSFEF), MCN(MNLAEF),
+     %              NUMIOB(2), NUMAOB(2), MCN(MNDOEL(2)),
+     %              NUMIOB(3), NUMAOB(3), MCN(MNDOEL(3)),
+     %              NUMIOB(4), NUMAOB(4), MCN(MNDOEL(4)),
+     %              MOARET, MXARET, MNLARE,
+     %              MOFACE, MXFACE, MCN(MNLFAC),
+     %              VXYZP0, VITMAX0, VXVYVZPR(N1P,NVP0),
+     %              P2P22D, P2P23D,
+     %              NTDLVI, V3P2,   NBCHTL, IERR )
+      IF( IERR .NE. 0 ) THEN
+         WRITE(IMPRIM,*)'ns2th: Problem exit bgvitth: IERR=',IERR
+         GOTO 9999
+      ENDIF
+
+C     LISTE DES DL VITESSES FIXEES AU TEMPS tn+1
+C     ------------------------------------------
+      CALL VITEFX( RELMIN, NTDLVI, NDIM,   MNXYZN,
+     %             NBTYEL, MNNPEF, NUMIOB, MNDOEL,
+     %             NBVCFX, NBVIFX, MNDLVIFX, MNVAVIFX, VITFXMAX )
+      VITMAX0 = MAX( VITMAX0, VITFXMAX )
+
+C     BLOCAGE DES COMPOSANTES FIXEES DE LA VITESSE AU TEMPS tn+1 SUR V3P2
+C     -------------------------------------------------------------------
+      CALL VITEFXBG( NBVIFX, MCN(MNDLVIFX), MCN(MNVAVIFX), STGV,
+     %               VITC,   NDIM, NBNOVI, V3P2 )
+
+
+C     RESOLUTION des NDIM COMPOSANTES de la VITESSE: i=1,...,NDIM
+C     Integrale  Rho tP2 P2 + dt Mhu tGrad P2 Grad P2 dx U*i(tn+1)
+C   = Integrale  Rho tP2 Ui(tn,X(tn;tn+1,bl) dX
+C   - Integrale  dt CoGrPr tP2 Gradi P(tn) dX
+C   + Integrale  dt        tP2 Forcei(tn+1)  dX     => U*(tn+1)
+C     ============================================================
+      MNVB = 1
+      MNV0 = 1
+      MNV1 = 1
+      IF( NORESO .EQ. 1 ) THEN
+
+C        DESCENTE et REMONTEE DU PROFIL DE LA MATRICE VITESSE
+C        L D tL COMPLETE DES NDIM COMPOSANTES DE LA VITESSE U*(tn+1)
+         DO K = 1, NDIM
+            CALL DRCRPR( NBNOVI, NCODSV, LP2LIGN, VG, V3P2(MNVB), 3,
+     %                   VXVYVZPR(MNV1,NVP1), IERR )
+
+ccc         print *,'Composante ',K,' de U*  -----------------'
+ccc         call affvect( 'Apres DRCRPR: VITESSE*i', 20,     VXVYVZPR(MNV1,NVP1) )
+ccc         call afl1ve(  'Apres DRCRPR: VITESSE*i', NBNOVI, VXVYVZPR(MNV1,NVP1) )
+            MNVB = MNVB + NBNOVI
+            MNV1 = MNV1 + NBNOVI
+         ENDDO
+
+      ELSE
+
+C        RESOLUTION PAR GC DES NDIM COMPOSANTES DE LA VITESSE U*(tn+1)
+C        LE VECTEUR INITIAL DU GC EST LE DERNIER VECTEUR CALCULE
+C        EN SORTIE DE GCAXBK LA SOLUTION EST DANS V3P1
+         DO K = 1, NDIM
+            CALL GCAXBK( NBNOVI, NODVFX, LP2LIGN, LP2COLO, VG,
+     %                   V3P2(MNVB), VXVYVZPR(MNV0,NVP0),
+     %                   DAUX1, DAUX2, DAUX3,
+     %                   VXVYVZPR(MNV1,NVP1),   KGCUET(K) )
+
+ccc            call affvect( 'Apres Gcaxbk: VITESSE*i', 20,     VXVYVZPR(MNV1,NVP1) )
+ccc            call afl1ve(  'Apres Gcaxbk: VITESSE*i', NBNOVI, VXVYVZPR(MNV1,NVP1) )
+
+cccC           VERIFICATION DE LA CONVERGENCE DU GC
+ccc            IF( IERR .NE. 0 ) THEN
+cccC              IL N'Y A PAS EU CONVERGENCE DU GC
+cccC              LA METHODE DU GC NE CONVERGE PAS => ABANDON DES CALCULS
+ccc               WRITE(KERR(MXLGER)(1:10),'(I10)') NBNOVI
+ccc               NBLGRC(NRERR) = 3
+ccc               IF( LANGAG .EQ. 0 ) THEN
+ccc                  KERR(1) = 'NON CONVERGENCE APRES '//KERR(MXLGER)(1:10)
+ccc     %                   // ' ITERATIONS DU GC'
+ccc                  KERR(2) = 'ABANDON DE LA METHODE DU GRADIENT CONJUGUE'
+ccc                  KERR(3) = 'ESSAYER UNE AUTRE METHODE DE RESOLUTION'
+ccc               ELSE
+ccc                  KERR(1) = 'NO CONVERGENCE after '// KERR(MXLGER)(1:10)
+ccc     %                   // ' ITERATIONS of CONJUGATE GRADIENT'
+ccc                  KERR(2) = 'EXIT of the CONJUGATE GRADIENT METHOD'
+ccc                  KERR(3) = 'TRY an OTHER METHOD'
+ccc               ENDIF
+ccc               CALL LEREUR
+ccc               IERR = 9
+ccc               GOTO 199
+ccc            ENDIF
+
+            MNVB = MNVB + NBNOVI
+            MNV0 = MNV0 + NBNOVI
+            MNV1 = MNV1 + NBNOVI
+         ENDDO
+
+      ENDIF
+
+
+C     ==========================================================================
+C     CALCUL DE LA DIFFERENCE DE PRESSION P(tn+1)-P(tn) PAR LA RESOLUTION DE
+C     -dt CoGrPr LAPLACIEN(P(tn+1)-P(tn))=-Rho (Div U* -(Integrale Div U*)/Vol))
+C     -dt CoGrPr      dP(tn+1)-P(tn))/dn = 0
+C     Ici le coefficient dt Mhu est SUPPOSE TRES PETIT
+C     L'integrale Div U* /Vol IMPOSE MODEREMENT, EN MOYENNE VOLUMIQUE,  Div U*=0
+C     ==========================================================================
+C     CALCUL DU SECOND MEMBRE  BG = - Rho (Div U* -(Integrale Div U*)/Volume))
+      IF( NUTYEL .EQ. 15 ) THEN
+
+C        TRIANGLE TAYLOR-HOOD
+C        CALCUL DE Integrale Div VITXY dX et Integrale dX sur le MAILLAGE
+         CALL MOYDIVTH2D( NBNOVI, RMCN(MNXYZN+WYZNOE),
+     %                    NBELEM, MCN(MNELE+WUNDEL), VXVYVZPR(1,NVP1),
+     %                    VOLUME, INTDIVV )
+C        Integrale (-Rho) * tP1 ( Div VITXYZ - Integrale Div VITXYZ / VOLUME )
+ccc essai non concluant          INTDIVV = 0D0
+         CALL BGDIVTH2( NBSOM,  RMCN(MNXYZN+WYZNOE),
+     %                  NBNOEF, NBELEM,  MCN(MNELE+WUNDEL), NONOSO,
+     %                  -Rho,   NBNOVI,  VXVYVZPR(1,NVP1),
+     %                  VOLUME, INTDIVV, VXVYVZPR(N1P,NVP1) )
+
+      ELSE
+
+C        TETRAEDRE TAYLOR-HOOD
+C        CALCUL DE Integrale Div VITXYZ dX et Integrale dX sur le MAILLAGE
+         CALL MOYDIVTH3D( NBNOVI, RMCN(MNXYZN+WYZNOE),
+     %                    NBELEM, MCN(MNELE+WUNDEL), VXVYVZPR(1,NVP1),
+     %                    VOLUME, INTDIVV )
+C        Integrale (-Rho) * tP1 ( Div VITXYZ - Integrale Div VITXYZ / VOLUME )
+ccc essai non concluant          INTDIVV = 0D0
+         CALL BGDIVTH3( NBSOM,  RMCN(MNXYZN+WYZNOE),
+     %                  NBNOEF, NBELEM, MCN(MNELE+WUNDEL), NONOSO,
+     %                  -Rho,   NBNOVI,  VXVYVZPR(1,NVP1),
+     %                  VOLUME, INTDIVV, VXVYVZPR(N1P,NVP1) )
+
+      ENDIF
+C
+cccC     ======================================================================
+cccC     CALCUL DE LA DIFFERENCE DE PRESSION P(tn+1)-P(tn) PAR LA RESOLUTION DE
+cccC     -dt CoGrPr LAPLACIEN(P(tn+1)-P(tn)) = (Rho-dt Mhu Laplacien) (-Div U*)
+cccC     -dt CoGrPr       dP(tn+1)-P(tn))/dn = dt Mhu  n . Laplacien U*
+cccC     ======================================================================
+ccc      IF( NUTYEL .EQ. 15 ) THEN
+cccC        TRIANGLE TAYLOR-HOOD
+ccc         CALL BGDIVLATH2( Rho,    dtMhu,  VXVYVZPR(1,NVP1),
+ccc     %                    NBNOVI, MCN(MNXYZN+WYZNOE),
+ccc     %                    NONOSO, NBELEM, MCN(MNELE+WUNDEL),
+ccc     %                    MCN(MNLAEF), NBSOM,    VXVYVZPR(N1P,NVP1) )
+ccc      ELSE
+cccC        TETRAEDRE TAYLOR-HOOD
+ccc         CALL BGDIVLATH3( Rho,    dtMhu,  VXVYVZPR(1,NVP1),
+ccc     %                    NBNOVI, MCN(MNXYZN+WYZNOE),
+ccc     %                    NONOSO, NBELEM, MCN(MNELE+WUNDEL),
+ccc     %                    MCN(MNSFEF), NBSOM,    VXVYVZPR(N1P,NVP1) )
+ccc      ENDIF
+
+ccc      call affvect( 'Sd Membre BGDIVTH', 20,    VXVYVZPR(N1P,NVP1) )
+ccc      call afl1ve(  'Sd Membre BGDIVTH', NBSOM, VXVYVZPR(N1P,NVP1) )
+
+C     CONSTRUCTION DES TABLEAUX NO ET VALEURS DES PRESSIONS FIXEES a tn+1
+C     -------------------------------------------------------------------
+      IF( IEBLPR .GT. 0 ) THEN
+         CALL PRESFXST( RELMIN, NBSOM,    NDIM,   MNXYZN, NONOSO,
+     %                  NBTYEL, MNNPEF,   NUMIOB, MNDOEL,
+     %                  NBPRFX, MNDLPRFX, MNVAPRFX )
+      ELSE
+         NBPRFX = 0
+      ENDIF
+
+
+      IF( NORESO .EQ. 1 ) THEN
+
+C        PRISE EN COMPTE DES DEGRES DE LIBERTE PRESSION FIXES P(tn+1)-P(tn)
+C        ------------------------------------------------------------------
+         MNV = ( MNVAPRFX - 1 ) / MOREE2
+         DO I=1, NBPRFX
+C           LE NO SOMMET GLOBAL DU DL FIXE
+            NDL = MCN( MNDLPRFX - 1 + I )
+C           VALEUR FIXEE DE LA PRESSION  P(tn+1)-P(tn)
+            VXVYVZPR(N0P+NDL,NVP1) = STGV *
+     %                           ( DMCN(MNV+I)-VXVYVZPR(N0P+NDL,NVP0) )
+         ENDDO
+
+C        ----------------------------------------------------------__------------
+C        RESOLUTION de P(tn+1)-P(tn) = [L D tL]-1 (-(Rho-dt Mhu Laplacien)Div U*)
+C        PAR DESCENTE REMONTEE DE LA MATRICE FACTORISEE PG = L D tL PROFIL
+C        ------------------------------------------------------------__----------
+         CALL DRCRPR( NBSOM, NCODSP, LP1LIGN, PG, VXVYVZPR(N1P,NVP1), 3,
+     %                VXVYVZPR(N1P,NVP1), IERR )
+ccc         call affvect( 'Apres DRCRPR PR1-PR0=', 20,    VXVYVZPR(N1P,NVP1) )
+ccc         call afl1ve(  'Apres DRCRPR PR1-PR0=', NBSOM, VXVYVZPR(N1P,NVP1) )
+
+      ELSE
+
+C        PRISE EN COMPTE DES DEGRES DE LIBERTE PRESSION FIXES P(tn+1)-P(tn)
+C        ------------------------------------------------------------------
+C        COPIE DE PRESSION1 DANS PRPR POUR LE GC
+         CALL TRTATD( VXVYVZPR(N1P,NVP1), PRPR, NBSOM )
+         MNV = ( MNVAPRFX - 1 ) / MOREE2
+         DO I=1, NBPRFX
+C           LE NO SOMMET GLOBAL DU DL FIXE
+            NDL = MCN( MNDLPRFX - 1 + I )
+C           VALEUR FIXEE DE LA PRESSION  P(tn+1)-P(tn)
+            PRPR(NDL) = STGV * ( DMCN(MNV+I) - VXVYVZPR(N0P+NDL,NVP0) )
+         ENDDO
+
+C        -----------------------------------------------------------------------
+C        RESOLUTION de P(tn+1)-P(tn) = [PG]-1 (-(Rho-dt Mhu Laplacien)Div U*)
+C        PAR GRADIENT CONJUGUE AVEC MATRICE SYMETRIQUE M
+C        -----------------------------------------------------------------------
+C        X0 DU GC EST MIS A ZERO CAR P(tn+1)-P(tn) EST PROCHE DE ZERO
+         CALL AZEROD( NBSOM, VXVYVZPR(N1P,NVP1) )
+
+C        RESOLUTION PAR GC
+C        LE VECTEUR INITIAL DU GC EST LE DERNIER VECTEUR CALCULE
+         CALL Gcaxbk( NBSOM, NODPFX, LP1LIGN, LP1COLO, PG,
+     %                PRPR,  VXVYVZPR(N1P,NVP1),
+     %                DAUX1, DAUX2, DAUX3,
+     %                VXVYVZPR(N1P,NVP1), KGCPRE )
+
+ccc         call affvect( 'Apres Gcaxbk PR1-PR0=', 20,    VXVYVZPR(N1P,NVP1) )
+ccc         call afl1ve(  'Apres Gcaxbk PR1-PR0=', NBSOM, VXVYVZPR(N1P,NVP1) )
+C
+cccC        VERIFICATION DE LA CONVERGENCE DU GC
+ccc         IF( IERR .NE. 0 ) THEN
+cccC           IL N'Y A PAS EU CONVERGENCE DU GC
+cccC           LA METHODE DU GC NE CONVERGE PAS => ABANDON DES CALCULS
+ccc            WRITE(KERR(MXLGER)(1:10),'(I10)') NBSOM
+ccc            NBLGRC(NRERR) = 3
+ccc            IF( LANGAG .EQ. 0 ) THEN
+ccc               KERR(1) = 'NON CONVERGENCE APRES '//KERR(MXLGER)(1:10)
+ccc     %                   // ' ITERATIONS DU GC'
+ccc               KERR(2) = 'ABANDON DE LA METHODE DU GRADIENT CONJUGUE'
+ccc               KERR(3) = 'ESSAYER UNE AUTRE METHODE DE RESOLUTION'
+ccc            ELSE
+ccc               KERR(1) = 'NO CONVERGENCE after '// KERR(MXLGER)(1:10)
+ccc     %                   // ' ITERATIONS of CG'
+ccc               KERR(2) = 'EXIT of the CONJUGATE GRADIENT METHOD'
+ccc               KERR(3) = 'TRY an OTHER METHOD'
+ccc            ENDIF
+ccc            CALL LEREUR
+cccC           ARRET DU CALCUL
+ccc            IERR = 9
+ccc            GOTO 199
+ccc         ENDIF
+
+      ENDIF
+
+C     ==========================================================================
+C     (Rho-DeltaT Mhu Laplacien)(ui(tn+1)-u*i)=- dt CoGrPr gradi(p(tn+1)- p(tn))
+C     V3P2i = - dt CoGrPr gradi (p(tn+1)- p(tn))  i=1,...,3
+C     ==========================================================================
+      CALL BGGRATH( DELTAT, CoGrPr, NDIM,  NBSOM, NBNOVI, NTDLVI,
+     %              NONOSO, MCN(MNXYZN+WYZNOE),
+     %              NUTYEL, NBNOEF, NBELEM, MCN(MNELE+WUNDEL),
+     %              VXVYVZPR(N1P,NVP1),  V3P2 )
+ccc      call affvect( 'BGGRATH avant CL VITESSE', 20,         V3P2 )
+ccc      call afl1ve(  'BGGRATH avant CL VITESSE', NDIM*NBNOVI,V3P2 )
+
+C     BLOCAGE DES DL VITESSES  U(tn+1)-U*  FIXEES A ZERO
+C     CAR U*=U(tn+1) sur la FRONTIERE DIRICHLET DU PROBLEME
+C     -----------------------------------------------------
+      DO I=1, NBVIFX
+C        LE NO GLOBAL DU DL FIXE
+         NDL = MCN( MNDLVIFX - 1 + I )
+C        VALEUR FIXEE DE LA VITESSE  ( Ui(tn+1)-Ui* )=0
+         V3P2(NDL) = 0D0
+      ENDDO
+
+C     RESOLUTION des NDIM COMPOSANTES DE LA VITESSE Ui(tn+1)-U*i: i=1,...,NDIM
+C     Integrale Rho tP2 P2 + dt Mhu tGrad P2 Grad P2 dx (Ui(tn+1)-U*i)
+C  = -Integrale dt CoGrPr tP2 Grad (P(tn+1)-P(tn)) dX   =>  Ui(tn+1)-U*i
+C     ------------------------------------------------------------------------
+      MNV2 = 1
+      IF( NORESO .EQ. 1 ) THEN
+
+C        DESCENTE et REMONTEE DU PROFIL DE LA MATRICE VITESSE
+C        L D tL COMPLETE DES NDIM COMPOSANTES DE LA VITESSE U*(tn+1)
+         DO K = 1, NDIM
+            CALL DRCRPR( NBNOVI, NCODSV, LP2LIGN, VG, V3P2(MNV2), 3,
+     %                   V3P2(MNV2), IERR )
+ccc            call affvect('Apres DRCRPR: (U(tn+1)-U*)i',   20, V3P2(MNV2) )
+ccc            call afl1ve( 'Apres DRCRPR: (U(tn+1)-U*)i',NBSOM, V3P2(MNV2) )
+            MNV2 = MNV2 + NBNOVI
+         ENDDO
+
+      ELSE
+
+C        RESOLUTION PAR GC DES NDIM COMPOSANTES DE LA VITESSE U(tn+1)-U*
+         DO K = 1, NDIM
+
+C           COPIE DE V3P2 DANS PRPR POUR LE PROTEGER
+C           CAR B DOIT ETRE DIFFERENT DE X DANS LE GC
+            CALL TRTATD( V3P2(MNV2), PRPR, NBNOVI )
+
+C           MISE A ZERO DU VECTEUR INITIAL DU GRADIENT CONJUGUE
+            CALL AZEROD( NBNOVI, V3P2(MNV2) )
+
+C           RESOLUTION PAR GRADIENT CONJUGUE
+            CALL GCAXBK( NBNOVI, NODVFX, LP2LIGN, LP2COLO, VG,
+     %                   PRPR, V3P2(MNV2),
+     %                   DAUX1, DAUX2, DAUX3,
+     %                   V3P2(MNV2),  KGCVIT(K) )
+
+cccC           VERIFICATION DE LA CONVERGENCE DU GC
+ccc            IF( IERR .NE. 0 ) THEN
+cccC              IL N'Y A PAS EU CONVERGENCE DU GC
+cccC              LA METHODE DU GC NE CONVERGE PAS => ABANDON DES CALCULS
+ccc               WRITE(KERR(MXLGER)(1:10),'(I10)') NBNOVI
+ccc               NBLGRC(NRERR) = 3
+ccc               IF( LANGAG .EQ. 0 ) THEN
+ccc                  KERR(1) = 'NON CONVERGENCE APRES '//KERR(MXLGER)(1:10)
+ccc     %                   // ' ITERATIONS DU GRADIENT CONJUGUE'
+ccc                  KERR(2) = 'ABANDON DE LA METHODE DU GRADIENT CONJUGUE'
+ccc                  KERR(3) = 'ESSAYER UNE AUTRE METHODE DE RESOLUTION'
+ccc               ELSE
+ccc                  KERR(1) = 'NO CONVERGENCE after '// KERR(MXLGER)(1:10)
+ccc     %                   // ' ITERATIONS of CONJUGATE GRADIENT'
+ccc                  KERR(2) = 'EXIT of the CONJUGATE GRADIENT METHOD'
+ccc                  KERR(3) = 'TRY an OTHER METHOD'
+ccc               ENDIF
+ccc               CALL LEREUR
+ccc               IERR = 9
+ccc               GOTO 199
+ccc            ENDIF
+
+ccc            call affvect('Apres Gcaxbk (U(tn+1)-U*)i=',    20,V3P2(MNV2))
+ccc            call afl1ve( 'Apres Gcaxbk (U(tn+1)-U*)i=',NBNOVI,V3P2(MNV2))
+
+            MNV2 = MNV2 + NBNOVI
+         ENDDO
+
+      ENDIF
+
+C     U(tn+1) = U* + (U(tn+1)-U*)  => U(tn+1)=V3P1
+C     ===========================
+      CALL SOM2VED( NTDLVI, VXVYVZPR(1,NVP1), V3P2, VXVYVZPR(1,NVP1) )
+ccc      call affvect( 'U(tn+1) = U* + (U(tn+1)-U*)',20, VXVYVZPR(1,NVP1) )
+ccc      call afl1ve('U(tn+1) = U* + (U(tn+1)-U*)',NDIM*NBNOVI,VXVYVZPR(1,NVP1))
+C
+C     CALCUL DE P(tn+1) = P(tn) + (P(tn+1)-P(tn))  => P(tn+1)=PRES1
+C     ===========================================
+      CALL SOM2VED( NBSOM, VXVYVZPR(N1P,NVP0), VXVYVZPR(N1P,NVP1),
+     %                     VXVYVZPR(N1P,NVP1) )
+ccc      call affvect( 'P(tn+1)=P(tn) +(P(tn+1)-P(tn))', 20,VXVYVZPR(N1P,NVP1))
+ccc      call afl1ve(  'P(tn+1)=P(tn) +(P(tn+1)-P(tn))',
+ccc     %              NBSOM, VXVYVZPR(N1P,NVP1) )
+
+      IF ( NBPRFX .GT. 0 ) THEN
+
+C        PRISE EN COMPTE DES DEGRES DE LIBERTE PRESSION FIXES
+C        ----------------------------------------------------
+         MNP0 = ( MNVAPRFX - 1 ) / MOREE2
+         DO I=1, NBPRFX
+C           LE NO GLOBAL DU DL FIXE
+            NDL = MCN( MNDLPRFX - 1 + I )
+C           VALEUR FIXEE DE LA PRESSION
+            VXVYVZPR(N0P+NDL,NVP1) = DMCN(MNP0+I)
+         ENDDO
+
+      ELSE
+
+C        CALCUL DE LA MOYENNE VOLUMIQUE DE LA PRESSION
+C        POUR LUI IMPOSER UNE MOYENNE VOLUMIQUE NULLE SUR LE MAILLAGE
+C        ------------------------------------------------------------
+         IF( NUTYEL .EQ. 15 ) THEN
+C           TRIANGLE TAYLOR-HOOD
+            CALL MOYP12D( NBNOVI, RMCN(MNXYZN+WYZNOE),
+     %                    NBELEM, NBNOEF, MCN(MNELE+WUNDEL),NONOSO,
+     %                    NBSOM,  VXVYVZPR(N1P,NVP1), VOLUME, INTPRES )
+         ELSE
+C           TETRAEDRE TAYLOR-HOOD
+            CALL MOYP13D( NBNOVI, RMCN(MNXYZN+WYZNOE),
+     %                    NBELEM, NBNOEF, MCN(MNELE+WUNDEL),NONOSO,
+     %                    NBSOM,  VXVYVZPR(N1P,NVP1), VOLUME, INTPRES )
+         ENDIF
+
+C        TRANSLATION POUR IMPOSER UNE MOYENNE VOLUMIQUE NULLE DE LA PRESSION
+         INTPRES = INTPRES / VOLUME
+         DO N = 1, NBSOM
+            VXVYVZPR(N0P+N,NVP1) = VXVYVZPR(N0P+N,NVP1) - INTPRES
+         ENDDO
+
+cccC        PAS DE CONDITION AUX LIMITES SUR LA PRESSION
+cccC        => ELLE EST DEFINIE A UNE CONSTANTE PRES
+cccC        RECHERCHE DE LA PLUS BASSE PRESSION POUR SERVIR DE TRANSLATION
+cccC        ELLE EST SOUSTRAITE DES AUTRES PRESSIONS ET DEVIENT ZERO
+cccC        --------------------------------------------------------------
+ccc         PREMIN = 1D100
+ccc         DO N=1,NBSOM
+ccc            IF( VXVYVZPR(N0P+N,NVP1) .LT. PREMIN ) THEN
+ccc               PREMIN = VXVYVZPR(N0P+N,NVP1)
+ccc            ENDIF
+ccc         ENDDO
+cccC        TRANSLATION DE PREMIN A ZERO
+ccc         DO N=1,NBSOM
+ccc            VXVYVZPR(N0P+N,NVP1) = VXVYVZPR(N0P+N,NVP1) - PREMIN
+ccc         ENDDO
+ccc         IF( LANGAG .EQ. 0 ) THEN
+ccc            WRITE(IMPRIM,*) 'Au TEMPS',TEMPS,' PRESSION MIN',PREMIN,
+ccc     %                      ' est TRANSLATEE a ZERO'
+ccc         ELSE
+ccc            WRITE(IMPRIM,*) 'At TIME',TEMPS,' PRESSURE MIN',PREMIN,
+ccc     %                      ' is TRANSLATED to ZERO'
+ccc         ENDIF
+
+      ENDIF
+
+ccc      call affvect( 'PRESSION tn+1 FINAL',    20, VXVYVZPR(N1P,NVP1) )
+ccc      call afl1ve(  'PRESSION tn+1 FINAL', NBSOM, VXVYVZPR(N1P,NVP1) )
+
+C     CALCUL DES |VITESSES tn+1| MIN ET MAX ET MOYENNE
+C     ------------------------------------------------
+      CALL MAXVIT( NDIM, NBNOVI, 1,
+     %    VXVYVZPR(N1X,NVP1), VXVYVZPR(N1Y,NVP1), VXVYVZPR(N1Z,NVP1),
+     %             NOEVMIN, NVAMIN, VITMIN,
+     %             NOEVMAX, NVAMAX, VITMAX, VITMOY )
+
+      IF( LANGAG .EQ. 0 ) THEN
+         PRINT 10050, TEMPS, VITMOY, VITMAX, VITMIN, NBPAST
+      ELSE
+         PRINT 20050, TEMPS, VITMOY, VITMAX, VITMIN, NBPAST
+      ENDIF
+
+10050 FORMAT(' Au Temps ', G14.7,
+     %' |VITESSE|Moyenne=',G14.7,
+     %' |VITESSE|Max=',    G14.7,
+     %' |VITESSE|Min=',    G14.7, ' Pas de temps',I7)
+
+20050 FORMAT(' At Time ', G14.7,
+     %' |VELOCITY|Mean=', G14.7,
+     %' |VELOCITY|Max=',  G14.7,
+     %' |VELOCITY|Min=',  G14.7, ' Time Step',I7)
+
+
+C     =========================================================================
+C     PAS D'ECRETAGE ............... supprime le  13/4/2021 et remis 1/10/2022
+C                                 et supprime ici
+      IF( NBSOM .LT. 0 ) THEN
+         IF( NBPAST .GT. 50 ) THEN
+
+C        ECRETAGE DE LA VITESSE AU TEMPS tn+1 A LA VITESSE VITECR
+C        APRES 50 PAS DE TEMPS AU DEMARRAGE
+C        --------------------------------------------------------
+C        MISE A JOUR DU SEUIL D'ECRETAGE TOUTES LES 200 ITERATIONS
+         IF( MOD( NBPAST, 200 ) .EQ. 0 ) THEN
+ccc            VITECR = MIN( VITECR, VITMOY + VITMAX )
+            VITECR = VITMAX
+         ENDIF
+
+cccC        ECRETAGE SI VITESSE MAX > 5% DE PLUS DE LA VALEUR MAXIMALE PRECEDENTE
+ccc         IF( VITMAX .GT. 1.05D0 * VITMAX0 ) THEN   14/4/2021
+cccccc            VITECR = 1.02D0 * VITMAX0
+ccc            VITECR = 1.01D0 * VITMAX0
+ccc             GOTO 55
+ccc         ENDIF
+
+C        ECRETAGE SI  VITESSE MAX SUPERIEURE A LA VITESSE D'ECRETAGE
+         IF( VITMAX .GT. VITECR ) THEN
+            CALL VITECRET( NDIM, NBNOVI,
+     %                     VXVYVZPR(N1X,NVP1), VXVYVZPR(N1Y,NVP1),
+     %                     VXVYVZPR(N1Z,NVP1), VITECR )
+         ENDIF
+
+         ENDIF
+      ENDIF
+C     =========================================================================
+
+
+C     PASSAGE DE VITX,VITY,VITZ,PRESSION PAR COMPOSANTES A PAR NOEUDS
+C     ===============================================================
+      CALL VXYZPRE( NDIM, NUTYEL, NDDLNO, 1, NBNOVI,
+     %        VXVYVZPR(N1X,NVP1), VXVYVZPR(N1Y,NVP1),VXVYVZPR(N1Z,NVP1),
+     %              NBSOM, NONOSO, VXVYVZPR(N1P,NVP1), NTDLVP,
+     %              VXYZP0 )
+
+C     AFFICHAGE DU VECTEUR"VITESSEPRESSION NOVVIPR AU TEMPS APRES ECRETAGE
+C     --------------------------------------------------------------------
+      CALL AFVIPR( NUTYEL, NDIM,   NBNOVI, MNXYZN, NDDLNO,
+     %             TEMPS,  NTDLVP, MIN(1,NBNOVI),  VXYZP0,
+     %             VITMIN, VITMAX, VITMOY, PREMIN, PREMAX, PREMOY )
+
+      IF( NDIM .EQ. 3 ) THEN
+
+C        FLUX DE LA VITESSE A TRAVERS LES FACES DES SURFACES DE L'OBJET
+C        --------------------------------------------------------------
+         CALL FLUXVITSF( NBNOVI, MCN(MNXYZN+WYZNOE),
+     %                   NUTYEL, NBNOEF, NBELEM, MCN(MNELE+WUNDEL),
+     %                   NDDLNO, NBSFEF, MCN(MNSFEF),
+     %                   VXYZP0, NUMIOB(3), NUMAOB(3),
+     %                   FLUNEG, FLUPOS, MCN(MNFVSF) )
+      ELSE
+
+C        FLUX DE LA VITESSE A TRAVERS LES ARETES DES LIGNES DE L'OBJET
+C        -------------------------------------------------------------
+         CALL FLUXVITLG( NBNOVI, MCN(MNXYZN+WYZNOE),
+     %                   NUTYEL, NBNOEF, NBELEM, MCN(MNELE+WUNDEL),
+     %                   NDDLNO, NBLAEF, MCN(MNLAEF),
+     %                   VXYZP0, NUMIOB(2), NUMAOB(2),
+     %                   FLUNEG, FLUPOS, MCN(MNFVSF) )
+      ENDIF
+
+C     STOCKAGE DES RESULTATS
+      VPMIMX(1,NBPAST) = TEMPS
+      VPMIMX(2,NBPAST) = VITMOY
+      VPMIMX(3,NBPAST) = VITMAX
+      VPMIMX(4,NBPAST) = PREMOY
+      VPMIMX(5,NBPAST) = PREMAX - PREMIN
+      VPMIMX(6,NBPAST) = FLUNEG
+      VPMIMX(7,NBPAST) = FLUPOS
+      VPMIMX(8,NBPAST) = NBPAST
+
+C     STOCKAGE OU PAS DU VECTEUR VITESSE+PRESSION?
+C     --------------------------------------------
+      IF( TEMPS .GE. TSTOC*0.9999 ) THEN
+
+C        LE NOMBRE DE VECTEURS VITESSEPRESSION STOCKES
+         NOVVIPR = NOVVIPR + 1
+
+C        STOCKAGE DE LA VITESSEPRESSION NOVVIPR A CET INSTANT TEMPS
+C        SUR FICHIER DU REPERTOIRE DU PROJET
+         CALL ECFIVIPRTE( KNOMOB, TEMPS,  NOVVIPR, NAVSTO, NBPAST,
+     %                    NDIM,   NBNOVI, NBSOM,  NBNOTE,
+     %                    NTDLVP, VXYZP0, NTDLTE, TEMPER0,
+     %                    KNOMFIC, IERR )
+
+C        LE TEMPS DU STOCKAGE
+         RMCN(MNTIMES-1+NOVVIPR) = TEMPS
+
+         NBK = NUDCNB( NMPROJ )
+         IF( LANGAG .EQ. 0 ) THEN
+            WRITE(IMPRIM,10150) TEMPS, NTDLVP, NOVVIPR, NMPROJ(1:NBK)
+         ELSE
+            WRITE(IMPRIM,20150) TEMPS, NTDLVP, NOVVIPR, NMPROJ(1:NBK)
+         ENDIF
+
+10150 FORMAT('ns2th: Au TEMPS',G14.6,' STOCKAGE de',I9,
+     %       ' D.L. VITESSE+PRESSION sur FICHIER',I5,
+     %       ' du REPERTOIRE du PROJET ',A)
+20150 FORMAT('ns2th:  At TIME',G14.6,' STORAGE of',I9,
+     %       ' VELOCITY PRESSURE DoF on FILE',I5,
+     %       ' of PROJECT DIRECTORY ',A)
+
+C        LE PROCHAIN TEMPS DE STOCKAGE
+         TSTOC = TSTOC + DTSTOC
+
+      ENDIF
+
+C     TRACE DES VITESSES EN TOUS LES POINTS AVEC SEUIL MIN A TRACER
+C     =============================================================
+      IF( INTERA .GE. 1 ) THEN
+
+C        MODE GRAPHIQUE AVEC X11
+C        LA MEMOIRE PIXELS EST EFFACEE
+         CALL EFFACEMEMPX
+
+         CALL VISEE0
+         NOTYVI  = 0
+         LORBITE = 0
+         NETAXE  = 0
+         CMFLEC  = 2.5
+         CMVITE  = REAL( CMFLEC / VITMAX )
+
+C        TRACE DES ARETES DES FACES AVEC LA COULEUR
+         NCOUAF = NCGRIM
+C        POURCENTAGE DE REDUCTION DES FACES
+         PREDUF = 0.
+C        COULEUR PAR DEFAUT DES ARETES DES FACES FRONTIERE
+         NCOAFR = NCGRIC
+
+         IF( NDIM .EQ. 2 ) THEN
+
+C           LA VISEE EN 2D:  TRACE DES FLECHES VITESSES
+            SEMINVIT = 0
+            SEMAXVIT = VITMAX
+            CALL TRVITE2D( NBNOVI, MCN(MNXYZN+WYZNOE),
+     %                     MOARET, MXARET, MCN(MNLARE),
+     %                     SEMINVIT, SEMAXVIT, CMVITE, 1,
+     %                     VXVYVZPR(N1X,NVP1), VXVYVZPR(N1Y,NVP1),
+     %                     VITMAX )
+
+         ELSE
+
+C           LA VISEE EN 3D
+C           LONGITUDE et LATITUDE
+ccc            CALL LONLAT( -80.0, 10. )
+ccc            CALL LONLAT( -82.0, 8. )
+ccc            CALL LONLAT( -110., 20. )
+            CALL LONLAT( -85., 3. )
+
+C           LOUPE GROSSISSANTE
+ccc            GROSSI = 1.2
+ccc            GROSSI = 0.65
+            GROSSI = 1.12
+            AXOLAR = AXOLAR / GROSSI
+            AXOHAU = AXOHAU / GROSSI
+
+C           TRACE DES FLECHES VITESSES
+            LORBITE = 0
+ccc            LORBITE = 1
+
+            SEMINVIT = MIN( 2D0*VITMOY, 0.5D0*VITMAX )
+            SEMAXVIT = VITMAX
+            CALL TRVITE3D( NBNOVI, MCN(MNXYZN+WYZNOE),
+     %                     MOARFR, MXARFR, L1ARFR, MCN(MNAFOB+WAREFR),
+     %                     SEMINVIT, SEMAXVIT, CMVITE, 1,
+     %                     VXVYVZPR(N1X,NVP1), VXVYVZPR(N1Y,NVP1),
+     %                     VXVYVZPR(N1Z,NVP1), VITMAX )
+
+         ENDIF
+
+C        LE TRACE DU TITRE FINAL
+         CALL LEGVIT6( KNOMOB, 1, VITMOY, VITMIN, VITMAX, CMVITE )
+
+      ENDIF
+
+C     TEMPS CPU donne par le systeme a la fin de l'iteration n+1
+      call cpu_time(t_cpu_it1)
+
+C     LA DATE EN SECONDES DEPUIS LE 1/1/70 MINUIT
+      CALL  SECONDES1970( DATE )
+      SECONDES = DATE - DATE0
+      TIMEMOY1DT = TIMEMOY1DT + SECONDES
+
+      IF( LANGAG .EQ. 0 ) THEN
+         WRITE(IMPRIM,10105) t_cpu_it1-t_cpu_it0, SECONDES,VITMOY,VITMAX
+10105    FORMAT(' ns2th: Pour ce pas de temps ',F12.2,
+     %' secondes CPU en ',F12.2,' secondes reelles  VitesseMoy=',G15.6,
+     %' VitesseMAX=',G15.6 )
+      ELSE
+         WRITE(IMPRIM,20105) t_cpu_it1-t_cpu_it0, SECONDES,VITMOY,VITMAX
+20105    FORMAT(' ns2th: For this time step ',F12.2,
+     %' CPU seconds in ',F12.2,' real seconds  MeanVelocity=',G15.6,
+     %' MaxVelocity=',G15.6 )
+      ENDIF
+
+      t_cpu_it0 = t_cpu_it1
+      DATE0     = DATE
+
+C     PERMUTATION DE V3P0 ET V3P1
+C     ===========================
+      N    = NVP0
+      NVP0 = NVP1
+      NVP1 = N
+
+      VITMOY0 = VITMOY
+      VITMAX0 = VITMAX
+
+      IF( TEMPS + DT .LT. TPSFIN*1.0001 ) GOTO 100
+C    ##############################################################
+C    ##                                                          ##
+C    ##                FIN DE LA BOUCLE EN TEMPS                 ##
+C    ##                                                          ##
+C    ##############################################################
+
+
+C     STOCKAGE OU PAS DU VECTEUR VITESSE+PRESSION A CE TEMPS?
+C     -------------------------------------------------------
+      IF( RMCN(MNTIMES-1+NOVVIPR) .NE. TEMPS ) THEN
+
+C        LE NOMBRE DE VECTEURS VITESSEPRESSION STOCKES
+         NOVVIPR = NOVVIPR + 1
+
+C        STOCKAGE DE LA VITESSEPRESSION NOVVIPR A CET INSTANT TEMPS
+C        SUR FICHIER DU REPERTOIRE DU PROJET
+         CALL ECFIVIPRTE( KNOMOB,  TEMPS,  NOVVIPR, NAVSTO, NBPAST,
+     %                    NDIM,    NBNOVI, NBSOM,   NBNOTE,
+     %                    NTDLVP,  VXYZP0, NTDLTE,  TEMPER0,
+     %                    KNOMFIC, IERR )
+
+C        LE TEMPS DU STOCKAGE
+         RMCN(MNTIMES-1+NOVVIPR) = TEMPS
+
+         IF( LANGAG .EQ. 0 ) THEN
+            WRITE(IMPRIM,10150) TEMPS, NTDLVP, NOVVIPR, NMPROJ
+         ELSE
+            WRITE(IMPRIM,20150) TEMPS, NTDLVP, NOVVIPR, NMPROJ
+         ENDIF
+
+      ENDIF
+
+
+C     BILAN SUR LES REMONTEES DES CARACTERISTIQUES TROP LONGUES
+      IF( LANGAG .EQ. 0 ) THEN
+         WRITE(IMPRIM,*) NBCHTL,
+     %    ' REMONTEES DE LA CARACTERISTIQUE TROP LONGUES'
+         IF( NBCHTL .GT. 0 ) THEN
+            WRITE(IMPRIM,*) '=> DIMINUER LE PAS DE TEMPS'
+         ENDIF
+      ELSE
+         WRITE(IMPRIM,*) NBCHTL,
+     %      ' TOO LONG COMES BACK of CHARACTERISTICS'
+         IF( NBCHTL .GT. 0 ) THEN
+            WRITE(IMPRIM,*) '=> REDUCE THE TIME STEP'
+         ENDIF
+      ENDIF
+      GOTO 9999
+
+
+C     PLACE MEMOIRE INSUFFISANTE
+ 9993 NBLGRC(NRERR) = 2
+      IF( LANGAG .EQ. 0 ) THEN
+         KERR(1) = 'ERREUR: PLACE MEMOIRE INSUFFISANTE'
+         KERR(2) = 'REDUIRE LE MAILLAGE'
+      ELSE
+         KERR(1) = 'ERROR: NOT ENOUGH LARGE MEMORY'
+         KERR(2) = 'REDUCE the MESH'
+      ENDIF
+      CALL LEREUR
+      IERR = 20
+
+
+C     DESTRUCTION DES TMC DEVENUS INUTILES
+C     ====================================
+C     FREE MEMORY USED BY ARRAY VG and PG is DEALLOCATED
+ 9999 IF( IERVITC .EQ. 0 ) then
+         WRITE(IMPRIM,*)'ns2th: VITC est DESALLOUE'
+         DEALLOCATE( VITC )
+      ENDIF
+
+      IF( IERVXVYVZPR  .EQ. 0 ) then
+         WRITE(IMPRIM,*)'ns2th: VXVYVZPR est DESALLOUE'
+         DEALLOCATE( VXVYVZPR )
+      ENDIF
+
+      IF( IERPRPR  .EQ. 0 ) then
+         WRITE(IMPRIM,*)'ns2th: PRPR est DESALLOUE'
+         DEALLOCATE( PRPR )
+      ENDIF
+
+      IF( IERLP1COLO  .EQ. 0 ) then
+         WRITE(IMPRIM,*)'ns2th: LP1COLO est DESALLOUE'
+         DEALLOCATE( LP1COLO )
+      ENDIF
+
+      IF( IERLP1LIGN  .EQ. 0 ) then
+         WRITE(IMPRIM,*)'ns2th: LP1LIGN est DESALLOUE'
+         DEALLOCATE( LP1LIGN )
+      ENDIF
+
+      IF( IERDAUX3  .EQ. 0 ) then
+         WRITE(IMPRIM,*)'ns2th: DAUX3 est DESALLOUE'
+         DEALLOCATE( DAUX3 )
+      ENDIF
+
+      IF( IERDAUX2  .EQ. 0 ) then
+         WRITE(IMPRIM,*)'ns2th: DAUX2 est DESALLOUE'
+         DEALLOCATE( DAUX2 )
+      ENDIF
+
+      IF( IERDAUX1  .EQ. 0 ) then
+         WRITE(IMPRIM,*)'ns2th: DAUX1 est DESALLOUE'
+         DEALLOCATE( DAUX1 )
+      ENDIF
+
+      IF( IERV3P2  .EQ. 0 ) then
+         WRITE(IMPRIM,*)'ns2th: V3P2 est DESALLOUE'
+         DEALLOCATE( V3P2 )
+      ENDIF
+
+      IF( IERNODVFX  .EQ. 0 ) then
+         WRITE(IMPRIM,*)'ns2th: NODVFX est DESALLOUE'
+         DEALLOCATE( NODVFX )
+      ENDIF
+
+      IF( IERNODPFX  .EQ. 0 ) then
+         WRITE(IMPRIM,*)'ns2th: NODPFX est DESALLOUE'
+         DEALLOCATE( NODPFX )
+      ENDIF
+
+      IF( IERVGALLOC  .EQ. 0 ) then
+         WRITE(IMPRIM,*)'VG est DESALLOUEE'
+         DEALLOCATE( VG )
+      ENDIF
+      IF( IERPGALLOC  .EQ. 0 ) then
+         WRITE(IMPRIM,*)'PG est DESALLOUEE'
+         DEALLOCATE( PG )
+      ENDIF
+
+      IF( NBVVEF .GT. 0 ) CALL TNMCDS( 'ENTIER', NBELEM*NBVVEF, MNVVEF )
+      IF( NBSFEF .GT. 0 ) CALL TNMCDS( 'ENTIER', NBELEM*NBSFEF, MNSFEF )
+      IF( NBLAEF .GT. 0 ) CALL TNMCDS( 'ENTIER', NBELEM*NBLAEF, MNLAEF )
+      IF( NBPSEF .GT. 0 ) CALL TNMCDS( 'ENTIER', NBELEM*NBPSEF, MNPSEF )
+
+      IF( NBPRFX .GT. 0 ) CALL TNMCDS( 'ENTIER', NBPRFX, MNDLPRFX )
+      IF( NBPRFX .GT. 0 ) CALL TNMCDS( 'REEL2',  NBPRFX, MNVAPRFX )
+      IF( NBVIFX .GT. 0 ) CALL TNMCDS( 'ENTIER', NBVIFX, MNDLVIFX )
+      IF( NBVIFX .GT. 0 ) CALL TNMCDS( 'REEL2',  NBVIFX, MNVAVIFX )
+      IF( MNFVSF .GT. 0 ) CALL TNMCDS( 'REEL2',  MOSFOB, MNFVSF   )
+
+      DMOTSTO = 901.D0+NBNOVI*2+NBPRFX+NBVIFX+NBSOM*3
+     %        + MOREE2*( NBNOVI+NTDLVI+NTDLVP*3
+     %                  +NBPRFX+NBVIFX+ MOSFOB+NBCMVG+NBCMPG )
+     %        + NOVVIPR + MOREE2 *NTDLVP*NOVVIPR
+
+      IF( NORESO .GE. 2 ) THEN
+C        GRADIENT CONJUGUE STOCKAGE MORSE
+         DMOTSTO = DMOTSTO + NBNOVI+1+NBCMPG+NBCMVG
+      ENDIF
+
+C     BILAN SUR LA PLACE MEMOIRE CENTRALE OCCUPEE
+C     ===========================================
+      IF( NORESO .EQ. 1 ) THEN
+
+C        FACTORISATION COMPLETE CROUT STOCKAGE PROFIL
+         IF( LANGAG .EQ. 0 ) THEN
+            WRITE(IMPRIM,19002) DMOTSTO
+         ELSE
+            WRITE(IMPRIM,29002) DMOTSTO
+         ENDIF
+19002 FORMAT(/'STOCKAGE PROFIL des MATRICES et VECTEURS=',G25.17,
+     %' MOTS MEMOIRE'/)
+29002 FORMAT(/'SKYLINE STORAGE of MATRICES and VECTORS=', G25.17,
+     %' MEMORY WORDS'/)
+
+      ENDIF
+
+C     TOTAL DES MOTS NECESSAIRES A LA RESOLUTION DU PROBLEME de NAVIER-STOKES
+C     -----------------------------------------------------------------------
+      IF( LANGAG .EQ. 0 ) THEN
+         WRITE(IMPRIM,19005) DMOTSTO
+      ELSE
+         WRITE(IMPRIM,29005) DMOTSTO
+      ENDIF
+19005 FORMAT(' STOCKAGE TOTAL des MATRICES et VECTEURS=',G25.17,
+     %' MOTS MEMOIRE')
+29005 FORMAT(' TOTAL STORAGE of MATRICES and VECTORS=', G25.17,
+     %' MEMORY WORDS')
+
+C     CHAINAGE DES FACES FRONTALIERES C-A-D APPARTENANT A UN SEUL EF
+C     A PARTIR DU ZERO EN POSITION 7 DE LFACES
+C     --------------------------------------------------------------
+      IF( MNLFAC .GT. 0 ) THEN
+         CALL MACFAF( MOFACE, MXFACE, MCN(MNLFAC),  L1FAFR, NBFAFR )
+C        MISE A JOUR DU NUMERO DE LA PREMIERE FACE FRONTALIERE (DANS UN SEUL EF)
+         MCN( MNFAOB + W1FAFR ) = L1FAFR
+      ENDIF
+
+C     REMISE EN ETAT DE LA FONTE COURANTE
+      IF( INTERA .GT. 0 ) CALL CHARGEFONTE( NOFONT0 )
+
+      IF( IERNONOSO  .EQ. 0 ) then
+         WRITE(IMPRIM,*)'ns2th: NONOSO est DESALLOUE'
+         DEALLOCATE( NONOSO)
+      ENDIF
+
+      IF( IERNO1EFN  .EQ. 0 ) then
+         WRITE(IMPRIM,*)'ns2th: NO1EFN est DESALLOUE'
+         DEALLOCATE( NO1EFN)
+      ENDIF
+
+C     TEMPS CALCUL DES VITESSES PRESSIONS
+C     ===================================
+      DVITPR = DINFO( 'DELTA CPU' )
+
+C     TEMPS REEL D'EXECUTION DE ns2th
+      CALL SECONDES1970( DATE )
+      SECONDES = DATE - DATE00
+      IF( LANGAG .EQ. 0 ) THEN
+         WRITE(IMPRIM,19000) SECONDES
+19000    FORMAT(' ns2th: Secondes REELLES execution=',F10.0)
+      ELSE
+         WRITE(IMPRIM,29000) SECONDES
+29000    FORMAT(' ns2th: Elapsed REAL seconds of execution=',F10.0)
+      ENDIF
+
+C     AUTRE CALCUL DU TEMPS DES THREADS
+      call system_clock( count=t1, count_rate=nbclockps )
+      S = real( t1-t0, kind=8 ) / real( nbclockps, kind=8 )
+      IF( LANGAG .EQ. 0 ) THEN
+         WRITE(IMPRIM,*)'ns2th: Nombre des secondes d''EXECUTION=',S,
+     %                  ' sur',nbthreads,' threads'
+      ELSE
+         WRITE(IMPRIM,*)'ns2th: Thread EXECUTION Seconds=',
+     %                   S, ' on',nbthreads,' threads'
+      ENDIF
+
+C$OMP PARALLEL SHARED( tt0 )
+      IF( LANGAG .EQ. 0 ) THEN
+         WRITE(IMPRIM,*)'ns2th: Numero Thread=',OMP_GET_THREAD_NUM(),
+     %                  ' OMP seconds=', OMP_GET_WTIME()-tt0
+      ELSE
+         WRITE(IMPRIM,*)'ns2th: Thread Number=',OMP_GET_THREAD_NUM(),
+     %                  ' OMP seconds=', OMP_GET_WTIME()-tt0
+      ENDIF
+C$OMP END PARALLEL
+
+      call cpu_time(t_cpu_1)
+      WRITE(IMPRIM,*)'ns2th: CPU_time=',t_cpu_1-t_cpu_0
+
+      IF( NBPAST .GT. 0 ) THEN
+         IF( LANGAG .EQ. 0 ) THEN
+        WRITE(IMPRIM,*)'ns2th: Temps moyen EXECUTION 1 pas de temps='
+     %, TIMEMOY1DT/NBPAST,' pour',NBPAST,' pas de temps'
+         ELSE
+          WRITE(IMPRIM,*)'ns2th: Mean EXECUTION Time of 1 time step='
+     %, TIMEMOY1DT/NBPAST,' for',NBPAST,' time steps'
+         ENDIF
+      ENDIF
+
+      RETURN
+      END

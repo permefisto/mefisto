@@ -1,0 +1,11 @@
+variable EXPORTER 'un MAILLAGE vers un LOGICIEL' entier
+( 1 : 'Un Fichier Mefisto xyznsef d''un PLSV',
+  2 : 'Un Fichier Mefisto xyznpef d''un OBJET',
+  3 : 'Un Fichier NEKTON d''un OBJET',
+  4 : 'Un Fichiers FIDAP d''un OBJET',
+  5 : 'Un Fichier FREEFEM d''un OBJET',
+  6 : 'Un Fichier OpenFOAM d''un OBJET',
+  7 : 'Un Fichier Modulef NOPO d''un OBJET',
+  8 : 'Un Fichier LS-DYNA uneSURFACE+unVOLUME'
+  9 : 'Un Fichier STL TRIANGULATION SURFACE FERMEE'
+) ;

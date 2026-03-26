@@ -1,0 +1,45 @@
+      SUBROUTINE GR2P1BP1( NTDL, NUELEM, NONOEF, AG, BG )
+C ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+C BUT :    ELIMINATION DE GAUSS SUR LE SECOND MEMBRE
+C -----    POUR LES DL BARYCENTRES DES TRIANGLES BREZZI-FORTIN
+C
+C ENTREES:
+C --------
+C NTDL   : NOMBRE DE DEGRES DE LIBERTE SANS LES BARYCENTRES DES EF
+C NUELEM : NUMERO DU TRIANGLE BREZZI-FORTIN A TRAITER
+C NONOEF : NO DES NOEUDS DU TRIANGLE C'EST A DIRE DES 3 SOMMETS
+C AG     : LES 2 LIGNES DE AE DES DEGRES DE LIBERTE 4 ET 8 DU BARYCENTRE
+C
+C MODIFIE:
+C --------
+C BG     : VECTEUR SECOND MEMBRE AVANT ET APRES GAUSS
+C+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+C AUTEUR: ALAIN PERRONNET LJLL UPMC Saint Pierre du Perray Decembre 2008
+C23456---------------------------------------------------------------012
+      DOUBLE PRECISION  AG(11,2), BG(*), PIVOT
+      INTEGER           NONOEF(3)
+      INTEGER           NOGLDL(11)
+C
+C     NO GLOBAL DES DL ELEMENTAIRES
+      CALL NODLEFBF( 2, NTDL, NUELEM, NONOEF, NOGLDL )
+C
+C     TRIANGULATION DE GAUSS SUR LA LIGNE 4 DU VECTEUR
+      PIVOT = BG( NOGLDL(4) ) / AG(4,1)
+      DO 10 I=1,11
+         IF( I .NE. 4 ) THEN
+            N = NOGLDL( I )
+            BG(N) = BG(N) - AG(I,1) * PIVOT
+         ENDIF
+ 10   CONTINUE
+C
+C     TRIANGULATION DE GAUSS SUR LA LIGNE 8 DU VECTEUR
+      PIVOT = BG( NOGLDL(8) ) / AG(8,2)
+      DO 20 I=1,11
+         IF( I .NE. 4 .AND. I .NE. 8 ) THEN
+            N = NOGLDL( I )
+            BG(N) = BG(N) - AG(I,2) * PIVOT
+         ENDIF
+ 20   CONTINUE
+C
+      RETURN
+      END

@@ -1,0 +1,5 @@
+The number of SLICES M is equal to
+the number of displacements of the LINE
+to create the quadrangulation of the surface
+from the N edges of the line.
+Thus, M*N quadrangles will be created.

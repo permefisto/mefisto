@@ -1,0 +1,3 @@
+variable ManagFEN 'Management FENETRE GRAPHIQUE' entier
+( 1 : 'LARGEUR HAUTEUR PIXELS de la FENETRE',
+  2 : 'COULEUR du FOND de la FENETRE' ) ;

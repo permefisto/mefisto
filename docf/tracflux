@@ -1,0 +1,10 @@
+Definition de l'ECHELLE de trace des FLECHES
+de representation du VECTEUR FLUX NORMAL de TEMPERATURE
+
+1: Nombre CM de la FLECHE MAX
+   La FLECHE MAXIMALE tracee aura cette longueur en CM
+   demandee ensuite
+
+2: un CM VAUT EN GRADIENT
+   Une FLECHE TRACEE avec une LONGUEUR de 1 CM aura la
+   valeur tapee ensuite

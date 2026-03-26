@@ -1,0 +1,775 @@
+      SUBROUTINE VDR1CF( COSMAX, NF0,    NBSOMM, PTXYZD,
+     %                   N1TETS, NOTETR,
+     %                   NBFAPE, NOFAPE, MXFACO, LEFACO, N1FASC, NO0FAR,
+     %                   MXETOI, NASIDUCF,
+     %                   MXTRCF, NBTRCF, NOTRCF,
+     %                   MXARCF, NBCF,   N1ARCF, NOARCF,
+     %                   MXSTCF, NBSTCF, NOSTCF,
+     %                   MXSTIS, NBSTIS, NOSTIS,
+     %                   IERR )
+C+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+C BUT :    LISTAGE DES SOMMETS DE LA FRONTIERE ET INTERNES AU POLYGONE
+C -----    DES FACES PERDUES (COPLANAIRES SI COSMAX>-1) ADJACENTES
+C          A PARTIR DE LA FACE NF0 DE LEFACO
+C
+C ENTREES:
+C --------
+C COSMAX : SEUIL DU COSINUS DE L'ANGLE FORME PAR LES NORMALES AUX
+C          2 FACES ET AU DESSUS DUQUEL LES FACES
+C          SONT CONSIDEREES COPLANAIRES
+C NF0    : NUMERO LEFACO DE LA FACE INITIALE
+C NBSOMM : NOMBRE ACTUEL DE SOMMETS  DANS LA TETRAEDRISATION
+C N1TETS : N1TETS(NS) NUMERO D'UN TETRAEDRE AYANT POUR SOMMET NS
+C NOTETR : LISTE DES TETRAEDRES
+C          SOMMET1,    SOMMET2,    SOMMET3,    SOMMET4,
+C          TETRAEDRE1, TETRAEDRE2, TETRAEDRE3, TETRAEDRE4
+C          DE L'AUTRE COTE DE LA FACE
+C          1: 123      2: 234      3: 341      4: 412
+C NBFAPE : NOMBRE DE  FACES PERDUES DE   LEFACO
+C NOFAPE : NUMERO DES FACES PERDUES DANS LEFACO
+C MXFACO : NOMBRE MAXIMAL DE TRIANGLES PERMIS POUR LA TRIANGULATION
+C NO0FAR : NUMERO DES 3 SOMMETS DE LA FACE AJOUTEE AU CF
+C          ICI TABLEAU INACTIF CAR PAS DE TRIANGLE AJOUTE AU CF
+C MXTRCF : NOMBRE MAXIMAL DE TRIANGLES DANS NOTRCF
+C MXSTCF : NOMBRE MAXIMAL DE SOMMETS DU CF DECLARABLES DANS NOSTCF
+C MXSTIS : NOMBRE MAXIMAL DE SOMMETS ISOLES DU CF DECLARABLES DANS NOSTIS
+C
+C ENTREES ET SORTIES:
+C -------------------
+C LEFACO : ENSEMBLE DES FACES=TRIANGLES DE LA PEAU OU INTERFACES ENTRE VOLUMES
+C          IL CONTIENT DANS CET ORDRE
+C          123: NUMERO (DANS PTXYZD) DU SOMMET 1 < SOMMET 2 < SOMMET 3
+C          45 : NUMERO (DANS NUVOPA 0 SINON) DU VOLUME1, VOLUME2 DE LA FACE
+C          678: NUMERO (DANS LEFACO) DE LA FACE ADJACENTE PAR L'ARETE 1 2 3
+C               ATTENTION: UNE ARETE PEUT APPARTENIR A PLUS DE 2 FACES
+C                          => CHAINAGE CIRCULAIRE DE CES FACES DANS LEFACO
+C          9  : LEFACO(9,*)  -> FACE SUIVANTE (*=0:VIDE, *<>0:NON VIDE)
+C               HACHAGE AVEC LA SOMME DES 3 SOMMETS MODULO MXFACO
+C               LF = MOD( NOSOFA(1)+NOSOFA(2)+NOSOFA(3) , MXFACO ) + 1
+C               NF = LEFACO( 10, LF ) LE NUMERO DE LA 1-ERE FACE DANS LEFACO
+C               SI LA FACE NE CONVIENT PAS. PASSAGE A LA SUIVANTE
+C               NF  = LEFACO( 9, NF )  ...
+C          10 : LEFACO(10,*) PREMIERE FACE DANS LE HACHAGE
+C          11 : LEFACO(11,.) = NO NOTETR D'UN TETRAEDRE AYANT CETTE FACE, 0 SINON
+cccC          12 : LEFACO(12,.) = NO FACEOC DE 1 A NBFACES D'OC
+
+C PTXYZD : TABLEAU DES COORDONNEES DES POINTS
+C          PAR POINT : X  Y  DISTANCE_SOUHAITEE
+C N1FASC : N1FASC(I) NUMERO D'UN TRIANGLE DE LEFACO AYANT POUR SOMMET I
+C
+C MXETOI : NOMBRE MAXIMAL D'ARETES SIMPLES DES FACES PERDUES DU CF
+C NASIDUCF: LISTE DES ARETES SIMPLES DES FACES PERDUES DU CF
+C          POINTEE POUR LES ARETES OCCUPEES PAR N1ASOC
+C                                  VIDES    PAR N1ASVI
+C          INUTILISABLE EN SORTIE CAR TABLEAU AUXILIAIRE
+
+
+C SORTIES :
+C ---------
+C NBCF   : NOMBRE DE LIGNES FERMEES PERIPHERIQUES DES FACES PERDUES
+C NBTRCF : NOMBRE DE TRIANGLES DU TABLEAU NOTRCF SUR LEFACO
+C          C-A-D DU POLYGONE ENCORE DIT ENSUITE ETOILE
+C NOTRCF : TABLEAU DU NUMERO DANS LEFACO DES TRIANGLES DE L'ETOILE
+C N1ARCF : NUMERO DU 1-ER SOMMET OU 1-ERE ARETE DU CONTOUR FERME
+C NOARCF : 1:NUMERO DU SOMMET DE L'ARETE DE LA LIGNE DU CONTOUR FERME
+C          2:NUMERO DANS NOARCF DE L'ARETE SUIVANTE DU CF
+C          3:NUMERO DANS LEFACO DU TRIANGLE ADJACENT OPPOSE A L'ARETE
+C NBSTCF : NOMBRE DE SOMMETS DU CF
+C NOSTCF : NUMERO PTXYZD DES NBSTCF SOMMETS PERIPHERIQUES DU CF
+C NBSTIS : NOMBRE DE SOMMETS ISOLES DANS L'ETOILE
+C NOSTIS : NUMERO DES SOMMETS ISOLES N'APPARTENANT PAS AU CONTOUR
+C IERR   : 0 SI PAS D'ERREUR
+C          1 ANOMALIE 2 TETRAEDRES NON REELLEMENT OPPOSES PAR UNE FACE
+C          3 NBTRCF>MXTRCF => TROP DE TRIANGLES PERDUS COAGULES
+C          4 NBSTIS>MXSTIS => TROP DE SOMMETS ISOLES
+C          5 NBSTCF>MXSTCF => TROP DE SOMMETS DU CF
+C+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+C AUTEUR : ALAIN PERRONNET  ANALYSE NUMERIQUE PARIS UPMC    OCTOBRE 1991
+C MODIFS : ALAIN PERRONNET LJLL UPMC & St PIERRE DU PERRAY  OCTOBRE 2014
+C MODIFS : ALAIN PERRONNET LJLL UPMC & St PIERRE DU PERRAY  MAI     2017
+C2345X7..............................................................012
+      PARAMETER    (MXPTRCF=1024)
+C     MXPTRCF: NOMBRE MAXIMAL PERMIS DE TRIANGLES PERDUS AGGLUTINES
+C              RETOUR AVEC IERR=5 SI CE NOMBRE EST ATTEINT
+      include"./incl/gsmenu.inc"
+      include"./incl/trvari.inc"
+      include"./incl/mecoit.inc"
+      include"./incl/xyzext.inc"
+      COMMON / UNITES / LECTEU, IMPRIM, NUNITE(30)
+      COMMON / TRTETR / STOPTE,TRACTE
+      LOGICAL           STOPTE,TRACTE
+      LOGICAL                  TRACTE0
+      DOUBLE PRECISION  PTXYZD(4,NBSOMM)
+      INTEGER           NOTETR(8,*), 
+     %                  N1TETS(NBSOMM),
+     %                  N1FASC(*),
+     %                  LEFACO(11,0:MXFACO),
+     %                  NO0FAR(3,*),
+     %                  NASIDUCF(4,MXETOI),
+     %                  NOTRCF(MXTRCF),
+     %                  NOSTCF(MXSTCF),
+     %                  N1ARCF(0:MXETOI),
+     %                  NOARCF(3,MXARCF),
+     %                  NOSTIS(MXSTIS),
+     %                  NOFAPE(NBFAPE),
+     %                  NOSOTR(3)
+      CHARACTER*128     KTITRE
+
+      TRACTE0 = TRACTE
+
+C     PROTECTION DE NBFAPE INITIAL
+      NBFAP0 = NBFAPE
+
+C     NOMBRE DE CIRCUIT FERMES PERIPHERIQUES
+      NBCF   = 0
+
+C     NOMBRE D'ARETES DU CF
+      NBARCF = 0
+
+C     LE NOMBRE DE SOMMETS ISOLES DE L'ETOILE
+      NBSTIS = 0
+C
+C     REINITIALISATION A VIDE DES ARETES DE L'ETOILE
+C     FORMEE DES ARETES VUES UNE FOIS DANS LES TRIANGLES DE L'ETOILE
+      N1ASVI = 1
+      N1ASOC = 0
+      DO I=1,MXETOI
+C        NUMERO DANS NASIDUCF DE L'ARETE SUIVANTE
+         NASIDUCF(4,I) = I+1
+      ENDDO
+      NASIDUCF(4,MXETOI) = 0
+C
+C     LE PREMIER TRIANGLE PERDU A TRAITER
+C     IL DEFINIT AUSSI LA NORMALE AUX TRIANGLES DU CF
+C     NBTRCF : NOMBRE DE TRIANGLES DU CF A PARTIR DE NF0
+ 1    LHTRIA = 1
+      NBTRCF = 1
+      NOTRCF( 1 ) = NF0
+
+C     LES VOLUMES DE LA FACE NF0
+      NV1 = LEFACO(4,NF0)
+      NV2 = LEFACO(5,NF0)
+
+C     PARCOURS DES TRIANGLES ADJACENTS A LA FACE NF0 DE LEFACO
+C     ========================================================
+ 8    IF( NBTRCF .GE. MXPTRCF ) THEN
+C        TROP DE TRIANGLES PERDUS COAGULES
+         IERR = 3
+         RETURN
+      ENDIF
+
+      IF( LHTRIA .LE. NBTRCF ) THEN 
+
+ccc 8    IF( LHTRIA .LE. NBTRCF ) THEN     27/8/2014
+ccc 8    IF( LHTRIA .LE. NBTRCF .AND. NBTRCF .LE. 128 ) THEN  21/10/2014
+
+C        LE NUMERO DANS LEFACO DU TRIANGLE A TRAITER
+         NTCF = NOTRCF( LHTRIA )
+
+C        LE TRIANGLE EST DEPILE
+         LHTRIA = LHTRIA + 1
+
+         IF( NTCF .LE. 0 ) GOTO 8
+
+C        CETTE FACE NTCF A T ELLE ETE AJOUTEE COMME FACE PERDUE ?
+         NFAPNT = 0
+         DO K = NBFAP0+1, NBFAPE
+            IF( NTCF .EQ. NOFAPE(K) ) THEN
+C              FACE ISOLEE AJOUTEE COMME FACE PERDUE
+               NFAPNT = 1
+               GOTO 10
+            ENDIF
+         ENDDO
+
+C        TRAITEMENT DES 3 ARETES DU TRIANGLE NTCF DE LEFACO
+ 10      DO 80 I=1,3
+
+C           LE TRIANGLE OPPOSE A NTCF PAR SON ARETE I
+            NTOP = LEFACO(5+I,NTCF)
+
+C           LES 2 SOMMETS NS1 NS2 DE L'ARETE I DE NTCF
+            IF( I .EQ. 3 ) THEN
+               II = 1
+            ELSE
+               II = I+1
+            ENDIF
+            NS1 = LEFACO(I, NTCF)
+            NS2 = LEFACO(II,NTCF)
+
+C           L'ARETE I DU TRIANGLE NTCF EST ELLE DANS LA TETRAEDRISATION?
+            CALL TETR1A( NS1, NS2, N1TETS, NOTETR,
+     %                   NBTE1A, MXSTIS, NOSTIS, IER )
+C           NBTE1A>0 NOMBRE DE TETRAEDRES DE NOTETR AYANT CETTE ARETE NS1-NS2
+C                 =0 SI AUCUN  TETRAEDRE  DE NOTETR NE CONTIENT CETTE ARETE
+C           LE TABLEAU NOSTIS(MXSOMM) EST UN AUXILIAIRE MOMENTANE
+
+            IF( NBTE1A .GT. 0 ) GOTO 50
+C           SI L'ARETE EST DANS LA TETRAEDRISATION, LE TRIANGLE OPPOSE
+C           DE LEFACO N'EST PAS AJOUTE A LA PILE
+
+C           NTOP A T IL DEJA ETE RANGE DANS NOTRCF?
+            DO J=1,NBTRCF
+               IF( NTOP .EQ. NOTRCF(J) ) GOTO 50
+            ENDDO
+C
+C           LE TRIANGLE NTOP EST IL PERDU DANS LA TETRAEDRISATION ?
+            IF( LEFACO(11,NTOP) .GT. 0 ) GOTO 50
+
+ccc            DO NFP1=1,NBFAPE
+ccc               NTT = NOFAPE(NFP1)
+ccc               IF( NTT .EQ. NTOP ) GOTO 20
+ccc            ENDDO
+cccC           LE TRIANGLE NTOP N'EST PAS PERDU
+cccC           L'ARETE I DE NTCF DOIT ETRE TRAITEE DANS L'ETOILE
+ccc            GOTO 50
+
+C           NTOP EST UNE FACE PERDUE NON DANS LA TETRAEDRISATION
+C           LES FACES PERDUES NTCF ET NTOP ONT L'ARETE NS1-NS2 COMMUNE
+C           LES VOLUMES DE CES 2 TRIANGLES SONT ILS LES MEMES ?
+            NW1 = LEFACO(4,NTOP)
+            NW2 = LEFACO(5,NTOP)
+            IF( NV1 .NE. NW1  .OR.  NV2 .NE. NW2 ) GOTO 50
+C
+C           OUI : LES 2 VOLUMES SONT IDENTIQUES
+C           L'ARETE COMMUNE NS1-NS2 EST ELLE PARCOURUE DANS
+C           DES SENS DIFFERENTS?
+            DO K=1,3
+
+               NSOP1 = LEFACO(K,NTOP)
+               IF( K .EQ. 3 ) THEN
+                  KK = 1
+               ELSE
+                  KK = K+1
+               ENDIF
+               NSOP2 = LEFACO(KK,NTOP)
+
+               IF( NS1 .EQ. NSOP2 .AND. NS2 .EQ. NSOP1 ) THEN
+C                 LA NORMALE A NTCF ET NTOP SONT DANS LE MEME SENS
+                  GOTO 20
+               ENDIF
+
+               IF( NS1 .EQ. NSOP1 .AND. NS2 .EQ. NSOP2 ) THEN
+C                 LA NORMALE A NTCF ET NTOP SONT DANS DES SENS DIFFERENTS
+C                 L'ORIENTATION DE NTOP DANS LEFACO EST MODIFIEE POUR
+C                 ASSURER UN VECTOR NORMAL DANS UNE MEME DIRECTION
+C                 DE L'INTERIEUR DE LA FUTURE ETOILE
+                  N              = LEFACO(2,NTOP)
+                  LEFACO(2,NTOP) = LEFACO(3,NTOP) 
+                  LEFACO(3,NTOP) = N
+                  N              = LEFACO(6,NTOP)
+                  LEFACO(6,NTOP) = LEFACO(8,NTOP) 
+                  LEFACO(8,NTOP) = N
+                  GOTO 20
+               ENDIF
+
+            ENDDO
+
+            PRINT*,'???????????????????????????????????????????????????'
+            PRINT*,'vdr1cf: PB ARETE',NS1,NS2,' NON ARETE DE LEFACO(',
+     %              NTOP,') MAIS ARETE DE LEFACO(',NTCF,')'
+            WRITE(IMPRIM,*) 'LEFACO(',NTOP,')=',(LEFACO(J,NTOP),J=1,11)
+            WRITE(IMPRIM,*) 'LEFACO(',NTCF,')=',(LEFACO(J,NTCF),J=1,11)
+            PRINT*,'???????????????????????????????????????????????????'
+
+C           CETTE FACE NTOP A T ELLE ETE AJOUTEE COMME FACE PERDUE ?
+ 20         NFAPNO = 0
+            DO K = NBFAP0+1, NBFAPE
+               IF( NTOP .EQ. NOFAPE(K) ) THEN
+C                 FACE ISOLEE AJOUTEE COMME FACE PERDUE
+                  NFAPNO = 1
+                  GOTO 25
+               ENDIF
+            ENDDO
+
+C           LES FACES NTCF ET NTOP SONT ELLES COPLANAIRES ?
+C           -----------------------------------------------
+ 25         IF( NFAPNT + NFAPNO .GT. 0 ) THEN
+C              AU MOINS UNE DES 2 FACES A ETE AJOUTEE PERDUE
+C              => LE TEST DE COPLANEARITE EST ABAISSE
+ccc               C = REAL( MIN( COSMAX, 0.89D0 ) )
+               C = REAL( COSMAX * 0.89D0 )
+            ELSE
+C              AUCUNE FACE N'A ETE AJOUTEE PERDUE:
+C              => TEST DE COPLANEARITE STANDARD
+               C = COSMAX
+            ENDIF
+C           CE CHANGEMENT DE COSMAX EST NECESSAIRE POUR EVITER
+C           UNE BOUCLE INFINIE
+            CALL VD2TPL( C, NTCF, NTOP, LEFACO, PTXYZD, NONOUI )
+            IF( NONOUI .EQ. 0 ) GOTO 50
+C
+C           ICI LES 2 TRIANGLES NTCF ET NTOP SONT ADJACENTS COPLANAIRES ET PERDUS
+C           ---------------------------------------------------------------------
+C           AJOUT DU TRIANGLE OPPOSE NTOP DANS LA LISTE NOTRCF DES TRIANGLES
+C           DE L'ETOILE (NTOP NE S'Y TROUVE PAS Cf 20)
+            IF( NBTRCF .GE. MXTRCF ) THEN
+               GOTO 9990
+            ENDIF
+C           AJOUT DE NTOP A LA QUEUE DES TRIANGLES COPLANAIRES PERDUS DU CF
+            NBTRCF = NBTRCF + 1
+            NOTRCF( NBTRCF ) = NTOP
+C
+C           AJOUT OU RETRAIT DE L'ARETE DU TABLEAU NASIDUCF
+C           SI    ( L'ARETE I DU TRIANGLE NTCF N'APPARTIENT PAS
+C                   AUX ARETES DE L'ETOILE NASIDUCF )
+C           ALORS ELLE EST AJOUTEE A L'ETOILE DANS NASIDUCF
+C           SINON ELLE EST EMPILEE DANS NPILE POUR ETRE DETRUITE ENSUITE
+C                 ELLE EST SUPPRIMEE DE L'ETOILE NASIDUCF
+C           ============================================================
+
+C           NAOP NUMERO DE L'ARETE COMMUNE DANS LE TRIANGLE OPPOSE NTOP
+ 50         IF( LEFACO(6,NTOP) .EQ. NTCF ) THEN
+               NAOP = 1
+            ELSE IF( LEFACO(7,NTOP) .EQ. NTCF ) THEN
+               NAOP = 2
+            ELSE IF( LEFACO(8,NTOP) .EQ. NTCF ) THEN
+               NAOP = 3
+            ELSE
+               WRITE(IMPRIM,*)
+         WRITE(IMPRIM,*)'vdr1cf ANOMALIE: NTCF=',NTCF,' NON OPPOSE DANS'
+              WRITE(IMPRIM,*)'LEFACO(',NTOP,')=',(LEFACO(J,NTOP),J=1,11)
+              WRITE(IMPRIM,*)'LEFACO(',NTCF,')=',(LEFACO(J,NTCF),J=1,11)
+               IERR = 1
+               RETURN
+            ENDIF
+
+C           DEBUT DU CHAINAGE DES ARETES PERIPHERIQUES NASIDUCF DE L'ETOILE
+C           ET BOUCLE SUR LES ARETES NASIDUCF DE L'ETOILE
+            NA1 = 0
+            NA2 = N1ASOC
+
+ 70         IF( NA2 .GT. 0 ) THEN
+
+               IF( NASIDUCF(1,NA2) .EQ. NTOP .AND.
+     %             ABS(NASIDUCF(2,NA2)) .EQ. NAOP ) THEN
+
+C                 L'ARETE NAOP DU TRIANGLE NTOP EST IDENTIQUE A NA2
+C                 DESTRUCTION DANS NASIDUCF DE L'ARETE NA2 DE L'ETOILE
+C                 --------------------------------------------------
+                  IF( NA1 .NE. 0 ) THEN
+C                    L'ARETE NA2, PRECEDEE DE NA1, N'EST PAS LA
+C                    PREMIERE DE L'ETOILE
+                     NASIDUCF(4,NA1) = NASIDUCF(4,NA2)
+C                    L'ARETE NA2 DEVIENT LA PREMIERE ARETE VIDE DE L'ETOILE
+                     NASIDUCF(4,NA2) = N1ASVI
+                     N1ASVI = NA2
+                  ELSE
+C                    L'ARETE NA2=N1ASOC EST LA 1-ERE DE L'ETOILE
+                     NA1    = NASIDUCF(4,N1ASOC)
+                     NASIDUCF(4,N1ASOC) = N1ASVI
+                     N1ASVI = N1ASOC
+                     N1ASOC = NA1
+                  ENDIF
+                  GOTO 80
+
+               ELSE
+C                 L'ARETE EST DIFFERENTE.PASSAGE A LA SUIVANTE
+                  NA1 = NA2
+                  NA2 = NASIDUCF(4,NA2)
+                  GOTO 70
+               ENDIF
+
+            ENDIF
+C
+C           L'ARETE NAOP DU TRIANGLE OPPOSE NTOP N'EST PAS RETROUVEE
+C           ELLE EST AJOUTEE A L'ETOILE AU DEBUT DES ARETES OCCUPEES
+C           --------------------------------------------------------
+            NA1    = N1ASVI
+            N1ASVI = NASIDUCF(4,N1ASVI)
+
+C           NUMERO DU TRIANGLE DU CF DE CETTE ARETE
+            NASIDUCF(1,NA1) = NTCF
+C           NUMERO LOCAL DE CETTE ARETE DANS LE TRIANGLE NTCF
+            NASIDUCF(2,NA1) = I
+C           NUMERO DANS NASIDUCF DE L'ARETE SUIVANTE
+            NASIDUCF(4,NA1) = N1ASOC
+            N1ASOC        = NA1
+
+ 80      CONTINUE
+C
+C        PASSAGE AU TRIANGLE SUIVANT NON TRAITE DE L'ETOILE
+         GOTO 8
+
+      ENDIF
+
+C     ===================================================================
+C     MODIFICATION DU CONTENU DU TABLEAU NASIDUCF
+C     LE NO(1) DE TRIANGLE DU CF => NO TRIANGLE OPPOSE AU DELA DE L'ARETE
+C     LE NO(2) LOCAL DANS LE TRIANGLE => NO 1-ER SOMMET DE L'ARETE
+C     LE NO(3) INUTILISE              => NO 2-ME SOMMET DE L'ARETE
+C     LE NO(4) SUR L'ARETE SUIVANTE N'EST PAS MODIFIE
+C     ===================================================================
+      NBAR = 0
+      NA1  = N1ASOC
+
+C     BOUCLE SUR LES ARETES SIMPLES DES TRIANGLES DU CF
+ 110  IF( NA1 .GT. 0 ) THEN
+
+C        UNE ARETE DE PLUS
+         NBAR = NBAR + 1
+
+C        LE NO DU TRIANGLE DU CF ET LOCAL DE L'ARETE
+         NTCF = NASIDUCF(1,NA1)
+         I    = NASIDUCF(2,NA1)
+
+C        LE NUMERO LEFACO DU TRIANGLE OPPOSE AU TRIANGLE DU CF
+C        PAR L'ARETE COMMUNE I DE NTCF
+         NTOP = LEFACO(I+5,NTCF)
+         NASIDUCF(1,NA1) = NTOP
+
+C        LE NUMERO DES 2 SOMMETS DE L'ARETE I DU TRIANGLE NTCF
+         IF( I .EQ. 3 ) THEN
+            NS2 = 1
+         ELSE
+            NS2 = I + 1
+         ENDIF
+C        NUMERO DU SOMMET 1 DE L'ARETE
+         NS1 = LEFACO(I,NTCF)
+         NASIDUCF(2,NA1) = NS1
+C        NUMERO LEFACO DU TRIANGLE CONTENANT ENCORE NS1
+         N1FASC( NS1 ) = NTOP
+
+C        NUMERO DU SOMMET 2 DE L'ARETE
+         NS2 = LEFACO(NS2,NTCF)
+         NASIDUCF(3,NA1) = NS2
+C        NUMERO LEFACO DU TRIANGLE CONTENANT ENCORE NS2
+         N1FASC( NS2 ) = NTOP
+C
+C        PASSAGE A L'ARETE SUIVANTE
+         NA1 = NASIDUCF(4,NA1)
+         GOTO 110
+
+      ENDIF
+
+C     CHAINAGE DES SOMMETS DE ARCF VIDES
+      N1ARCF(0) = 1
+      DO I = 1, MXARCF
+         NOARCF(2,I) = I+1
+      ENDDO
+      NOARCF(2,MXARCF) = 0
+
+C     LES ARETES SONT REORDONNEES CONSECUTIVES POUR FORMER UNE LIGNE FERMEE
+C     =====================================================================
+C     UN CF PERIPHERIQUE DES TRIANGLES
+ 120  NBCF = NBCF + 1
+
+C     LE NOMBRE DE SOMMETS DU CONTOUR FERME NBCF DE L'ETOILE
+      NBARCF = NBARCF + 1
+
+C     LE 1-ER SOMMET OU ARETE DU CONTOUR FERME NBCF
+      N1ARCF( NBCF ) = NBARCF
+
+      NA1 = N1ASOC
+C     LA PREMIERE ARETE
+      NS0 = NASIDUCF(2,NA1)
+      NS1 = NASIDUCF(3,NA1)
+
+C     LE SOMMET NBARCF D'UNE ARETE PERIPHERIQUE
+      NOARCF( 1, NBARCF ) = NS0
+C     LE SOMMET SUIVANT
+      NOARCF( 2, NBARCF ) = NBARCF + 1
+C     LE NUMERO DU TRIANGLE OPPOSE AU TRIANGLE DU CF AU DELA DE CETTE ARETE
+      NOARCF( 3, NBARCF ) = NASIDUCF(1,NA1)
+C
+C     DESTRUCTION DE L'ARETE NA1 DE NASIDUCF
+      NA1    = NASIDUCF(4,NA1)
+      N1ASOC = NA1
+C
+ 150  IF( NS1 .NE. NS0 ) THEN
+C
+C        RECHERCHE DANS NASIDUCF DE L'ARETE DE SOMMET NS1
+         NA0 = N1ASOC
+         NA1 = NA0
+ 160     IF( NA1 .GT. 0 ) THEN
+C
+C           LE NUMERO DU PREMIER SOMMET DE L'ARETE
+            IF ( NS1 .NE. NASIDUCF(2,NA1) .AND.
+     %           NS1 .NE. NASIDUCF(3,NA1) ) THEN
+C              PASSAGE A L'ARETE SUIVANTE
+               NA0 = NA1
+               NA1 = NASIDUCF(4,NA1)
+               GOTO 160
+            ENDIF
+C
+C           ARETE PERIPHERIQUE RETROUVEE
+            IF( NBARCF .GE. MXARCF ) THEN
+               GOTO 9990
+            ENDIF
+            NBARCF = NBARCF + 1
+
+C           NUMERO DU 1-ER SOMMET DE L'ARETE PERIPHERIQUE
+            NOARCF( 1, NBARCF ) = NS1
+
+C           LE NUMERO DU SECOND SOMMET DE L'ARETE
+            IF( NS1 .EQ. NASIDUCF(2,NA1) ) THEN
+               NS1 = NASIDUCF(3,NA1)
+            ELSE
+               NS1 = NASIDUCF(2,NA1)
+            ENDIF
+
+C           L'ARETE SUIVANTE
+            NOARCF( 2, NBARCF ) = NBARCF + 1
+
+C           LE NUMERO DU TRIANGLE DE L'AUTRE COTE DE CELUI DU CF
+            NOARCF( 3, NBARCF ) = NASIDUCF(1,NA1)
+C
+C           SUPPRESSION DE L'ARETE NASIDUCF DE SOMMET NS1
+            IF( N1ASOC .EQ. NA1 ) THEN
+                N1ASOC = NASIDUCF(4,NA1)
+            ELSE
+                NASIDUCF(4,NA0) = NASIDUCF(4,NA1)
+            ENDIF
+
+C           PASSAGE A L'ARETE SUIVANTE PERIPHERIQUE
+            GOTO 150
+
+         ENDIF
+
+C        ARETE NON RETROUVEE : L'ETOILE NE SE REFERME PAS
+         WRITE(IMPRIM,*) 'vdr1cf: ANOMALIE vdr1cf A CORRIGER'
+         WRITE(IMPRIM,*) 'vdr1cf: CF NON REFERME'
+         WRITE(IMPRIM,*) 'FACE',NF0,' Sommets DIFFERENTS',NS0,NS1
+         DO I=1,NBARCF
+            WRITE(IMPRIM,*) 'NOARCF(',I,')=',(NOARCF(J,I),J=1,3)
+         ENDDO
+         WRITE(IMPRIM,*) NBTRCF,' TRIANGLES DE L''ETOILE'
+         DO I=1,NBTRCF
+            NTCF = NOTRCF(I)
+            WRITE(IMPRIM,*) 'LEFACO(',NTCF,')=',(LEFACO(J,NTCF),J=1,11)
+         ENDDO
+         IERR = 1
+         RETURN
+
+      ENDIF
+C
+C     LE SOMMET SUIVANT DU DERNIER SOMMET EST LE PREMIER
+C     CHAINAGE CIRCULAIRE
+      NOARCF( 2, NBARCF ) = N1ARCF( NBCF )
+C
+C     CHAINAGE DES SOMMETS DE ARCF VIDES
+      N1ARCF(0) = NBARCF+1
+C
+C     LE CF A T IL TOUTES SES ARETES PERIPHERIQUES ?
+C     ==============================================
+      IF( N1ASOC .NE. 0 .OR. NBAR .NE. NBARCF ) THEN
+         GOTO 120
+cccC        IL MANQUE DES ARETES => AJOUT DES TRIANGLES OPPOSES AUX FACES PERDUES
+ccc 192     IF( N1ASOC .GT. 0 ) THEN
+ccc            NTCF = NASIDUCF( 1, N1ASOC )
+cccC           TRACE DE LA FACE
+ccc            CALL TRFATR( NCCYAN, NCROUG, LEFACO(1,NTCF), PTXYZD )
+ccc            DO I=1,NBFAPE
+ccc               IF( NOFAPE(I) .EQ. NTCF ) GOTO 198
+ccc            ENDDO
+cccC           FACE AJOUTEE COMME ETANT PERDUE
+ccc            NBFAPE = NBFAPE + 1
+ccc            NOFAPE( NBFAPE ) = NTCF
+cccC           SUPPRESSION DE L'ARETE SIMPLE
+ccc 198        N1ASOC = NASIDUCF(4,N1ASOC )
+ccc            GOTO 192
+ccc         ENDIF
+cccC        REDEPART
+ccc         GOTO 1
+      ENDIF
+
+
+C     LE CF A T IL DES TRIANGLES EXTERIEURS ENCOCHES?
+C     ===============================================
+C     RECHERCHE D'UN TRIANGLE DE 2 ARETES DU CF ET APPARTENANT A LEFACO
+C     SANS ETRE PERDUE
+ 200  NBTRCF0 = NBTRCF
+      DO 220 NCF = 1, NBCF
+
+C        LA PREMIERE ARETE DU CF
+         NA0 = N1ARCF( NCF )
+         NA1 = NA0
+
+C        LES 3 ARETES CONSECUTIVES
+ 210     NA2 = NOARCF( 2, NA1 )
+         NA3 = NOARCF( 2, NA2 )
+
+C        LEURS 3 SOMMETS
+         NOSOTR(1) = NOARCF(1,NA1)
+         NOSOTR(2) = NOARCF(1,NA2)
+         NOSOTR(3) = NOARCF(1,NA3)
+
+C        LE TRIANGLES EST IL DANS LEFACO?
+         CALL NULETR( NOSOTR, MXFACO, LEFACO,  NFLEFA )
+
+         IF( NFLEFA .GT. 0 ) THEN
+C           OUI: LA FACE EST RETROUVEE DANS LEFACO
+C           EST ELLE PERDUE C-A-D ELLE N'APPARTIENT PAS A UN TETRAEDRE
+
+            IF( LEFACO(11,NFLEFA) .GT. 0 ) THEN
+C              ELLE APPARTIENT A 1 TETRAEDRE. ELLE N'EST PAS PERDUE
+C              ELLE RESSEMBLE A UNE ENCOCHE DANS LE CF
+
+C              AJOUT DE LA FACE NFLEFA A LA QUEUE DES TRIANGLES DU CF
+               IF( NBTRCF .GE. MXTRCF ) GOTO 9990
+               NBTRCF = NBTRCF + 1
+               NOTRCF( NBTRCF ) = NFLEFA
+
+C              SUPPRESSION DE NA2 DES ARETES DU CF
+C              NASIDUCF N'EST PLUS A JOUR MAIS N'EST PLUS UTILISE
+               NA2 = NA3
+C              CHAINAGE DE L'ARETE NA1 SUR NA3
+               NOARCF(2,NA1) = NA3
+            ENDIF
+
+         ENDIF
+
+C        PASSAGE A L'ARETE SUIVANTE
+         IF( NA3 .NE. NA0 ) THEN
+            NA1 = NA2
+            GOTO 210
+         ENDIF
+
+ 220  ENDDO
+
+      IF( NBTRCF .GT. NBTRCF0 ) GOTO 200
+
+
+C     LE CF A T IL UN CIRCUIT INTERNE ?
+C     =================================
+C     RECHERCHE D'UN SOMMET 2 FOIS DANS UN CF
+      DO 320 NCF = 1, NBCF
+
+         NA0 = N1ARCF( NCF )
+         NA1 = NA0
+C
+ 300     NA2 = NOARCF( 2, NA1 )
+C
+ 302     IF( NA2 .NE. NA0 ) THEN
+            IF( NOARCF(1,NA1) .EQ. NOARCF(1,NA2) ) THEN
+C
+C              CROISEMENT DANS LES ARETES DU CF
+C              TOUS LES TRIANGLES OPPOSES ENTRE NA1 ET LE PRECEDENT DE NA2
+C              SONT CONSIDERES COMME PERDUS
+C              ATTENTION: LEQUEL DES 2 PARCOURS POSSIBLES EST IL LE BON?
+C              CHOIX POUVANT ETRE INCORRECT => LE PLUS COURT EN NOMBRE D'ARETES
+               NBAR = 0
+               NA0  = NA1
+C
+ 303           NA0 = NOARCF(2,NA0)
+               NBAR = NBAR + 1
+               IF( NA0 .NE. NA2 ) GOTO 303
+               IF( NBAR .GT. NBARCF-NBAR ) THEN
+C              L'AUTRE PARCOURS DE NA2 A NA1 EST CHOISI
+                  NA0 = NA2
+                  NA2 = NA1
+                  NA1 = NA0
+               ENDIF
+C
+ 306           NTCF = NOARCF( 3, NA1 )
+cccC           TRACE DE LA FACE
+ccc            CALL TRFATR( NCNOIR, NCMAGE, LEFACO(1,NTCF), PTXYZD )
+               DO 308 I=1,NBFAPE
+                  IF( NOFAPE(I) .EQ. NTCF ) GOTO 310
+ 308           CONTINUE
+
+C              FACE AJOUTEE COMME ETANT PERDUE
+               NBFAPE = NBFAPE + 1
+               NOFAPE( NBFAPE ) = NTCF
+C
+ 310           NA1 = NOARCF( 2, NA1 )
+               IF( NA1 .NE. NA2 ) GOTO 306
+C              REDEPART
+               GOTO 1
+            ELSE
+C              PASSAGE A L'ARETE SUIVANTE
+               NA2 = NOARCF( 2, NA2 )
+               GOTO 302
+            ENDIF
+         ENDIF
+C
+C        PASSAGE A L'ARETE SUIVANTE
+         NA1 = NOARCF( 2, NA1 )
+         IF( NA1 .NE. NA0 ) GOTO 300
+
+ 320  ENDDO
+
+C     ICI LE CF N'A PAS DE CROISEMENTS
+
+C     CONSTRUCTION DU TABLEAU DES NBSTCF NUMEROS DES SOMMETS DU CF
+C     ============================================================
+      CALL CRSTCF( NBCF,   N1ARCF, NOARCF, NBARCF,
+     %             MXSTCF, NBSTCF, NOSTCF, IERR )
+      IF( IERR .NE. 0 ) RETURN
+
+C     CONSTRUCTION DU TABLEAU DES NBSTIS SOMMETS ISOLES DU CF C-A-D
+C     QU'ILS APPARTIENNENT AUX TRIANGLES DU CF MAIS 
+C     N'APPARTIENNENT PAS AUX SOMMETS DU CONTOUR FERME
+C     =============================================================
+      NBSTIS = 0
+      DO J=1,NBTRCF
+         NTCF = NOTRCF(J)
+         DO 330 I=1,3
+
+C           NS SOMMET I DU TRIANGLE NTCF
+            NS = LEFACO( I, NTCF )
+
+            DO M=1,NBSTCF
+               IF( NS .EQ. NOSTCF(M) ) GOTO 330
+            ENDDO
+
+C           LE SOMMET NS EST IL DEJA RETROUVE COMME SOMMET ISOLE?
+            DO M=1,NBSTIS
+               IF( NS .EQ. NOSTIS(M) ) GOTO 330
+            ENDDO
+
+C           NS EST DECOUVERT SOMMET ISOLE. IL EST AJOUTE A NOSTIS
+            IF( NBSTIS .GE. MXSTIS ) THEN
+               PRINT*,'vdr1cf: TABLEAU NOSTIS SATURE. AUGMENTER MXSTIS='
+     %               ,MXSTIS
+               IERR = 4
+               GOTO 9992
+            ENDIF
+ccc            TRACTE = .TRUE.
+            NBSTIS = NBSTIS + 1
+            NOSTIS( NBSTIS ) = NS
+            PRINT*,'vdr1cf:',NS,' EST UN SOMMET ISOLE, INTERNE au CF'
+
+ 330     ENDDO
+      ENDDO
+
+cccC     AFFICHAGE A SUPPRIMER ENSUITE
+ccc      print*,'fin vdr1cf: NBTRCF=',NBTRCF
+ccc      DO L=1,NBTRCF
+ccc         print*,'fin vdr1cf: NOTRCF(',L,')=',(LEFACO(K,NOTRCF(L)),K=1,3)
+ccc      ENDDO
+ccc      print*,'fin vdr1cf: NOTRCF=',(NOTRCF(K),K=1,NBTRCF)
+ccc      print*,'fin vdr1cf: NBARCF=',NBARCF,' NBCF=',NBCF,
+ccc     %       ' N1ARCF=',(N1ARCF(K),K=0,NBCF)
+ccc      DO L=1,NBARCF
+ccc         print*,'fin vdr1cf: NOARCF(',L,')=',(NOARCF(K,L),K=1,3)
+ccc      ENDDO
+
+C     TRACE DES FACES TRIANGULAIRES DU CF
+      KTITRE='vdr1cf:        FACES TRCF        SOMMETS CF         SOMMET
+     %S ISOLES'
+      WRITE( KTITRE( 9:14),'(I6)' ) NBTRCF
+      WRITE( KTITRE(27:32),'(I6)' ) NBSTCF
+      WRITE( KTITRE(44:49),'(I6)' ) NBSTIS
+      CALL SANSDBL( KTITRE, L )
+      PRINT *, KTITRE(1:L)
+      CALL TRDUCF( KTITRE, PTXYZD, NBTRCF, NOTRCF, NBSTIS, NOSTIS,
+     %             LEFACO, NO0FAR )
+      TRACTE = TRACTE0
+      RETURN
+
+C     TABLEAU NOTRCF DE TAILLE INSUFFISANTE
+ 9990 NBLGRC(NRERR) = 1
+      KERR(1)='vdr1cf: TROP DE FACES DANS LE CF. AUGMENTER MXTRCF'
+      CALL LEREUR
+      IERR = 3
+      RETURN
+
+C     TABLEAU NOSTIS DE TAILLE INSUFFISANTE
+ 9992 NBLGRC(NRERR) = 1
+      KERR(1)='vdr1cf: TROP DE SOMMETS ISOLES DANS LE CF. AUGMENTER MXST
+     %IS'
+      CALL LEREUR
+      IERR = 4
+      RETURN
+
+      END

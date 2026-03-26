@@ -1,0 +1,196 @@
+      SUBROUTINE ENERGYH3
+C+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+C BUT : TRACER LA COURBE Log( | KEh / PEh -(-1/2) | )
+C ----- D'UN ATOME D'HYDROGENE CALCULES PAR SSPACE en FONCTION de -Log(h)
+C+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+C AUTEUR : ALAIN PERRONNET LJLL UPMC Paris, Veulettes sur mer  Juin 2008
+C23456---------------------------------------------------------------012
+      include"./incl/xvfontes.inc"
+      include"./incl/trvari.inc"
+      COMMON / UNITES / LECTEU , IMPRIM , INTERA , NUNITE(29)
+      CHARACTER*80 TITRE
+C
+C     LES DONNEES CALCULEES PAR SSPACE
+      PARAMETER (NBI2=14,NBH=3)
+      INTEGER    NBHEXA(NBH), NBVERT(NBH), NBNODE(NBH)
+      REAL       H(NBH)
+      REAL       VALEUR(4,NBI2,NBH)
+C     VALEUR(1,noEV,h) EIGENVALUE
+C     VALEUR(2,noEV,h) KINETIC ENERGY
+C     VALEUR(3,noEV,h) POTENTIAL ENERGY
+C     VALEUR(4,noEV,h) KE/PE
+C
+C     TABLEAUX AUXILIAIRES
+      REAL       PT(2,NBH), LNH0, LNH1, V0, V1
+      DOUBLE PRECISION  DROITE(3)
+C
+C     INITIALISATIONS DES DONNEES
+      DATA NBHEXA /  6656,  832, 104 /
+      DATA NBVERT /  6905,  909, 131 /
+      DATA NBNODE / 27313, 3529, 481 /
+      DATA H      /  0.25,  0.5, 1.0 /
+C
+      DATA VALEUR /
+     % -0.500362039,   0.500936399,  -1.00129844,  -0.500286809,
+     % -0.125018358,   0.125090075,  -0.250108427,  -0.500143385,
+     % -0.124980912,   0.124928646,  -0.249909559,  -0.499895428,
+     % -0.12498071,   0.124836578,  -0.249817291,  -0.49971152,
+     % -0.124976441,   0.124750854,  -0.249727296,  -0.499548331,
+     % -0.0555448979,   0.0554668964,  -0.111011795,  -0.499648676,
+     % -0.0555380359,   0.0555192482,  -0.111057299,  -0.499915348,
+     % -0.0555380359,   0.0555192083,  -0.111057277,  -0.499915088,
+     % -0.0555380359,   0.0555189791,  -0.111057084,  -0.499913891,
+     % -0.0555376783,   0.0555183005,  -0.111056081,  -0.499912297,
+     % -0.0555376783,   0.0555179024,  -0.111055619,  -0.499910791,
+     % -0.0555306114,   0.0555970283,  -0.111127802,  -0.500298101,
+     % -0.0555306114,   0.0555957487,  -0.111126507,  -0.500292417,
+     % -0.0555306114,   0.0554249274,  -0.110955684,  -0.499523099,
+     %
+     % -0.499304384,   0.498428043,  -0.997732412,  -0.499560841,
+     % -0.124712318,   0.12410685,  -0.248819165,  -0.498783323,
+     % -0.124712244,   0.12406551,  -0.248777756,  -0.498700174,
+     % -0.124711722,   0.123987122,  -0.248698843,  -0.49854322,
+     % -0.124586403,   0.123394487,  -0.247980893,  -0.497596754,
+     % -0.0552989244,   0.055285847,  -0.110584813,  -0.499940685,
+     % -0.0552989244,   0.0552858302,  -0.110584767,  -0.499940739,
+     % -0.0552989244,   0.0552858181,  -0.110584757,  -0.499940674,
+     % -0.0552945063,   0.0552639292,  -0.110558449,  -0.499861655,
+     % -0.0552945063,   0.0552638933,  -0.110558403,  -0.49986154,
+     % -0.0551611818,   0.0531739519,  -0.108335162,  -0.490828192,
+     % -0.0551412627,   0.0538312183,  -0.108972564,  -0.493988729,
+     % -0.0551412627,   0.0537444611,  -0.108885742,  -0.493585847,
+     % -0.0551412627,   0.0537223594,  -0.108863624,  -0.493483108,
+     %
+     % -0.485064,   0.473722735,  -0.958786747,  -0.49408561,
+     % -0.121295787,   0.117436594,  -0.238732383,  -0.49191732,
+     % -0.121295787,   0.117434645,  -0.238730433,  -0.491913171,
+     % -0.121295787,   0.117432937,  -0.238728726,  -0.491909539,
+     % -0.119203486,   0.105201773,  -0.224405261,  -0.468802615,
+     % -0.0530041493,   0.0540947576,  -0.107098906,  -0.505091599,
+     % -0.0529745296,   0.0542929819,  -0.107267512,  -0.506145627,
+     % -0.0524298251,   0.0508580595,  -0.103287881,  -0.492391352,
+     % -0.0522999726,   0.0486628827,  -0.100962854,  -0.481987984,
+     % -0.0518576019,   0.0477047954,  -0.0995623992,  -0.479144695,
+     % -0.0506254435,   0.0405596385,  -0.0911850744,  -0.444805675,
+     % -0.0503803864,   0.0367971759,  -0.0871775627,  -0.42209457,
+     % -0.0498336293,   0.0367124416,  -0.0865460734,  -0.424195347,
+     % -0.0492658354,   0.0298306268,  -0.079096472,  -0.377142318 /
+C
+C     LA FENETRE DE TRACE
+      HMIN =  1E20
+      HMAX = -1E20
+      RMIN =  1E20
+      RMAX = -1E20
+      DO 3 K = 1, NBH
+         HH = -Log( H(K) )
+         HMIN = MIN( HMIN, HH )
+         HMAX = MAX( HMAX, HH )
+         DO 2 J = 1, NBI2
+            V1 = Log( ABS( VALEUR(4,J,K) + 0.5 ) )
+            RMIN = MIN( RMIN, V1 )
+            RMAX = MAX( RMAX, V1 )
+ 2       CONTINUE
+ 3    CONTINUE
+      print *,'HMIN=',HMIN,' HMAX=',HMAX,' RMIN=',RMIN,'  RMAX=',RMAX
+      HH = ( HMAX - HMIN ) / 15
+      RH = ( RMAX - RMIN ) / 15
+C
+C     MISE SUR FICHIER.eps du TRACE
+      CALL xvinitierps( 1 )
+      CALL EFFACE
+      CALL FENETRE( HMIN-HH, HMAX+HH, RMIN-RH, RMAX+2*RH )
+C
+C     LA SIGNIFICATION DES AXES
+      CALL CHOIXFONTE( 20 )
+      CALL TEXTE2D( NCNOIR, HMIN, RMAX+RH/3, 'Log(| KEh/PEh -(-1/2) |)')
+      CALL TEXTE2D(NCNOIR, HMAX, RMIN, '-Log(h)' )
+C
+C     LE TRACE DES AXES 2D
+      CALL TRAXE2
+C
+C     LE TRACE DES ( -Log(hi), Log( | KEh / PEh -(-1/2) | ) ) (-Log(hi))
+      DO 20 J = 1, NBI2
+C
+C        CHOIX DE LA COULEUR DE TRACE
+         NC = J
+         IF( NC .GT. 9 ) NC = NC + 2
+         print *
+C
+C        LE POINT A TRACER ( -Log(H(1)), Log( ABS( VALEUR(4,J,1) + 0.5 ) ) )
+         LNH0 = -Log(H(1))
+         V0  =  Log( ABS( VALEUR(4,J,1) + 0.5 ) )
+C        LE NO DE LA VALEUR PROPRE A GAUCHE
+         CALL ENTIER2D(  NC, HMAX+HH/7, V0, J )
+         CALL SYMBOLE2D( NC, LNH0, V0, '*' )
+C
+C        DROITE PAR MOINDRES CARRES
+         PT(1,1) = LNH0
+         PT(2,1) = V0
+C
+C        BOUCLE SUR LA TAILLE DES ARETES H
+         DO 10 K = 2, NBH
+C
+C           LE POINT A TRACER
+            LNH1 = -Log(H(K))
+            V1  =  Log( ABS( VALEUR(4,J,K) + 0.5 ) )
+            CALL XVEPAISSEUR( 0 )
+            CALL TRAIT2D(   NC, LNH0, V0,  LNH1, V1 )
+            CALL SYMBOLE2D( NC, LNH1, V1, '*' )
+C
+C           DROITE PAR MOINDRES CARRES
+            PT(1,K) = LNH1
+            PT(2,K) = V1
+C
+            print *,'SLOPE j=',j,' k=',K,'=',
+     %              (V1-V0)/(-Log(H(K))+Log(H(K-1)))
+C
+            LNH0 = LNH1
+            V0  = V1
+ 10      CONTINUE
+C
+C        LE NO DE LA VALEUR PROPRE A DROITE
+         CALL ENTIER2D( NC, HMIN-HH/2, V1, J )
+C
+C        DROITE PAR MOINDRES CARRES
+         CALL DRDIMI( NBH, PT, DROITE, IERR )
+C
+         print *
+         print *,'EIGV',J,': Least square LINE(',J,')=',DROITE
+         print *,'Y=',-DROITE(1)/DROITE(2),' * X +',-DROITE(3)/DROITE(2)
+         print *,'Least square LINE SLOPE',J,'=',-DROITE(1)/DROITE(2)
+C
+C        TRACE DE LA DROITE
+         LNH0 = -Log(H(1))
+         V0  = REAL( - ( DROITE(1) * LNH0 + DROITE(3) ) / DROITE(2) )
+         LNH1 = -Log(H(NBH))
+         V1  = REAL( - ( DROITE(1) * LNH1 + DROITE(3) ) / DROITE(2) )
+         CALL XVEPAISSEUR( 2 )
+         CALL TRAIT2D( NC, LNH0, V0,  LNH1, V1 )
+C
+ 20   CONTINUE
+C
+C     LE TITRE DU GRAPHIQUE
+      CALL CHOIXFONTE( 35 )
+      TITRE = 'Hydrogen Atom:  Log( | KEh/PEh -(-1/2) | ) (-Log(h))'
+      L = NUDCNB( TITRE )
+      CALL TEXTE2D( NCROUG, HMIN+HH*2, RMAX+RH, TITRE(1:L) )
+C
+C     COPIE DE MEMPX DANS FENETRE
+      CALL MEMPXFENETRE
+C
+C     POUR VIDER LE BUFFER DE X11
+      CALL XVVOIR
+C
+C     MISE SUR FICHIER energyh.eps du TRACE
+C     ATTENTION PASSAGE PAR VARIABLE OBLIGATOIRE
+      NBC = 7
+      CALL xvsauverps( 'energyh', NBC )
+      print *, 'NBC=',NBC
+C
+C     POUR ATTENDRE UN CLIC SOURIS ET  LIRE LE GRAPHIQUE
+      CALL CHOIXFONTE( NPHFCO )
+      CALL CLICSO
+C
+      CALL XVEPAISSEUR( 1 )
+      RETURN
+      END

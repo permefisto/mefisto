@@ -1,0 +1,106 @@
+      SUBROUTINE TAMSRA( NOTAMS , NBVARI )
+C+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+C BUT : RACCOURCIR LE TABLEAU MS NOTAMS A NBVARI VARIABLES DE TYPE DEJA
+C ----- DECLARE (CF TNMSDC)
+C       SI LE TYPE EST CARACTERE ,NBVAR2 EST LE PRODUIT DU NOMBRE DE
+C       CHAINES PAR LE NOMBRE DE CARACTERES PAR CHAINE.
+C
+C ENTREES :
+C ---------
+C NOTAMS : NUMERO DU TABLEAU MS A RACCOURCIR
+C NBVARI : NOMBRE DE VARIABLES < NOMBRE DE VARIABLES DE SA DECLARATION
+C+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+C PROGRAMMEUR : PERRONNET ALAIN ANALYSE NUMERIQUE PARIS  DECEMBRE 1983
+C.......................................................................
+      include"./incl/motmcg.inc"
+      include"./incl/ppmck.inc"
+      include"./incl/msvaau.inc"
+      COMMON / UNITES /  LECTEU,IMPRIM,NUNITE(30)
+      COMMON / MSIMTA /  NOIMPR
+      include"./incl/pp.inc"
+      COMMON /        /  MCN(MOTMCN)
+      COMMON / MSSFTA /  NOFISF,NBPASF,MOPASF,MGBUSF,NSFLIB,
+     %                   M1FIMS,M2FIMS,MGFIMS,NSFIMS,LPFIMS,
+     %                   M1TAMS,M2TAMS,MGBUTA,NBBUTA,NPTAMS,NATAMS,
+     %                   NBCTMS,LLTAMS,LFTAMS,MGNPSF,NSFNPS,NPSNPS,
+     %                   MGZLMG,MGZLMK,MGZLMN,MOTSMG,MOTSMK,MOTSMN,
+     %                   NTADAM
+      CHARACTER*9        TYPNUM
+      CHARACTER*48       ERREUR
+      DATA               ERREUR / 'ERREUR TAMSRA :' /
+C
+C     RECHERCHE DE L ADRESSE MGTAMS DANS MCG DU DESCRIPTEUR DU TABLEAU
+C     MS NOTAMS
+      CALL TAMSRE( NOTAMS , MGTAMS )
+C
+C     NBVARI < NOMBRE DE VARIABLES PRECEDEMMENT DECLARE NVTAMS ?
+      NVTAMS = MCG( MGTAMS + 1 )
+      IF( NBVARI .GT. NVTAMS ) THEN
+         WRITE(IMPRIM,10000) ERREUR,NOTAMS,NVTAMS,NBVARI
+10000 FORMAT(A16,' LE TABLEAU MS',I10,' DE',I10,' VARIABLES NE PEUT ETRE
+     % RACCOURCI A',I10,' VARIABLES.PAS DE MODIFICATION'/)
+         CALL ARRET(100)
+      ELSEIF( NBVARI .EQ. NVTAMS ) THEN
+         RETURN
+      ELSEIF( NBVARI .LE. 0 ) THEN
+         WRITE(IMPRIM,10005) ERREUR,NOTAMS,NBVARI
+10005 FORMAT(A16,' LE TABLEAU MS',I8,' NE PEUT AVOIR',I8,' VARIABLES'/)
+         RETURN
+      ELSE
+C
+C        L'ANCIEN NOMBRE DE PAGES DU TABLEAU MS ET LE NOUVEAU
+         IGF    = MGFIMS + ( MCG(MGTAMS+2) - 1 ) * M1FIMS
+         MOPAFI = MCG( IGF + 2 )
+         MOT    = MOTTAB( MCG(MGTAMS) , NVTAMS )
+         CALL NBPATA( MOT  , MOPAFI , NBPAG0 , N )
+         MOT    = MOTTAB( MCG(MGTAMS) , NBVARI )
+         CALL NBPATA( MOT  , MOPAFI , NBPAG1 , N )
+         IF( NBPAG1 .EQ. NBPAG0 ) GOTO 100
+C
+C        LE PARCOURS DES PAGES DE CE TABLEAU MS
+C        ======================================
+         L0 = MCG( MGTAMS + 3 )
+         DO 20 I= 1 , NBPAG1
+            CALL FIPASU( L0 , MCG(IGF) , IG )
+            L0 = MCG( IG )
+ 20      CONTINUE
+C
+C        ICI L0 EST LA DERNIERE PAGE DU TABLEAU RACCOURCI
+         MCG( IG ) = 0
+C
+C        PROTECTION DE LA PREMIERE PAGE LIBRE DU REPERTOIRE RED1FI
+         N = MCG( IGF + 6 )
+C
+C        LA PREMIERE PAGE LIBRE EST MAINTENANT L0
+         MCG( IGF + 6 ) = L0
+            DO 40 I= NBPAG1+1 , NBPAG0
+            CALL FIPASU( L0 , MCG(IGF) , IG )
+            L0 = MCG( IG )
+ 40      CONTINUE
+C
+C        LE CHAINAGE AVEC L ANCIENNE PREMIERE PAGE LIBRE
+         MCG( IG ) = N
+C
+C        LE TABLEAU MS S IL EST EN MC EST RACCOURCI
+C        ==========================================
+ 100     MCG( MGTAMS + 1 ) = NBVARI
+C        ADRESSE MC DU TABLEAU
+         N = MCG( MGTAMS + 4 )
+         IF( N .NE. 0 ) THEN
+         N = ABS( N )
+            IF( MCG(MGTAMS) .EQ. NOTYPK ) THEN
+C              TABLEAU DE CARACTERES
+               CALL TKMCRA( 1 , NVTAMS , NBVARI , N )
+            ELSE
+C              TABLEAU NUMERIQUE
+               CALL TNMCRA( TYPNUM(MCG(MGTAMS)), NVTAMS , NBVARI , N )
+            ENDIF
+         ENDIF
+      ENDIF
+C
+      IF( NOIMPR .NE. 0 ) WRITE(IMPRIM,19999) NOTAMS,NVTAMS,
+     %                                        NBVARI,MCG(MGTAMS)
+19999 FORMAT(' REDUCTION   TABLEAU MS NO',I9,' DE',I9,' A',I9,' VARIABLE
+     %S DE TYPE',I3)
+      RETURN
+      END

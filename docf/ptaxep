@@ -1,0 +1,6 @@
+Noms des 2 points definissant l'axe du cylindre ou du  cercle.
+Dans le cas de la projection sur un cercle le  premier  point
+defini le cercle par l'intersection du cylindre avec le plan
+orthogonal a l'axe passant par ce point.
+
+Donner 2 points par projection.

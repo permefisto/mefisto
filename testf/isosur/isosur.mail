@@ -1,0 +1,41 @@
+{ ============================================================ }
+{ MEFISTO Version Juin 1999        PROJET: Test f(x,y,z)=Ctes  }
+{ Utilisateur: Alain Perronnet     Date:   15/6/99             }
+{ ============================================================ }
+DefVar a,b,c; a=8; b=12; c=7;
+ 
+1;   { POINTS sommets de l objet }
+  1; { FRAPPE des valeurs }
+  p; { NOM DU POINT ou ABANDON? }
+  i; { DANS LE LEXIQUE ~>TRANSFO }
+  1; { coordonnees x y z }
+  0; { x }
+  0; { y }
+  0; { z }
+ { NOM DU POINT ou ABANDON? }
+@;
+
+4; { VOLUMES materiaux de l objet }
+  v;   { NOM DU VOLUME ou ABANDON? }
+    i; { DANS LE LEXIQUE ~>TRANSFO }
+   11; { hexaedre rectangle regulier d aretes 1 }
+    a; { NBINHX 'nombre d''aretes en x' entier ; }
+    b; { NBINHY 'nombre d''aretes en y' entier ; }
+    c; { NBINHZ 'nombre d''aretes en z' entier ; }
+@;
+
+5; { OBJETS parties de l OBJET }
+ ob;  { NOM DE L'OBJET ou ABANDON? }
+   0; { classique 2D ou 3D }
+   2; { NBDOBJ nombre des Points Lignes Surfaces Volumes Objets }
+   vol; v; { TYPE et NOM DANS LE TYPE }
+ point; p; { nom du POINT }
+@;
+
+7; { INTERPOLATION NOEUDS du maillage }
+ ob; { NOM OBJET DE TOPOLOGIE A IDENTIFIER? }
+  4; { Interpolation de LAGRANGE de DEGRE 2 }
+@;
+
+10; 5; 90; {TRACE DE L'OBJET}
+FERMER;

@@ -1,0 +1,116 @@
+      SUBROUTINE T3LLDR( NORMALE, TMIN,  TMAX,
+     %                   NBARFR, NBSGPT, NOFAFR,
+     %                   MOARFR, MXARFR, LAREFR, NBCOOR, XYZPOI,
+     %                   XYZSEG, NCAS0, NCAS1, NCAS, TEMSEG )
+C ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+C BUT :    TRACER EN BLANC LES ARETES FRONTALIERES ET EN COULEURS
+C ----     LA SOLUTION NCAS SUR LA DROITE D'INTERSECTION DANS UNE DIRECTION
+C
+C ENTREES:
+C --------
+C NORMALE: VECTEUR DIRECTION DE LA TEMPERATURE A VISUALISER
+C TMIN   : TEMPERATURE MINIMALE POUR LE CAS A TRACER (PEUT ETRE AMPLIFIE)
+C TMAX   : TEMPERATURE MAXIMALE POUR LE CAS A TRACER
+C NBARFR : NOMBRE DES ARETES FRONTALIERES
+C NBSGPT : NOMBRE DE SEGMENTS INTERSECTION AVEC LES TETRAEDRES
+C NOFAFR : NUMERO DES SEGMENTS-ARETES SELON LEUR DISTANCE DECROISSANTE A L'OEIL
+C MOARFR : NOMBRE DE MOTS PAR ARETE FRONTALIERE DU TABLEAU LAREFR
+C MXARFR : NOMBRE DE FACES DU TABLEAU LAREFR
+C LAREFR : TABLEAU NUMERO DES 2 SOMMETS ET LIEN
+C          LAREFR(1,I)= NO DU 1-ER  SOMMET DE L'ARETE FRONTALIERE
+C          LAREFR(2,I)= NO DU 2-EME SOMMET > 1-ER  SOMMET
+C          LAREFR(3,I)= 0 OU NUMERO DE L'ARETE FRONTALIERE SUIVANTE DANS LE HACH
+C NBCOOR : NOMBRE DE COORDONNEES D'UN POINT (3 ou 6)
+C XYZPOI : COORDONNEES DES SOMMETS DES FACES FRONTALIERES (ET INTERNES)
+C XYZSEG : XYZ         DES SOMMETS DES SEGMENTS DE LA DROITE D'INTERSECTION
+C TEMSEG : TEMPERATURE DES SOMMETS DES SEGMENTS DE LA DROITE D'INTERSECTION
+C+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+C AUTEUR :PERRONNET ALAIN UPMC ANALYSE NUMERIQUE LJLL PARIS OCTOBRE 2003
+C2345X7..............................................................012
+      PARAMETER    ( LIGCON=0, LIGTIR=1 )
+      include"./incl/trvari.inc"
+      include"./incl/mecoit.inc"
+      INTEGER           NOFAFR(1:NBSGPT+NBARFR)
+      INTEGER           LAREFR(1:MOARFR,1:MXARFR)
+      REAL              XYZPOI(1:NBCOOR,1:*)
+      REAL              XYZSEG(1:3,1:2,1:NBSGPT)
+      REAL              TEMSEG(1:2,NCAS0:NCAS1,1:NBSGPT)
+      DOUBLE PRECISION  NORMALE(3)
+      REAL              XYZ(3,4)
+      REAL              COUL(4)
+C
+C     ZERO EST IL ENTRE TMIN ET TMAX?
+      IF( TMIN .LE. 0 .AND. 0 .LE. TMAX ) THEN
+         TMILIEU = 0
+      ELSE
+ccc         TMILIEU = (TMIN+TMAX) / 2
+         TMILIEU = TMIN
+      ENDIF
+C
+C     LE NOMBRE DE COULEURS DISPONIBLES
+      NBCOUL = NDCOUL - N1COUL
+C
+C     LES ARETES SONT TRACEES AVEC UNE EPAISSEUR
+      CALL XVEPAISSEUR( 1 )
+C
+C     LE TRACE DES FACES EN COMMENCANT PAR LES PLUS ELOIGNEES
+C     =======================================================
+      DO 50 NF = 1, NBARFR+NBSGPT
+C
+C        LE NUMERO DE LA FACE LA PLUS ELOIGNEE NON ENCORE TRACEE
+         NAOF = NOFAFR( NF )
+C
+         IF( NAOF .GT. 0 ) THEN
+C
+C           TRACE DU SEGMENT SOUS FORME D'UN TRAPEZE COLORE
+C           -----------------------------------------------
+            CALL XVTYPETRAIT( NTLAPL )
+C
+C           LA COULEUR DES 2 SOMMETS DE L'ARETE INTERSECTION
+            DO 10 I=1,2
+C
+C              LA COULEUR
+               TEMP = TEMSEG(I,NCAS,NAOF)
+               IF( TMIN .NE. TMAX ) THEN
+                  COUL(I)=(TEMP-TMIN)/(TMAX-TMIN)*NBCOUL+N1COUL
+               ELSE
+                  COUL(I)=NDCOUL
+               ENDIF
+               IF( COUL(I) .GT. NDCOUL ) COUL(I)=NDCOUL
+               IF( COUL(I) .LT. N1COUL ) COUL(I)=N1COUL
+C
+C              LES XYZ DU SOMMET I FONCTION DE LA TEMPERATURE
+               DO 5 K=1,3
+                  XYZ(K,I  ) = REAL( XYZSEG(K,I,NAOF) )
+                  XYZ(K,5-I) = REAL( XYZSEG(K,I,NAOF)
+     %                             + NORMALE(K) * (TEMP-TMILIEU) )
+ 5             CONTINUE
+ 10         CONTINUE
+            COUL(3) = COUL(2)
+            COUL(4) = COUL(1)
+            COUL(1) = N1COUL
+            COUL(2) = N1COUL
+C
+C           LE TRACE DU TRAPEZE
+            CALL TRAPEZE3DBORD( XYZ(1,1), XYZ(1,2), XYZ(1,3), XYZ(1,4),
+     %                          COUL(1),  COUL(2),  COUL(3),  COUL(4),
+     %                          NCOAPL, 1 )
+C
+         ELSE
+C
+C           TRACE DE L'ARETE FRONTALIERE DU MAILLAGE
+C           ----------------------------------------
+C           LE NUMERO DE L'ARETE DANS LE TABLEAU LAREFR
+            IF( NCOAFR .GE. 0 ) THEN
+               CALL XVTYPETRAIT( NTLAFR )
+               NAOF = -NAOF
+               CALL TRAIT3D( NCOAFR, XYZPOI(1,LAREFR(1,NAOF)),
+     %                               XYZPOI(1,LAREFR(2,NAOF)) )
+            ENDIF
+         ENDIF
+ 50   CONTINUE
+C
+C     RETOUR AU TRACE CONTINU DES LIGNES
+      CALL XVTYPETRAIT( LIGCON )
+      RETURN
+      END

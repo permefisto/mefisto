@@ -1,0 +1,343 @@
+      SUBROUTINE LISTQU( KNOMLI, NUCOTE, NBSOCT, MNSOCT,
+     %                   XYZ4ST, RLONGC,
+     %                   NBSOLI, MNXY,   IERR )
+C+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+C BUT :    FORMER LE TABLEAU DES COORDONNEES DES SOMMETS DU CONTOUR
+C -----    D'UN QUADRANGLE DEFINI PAR SES 4 LIGNES STRUCTUREES
+C          A PARTIR DES LONGUEURS DES 4 COTES
+C
+C ENTREES:
+C --------
+C KNOMLI : NOM DE 24 CARACTERES DE LA LIGNE CONTOUR DU QUADRANGLE PLAN
+C NUCOTE : NUCOTE(3) NUMERO DE 1 A 4 DU COTE 3 PARMI LES 4 LIGNES...
+C          SI NUCOTE(3)=-4 LE COTE 3 EST LA LIGNE 4 A PARCOURIR
+C                          EN SENS INVERSE DE SON RANGEMENT...
+C          POUR LE SENS C1:S1S2 C2:S2S3 C3:S4S3 C4:S1S4
+C
+C                S4----<-------S3
+C                |             |
+C                |             |
+C               \/             /\
+C                |             |
+C                |             |
+C                S1---->-------S2
+C
+C NBSOCT : NOMBRE DE SOMMETS DE CHACUN DES 4 COTES
+C MNSOCT : ADRESSE MCN DU TMS 'XYZSOMMET' DES 4 LIGNES
+C
+C SORTIES:
+C --------
+C NUCOTE : PAR PERMUTATION CIRCULAIRE LE COTE DE PLUS GRANDE LONGUEUR
+C          DEVIENT LE COTE 1
+C XYZ4ST : 3 COORDONNEES DES 4 SOMMETS DU QUADRANGLE COURBE
+C RLONGC : LONGUEUR DES ARETES DES 4 COTES DU QUADRANGLE SELON LE SENS CI DESSUS
+C NBSOLI : NOMBRE DE SOMMETS OU D'ARETES DU CONTOUR FERME DU QUADRANGLE
+C MNXY   : ADRESSE MCN DE LA PREMIERE COORDONNEE DU PREMIER SOMMET
+C          DE LA LIGNE FORMANT LE CONTOUR DU QUADRANGLE PLAN DONT LA
+C          LONGUEUR DES COTES EST CELLE DES COTES DU QUADRANGLE COURBE
+C IERR   : 0 SI PAS D'ERREUR, 1 SI LIGNE NON FERMEE OU QUADRANGLE PLAN
+C          NON CONSTRUCTIBLE
+C+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+C AUTEUR : ALAIN PERRONNET  ANALYSE NUMERIQUE PARIS         OCTOBRE 1996
+C234567..............................................................012
+      IMPLICIT INTEGER (W)
+      include"./incl/ntmnlt.inc"
+      include"./incl/gsmenu.inc"
+      include"./incl/a___nsef.inc"
+      include"./incl/a___xyzsommet.inc"
+      INTEGER           NUCOTE(1:4), MNSOCT(1:4)
+      include"./incl/pp.inc"
+      COMMON             MCN(MOTMCN)
+      REAL              RMCN(1)
+      EQUIVALENCE      (MCN(1),RMCN(1))
+C
+      REAL              RLONGC(1:4),XYZ4ST(3,4)
+      INTEGER           NBSOCT(1:4)
+      CHARACTER*(*)     KNOMLI
+C
+C     CALCUL DES LONGUEURS DANS L'ORDRE DES DONNEES UTILISATEUR
+      DO 10 I=1,4
+         CALL LISTLO( MNSOCT(I), RLONGC(I) )
+         IF( RLONGC(I) .LE. 0.0 ) THEN
+            NBLGRC(NRERR) = 1
+            WRITE(KERR(MXLGER)(1:2),'(I2)') I
+            KERR(1) = 'COTE' // KERR(MXLGER)(1:2) //' DE LONGUEUR NULLE'
+            CALL LEREUR
+            IERR = 1
+         ENDIF
+ 10   CONTINUE
+      IF( IERR .NE. 0 ) RETURN
+C
+C     LE COTE LE PLUS LONG DEVIENT LE COTE 1 DU QUADRANGLE
+      P = MAX( RLONGC(1), RLONGC(2), RLONGC(3) , RLONGC(4) )
+      DO 16 I=1,4
+         IF( P .EQ. RLONGC(I) ) GOTO 17
+ 16   CONTINUE
+C
+C     LE COTE LE PLUS LONG EST LE I-EME COTE:
+C     IL DEVIENT PAR PERMUTATION CIRCULAIRE LE PREMIER
+ 17   DO 18 I1=1,4
+         IF( ABS(NUCOTE(1)) .EQ. I ) THEN
+C           LE COTE 1 EST MAINTENANT L'ANCIEN COTE I
+            GOTO 19
+         ENDIF
+C        PERMUTATION 2 DEVIENT 1, 3 DEVIENT 2, 4 DEVIENT 3, 1 DEVIENT 4
+         CALL PECI4R( NUCOTE )
+ 18   CONTINUE
+C
+C     SI LE COTE 1 EST DANS LE SENS RETROGRADE, ALORS CHANGEMENT DE SENS
+ 19   IF( NUCOTE(1) .LT. 0 ) THEN
+         NUCOTE(1) = -NUCOTE(1)
+         NUCOTE(3) = -NUCOTE(3)
+         I1        =  NUCOTE(2)
+         NUCOTE(2) = -NUCOTE(4)
+         NUCOTE(4) = -I1
+      ENDIF
+C
+C     RE-CALCUL DES LONGUEURS LE PLUS GRAND EST EN PREMIER
+      DO 20 I=1,4
+         N = ABS( NUCOTE(I) )
+         CALL LISTLO( MNSOCT(N), RLONGC(I) )
+ 20   CONTINUE
+C
+C     LE QUADRANGLE PLAN EST IL CONSTRUCTIBLE?
+      IF( RLONGC(1) .GE. RLONGC(2)+RLONGC(3)+RLONGC(4) ) THEN
+         NBLGRC(NRERR) = 2
+         KERR(1) ='LE QUADRANGLE COURBE PROJETE N EST PAS UN QUADRANGLE'
+         KERR(2) ='LE PLUS GRAND COTE EST TROP LONG POUR LES 3 AUTRES'
+         CALL LEREUR
+         IERR = 2
+         RETURN
+      ENDIF
+C
+C     LES 4 COTES FORMENT ILS UNE LIGNE FERMEE ?
+C     LES 4 COTES SONT PARCOURUS DANS LE SENS DIRECT (OU RETROGRADE)
+C     C1:S1->S2  C2:S2->S3  C3:S3->S4  C4:S4->S1
+C     --------------------------------------------------------------
+      DO 23 I=1,4
+C        LE NUMERO DE LA LIGNE (1 A 4) DU COTE I
+         N1 = ABS( NUCOTE(I) )
+C        L'ADRESSE DU DERNIER POINT DE LA LIGNE DU COTE I
+         IF( NUCOTE(I) .GT. 0 ) THEN
+C           L'ADRESSE DU DERNIER POINT DE LA LIGNE DU COTE I
+            MN1 = MNSOCT(N1) + WYZSOM + NBSOCT(N1) * 3 - 3
+         ELSE
+C           L'ADRESSE DU DERNIER POINT DE LA LIGNE DU COTE I
+            MN1 = MNSOCT(N1) + WYZSOM
+         ENDIF
+C        L'ADRESSE DU PREMIER POINT DE LA LIGNE DU COTE I+1
+         IF( I .LT. 4 ) THEN
+            I1 = I+1
+         ELSE
+            I1 = 1
+         ENDIF
+         N2 = ABS( NUCOTE(I1) )
+         IF( NUCOTE(I1) .GT. 0 ) THEN
+C           L'ADRESSE DU PREMIER POINT DE LA LIGNE DU COTE I1
+            MN2 = MNSOCT(N2) + WYZSOM
+         ELSE
+C           L'ADRESSE DU PREMIER POINT DE LA LIGNE DU COTE I1
+            MN2 = MNSOCT(N2) + WYZSOM + NBSOCT(N2) * 3 - 3
+         ENDIF
+C        IDENTIFICATION DE CES 2 SOMMETS
+         CALL XYZIDE( RMCN(MN1), RMCN(MN2), IDENTQ )
+         IF( IDENTQ .EQ. 0 ) THEN
+C           ERREUR : LIGNE NON FERMEE
+            NBLGRC(NRERR) = 2
+            KERR(1) = 'CONTOUR NE FORMANT PAS UNE LIGNE FERMEE'
+            WRITE(KERR(MXLGER)(1:6),'(I6)') I
+            KERR(2) = 'COTE ' // KERR(MXLGER)(1:6)
+     %             // ' SANS LIGNE SUIVANTE'
+            CALL LEREUR
+            IERR = 1
+            RETURN
+         ENDIF
+ 23   CONTINUE
+C
+C     GENERATION DES 2 COORDONNEES DES 2 SOMMETS S3 ET S4 DU QUADRANGLE
+C     RESPECTANT LA LONGUEUR DES 4 COTES
+C     -----------------------------------------------------------------
+      N2 = NBSOCT( ABS( NUCOTE(1) ) )
+      N3 = N2 + NBSOCT( ABS( NUCOTE(2) ) ) - 1
+      N4 = N3 + NBSOCT( ABS( NUCOTE(3) ) ) - 1
+      CALL SOQU4L( RLONGC, X3, Y3, X4, Y4, IERR )
+C
+C     CONSTRUCTION DU TABLEAU DES 2 COORDONNES DES POINTS DE LA
+C     LIGNE FERMEE CONTOUR
+C     ---------------------------------------------------------
+      NBSOLI = N4 + NBSOCT( ABS( NUCOTE(4) ) )  - 2
+ 25   CALL LXLXOU( NTLIGN , KNOMLI , NTLXLI , MNLXLI )
+C
+C     S'IL N'EXISTE PAS IL EST CREE
+      IF( NTLXLI .LE. 0 ) THEN
+         CALL LXLXDC( NTLIGN , KNOMLI , 24 , 8 )
+         GOTO 25
+      ENDIF
+C
+C     SI LE TABLEAU XYZSOMMET EXISTE ALORS IL EST DETRUIT
+      CALL LXTSOU( NTLXLI , 'XYZSOMMET' ,  NTSOLI  , MNSOLI )
+      IF( NTSOLI .GT. 0 ) THEN
+         CALL LXTSDS( NTLXLI, 'XYZSOMMET' )
+      ENDIF
+      CALL LXTNDC( NTLXLI , 'XYZSOMMET' , 'ENTIER' , WYZSOM + 3*NBSOLI )
+      CALL LXTSOU( NTLXLI , 'XYZSOMMET' ,  NTSOLI  , MNSOLI )
+      MNXY = MNSOLI + WYZSOM
+      MNS  = MNXY
+C
+C     LE COTE 1 SUR L'AXE DES X DU QUADRANGLE PLAN
+C     --------------------------------------------
+C     ( IL IMPOSE SON SENS A CELUI DU PARCOURS DU QUADRANGLE)
+      N    = ABS( NUCOTE(1) )
+      MNL0 = MNSOCT(N) + WYZSOM
+C     LE 1-ER SOMMET DU QUADRANGLE COURBE
+      XYZ4ST(1,1) = RMCN(MNL0)
+      XYZ4ST(2,1) = RMCN(MNL0+1)
+      XYZ4ST(3,1) = RMCN(MNL0+2)
+      RMCN(MNS  ) = 0.0
+      RMCN(MNS+1) = 0.0
+      RMCN(MNS+2) = 0.0
+      RL = 0.0
+      DO 30 J=2,N2
+         MNL1 = MNL0 + 3
+C        LA LONGUEUR DE L'ARETE
+         RL   = RL + DIST2P( RMCN(MNL0), RMCN(MNL1) )
+         MNL0 = MNL1
+C        LE POINT SUIVANT
+         MNS  = MNS + 3
+         RMCN(MNS  ) = RL
+         RMCN(MNS+1) = 0.0
+         RMCN(MNS+2) = 0.0
+ 30   CONTINUE
+C     LE 2-EME SOMMET DU QUADRANGLE COURBE
+      XYZ4ST(1,2) = RMCN(MNL0)
+      XYZ4ST(2,2) = RMCN(MNL0+1)
+      XYZ4ST(3,2) = RMCN(MNL0+2)
+C
+C     LE COTE 2 : DU SOMMET 2 AU SOMMET 3 DU QUADRANGLE PLAN
+C     ------------------------------------------------------
+      N    = ABS( NUCOTE(2) )
+      MNL0 = MNSOCT(N) + WYZSOM
+      IF( NUCOTE(2) .LT. 0 ) THEN
+         NSENS = -3
+         MNL0  = MNL0 + 3 * MCN( MNSOCT(N) + WNBSOM ) - 3
+      ELSE
+         NSENS = 3
+      ENDIF
+      RL = 0.0
+      DO 40 J=N2+1,N3
+         MNL1 = MNL0 + NSENS
+C        LA LONGUEUR DE L'ARETE
+         RL   = RL + DIST2P( RMCN(MNL0), RMCN(MNL1) )
+         MNL0 = MNL1
+C        LE POINT SUIVANT
+         MNS  = MNS + 3
+         C    = RL / RLONGC(2)
+         RMCN(MNS  ) = RLONGC(1) + C * (X3-RLONGC(1))
+         RMCN(MNS+1) = C * Y3
+         RMCN(MNS+2) = 0.0
+ 40   CONTINUE
+C     LE 3-EME SOMMET DU QUADRANGLE COURBE
+      XYZ4ST(1,3) = RMCN(MNL0)
+      XYZ4ST(2,3) = RMCN(MNL0+1)
+      XYZ4ST(3,3) = RMCN(MNL0+2)
+C     SUPPRESSION DES ERREURS D'ARRONDI
+      RMCN(MNS  ) = X3
+      RMCN(MNS+1) = Y3
+      RMCN(MNS+2) = 0.0
+C
+C     LE COTE 3 : DU SOMMET 3 AU SOMMET 4 DU QUADRANGLE PLAN
+C     ------------------------------------------------------
+      N    = ABS( NUCOTE(3) )
+      MNL0 = MNSOCT(N) + WYZSOM
+      IF( NUCOTE(3) .LT. 0 ) THEN
+         NSENS = -3
+         MNL0  = MNL0 + 3 * MCN( MNSOCT(N) + WNBSOM ) - 3
+      ELSE
+         NSENS = 3
+      ENDIF
+      RL = 0.0
+      DO 50 J=N3+1,N4
+         MNL1 = MNL0 + NSENS
+C        LA LONGUEUR DE L'ARETE
+         RL   = RL + DIST2P( RMCN(MNL0), RMCN(MNL1) )
+         MNL0 = MNL1
+C        LE POINT SUIVANT
+         MNS  = MNS + 3
+         C    = RL / RLONGC(3)
+         RMCN(MNS  ) = X3 + C * (X4-X3)
+         RMCN(MNS+1) = Y3 + C * (Y4-Y3)
+         RMCN(MNS+2) = 0.0
+ 50   CONTINUE
+C     LE 4-EME SOMMET DU QUADRANGLE COURBE
+      XYZ4ST(1,4) = RMCN(MNL0)
+      XYZ4ST(2,4) = RMCN(MNL0+1)
+      XYZ4ST(3,4) = RMCN(MNL0+2)
+C     SUPPRESSION DES ERREURS D'ARRONDI
+      RMCN(MNS  ) = X4
+      RMCN(MNS+1) = Y4
+      RMCN(MNS+2) = 0.0
+C
+C     LE COTE 4 : DU SOMMET 4 AU SOMMET 1 DU QUADRANGLE PLAN
+C     ------------------------------------------------------
+      N    = ABS( NUCOTE(4) )
+      MNL0 = MNSOCT(N) + WYZSOM
+      IF( NUCOTE(4) .LT. 0 ) THEN
+         NSENS = -3
+         MNL0  = MNL0 + 3 * MCN( MNSOCT(N) + WNBSOM ) - 3
+      ELSE
+         NSENS = 3
+      ENDIF
+      RL = 0.0
+      DO 55 J=N4+1,NBSOLI
+         MNL1 = MNL0 + NSENS
+C        LA LONGUEUR DE L'ARETE
+         RL   = RL + DIST2P( RMCN(MNL0), RMCN(MNL1) )
+         MNL0 = MNL1
+C        LE POINT SUIVANT
+         MNS  = MNS + 3
+         C    = 1.0 - RL / RLONGC(4)
+         RMCN(MNS  ) = X4 * C
+         RMCN(MNS+1) = Y4 * C
+         RMCN(MNS+2) = 0.0
+ 55   CONTINUE
+C
+C     FIN DE REMPLISSAGE DU TABLEAUX XYZSOMMET DE LA LIGNE CONTOUR
+      MCN(MNSOLI+WNBSOM) = NBSOLI
+      MCN(MNSOLI+WBCOOR) = 3
+C     LA DATE DE CREATION
+      CALL ECDATE( MCN(MNSOLI) )
+C     LE NUMERO DU TABLEAU DESCRIPTEUR
+      MCN( MNSOLI + WNBTGS ) = 0
+      MCN( MNSOLI + MOTVAR(6) ) = NONMTD( '~>>>XYZSOMMET' )
+C
+C     SI LE TABLEAU NSEF EXISTE ALORS IL EST DETRUIT
+      CALL LXTSOU( NTLXLI , 'NSEF' ,  NTARLI  , MNARLI )
+      IF( NTARLI .GT. 0 ) THEN
+         CALL LXTSDS( NTLXLI, 'NSEF' )
+      ENDIF
+C     CREATION DU TABLEAU NSEF
+      CALL LXTNDC( NTLXLI , 'NSEF' , 'ENTIER' , WUSOEF + 2 * NBSOLI )
+      CALL LXTSOU( NTLXLI , 'NSEF' ,  NTARLI  , MNARLI )
+      MCN(MNARLI+WUTYOB) = 2
+      MCN(MNARLI+WUTYMA) = 0
+      MCN(MNARLI+WBSOEF) = 2
+      MCN(MNARLI+WBEFOB) = NBSOLI
+      MNL0 = MNARLI + WUSOEF
+      DO 60 J=1,NBSOLI
+         MCN(MNL0  ) = J
+         MCN(MNL0+1) = J+1
+         MNL0 = MNL0 + 2
+ 60   CONTINUE
+      MCN(MNL0-1) = 1
+C     LE TYPE DE FERMETURE : LIGNE FERMEE
+      MCN( MNARLI + WUTFMA ) = 1
+C     PAS DE TANGENTES STOCKEES
+      MCN( MNARLI + WBTGEF ) = 0
+      MCN( MNARLI + WBEFAP ) = 0
+      MCN( MNARLI + WBEFTG ) = 0
+C
+C     LA DATE DE CREATION
+      CALL ECDATE( MCN(MNARLI) )
+C     LE NUMERO DU TABLEAU DESCRIPTEUR
+      MCN( MNARLI + MOTVAR(6) ) = NONMTD( '~>>>NSEF' )
+      END

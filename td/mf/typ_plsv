@@ -1,0 +1,5 @@
+variable TYP_PLSV 'Types de PLSV'   entier 
+ ( 1  : 'POINT'
+ , 2  : 'LIGNE'
+ , 3  : 'SURFACE'
+ , 4  : 'VOLUME' );

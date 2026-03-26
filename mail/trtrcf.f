@@ -1,0 +1,152 @@
+      SUBROUTINE TRTRCF( NBET,   NA01,   NA1,    NA02,  NA2, NA03, NA3,
+     %                   N1TRVI, NOTRIA, NOTRSO,
+     %                   MXARCF, N1ARCF, NOARCF, NF )
+C+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+C BUT :     AJOUT D'UN TRIANGLE D'ARETES NA1 2 3 DE NOARCF
+C -----     A UN CONTOUR FERME
+C
+C ENTREES:
+C --------
+C NBET    : NUMERO DANS N1ARCF DU CF TRAITE ICI
+C NA01    : NUMERO NOARCF DE L'ARETE PRECEDENT L'ARETE NA1 DE NOARCF
+C NA1     : NUMERO NOARCF DU 1-ER SOMMET DU TRIANGLE
+C NA02    : NUMERO NOARCF DE L'ARETE PRECEDENT L'ARETE NA2 DE NOARCF
+C NA2     : NUMERO NOARCF DU 2-EME SOMMET DU TRIANGLE
+C NA03    : NUMERO NOARCF DE L'ARETE PRECEDENT L'ARETE NA3 DE NOARCF
+C NA3     : NUMERO NOARCF DU 3-EME SOMMET DU TRIANGLE
+C N1TRVI  : NOMBRE MAXIMAL DE TRIANGLES PERMIS POUR LA TRIANGULATION
+C MXARCF  : NOMBRE MAXIMAL D'ARETES DECLARABLES DANS NOARCF, N1ARCF
+C
+C ENTREES ET SORTIES :
+C --------------------
+C N1TRVI : NUMERO DU PREMIER TRIANGLE NON UTILISE
+C NOTRIA : LES 3 SOMMETS, 3 TRIANGLES VOISINS
+C NOTRSO : NOTRSO(I) NUMERO D'UN TRIANGLE DE NOTRIA DE SOMMET I
+C N1ARCF : NUMERO D'UNE ARETE DE CHAQUE CONTOUR
+C NOARCF : NUMERO DES ARETES DE LA LIGNE DU CONTOUR FERME
+C          ATTENTION : CHAINAGE CIRCULAIRE DES ARETES
+C
+C SORTIE :
+C --------
+C NF     : NUMERO DU TRIANGLE AJOUTE DANS NOTRIA
+C          0 SI SATURATION DU TABLEAU NOTRIA OU NOARCF OU N1ARCF
+C+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+C AUTEUR : ALAIN PERRONNET  ANALYSE NUMERIQUE PARIS UPMC    FEVRIER 1992
+C2345X7..............................................................012
+      include"./incl/trvari.inc"
+      INTEGER           NOTRSO(*),
+     %                  NOTRIA(6,*),
+     %                  N1ARCF(0:MXARCF),
+     %                  NOARCF(3,MXARCF)
+C
+C     COMBIEN A T IL D'ARETES NBASCF SUR LE CF ?
+C     ==========================================
+C     LA PREMIERE ARETE EST SUR LE CF
+      NBASCF = 0
+      IF( NOARCF(2,NA1) .EQ. NA2 ) THEN
+C        1 ARETE SUR LE CF
+         NBASCF = 1
+C        LA 1-ERE ARETE EST SUR LE CF
+         NA1CF  = 1
+      ELSE
+C        LA 1-ERE ARETE N'EST PAS SUR LE CF
+         NA1CF  = 0
+      ENDIF
+      IF( NOARCF(2,NA2) .EQ. NA3 ) THEN
+C        1 ARETE DE PLUS SUR LE CF
+         NBASCF = NBASCF+1
+C        LA 2-EME ARETE EST SUR LE CF
+         NA2CF = 1
+      ELSE
+         NA2CF = 0
+      ENDIF
+      IF( NOARCF(2,NA3) .EQ. NA1 ) THEN
+C        1 ARETE DE PLUS SUR LE CF
+         NBASCF = NBASCF+1
+C        LA 3-EME ARETE EST SUR LE CF
+         NA3CF = 1
+      ELSE
+         NA3CF = 0
+      ENDIF
+C
+C     TRAITEMENT SELON LE NOMBRE D'ARETES SUR LE CF
+C     =============================================
+      IF( NBASCF .EQ. 3 ) THEN
+C
+C        LE CONTOUR FERME SE REDUIT A UN TRIANGLE
+C        ----------------------------------------
+C        AJOUT DANS NOTRIA DE CE TRIANGLE NF
+         CALL TRAJFA( NOARCF(1,NA1), NOARCF(1,NA2), NOARCF(1,NA3),
+     %                NOARCF(3,NA1), NOARCF(3,NA2), NOARCF(3,NA3),
+     %                N1TRVI, NOTRIA, NOTRSO, NF )
+         IF( NF .LE. 0 ) RETURN
+C
+C        LE CF EST SUPPRIME ET CHAINE VIDE
+         NOARCF(2,NA3) = N1ARCF(0)
+         N1ARCF( 0 )   = NA1
+         NBET = NBET - 1
+C
+      ELSE IF( NBASCF .EQ. 2 ) THEN
+C
+C        LE TRIANGLE A 2 ARETES SUR LE CONTOUR
+C        -------------------------------------
+C        LES 2 ARETES SONT LA 1-ERE et 2-EME DU TRIANGLE
+         IF( NA1CF .EQ. 0 ) THEN
+C           L'ARETE 1 N'EST PAS SUR LE CF
+            N1ARTR = NA2
+         ELSE IF( NA2CF .EQ. 0 ) THEN
+C           L'ARETE 2 N'EST PAS SUR LE CF
+            N1ARTR = NA3
+         ELSE
+C           L'ARETE 3 N'EST PAS SUR LE CF
+            N1ARTR = NA1
+         ENDIF
+C        LE TRIANGLE OPPOSE A L'ARETE 3 EST INCONNU
+C        MODIFICATION DU CONTOUR APRES INTEGRATION DU
+C        TRIANGLE AYANT SES 2-ERES ARETES SUR LE CF
+         CALL TR2ACF( NBET,   N1ARTR, -1,
+     %                N1TRVI, NOTRIA, NOTRSO,
+     %                N1ARCF, NOARCF, NF )
+C
+      ELSE IF( NBASCF .EQ. 1 ) THEN
+C
+C        LE TRIANGLE A 1 ARETE SUR LE CONTOUR
+C        ------------------------------------
+C        CETTE ARETE EST LA SECONDE DU TRIANGLE
+         IF( NA3CF .EQ. 1 ) THEN
+C           L'ARETE 3 EST SUR LE CF
+            NAA01 = NA02
+            NAA1  = NA2
+            NAA2  = NA3
+         ELSE IF( NA1CF .EQ. 1 ) THEN
+C           L'ARETE 1 EST SUR LE CF
+            NAA01 = NA03
+            NAA1  = NA3
+            NAA2  = NA1
+         ELSE IF( NA2CF .EQ. 1 ) THEN
+C           L'ARETE 2 EST SUR LE CF
+            NAA01 = NA01
+            NAA1  = NA1
+            NAA2  = NA2
+         ENDIF
+C        LE TRIANGLE OPPOSE A L'ARETE 1 ET 3 EST INCONNU
+C        MODIFICATION DU CONTOUR APRES INTEGRATION DU
+C        TRIANGLE AYANT 1 ARETE SUR LE CF AVEC CREATION
+C        D'UN NOUVEAU CONTOUR FERME
+         CALL TR1ACF( NBET, NAA01, NAA1, NAA2, -1, -1,
+     %                N1TRVI, NOTRIA, NOTRSO,
+     %                MXARCF, N1ARCF, NOARCF, NF )
+C
+      ELSE
+C
+C        LE TRIANGLE A 0 ARETE SUR LE CONTOUR
+C        ------------------------------------
+C        MODIFICATION DU CONTOUR APRES INTEGRATION DU
+C        TRIANGLE AYANT 0 ARETE SUR LE CF AVEC CREATION
+C        DE 2 NOUVEAUX CONTOURS FERMES
+         CALL TR0ACF( NBET, NA01, NA1, NA2, NA3,
+     %                -1, -1, -1,
+     %                N1TRVI, NOTRIA, NOTRSO,
+     %                MXARCF, N1ARCF, NOARCF, NF )
+      ENDIF
+      END

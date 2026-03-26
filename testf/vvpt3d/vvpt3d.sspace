@@ -1,0 +1,37 @@
+{=====================================================================}
+{ MEFISTO: Version Janvier 1999          PROJET: VVPT3D  SSPACE       }
+{ Utilisateur:  Perronnet Alain          Date:   4/1/99               }
+{ TEST DU CALCUL DES VALEURS ET VECTEURS PROPRES EN THERMIQUE         }
+{ Nombreuses valeurs propres multiples: vp=(n**2 + m**2 + p**2) Pi**2 }
+{ Les valeurs propres 12 et 27 sont de multiplicite 6 => QQ PB ...    }
+{=====================================================================}
+1; CUBE;
+
+2;
+
+ {volume CUBE}
+  1; {densite de masse}
+  1; 1.0;
+
+  7; {chaleur massique}
+  1; 1.0;
+
+  2; {conductivite thermique}
+  3; 1.0;
+ @;
+
+ {surface PEAU}
+ 3;  {contact}
+  1; {constant}
+  0; {valeur fixee}
+ @;
+@;
+
+6; {calcul des valeurs et vecteurs propres de l'operateur thermique}
+  1; {METHODE DES SOUS-ESPACES}
+  0; {borne inferieure des valeurs propres a calculer}
+220; {borne superieure des valeurs propres a calculer}
+
+8; {TRACE DU VECTEUR PROPRE 11}
+ 1; 11; 2; 1; 2; 90;
+FERMER;

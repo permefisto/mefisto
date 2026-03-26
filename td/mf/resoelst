@@ -1,0 +1,3 @@
+variable ResoELST 'Type RESOLUTION ELASTICITE STATIONNAIRE' entier
+(1: 'Coefficients INDEPENDANTS des DEPLACEMENTS',
+ 2: 'Coefficients   DEPENDANTS des DEPLACEMENTS' ) ;

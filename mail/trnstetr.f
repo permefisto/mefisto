@@ -1,0 +1,144 @@
+      SUBROUTINE TRNSTETR( NBSOTE, MXTETR, NSTETR, NBCOOR, XYZSOM,
+     %                     NBTETR, VOLUMT, QUAMIN, QUAMOY )
+C+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+C BUT :    TRACE DES ARETES DES TETRAEDRES DEFINIS DANS NSTETR ET XYZSOM
+C -----    EN ROUGE SI TETRAEDRE DE QUALITE <0.1, EN GRIS SINON
+
+C ENTREES:
+C --------
+C NBSOTE : VALEUR MAXIMALE DE DECLARATION DU PREMIER INDICE DE NSTETR(>3)
+C MXTETR : NOMBRE MAXIMAL DECLARABLE DE TETRAEDRES DANS NSTETR
+C NSTETR : LISTE DES TETRAEDRES OCCUPES POINTEE PAR N1TETS
+C                               VIDES   POINTEE PAR N1TEVI
+C
+C          SOMMET1   < SOMMET2    SOMMET3     SOMMET4
+C          ORDRE CLASSIQUE 1 2 3 DIRECT EN BAS ET 4 EN HAUT
+C          LE SOMMET 1 EST LE PLUS PETIT
+C          LE VOLUME EST POSITIF => UN ORDRE
+C
+C          TETRAEDRE1  TETREDRE2  TETRAEDRE3  TETREDRE4  VOISINS PAR LA
+C          FACE1       FACE2D      FACE3       FACE4
+C NBCOOR : NOMBRE DE COORDONNEES PAR SOMMET
+C XYZSOM : PAR POINT : X  Y  Z  DISTANCE_SOUHAITEE
+
+C SORTIES:
+C --------
+C NBTETR : NOMBRE ACTUEL DE TETRAEDRES RANGES DANS NSTETR ET TRACES
+C VOLUMT : VOLUME TOTAL     DE LA TETRAEDRISATION
+C QUAMIN : QUALITE MINIMALE DE LA TETRAEDRISATION
+C QUAMOY : QUALITE MOYENNE  DE LA TETRAEDRISATION
+C+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+C AUTEUR : ALAIN PERRONNET LJLL UPMC ET ST PIERRE DU PERRAY   AVRIL 2008
+C MODIFS : ALAIN PERRONNET LJLL UPMC et St Pierre du Perray    Mars 2016
+C2345X7..............................................................012
+      include"./incl/langue.inc"
+      include"./incl/trvari.inc"
+      include"./incl/mecoit.inc"
+
+      COMMON / TRTETR / STOPTE, TRACTE
+      LOGICAL           STOPTE, TRACTE
+C     STOPTE = FAUX ==> PAS D'ARRET APRES LE TRACE DE CHAQUE TETRAEDRE
+C              VRAI ==> DEMANDE D'UN CARACTERE POUR REDEMARRER
+C     TRACTE = FAUX ==> PAS DE TRACE DES TETRAEDRES
+C              VRAI ==> TRACE DES TETRAEDRES DE L'ETOILE
+
+      REAL          XYZSOM(NBCOOR,*)
+      INTEGER       NSTETR(NBSOTE,MXTETR)
+      REAL          ARMIN, ARMAX, SURFTR(4), VOLUMT, VTE, QTE,
+     %              QUAMIN, QUAMOY
+      CHARACTER*136 KTITRE
+
+      IF( .NOT. TRACTE ) GOTO 30
+
+C     TRACE EN MODE 3 BOUTONS POUR DEPLACEMENT ROTATIONS ZOOM
+      IF( LORBITE .EQ. 0 ) GOTO 20
+
+C     INITIALISATION DE L'ORBITE
+C     ==========================
+      CALL ORBITE0( NOTYEV )
+      GOTO 20
+
+C     TRACE SELON L'ORBITE OU ZOOM OU TRANSLATION ACTIFS
+C     ==================================================
+ 10   CALL ORBITE1( NOTYEV )
+      IF( NOTYEV .EQ. 0 ) GOTO 9000
+
+ 20   CALL EFFACEMEMPX
+
+C     TRACE DES AXES 3D
+      CALL TRAXE3
+
+C     LE TRACE DES FACES TRIANGULAIRES DU TABLEAU NSTETR
+C     CALCUL DU NOMBRE DE TETRAEDRES
+ 30   NBTETR = 0
+      NBTEQF = 0
+      VOLUMT = 0
+      QUAMIN = 2.2222
+      QUAMOY = 0
+
+      DO 50 NT=1,MXTETR
+
+         IF( NSTETR(1,NT) .GT. 0 ) THEN
+
+C           CALCUL DE LA QUALITE DU TETRAEDRE NT
+            CALL QUATET( XYZSOM(1,NSTETR(1,NT)),
+     %                   XYZSOM(1,NSTETR(2,NT)),
+     %                   XYZSOM(1,NSTETR(3,NT)),
+     %                   XYZSOM(1,NSTETR(4,NT)),
+     %                   ARMIN, ARMAX, SURFTR, VTE, QTE )
+            VOLUMT = VOLUMT + ABS( VTE )
+            QUAMIN = MIN( QUAMIN, QTE )
+            QUAMOY = QUAMOY + QTE
+
+C           COULEUR ET EPAISSEUR DES ARETES SELON LA QUALITE
+            IF( QTE .LT. 0.1 ) THEN
+               NBTEQF = NBTEQF + 1
+               NC = NCROUG
+               CALL XVEPAISSEUR( 5 )
+            ELSE
+               NC = NCGRIS
+               CALL XVEPAISSEUR( 0 )
+            ENDIF
+
+C           TRACE DU TETRAEDRE
+            IF( TRACTE ) CALL TRATETRA( NC, NSTETR(1,NT), XYZSOM )
+
+            NBTETR = NBTETR + 1
+
+         ENDIF
+
+ 50   CONTINUE
+
+C     QUALITE MOYENNE DU MAILLAGE
+      QUAMOY = QUAMOY / NBTETR
+
+      IF( .NOT. TRACTE ) GOTO 9000
+
+C     TITRE ET TRACE EFFECTIF
+      KTITRE='         TETRAEDRES de QUALITE<0.1  avec des ARETES ROUGES
+     % Qualite MIN=             MOY=               Volume=             '
+      WRITE(KTITRE(1:8),    '(I8)'   ) NBTEQF
+      WRITE(KTITRE(72:82)  ,'(F11.7)') QUAMIN
+      WRITE(KTITRE(89:99)  ,'(F11.7)') QUAMOY
+      WRITE(KTITRE(114:127),'(G14.6)') VOLUMT
+      CALL SANSDBL( KTITRE, L )
+      CALL TRFINS(  KTITRE(1:L) )
+
+C     REPRISE DE L'ORBITE
+C     ===================
+      IF( LORBITE .NE. 0 ) GOTO 10
+
+C     SORTIE DU TRACE APRES AFFICHAGE DES QUALITES
+C     ============================================
+ 9000 IF( LANGAG .EQ. 0 ) THEN
+         PRINT *,'trnstetr: Volume=',VOLUMT,' QUALITE MINIMUM=',QUAMIN,
+     %   ' MOYENNE=',QUAMOY,' des',NBTETR,' tetraedres dont',NBTEQF,
+     %   ' de QUALITE<0.1'
+      ELSE
+         PRINT *,'trnstetr: Volume=',VOLUMT,' QUALITY MINIMUM=',QUAMIN,
+     %   ' AVERAGE=',QUAMOY,' of',NBTETR,' tetrahedra  with',NBTEQF,
+     %   ' of QUALITY<0.1'
+      ENDIF
+
+      RETURN
+      END

@@ -1,0 +1,331 @@
+      SUBROUTINE SUEX46( NUSUFI, NTLXSU, LADEFI,
+     %                   NTNSEF, MNNSEF, NTXYZS, MNXYZS, IERR )
+C+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+C BUT :    COUTURE DES ARETES SIMPLES POUR FERMER UNE SURFACE MAILLEE
+C -----    SAUF SI LA SURFACE EST DEJA FERMEE
+
+C ENTREES:
+C --------
+C NUSUFI : NUMERO DE LA SURFACE FINALE DANS LE LEXIQUE DES SURFACES
+C NTLXSU : NUMERO DU TABLEAU TMS DU LEXIQUE  DE LA SURFACE
+C LADEFI : TABLEAU ENTIER DE DEFINITION DE LA SURFACE FINALE
+C          CF $MEFISTO/td/d/a_surface__definition
+
+C SORTIES:
+C --------
+C NTNSEF : NUMERO      DU TMS 'NSEF' DES NUMEROS DES FACES DE LA SURFACE
+C MNNSEF : ADRESSE MCN DU TMS 'NSEF' DES NUMEROS DES FACES DE LA SURFACE
+C          CF ~td/d/a___nsef
+C NTXYZS : NUMERO      DU TMS 'XYZSOMMET' DE LA SURFACE
+C MNXYZS : ADRESSE MCN DU TMS 'XYZSOMMET' DE LA SURFACE
+C          CF ~td/d/a___xyzsommet
+C IERR   : 0 SI PAS D'ERREUR,  >0 SINON
+C+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+C AUTEUR : ALAIN PERRONNET LJLL UPMC & St PIERRE du PERRAY Novembre 2015
+C23456---------------------------------------------------------------012
+      include"./incl/langue.inc"
+      include"./incl/gsmenu.inc"
+      include"./incl/ntmnlt.inc"
+      include"./incl/a_surface__definition.inc"
+      include"./incl/a___xyzsommet.inc"
+      include"./incl/a___nsef.inc"
+      include"./incl/a___texte.inc"
+      include"./incl/pp.inc"
+      COMMON             MCN(MOTMCN)
+      COMMON / UNITES /  LECTEU, IMPRIM, INTERA, NUNITE(29)
+      REAL               RMCN(1)
+      EQUIVALENCE       (MCN(1),RMCN(1))
+      INTEGER            LADEFI(0:*), NBARXF(3)
+      CHARACTER*24       NMSUIN, NMSUFI
+
+      IERR   = 0
+      MNARFA = 0
+      L1ARFA = 0
+      L2ARFA = 0
+      MNSA1F = 0
+      MNAR1F = 0
+      MNADAR1F = 0
+      MNSTCH = 0
+      MNNEWS = 0
+      NBARXF(3) = 0
+C
+C     LE NUMERO DE LA SURFACE INITIALE
+      NUSUIN = LADEFI(WUSUIN)
+C     LE NOM DE LA SURFACE INITIALE
+      CALL NMOBNU( 'SURFACE', NUSUIN, NMSUIN )
+C     LE LEXIQUE DE LA SURFACE INITIALE
+      CALL LXNLOU( NTSURF, NUSUIN, NTLX, MNLX )
+      IF( NTLX .LE. 0 ) THEN
+         NBLGRC(NRERR) = 1
+         IF( LANGAG .EQ. 0 ) THEN
+            KERR(1) = 'SURFACE INITIALE INCONNUE'
+         ELSE
+            KERR(1) = 'UNKNOWN INITIAL SURFACE'
+         ENDIF
+         CALL LEREUR
+         IERR = 1
+         RETURN
+      ENDIF
+
+C     LE TABLEAU 'NSEF' DE CETTE SURFACE INITIALE
+      CALL LXTSOU( NTLX, 'NSEF', NTNSEF0, MNNSEF0 )
+      IF( NTNSEF0 .LE. 0 ) THEN
+         NBLGRC(NRERR) = 2
+         KERR(1) = 'SURFACE ' // NMSUIN
+         IF( LANGAG .EQ. 0 ) THEN
+            KERR(2) = 'SURFACE SANS NSEF'
+         ELSE
+            KERR(2) = 'SURFACE WITHOUT NSEF'
+         ENDIF
+         CALL LEREUR
+         IERR = 2
+         RETURN
+      ENDIF
+
+C     LE TYPE DE FERMETURE DU MAILLAGE DE LA SURFACE INITIALE
+      NUTFMA = MCN( MNNSEF0 + WUTFMA )
+
+C     NUTFMA  type FERME(1) ou NON(0) ou INCONNU(-1)
+ 20   IF( NUTFMA .EQ. 1 ) THEN
+
+C        LA SURFACE A DEJA ETE TESTEE COMME ETANT FERMEE
+C        => PAS D'ARETES SIMPLES
+         IF( LANGAG .EQ. 0 ) THEN
+            WRITE(IMPRIM,*) 'FERME est le TYPE du MAILLAGE de ',
+     %                       NMSUIN
+         ELSE
+           WRITE(IMPRIM,*)'CLOSED is the INITIAL SURFACE MESH TYPE of '
+     %                    ,NMSUIN
+         ENDIF
+         NBLGRC(NRERR) = 2
+         N = NUDCNB(NMSUIN)
+         IF( LANGAG .EQ. 0 ) THEN
+            KERR(1) = 'SURFACE ' // NMSUIN(1:N) // ' DEJA FERMEE'
+            KERR(2) = 'PAS D''ARETE APPARTENANT A 1 SEUL EF'
+         ELSE
+            KERR(1) = 'SURFACE ' // NMSUIN(1:N) // ' ALREADY CLOSED'
+            KERR(2) = 'WITHOUT SINGLE EDGE (in ONLY ONE FE)'
+         ENDIF
+         CALL LEREUR
+         IERR = 5
+         GOTO 9900
+
+      ELSE IF( NUTFMA .EQ. 0 ) THEN
+
+         IF( LANGAG .EQ. 0 ) THEN
+            WRITE(IMPRIM,*) 'TYPE NON FERME du MAILLAGE INITIAL de ',
+     %                       NMSUIN
+         ELSE
+        WRITE(IMPRIM,*)'NOT CLOSED is the INITIAL SURFACE MESH TYPE of '
+     %                  ,NMSUIN
+         ENDIF
+         IF( NBARXF(3) .GT. 0 ) THEN
+            CALL LEREUR
+            IERR = 5
+            GOTO 9900
+         ENDIF
+
+      ELSE
+
+         IF( LANGAG .EQ. 0 ) THEN
+            WRITE(IMPRIM,*) 'TYPE INCONNU du MAILLAGE INITIAL de ',
+     %                       NMSUIN
+         ELSE
+          WRITE(IMPRIM,*) 'UNKNOWN is the INITIAL SURFACE MESH TYPE of '
+     %                  ,NMSUIN
+         ENDIF
+
+      ENDIF
+
+C     LE NOM DE LA SURFACE FINALE
+      CALL NMOBNU( 'SURFACE', NUSUFI, NMSUFI )
+
+C     CREE UNE TRIANGULATION NON STRUCTUREE DE LA SURFACE
+C     AVEC 2 FOIS PLUS DE PLACES QU'AU DEPART
+C     ---------------------------------------------------
+      CALL AUGTRIANG( 2,      NTLXSU, NUSUIN,
+     %                NTXYZS, MNXYZS, NTNSEF, MNNSEF,
+     %                MOXYZS, MONSEF, IERR )
+C     MOXYZS: TAILLE DU TABLEAU XYZSOMMET DU MAILLAGE DE LA SURFACE FINALE
+C     MONSEF: TAILLE DU TABLEAU NSEF      DU MAILLAGE DE LA SURFACE FINALE
+      IF( IERR .NE. 0 ) GOTO 9900
+
+C     NOMBRE DE SOMMETS DU MAILLAGE DE LA SURFACE INITIALE
+      NBSOM0 = MCN( MNXYZS + WNBSOM )
+C
+C     MISE A JOUR DES COORDONNEES EXTREMES DE CETTE SURFACE FINALE
+      CALL MAJEXT( MNXYZS )
+      CALL DIMCOO( NBSOM0, MCN(MNXYZS+WYZSOM), NDIMLI )
+
+C     NOMBRE DE EF QT QUAD-TRIANGLES
+      NBEFOB = MCN( MNNSEF + WBEFOB )
+
+C     NOMBRE DE SOMMETS ET TANGENTES PAR EF
+      NBSOEF = MCN( MNNSEF + WBSOEF )
+
+      IF( LANGAG .EQ. 0 ) THEN
+         WRITE(IMPRIM,*) 'NOMBRE DE SOMMETS INITIAUX=',NBSOM0
+      ELSE
+         WRITE(IMPRIM,*) 'INITIAL VERTICES NUMBER=',NBSOM0
+      ENDIF
+
+C     LE TABLEAU DES ARETES DES FACES DE LA SURFACE
+C     ---------------------------------------------
+      MXFAAR = 4
+      CALL GEARFA( MCN(MNXYZS+WYZSOM), NBSOEF, NBEFOB,
+     %             MCN(MNNSEF+WUSOEF), MXFAAR,
+     %             L1ARFA, L2ARFA, MNARFA, NBARXF, IERR )
+      IF( IERR .LT. 0 ) GOTO 9900
+
+      IF( NBARXF(1) .EQ. 0 ) THEN
+         IF( NBARXF(3) .EQ. 0 ) THEN
+C           LE MAILLAGE DE LA SURFACE EST DEJA FERME
+C           PAS DE MAILLAGE DUPLIQUE CAR PAS DE COUTURE
+            NUTFMA = 1
+         ELSE
+C           LE MAILLAGE DE LA SURFACE N'EST PAS FERME MAGRE 0 ARETE SIMPLE
+C           PAS DE MAILLAGE DUPLIQUE CAR PAS DE COUTURE
+            NUTFMA = 0
+         ENDIF
+         MCN( MNNSEF0 + WUTFMA ) = NUTFMA
+         GOTO 20
+      ENDIF
+
+C     A PARTIR DU TABLEAU ARFA DES ARETES DES FACES D'UNE SURFACE
+C     CONSTRUIRE LA TABLEAU AR1F DU NUMERO NARFA DES ARETES SIMPLES CAD
+C     DES ARETES APPARTENANT A UNE SEULE FACE (QUADRANGLE ou TRIANGLE)
+      CALL LAR1F( NBSOM0, RMCN(MNXYZS), L1ARFA, L2ARFA, MCN(MNARFA),
+     %            MXAR1F, NBARXF(1), MNAR1F, IERR )
+      IF( IERR .NE. 0 ) GOTO 9900
+
+C     ESSAI DE COUTURE DES ARETES SIMPLES POUR FERMER LE MAILLAGE
+C     -----------------------------------------------------------
+      MXADAR1F = NBARXF(1)
+      CALL TNMCDC( 'ENTIER', MXADAR1F, MNADAR1F )
+      IF( MNADAR1F .LE. 0 ) GOTO 9900
+
+      MXSTCH = NINT( MXADAR1F * 3. / 2 )
+      CALL TNMCDC( 'ENTIER', MXSTCH, MNSTCH )
+      IF( MNSTCH .LE. 0 ) GOTO 9900
+
+      CALL TNMCDC( 'ENTIER', 1+NBSOM0, MNNEWS )
+      IF( MNNEWS.LE. 0 ) GOTO 9900
+
+      NBSOM = NBSOM0
+      CALL COUSUR( NDIMLI, NBSOM,  MCN(MNXYZS+WYZSOM),
+     %             NBEFOB, MCN(MNNSEF+WUSOEF),
+     %             L1ARFA, L2ARFA, MCN(MNARFA),
+     %             NBARXF, MCN(MNAR1F), MCN(MNADAR1F), MCN(MNSTCH),
+     %             MCN(MNNEWS) )
+
+      CALL TNMCDS( 'ENTIER', 1+NBSOM0, MNNEWS )
+      CALL TNMCDS( 'ENTIER', MXSTCH,   MNSTCH )
+      CALL TNMCDS( 'ENTIER', MXADAR1F, MNADAR1F )
+
+C     IDENTIFIER LES SOMMETS AYANT LES MEMES 3 COORDONNEES
+C     MISE A JOUR DU NO DES SOMMETS DES EF
+C     ----------------------------------------------------
+      MNXYZF = 0
+      MXXYZF = 3 * NBSOM
+      CALL TNMCDC( 'REEL', MXXYZF, MNXYZF )
+      IF( MNXYZF .LE. 0 ) GOTO 9900
+
+      CALL IDSTMA( NBSOEF, NBEFOB, MCN(MNNSEF+WUSOEF),
+     %             NBSOM,  RMCN(MNXYZS+WYZSOM),
+     %             NBSTFI, RMCN(MNXYZF) )
+
+      IF( NBSTFI .LT. NBSOM ) THEN
+         CALL TRTATA( RMCN(MNXYZF), RMCN(MNXYZS+WYZSOM), 3*NBSTFI )
+         NBSOM = NBSTFI
+      ENDIF
+
+      CALL TNMCDS( 'REEL', MXXYZF, MNXYZF )
+
+C     LE TABLEAU DES ARETES DES FACES DE LA SURFACE EST MIS A JOUR
+C     ------------------------------------------------------------
+      CALL GEARFA( MCN(MNXYZS+WYZSOM), NBSOEF, NBEFOB,
+     %             MCN(MNNSEF+WUSOEF), MXFAAR,
+     %             L1ARFA, L2ARFA, MNARFA, NBARXF, IERR )
+      IF( IERR .LT. 0 ) GOTO 9900
+
+C     REDUCTION DE LA TAILLE DU TMS XYZSOMMET
+      CALL TAMSRA( NTXYZS, WYZSOM+3*NBSOM )
+C     OUVERTURE POUR OBTENIR L'ADRESSE MCN
+      CALL LXTSOU( NTLXSU, 'XYZSOMMET', NTXYZS, MNXYZS )
+
+C     MISE A JOUR DU TMS XYZSOMMET
+C     ----------------------------
+      MCN(MNXYZS+WNBSOM)=NBSOM
+      CALL ECDATE( MCN(MNXYZS) )
+      MCN(MNXYZS+MOTVAR(6))=NONMTD('~>>>XYZSOMMET')
+
+C     REDUCTION DE LA TAILLE DU TMS NSEF
+      CALL TAMSRA( NTNSEF, WUSOEF+4*NBEFOB )
+C     OUVERTURE POUR OBTENIR L'ADRESSE MCN
+      CALL LXTSOU( NTLXSU, 'NSEF', NTNSEF, MNNSEF )
+
+C     MISE A JOUR DU TMS NSEF
+C     -----------------------
+      MCN(MNNSEF+WBEFOB)=NBEFOB
+      CALL ECDATE( MCN(MNNSEF) )
+      MCN(MNNSEF+MOTVAR(6))=NONMTD('~>>>NSEF')
+
+C     BILAN FINAL SUR LE TYPE DE LA SURFACE MAILLEE
+      IF( NBARXF(1) .EQ. 0 ) THEN
+         IF( NBARXF(3) .EQ. 0 ) THEN
+C           LE MAILLAGE DE LA SURFACE EST DEJA FERME
+            NUTFMA = 1
+         ELSE
+C           LE MAILLAGE DE LA SURFACE N'EST PAS FERME MALGRE 0 ARETE SIMPLE
+            NUTFMA = 0
+         ENDIF
+      ELSE
+C        LE MAILLAGE DE LA SURFACE N'EST PAS FERME
+         NUTFMA = 0
+      ENDIF
+      MCN( MNNSEF + WUTFMA ) = NUTFMA
+
+      J = NUDCNB(NMSUFI)
+      IF( NUTFMA .EQ. 1 ) THEN
+C
+C        SURFACE FERMEE (TOUTE ARETE APPARTIENT A 2 FACES)
+         IF( LANGAG .EQ. 0 ) THEN
+            WRITE(IMPRIM,*) NMSUFI(1:J),
+     %' est une SURFACE FERMEE de R**3  ...............................'
+         ELSE
+            WRITE(IMPRIM,*) NMSUFI(1:J),
+     %' is a CLOSED SURFACE of R**3  ..................................'
+         ENDIF
+
+      ELSE
+
+C        SURFACE NON-FERMEE
+         IF( LANGAG .EQ. 0 ) THEN
+            WRITE(IMPRIM,*) NMSUFI(1:J),
+     %' N''EST PAS une SURFACE FERMEE de R**3  ........................'
+         ELSE
+            WRITE(IMPRIM,*) NMSUFI(1:J),
+     %' is NOT a CLOSED SURFACE of R**3  ..............................'
+         ENDIF
+
+      ENDIF
+
+C     PAS D'ERREUR RENCONTREE
+      IERR = 0
+
+C     TRACER EN MAGENTA TOUTES LES ARETES APPARTENANT A  1 FACE
+C            EN GRIS    TOUTES LES ARETES APPARTENANT A  2 FACES
+C            EN ROUGE   TOUTES LES ARETES APPARTENANT A >2 FACES
+ccc      INTERA0 = INTERA
+ccc      INTERA  = 3
+      CALL TRARFASU( NDIMLI, NBSOM,  RMCN(MNXYZS+WYZSOM),
+     %               MCN(MNNSEF+WUSOEF),
+     %               L1ARFA, L2ARFA, MCN(MNARFA), NBARXF )
+ccc      INTERA = INTERA0
+
+C     DESTRUCTION DES TABLEAUX DEVENUS INUTILES
+ 9900 IF( MNAR1F .GT. 0 ) CALL TNMCDS( 'ENTIER', MXAR1F, MNAR1F )
+      IF( MNARFA .GT. 0 ) CALL TNMCDS( 'ENTIER', L1ARFA*L2ARFA, MNARFA )
+
+      RETURN
+      END

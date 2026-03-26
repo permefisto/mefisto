@@ -1,0 +1,10 @@
+variable PROFDROI 'Profil sur une DROITE' entier
+( 1  : '2 XYZ pour definir la DROITE'
+, 5  : 'COULEUR    des ARETES FRONTIERE'
+, 6  : 'TYPE TRAIT des ARETES FRONTIERE'
+, 7  : 'COULEUR des ARETES des PROFILS'
+, 8  : 'TYPE TRAIT  ARETES des PROFILS'
+, 9  : 'DIRECTION du PROFIL'
+, 15 : 'coefficient AMPLIFICATEUR'
+, 80 : 'REINITIALISER la DROITE'
+, 90 : 'EXECUTER le TRACE' ) ;

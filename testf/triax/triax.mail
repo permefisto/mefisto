@@ -1,0 +1,376 @@
+ { ===================================================================== }
+ { MEFISTO      Version 01/05/1995       PROJET: triax                   }
+ { Utilisateur: perronnet alain          Date: 17/04/92                  }
+ { ===================================================================== } 
+     
+ defvar pi4,pi,pi2,pi15; 
+        pi4=atan(1); pi2=pi4*2; pi=pi4*4; pi15=pi/15;
+ defvar p40d; 
+        p40d=pi/180*40;  
+                                
+ defvar h,rac2,rac3;
+  h=4; rac2=sqrt(2); rac3=sqrt(3);
+
+ defvar rc,r1,r2,ra,ran,rane,ratr,rconge,ep,ep0,ep1,ep2;
+ rc=20; r1=119/2; r2=131/2; ran=46; ra=8.5; rane=ran+ra; ratr=52/2; rconge=2;
+ ep1=12; ep2=ep1+rc;  ep=3; ep0=ep1-ep;
+
+ defvar na1,na2,na3,na4,na5,na6,na7,na8,na9,na10,naep1,naep2,naconge;
+ na1=rc*pi4/h; na2=27/h; na3=na1; na4=ra/h; na5=max(1,ep/h);
+ na6=(r2-rane)/h; na7=(r2-rc*rac2)*pi4/h; na8=(r1-rc*rac2)*pi4/h;
+ na9=max(2,(r2-r1)/h); na10=(r1-(rc+r2-r1)*rac2)/h;
+ naep1=ep1/h; naep2=rc/h; naconge=3;
+
+6;   { TRANSFORMATIONS mathematiques sur les objets }  
+ deffonc idx(x,y,z); idx=x;      finfonc;
+ deffonc idy(x,y,z); idy=y;      finfonc;
+ deffonc idz(x,y,z); idz=z;      finfonc;  
+
+ deffonc zep1(x,y,z); zep1=z+ep1;  finfonc;
+ deffonc zep2(x,y,z); zep2=z+ep2;  finfonc;
+
+ transz_ep1;     6;   idx;  idy;   zep1;
+ transz_ep2;     6;   idx;  idy;   zep2;   
+
+ deffonc py(x,y,z);  py=rc*asin(y/rc); finfonc;       
+ deffonc py0(x,y,z); py0=(rc+ep)*asin(y/(rc+ep)); finfonc;
+ deffonc pz(x,y,z);  pz=0;  finfonc;  
+  
+ deffonc pm1y0(x,y,z); pm1y0= (rc+ep)*sin(y/(rc+ep));     finfonc;
+ deffonc pm1z0(x,y,z); pm1z0=-(rc+ep)*cos(y/(rc+ep))+ep2; finfonc; 
+     
+ deffonc pm1y(x,y,z); pm1y= rc*sin(y/rc);     finfonc;
+ deffonc pm1z(x,y,z); pm1z=-rc*cos(y/rc)+ep2; finfonc;
+ deffonc pxz(x,y,z); pxz=z; finfonc;
+ deffonc pzx(x,y,z); pzx=x; finfonc;
+ deffonc pycz2(x,y,z); 
+   si x>1e-5 
+   alors pycz2=r2*atan(y/x);
+   sinon pycz2=r2*pi2;
+   finsi;
+ finfonc;       
+ deffonc pycz1(x,y,z); 
+   si x>1e-5 
+   alors pycz1=r1*atan(y/x);
+   sinon pycz1=r1*pi2;
+   finsi;
+ finfonc;       
+ deffonc pycz(x,y,z); 
+   si x>1e-5 
+   alors pycz=rc*atan(y/x);
+   sinon pycz=rc*pi2;
+   finsi;
+ finfonc;
+
+ deffonc pm1czx1(x,y,z); pm1czx1=r1*cos(y/r1); finfonc;
+ deffonc pm1czy1(x,y,z); pm1czy1=r1*sin(y/r1); finfonc; 
+     
+ deffonc pm1czx2(x,y,z); pm1czx2=r2*cos(y/r2); finfonc;
+ deffonc pm1czy2(x,y,z); pm1czy2=r2*sin(y/r2); finfonc; 
+
+ deffonc pm1czx(x,y,z); pm1czx=rc*cos(y/rc); finfonc;
+ deffonc pm1czy(x,y,z); pm1czy=rc*sin(y/rc); finfonc;
+
+ aplatir0;  6;  idx; py0;  pz; 
+ aplatir;   6;  idx; py;   pz;  
+ aplatirz1; 6;  pxz; pycz1; pz;  
+ aplatirz2; 6;  pxz; pycz2; pz;  
+ aplatirz;  6;  pxz; pycz; pz;  
+
+ arrondir;   6;  idx;    pm1y;    pm1z;  
+ arrondir0;  6; idx;     pm1y0;   pm1z0; 
+ arrondirz1; 6; pm1czx1; pm1czy1; pzx;  
+ arrondirz2; 6; pm1czx2; pm1czy2; pzx;   
+ arrondirz;  6; pm1czx ; pm1czy;  pzx;
+@; 
+
+ 20;     {modification de la PRECISION  pour identifier des points}
+  1;     {Autour d''un POINT NON ORIGINE }
+ 1E-3;
+@;
+
+ 1; 1;   { POINTS principaux de l objet }
+ o;  i;1; 0;0;0;
+ x1; i;1; rc;0;0;
+ x2; i;1; ran;0;0;
+ x3; i;1; rane;0;0;
+ x4; i;1; r2;0;0;
+ b1; i;1; rc;rc;0;
+ b2; i;1; ratr;ratr;0;
+ b3; i;1; R1/rac2; R1/rac2; 0;
+ b4; i;1; R2/rac2; R2/rac2; 0;
+ c1; i;1; rane; rc; 0;
+ c2; i;1; rane; (rc+ep); 0;
+ c3; i;1; ran; (rc+ep); 0;
+ c4; i;1; ran; rc; 0;
+ c5; i;1; sqrt( R2**2 - (rc+ep)**2 ); (rc+ep); 0;    
+ b0; i;1; rc/rac2; rc/rac2; 0; 
+ ab; i; 1; rc/rac2; rc/rac2;  ep2-rc/rac2; 
+
+ cz; i;1; rc*rac3/2;  10; 0;
+ cze;i;1; R2*rac3/2;  R2/2; 0;
+ d1; i;1; sqrt(r1**2-ratr**2); ratr; 0; 
+ d3; i;1; sqrt(r1**2-(ratr+rconge)**2); ratr+rconge; 0; 
+ d2; i;1; sqrt(r1**2-ratr**2)-rconge; ratr; 0; 
+
+ czb;i;1; r2*cos(pi15); r2*sin(pi15); 0;  
+ czi;i;1; r1*cos(p40d); r1*sin(p40d); 0; 
+ x;i;1;   1;  0;  0;
+ y;i;1;   0;  1;  0;
+ z;i;1;   0;  0;  1; 
+ zmep2;i; 1; 0; 0; 1-ep2;      
+ mx;i;1; -1;  0;  0;
+ my;i;1;  0; -1;  0;
+ mz;i;1;  0;  0; -1;
+
+ x1z1; transz_ep1; 50; x1; 
+ x4z1; transz_ep1; 50; x4; 
+ d1z1; transz_ep1; 50; d1; 
+ d2z1; transz_ep1; 50; d2; 
+ d3z1; transz_ep1; 50; d3; 
+
+ b1z1; transz_ep1; 50; b1; 
+ b2z1; transz_ep1; 50; b2;    
+ b3z1; transz_ep1; 50; b3;
+
+ b1z2; transz_ep2; 50; b1; 
+ b2z2; transz_ep2; 50; b2;    
+ b3z2; transz_ep2; 50; b3;
+ b4z2; transz_ep2; 50; b4;   
+ c1z2; transz_ep2; 50; c1;
+ c2z2; transz_ep2; 50; c2;    
+ c3z2; transz_ep2; 50; c3;
+ c4z2; transz_ep2; 50; c4; 
+ c5z2; transz_ep2; 50; c5; 
+ d1z2; transz_ep2; 50; d1;   
+ d2z2; transz_ep2; 50; d2; 
+ d3z2; transz_ep2; 50; d3; 
+
+ cerx0;  i; 1; rane; 0;         ep0;
+ cerx1;  i; 1; rane; 0;         ep1;
+ cerx2;  i; 1; rane; rc/2;      ep2-rc*rac3/2; 
+ cerxrc; i; 1; rane; (rc+ep)/2; ep2-(rc+ep)*rac3/2; 
+ x4z0;   i; 1; r2;   0; ep0;
+@;    
+
+6;   { TRANSFORMATIONS mathematiques sur les objets }  
+ rotzp90;  3; 1; O; z; -90; 0; 0; ep2; 1; 1; 1;
+ rotyp90;  3; 1; O; y;  90; 0; 0; ep2; 1; 1; 1;
+ roty90;   3; 3;    o; x; y;  o; mz; y;
+@;
+
+2;        { LIGNES aretes de l objet }
+ x1b0;i;3; na1;  1;  X1; B0;  CZ;
+ x1x2;i;2; na2;  1;  X1;  X2;
+ x2x3;i;2; na4;  1;  x2;  x3;
+ x3x4;i;2; na6;  1;  x3;  x4; 
+ x3c1;i;2; na1+na3; 1; x3; c1;
+ x1x4;i; 51; 3;  x1x2; x2x3; x3x4; 
+ x1x4d; i; 2; (r2-rc)/h; 1; x1; x4;
+ b0b1;i;2; na3;  1;  b0;  b1;
+ b1b2;i;2; na9;  1;  b1;  b2;
+ b2b3;i;2; na10; 1;  b2;  b3;
+ b3b4;i;2; na9; 1;  B3;  B4; 
+ b0b4; i; 51; 4; b0b1; b1b2; b2b3; b3b4;
+ x4c5;i;3; na1+na5;   1;  x4;  c5; czb;
+ c5b4;i;3; na7;  1;  c5;  b4;  cze;
+ b1c4;i;2; na2; 1; b1; c4;
+ b2d2;i;2; na2-1; 1; b2; d2;
+ c4c3;i;2; na5; 1; c4; c3;
+ c3c2;i;2; na4; 1; c3;c2;
+ c2c5;i;2; na6; 1; c2;c5;
+ c4c1;i;2; na4; 1; c4;c1;
+ c1c2;i;2; na5; 1; c1; c2;
+ d3b3;i;3; na8; 1; d3; b3; czi; 
+ x4b4;i;51; 2;  x4c5; c5b4;    
+{  conge;i; 28; naconge; rconge; d2; d1; d3;   }
+ conge; i; 2; 1; 1; d2; d3;   
+
+ c01;i; 51; 7;    X1X2; X2X3; X3C1; C4C1; B1C4; B0B1; X1B0;  
+
+ c02;i; 51; 5;    x4c5; c2c5; c1c2; x3c1; x3x4;
+ c03;i; 51; 10;   B1C4; C4C1; C1C2; C2C5; C5B4;
+                  B3B4; d3b3; conge; b2d2; b1b2;
+ c04;  i; 51; 4;  B2D2; conge; d3b3; B2B3; 
+ base; i; 51; 8; x1x4d; x4c5; c5b4; b3b4;
+                  b2b3; b1b2; b0b1; x1b0;
+
+ x1x4z1; transz_ep1; 50; x1x4;
+ b1c4z2; transz_ep2; 50; b1c4;
+ c5b4z2; transz_ep2; 50; c5b4; 
+ b1b2z2; transz_ep2; 50; b1b2;
+ b3b4z2; transz_ep2; 50; b3b4;    
+ b2d2z2; transz_ep2; 50; b2d2;
+ d3b3z2; transz_ep2; 50; d3b3; 
+ c3c2z2; transz_ep2; 50; c3c2; 
+ c4c3z2; transz_ep2; 50; c4c3; 
+ c1c2z2; transz_ep2; 50; c1c2;
+ c2c5z2; transz_ep2; 50; c2c5;
+ c4c1z2; transz_ep2; 50; c4c1;
+
+ b2b3z1; transz_ep1; 50; b2b3;     
+ b2d2z1; transz_ep1; 50; b2d2;
+ d3b3z1; transz_ep1; 50; d3b3; 
+
+{ conge1;i; 28; naconge; rconge; d2z1; d1z1; d3z1;  }
+{ conge2;i; 28; naconge; rconge; d2z2; d1z2; d3z2;  }
+  conge1;i; 2; 1; 1; d2z1; d3z1;
+  conge2;i; 2; 1; 1; d2z2; d3z2;
+
+ d2d2; i; 2; naep2; 1; d2z1; d2z2;  
+ d3d3; i; 2; naep2; 1; d3z1; d3z2; 
+
+ b2b2; i; 2; naep2; 1; b2z1; b2z2;     
+ b3b3; i; 2; naep2; 1; b3z1; b3z2;
+ b4b4; i; 2; naep1+naep2; 1; b4; b4z2;
+   
+ cxcz;  transz_ep2; 27;  { intersection 2 demi-cylindres d axes Y Z } 
+ na1; { NBARLI 'nombre d''aretes de la ligne intersection' entier ; } 
+   1; { axe des X }
+  rc; { RAYCAY 'rayon cylindre CY d''AXE Y (>R2)'  reel ; }
+  rc; { RAYCAZ 'rayon cylindre CZ d''AXE Z (<R1)'  reel ; }
+   0; { AL0CAZ 'longitude initiale en degres'      reel ; }
+  45; { AL1CAZ 'longitude finale   en degres'      reel ; }
+  -1; { COTCAZ 'cote z>0 ou z<0 (1 ou -1)' reel ;}          
+
+ cxcy;  rotyp90; 27;  { intersection 2 demi-cylindres d axes Y Z } 
+ na1; { NBARLI 'nombre d''aretes de la ligne intersection' entier ; } 
+   2; { axe des Y }
+  rc; { RAYCAY 'rayon cylindre CY d''AXE Y (>R2)'  reel ; }
+  rc; { RAYCAZ 'rayon cylindre CZ d''AXE Z (<R1)'  reel ; }
+  45; { AL0CAZ 'longitude initiale en degres'      reel ; }
+  90; { AL1CAZ 'longitude finale   en degres'      reel ; }
+   1; { COTCAZ 'cote z>0 ou z<0 (1 ou -1)' reel ;}       
+
+ CZcx;  roty90; 27;  { intersection 2 demi-cylindres d axes Y Z } 
+ na1+na3;  { NBARLI 'nombre d''aretes de la ligne intersection' entier ; } 
+   1;      { axe des x }
+  R2;      { RAYCAY 'rayon cylindre CX d''AXE X (>R2)'  reel ; }
+  rc+ep;   { RAYCAZ 'rayon cylindre CZ d''AXE Z (<R1)'  reel ; }
+   0;      { AL0CAZ 'longitude initiale en degres'      reel ; }
+  90;      { AL1CAZ 'longitude finale   en degres'      reel ; }
+   1;      { COTCAZ 'cote z>0 ou z<0 (1 ou -1)' reel ;}  
+
+ CZcxz0;  transz_ep2; 50; CZcx;
+                    
+ cerx1;  i; 3; na1+na3; 1; cerx1;  c1z2;  cerx2; 
+ cerx10; i; 3; na1+na3; 1; cerx0;  c2z2;  cerxrc; 
+ cx1cx0; i; 2; na5;     1; cerx1; cerx0; 
+ cer0;   i; 51; 4; cerx10; c1c2z2; cerx1; cx1cx0; 
+
+ cex40;  i; 2; na6; 1; cerx0; x4z0;  
+ cerceau; aplatir0; 51; 4; czcxz0; c2c5z2; cerx10; cex40;
+                        
+ x1ce1; i; 2; na2; 1; x1z1; cerx1;
+ c01plat; aplatir;  51; 6; x1ce1; cerx1; c4c1z2; b1c4z2; cxcy; cxcz; 
+
+ x1x1z1; i; 2; naep1; 1; x1; x1z1; 
+ x4x4z0; i; 2; naep1; 1; x4; x4z0;
+ gauche; i; 51;  6;  x1x4d; x4x4z0; cex40; cx1cx0; x1ce1; x1x1z1; 
+ devant; aplatirz2; 51; 5; x4b4; b4b4; c5b4z2; czcxz0; x4x4z0;  
+ b0ab; i; 2; naep2; 1; b0; ab;
+ axe; aplatirz; 51; 4; x1b0;  b0ab; cxcz; x1x1z1;
+ derriere;  i; 51; 9; b0b4; b4b4; b3b4z2; b3b3; b2b3z1; b2b2; b1b2z2; cxcy; b0ab; 
+ entaille1; i;         51; 4; b2b2; b2d2z2; d2d2; b2d2z1;
+ entaille2; aplatirz1; 51; 4; d3b3z1; b3b3; d3b3z2; d3d3;
+@; 
+
+3;    { SURFACES contours de l objet }
+ c01;i;9; { triangulation d un contour de lignes fermees }
+ h;       { ARETMX 'taille max des aretes des triangles equilateraux' reel ; }
+ 1;       { NBLFTR 'nombre de lignes fermees contour de la surface' entier ; }
+ 0;       { NBPTIT 'nombre de points internes futurs sommets' entier ; }
+ c01;     { DANS LE LEXIQUE ~>LIGNE }
+ c02;  i;                9; h;   1;  0;  c02;
+ c03;  i;                9; h;   1;  0;  c03; 
+ c032; transz_ep2; 50; c03;
+ c04;i;                  9; h;   1;  0;  c04; 
+ c041; transz_ep1; 50; c04;
+ base;   i;              9; h;   1; 0; base;    
+ gauche; i;              9; h;   1; 0; gauche;
+ cer0;   i;              9; h;   1; 0; cer0; 
+
+ cer1; arrondir0;        9; h;  1; 0; cerceau;  
+ c01c; arrondir;         9; h;  1; 0; c01plat; 
+ devant; arrondirz2;     9; h;  1; 0; devant;
+ axe;    arrondirz;      9; h;  1; 0; axe;      
+ derriere;  i;           9; h;  1; 0; derriere;
+ entaille1; i;           9; h;  1; 0; entaille1;
+ entaille2; arrondirz1;  9; h;  1; 0; entaille2;
+{ conge; i; 28; rconge; rconge; naconge; naep2; d2z1; d1z1; d3z1; d2z2; d1z2; d3z2;}
+ congeq; i; 1; conge1; d3d3; conge2; d2d2; 2;
+ conge;  i; 31; congeq; 1;
+
+ triaxs; i; 51;  13;
+     gauche; base; devant; derriere; axe;  c01c;
+     cer0; cer1; c032; c041; entaille1; entaille2; conge;     
+{ triaxs; i; 51;  16;
+     gauche; c01; c02; c03; c04;  devant; derriere; axe;  c01c;
+     cer0; cer1; c032; c041; entaille1; entaille2; conge; }
+
+@;    
+     
+4;     { VOLUMES parties de l objet }
+ triax8;i;8;  { un volume ferme d un volume pour option 9 }
+ 1;           { NBSF1V 'nombre de surfaces fermees contour du volume' entier ; }
+ triaxs;      { DANS LE LEXIQUE ~>SURFACE }
+
+ triax9;i;9;  { le volume union de volumes fermes de type 8 }
+ 10000;       { MXSOVO 'nombre maximal de sommets de la tetraedrisation' }
+ h;           { ARETGR 'longueur de l''arete de la grille reguliere' } 
+ 3;           { ANTE2P 'degres du petit angle de coplanearite' }
+ 0;           { NBPTIV 'nombre de points internes fournis par l''utilisateur' }
+ 1;           { NBVOPA 'nombre de volumes de type 8 de la partition' entier ; }
+ triax8;      { DANS LE LEXIQUE ~>VOLUME } 
+  
+ triaxa; i; 30;  { amelioration d une tetraedrisation }
+     triax9;     { DANS LE LEXIQUE ~>VOLUME }
+      0.3;       { QUTEMN 'qualite au dessous de laquelle ameliorer' }
+        3;       { ANTE2P 'degres du petit angle de coplanearite' }
+        8;       { NBITAT 'nombre des iterations pour ameliorer'  }
+@;  
+
+6;    { TRANSFORMATIONS mathematiques sur les objets }
+ sym_bissec; 3;   { isometrie de R3 -> R3 }
+             4;   { symetrie par rapport a un plan defini par 3 points }
+             b2;  b4;   b2z2; 
+                   
+ sym_yz;     3;   { isometrie de R3 -> R3 }
+             4;   { symetrie par rapport a un plan defini par 3 points }
+             o; y; z;     
+
+ sym_xz;     3;   { isometrie de R3 -> R3 }
+             4;   { symetrie par rapport a un plan defini par 3 points }
+             o; x; z;  
+
+ sym_xy;     3;   { isometrie de R3 -> R3 }
+             4;   { symetrie par rapport a un plan defini par 3 points }
+             b1z2; b4z2; c1z2;
+
+ sym_z2;     3;   { isometrie de R3 -> R3 }
+             4;   { symetrie par rapport a un plan defini par 3 points }
+ c1z2; b4z2; b1z2;
+  
+@; 
+
+4;    { VOLUMES parties de l objet }
+ triax2;  sym_bissec;  50; triaxa;
+ triax14; i;           51; 2; triaxa; triax2;
+ triax14yz; sym_yz;    50; triax14;
+ triax12; i;           51; 2; triax14; triax14yz;
+ triax12xz; sym_xz;    50; triax12;
+ triax; i;             51; 2; triax12; triax12xz; 
+@;
+
+10; {TRACES}
+ 4; 3; triax; 90;
+ 50; 90;
+QUITTER;  {Le reste est inactif si non relu}
+
+@;
+@;
+4;  {VOLUMES par symetries}
+ triax1xy;  sym_xy;    50; triax;
+ triaxes; i;           51; 2; triax; triax1xy;
+@;
+FERMER;

@@ -1,0 +1,13 @@
+deftms ~>>>TEMPERINIT 'Temperature Initiale aux Noeuds'
+variable muet DATE 'date de creation du tableau'     reel2  ;
+variable muet NUTD 'numero du tableau descripteur'   entier ; 
+variable    LTTEM0 'type de la Temperature Initiale' entier 
+ ( 2 : 'Temperature Initiale existante'
+,  1 : 'Temperature Initiale constante' 
+, -1 : 'Fonction Temperature Initiale'
+,  0 : 'Temperature Initiale a supprimer' ) ;
+cas LTTEM0
+ 1 : variable VATEM0 'Valeur Temperature Initiale' reel ; 
+-1 : variable NFTEM0 'Nom fonction Temperature Initiale' ^~>FONCTION ;
+fincas ;   
+fintms ;

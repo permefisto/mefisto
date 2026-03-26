@@ -1,0 +1,20 @@
+#!/bin/bash
+echo  Nom du repertoire?
+read repe
+echo librairie $repe
+cd $repe
+nbl=0
+#  le nombre de lignes d appels CALL des fichiers *.f de la librairie $repe
+#
+for j in `ls -1 *.f`
+do
+      nl=0                 #le nombre de lignes du fichier $j
+      set `grep -i CALL $j | wc` ; nl=$1
+      nbl=`expr $nbl + $nl`
+      echo $nl lignes avec un CALL dans le fichier $j
+done
+#
+echo
+echo Total pour la librairie $repe : $nbl lignes avec CALL
+echo --------------------------------------------------------------------------------
+

@@ -1,0 +1,43 @@
+#!/bin/bash   
+#
+#  -----------------------------------------------   
+#  Cryptage selon b77 de Frederic HECHT  Juin 1997
+#  -----------------------------------------------      
+#  lecture et mise sous le directory 
+cd $MEFISTO
+echo -n nom de la bibliotheque?
+read dir
+echo -n nom du sp fortran?
+read sp
+nomsp=`basename $sp .f` 
+nomspf=./$dir/$nomsp.f
+#
+#  si le repertoire .cry n'existe pas il est cree
+if test ! -d ./$dir.cry 
+then 
+  mkdir ./$dir.cry
+fi  
+
+nomspc=./$dir.cry/$nomsp.f
+rm $nomspc  2>poubelle
+#
+# cryptage de nomspc selon b77
+# dans un fichier de nom donn'e remplace chaque nom par un autre nom
+# la correspondance entre les noms se trouvera dans le fichier "XXX.rmp" 
+#   utilisation:
+#    b77  [[-in] input_files *[input_file]] [-out output_file] [-dico dico_file]
+#         [-comment] [-indent] [-blancs] 
+#                  [-idir prefix *[ prefix] ]   { recherche pour include }
+#         
+$mefisto/bin/b77/b77 $nomspf >$nomspc
+#       
+if test -f $nomspc
+then 
+  echo CRYPTAGE FAIT dans $nomspc
+else
+  echo ==========================================================
+  echo PROBLEME: $nomspc NON GENERE
+  echo ==========================================================
+fi  
+rm poubelle
+

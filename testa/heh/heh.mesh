@@ -1,0 +1,101 @@
+{ ==================================================================== }
+{ Logiciel MEFISTO     : Version July 2007                             }
+{ Name of the User     : Alain Perronnet                               }
+{ Name of the Project  : vp21                                          }
+{ Date                 : 15/10/2003                                    }
+{ Heure                : 14h 04m 05s                                   }
+{ ==================================================================== }
+ defvar a; a=0.5;
+ defvar R; R=60;
+ {nbsubedge of the sphere is adjusted to have a max edge=R/1.25}
+ defvar nbsubedge; nbsubedge=nint(3.14159*cos(atan(0.5)));
+ defvar edgemax; edgemax=R;
+
+1;  { POINTS vertices of the object }
+ 1; { TYPING of values }
+
+ origine;i;       { NAME of POINT or ESCAPE? }
+            1;  0; 0; 0;  { coordinates x y z }
+ amoins; i; 1; -a; 0; 0;
+ aplus;  i; 1;  a; 0; 0;
+@;
+
+
+3; { SURFACES faces of the object }
+ sphere; i;  { NAME of the SURFACE or ESCAPE? }
+ 18;      { 1/1 de la surface d une SPHERE }
+ 20*3**2; {nbsubedge**2; NBTRSP 'approach number of triangles' }
+ R;       { RAYOSP 'radius of the sphere' reel ; }
+ ORIGINE; { IN THE LEXICON ~>POINT }
+ @;
+
+
+4; { VOLUMES materiaux de l objet }
+ v8; i;  { NAME of VOLUME or ESCAPE? }
+ 8;      { a closed volume of a volume option 9; }
+ 1;      { NBSF1V 'number of closed surfaces contour of the volume' }
+ sphere; { IN THE LEXICON ~>SURFACE }
+
+ v9; i;    { NAME of VOLUME or ESCAPE? }
+ 9;        { tetraedrisation de volumes de type 8 }
+ 500000;   { MXSOVO 'number maximal of vertices of the tetrahedrization' }
+ edgemax; { ARETGR 'edge lenght of the regular grid }
+ deffunc edge_length(x,y,z);
+ defvar d; d=sqrt(x*x+y*y+z*z);
+ if d<2.75*a then
+    edge_length=a*0.5;
+ else
+    edge_length=(a*(R-d)+edgemax*d)/R;
+ endif;
+ endfunc;
+ 8;   { ANEN2P degrees of the coplanearity angle  }
+ 3;   { NBPTIV number of internal points given by the user }
+ 1;   { NBVOPA number of type 8 volumes }
+ v8;  { IN THE LEXICON ~>VOLUME }
+ amoins; origine; aplus; { IN THE LEXICON ~>POINT }
+ a/4;    a/4;     a/4;   { wished distance around the internal points }
+
+ sphere; i; { NAME du VOLUME or ESCAPE? }
+ { IN THE LEXICON ~>TRANSFO }
+ 30;  { improvement of a tetrahedrization }
+ v9;  { IN THE LEXICON ~>VOLUME }
+ 0.5; { QUTEMN improvement under this quality of tetrahedra }
+ 8;   { ANTE2P degrees  of the coplanearity angle }
+ 15;  { NBITAT number of iterations to improve }
+ @;
+
+
+3; { SURFACES faces of the object }
+ surfsphere; i; { NAME of the SURFACE or ESCAPE? }
+ { NAME of TRANSFORMATION }
+ 37;     { EXTRACTED surface of a volume }
+ sphere; { IN THE LEXICON ~>VOLUME }
+ { NAME of the FUNCTION }
+ deffunc yes(x,y,z);
+   yes=1;
+ endfunc;
+ yes;    { IN THE LEXICON ~>FONCTION }
+ 1;      { boundary faces }
+ @;
+
+5;  { OBJETS parties de l OBJET }
+ electron_wave_functions;  { NAME of the OBJECT or ESCAPE }
+ 0;   { classic 2D or 3D }
+ 2;   { NBDOBJ 'number of Points Lines Surfaces Volumes Objects of the object }
+ vol;    sphere;   { Point Line Surface Volume Object of the object }
+ surf; surfsphere; { NTYOBJ(1..NBDOBJ) name of type PLSVO and name of PLSVO typeobject }
+ { NAME of the OBJECT or ESCAPE? }
+@;
+
+7;  { INTERPOLATION NODES of the MESH }
+ electron_wave_functions; { NAME of the OBJECT to INTERPOLATE? }
+ 4;  { LAGRANGE of DEGREE 2 }
+@;
+
+10;  { DRAWING of the MESH of PLSVO }
+ 5;  { OBJECT }
+ 1;  { All OBJECTS 1 by 1 }
+ 90; { Continue the DRAWING }
+@;
+
+CLOSE;

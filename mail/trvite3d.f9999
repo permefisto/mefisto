@@ -1,0 +1,176 @@
+      SUBROUTINE TRVITE3D( NBPOI,    XYZPOI, &
+                           MOARFR,   MXARFR,   L1ARFR, LAREFR, &
+                           SEMINVIT, SEMAXVIT, CMVITE, &
+                           NCAS,     VITX, VITY, VITZ, VITMAX )
+! ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+! BUT :    TRACER LES ARETES FRONTALIERES, LES FLECHES VITESSES
+! -----    EN TOUS LES POINTS DES EF 3D D'UN NCAS
+
+! ENTREES:
+! --------
+! NBPOI  : NOMBRE DE POINTS STOCKES DANS XYZPOI
+! XYZPOI : XYZ DES POINTS DES EF DU MAILLAGE
+! MOARFR : NOMBRE DE MOTS PAR ARETE FRONTALIERE DU TABLEAU LAREFR
+! MXARFR : NOMBRE DE FACES DU TABLEAU LAREFR
+! L1ARFR : NUMERO DANS LAREFR DE LA PREMIERE ARETE FRONTALIERE
+! LAREFR : TABLEAU NUMERO DES 2 SOMMETS ET LIEN
+!          LAREFR(1,I)= NO DU 1-ER  SOMMET DE L'ARETE FRONTALIERE
+!          LAREFR(2,I)= NO DU 2-EME SOMMET > 1-ER  SOMMET
+!          LAREFR(3,I)= 0 OU NUMERO DE L'ARETE FRONTALIERE SUIVANTE
+! SEMINVIT: MIN DE LA NORME DE LA VITESSE AU DESSOUS DUQUEL LA
+!           FLECHE NE DOIT PAS ETRE TRACEE
+! SEMAXVIT: MAX DE LA NORME DE LA VITESSE AU DESSUS DUQUEL LA
+!           FLECHE NE DOIT PAS ETRE TRACEE
+! CMVITE : NOMBRE DE CM POUR L'UNITE DE VITESSE
+! NCAS   : NUMERO DU CAS A TRAITER
+! VITX   : COMPOSANTE X DE LA VITESSE EN CHAQUE NOEUD DES TETRAEDRES
+! VITY   : COMPOSANTE Y DE LA VITESSE EN CHAQUE NOEUD DES TETRAEDRES
+! VITZ   : COMPOSANTE Z DE LA VITESSE EN CHAQUE NOEUD DES TETRAEDRES
+! VITMAX : VITESSE MAXIMALE POUR DEFINIR LA COULEUR DANS LA PALETTE
+
+! REMARQUE:
+!          LA FONCTION UTILISATEUR Region(t,x,y,z) PEUT LIMITER LA
+!          REGION OU TRACER LA FLECHE DE LA VITESSE
+! ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+! AUTEUR : ALAIN PERRONNET Laboratoire JL LIONS UPMC Paris  Fevrier 2007
+! MODIFS : ALAIN PERRONNET Veulettes sur mer                Aout    2020
+! MODIFS : ALAIN PERRONNET Saint Pierre du Perray           Mars    2021
+! MODIFS : ALAIN PERRONNET Saint Pierre du Perray          Decembre 2021
+! ...................................................................012
+!$ USE OMP_LIB
+      PARAMETER     (LIGCON=0, LIGTIR=1)
+      include"./incl/langue.inc"
+      include"./incl/trvari.inc95"
+      include"./incl/mecoit.inc95"
+      include"./incl/ntmnlt.inc95"
+      include"./incl/ctemps.inc"
+      include"./incl/threads.inc"
+      COMMON / UNITES / LECTEU, IMPRIM, NUNITE(30)
+      DOUBLE PRECISION  VITX(NBPOI), &
+                        VITY(NBPOI), &
+                        VITZ(NBPOI)
+      REAL              XYZPOI(3,NBPOI)
+      INTEGER           LAREFR(1:MOARFR,1:MXARFR)
+      REAL              DIRFLE(3), DISTCM
+      DOUBLE PRECISION  SEMINVIT, SEMAXVIT, VITNORM, VITMAX, &
+                        DPARAF(4), DSREGI
+
+!     EXISTENCE OU NON DE LA FONCTION 'REGION'
+!     ========================================
+      CALL LXNMNO( NTFONC, 'REGION', NOFORE, I )
+!     NOFORE>0 SI CETTE FONCTION EXISTE
+
+!     LA PALETTE 2 : LES COULEURS VARIENT RAPIDEMENT ET S'ASSOMBRISSENT
+!     LA PALETTE 11: ARC EN CIEL
+      CALL PALCDE(11)
+
+!     LE NOMBRE-1 DE COULEURS DISPONIBLES
+      NBCOUL = NDCOUL - N1COUL
+
+!     LES ARETES SONT TRACEES EN CONTINU
+      CALL XVTYPETRAIT( LIGCON )
+
+!     LA DIRECTION DE VISEE PTV-OEIL
+      DIREVI(1) = AXOEIL(1) - AXOPTV(1)
+      DIREVI(2) = AXOEIL(2) - AXOPTV(2)
+      DIREVI(3) = AXOEIL(3) - AXOPTV(3)
+
+      CALL T3PLAV
+      CALL TRAXE3
+!     AUCUN ITEM SUR L'ECRAN
+      CALL ITEMS0
+
+      IF( NOFORE .GT. 0 ) THEN
+!        LIMITATION du TRACE PAR LA FONCTION 'REGION(t,x,y,z)'
+!        -----------------------------------------------------
+         IF( LANGAG .EQ. 0 ) THEN
+            WRITE(IMPRIM,10011) NCAS
+         ELSE
+            WRITE(IMPRIM,20021) NCAS
+         ENDIF
+10011    FORMAT('CAS',I6, &
+        ': VITESSES dans la REGION DEFINIE par la FONCTION REGION(t,x,y,z)')
+20021    FORMAT('CASE',I6, &
+        ': VELOCITIES in the REGION DEFINED by the FUNCTION REGION(t,x,y,z)')
+      ENDIF
+
+      N = L1ARFR
+ 10   IF( N .GT. 0 ) THEN
+
+!        TRACE DE L' ARETE FRONTALIERE DES VOLUMES DE L'OBJET
+!        ----------------------------------------------------
+!        LE NUMERO DE L'ARETE DANS LE TABLEAU LAREFR
+         CALL XVEPAISSEUR( 0 )
+         CALL TRAIT3D( NCOUAF, XYZPOI(1,LAREFR(1,N)), &
+                               XYZPOI(1,LAREFR(2,N)) )
+
+!        PASSAGE A L'ARETE SUIVANTE
+         N = LAREFR(3,N)
+         GOTO 10
+
+      ENDIF
+
+!     FLECHE VITESSE EN TOUS LES NOEUDS SAUF NON INCLUS DANS LA REGION
+!     ----------------------------------------------------------------
+      IF( NPAFLE .LE. 0 ) NPAFLE = 1
+      CALL XVEPAISSEUR( NEPFLE )
+!!!      CALL XVEPAISSEUR( 2 )
+
+!///////////////////////////////////////////////////////////////////////
+!$OMP PARALLEL  DEFAULT(SHARED) &
+!$OMP PRIVATE(N,K,NOCOUL,NCODEV,DPARAF,DSREGI,VITNORM,DIRFLE,DISTCM)
+!$OMP DO SCHEDULE( STATIC, NBPOI/NBTHREADS )
+
+      DO 20 N=1,NBPOI
+
+!!!         IF( MOD(N,NPAFLE) .NE. 0 ) GOTO 20
+
+!!!         print 10020,N,(XYZPOI(K,N),K=1,3),VITX(N), &
+!!!                        VITY(N),VITZ(N)
+!!!10020    FORMAT('XYZ',I3,'=',3G13.4,'  VXYZ=',3G15.6)
+
+         IF( NOFORE .GT. 0 ) THEN
+!           LES 4 PARAMETRES D'APPEL DE LA FONCTION 'REGION'
+!           LE TEMPS EN 1-ER PARAMETRE
+            DPARAF(1) = TEMPS
+!           PUIS LES 3 COORDONNEES X Y Z DU NOEUD N
+            DO K=1,3
+               DPARAF(1+K) = XYZPOI(K,N)
+            ENDDO
+!           FONCTION REGION(TEMPS,X,Y,Z)
+            CALL FONVAL( NOFORE, 4, DPARAF, NCODEV, DSREGI )
+            IF( NCODEV .EQ. 0 .OR. DSREGI .EQ. 0D0 ) GOTO 20
+!           ICI TRACE DE LA FLECHE
+         ENDIF
+
+!        MODULE DE LA FLECHE VITESSE AU POINT
+         VITNORM = SQRT( VITX(N)**2 + VITY(N)**2 + VITZ(N)**2 )
+
+!        AU DESSOUS DU SEUIL MIN PAS DE TRACE DE LA FLECHE
+         IF( VITNORM .LT. SEMINVIT ) GOTO 20
+!        AU DESSUS DU SEUIL MAX PAS DE TRACE DE LA FLECHE
+         IF( VITNORM .GT. SEMAXVIT ) GOTO 20
+
+!        LONGUEUR DE LA FLECHE
+         DIRFLE(1) = REAL( VITX(N) * CMVITE )
+         DIRFLE(2) = REAL( VITY(N) * CMVITE )
+         DIRFLE(3) = REAL( VITZ(N) * CMVITE )
+         DISTCM    = REAL( VITNORM * CMVITE )
+
+!        COULEUR DU BOIS DE LA FLECHE
+         NOCOUL = NINT( VITNORM / VITMAX * NBCOUL + N1COUL )
+         IF( NOCOUL .GT. NDCOUL ) NOCOUL = NDCOUL
+         CALL T3FLEC( NOCOUL, XYZPOI(1,N), DISTCM, DIRFLE )
+
+ 20   ENDDO
+
+!$OMP END DO
+!$OMP END PARALLEL
+!/////////////////////////////////////////////////////////////////////////
+
+!     FINITION DU TRACE DES 3 PLANS PAR TRACE DES 3 ARETES VUES
+      CALL T3PLAP
+      CALL XVEPAISSEUR( 0 )
+
+      RETURN
+      END

@@ -1,0 +1,8 @@
+variable TRAERRVI 'Trace ERREURS du |VITESSE|' entier
+( 1 : 'ISO-ERREURS du module |VITESSE|'
+, 2 : 'ZONES de COULEURS de l''ERREUR |VITESSE|'
+, 3 : 'ZONES ERREUR |VITESSE| par SECTIONS X ou Y ou Z=CTE'
+, 4 : 'PROFILS ERREUR |VITESSE| dans PLANS X ou Y ou Z=CTE'
+, 5 : 'ERREURS |VITESSE| le LONG d''une DROITE de 2 POINTS'
+, 6 : 'ERREURS |VITESSE| sur UNE SURFACE ou PLUS de l''OBJET'
+, 9 : 'En 2D SURFACE(X,Y,Erreur|VitesseExact-Calc(X,Y)|)' ) ;

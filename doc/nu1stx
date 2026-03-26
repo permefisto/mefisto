@@ -1,0 +1,2 @@
+NU1STX is the number of the first vertex to be extracted of the line.
+This number must be >0 and < number of line vertices.

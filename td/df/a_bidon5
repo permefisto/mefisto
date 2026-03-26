@@ -1,0 +1,5 @@
+deftms ~>BIDON5 'a remplacer par un vrai tms'
+variable muet DATE   'date de creation du tableau'   reel2 ;
+variable muet NUTD   'numero du tableau descripteur' entier ;  
+variable BIDON5  'rien a signaler' entier ;
+fintms ;

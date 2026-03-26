@@ -1,0 +1,81 @@
+#!/bin/bash
+#
+#  compilation et edition de liens de pppara.f sous le debogueur ddd
+#  Alain Perronnet                              Juillet 2000
+echo     
+echo ===========================================================================
+echo "$MEFISTO-linux: Compilation Edition de liens de pppara.f"
+echo ===========================================================================
+cd $MEFISTO
+nompp=pp/pppara
+rm $nompp    
+rm pppara.o 
+#
+# compilation de xvuelc.c
+if test -f xvue/xvuelc.o
+then
+   echo "xvue/xvuelc.o NON recompile"
+else 
+   $MEFISTO/bin/ccxvue
+fi
+
+echo "Un peu de patience : Compilation, Edition de liens en cours ..."
+
+###f77 +ppu -g prpr/pppara.f util/lib xvue/lib xvue/xvuelc.o \
+###     -lXm -lXt -lX11 -lXext \
+###     -o $nompp
+
+###g77  -g -I.  prpr/pppara.f util/lib xvue/lib xvue/xvuelc.o \
+###     -L/usr/X11R6/lib -lXt -lX11 -lXext \
+###     -o $nompp
+
+gfortran -m64 -fPIC -fopenmp -g -I.  prpr/pppara.f util/lib xvue/lib util/lib xvue/lib xvue/xvuelc.o \
+     -lgfortran -L/usr/X11R6/lib64 -lX11   -o $nompp
+
+rm pppara.o
+
+if test -f $nompp 
+then 
+   ls -l $MEFISTO/pp
+   echo "$nompp est PRET a l'emploi" 
+#
+#  destruction des fichiers 
+#   rm $MEFISTO/incl/a_*.inc 
+#   rm $MEFISTO/incl/bibinc
+#
+#  calcul des fichiers PARAMETER sous le debogueur ddd
+   ddd $nompp 
+#
+#  creation de la liste des fichiers, un nom par ligne
+   ls -1 ./incl/a_*.inc >./incl/bibinc
+   chmod 777 ./incl/bibinc
+#
+#  ajout de la declaration INTEGER des variables w
+   if test -f ./bin/entierw
+   then 
+      rm ./bin/entierw
+   fi 
+   if test -f /entierw.o
+   then
+      rm ./entierw.o
+   fi
+   gfortran -m64 -fPIC -g -I. ./bin/entierw.f -o ./bin/entierw
+   ./bin/entierw
+#
+#  changement des droits d'acces
+   chmod -R 770 ./incl
+#
+#  destruction de la liste des fichiers
+   rm ./incl/bibinc 
+   rm ./bin/entierw
+#
+   chmod 755 $nompp
+   echo
+   echo "Le contenu actuel du repertoire $MEFISTO/pp"
+   ls -l $MEFISTO/pp
+#
+else
+   echo "$nompp est INCORRECT REVOIR le fortran de pppara ou autre ..."
+fi 
+
+echo

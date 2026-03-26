@@ -1,0 +1,186 @@
+{ ==================================================================== }
+{ MEFISTO Software     : May 5, 2023 version                           }
+{ USER's Name          : Alain Perronnet                               }
+{ Project Name         : pan3d                                         }
+{ Date                 : 23/05/06   11h 08m 05s                        }
+{ ==================================================================== }
+
+ DefVar Radius;  Radius =0.1;
+ DefVar Zmax;    Zmax   =0.08;
+ DefVarEdgeMax;  EdgeMax=0.005;
+ DefVar Epsilon; Epsilon=0.001;
+
+19; { min MAX of XYZ of a PLSVO }
+ { X MINIMUM? }
+ -Radius-EdgeMax; Radius+EdgeMax;
+ { Y MINIMUM? }
+ -Radius-EdgeMax; Radius+EdgeMax;
+ { Z MINIMUM? }
+ -EdgeMax; Zmax+EdgeMax;
+
+0;{ WISHED EDGE LENGTH>0 by DEFAULT }
+ { LENGTH by DEFAULT of MESH EDGES? }
+ EdgeMax;
+
+1;{ POINTS vertices of the object }
+ 1;{ TYPING of VALUES }
+ { NAME of the POINT or ESCAPE? }
+ Centre; i; 1; 0; 0; 0;
+ { in LEXICON ~>TRANSFO }
+ { X Y Z COORDINATES }
+ { COORPO 'X Y Z of a point' xyz ; }
+ { NAME of the POINT or ESCAPE? }
+
+ X; i; 1;
+ { in LEXICON ~>TRANSFO }
+ { X Y Z COORDINATES }
+ { VALUE of X? } Radius;
+ { VALUE of Y? } 0;
+ { VALUE of Z? } 0;
+ { COORPO 'X Y Z of a point' xyz ; }
+
+ { NAME of the POINT or ESCAPE? }
+ Y;I; 1; 0; Radius; 0;
+ { in LEXICON ~>TRANSFO }
+ { X Y Z COORDINATES }
+ { COORPO 'X Y Z of a point' xyz ; }
+
+ { NAME of the POINT or ESCAPE? }
+ Z; I; 1;0; 0; 
+ { in LEXICON ~>TRANSFO }
+ { X Y Z COORDINATES }
+ { VALUE of Z? } Zmax;
+ { COORPO 'X Y Z of a point' xyz ; }
+ @;
+
+
+2;{ LINES edges of the object }
+ { NAME of the LINE or ESCAPE? }
+ circle; I;
+ { in LEXICON ~>TRANSFO }
+ 8;
+ { COMPLETE 3D CIRCLE }
+ 200;
+ { NBARLI 'number of edges of the line' entier ; }
+ 3;{ circle defined by centre, radius, choice of plane=Constant }
+ centre;{ in LEXICON ~>POINT }
+ Radius;{ RAYDCI 'radius of circle' reel ; }
+ 3;{ circle in plane XY with Z=centre(3)=Ct }
+ { NAME of the LINE or ESCAPE? }
+ @;
+
+3;{ SURFACES faces of the object }
+ { NAME of the SURFACE or ESCAPE? }
+ Circle;
+ I;      { NAME of TRANSFORMATION }
+ 9;      { TRIANGULATION1 BETWEEN CLOSED LINES }
+ EdgeMax;{ ARETMX 'MAX LENGTH of edges of regular triangles' reel ; }
+ 1;{ NBLFTR 'NUMBER of closed lines contour of the surface' entier ; }
+ 1;{ NBPTIT 'NUMBER of internal points future vertices' entier ; }
+ { NAME of LINE } CIRCLE;
+ { in LEXICON ~>LIGNE }
+ { NAME of POINT } Centre; { in LEXICON ~>POINT }
+ EdgeMax;
+ { DISOSV(1..NBPTIT) 'wished distance to the near vertices' reel ; }
+ { NAME of the SURFACE or ESCAPE? }
+ @;
+
+4;{ VOLUMES materials of the object }
+ { NAME of the VOLUME or ESCAPE? }
+ Cylinder;
+ { NAME of TRANSFORMATION }
+ I;{ in LEXICON ~>TRANSFO }
+ 14;{ PATH 3D of a GENERIC SURFACE (EXTRUSION) }
+ { NAME of SURFACE }
+ CIRCLE;
+ { in LEXICON ~>SURFACE }
+ 2;
+ { translation of a constant cote z>0 (a stack) }
+ Zmax/EdgeMax;
+ { NBTRCS 'NUMBER of slices of the final volume' entier ; }
+ Zmax;{ ZMAXCS 'MAX Z cote to cut in slices' reel ; }
+
+ { NAME of the VOLUME or ESCAPE? }
+ Cylinder_Tetra;
+ { NAME of TRANSFORMATION }
+ I; { in LEXICON ~>TRANSFO }
+ 31;{ TETRAHEDRIZATION of a TETRA-PENTA-HEXAHEDRIZATION }
+ { NAME of VOLUME }
+ CYLINDER;
+ { in LEXICON ~>VOLUME }
+ { NAME of the VOLUME or ESCAPE? }
+ @;
+
+3;{ SURFACES faces of the object }
+ { NAME of the SURFACE or ESCAPE? }
+ Bottom;
+ { NAME of TRANSFORMATION }
+ I;{ in LEXICON ~>TRANSFO }
+ 37;{ EXTRACT SURFACE FROM FACES of a VOLUME }
+ { NAME of VOLUME }
+ Cylinder_Tetra;
+ { in LEXICON ~>VOLUME }
+ { NAME of FUNCTION }
+ DefFunc Bottom(x,y,z); Bottom=z>-Epsilon and Z<Epsilon; EndFunc;
+ Bottom;
+ { in LEXICON ~>FONCTION }
+ 1;{ BOUNDARY FACES }
+
+ { NAME of the SURFACE or ESCAPE? }
+ Top;
+ { NAME of TRANSFORMATION }
+ I;{ in LEXICON ~>TRANSFO }
+ 37;{ EXTRACT SURFACE FROM FACES of a VOLUME }
+ { NAME of VOLUME }
+ Cylinder_Tetra;
+ { in LEXICON ~>VOLUME }
+ { NAME of FUNCTION }
+ DefFunc Top(x,y,z); Top=Z>Zmax-Epsilon and Z<Zmax+Epsilon; EndFunc;
+ Top;
+ { in LEXICON ~>FONCTION }
+ 1;{ BOUNDARY FACES }
+
+ { NAME of the SURFACE or ESCAPE? }
+ Contour;
+ { NAME of TRANSFORMATION }
+ I;
+ 37;{ EXTRACT SURFACE FROM FACES of a VOLUME }
+ { NAME of VOLUME }
+ Cylinder_Tetra;
+ { in LEXICON ~>VOLUME }
+ { NAME of FUNCTION }
+ DefFunc Contour(x,y,z);
+ Contour=sqrt(x*x+y*y)>Radius-Epsilon;
+ EndFunc;
+ Contour; { in LEXICON ~>VOLUME }
+ 1;{ BOUNDARY FACES }
+ @;
+
+
+ 5;{ OBJECTS parts of the OBJECT }
+ pan3d; { name of the OBJECT }
+ 0;     { classic 2D or 3D }
+ 6;     { NBDOBJ number of Points Lines Surfaces Volumes Objects of the object}
+        { POINT or LINE or SURFACE or VOLUME or OBJECT? }
+        { NTYOBJ(1..NBDOBJ) 'name of type PLSVO and name of PLSVO' typeobject }
+ V; Cylinder_Tetra; 
+ S; Bottom;
+ S; Contour;
+ S; Top;
+ L; Circle;
+ P; Z;
+ @;
+
+
+ 7;   { INTERPOLATION NODES of the MESH }
+ pan3d;  { name of the OBJECT to INTERPOLATE }
+  4;     { LAGRANGE de DEGRE 2 => Tetraedra Taylor-Hood P2 }
+ @;
+ @;
+
+10;  { DRAWINGS of the pan }
+ 5;  { OBJECT }
+ 1;  { ALL OBJECTS 1 by 1 }
+ 90; { Continue the DRAWING }
+
+CLOSE;

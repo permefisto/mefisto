@@ -1,0 +1,144 @@
+      SUBROUTINE SESTCLIC( XYZSOM,  ITSTPRCL, NUSTPRCL )
+C+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+C BUT :    CONSTRUIRE LES ITEMS SOMMETS VISIBLES SUR L'ECRAN GRAPHIQUE
+C -----    SELECTIONNER A L'AIDE D'UN CLIC SOURIS UN SOMMET DU MAILLAGE
+C          PRESENT DANS LA FENETRE GRAPHIQUE C-A-D
+C          RETOURNER LE NUMERO NUSTPRCL DU SOMMET VISIBLE LE PLUS PROCHE
+C          DU POINT CLIQUE DANS UN MAILLAGE 3D
+
+C ENTREE :
+C --------
+C XYZSOM : XYZ les 3 COORDONNEES CARTESIENNES DES SOMMETS DU MAILLAGE
+
+C SORTIES:
+C --------
+C ITSTPRCL: >0 NUMERO DE L'ITEM SOMMET LE PLUS PROCHE DU POINT CLIQUE
+C           =0 PAS D'ITEM SOMMET PROCHE
+C NUSTPRCL: >0 NUMERO DU SOMMET VISIBLE LE PLUS PROCHE DU POINT CLIQUE
+C              NUSTPRCL=MCN(MNITEMS+MCN(MNITEMS)*ITSTPRCL+3)
+C              EST L'INDICE DANS LE TABLEAU XYZSOM
+C           =0 SI PAS D'ITEM SOMMET PROCHE OU ABANDON DEMANDE
+C+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+C AUTEUR : Alain PERRONNET  Saint PIERRE du PERRAY            Avril 2020
+C2345X7..............................................................012
+      include"./incl/langue.inc"
+      include"./incl/trvari.inc"
+      include"./incl/mecoit.inc"
+      include"./incl/pp.inc"
+      REAL          RMCN(MOTMCN)
+      COMMON         MCN(MOTMCN)
+      EQUIVALENCE  (RMCN(1),MCN(1))
+
+      COMMON /LECLXQ/LECLEX
+
+      REAL           XYZSOM(3,*)
+      CHARACTER*20   KTITRE
+
+C     LES ITEMS SOMMETS VISIBLES SONT SUR L'ECRAN
+      LECLEX = 6
+
+      ITSTPRCL= 0
+      NXCL    = -1
+      NYCL    = -1
+      NUSTPRCL0= 0
+      NUSTPRCL = 0
+      DISTMI  = 1E28
+
+C     POUR INVITE le TRACE DU MAILLAGE + LES ITEMS SOMMETS VISIBLES
+      IF( LANGAG .EQ. 0 ) THEN
+         KTITRE='CLIQUER un SOMMET'
+      ELSE
+         KTITRE='CLICK a VERTEX'
+      ENDIF
+      CALL SANSBL( KTITRE, NBC )
+      CALL TRFINS( KTITRE(1:NBC) )
+
+C     ACTIVATION DE LA SAISIE A LA SOURIS ou FRAPPE AU CLAVIER
+C     SAISIE D'UN CLIC (NX,NY) DE LA SOURIS 
+C     ou UN DEPLACEMENT du POINTEUR de la SOURIS
+C     ou d'UN CARACTERE AU CLAVIER
+C     --------------------------------------------------------
+ 10   CALL XVSOURIS( NOTYEV, NOBOCA, NX, NY )
+C     RETOURNE NOTYEV QUI VAUT
+C     = 0 Si ABANDON demande par clic du bouton 2 de la souris
+C         ou par frappe de la touche Echappement ou @
+C     = 1 Si CLIC ENFONCE et RELACHE D'UN BOUTON DE LA SOURIS
+C         => NX, NY et NOBOCA=NUMERO DU BOUTON ENFONCE RELACHE
+C     =-1 Si CLIC SEULEMENT ENFONCE  D'UN BOUTON DE LA SOURIS
+C         => NX, NY et NOBOCA=NUMERO DU BOUTON ENFONCE
+C     =-2 Si le POINTEUR de la SOURIS A BOUGE SANS BOUTON ENFONCE
+C         => NX, NY
+C     = 2 Si FRAPPE D'UN CARACTERE AU CLAVIER
+C         => NOBOCA=NUMERO DU CARACTERE DANS LA TABLE ASCII
+
+      IF( NOTYEV .EQ. 2 ) THEN
+C        CARACTERE de NUMERO ASCII NOBOCA TAPE AU CLAVIER
+         IF( NOBOCA .EQ. 27 ) THEN
+cccC        LE CARACTERE 'ECHAPPEMENT' DEVIENT LE CARACTERE '@'
+ccc         NOBOCA = 64
+            NOTYEV = 0
+            GOTO 12
+         ELSE
+            GOTO 10
+         ENDIF
+      ENDIF
+
+ 12   IF( NOTYEV .EQ. 0 ) THEN
+C        ABANDON DE LA RECHERCHE DU SOMMET CLIQUE
+         NUSTPRCL = 0
+         NXCL = -1
+         NYCL = -1
+         GOTO 9999
+      ENDIF
+
+C     Ici: NOTYEV=1 ou -1 ou -2
+C     LE CLIC DANS L'ECRAN GRAPHIQUE (NX,NY) EN PIXELS
+C     RECHERCHE DU PLUS PROCHE SOMMET DU CLIC PARMI LES ITEMST
+C     --------------------------------------------------------
+      CALL SEITCLIC( NX, NY, 6, MNITST, ITSTPRCL, NUSTPRCL )
+
+      IF( ITSTPRCL .EQ. 0 ) GOTO 10
+
+
+C     LE SOMMET LE PLUS PROCHE DU POINT CLIQUE EST NUSTPRCL
+C     -----------------------------------------------------
+      IF( NUSTPRCL0 .GT. 0 .AND. NUSTPRCL0 .NE. NUSTPRCL ) THEN
+
+C        RESTAURATION DES PIXELS DE LA FENETRE PIXELS MEFISTO
+C        SAUVEGARDEE JUSTE AVANT LES MODIFICATIONS
+         CALL RESTAUREMEMPX
+         CALL MEMPXFENETRE
+         CALL XVVOIR
+
+      ENDIF
+
+C     TRACE EN NOIR DE L'ITEM SOMMET '+NUSTPRCL'
+C     ------------------------------------------
+      CALL TRST3D( NCNOIR, NUSTPRCL, XYZSOM )
+      CALL TRFINS( KTITRE(1:NBC) )
+      NUSTPRCL0 = NUSTPRCL
+
+      IF( NOTYEV .LT. 0 ) THEN
+         GOTO 10
+      ENDIF
+
+
+C     Ici: NOTYEV = 1  NOBOCA EST LE BOUTON CLIQUE et RELACHE
+C                 =>   le SOMMET NUSTPRCL CLIQUE EST SELECTIONNE
+C     ==========================================================
+C     ADRESSE PIXELS NXCL NYCL SUR L'ECRAN DU SOMMET NUSTPRCL CLIQUE
+C     L'ADRESSE MCN DE L'ITEMST ITSTPRCL
+      MNIT = MNITST + MCN(MNITST) * ITSTPRCL
+
+      IF( LANGAG .EQ. 0 ) THEN
+         PRINT*,'sestclic: SOMMET CLIQUE: NoSt=',NUSTPRCL,
+     %          ' X=',XYZSOM(1,NUSTPRCL),' Y=',XYZSOM(2,NUSTPRCL),
+     %          ' Z=',XYZSOM(3,NUSTPRCL)
+      ELSE
+         PRINT*,'sestclic: CLICKED VERTEX: NoSt=',NUSTPRCL,
+     %          ' X=',XYZSOM(1,NUSTPRCL),' Y=',XYZSOM(2,NUSTPRCL),
+     %          ' Z=',XYZSOM(3,NUSTPRCL)
+      ENDIF
+
+ 9999 RETURN
+      END

@@ -1,0 +1,66 @@
+      SUBROUTINE INVNFETOI( N1FEOC, NFETOI )
+C+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+C BUT :    INVERSER LE CHAINAGE DU TABLEAU NFETOI
+C -----    VERSION 1 ou 2 DU TABLEAU NFETOI
+
+C ENTREES et SORTIES:
+C -------------------
+C N1FEOC : POINTEUR SUR LA PREMIERE FACE OCCUPEE DE L'ETOILE
+C          CHAINAGE SUIVANT DANS NFETOI(5,*)
+
+C NFETOI : VERSION 1:
+C          1: NUMERO DU TETRAEDRE DANS NOTETR DE LA FACE DE L'ETOILE
+C          2: NUMERO LOCAL AU TETRAEDRE DE LA FACE DE L'ETOILE
+C             UN SIGNE NEGATIF INDIQUE UN TRAITEMENT EFFECTUE
+C          3: NON UTILISE ICI (MAIS INITIALISE A ZERO POUR NO VERSION)
+C          4: NON UTILISE ICI
+C          5: CHAINAGE SUIVANT DES FACES OCCUPEES ET VIDES
+
+C NFETOI : VERSION 2:
+C          1: NUMERO NOTETR DU TETRAEDRE AU DELA DE LA FACE
+C             =0 SI INCONNU
+C          2: NUMERO PTXYZD DU 1-ER SOMMET DE LA FACE
+C          3: NUMERO PTXYZD DU 2-ME SOMMET DE LA FACE
+C          4: NUMERO PTXYZD DU 3-ME SOMMET DE LA FACE
+C          5: CHAINAGE SUIVANT DES FACES OCCUPEES ET VIDES
+C+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+C AUTEUR : ALAIN PERRONNET  Saint PIERRE du PERRAY          Janvier 2018
+C2345X7..............................................................012
+      INTEGER  NFETOI(5,*)
+
+C     NUMERO DE VERSION DE L'ETOILE NFETOI
+      NOVERS = 1
+      IF( N1FEOC .GT. 0 .AND. NFETOI(3,N1FEOC) .NE. 0 ) NOVERS=2
+
+      print *
+      print *,'INVERSION du CHAINAGE de NFETOI en VERSION',NOVERS
+
+cccC     AFFICHAGE NFETOI
+ccc      CALL AFETOI( N1FEOC, NFETOI )
+
+      NF0 = N1FEOC
+      IF( NF0 .GT. 0 ) THEN
+
+C        FACE SUIVANTE
+         NF1 = NFETOI( 5, NF0 )
+
+ 10      IF( NF1 .GT. 0 ) THEN
+C           FACE SUIVANTE
+            NF2 = NFETOI( 5, NF1 )
+            NFETOI( 5, NF1 ) = NF0
+            NF0 = NF1
+            NF1 = NF2
+            GOTO 10
+         ENDIF
+
+C        ANCIEN PREMIER DEVIENT LE DERNIER
+         NFETOI( 5, N1FEOC ) = 0
+         N1FEOC = NF0
+
+      ENDIF
+
+cccC     AFFICHAGE NFETOI avec CHAINAGE INVERSE
+ccc      CALL AFETOI( N1FEOC, NFETOI )
+
+      RETURN
+      END

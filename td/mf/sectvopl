@@ -1,0 +1,5 @@
+variable SECTVOPL 'SECTION PLANE d''un VOLUME' entier
+( 1  : 'X=Constante'
+, 2  : 'Y=Constante'
+, 3  : 'Z=Constante'
+, 4  : 'VECTEUR NORMAL du PLAN' ) ;

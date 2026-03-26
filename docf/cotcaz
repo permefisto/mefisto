@@ -1,0 +1,5 @@
+La ligne intersection de 2 cylindres d'axes Z et (X ou Y)
+centres a l'origine est formee de 2 lignes fermees dont
+l'une a des cotes positives et l'autre negatives
+
+COTCAZ definit le choix : 1 => Z>0,  -1 => Z<0

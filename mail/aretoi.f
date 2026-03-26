@@ -1,0 +1,86 @@
+      SUBROUTINE ARETOI( NS1, NS2, NOTETR, N1FEOC, NFETOI,  NF1, NC )
+C+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+C BUT :    L'ARETE DE SOMMET NS1-NS2 EST ELLE UNE ARETE DES FACES DE
+C -----    L'ETOILE DEFINIE PAR NFETOI VERSION 1?
+C ENTREES:
+C --------
+C NS1 NS2: NUMERO DES 2 SOMMETS DE L'ARETE A TESTER
+C NOTETR : LISTE DES TETRAEDRES
+C          SOMMET1,    SOMMET2,    SOMMET3,    SOMMET4,
+C          TETRAEDRE1, TETRAEDRE2, TETRAEDRE3, TETRAEDRE4
+C          DE L'AUTRE COTE DE LA FACE
+C          1: 123      2: 234      3: 341      4: 412
+C N1FEOC : POINTEUR SUR LA PREMIERE FACE DE L'ETOILE
+C          CHAINAGE SUIVANT DANS NFETOI(5,*)
+C NFETOI : VERSION 1   FACES DE L'ETOILE
+C          1: NUMERO DU TETRAEDRE DANS NOTETR
+C          2: NUMERO LOCAL AU TETRAEDRE DE LA FACE DE L'ETOILE
+C             UN SIGNE NEGATIF INDIQUE UN TRAITEMENT EFFECTUE
+C          3: NON UTILISE ICI
+C          4: NUMERO DANS LEFACO DE LA FACE, 0 SINON
+C          5: CHAINAGE SUIVANT DES FACES OCCUPEES ET VIDES
+C SORTIES:
+C --------
+C NF1    : >0 NUMERO NFETOI DE LA FACE D'ARETE NS1-NS2
+C          =0 PAS DE FACE AYANT CETTE ARETE
+C NC       LE NUMERO DE L'ARETE 1:1-2, 2:2-3 3:3-1 DANS LA FACE
+C+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+C AUTEUR : ALAIN PERRONNET LJLL UPMC ET ST PIERRE DU PERRAY Octobre 2014
+C2345X7..............................................................012
+      INTEGER  NOTETR(8,*), NFETOI(5,*), NOSOTR(3), NOSOFA(3,4)
+      DATA     NOSOFA / 1,3,2,  2,3,4,  3,1,4,  4,1,2 /
+C     => LA NORMALE A LA FACE EST ORIENTEE VERS L'EXTERIEUR DU TETRAEDRE
+
+C     LA PREMIERE ARETE DU CF
+      IF( N1FEOC .LE. 0 ) THEN
+         print *,'aretoi: ERREUR N1FEOC=',N1FEOC,' NFETOI est VIDE'
+         GOTO 9990
+      ENDIF
+
+      NF1 = N1FEOC
+
+ 10   IF( NF1 .GT. 0 ) THEN
+
+C        NUMERO NOTETR DU TETRAEDRE DE LA FACE SIMPLE
+         NTE = NFETOI(1,NF1)
+
+C        NUMERO DE LA FACE SIMPLE DANS LE TETRAEDRE NTE
+         I = ABS( NFETOI(2,NF1) )
+
+C        LES 3 SOMMETS DE LA FACE I DU TETRAEDRE
+         NOSOTR(1) = NOTETR( NOSOFA(1,I), NTE )
+         NOSOTR(2) = NOTETR( NOSOFA(3,I), NTE )
+         NOSOTR(3) = NOTETR( NOSOFA(2,I), NTE )
+ 
+         DO NC=1,3
+
+C           LES 2 SOMMETS DE L'ARETE NC DE LA FACE
+            NSA1 = NOSOTR( NC )
+            IF( NC .EQ. 3 ) THEN
+               NSA2 = 1
+            ELSE
+               NSA2 = NC+1
+            ENDIF
+            NSA2 = NOSOTR( NSA2 )
+
+            IF( (NS1 .EQ. NSA1 .AND. NS2 .EQ. NSA2) .OR.
+     %          (NS1 .EQ. NSA2 .AND. NS2 .EQ. NSA1) ) THEN
+C              L'ARETE NS1-NS2 EST L'ARETE NC DE LA FACE NF1
+C              DE LA FACE I DU TETRAEDRE NTE
+               RETURN
+            ENDIF
+
+         ENDDO
+
+C        LA FACE SUIVANTE
+         NF1 = NFETOI(5,NF1)
+         GOTO 10
+
+      ENDIF
+
+C     ARETE NON RETROUVEE
+ 9990 NF1 = 0
+      NC  = 0
+
+      RETURN
+      END

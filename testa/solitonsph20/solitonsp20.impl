@@ -1,0 +1,56 @@
+{ ===========================================================================}
+{ MEFISTO Software   : August 17, 2011 Version                               }
+{ USER's Name        : Alain Perronnet                                       }
+{ Project Name       : sp20 Test of NLSE on a sphere of Radius 20            }
+{ Semi-Implicit Algo on i dU(t,X)/dt +Laplac U(t,X) + U(t,X)**3 -U(t,X)**5=0 }
+{                      Data of semi-implicit scheme to solve NLSE problem    }
+{ Date               : 2011/08/17                                            }
+{ ===========================================================================}
+DefVar Mass;  Mass  = 1.0;
+DefVar Alfa;  Alfa  =-1.0;
+DefVar Beta;  Beta  = 1.0;
+DefVar Gama;  Gama  =-1.0;
+
+DefFunc NLSECoef(t,x,y,z,ntyobj,nuobj,WaveR,WaveI);
+  DefVar nlc; nlc = WaveR**2 + WaveI**2;
+  NLSECoef = nlc * ( Beta + Gama * nlc );
+EndFunc;
+
+{ The initial conditions of the Wave }
+DefFunc InitWave(t,x,y,z,ntyob,nuobjt,partnb);
+  If partnb=1 then
+    InitWave = exp( -( (x-0.1)**2 +(y-0.2)**2 +z**2 ) / 98 ); {Real Part}
+  else
+    InitWave = 0;  {Imaginary Part}
+  EndIf;
+EndFunc;
+
+{DATA for the Non Linear Schrodinger Equations}
+2; { NLSE INPUT DATA }
+  {Volume sphere}
+  1;    { Mass density }
+  1;    { Mass density is a Constant }
+  Mass; { Mass density Value }
+
+  2;    { Alfa heat conductivity Coefficient of Laplacians }
+  1;    { 3D HOMOGENEOUS ISOTROPIC Material } 
+  Alfa; { Constant Coefficient of Laplacians }
+
+  6;    { NLSE Coefficient of U }
+  -1;        { Function }
+   NLSECoef; { Function Name }
+ @;
+
+ {Surface sphere NO data}
+@;
+
+5; {Algo1 on i Mass dU/dt -Alfa Laplacian U +Beta U**3 +Gama U**5=0 }
+  0;       { Initial TIME }
+ -1;       { Real & Imaginary Part of INITIAL Wave FUNCTION }
+ InitWave; { NAME of the Initial Wave FUNCTION on the object }
+  15;      { Final TIME }
+  0.0025;  { Step of TIME }
+  150;     { Number of Wave Vectors to Store }
+  1;       { Skyline Crout Factorization A=L D tL }
+@;
+CLOSE;

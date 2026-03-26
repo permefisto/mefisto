@@ -1,0 +1,109 @@
+      SUBROUTINE TR3P3P( XYZ3PI, XYZ3PF, DMATRI, IERR )
+C+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+C BUT :    CONSTRUIRE LA MATRICE DE TRANSFORMATION DES COORDONNEES POUR
+C -----    PASSER D'UN REPERE DEFINI PAR 3 POINTS INITIAUX NON ALIGNES
+C                                    A   3 POINTS FINAUX   NON ALIGNES
+C
+C ENTREES:
+C --------
+C XYZ3PI : XYZ DES 3 POINTS INITIAUX NON ALIGNES
+C XYZ3PF : XYZ DES 3 POINTS FINAUX   NON ALIGNES
+C
+C SORTIES:
+C --------
+C DMATRI : MATRICE DE TRANSFORMATION
+C IERR   : =0 SI PAS D'ERREUR RENCONTREE
+C          >0 SINON
+C+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+C AUTEUR : ALAIN PERRONNET LJLL UPMC & St Pierre du Perray Novembre 2011
+C2345X7..............................................................012
+      include"./incl/gsmenu.inc"
+      include"./incl/langue.inc"
+      COMMON /UNITES/ LECTEU, IMPRIM, INTERA, NUNIT(29)
+      REAL               XYZ3PI(3,3), XYZ3PF(3,3), COEPLA(4)
+      DOUBLE PRECISION   D, AXE1(3,3), AXE2(3,3), DMATRI(3,4)
+C
+      IERR = 0
+C
+C     LES 3 POINTS DU REPERE INITIAL SONT-ILS ALIGNES ?
+      CALL EQPLAN( XYZ3PI, COEPLA, J )
+      IF( J .GT. 0 ) THEN
+         WRITE(IMPRIM,*) 'TR3P3P: 3 POINTS INITIAUX ALIGNES'
+         WRITE(IMPRIM,11000) (K,(XYZ3PI(J,K),J=1,3),K=1,3)
+         IERR = 1
+         GOTO 9990
+      ENDIF
+11000 FORMAT( 3(' POINT',I2,': X=',G15.7,' Y=',G15.7,' Z=',G15.7/) )
+C
+C     LES 3 POINTS DU REPERE INITIAL SONT-ILS ALIGNES ?
+      CALL EQPLAN( XYZ3PF, COEPLA, J )
+      IF( J .GT. 0 ) THEN
+         WRITE(IMPRIM,*) 'TR3P3P: 3 POINTS FINAUX ALIGNES'
+         WRITE(IMPRIM,11000) (K,(XYZ3PF(J,K),J=1,3),K=1,3)
+         IERR = 2
+         GOTO 9990
+      ENDIF
+C
+C     LES 3 COORDONNEES SONT TRANSFORMEES EN DOUBLE PRECISION
+      DO I=1,3
+         DO J=1,3
+            DMATRI(J,I) = XYZ3PI(J,I)
+            AXE1  (J,I) = XYZ3PF(J,I)
+         ENDDO
+      ENDDO
+C
+C     LES AXE2 DU REPERE APRES ISOMETRIE
+      CALL P3AXE3( AXE1, AXE2, IERR )
+      IF( IERR .NE. 0 ) THEN
+         NBLGRC(NRERR) = 1
+         IF( LANGAG .EQ. 0 ) THEN
+            KERR(1) = 'TR3P3P: AXES FINAUX INCORRECTS'
+         ELSE
+            KERR(1) = 'TR3P3P: FINAL AXES NOT CORRECT'
+         ENDIF
+         CALL LEREUR
+         IERR = 3
+         GOTO 9999
+      ENDIF
+C
+C     LES AXE1 DU REPERE AVANT ISOMETRIE
+      CALL P3AXE3( DMATRI, AXE1, IERR )
+      IF( IERR .NE. 0 ) THEN
+         NBLGRC(NRERR) = 1
+         IF( LANGAG .EQ. 0 ) THEN
+            KERR(1) = 'TR3P3P: AXES INITIAUX INCORRECTS'
+         ELSE
+            KERR(1) = 'TR3P3P: INITIAL AXES NOT CORRECT'
+         ENDIF
+         CALL LEREUR
+         IERR = 4
+         GOTO 9999
+      ENDIF
+C
+C     DMATRI = ( R2 ) * (DILATATION) * TRANSPOSEE( R1 )
+      CALL ATB0D( 3, 3, 3, AXE2, AXE1, DMATRI )
+C
+C     VECTOR = ORIGINE2 - DMATRI * ORIGINE1
+      DO I=1,3
+         D = 0D0
+         DO J=1,3
+            D = D + DMATRI(I,J) * XYZ3PI(J,1)
+         ENDDO
+         DMATRI(I,4) = XYZ3PF(I,1) - D
+      ENDDO
+      GOTO 9999
+C
+C     ERREUR: 3 POINTS ALIGNES POUR DEFINIR UN REPERE DE R3
+ 9990 NBLGRC(NRERR) = 2
+      IF( LANGAG .EQ. 0 ) THEN
+         KERR(1) = 'TR3P3P: 3 POINTS CONFONDUS OU ALIGNES'
+         KERR(2) = 'REPERE 3D IMPOSSIBLE A DEFINIR'
+      ELSE
+         KERR(1) = 'TR3P3P: 3 POINTS ON A SAME STRAIGHT LINE'
+         KERR(2) = '3D COORDINATE SYSTEM IMPOSSIBLE TO DEFINE'
+      ENDIF
+      CALL LEREUR
+      GOTO 9999
+C
+ 9999 RETURN
+      END

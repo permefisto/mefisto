@@ -1,0 +1,17 @@
+deftms ~>>>MORSE 'Une matrice symetrique MORSE est assemblee a partir des
+matrices elementaires associes aux elements finis du maillage d''un objet
+Seuls sont stockes les coefficients non nuls de chaque ligne 
+LPLIGN(i) donne la position dans le vecteur MORSE du coefficient diagonal
+          de la ligne i et par homogeneite LPLIGN(0)=0 '
+variable muet DATE  'date de creation du tableau'    reel2  ;
+variable muet NUTD  'numero du tableau descripteur'  entier ;
+variable NBLIMO     'nombre de lignes de la matrice MORSE'            entier ;
+variable LPMORS
+ 'le decalage (entier pair) en mots dans ce tms du 1-er mot de MORSE' entier ;
+tableau  LPLIGN(0..NBLIMO)
+'pointeur dans MORSE de chaque coefficient diagonal et LPLIGN(0)=0'  entier ;
+tableau  LPCOLO(1..LPLIGN(NBLIMO))
+'pointeur dans MORSE du numero de colonne de chaque coefficient non nul' 
+          entier ;
+tableau  MORSE(1..LPLIGN(NBLIMO)) 'coefficients de la matrice MORSE' reel2  ;
+fintms ;

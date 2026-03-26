@@ -1,0 +1,74 @@
+{ ==================================================================== }
+{ Logiciel MEFISTO     : Version Juin 2000                             }
+{ Nom de l'Utilisateur : perronne                                      }
+{ Nom du Projet        : e                                             }
+{ Date                 :  5/09/ 0                                      }
+{ Heure                : 16h 40m 02s                                   }
+{ ==================================================================== }
+ 2;
+ { ENTREE des DONNEES du PROBLEME }
+ { SURFACE: SURF }
+ 2;
+ { [A] Tenseur CONDUCTIVITE THERMIQUE }
+ 3;
+ { Materiau 2D homogene isotrope }
+ 1;
+ { CONDUC 'Conductivite du materiau' reel ; }
+ 4;
+ { FOmega SOURCE interne de CHALEUR }
+ 1;
+ { Source constante }
+ 1;
+ { SOURCE 'Valeur de la Source' reel ; }
+ @;
+ { LIGNE: CONTOUR }
+ @;
+ { LIGNE: CERCLE }
+ 3;
+ { CONTACT Temperature IMPOSEE }
+ 1;
+ { Temperature Fixee constante }
+ 0;
+ { CONTAC 'Valeur Temperature Fixee' reel ; }
+ @;
+ 3;
+ { CALCUL THERMIQUE STATIONNAIRE }
+ 1;
+ { Coefficients INDEPENDANTS de la TEMPERATURE }
+ 2;
+ { GRADIENT CONJUGUE PRECONDITIONNE }
+ { NIVEAU de FACTORISATION INCOMPLETE 0,1,2? }
+ 1;
+ 8;
+ { DESSIN des TEMPERATURES et des FLUX }
+ 2;
+ { TEMPERATURE }
+ 1;
+ { ISOTHERMES }
+ 2;
+ { ISO REGULIERES entre MIN et MAX }
+ 90;
+ { EXECUTER le TRACE }
+ @;
+ @;
+ 2;
+ { ZONES COULEURS ISOTHERMES }
+ 1;
+ { Trace des ZONES de COULEURS }
+ 90;
+ { EXECUTER le TRACE }
+ @;
+ @;
+ 4;
+ { FLUX NORMAUX }
+ 1;
+ { Nombre CM de la FLECHE MAX }
+ { NOMBRE CM de la FLECHE MAXIMUM? }
+ 2;
+ 90;
+ { EXECUTER le TRACE }
+ @;
+ @;
+ @;
+ FERMER;
+

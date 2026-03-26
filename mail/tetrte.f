@@ -1,0 +1,261 @@
+      SUBROUTINE TETRTE( COMXMI, ARETMX, NBARPI, MXSOMM, PXYD,
+     %                   MXQUEU, LAQUEU, LETREE,
+     %                   MOSOAR, MXSOAR, N1SOAR, NOSOAR,
+     %                   MOARTR, MXARTR, N1ARTR, NOARTR, NOARST,
+     %                   IERR  )
+C+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+C BUT :    TRIANGULER LES TRIANGLES EQUILATERAUX FEUILLES ET
+C -----    LES POINTS DE LA FRONTIERE ET LES POINTS INTERNES IMPOSES
+C
+C ATTENTION: LA TRIANGULATION FINALE N'EST PAS DE TYPE DELAUNAY!
+C
+C ENTREES:
+C --------
+C COMXMI : MINIMUM ET MAXIMUM DES COORDONNEES DE L'OBJET
+C ARETMX : LONGUEUR MAXIMALE DES ARETES DES TRIANGLES EQUILATERAUX
+C NBARPI : NOMBRE DE SOMMETS DE LA FRONTIERE + NOMBRE DE POINTS INTERNES
+C          IMPOSES PAR L'UTILISATEUR
+C MXSOMM : NOMBRE MAXIMAL DE SOMMETS DECLARABLES DANS PXYD
+C PXYD   : TABLEAU DES COORDONNEES 2D DES POINTS
+C          PAR POINT : X  Y  DISTANCE_SOUHAITEE
+C
+C MXQUEU : NOMBRE D'ENTIERS UTILISABLES DANS LAQUEU
+C MOSOAR : NOMBRE MAXIMAL D'ENTIERS PAR ARETE DU TABLEAU NOSOAR
+C MXSOAR : NOMBRE MAXIMAL D'ARETES STOCKABLES DANS LE TABLEAU NOSOAR
+C MOARTR : NOMBRE MAXIMAL D'ENTIERS PAR ARETE DU TABLEAU NOARTR
+C MXARTR : NOMBRE MAXIMAL DE TRIANGLES STOCKABLES DANS LE TABLEAU NOARTR
+C LETREE : ARBRE-4 DES TRIANGLES EQUILATERAUX (TE) FOND DE LA TRIANGULATION
+C          LETREE(0,0) : NO DU 1-ER TE VIDE DANS LETREE
+C          LETREE(0,1) : MAXIMUM DU 1-ER INDICE DE LETREE (ICI 8)
+C          LETREE(0,2) : MAXIMUM DECLARE DU 2-EME INDICE DE LETREE (ICI MXTREE)
+C          LETREE(0:8,1) : RACINE DE L'ARBRE  (TRIANGLE SANS SUR TRIANGLE)
+C          SI LETREE(0,.)>0 ALORS
+C             LETREE(0:3,J) : NO (>0) LETREE DES 4 SOUS-TRIANGLES DU TRIANGLE J
+C          SINON
+C             LETREE(0:3,J) :-NO PXYD DES 1 A 4 POINTS INTERNES AU TRIANGLE J
+C                             0  SI PAS DE POINT
+C                             ( J EST ALORS UNE FEUILLE DE L'ARBRE )
+C          LETREE(4,J) : NO LETREE DU SUR-TRIANGLE DU TRIANGLE J
+C          LETREE(5,J) : 0 1 2 3 NO DU SOUS-TRIANGLE J POUR SON SUR-TRIANGLE
+C          LETREE(6:8,J) : NO PXYD DES 3 SOMMETS DU TRIANGLE J
+C
+C MODIFIES:
+C ---------
+C N1SOAR : NUMERO DE LA PREMIERE ARETE VIDE DANS LE TABLEAU NOSOAR
+C          UNE ARETE I DE NOSOAR EST VIDE  <=>  NOSOAR(1,I)=0
+C NOSOAR : NUMERO DES 2 SOMMETS , NO LIGNE, 2 TRIANGLES DE L'ARETE,
+C          CHAINAGE DES ARETES FRONTALIERES, CHAINAGE DU HACHAGE DES ARETES
+C          HACHAGE DES ARETES = NOSOAR(1)+NOSOAR(2)*2
+C NOARST : NOARST(I) NUMERO D'UNE ARETE DE SOMMET I
+C
+C AUXILIAIRE :
+C ------------
+C LAQUEU : MXQUEU ENTIERS SERVANT DE QUEUE POUR LE PARCOURS DE LETREE
+C
+C SORTIES:
+C --------
+C N1ARTR : NUMERO DU PREMIER TRIANGLE VIDE DANS LE TABLEAU NOARTR
+C          LE CHAINAGE DES TRIANGLES VIDES SE FAIT SUR NOARTR(2,.)
+C NOARTR : LES 3 ARETES DES TRIANGLES +-ARETE1, +-ARETE2, +-ARETE3
+C          ARETE1 = 0 SI TRIANGLE VIDE => ARETE2 = TRIANGLE VIDE SUIVANT
+C IERR   : =0 SI PAS D'ERREUR
+C          =1 SI LE TABLEAU NOSOAR EST SATURE
+C          =2 SI LE TABLEAU NOARTR EST SATURE
+C          =3 SI AUCUN DES TRIANGLES NE CONTIENT L'UN DES POINTS INTERNES D'UN T
+C          =5 SI SATURATION DE LA QUEUE DE PARCOURS DE L'ARBRE DES TE
+C+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+C AUTEUR : ALAIN PERRONNET  ANALYSE NUMERIQUE PARIS UPMC       MARS 1997
+C2345X7..............................................................012
+      COMMON / UNITES / LECTEU, IMPRIM, INTERA, NUNITE(29)
+C
+      DOUBLE PRECISION  PXYD(3,MXSOMM)
+      REAL              COMXMI(3,2)
+C
+      INTEGER           NOSOAR(MOSOAR,MXSOAR),
+     %                  NOARTR(MOARTR,MXARTR),
+     %                  NOARST(MXSOMM)
+C
+      INTEGER           LETREE(0:8,0:*)
+      INTEGER           LAQUEU(1:MXQUEU)
+C                       LEQUEU:ENTREE DANS LA QUEUE EN GESTION CIRCULAIRE
+C                       LHQUEU:LONGUEUR DE LA QUEUE EN GESTION CIRCULAIRE
+C
+      INTEGER           MILIEU(3), NUTR(1:13)
+C
+C     LE RECTANGLE ENGLOBANT POUR SELECTIONNER LES TE "INTERNES"
+C     LE NUMERO DES 3 SOMMETS DU TE ENGLOBANT RACINE DE L'ARBRE DES TE
+      NS1 = LETREE(6,1)
+      NS2 = LETREE(7,1)
+      NS3 = LETREE(8,1)
+      A   = ARETMX * 0.01
+C     ABSCISSE DU MILIEU DE L'ARETE GAUCHE DU TE 1
+      S      = REAL( ( PXYD(1,NS1) + PXYD(1,NS3) ) / 2 )
+      XRMIN  = MIN( S, COMXMI(1,1) - ARETMX ) - A
+C     ABSCISSE DU MILIEU DE L'ARETE DROITE DU TE 1
+      S      = REAL( ( PXYD(1,NS2) + PXYD(1,NS3) ) / 2 )
+      XRMAX  = MAX( S, COMXMI(1,2) + ARETMX ) + A
+      YRMIN  = COMXMI(2,1) - ARETMX
+C     ORDONNEE DE LA DROITE PASSANT PAR LES MILIEUS DES 2 ARETES
+C     DROITE GAUCHE DU TE 1
+      S      = REAL( ( PXYD(2,NS1) + PXYD(2,NS3) ) / 2 )
+      YRMAX  = MAX( S, COMXMI(2,2) + ARETMX ) + A
+C
+C     CAS PARTICULIER DE 3 OU 4 OU PEU D'ARETES FRONTALIERES
+      IF( NBARPI .LE. 8 ) THEN
+C        TOUT LE TRIANGLE ENGLOBANT (RACINE) EST A PRENDRE EN COMPTE
+         XRMIN = REAL( PXYD(1,NS1) - A )
+         XRMAX = REAL( PXYD(1,NS2) + A )
+         YRMIN = REAL( PXYD(2,NS1) - A )
+         YRMAX = REAL( PXYD(2,NS3) + A )
+      ENDIF
+C
+C     INITIALISATION DU TABLEAU NOARTR
+      DO I=1,MXARTR
+C        LE NUMERO DE L'ARETE EST INCONNU
+         NOARTR(1,I) = 0
+C        LE CHAINAGE SUR LE TRIANGLE VIDE SUIVANT
+         NOARTR(2,I) = I+1
+      ENDDO
+      NOARTR(2,MXARTR) = 0
+      N1ARTR = 1
+C
+C     PARCOURS DES TE JUSQU'A TRIANGULER TOUTES LES FEUILLES (TRIANGLES EQ)
+C     =====================================================================
+C     INITIALISATION DE LA QUEUE SUR LES TE
+      IERR   = 0
+      LEQUEU = 1
+      LHQUEU = 0
+C     LA RACINE DE LETREE INITIALISE LA QUEUE
+      LAQUEU(1) = 1
+C
+C     TANT QUE LA LONGUEUR DE LA QUEUE EST >=0 TRAITER LE DEBUT DE QUEUE
+ 10   IF( LHQUEU .GE. 0 ) THEN
+C
+C        LE TRIANGLE TE A TRAITER
+         I   = LEQUEU - LHQUEU
+         IF( I .LE. 0 ) I = MXQUEU + I
+         NTE = LAQUEU( I )
+C        LA LONGUEUR EST REDUITE
+         LHQUEU = LHQUEU - 1
+C
+C        NTE EST IL UN SOUS-TRIANGLE FEUILLE (MINIMAL) ?
+         IF( LETREE(0,NTE) .GT. 0 ) THEN
+C           NON LES 4 SOUS-TRIANGLES SONT MIS DANS LA QUEUE
+            IF( LHQUEU + 4 .GE. MXQUEU ) THEN
+               WRITE(IMPRIM,*) 'TETRTE: SATURATION DE LA QUEUE'
+               IERR = 5
+               RETURN
+            ENDIF
+            DO 20 I=3,0,-1
+C              AJOUT DU SOUS-TRIANGLE I
+               LHQUEU = LHQUEU + 1
+               LEQUEU = LEQUEU + 1
+               IF( LEQUEU .GT. MXQUEU ) LEQUEU = LEQUEU - MXQUEU
+               LAQUEU( LEQUEU ) = LETREE( I, NTE )
+ 20         CONTINUE
+            GOTO 10
+         ENDIF
+C
+C        ICI NTE EST UN TRIANGLE MINIMAL NON SUBDIVISE
+C        ---------------------------------------------
+C        LE TE EST IL DANS LE CADRE ENGLOBANT DE L'OBJET ?
+         NS1 = LETREE(6,NTE)
+         NS2 = LETREE(7,NTE)
+         NS3 = LETREE(8,NTE)
+         IF( PXYD(1,NS1) .GT. PXYD(1,NS2) ) THEN
+            DMIN = REAL( PXYD(1,NS2) )
+            DMAX = REAL( PXYD(1,NS1) )
+         ELSE
+            DMIN = REAL( PXYD(1,NS1) )
+            DMAX = REAL( PXYD(1,NS2) )
+         ENDIF
+         IF( (XRMIN .LE. DMIN .AND. DMIN .LE. XRMAX) .OR.
+     %       (XRMIN .LE. DMAX .AND. DMAX .LE. XRMAX) ) THEN
+            IF( PXYD(2,NS1) .GT. PXYD(2,NS3) ) THEN
+               DMIN = REAL( PXYD(2,NS3) )
+               DMAX = REAL( PXYD(2,NS1) )
+            ELSE
+               DMIN = REAL( PXYD(2,NS1) )
+               DMAX = REAL( PXYD(2,NS3) )
+            ENDIF
+            IF( (YRMIN .LE. DMIN .AND. DMIN .LE. YRMAX) .OR.
+     %          (YRMIN .LE. DMAX .AND. DMAX .LE. YRMAX) ) THEN
+C
+C              TE MINIMAL ET INTERNE AU RECTANGLE ENGLOBANT
+C              --------------------------------------------
+C              RECHERCHE DU NOMBRE DE NIVEAUX ENTRE NTE ET LES TE VOISINS
+C              PAR SES ARETES
+               NBMILI = 0
+               DO 30 I=1,3
+C
+C                 A PRIORI PAS DE MILIEU DE L'ARETE I DU TE NTE
+                  MILIEU(I) = 0
+C
+C                 RECHERCHE DE NOTEVA TE VOISIN DE NTE PAR L'ARETE I
+                  CALL N1TRVA( NTE, I, LETREE, NOTEVA, NIVEAU )
+C                 NOTEVA  : >0 NUMERO LETREE DU TE VOISIN PAR L'ARETE I
+C                           =0 SI PAS DE TE VOISIN (RACINE , ... )
+C                 NIVEAU  : =0 SI NTE ET NOTEVA ONT MEME TAILLE
+C                           >0 NTE EST 4**NIVEAU FOIS PLUS PETIT QUE NOTEVA
+                  IF( NOTEVA .GT. 0 ) THEN
+C                    IL EXISTE UN TE VOISIN
+                     IF( LETREE(0,NOTEVA) .GT. 0 ) THEN
+C                       NOTEVA EST PLUS PETIT QUE NTE
+C                       => RECHERCHE DU NUMERO DU MILIEU DU COTE=SOMMET DU TE NO
+C                       LE SOUS-TE 0 DU TE NOTEVA
+                        NSOT = LETREE(0,NOTEVA)
+C                       LE NUMERO DANS PXYD DU MILIEU DE L'ARETE I DE NTE
+                        MILIEU( I ) = LETREE( 5+NOPRE3(I), NSOT )
+                        NBMILI = NBMILI + 1
+                     ENDIF
+                  ENDIF
+C
+ 30            CONTINUE
+C
+C              TRIANGULATION DU TE NTE EN FONCTION DU NOMBRE DE SES MILIEUX
+               GOTO( 50, 100, 200, 300 ) , NBMILI + 1
+C
+C              0 MILIEU => 1 TRIANGLE = LE TE NTE
+C              ----------------------------------
+ 50            CALL F0TRTE( LETREE(0,NTE),  PXYD,
+     %                      MOSOAR, MXSOAR, N1SOAR, NOSOAR,
+     %                      MOARTR, MXARTR, N1ARTR, NOARTR,
+     %                      NOARST,
+     %                      NBTR,   NUTR,   IERR )
+               IF( IERR .NE. 0 ) RETURN
+               GOTO 10
+C
+C              1 MILIEU => 2 TRIANGLES = 2 DEMI TE
+C              -----------------------------------
+ 100           CALL F1TRTE( LETREE(0,NTE),  PXYD,   MILIEU,
+     %                      MOSOAR, MXSOAR, N1SOAR, NOSOAR,
+     %                      MOARTR, MXARTR, N1ARTR, NOARTR,
+     %                      NOARST,
+     %                      NBTR,   NUTR,   IERR )
+               IF( IERR .NE. 0 ) RETURN
+               GOTO 10
+C
+C              2 MILIEUX => 3 TRIANGLES
+C              -----------------------------------
+ 200           CALL F2TRTE( LETREE(0,NTE),  PXYD,   MILIEU,
+     %                      MOSOAR, MXSOAR, N1SOAR, NOSOAR,
+     %                      MOARTR, MXARTR, N1ARTR, NOARTR,
+     %                      NOARST,
+     %                      NBTR,   NUTR,   IERR )
+               IF( IERR .NE. 0 ) RETURN
+               GOTO 10
+C
+C              3 MILIEUX => 4 TRIANGLES = 4 QUART TE
+C              -------------------------------------
+ 300           CALL F3TRTE( LETREE(0,NTE),  PXYD,   MILIEU,
+     %                      MOSOAR, MXSOAR, N1SOAR, NOSOAR,
+     %                      MOARTR, MXARTR, N1ARTR, NOARTR,
+     %                      NOARST,
+     %                      NBTR,   NUTR,   IERR )
+               IF( IERR .NE. 0 ) RETURN
+               GOTO 10
+            ENDIF
+         ENDIF
+         GOTO 10
+      ENDIF
+      END

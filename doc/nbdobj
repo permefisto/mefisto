@@ -1,0 +1,43 @@
+An object is composed of PLSVO :
+(POINTS, LINES, SURFACES, VOLUMES, OBJECTS).
+A PLSVO is defined by its type P L S V ou O.
+A PLSVO has a NAME known by the User.
+
+The VOLUMES are the MATERIALS.
+At each MATERIAL are ASSOCIATED PHYSICAL CHARACTERISTICS.
+
+The SURFACES, LINES, POINTS support the BOUNDARY CONDITIONS
+for the problems to solve on this object.
+
+In 2D or axisymmetric, the MATERIALS are the SURFACES
+and PL support the boundary conditions.
+
+Example in 3D:       
+5; { OBJETS PARTIES DE L OBJET }
+ JAW; {NAME DE L'OBJET}
+ 0;  { CLASSICAL 2D or 3D }
+ 5;  { NBDOBJ NUMBER of POINTS LINES SURFACES VOLUMES OBJECTS of the OBJECT}
+ V; MECHANICAL_PIECE; {NTYOBJ(1..NBDOBJ) 'TYPE of PLSVO NAME and PLSVO NAME}
+ SURFACE; RIGHT_WASHER;
+ S; LEFT_WASHER;
+ S; CYLINDER_WITH_FORCE;
+ S; RAIL_FIXED;
+ @;
+7; { INTERPOLATION DEFINITION of MESH NODES}
+ JAW; 4; { LAGRANGE of DEGREE 2 }
+@;
+
+Example in axisymmetric:
+5;{ OBJECTS components of the OBJECT }
+ WATER_CASTLE;  0;  {classic solution 2D or 3D with renumbering}
+ 5; { number of Points Lines Surfaces Volumes Objects of the object}
+ SURFACE; GROUND;
+ S; CONCRETE;
+ L; D2E2;
+ L; D1D2;
+ L; DISPLNULL;
+@;
+7; { Interpolation }
+ WATER_CASTLE;
+ 2; {AXISYMETRIC LAGRANGE DEGREE 2}
+@;

@@ -1,0 +1,10 @@
+deftms ~>LIGNE>>BSPLINE 'B-Spline Curve''s coefficients'
+variable muet DATE 'date of creation of the TMS'    reel2  ;
+variable muet NUTD 'number of the descriptor array' entier ; 
+variable DEGRBS 'degree of polynomials' entier ;
+variable NBCOBS 'number (3or4) of components of the BSPLINE' entier ;
+variable NBINBS 'number of intervals of the definition' entier ;
+tableau  PARABS(0..NBINBS) 'values of the parameter of the BSPLINE' reel ;
+tableau  SPLIBS(0..DEGRBS,1..NBINBS,1..NBCOBS) 'coefficients of polynomials'
+         reel ;
+fintms ;

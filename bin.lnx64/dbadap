@@ -1,0 +1,21 @@
+#!/bin/bash
+#  execution sous le debogueur de ppadap
+#  Alain Perronnet    Janvier 1995
+#        
+#  mise sous le directory 
+echo
+echo ==========================================================
+echo MEFISTO-ADAPTATION 2d THERMIQUE: nom du projet \?
+echo ==========================================================
+   read nomproj
+   direxec=$mefisto/../jobs/exec/$nomproj  
+#   direxec=$mefisto 
+                                 
+   if test -d $direxec
+   then
+      cd  $direxec     
+#     appel du debogueur 
+     /opt/langtools/bin/dde -do "property sdir $mefisto" $mefisto/../jobs/ppadap  
+   else  
+      echo Vous devez d abord INITIalisER vos fichiers
+   fi          

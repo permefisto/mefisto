@@ -1,0 +1,17 @@
+deftms ~>>>CONTRAINTE 'Contraintes dans les EF de ce type'
+variable muet DATE   'date de creation du tableau'   reel2  ;
+variable muet NUTD   'numero du tableau descripteur' entier ;
+variable NUTYEF 'Numero du type des elements finis'  entier ;  
+variable NBELFI 'Nombre d''elements finis'           entier ;   
+variable NDIMES 'Dimension de l''espace de l''objet 1 ou 2 ou 3'    entier ; 
+variable NBJECA 'Nombre de jeux de Contraintes'                     entier ;       
+variable NBPIEF 'Nombre de points de calcul des Contraintes sur un EF' entier ;
+variable LDCOPR
+'decalage (entier pair) en mots dans ce tms du 1-er mot de CONPRI' entier ;
+tableau  COPIEF(1..NBELFI,1..NBPIEF,1..NDIMES)
+'NDIMES coordonnees des NBPIEF points de calcul des Contraintes des EF' reel ;     
+tableau  CONPRI(1..NBELFI,1..NBPIEF,1..NDIMES,1..NBJECA)
+'Contraintes Principales aux points de calcul des Contraintes des EF' reel2 ;
+tableau  DIRPRI(1..NBELFI,1..NBPIEF,1..NDIMES,1..NDIMES,1..NBJECA)
+'Coordonnees des Directions Principales aux points de calcul des EF' reel ;
+fintms ;

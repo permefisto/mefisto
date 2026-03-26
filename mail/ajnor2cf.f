@@ -1,0 +1,329 @@
+      SUBROUTINE AJNOR2CF( NBVDWH, MXSOMM, NBSOMM, PTXYZD, NPSOFR,
+     %                     HEXAPAVE, NBIPAV,ECHPAV, N1SPAVE, NOPTSUIV,
+     %                     N1TETS, NOTETR,
+     %                     MXFACO, LEFACO, N1FASC, NBFAPE, NOFAPE,
+     %                     MXTRCF, NOTRCF, NOSTCF, NOSTIS,
+     %                     MXARCF, N1ARCF, NOARCF,
+     %                     IERR )
+C+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+C BUT :    AJOUT A LA LISTE DES POINTS A TETRAEDRISER DES 2 POINTS SITUES
+C -----    SUR LA NORMALE A LA PREMIERE, 3-EME, 5-EME  FACE DES CONTOURS
+C          FERMES DES FACES PERDUES DE LEFACO
+
+C ENTREES:
+C --------
+C NBVDWH : NUMERO DE L'ITERATION POUR RETROUVER LES FACES PERDUES
+C MXSOMM : NOMBRE MAXIMAL DE SOMMETS PERMIS POUR LA TETRAEDRISATION
+C PTXYZD : X Y Z DISTANCE SOUHAITEE DES POINTS
+C NPSOFR : =  0 SI POINT AJOUTE NON SUR LA SURFACE DE L'OBJET
+C          =  1 SI LE POINT EST AJOUTE SUR UNE ARETE DE LA SURFACE
+C          =  2 SI LE POINT EST AJOUTE COMME BARYCENTRE SUR LA SURFACE
+C          =  1 000 000  + NUMERO DU  POINT INTERNE UTILISATEUR
+C          = (1 000 000) * (NO SURFACE + 1) + NUMERO DU SOMMET DANS
+C              LA NUMEROTATION DES SOMMETS DE LA SURFACE
+C          = -4 SI LE POINT EST SOMMET D'OT NON TROP PROCHE PT OU FACE
+C          = -1 SI LE POINT EST SOMMET D'OT TROP PROCHE PT OU FACE
+C          = -3 SI LE POINT EST SOMMET D'OT REFUSE DANS LA TETRAEDRISATION
+C          = -NPSOFR(I) SI POINT DEPLACE SUR LA SURFACE
+C            DANS LEUR SURFACE FERMEE INITIALE ou NO DE POINT INTERNE
+
+C HEXAPAVE: MIN ET MAX DES COORDONNEES DU PAVAGE
+C NBIPAV  : NOMBRE D'ARETES DANS LA DIRECTION I
+C ECHPAV  : ECHELLE DANS LA DIRECTION I
+C N1SPAVE : NO DU 1-ER SOMMET DANS PTXYZD DU PAVE
+C NOPTSUIV: NO DU POINT SUIVANT DANS LE CHAINAGE DES POINTS DES PAVES
+
+C N1TETS : N1TETS(NS) NUMERO D'UN TETRAEDRE AYANT POUR SOMMET NS
+C NOTETR : LISTE DES TETRAEDRES
+C          SOMMET1,    SOMMET2,    SOMMET3,    SOMMET4,
+C          TETRAEDRE1, TETRAEDRE2, TETRAEDRE3, TETRAEDRE4
+C          DE L'AUTRE COTE DE LA FACE
+C          1: 123      2: 234      3: 341      4: 412
+
+C MXFACO : NOMBRE MAXIMAL DECLARABLE DE FACES DU CONTOUR
+C LEFACO : FACE DU CONTOUR OU INTERFACES ENTRE VOLUMES
+C          IL CONTIENT DANS CET ORDRE
+C          1:   =0 POUR UNE FACE VIDE
+C          123: NO (DANS PTXYZD) DU SOMMET 1, SOMMET 2, SOMMET 3
+C          45:  NO (DANS NUVOPA 0 SINON) DU VOLUME1 , VOLUME2 DE LA FACE
+C          678: NO (DANS LEFACO) DE LA FACE ADJACENTE PAR L'ARETE 1 2 3
+
+C          9: ATTENTION: UNE ARETE PEUT APPARTENIR A PLUS DE 2 FACES
+C             => CHAINAGE CIRCULAIRE DE CES FACES DANS LEFACO
+C             LEFACO(9,*) -> FACE SUIVANTE (*=0:VIDE, *<>0:NON VIDE)
+
+C          10: HACHAGE AVEC LA SOMME DES 3 SOMMETS MODULO MXFACO
+C              LF = MOD( NOSOFA(1)+NOSOFA(2)+NOSOFA(3) , MXFACO ) + 1
+C              NF = LEFACO( 10, LF ) LE NUMERO DE LA 1-ERE FACE DANS LEFACO
+C              SI LA FACE NE CONVIENT PAS. PASSAGE A LA SUIVANTE
+C              NF = LEFACO( 9, NF )  ...
+
+C          11: >0  NO NOTETR D'UN TETRAEDRE AYANT CETTE FACE,
+C              =0  SINON
+cccC          12: = NO FACEOC DE 1 A NBFACES D'OC
+C          ATTENTION: UNE ARETE PEUT APPARTENIR A PLUS DE 2 FACES
+C          => CHAINAGE CIRCULAIRE DE CES FACES DANS LEFACO
+C          LEFACO(9,*)  -> FACE SUIVANTE (*=0:VIDE, *<>0:NON VIDE)
+C          HACHAGE AVEC LA SOMME DES 3 SOMMETS MODULO MXFACO
+C          LF = MOD( NOSOFA(1)+NOSOFA(2)+NOSOFA(3) , MXFACO ) + 1
+C          NF = LEFACO( 10, LF ) LE NUMERO DE LA 1-ERE FACE DANS LEFACO
+C          SI LA FACE NE CONVIENT PAS. PASSAGE A LA SUIVANTE
+C          NF  = LEFACO( 9, NF )  ...
+C N1FASC : N1FASC(NS)=NUMERO (DANS LEFACO) D'UNE FACE DE SOMMET NS
+C NBFAPE : NOMBRE DE FACES PERDUES DANS LEFACO
+C NOFAPE : NUMERO DES NBFAPE FACES PERDUES
+C MXTRCF : NOMBRE MAXIMAL DE TRIANGLES DANS NOTRCF
+C MXARCF : NOMBRE MAXIMAL D'ARETES DECLARABLES DANS NOARCF
+
+C ENTREES ET SORTIES :
+C --------------------
+C NBSOMM : NOMBRE DE SOMMETS DANS PTXYZD A L'APPEL ET EN SORTIE
+C NPSOFR : NUMERO DES POINTS INITIAUX
+C          LE SIGNE DEVIENT NEGATIF SI LE SOMMET EST DEPLACE
+C          =  0 SI POINT AJOUTE NON SUR LA SURFACE DE L'OBJET
+C          =  1 SI LE POINT EST AJOUTE SUR UNE ARETE DE LA SURFACE
+C          =  2 SI LE POINT EST AJOUTE COMME BARYCENTRE SUR LA SURFACE
+C          =  1 000 000  + NUMERO DU  POINT INTERNE UTILISATEUR
+C          = (1 000 000) * (NO SURFACE + 1) + NUMERO DU SOMMET DANS
+C                    LA NUMEROTATION DES SOMMETS DE LA SURFACE
+C          = -1 SI LE POINT EST SOMMET D'OT ET RECONNU TROP PROCHE
+C          = -4 SI LE POINT EST SOMMET D'OT NON TROP PROCHE
+C          = -3 SI LE POINT EST SOMMET D'OT REFUSE DANS LA TETRAEDRISATION
+C          = -NPSOFR(I) SI POINT I DEPLACE SUR LA SURFACE
+C             DANS LEUR SURFACE FERMEE INITIALE ou NO DE POINT INTERNE
+C
+C SORTIES:
+C --------
+C NOTRCF : TABLEAU DU NUMERO DANS LEFACO DES TRIANGLES DE L'ETOILE
+C N1ARCF : NUMERO DU 1-ER SOMMET OU 1-ERE ARETE DU CONTOUR FERME
+C NOARCF : 1:NUMERO DU SOMMET DE L'ARETE DE LA LIGNE DU CONTOUR FERME
+C          2:NUMERO DANS NOARCF DE L'ARETE SUIVANTE DU CF
+C          3:NUMERO DANS LEFACO DU TRIANGLE ADJACENT OPPOSE A L'ARETE
+C NOSTCF : NUMERO PTXYZD DES NBSTCF SOMMETS PERIPHERIQUES DU CF
+C NOSTIS : NUMERO DES SOMMETS ISOLES N'APPARTENANT PAS AU CONTOUR
+C IERR   : 0 SI PAS D'ERREUR
+C          1 SATURATION DES SOMMETS
+C          2 PROBLEME LORS DU CALCUL DE LA FONCTION TAILLE_IDEALE
+C+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+C AUTEUR : ALAIN PERRONNET          St Pierre du Perray     Fevrier 2018
+C....................................................................012
+      PARAMETER       ( MXETOI=4096, MXSMIN=1024 )
+      include"./incl/langue.inc"
+      include"./incl/gsmenu.inc"
+      include"./incl/trvari.inc"
+      include"./incl/darete.inc"
+      COMMON / UNITES / LECTEU, IMPRIM, INTERA, NUNITE(29)
+
+      INTEGER           NOTETR(8,*), N1TETS(MXSOMM),
+     %                  LEFACO(1:11,0:MXFACO), N1FASC(*),
+     %                  NPSOFR(MXSOMM),
+     %                  NOFAPE(NBFAPE),
+     %                  NOTRCF(MXTRCF), NOSTCF(MXTRCF), NOSTIS(MXSOMM),
+     %                  NAETOI(4,MXETOI),
+     %                  N1ARCF(0:MXARCF), NOARCF(3,MXARCF), NO0FAR(1)
+      INTEGER           NBIPAV(3), N1SPAVE(0:*), NOPTSUIV(1:*),
+     %                  NOSMIN(MXSMIN), NODSNO(MXSMIN)
+
+      DOUBLE PRECISION  PTXYZD(1:4,1:MXSOMM)
+      DOUBLE PRECISION  HEXAPAVE(3,2), ECHPAV(3), DISTMIN(MXSMIN)
+      DOUBLE PRECISION  PROSCD, XYZNONF(3), XYZBANF(4), D, C
+      INTRINSIC         SQRT
+
+      NBSOM0 = NBSOMM
+
+C     EXISTENCE OU NON DE LA FONCTION TAILLE_IDEALE(X,Y,Z)
+      NOFOTI = NOFOTIEL()
+
+C     PARCOURS DES FACES ACTUELLES DE LEFACO
+      DO 100 NFP = 1, NBFAPE
+
+C        NUMERO DE LA FACE LEFACO PERDUE
+         NFLPER = NOFAPE( NFP )
+         IF( NFLPER .LE. 0 ) GOTO 100
+
+C        FORMATION DU PREMIER CONTOUR FERME CF FORME DES TRIANGLES
+C        LEFACO PERDUS ADJACENTS A PARTIR DE LA FACE NFLPER
+C        ------------------------------------------------------------
+         CALL VDR1CF( -1.0,   NFLPER, NBSOMM, PTXYZD, N1TETS, NOTETR,
+     %                NBFAPE, NOFAPE, MXFACO, LEFACO, N1FASC, NO0FAR,
+     %                MXETOI, NAETOI,
+     %                MXTRCF, NBTRCF, NOTRCF,
+     %                MXARCF, NBCF,   N1ARCF, NOARCF,
+     %                MXTRCF, NBSTCF, NOSTCF,
+     %                MXSOMM, NBSTIS, NOSTIS,
+     %                IERR )
+
+         IF( IERR .NE. 0 .OR. NBTRCF .LE. 0 ) THEN
+C           FACE PERDUE NFP A NE PLUS TRAITER
+            NOFAPE( NFP ) = -NFLPER
+            GOTO 100
+         ENDIF
+
+C        CALCUL DU BARYCENTRE ET VECTEUR NORMAL DES FACES IMPAIRS DE NOTRCF
+C        ------------------------------------------------------------------
+ccc      DO 50 NOTR = 1, NBTRCF, 2
+         DO 50 NOTR = 1, NBTRCF, 1
+
+C           NUMERO DE LA FACE LEFACO
+            NF = NOTRCF( NOTR )
+
+C           NUMERO DU SOMMET 1 DE LA FACE NF DE LEFACO
+            NS = LEFACO(1,NF)
+            IF( NS .LE. 0 ) GOTO 50
+
+C           LA FACE EXISTE: CALCUL DU VECTEUR NORMAL UNITE A LA FACE NF
+            CALL VECNOR3D( PTXYZD(1, LEFACO(1,NF) ),
+     %                     PTXYZD(1, LEFACO(2,NF) ),
+     %                     PTXYZD(1, LEFACO(3,NF) ),
+     %                     XYZNONF )
+            D = SQRT( PROSCD( XYZNONF, XYZNONF, 3 ) )
+            DO I=1,3
+               XYZNONF(I) = XYZNONF(I)  / D
+            ENDDO
+
+C           CALCUL DU BARYCENTRE DE LA FACE NF
+            DO I=1,4
+               XYZBANF(I) = 0D0
+               DO J=1,3
+                  XYZBANF(I) = XYZBANF(I) + PTXYZD(I,LEFACO(J,NF))
+               ENDDO
+               XYZBANF(I) = XYZBANF(I) / 3D0
+            ENDDO
+
+            IF( NOFOTI .GT. 0 ) THEN
+C              CALCUL DE LA DISTANCE SOUHAITEE AU  BARYCENTRE DE NF
+C              LES 3 PARAMETRES D'APPEL DE LA FONCTION 'TAILLE_IDEALE'
+C              EN CE SOMMET XYZ DU REPERE R**3 "NATUREL"
+               CALL FONVAL( NOFOTI, 3, XYZBANF, NCODEV, XYZBANF(4) )
+               IF( NCODEV .LE. 0 ) THEN
+                  IERR = 2
+                  GOTO 9999
+               ENDIF
+            ENDIF
+
+C           CREATION DE 2 POINTS (UN DE CHAQUE COTE DE LA NORMALE)
+C           SUR LA NORMALE
+            IF( NBSOMM+2 .GT. MXSOMM ) THEN
+               NBLGRC(NRERR) = 1
+               WRITE(KERR(MXLGER)(1:10),'(I10)') MXSOMM
+               KERR(1) = 'MAXIMUM DE SOMMETS ' // KERR(MXLGER)(1:10) //
+     %                   ' ATTEINT'
+               CALL LEREUR
+               IERR = 1
+               GOTO 9999
+            ENDIF
+
+C           DISTANCE A LA FACE ou LONGUEUR DU VECTEUR NORMAL DE POINTE
+C           LE SOMMET NBSOMM
+ccc         C = XYZBANF(4) * 0.8D0 / NBVDWH
+ccc         C = XYZBANF(4) * 0.6D0 / NBVDWH
+ccc         C = XYZBANF(4) * 0.9D0 / NBVDWH
+ccc         C = XYZBANF(4) * 0.75D0 / NBVDWH
+ccc         C = XYZBANF(4) * 0.25D0 / NBVDWH
+ccc         C = XYZBANF(4) / NBVDWH / 2
+
+            C = XYZBANF(4) / NBVDWH / 3
+
+            NBSOMM = NBSOMM + 1
+            NPSOFR(NBSOMM) = 0
+            DO I=1,3
+               D = C * XYZNONF(I)
+               PTXYZD(I,NBSOMM  ) = XYZBANF(I) + D
+               PTXYZD(I,NBSOMM+1) = XYZBANF(I) - D
+            ENDDO
+
+C           TAILLE DES ARETES AUTOUR DU POINT NBSOMM
+            PTXYZD( 4, NBSOMM   ) = XYZBANF( 4 )
+            PTXYZD( 4, NBSOMM+1 ) = XYZBANF( 4 )
+
+            NBSOMM = NBSOMM + 1
+            NPSOFR(NBSOMM) = 0
+
+C           EXISTE-T-IL UN SOMMET PTXYZD TRES PROCHE DE L'UN DE CES 2 POINTS?
+C           RETROUVER LES PLUS PROCHES SOMMETS TETRAEDRISES DU POINT NPt
+C           A UNE DISTANCE D'UN PAVE RANGES DANS LES PAVES DE L'HEXAEDRE
+C           -----------------------------------------------------------------
+            NP1 = NBSOMM - 1
+            NP2 = NBSOMM
+            NP  = NBSOMM
+            DO I=1,2
+               CALL DMINSTPAV( HEXAPAVE, NBIPAV,ECHPAV,N1SPAVE,NOPTSUIV,
+     %                         PTXYZD(1,NP), PTXYZD,
+     %                         MXSMIN, NBSMIN, NOSMIN, NODSNO, DISTMIN )
+
+C              DISTANCE DU SOMMET LE PLUS PROCHE DU POINT NP
+               NSDMIN = NOSMIN( NODSNO(1) )
+               D      = SQRT( DISTMIN( 1 ) )
+
+               IF( I .EQ. 1 ) THEN
+
+C                 TRAITEMENT DU POINT NP2
+ccc               IF( D .LT. PTXYZD(4,NSDMIN) * 5D-2 ) THEN
+                  IF( D .LT. PTXYZD(4,NSDMIN) * 1D-2 ) THEN
+C                    LE POINT NP=NBSOMM EST ABANDONNE
+                     PRINT*,'ajnor2cf: ABANDON du POINT NORMAL2',
+     %                      (PTXYZD(K,NP2),K=1,4)
+                     PRINT*,'ajnor2cf: TROP PROCHE de',
+     %                      (PTXYZD(K,NSDMIN),K=1,4)
+                     NBSOMM = NBSOMM - 1
+                     NP     = NBSOMM
+                     NP2    = NBSOMM
+                  ELSE
+C                    PASSAGE DE NP2 A NP1
+                     NP = NBSOMM - 1
+                  ENDIF
+
+               ELSE
+
+C                 TRAITEMENT DU POINT NP1
+ccc               IF( D .LT. PTXYZD(4,NSDMIN) * 5D-2 ) THEN
+                  IF( D .LT. PTXYZD(4,NSDMIN) * 1D-2 ) THEN
+C                    LE POINT NP1 EST ABANDONNE
+                     PRINT*,'ajnor2cf: ABANDON du POINT NORMAL1',
+     %                      (PTXYZD(K,NP1),K=1,4)
+                     PRINT*,'ajnor2cf: TROP PROCHE de',
+     %                      (PTXYZD(K,NSDMIN),K=1,4)
+                     IF( NP2 .GT. NP1 ) THEN
+C                       IL FAUT RECULER NP2 EN NP1
+                        DO K=1,4
+                           PTXYZD(K,NP1) = PTXYZD(K,NP2)
+                        ENDDO
+C                    ELSE
+C                       ABANDON DE NP1 ET NP2
+                     ENDIF
+                     NBSOMM = NBSOMM - 1
+                  ENDIF
+
+               ENDIF
+            ENDDO
+
+ 50      ENDDO
+
+C        MISE A JOUR NOFAPE POUR LES NBTRCF FACES PERDUES
+C        AUXQUELLES 2 POINTS SUR LES NORMALES ONT ETE AJOUTES
+         DO 90 NT = 1, NBTRCF
+            NF = NOTRCF( NT )
+            DO K=1,NBFAPE
+               NFLF = ABS( NOFAPE(K) )
+               IF( NF .EQ. NFLF ) THEN
+                  NOFAPE(K) = -NFLF
+                  GOTO 90
+               ENDIF
+            ENDDO
+ 90      ENDDO
+
+ 100  ENDDO
+
+C     RETOUR A DES VALEURS POSITIVES DES FACES PERDUES DE NOFAPE
+      DO NT = 1, NBFAPE
+         NOFAPE(NT) = ABS( NOFAPE(NT) )
+      ENDDO
+
+      IERR = 0
+
+ 9999 WRITE(IMPRIM,*)
+      WRITE(IMPRIM,*) 'ajnor2cf: Ajout de ',NBSOMM-NBSOM0,
+     %   ' POINTS sur la NORMALE AUX',NBFAPE,' FACES PERDUES du CF'
+
+      RETURN
+      END

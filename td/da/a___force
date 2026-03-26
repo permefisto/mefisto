@@ -1,0 +1,16 @@
+deftms ~>>>FORCE   'Force on a PLSV'
+variable muet DATE 'date of creation of the TMS' reel2  ;
+variable muet NUTD 'number of the descriptor array TD' entier ; 
+variable      LTFORC 'type of forces' entier 
+(  1 : 'constant force'
+, -1 : 'function force'
+,  0 : 'delete this force' ) ;
+cas LTFORC
+-1 : variable NBCOFO 'number of force components' entier ;
+     tableau  NUCOFO(1..NBCOFO) 'number of each force component' entier ;
+     variable NFFORC 'name of the function FORCE' ^~>FONCTION ;
+ 1 : variable NBCOF0 'number of force components' entier ; 
+     tableau  NUCOF0(1..NBCOF0) 'number of each force component' entier ;
+     tableau  FORCE(1..NBCOF0)  'Value  of each force component' reel ;
+fincas ;
+fintms ;

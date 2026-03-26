@@ -1,0 +1,47 @@
+Trois possiblites pour definir des points :
+
+1 : LES 3 COORDONNEES CARTESIENNES X Y Z ; 
+    Exemple: POINT1; I; 1; 0.0001; 1E-2; 0; 
+
+2 : LES COORDONNEES CYLINDRIQUES R TETA Z   avec
+    R    le rayon,
+    TETA la longitude (angle (OX,OR)),
+    Z    la cote; 
+    Exemple: POINT2; I; 2; 1; 90; 1;
+              
+3 : LES COORDONNEES SPHERIQUES R TETA PHI avec
+    R    le rayon,
+    TETA la longitude (angle(OX,projection sur plan OXY de OR ),
+    PHI  la latitude  (angle(planXOY,OR) ; 
+    Exemple: POINT3; I; 3; 1; 90; 45;
+
+35 : EXTRACTION NO SOMMETS D'UNE LIGNE
+     Donner le numero du premier et dernier sommet a extraire
+     Exemple: POINT35; I; 35; LIGNE; 2; 25;
+
+36: EXTRAIRE LES SOMMETS D'UN PLSV dont les 3 coordonnees x,y,z
+    donne VRAI pour resultat d'une fonction utilisateur F(x,y,z)
+    de nom a fournir ensuite 
+    Exemple: POINT36; I; 36; LIGNE; POURTOUR; 
+             deffonc PLANXY(x,y,z); PLANXY = (z=0); finfonc;
+             PLANXY;
+    extrait les sommets du plan xy de la ligne de nom POURTOUR
+
+50: TRANSFORMATION D'UN POINT
+    UN point deja existant est transforme a l'aide d'une
+    transformation predefinie
+    Exemple: POINT50; SYMETRIE_DROITE; 50; P1;
+             Le point POINT50 est l'image du point p1 par
+             la transformation SYMETRIE_DROITE
+
+81: RENOMMER UN POINT
+    Renomme le NOM d'un POINT comme suit
+    Un nom a ete fourni pour arriver ici.
+    C'est le NOUVEAU NOM du POINT.
+    L'ANCIEN NOM du POINT sera demande apres. 
+    Exemple: NOUVO_NOM_POINT; I; 81; ANCIEN_NOM_POINT; 
+            {Renomme le point ANCIEN_NOM_POINT en NOUVO_NOM_POINT}
+
+82: TUER CE POIN
+    Detruit le point dont le nom vient d'etre donne.
+    Exemple: P1; I; 82;   {detruit le point P1 s'il existait}

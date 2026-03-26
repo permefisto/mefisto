@@ -1,0 +1,9 @@
+Afin de ne pas trop transformer la geometrie initiale
+definie par la triangulation initiale, certaines
+transformations seront interdites si l'angle forme
+par les normales a 2 triangles ayant une arete commune
+excede une valeur ANEN2P (en degres)
+
+Une valeur realiste ne depasse pas quelques degres.
+Au dela, la geometrie initiale peut varier fortement.
+

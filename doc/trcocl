@@ -1,0 +1,6 @@
+The previous line is translated of a CONSTANT VECTOR NOT NULL
+
+Example: S14.4; I; 14; INITIAL_LINE; 4; 5; {slices}
+1; 2; 3; {the 3 translation vector components}
+
+Attention: The translations add

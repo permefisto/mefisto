@@ -1,0 +1,90 @@
+#!/bin/bash
+#
+#  compilation et archivage d un sp fortran 95 avec OpenMP
+#  Alain Perronnet   sous LINUX 64bits  Octobre 2012
+#
+#lecture et mise sous le directory
+cd $MEFISTO
+echo
+
+if test -f $MEFISTO/td/m/anglais
+then
+  LANGAGE=1
+  LANGUE=ANGLAISE
+  echo
+  echo =========================================================
+  echo MEFISTO-LINUX 64bits: Compilation f+OpenMP, Link, Library
+  echo =========================================================
+  echo Mefisto Library Name?
+  read dir
+  echo Fortran Subroutine Name?
+  read sp
+else
+  LANGAGE=0
+  LANGUE=FRANCAISE
+  echo
+  echo ============================================================
+  echo MEFISTO-LINUX 64bits: Compilation f+OpenMP, Liens, Librairie
+  echo ============================================================
+  echo Nom de la librairie Mefisto?
+  read dir
+  echo Nom du sp Fortran?
+  read sp
+fi
+
+nomsp=$dir/$sp 
+nomsp=`basename $nomsp .f` 
+nomspf=$dir/$nomsp.f
+nomspo=$nomsp.o 
+nomspl=$dir/$nomsp  
+nomlib=$dir/lib
+poubel=$dir/poubelle
+
+rm $nomspo  2>$poubel
+rm $nomspl  2>$poubel
+#
+echo "gfortran -m64 -Wall -fPIC -g -fopenmp -I. -c $nomspf -o $nomspo"
+      gfortran -m64 -Wall -fPIC -g -fopenmp -I. -c $nomspf -o $nomspo
+#       
+if test -f $nomspo
+then
+#            
+# edition de liens de nomspo
+# ld -a -r $nomspo -o $nomspl
+#
+# si le fichier $dir/lib n'existe pas il est cree
+  if test -f $nomlib
+  then  
+#   mise en librairie du module objet du sp
+    ar r $nomlib $nomspo
+  else
+#   creation de lib et mise en librairie du module objet du sp
+    ar rc $nomlib $nomspo
+    chmod 750 $nomlib
+  fi  
+#
+# destruction du module objet du sp 
+  rm $nomspo 2>$poubel
+  rm $nomspl 2>$poubel
+  if [ $LANGAGE = 0 ]
+  then
+    echo COMPILATION CORRECTE de $MEFISTO/$nomspf
+  else
+    echo CORRECT COMPILATION of $MEFISTO/$nomspf
+  fi
+#
+else
+  rm  $nomspo 2>$poubel
+  if [ $LANGAGE = 0 ]
+  then
+    echo COMPILATION INCORRECTE de $MEFISTO/$nomspf
+    echo CORRIGER $MEFISTO/$nomspf et RECOMPILER  
+  else
+    echo INCORRECT COMPILATION of $MEFISTO/$nomspf
+    echo MODIFY $MEFISTO/$nomspf and COMPILE AGAIN
+  fi
+  echo ==========================================================
+fi  
+#
+rm $poubel
+echo

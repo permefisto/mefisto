@@ -1,0 +1,37 @@
+{ ========================================================================== }
+{ MEFISTO Software     : January 3, 2021 Version                             }
+{ USER's  Name         : Alain Perronnet                                     }
+{ Project Name         : Air around 3 Dennis: 1-st Conjugate Gradient Solver }
+{ Date                 : January 3, 2021 18h 44                              }
+{ ========================================================================== }
+@;
+{
+readf d123_r_fldata;  { read the physical characteristics of air ... }
+}
+@;
+@;
+@;
+@;
+
+20;    { PRECISION DATA  to STOP the CONJUGATE GRADIENT ITERATIONS }
+ 1e-6; { EpsRCG    VALUE to STOP the CONJUGATE GRADIENT ITERATIONS }
+@;
+
+DefVar InitTime,        FinalTime;
+       InitTime=10.0;   FinalTime=50.0;
+
+DefVar StepTime,       StoreStepTime;
+       StepTime=0.01; { CHOSEN to obtain a 0.017m DISPLACEMENT }
+       StoreStepTime=5*StepTime; { 1/5 computed vectors are stored on files}
+
+
+8; {=== FRACTIONAL UNSTEADY NAVIER-STOKES SOLVER Algorithm2 ============}
+   2;   { CONDENSED MATRIX CONJUGATE GRADIENT + FACTORIZATION LEVEL }
+     1;   { + FACTORIZATION LEVEL VALUE (0 or 1 or 2) }
+   InitTime;  { SECOND INITIAL TIME }
+   FinalTime; { SECOND FINAL   TIME }
+   StepTime;  { CONSTANT STEP of TIME (seconds) }
+   (FinalTime-InitTime)/StoreStepTime; { NUMBER of STORED SOLUTION VECTORS }
+@;
+@;
+CLOSE;

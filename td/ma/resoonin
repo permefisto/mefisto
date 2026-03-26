@@ -1,0 +1,4 @@
+variable ResoONIN 'WAVE Coefficient Types' entier
+(1: 'COEFFICIENTS M K g INDEPENDENTT of TIME',
+ 2: 'M K g INDEPT of TIME & SECOND MEMBER DEPENDENT of DISPLACEMENT',
+ 3: 'At least one COEFFICIENT depends of TIME & DISPLACEMENT' ) ;

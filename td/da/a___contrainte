@@ -1,0 +1,16 @@
+deftms ~>>>CONTRAINTE 'Stress of FE of a type'
+variable muet DATE 'date of creation of the TMS'   reel2  ;
+variable muet NUTD 'number of the descriptor array TD' entier ; 
+variable NUTYEF 'type number of Finite Elements'  entier ;  
+variable NBELFI 'number of finite elements'       entier ;   
+variable NDIMES 'dimension of the euclidean space 2 or 3' entier ; 
+variable NBJECA 'data number of stress'           entier ;       
+variable NBPIEF 'computation point number of stress on a FE' entier ;
+variable LDCOPR 'even number of words to point on CONPRI' entier ;
+tableau  COPIEF(1..NBELFI,1..NBPIEF,1..NDIMES)
+'NDIMES coordinates of NBPIEF points to compute the stress on EF' reel ;     
+tableau  CONPRI(1..NBELFI,1..NBPIEF,1..NDIMES,1..NBJECA)
+'principal stress at computation points of stress on EF' reel2 ;
+tableau  DIRPRI(1..NBELFI,1..NBPIEF,1..NDIMES,1..NDIMES,1..NBJECA)
+'coordinates of principal directions of stress on FE' reel ;
+fintms ;

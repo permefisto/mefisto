@@ -1,0 +1,71 @@
+{ ==================================================================== }
+{ MEFISTO Software     : August 17, 2011 Version                       }
+{ USER's Name          : Alain Perronnet                               }
+{ Project Name         : sp20 Test of NLSE on a sphere of Radius 20    }
+{ Date                 : 2011/08/17                                    }
+{ ==================================================================== }
+@;
+1;{ POINTS vertices of the object }
+ 1;{ TYPING of VALUES }
+ { NAME of the POINT or ESCAPE? }
+ Orig; i; 1; 0; 0; 0;
+ { in LEXICON ~>TRANSFO }
+ { X Y Z COORDINATES }
+ { COORPO 'X Y Z of a point' xyz ; }
+ { NAME of the POINT or ESCAPE? }
+ Centre; i; 1; 0.1; 0.2; 0;
+@;
+
+3;{ SURFACES faces of the object }
+ sphere; { NAME of the SURFACE or ESCAPE? }
+ i;      { NAME of TRANSFORMATION }
+ 18;     { 1/1 OF THE SURFACE OF A SPHERE }
+ 2000;   { NBTRSP 'number of triangles (20*n**2)' entier ; }
+ 20;     { RAYOSP 'radius of the sphere' reel ; }
+ Orig;   { NAME of POINT Centre of the sphere }
+@;
+
+4;{ VOLUMES materials of the object }
+ sphere8; { NAME of the VOLUME or ESCAPE? }
+ i; { NAME of TRANSFORMATION }
+ 8; { 1 CLOSED VOLUME FOR THE OPTION 9 }
+ 1; { NBSF1V 'NUMBER of closed surfaces of the volume' entier ; }
+ sphere; { NAME of SURFACE }
+
+ sphere9;{ NAME of the VOLUME or ESCAPE? }
+ i; { NAME of TRANSFORMATION }
+ 9; { TETRAHEDRIZATION 1 of VOLUMES of TYPE 8 }
+ 500000; { MXSOVO 'max NUMBER of vertices of the tetrahedrization'}
+ 1.3;    { ARETGR 'max length of edges of the regular grid' reel ; }
+ 3;      { ANEN2P 'max (degrees) angle of coplanearity' reel; }
+ 1;      { NBPTIV 'NUMBER of internal points future vertices' entier ; }
+ 1;      { NBVOPA 'NUMBER of volumes of type 8 of the partition' entier}
+ sphere8;{ NAME of VOLUME }
+ Centre; { NUPTIV(1..NBPTIV) Point Name of a future vertex }
+ 0.5;    { DISSOV(1..NBPTIV) 'wished distance up to near vertices' reel}
+
+ sphere; { NAME of the VOLUME or ESCAPE? }
+ i; { NAME of TRANSFORMATION }
+ 30;{ QUALITY IMPROVEMENT of a TETRAHEDRIZATION }
+ sphere9; { NAME of VOLUME }
+ 0.5;     { QUTEMN 'MAX QUALITY to be improved' reel; }
+ 3;       { ANTE2P 'MAX DEGREES of COPLANEARITY' reel; }
+ 15;      { NBITAT 'NUMBER of IMPROVEMENT ITERATIONS' entier ; }
+ @;
+
+5; { OBJECTS parts of the object }
+ sphere; { NAME of the OBJECT or ESCAPE? }
+ 0; { 1D or 2D or 3D classic }
+ 2; { NBDOBJ 'number of Points Lines Surfaces Volumes Objects of the object' }
+ v; sphere; { POINT or LINE or SURFACE or VOLUME or OBJECT? }
+ s; sphere; { POINT or LINE or SURFACE or VOLUME or OBJECT? }
+ @;
+
+7; { INTERPOLATION nodes of the mesh }
+ sphere; { NAME of the OBJECT to be INTERPOLATED? }
+ 4;      { LAGRANGE polynomial of DEGREE 2 }
+@;
+
+10; {Drawing of the object}
+ 5; 1; 90; 90;
+CLOSE;

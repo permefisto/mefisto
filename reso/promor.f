@@ -1,0 +1,126 @@
+      SUBROUTINE PROMOR( NTLXOB , NUTYOB , NUOBJE ,
+     &                   KNOMS1 , KNOMS2 , IERR )
+C ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+C BUT : TRANSFORMER UNE STRUCTURE PROFIL EN STRUCTURE MORSE
+C -----
+C ENTREES :
+C ---------
+C NTLXOB : NUMERO DU LEXIQUE DE L'OBJET
+C NUTYOB : NUMERO DU TYPE DE L'OBJET
+C NUOBJE : NUMERO DANS LES OBJETS DE CE TYPE
+C KNOMS1 : NOM DE LA STRUCTURE A RECOPIER
+C KNOMS2 : NOM DE LA STRUCTURE COPIEE
+C
+C SORTIES :
+C ---------
+C IERR   : 0 SI PAS D'ERREUR , NON NUL SINON
+C ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+C AUTEUR : PASCAL JOLY     ANALYSE NUMERIQUE UPMC PARIS  MAI 1990
+C23456---------------------------------------------------------------012
+      IMPLICIT          INTEGER (W)
+      include"./incl/gsmenu.inc"
+      include"./incl/a___profil.inc"
+      include"./incl/a___morse.inc"
+C
+      include"./incl/pp.inc"
+      COMMON            MCN(MOTMCN)
+      COMMON / UNITES / LECTEU,IMPRIM,INTERA,NUNITE(29)
+      REAL              RMCN(1)
+      DOUBLE PRECISION  DMCN(1)
+      EQUIVALENCE      (MCN(1),RMCN(1),DMCN(1))
+      CHARACTER*10      NMTYOB,KNOMTY
+      CHARACTER*12      KNOMS1,KNOMS2
+      CHARACTER*24      KNOM,KNOM1,KNOM2
+C
+      IERR   = 0
+C
+C     OUVERTURE DE LA MATRICE PROFIL
+C     ------------------------------
+C
+      KNOM1 = 'PROFIL"'//KNOMS1
+      L = INDEX( KNOM1 , ' ' )
+      IF( L .GT. 0 ) THEN
+         L = L - 1
+      ELSE
+         L = LEN( KNOM1 )
+      ENDIF
+      CALL LXTSOU( NTLXOB,KNOM1(1:L),NTPROF,MNPROF )
+      KNOMTY = NMTYOB( NUTYOB )
+      CALL NMOBNU( KNOMTY , NUOBJE , KNOM )
+      IF( NTPROF .LE. 0 ) THEN
+         NBLGRC(NRERR) = 1
+         KERR(1) = ' ERREUR : OBJET'// KNOM //' SANS '//KNOM1
+         CALL LEREUR
+         IERR = IERR + 1
+         RETURN
+      ENDIF
+      NTDL   = MCN( MNPROF + WBLIPR )
+      LPPROF = MCN( MNPROF + WPPROF )
+C     LES ADRESSES DES TABLEAUX
+      MNMUDL = MNPROF + WPDIAG
+      MNAGP  = MNPROF + LPPROF
+C
+C     LES TMS 'MORSE"KNOMS'
+C     ---------------------
+C
+      LOLP = MCN(MNMUDL+NTDL)
+      CALL TNMCDC( 'ENTIER' , NTDL+1 , MNLPLI )
+      CALL TNMCDC( 'ENTIER' , LOLP , MNLPCO )
+      CALL TNMCDC( 'REEL2'  , LOLP , MNAGM )
+C     INITIALISATION DES TABLEAUX
+      CALL AZEROI( NTDL+1 , MCN(MNLPLI) )
+      CALL AZEROI( LOLP   , MCN(MNLPCO) )
+      CALL AZEROD( LOLP   , MCN(MNAGM) )
+C     LES TABLEAUX DE LA STRUCTURE MORSE
+      NCODSA = 1
+      CALL PROMO1(NCODSA,NTDL,MCN(MNMUDL),MCN(MNAGP),
+     &            MCN(MNLPLI),MCN(MNLPCO),MCN(MNAGM) )
+C
+C     DECLARATION DE LA STRUCTURE MORSE
+C     ---------------------------------
+C
+      KNOM2 = 'MORSE"'//KNOMS2
+      L = INDEX( KNOM2 , ' ' )
+      IF( L .GT. 0 ) THEN
+         L = L - 1
+      ELSE
+         L = LEN( KNOM2 )
+      ENDIF
+      CALL LXTSOU( NTLXOB,KNOM2(1:L),NTMORS,MNMORS )
+      IF( NTMORS .GT. 0 ) THEN
+C        LA MATRICE MORSE EST DETRUITE POUR ETRE REDECLAREE
+         CALL LXTSDS( NTLXOB , KNOM2(1:L) )
+      ENDIF
+      LOLPCO = MCN(MNLPLI+NTDL)
+      LPMORS = WPLIGN + 1 + NTDL + LOLPCO
+      MOREE2 = MOTVAR(6)
+      IF( MOD(LPMORS,MOREE2) .EQ. 1 ) LPMORS = LPMORS + 1
+      LO = LPMORS / MOREE2 + LOLPCO
+      CALL LXTNDC( NTLXOB , KNOM2(1:L) , 'REEL2' , LO )
+      CALL LXTSOU( NTLXOB , KNOM2(1:L) , NTMORS , MNMORS )
+C     COPIE DU TABLEAU LPLIGN
+      MNLPLS = MNMORS + WPLIGN
+      CALL TRTATA( MCN(MNLPLI) , MCN(MNLPLS) , NTDL+1 )
+C     COPIE DU TABLEAU LPCOLO
+      MNLPCS = MNLPLS + NTDL + 1
+      CALL TRTATA( MCN(MNLPCO) , MCN(MNLPCS) , LOLPCO )
+C     COPIE DE LA MATRICE
+      MNAG   = MNMORS + LPMORS
+      CALL TRTATA( MCN(MNAGM) , MCN(MNAG) , LOLPCO*MOREE2 )
+C     DESTRUCTION DES TABLEAUX TEMPORAIRES
+      CALL TNMCDS( 'ENTIER' , NTDL+1 , MNLPLI )
+      CALL TNMCDS( 'ENTIER' , LOLP   , MNLPCO )
+      CALL TNMCDS( 'REEL2'  , LOLP   , MNAGM  )
+C
+C     MISE A JOUR DES TMS 'MORSE"KNOMS'
+C     ---------------------------------
+C
+      MCN( MNMORS + WBLIMO ) = NTDL
+      MCN( MNMORS + WPMORS ) = LPMORS
+C     LA DATE
+      CALL ECDATE( MCN(MNMORS) )
+C     LE NUMERO DU TABLEAU DESCRIPTEUR
+      MCN( MNMORS + MOREE2 ) = NONMTD( '~>>>MORSE' )
+C
+      RETURN
+      END

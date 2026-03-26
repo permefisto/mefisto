@@ -1,0 +1,24 @@
+Les 3 FACES de l'HEXAEDRE ENGLOBANT ACTUEL des coordonnes
+qui sont les plus eloignees de l'oeil vont etre tracees
+A la fin elles seront completees des 3 aretes visibles restantes
+Comment?
+
+0: Supprime ensuite ce type de trace
+
+1: 8 ARETES englobantes
+   Seules les aretes de l'hexaedre englobant sont tracees
+
+2: GRILLE quadrangulaire
+   Les 3 faces sont decoupees selon une grille de quadrangles
+   sans couleur de fond
+
+3: 3 FACES en FOND
+   Les 3 faces ont toutes la meme couleur
+
+4: DAMIER selon 2 couleurs
+   Les 3 faces sont decoupees en quadrangles
+   Ces quadrangles sont remplis de couleurs alternees
+   La plus longue arete est decoupee en 10 + 2 marges ce qui
+   definit la taille d'un carreau
+   Les 2 autres dimensions sont ajustees a un nombre entier
+   de longueurs de carreau

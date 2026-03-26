@@ -1,0 +1,11 @@
+The topologic coordinates I J K vary from 1 to MAX
+for the vertices.
+
+Choose min and max for each topologic coordinate.
+
+Example: V35; I; 35; STRUCTURED_HEXAEDRON;
+2;5;  4;8;  2;3;
+Extract the hexahedra of 
+3 slices 2 to 5 in I-coordinate,
+4 slices 4 to 8 in J-coordinate,
+2 slices 2 to 3 in K-coordinate.

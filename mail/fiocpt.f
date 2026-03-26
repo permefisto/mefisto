@@ -1,0 +1,291 @@
+       SUBROUTINE FIOCPT( PT, PTXYZD, NUMOCT, LARBRO, NUFILS )
+C+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+C BUT :    TROUVER LE NUMERO DU PREMIER FILS DE L'OCTAEDRE NUMOCT
+C -----    (NON FEUILLE) DANS LARBRO ET CONTENANT LE POINT PT
+C
+C    ATTENTION : LE POINT PT EST SUPPOSE INTERNE A L'OCTAEDRE !!!
+C
+C ENTREES:
+C --------
+C NUMOCT : NUMERO LARBRO DE L'OCTAEDRE
+C PT     : X  Y  Z DU POINT + UN REEL DOUBLE DECLARE MAIS INUTILE
+C PTXYZD : PAR POINT : X  Y  Z  DISTANCE_SOUHAITEE
+C LARBRO : ARBRE-14 DES OCTAEDRES ( FOND DE LA TETRAEDRISATION )
+C      LARBRO(0,0) : NO DU 1-ER OCTAEDRE VIDE DANS LARBRO
+C      LARBRO(1,0) : MAXIMUM DU 1-ER INDICE DE LARBRO (ICI -1:20)
+C      LARBRO(2,0) : MAXIMUM DECLARE DU 2-EME INDICE DE LARBRO
+C                    (ICI = MXARBO)
+C
+C      LARBRO(-1:20,1) : RACINE DE L'ARBRE (OCTAEDRE SANS PERE)
+C
+C      LARBRO(-1,J) : NO DU PERE DE L'OCTAEDRE J DANS UN DES 2 ARBRES
+C                     >0 => DANS LARBRO
+C                     <0 => DANS LARBRT
+C      LARBRO(0,J)  : 1 A 14 NO DE FILS DE L'OCTAEDRE J POUR SON PERE
+C                     + 100 * NO TYPE DE L'OT J
+C                     NO TYPE DE L'OT : 0 SI OCTAEDRE
+C                                       1 SI TETRAEDRE T RONDE (T1)
+C                                       2 SI TETRAEDRE T       (T2)
+C   SI LARBRO(0,J)>0 ALORS J EST UN OCTAEDRE OCCUPE
+C      SI LARBRO(1,.)>0 ALORS
+C         LARBRO(1:14,J): NO (>0) LARBRO DES 14 SOUS-OCTA-TETRAEDRES
+C      SINON
+C         LARBRO(1:14,J):-NO PTXYZD DES 0 A 14 POINTS INTERNES DE L'OCTA J
+C                         0  SI PAS DE POINT
+C                        ( J EST ALORS UNE FEUILLE DE L'ARBRE )
+C
+C      LARBRO(15:20,J) : NO PTXYZD DES 6 SOMMETS DE L'OCTAEDRE J
+C   SINON
+C      LARBRO(0,J): -ADRESSE DANS LARBRO DE L'OCTAEDRE VIDE SUIVANT
+C
+C SORTIES:
+C --------
+C NUFILS : NUMERO DU PREMIER FILS DE L'OCTAEDRE CONTENANT LE POINT PT
+C+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+C AUTEUR : ALAIN PERRONNET ANALYSE NUMERIQUE UPMC PARIS    NOVEMBRE 1992
+C2345X7..............................................................012
+      COMMON / UNITES / LECTEU,IMPRIM,INTERA,NUNITE(29)
+      INTEGER           LARBRO(-1:20,0:*)
+      DOUBLE PRECISION  PT(4)
+      DOUBLE PRECISION  PTXYZD(4,*)
+      INTEGER           NOSOTE(20), NOSOT(6)
+C
+C     TRAITEMENT SELON LE DEMI PLAN SUPERIEUR OU INFERIEUR
+      IF( PT(3) .GE. PTXYZD(3,LARBRO(16,NUMOCT)) ) THEN
+C
+C        DEMI PLAN SUPERIEUR
+C        ===================
+C        LE SOMMET SUPERIEUR
+         NOSOTE(1) = LARBRO( 15, NUMOCT )
+C        CALCUL DES MILIEUX DES ARETES DE L'OCTAEDRE
+         NUOTFI = LARBRO( 1, NUMOCT )
+         NOSOTE(7) = LARBRO( 16, NUOTFI )
+         NOSOTE(8) = LARBRO( 17, NUOTFI )
+         NOSOTE(9) = LARBRO( 18, NUOTFI )
+         NOSOTE(10)= LARBRO( 19, NUOTFI )
+         NOSOTE(15)= LARBRO( 20, NUOTFI )
+         NUOTFI = LARBRO( 2, NUMOCT )
+         NOSOTE(11)= LARBRO( 17, NUOTFI )
+         NOSOTE(14)= LARBRO( 19, NUOTFI )
+         NUOTFI = LARBRO( 4, NUMOCT )
+         NOSOTE(12)= LARBRO( 17, NUOTFI )
+         NOSOTE(13)= LARBRO( 19, NUOTFI )
+C
+C        PT DANS LE TETRAEDRE 11 15 7 8 => T1 => FILS 7
+         NOSOT(1) = NOSOTE(11)
+         NOSOT(2) = NOSOTE(15)
+         NOSOT(3) = NOSOTE(7)
+         NOSOT(4) = NOSOTE(8)
+         CALL PTDSTEOT( PT, PTXYZD, NOSOT, NONOUI )
+         IF( NONOUI .GT. 0 ) THEN
+            NUFILS = 7
+            RETURN
+         ENDIF
+C
+C        PT DANS LE TETRAEDRE 12 15 8 9 => T2 => FILS 8
+         NOSOT(1) = NOSOTE(12)
+         NOSOT(2) = NOSOTE(15)
+         NOSOT(3) = NOSOTE(8)
+         NOSOT(4) = NOSOTE(9)
+         CALL PTDSTEOT( PT, PTXYZD, NOSOT, NONOUI )
+         IF( NONOUI .GT. 0 ) THEN
+            NUFILS = 8
+            RETURN
+         ENDIF
+C
+C        PT DANS LE TETRAEDRE 15 13 10 9 => T3 => FILS 9
+         NOSOT(1) = NOSOTE(15)
+         NOSOT(2) = NOSOTE(13)
+         NOSOT(3) = NOSOTE(10)
+         NOSOT(4) = NOSOTE(9)
+         CALL PTDSTEOT( PT, PTXYZD, NOSOT, NONOUI )
+         IF( NONOUI .GT. 0 ) THEN
+            NUFILS = 9
+            RETURN
+         ENDIF
+C
+C        PT DANS LE TETRAEDRE 15 14 7 10 => T4 => FILS 10
+         NOSOT(1) = NOSOTE(15)
+         NOSOT(2) = NOSOTE(14)
+         NOSOT(3) = NOSOTE(7)
+         NOSOT(4) = NOSOTE(10)
+         CALL PTDSTEOT( PT, PTXYZD, NOSOT, NONOUI )
+         IF( NONOUI .GT. 0 ) THEN
+            NUFILS = 10
+            RETURN
+         ENDIF
+C
+C        PT DANS L'OCTAEDRE 1 8 7 9 10 => O1 => FILS 1
+         NOSOT(1) = NOSOTE(1)
+         NOSOT(2) = NOSOTE(7)
+         NOSOT(3) = NOSOTE(8)
+         NOSOT(4) = NOSOTE(9)
+         NOSOT(5) = NOSOTE(10)
+         NOSOT(6) = NOSOTE(15)
+         CALL PTDSOC( PT, PTXYZD, NOSOT, NONOUI )
+         IF( NONOUI .GT. 0 ) THEN
+            NUFILS = 1
+            RETURN
+         ENDIF
+C
+C        COMPLEMENT POUR LA SUITE
+         NOSOTE(6) = LARBRO( 20, NUMOCT )
+         NUOTFI = LARBRO( 6, NUMOCT )
+         NOSOTE(16) = LARBRO( 16, NUOTFI )
+         NOSOTE(17) = LARBRO( 17, NUOTFI )
+         NOSOTE(18) = LARBRO( 18, NUOTFI )
+         NOSOTE(19) = LARBRO( 19, NUOTFI )
+C
+      ELSE
+C
+C        DEMI PLAN INFERIEUR
+C        ===================
+C        LE SOMMET INFERIEUR
+         NOSOTE(6) = LARBRO( 20, NUMOCT )
+C        CALCUL DES MILIEUX DES ARETES DE L'OCTAEDRE
+         NUOTFI = LARBRO( 6, NUMOCT )
+         NOSOTE(15) = LARBRO( 15, NUOTFI )
+         NOSOTE(16) = LARBRO( 16, NUOTFI )
+         NOSOTE(17) = LARBRO( 17, NUOTFI )
+         NOSOTE(18) = LARBRO( 18, NUOTFI )
+         NOSOTE(19) = LARBRO( 19, NUOTFI )
+         NUOTFI = LARBRO( 2, NUMOCT )
+         NOSOTE(11)= LARBRO( 17, NUOTFI )
+         NOSOTE(14)= LARBRO( 19, NUOTFI )
+         NUOTFI = LARBRO( 4, NUMOCT )
+         NOSOTE(12)= LARBRO( 17, NUOTFI )
+         NOSOTE(13)= LARBRO( 19, NUOTFI )
+C
+C        PT DANS LE TETRAEDRE 17 16 11 15 => T5 => FILS 11
+         NOSOT(1) = NOSOTE(17)
+         NOSOT(2) = NOSOTE(16)
+         NOSOT(3) = NOSOTE(11)
+         NOSOT(4) = NOSOTE(15)
+         CALL PTDSTEOT( PT, PTXYZD, NOSOT, NONOUI )
+         IF( NONOUI .GT. 0 ) THEN
+            NUFILS = 11
+            RETURN
+         ENDIF
+C
+C        PT DANS LE TETRAEDRE 17 18 15 12 => T6 => FILS 12
+         NOSOT(1) = NOSOTE(17)
+         NOSOT(2) = NOSOTE(18)
+         NOSOT(3) = NOSOTE(15)
+         NOSOT(4) = NOSOTE(12)
+         CALL PTDSTEOT( PT, PTXYZD, NOSOT, NONOUI )
+         IF( NONOUI .GT. 0 ) THEN
+            NUFILS = 12
+            RETURN
+         ENDIF
+C
+C        PT DANS LE TETRAEDRE 18 19 15 13 => T7 => FILS 13
+         NOSOT(1) = NOSOTE(18)
+         NOSOT(2) = NOSOTE(19)
+         NOSOT(3) = NOSOTE(15)
+         NOSOT(4) = NOSOTE(13)
+         CALL PTDSTEOT( PT, PTXYZD, NOSOT, NONOUI )
+         IF( NONOUI .GT. 0 ) THEN
+            NUFILS = 13
+            RETURN
+         ENDIF
+C
+C        PT DANS LE TETRAEDRE 16 19 14 15 => T8 => FILS 14
+         NOSOT(1) = NOSOTE(16)
+         NOSOT(2) = NOSOTE(19)
+         NOSOT(3) = NOSOTE(14)
+         NOSOT(4) = NOSOTE(15)
+         CALL PTDSTEOT( PT, PTXYZD, NOSOT, NONOUI )
+         IF( NONOUI .GT. 0 ) THEN
+            NUFILS = 14
+            RETURN
+         ENDIF
+C
+C        PT DANS L'OCTAEDRE 15 16 17 18 19 6 => O6 => FILS 6
+         NOSOT(1) = NOSOTE(15)
+         NOSOT(2) = NOSOTE(16)
+         NOSOT(3) = NOSOTE(17)
+         NOSOT(4) = NOSOTE(18)
+         NOSOT(5) = NOSOTE(19)
+         NOSOT(6) = NOSOTE(6)
+         CALL PTDSOC( PT, PTXYZD, NOSOT, NONOUI )
+         IF( NONOUI .GT. 0 ) THEN
+            NUFILS = 6
+            RETURN
+         ENDIF
+C
+C        COMPLEMENT POUR LA SUITE
+         NOSOTE(1) = LARBRO( 15, NUMOCT )
+         NUOTFI = LARBRO( 1, NUMOCT )
+         NOSOTE(7) = LARBRO( 16, NUOTFI )
+         NOSOTE(8) = LARBRO( 17, NUOTFI )
+         NOSOTE(9) = LARBRO( 18, NUOTFI )
+         NOSOTE(10)= LARBRO( 19, NUOTFI )
+      ENDIF
+C
+C     RECHERCHE DANS LES 4 OCTAEDRES 2 3 4 5
+C     ======================================
+C     LES SOMMETS MANQUANTS DE L'OCTAEDRE
+      NOSOTE(2) = LARBRO( 16, NUMOCT )
+      NOSOTE(3) = LARBRO( 17, NUMOCT )
+      NOSOTE(4) = LARBRO( 18, NUMOCT )
+      NOSOTE(5) = LARBRO( 19, NUMOCT )
+C
+C     PT DANS L'OCTAEDRE 7 2 11 15 14 16 => O2 => FILS 2
+      NOSOT(1) = NOSOTE(7)
+      NOSOT(2) = NOSOTE(2)
+      NOSOT(3) = NOSOTE(11)
+      NOSOT(4) = NOSOTE(15)
+      NOSOT(5) = NOSOTE(14)
+      NOSOT(6) = NOSOTE(16)
+      CALL PTDSOC( PT, PTXYZD, NOSOT, NONOUI )
+      IF( NONOUI .GT. 0 ) THEN
+         NUFILS = 2
+         RETURN
+      ENDIF
+C
+C     PT DANS L'OCTAEDRE 8 11 3 12 15 17 => O3 => FILS 3
+      NOSOT(1) = NOSOTE(8)
+      NOSOT(2) = NOSOTE(11)
+      NOSOT(3) = NOSOTE(3)
+      NOSOT(4) = NOSOTE(12)
+      NOSOT(5) = NOSOTE(15)
+      NOSOT(6) = NOSOTE(17)
+      CALL PTDSOC( PT, PTXYZD, NOSOT, NONOUI )
+      IF( NONOUI .GT. 0 ) THEN
+         NUFILS = 3
+         RETURN
+      ENDIF
+c
+C     PT DANS L'OCTAEDRE 9 15 12 4 13 18 => O3 => FILS 4
+      NOSOT(1) = NOSOTE(9)
+      NOSOT(2) = NOSOTE(15)
+      NOSOT(3) = NOSOTE(12)
+      NOSOT(4) = NOSOTE(4)
+      NOSOT(5) = NOSOTE(13)
+      NOSOT(6) = NOSOTE(18)
+      CALL PTDSOC( PT, PTXYZD, NOSOT, NONOUI )
+      IF( NONOUI .GT. 0 ) THEN
+         NUFILS = 4
+         RETURN
+      ENDIF
+C
+C     PT DANS L'OCTAEDRE 10 14 15 13 5 19 => O4 => FILS 5
+      NOSOT(1) = NOSOTE(10)
+      NOSOT(2) = NOSOTE(14)
+      NOSOT(3) = NOSOTE(15)
+      NOSOT(4) = NOSOTE(13)
+      NOSOT(5) = NOSOTE(5)
+      NOSOT(6) = NOSOTE(19)
+      CALL PTDSOC( PT, PTXYZD, NOSOT, NONOUI )
+      IF( NONOUI .GT. 0 ) THEN
+         NUFILS = 5
+         RETURN
+      ENDIF
+C
+C     PT DANS AUCUN DES FILS
+      WRITE(IMPRIM,*)'fiocpt: POINT xyz:',(PT(k),k=1,3),
+     %               'DANS AUCUN DES FILS DE L''OCTAEDRE ',NUMOCT
+      NUFILS = 0
+
+      RETURN
+      END

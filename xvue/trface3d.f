@@ -1,0 +1,61 @@
+      SUBROUTINE TRFACE3D( NCF, NCA, NCNF, NCNS, NOFACE, NOSOEF, XYZSOM)
+C+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+C BUT :    en 3D TRACE de la FACE TRIANGLE ou QUADRANGLE NOSOEF(NOFACE)
+C -----    de son REMPLISSAGE, de ses ARETES et des NO des SOMMETS
+
+C ENTREES:
+C --------
+C NCF    : NUMERO DE LA COULEUR DE REMPLISSAGE DE LA FACE A TRACER
+C          <0 PAS DE TRACE DU REMPLISSAGE  DE LA FACE A TRACER
+C NCA    : NUMERO DE LA COULEUR DES ARETES DE LA FACE A TRACER
+C          <0 PAS DE TRACE DES ARETES DU CONTOUR DE LA FACE
+C NCNF   : NUMERO DE LA COULEUR DU NUMERO NOFACE
+C NCNS   : NUMERO DE LA COULEUR DES NUMEROS DES SOMMETS
+
+C NOFACE : NUMERO NOSOEF de la FACE
+C NOSOEF : NUMERO XYZSOM DES 4 SOMMETS DE LA FACE
+C          SI LE 4-EME EST NUL ALORS LA FACE EST UN TRIANGLE
+C          SINON C'EST UN QUADRANGLE
+C XYZSOM : XYZ DES SOMMETS DU MAILLAGE DE LA SURFACE
+C+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+C AUTEUR : Alain PERRONNET  Saint PIERRE du PERRAY              Mai 2020
+C2345X7..............................................................012
+      INTEGER        NOSOEF(4,*)
+      REAL           XYZSOM(3,*), XYZ(3,4), BARY(3)
+
+      IF( NOFACE .LE. 0 ) GOTO 9999
+      IF( NOSOEF(1,NOFACE) .LE. 0 ) GOTO 9999
+
+C     NOMBRE DE SOMMETS DE LA FACE (A PRIORI 3:TRIANGLE ou 4:QUADRANGLE)
+      IF( NOSOEF( 4, NOFACE ) .EQ. 0 ) THEN
+         NBS = 3
+      ELSE
+         NBS = 4
+      ENDIF
+
+      DO N = 1, NBS
+         NS = NOSOEF( N, NOFACE )
+         DO K=1,3
+            XYZ( K, N ) = XYZSOM( K, NS )
+         ENDDO
+      ENDDO
+
+C     TRACE DE LA FACE 3D
+      CALL FACE3D( NCF, NCA, NBS, XYZ )
+
+      IF( NCNS .GE. 0 ) THEN
+C        TRACE DES NBS NO DES SOMMETS
+         DO N = 1, NBS
+            NS = NOSOEF( N, NOFACE )
+            CALL ENTIER3D( NCNS, XYZSOM(1,NS), NS )
+         ENDDO
+      ENDIF
+
+      IF( NCNF .GE. 0 ) THEN
+C        TRACE du NUMERO NOFACE DE LA FACE en son BARYCENTRE
+         CALL BARYFACE( NOFACE, NOSOEF, XYZSOM, BARY )
+         CALL ENTIER3D( NCNF, BARY, NOFACE )
+      ENDIF
+
+ 9999 RETURN
+      END

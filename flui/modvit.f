@@ -1,0 +1,37 @@
+      SUBROUTINE MODVIT( NDIM, NBNOVI, NBVECT, VX, VY, VZ,
+     %                   VITNORM )
+C+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+C BUT :    CALCULER LE TABLEAU DU MODULE DES VITESSES AUX NOEUDS
+C -----    DU MAILLAGE
+C
+C ENTREES :
+C ---------
+C NDIM   : DIMENSION DE L'ESPACE DE L'OBJET (2 OU 3)
+C NBNOVI : NOMBRE DE NOEUDS SUPPORT DE LA VITESSE
+C NBVECT : NOMBRE TOTAL DE VECTEURS VITESSE PRESSION
+C VX     : LA VITESSE EN X EN CHAQUE NOEUD ET NBVECT FOIS
+C VY     : LA VITESSE EN Y EN CHAQUE NOEUD ET NBVECT FOIS
+C VZ     : LA VITESSE EN Z EN CHAQUE NOEUD ET NBVECT FOIS
+C
+C SORTIE :
+C --------
+C VITNORM: MODULE DE LA VITESSE( NBNOVI, NBVECT )
+C+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+C AUTEUR : ALAIN PERRONNET LJLL UPMC & Saint PIERRE du PERRAY  Juin 2010
+C234567...............................................................12
+      DOUBLE PRECISION  VX(NBNOVI,NBVECT)
+      DOUBLE PRECISION  VY(NBNOVI,NBVECT)
+      DOUBLE PRECISION  VZ(NBNOVI,NBVECT)
+      DOUBLE PRECISION  VITNORM(NBNOVI,NBVECT), VITN
+      INTRINSIC         SQRT
+C
+      DO K=1,NBVECT
+         DO I=1,NBNOVI
+            VITN = VX(I,K)**2 + VY(I,K)**2
+            IF( NDIM .EQ. 3 ) VITN = VITN + VZ(I,K)**2
+            VITNORM(I,K) = SQRT( VITN )
+         ENDDO
+      ENDDO
+C
+      RETURN
+      END

@@ -1,0 +1,225 @@
+      SUBROUTINE SUEX21( NUSFEX, NTLXSF, LADEFI, RADEFI,
+     %                   NTNSEF, MNNSEF, NTXYZS, MNXYZS, IERR )
+C+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+C BUT :    GENERER LA TRIANGULATION FERMEE DES 6 FACES D'UNE BOITE
+C -----    DEFINIE PAR SON POINT CENTRE ET LONGUEURX,LARGEURY,HAUTEURZ
+C
+C ENTREES:
+C --------
+C NUSFEX : NUMERO DE LA SURFACE DANS SON LEXIQUE
+C NTLXSF : NUMERO DU TABLEAU TMS DU LEXIQUE DE LA SURFACE
+C LADEFI : TABLEAU ENTIER DES DONNEES DE LA DEFINITION DE LA SURFACE
+C RADEFI : TABLEAU REEL   DES DONNEES DE LA DEFINITION DE LA SURFACE
+C          CF ~/td/d/a_surface__definition
+C
+C SORTIES:
+C --------
+C NTNSEF : NUMERO      DU TMS 'NSEF' DES NUMEROS DES TRIANGLES DES SURFACES
+C MNNSEF : ADRESSE MCN DU TMS 'NSEF' DES NUMEROS DES TRIANGLES DES SURFACES
+C          CF ~/td/d/a___nsef
+C NTXYZS : NUMERO      DU TMS 'XYZSOMMET' DES TRIANGLES DE LA SURFACE
+C MNXYZS : ADRESSE MCN DU TMS 'XYZSOMMET' DES TRIANGLES DE LA SURFACE
+C          CF ~/td/d/a___xyzsommet
+C IERR   : 0 SI PAS D'ERREUR, >0 SINON
+C+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+C AUTEUR : ALAIN PERRONNET LJLL UPMC & St PIERRE DU PERRAY Novembre 2011
+C2345X7..............................................................012
+      include"./incl/langue.inc"
+      include"./incl/gsmenu.inc"
+      include"./incl/ntmnlt.inc"
+      include"./incl/a_point__definition.inc"
+      include"./incl/a_surface__definition.inc"
+      include"./incl/a___xyzsommet.inc"
+      include"./incl/a___nsef.inc"
+C
+C     LE SUPER-TABLEAU OU TOUS LES TMC ET TMS OUVERTS SONT STOCKES
+      include"./incl/pp.inc"
+      COMMON            MCN(MOTMCN)
+      REAL             RMCN(1)
+      EQUIVALENCE   ( MCN(1), RMCN(1) )
+C
+C     LE NUMERO D'UNITE DU CLAVIER, FENETRE DES AFFICHAGES ET
+C     LE PARAMETRE DE NIVEAU D'INTERACTIVITE
+      COMMON / UNITES / LECTEU, IMPRIM, INTERA, NUNITE(29)
+C
+C     LE TABLEAU DES DONNEES DE LA DEFINITION DE LA SURFACE
+C     VU SOUS FORME D'UN TABLEAU D'ENTIERS PUIS DE REELS
+      INTEGER           LADEFI(0:*), LADEFI2(0:WUPTES+4)
+      REAL              RADEFI(0:*)
+C
+      CHARACTER*24      NOMPOI, NMSFEX
+      CHARACTER*1       KNBRE
+      INTEGER           NUPTBX(0:4)
+      REAL              LONGXBX, LARGYBX, HAUTZBX, RXYZ(3), XYZ0(3)
+C
+C     LE NOM DE LA SURFACE
+      CALL NMOBNU( 'SURFACE', NUSFEX, NMSFEX )
+C
+C     RECUPERATION DES DONNEES DE LA SURFACE
+C     LONGUEUR EN X DE LA BOITE
+      LONGXBX = RADEFI( WONXBX )
+C     LARGEUR EN Y DE LA BOITE
+      LARGYBX = RADEFI( WARYBX )
+C     HAUTEUR EN Z DE LA BOITE
+      HAUTZBX = RADEFI( WAUZBX )
+C
+C     NOM DU POINT CENTRE DE LA BOITE
+      NUPTCE = LADEFI( WTCEBX )
+      CALL LXNLOU( NTPOIN, NUPTCE, NT, MN )
+      IF( MN .LE. 0 ) THEN
+         NBLGRC(NRERR) = 1
+         IF( LANGAG .EQ. 0 ) THEN
+            KERR(1) = 'POINT CENTRE DE LA BOITE EST INCONNU'
+         ELSE
+            KERR(1) = 'UNKNOWN ORIGIN POINT of the BOX'
+         ENDIF
+         CALL LEREUR
+         IERR = 1
+         GOTO 9999
+      ENDIF
+C
+      CALL LXTSOU( NT, 'XYZSOMMET',  NTSOM, MNSOM )
+      IF( MNSOM .LE. 0 ) THEN
+         NBLGRC(NRERR) = 1
+         IF( LANGAG .EQ. 0 ) THEN
+            KERR(1) = 'POINT DE COORDONNEES INCONNUES'
+         ELSE
+            KERR(1) = 'POINT WITH UNKWOWN COORDINATES'
+         ENDIF
+         CALL LEREUR
+         IERR = 2
+         GOTO 9999
+      ENDIF
+C
+C     LES 3 COORDONNEES DU POINT CENTRE DU POLYGONE
+      MN = MNSOM + WYZSOM - 1
+C
+C     LE POINT ORIGINE DE LA BOITE
+      XYZ0(1) = RMCN( MN+1 ) - LONGXBX / 2
+      XYZ0(2) = RMCN( MN+2 ) - LARGYBX / 2
+      XYZ0(3) = RMCN( MN+3 ) - HAUTZBX / 2
+C
+C     CREATION DU POINT TRANSLATE EN X et DES 3 SOMMETS DE LA FACE YZ
+C     ===============================================================
+      DO 30 K=0,4
+C
+         IF( K .EQ. 0 ) THEN
+C           LES 3 COORDONNEES DU POINT 1 DU VECTEUR TRANSLATION
+            RXYZ(1) = XYZ0(1)
+            RXYZ(2) = XYZ0(2)
+            RXYZ(3) = XYZ0(3)
+         ELSE IF( K .EQ. 1 ) THEN
+C           LES 3 COORDONNEES DU POINT 1 DU POLYGONE TRANSLATE DE LONGXBX
+            RXYZ(1) = XYZ0(1) + LONGXBX
+            RXYZ(2) = XYZ0(2)
+            RXYZ(3) = XYZ0(3)
+         ELSE IF( K .EQ. 2 ) THEN
+C           LES 3 COORDONNEES DU POINT 2 DE LA FACE YZ
+            RXYZ(1) = XYZ0(1)
+            RXYZ(2) = XYZ0(2) + LARGYBX
+            RXYZ(3) = XYZ0(3)
+         ELSE IF( K .EQ. 3 ) THEN
+C           LES 3 COORDONNEES DU POINT 3 DE LA FACE YZ
+            RXYZ(1) = XYZ0(1)
+            RXYZ(2) = XYZ0(2) + LARGYBX
+            RXYZ(3) = XYZ0(3) + HAUTZBX
+         ELSE IF( K .EQ. 4 ) THEN
+C           LES 3 COORDONNEES DU POINT 4 DE LA FACE YZ
+            RXYZ(1) = XYZ0(1)
+            RXYZ(2) = XYZ0(2)
+            RXYZ(3) = XYZ0(3) + HAUTZBX
+         ENDIF
+C
+C        CE POINT EXISTE T IL DEJA?
+         CALL XYZDSPT( RXYZ, NUPTBX(K), RXYZ )
+         IF( NUPTBX(K) .GT. 0 ) THEN
+C           LE POINT EXISTE DEJA
+C           LE NOM DU POINT RETROUVE
+            CALL NMOBNU( 'POINT', NUPTBX(K), NOMPOI )
+            GOTO 30
+         ENDIF
+C
+C        CONSTRUCTION DU NOUVEAU POINT K DE LA FACE
+C        LE NOM DU POINT K EST CELUI DE LA SURFACE AVEC LE NUMERO K
+         NOMPOI = NMSFEX
+         N      = NUDCNB( NOMPOI )
+         WRITE(KNBRE(1:1),'(I1)') K
+         N = MIN(N,22)
+         NOMPOI = NOMPOI(1:N) // '_' // KNBRE(1:1)
+C
+C        SI CE POINT EXISTE, IL EST DETRUIT
+         CALL LXLXOU( NTPOIN, NOMPOI, NT1PT, MN1PT )
+         IF( MN1PT .GT. 0 ) CALL LXTSDS( NTPOIN, NOMPOI )
+C
+C        CONSTRUCTION DU LEXIQUE DU POINT
+         CALL LXLXDC( NTPOIN, NOMPOI, 24, 8 )
+         CALL LXLXOU( NTPOIN, NOMPOI, NT1PT, MN1PT )
+C        NUMERO DU POINT DANS LE LX DES POINTS
+         CALL NUOBNM( 'POINT', NOMPOI, NUPTBX(K) )
+C
+C        CREATION DU TMS DEFINITION AVEC NUTYPO=1: 'COORDONNEES X Y Z'
+         CALL LXTNDC( NT1PT, 'DEFINITION', 'MOTS', WOORPO+3 )
+         CALL LXTSOU( NT1PT, 'DEFINITION', NT1PDE, MN1PDE )
+C        TRANSFORMATION (I POUR IDENTITE)'
+         MCN( MN1PDE + WTYTRP ) = 1
+C        NUMERO DU TYPE DU POINT
+         MCN( MN1PDE + WUTYPO ) = 1
+C        COORPO 3 COORDONNEES CARTESIENNES DU POINT XYZ
+         RMCN( MN1PDE + WOORPO     ) = RXYZ(1)
+         RMCN( MN1PDE + WOORPO + 1 ) = RXYZ(2)
+         RMCN( MN1PDE + WOORPO + 2 ) = RXYZ(3)
+C        AJOUT DU NUMERO DU TABLEAU DESCRIPTEUR
+         MCN( MN1PDE + MOTVAR(6) ) = NONMTD( '~>POINT>>DEFINITION' )
+C        AJOUT DE LA DATE
+         CALL ECDATE( MCN(MN1PDE) )
+C
+C        CREATION DU TMS XYZSOMMET  POUR SES 3 COORDONNEES X Y Z
+         CALL LXTNDC( NT1PT, 'XYZSOMMET', 'MOTS', WYZSOM+3 )
+         CALL LXTSOU( NT1PT, 'XYZSOMMET', NT1PXYZ, MN1PXYZ )
+C        NBSOM 'Nombre de sommets'
+         MCN( MN1PXYZ + WNBSOM ) = 1
+C        NBTGS 'Nombre de tangentes'
+         MCN( MN1PXYZ + WNBTGS ) = 0
+C        NBCOOR 'Nombre coordonnees d'un sommet
+         MCN( MN1PXYZ + WBCOOR ) = 3
+C        COORPO '3 coordonnees cartesiennes du point' xyz
+         RMCN( MN1PXYZ + WYZSOM     ) = RXYZ(1)
+         RMCN( MN1PXYZ + WYZSOM + 1 ) = RXYZ(2)
+         RMCN( MN1PXYZ + WYZSOM + 2 ) = RXYZ(3)
+C        AJOUT DU NUMERO DU TABLEAU DESCRIPTEUR
+         MCN( MN1PXYZ + MOTVAR(6) ) = NONMTD( '~>>>XYZSOMMET' )
+C        AJOUT DE LA DATE
+         CALL ECDATE( MCN(MN1PXYZ) )
+C
+ 30   CONTINUE
+C
+C     CREATION DU TABLEAU LADEFI bis POUR EXECUTER suex20.f
+      CALL TRTATA( LADEFI, LADEFI2, WUPTES+4 )
+C
+C     MODIFICATION DES DONNEES
+C     NOUVEAU NUMERO OPTION DE LA SURFACE
+C     'SURFACES EXTRUDEES A PARTIR D''UN POLYGONE PLAN'
+      LADEFI2( WUTYSU ) = 20
+C
+C     tableau  N2PTVT(1..2) 'nom 2 points du vecteur translation' ^~>POINT ;
+      LADEFI2( W2PTVT   ) = NUPTBX(0)
+      LADEFI2( W2PTVT+1 ) = NUPTBX(1)
+C
+C     variable OUFEES 'POLYGONE OUVERT(0) ou FERME(1)' entier ;
+      LADEFI2( WUFEES ) = 1
+C
+C     variable NBPTES 'nombre de points sommets du polygone plan' entier;
+      LADEFI2( WBPTES ) = 4
+C
+C     tableau  NUPTES(1..4) 'nom des points du polygone plan' ^~>POINT ;
+      LADEFI2( WUPTES   ) = NUPTBX(0)
+      LADEFI2( WUPTES+1 ) = NUPTBX(2)
+      LADEFI2( WUPTES+2 ) = NUPTBX(3)
+      LADEFI2( WUPTES+3 ) = NUPTBX(4)
+C
+C     CONSTRUCTION DE LA TRIANGULATION DES 6 FACES DE LA BOITE
+      CALL SUEX20( NUSFEX, NTLXSF, LADEFI2,
+     %             NTNSEF, MNNSEF, NTXYZS, MNXYZS, IERR )
+C
+ 9999 RETURN
+      END

@@ -1,0 +1,110 @@
+      SUBROUTINE CRETRD( NS1, NS2, NS3, NTOP1, NTOP2, NTOP3,
+     %                   PXYD, N1TRVI, NOTRIA, CETRIA,
+     %                   NT )
+C+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+C BUT :    GENERER LE TRIANGLE DE SOMMET NS1 NS2 NS3 ET DE
+C -----    TRIANGLES ADJACENTS PAR LES ARETES NTOP1 NTOP2 NTOP3
+C          CALCUL DU CENTRE ET DU CARRE DU RAYON DU CERCLE CIRCONSCRIT
+C          MISE A JOUR DANS CES TRIANGLES DU NOUVEAU TRIANGLE
+C
+C ENTREES:
+C --------
+C NS1,NS2,NS3 : LES 3 SOMMETS DU TRIANGLE A CREER
+C NTOP1,NTOP2,NTOP3 : LES 3 TRIANGLES ADJACENTS PAR LES ARETES
+C PXYD   : TABLEAU DES COORDONNEES 2D DES POINTS
+C
+C ENTREES ET SORTIES :
+C --------------------
+C N1TRVI : NUMERO DU 1 PREMIER TRIANGLE VIDE DANS LE TABLEAU NOTRIA
+C          LE CHAINAGE DES TRIANGLES VIDES SE FAIT SUR NOTRIA(4,.)
+C NOTRIA : LISTE DES TRIANGLES
+C                 ------- ------- ------- -------- -------- --------
+C  PAR TRIANGLE : SOMMET1 SOMMET2 SOMMET3 TR_VOIS1 TR_VOIS2 TR_VOIS3
+C                 ------- ------- ------- -------- -------- --------
+C                 SOMMET    EST LE NUMERO DU SOMMET
+C                 TR_VOIS i EST LE NUMERO DANS NOTRIA DU TRIANGLE
+C                               ADJACENT PAR L'ARETE i
+C CETRIA : COORDONNEES DU CENTRE DU CERCLE CIRCONSCRIT ET
+C          CARRE DU RAYON
+C                         ------- ------- --------
+C          PAR TRIANGLE : XCENTRE YCENTRE RAYON**2
+C                         ------- ------- --------
+C          TABLEAU REEL2(3,MXTRIA)
+C
+C SORTIES:
+C --------
+C NT     : LE NUMERO DU TRIANGLE CREE DANS NOTRIA
+C          0 SI SATURATION DU TABLEAU NOTRIA
+C+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+C AUTEUR : ALAIN PERRONNET  ANALYSE NUMERIQUE PARIS UPMC    JANVIER 1994
+C....................................................................012
+      include"./incl/gsmenu.inc"
+      COMMON / UNITES / LECTEU,IMPRIM,INTERA,NUNITE(29)
+      INTEGER           NOTRIA(6,*)
+      DOUBLE PRECISION  CETRIA(3,*),PXYD(3,*)
+C
+      IF( N1TRVI .LE. 0 ) THEN
+C        SATURATION DES TRIANGLES
+         NBLGRC(NRERR) = 2
+         KERR(1) = 'SATURATION DES TRIANGLES'
+         KERR(2) = 'AUGMENTER LE NOMBRE DE SOMMETS'
+         CALL LEREUR
+         NT = 0
+         RETURN
+      ENDIF
+C
+C     MISE A JOUR DU 1-ER TRIANGLE VIDE
+      NT     = N1TRVI
+      N1TRVI = NOTRIA(4,N1TRVI)
+C
+C     INITIALISATION DU NOUVEAU TRIANGLE NT : SES 3 SOMMETS
+      NOTRIA(1,NT) = NS1
+      NOTRIA(2,NT) = NS2
+      NOTRIA(3,NT) = NS3
+C
+C     SES 3 TRIANGLES ADJACENTS
+      NOTRIA(4,NT) = NTOP1
+      NOTRIA(5,NT) = NTOP2
+      NOTRIA(6,NT) = NTOP3
+C
+C     MISE A JOUR DU TRIANGLE VOISIN PAR L'ARETE 1
+      IF( NTOP1 .GT. 0 ) THEN
+C        RECHERCHE DE L'ARETE NS2-NS1 DANS NTOP1
+         CALL NO1A1F( NS2, NS1, NOTRIA(1,NTOP1), NAR )
+         IF( NAR .LE. 0 ) THEN
+            WRITE(IMPRIM,*) 'PB ',NS2,NS1,' NON ARETE DE ',
+     %      (NOTRIA(K,NTOP1),K=1,3),' TRIANGLE ',NTOP1
+            CALL XVPAUSE
+         ENDIF
+         NOTRIA(3+NAR,NTOP1) = NT
+      ENDIF
+C
+C     MISE A JOUR DU TRIANGLE VOISIN PAR L'ARETE 1
+      IF( NTOP2 .GT. 0 ) THEN
+C        RECHERCHE DE L'ARETE NS3-NS2 DANS NTOP2
+         CALL NO1A1F( NS3, NS2, NOTRIA(1,NTOP2), NAR )
+         IF( NAR .LE. 0 ) THEN
+            WRITE(IMPRIM,*) 'PB ',NS3,NS2,' NON ARETE DE ',
+     %      (NOTRIA(K,NTOP2),K=1,3),' TRIANGLE ',NTOP2
+            CALL XVPAUSE
+         ENDIF
+         NOTRIA(3+NAR,NTOP2) = NT
+      ENDIF
+C
+C     MISE A JOUR DU TRIANGLE VOISIN PAR L'ARETE 3
+      IF( NTOP3 .GT. 0 ) THEN
+C        RECHERCHE DE L'ARETE NS1-NS3 DANS NTOP3
+         CALL NO1A1F( NS1, NS3, NOTRIA(1,NTOP3), NAR )
+         IF( NAR .LE. 0 ) THEN
+            WRITE(IMPRIM,*) 'PB ',NS1,NS3,' NON ARETE DE ',
+     %      (NOTRIA(K,NTOP3),K=1,3),' TRIANGLE ',NTOP3
+            CALL XVPAUSE
+         ENDIF
+         NOTRIA(3+NAR,NTOP3) = NT
+      ENDIF
+C
+C     CALCUL DU CENTRE DU CERCLE CIRCONSCRIT ET DU CARRE DU RAYON
+      IER = 1
+      CALL CENCED( PXYD(1,NS1), PXYD(1,NS2), PXYD(1,NS3),
+     %             CETRIA(1,NT), IER )
+      END

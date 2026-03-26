@@ -1,0 +1,22 @@
+#!/bin/bash
+#  Changer le suffixe des fichiers .F en le suffixe .f
+#  Alain Perronnet    Fevrier 1996
+# 
+echo     
+echo MEFISTO-C1: Changer .F en .f
+echo ============================
+echo Nom de la librairie de Mefisto-C1?
+read dir 
+nomdir=$mefisto/$dir
+cd $nomdir
+rm *.bak
+#
+# boucle sur les fichiers .F
+for i in `ls $nomdir | grep .F$`
+do 
+   nomsp=`basename $i .F`
+   nomspF=$nomsp.F
+   nomspf=$nomsp.f
+   mv $nomspF $nomspf
+done
+

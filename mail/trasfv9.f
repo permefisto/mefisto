@@ -1,0 +1,253 @@
+      SUBROUTINE TRASFV9( MXFACO,  LEFACO,   NBSOMM,  PTXYZD, HEXAVOLU,
+     %                    NBTR3V,  NOTR3V,   NBAR2SF, NOAR2SF,
+     %                    NBAR1F,  NOAR1F,   NBAR3F,  NOAR3F,
+     %                    NB2TRCOL,NO2TRCOL, NBTR1AR, NOTR1AR )
+C+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+C BUT :    TRACER LES SOMMETS DE LA TRIANGULATION
+C -----    LES TRIANGLES FRONTIERE et INTERFACE DU TABLEAU LEFACO
+C          LES TRIANGLES APPARTENANT A 3 VOLUMES
+C              DONT UNE ARETE APPARTIENT A UN SEUL TRIANGLE
+C              DONT UNE ARETE APPARTIENT A AU MOINS 3 TRIANGLES
+C              DONT UNE ARETE PARTAGE 2 TRIANGLES DE SURFACES
+C                                                    TRES DIFFERENTES
+C          LES COUPLES DE TRIANGLES COLLES
+C          LES TRIANGLES REDUITS A UNE ARETE
+C ENTREES:
+C --------
+C MXFACO : NOMBRE MAXIMAL DECLARABLE DE TRIANGLES DU CONTOUR
+C LEFACO : TRIANGLE DU CONTOUR OU INTERFACES ENTRE VOLUMES
+C          IL CONTIENT DANS CET ORDRE
+C          1:   =0 POUR UNE FACE VIDE
+C          123: NO (DANS PTXYZD) DU SOMMET 1 < SOMMET 2 < SOMMET 3
+C          45:  NO (DANS NUVOPA 0 SINON) DU VOLUME1 , VOLUME2 DE LA FACE
+C          678: NO (DANS LEFACO) DE LA FACE ADJACENTE PAR L'ARETE 1 2 3
+
+C          9: CHAINAGE DU HACHAGE DES FACES ISSUES DE LA FONCTION DE HACHAGE
+C             LEFACO(9,*) -> FACE SUIVANTE (*=0:VIDE, *<>0:NON VIDE)
+
+C          10: NUMERO DE LA PREMIERE FACE ISSUE DE LA FONCTION DE HACHAGE
+C              LA SOMME DES 3 SOMMETS MODULO MXFACO
+C              LF = MOD( NOSOFA(1)+NOSOFA(2)+NOSOFA(3), MXFACO ) + 1
+C              NF = LEFACO( 10, LF ) LE NUMERO DE LA 1-ERE FACE DANS LEFACO
+C              SI LA FACE NE CONVIENT PAS. PASSAGE A LA SUIVANTE
+C              NF = LEFACO( 9, NF )  ...
+
+C          11: >0  NO NOTETR D'UN TETRAEDRE AYANT CETTE FACE,
+C              =0  SINON
+CCCC       LEFACO(12,*) NO DE FACE OpenCascade
+
+C NBSOMM : NOMBRE DE SOMMETS DU TABLEAU PTXYZD
+C PTXYZD : PAR POINT : X  Y  Z  DISTANCE_SOUHAITEE
+C HEXAVOLU: XYZ DE L'HEXAEDRE ENGLOBANT
+
+C NBTR3V : NOMBRE DE TRIANGLES APPARTENANT A 3 VOLUMES
+C NOTR3V : NUMERO LEFACO DES TRIANGLES APPARTENANT A 3 VOLUMES
+
+C NBAR2SF: NOMBRE DE TRIANGLES DONT UNE ARETE PARTAGE 2 TRIANGLES
+C          DE SURFACES TRES DIFFERENTES
+C NOAR2SF: NUMERO LEFACO DES TRIANGLES DONT UNE ARETE PARTAGE 2 TRIANGLES
+C          DE SURFACES TRES DIFFERENTES
+
+C NBAR1F : NOMBRE D'ARETES APPARTENANT A UNE SEULE TRIANGLE
+C NOAR1F : NUMERO LEFACO DES TRIANGLES DONT UNE SEULE ARETE LA PARTAGE
+
+C NBAR3F : NOMBRE D'ARETES APPARTENANT A 3 TRIANGLES
+C NOAR3F : NUMERO LEFACO DES TRIANGLES QUI PARTAGE UNE ARETE AVEC 2 AUTRES
+
+C NB2TRCOL:NOMBRE DE COUPLES DE TRIANGLES ADJACENTS COLLES
+C NO2TRCOL:NUMERO LEFACO DES 2  TRIANGLES ADJACENTS COLLES
+
+C NBTR1AR : NOMBRE DE TRIANGLES REDUITS A UNE ARETE
+C NOTR1AR : NUMERO LEFACO DES TRIANGLES REDUITS A UNE ARETE
+C+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+C AUTEUR : ALAIN PERRONNET Saint PIERRE du PERRAY               Mai 2020
+C2345X7..............................................................012
+      include"./incl/langue.inc"
+      include"./incl/trvari.inc"
+      include"./incl/mecoit.inc"
+C
+      COMMON / TRTETR / STOPTE, TRACTE
+      LOGICAL           STOPTE, TRACTE
+C     TRACTE = FAUX ==> PAS DE TRACE DES TETRAEDRES
+C              VRAI ==> TRACE DES TETRAEDRES DE L'ETOILE
+
+      CHARACTER*184     KTITRE
+      REAL              HEXAVOLU(6,2), XYZ(3)
+      DOUBLE PRECISION  PTXYZD(4,NBSOMM)
+      INTEGER           LEFACO(1:11,0:MXFACO)
+      INTEGER           NOAR1F(NBAR1F), NOAR3F(NBAR3F),NOAR2SF(NBAR2SF),
+     %                  NOTR3V(NBTR3V), NO2TRCOL(2,NB2TRCOL),
+     %                  NOTR1AR(NBTR1AR)
+
+      IF( .NOT. TRACTE ) RETURN
+
+C     CALCUL DE LA VISEE DU TRACE
+C     LE POINT VISE EST LE BARYCENTRE DE L'HEXAEDRE ENGLOBANT
+C     LA POSITION DE L'OEIL SUR LA DIAGONALE des EXTREMES
+      DIAG = 0
+      DO K=1,3
+         AXOPTV(K) = ( HEXAVOLU(K,1) + HEXAVOLU(K,2) ) / 2
+         D         =   HEXAVOLU(K,2) - HEXAVOLU(K,1)
+         AXOEIL(K) =  AXOPTV(K) + D
+         DIAG      =  DIAG + D**2
+      ENDDO
+      DIAG = SQRT( DIAG )
+
+C     DEMI-LARGEUR de la FENETRE
+      AXOLAR = DIAG * 0.6
+C     DEMI-HAUTEUR de la FENETRE
+      AXOHAU = AXOLAR * 0.7
+
+C     PAS DE PLAN ARRIERE ET AVANT
+      AXOARR = 0
+      AXOAVA = 0
+      CALL AXONOMETRIE( AXOPTV, AXOEIL, AXOLAR, AXOHAU, AXOARR, AXOAVA )
+
+C     TRACE EN MODE 3 BOUTONS POUR DEPLACEMENT ROTATIONS ZOOM
+      PREDU0 = PREDUF
+      PREDUF = 6.0
+      LORBITE= 1
+
+      IF( LORBITE .EQ. 0 ) GOTO 20
+
+C     INITIALISATION DE L'ORBITE
+C     ==========================
+      CALL ORBITE0( NOTYEV )
+      GOTO 20
+
+C     TRACE SELON L'ORBITE OU ZOOM OU TRANSLATION ACTIFS
+C     ==================================================
+ 10   CALL ORBITE1( NOTYEV )
+      IF( NOTYEV .EQ. 0 ) GOTO 9000
+
+C     TRACE DES AXES 3D
+C     -----------------
+ 20   CALL TRAXE3
+
+C     LE TRACE '+' DES NBSOMM SOMMETS
+C     -------------------------------
+      DO N = 1, NBSOMM
+         DO K = 1, 3
+            XYZ( K ) = REAL( PTXYZD( K, N ) )
+         ENDDO
+         CALL SYMBOLE3D( NCVERT, XYZ, '+' )
+      ENDDO
+
+C     LE TRACE DES FACES TRIANGULAIRES DU TABLEAU LEFACO EN FIL de FER
+C     ----------------------------------------------------------------
+      CALL XVEPAISSEUR( 0 )
+      NCF = -1
+      NCA = NCGRIM
+      DO NFL=1,MXFACO
+         IF( LEFACO(1,NFL) .GT. 0 ) THEN
+            CALL TRFATR( NCF, NCA, LEFACO(1,NFL), PTXYZD )
+         ENDIF
+      ENDDO
+
+C     TRACE DES TRIANGLES DONT UNE ARETE APPARTIENT A 3 TRIANGLES
+C     -----------------------------------------------------------
+      CALL XVEPAISSEUR( 1 )
+      NCF = NCTURQ
+      NCA = NCGRIM
+      DO NF = 1, NBAR3F
+         NFL = NOAR3F( NF )
+         IF( LEFACO(1,NFL) .GT. 0 ) THEN
+            CALL TRFATR( NCF, NCA, LEFACO(1,NFL), PTXYZD )
+         ENDIF
+      ENDDO
+
+C     TRACE DES TRIANGLES DONT UNE ARETE PARTAGE 2 TRIANGLES DE SURFACES
+C     TRES DIFFERENTES
+C     ------------------------------------------------------------------
+      CALL XVEPAISSEUR( 2 )
+      NCF = NCSAUM
+      NCA = NCGRIS
+      DO NF = 1, NBAR2SF
+         NFL = NOAR2SF( NF )
+         IF( LEFACO(1,NFL) .GT. 0 ) THEN
+            CALL TRFATR( NCF, NCA, LEFACO(1,NFL), PTXYZD )
+         ENDIF
+      ENDDO
+
+C     TRACE DES COUPLES DE TRIANGLES COLLES
+C     -------------------------------------
+      CALL XVEPAISSEUR( 3 )
+      NCF = NCCYAN
+      NCA = NCGRIS
+      DO NF = 1, NB2TRCOL
+         NFL = NO2TRCOL( 1, NF )
+         IF( LEFACO(1,NFL) .GT. 0 ) THEN
+            CALL TRFATR( NCF, NCA, LEFACO(1,NFL), PTXYZD )
+         ENDIF
+         NFL = NO2TRCOL( 2, NF )
+         IF( LEFACO(1,NFL) .GT. 0 ) THEN
+            CALL TRFATR( NCF, NCA, LEFACO(1,NFL), PTXYZD )
+         ENDIF
+      ENDDO
+
+C     TRACE DES TRIANGLES A PROBLEME APPARTENANT A 3 VOLUMES
+C     ------------------------------------------------------
+      CALL XVEPAISSEUR( 4 )
+      NCF = NCSAUM
+      NCA = NCSAUM
+      DO NF = 1, NBTR3V
+         NFL = NOTR3V( NF )
+         IF( LEFACO(1,NFL) .GT. 0 ) THEN
+            CALL TRFATR( NCF, NCA, LEFACO(1,NFL), PTXYZD )
+         ENDIF
+      ENDDO
+
+C     TRACE DES TRIANGLES DONT UNE ARETE APPARTIENT A 1 SEUL TRIANGLE
+C     ---------------------------------------------------------------
+      CALL XVEPAISSEUR( 7 )
+      NCF = NCORAN
+      NCA = NCROUG
+      DO NF = 1, NBAR1F
+         NFL = NOAR1F( NF )
+         IF( LEFACO(1,NFL) .GT. 0 ) THEN
+            CALL TRFATR( NCF, NCA, LEFACO(1,NFL), PTXYZD )
+         ENDIF
+      ENDDO
+
+C     TRACE DES TRIANGLES DONT UNE ARETE APPARTIENT A 1 SEUL TRIANGLE
+C     ---------------------------------------------------------------
+      CALL XVEPAISSEUR( 9 )
+      NCF = NCORAN
+      NCA = NCROUG
+      DO NF = 1, NBTR1AR
+         NFL = NOTR1AR( NF )
+         IF( LEFACO(1,NFL) .GT. 0 ) THEN
+            CALL TRFATR( NCF, NCA, LEFACO(1,NFL), PTXYZD )
+         ENDIF
+      ENDDO
+
+C     TITRE ET TRACE EFFECTIF
+C     -----------------------
+      IF( LANGAG .EQ. 0 ) THEN
+         KTITRE='TRIANGLES ARETES a PROBLEME:          :Turquoise 3Tria;
+     %        :Orange 3Volumes;        :Magenta 2SurfDiff;        :Rouge
+     % 1Tria;         :Cyan 2TriaColles;         :Noir 1Tria=1Arete'
+      ELSE
+         KTITRE='EDGES TRIANGLES with PROBLEM:         :Turquoise 3Tria;
+     %        :Orange 3Volumes;        :Magenta 2SurfDiff;        :Red 1
+     %Tria;           :Cyan 2GluedTria;          :Black 1Tria=1Edge'
+      ENDIF
+      WRITE( KTITRE(32:38),  '(I7)') NBAR3F
+      WRITE( KTITRE(57:63),  '(I7)') NBTR3V
+      WRITE( KTITRE(82:88),  '(I7)') NBAR2SF
+      WRITE( KTITRE(109:115),'(I7)') NBAR1F
+      WRITE( KTITRE(131:137),'(I7)') NB2TRCOL
+      WRITE( KTITRE(158:164),'(I7)') NBTR1AR
+
+      CALL SANSDBL( KTITRE, NBC )
+      CALL TRFINS(  KTITRE(1:NBC) )
+
+C     REPRISE DE L'ORBITE
+C     ===================
+      IF( LORBITE .NE. 0 ) GOTO 10
+C
+ 9000 PREDUF = PREDU0
+      CALL XVEPAISSEUR( 1 )
+
+      RETURN
+      END

@@ -1,0 +1,5 @@
+C
+C     FICHIER ~/incl/lagra1.inc
+C
+C     LE NUMERO DES ELEMENTS CONFORMES LAGRANGE DE DEGRE 1
+      DATA    LAGRAN  / 27 , 28 , 13 , 16 , 19 , 21 , 23 /

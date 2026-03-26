@@ -1,0 +1,64 @@
+{ ================================================================ }
+{ MEFISTO software : Version March 2009                            }
+{ USER name        : Alain Perronnet                               }
+{ PROJECT name     : demoa = demo anglaise                         }
+{ DATE             : 10/4/2009                                     }
+{ ================================================================ }
+@;
+@;
+
+1; CARDAN; { NOM de l'OBJET a TRAITER }
+ 
+2;{ ENTREE DES DONNEES DU PROBLEME D ELASTICITE }
+
+ { VOLUME: CARDAN STRUCTURAL STEEL ASTM-A36 its ELASTICITY CHARACTERISTICS }
+   1;      { DENSITE DE MASSE }
+   1;      { CONSTANTE }
+   7800;   { DMASSE  DENSITE DE MASSE  }
+
+   2;      { MODULE DE YOUNG ET COEFFICIENT DE POISSON }
+   1;      { MATERIAU 3D HOMOGENE ISOTROPE }
+  200E9;   { Pascal ou 200 GigaPascal (1GPa=1E9 N/m2) son MODULE de YOUNG}
+           { Les CONTRAINTES ne doivent pas dépasser son seuil de FLAMBAGE
+             qui vaut 250*(1E6 N/m2, MPa)  (au dela PLASTICITE) et
+             400*(1E6 N/m2 or MPa) est son ULTIME RESISTANCE a la TRACTION}
+   0.25;   { COEFFICIENT DE POISSON }
+
+   3;      { DILATATION & TEMPERATURE REFERENCE }
+   0;      { DELETED IF EXISTS }
+ @;
+
+ { SURFACE: CYL4 NO IMPOSED FORCE }
+   1;     { FORCE IMPOSED on BOUNDARY }
+   0;     { DELETED IF EXISTS }
+ @;
+
+ { SURFACE: CYL4_SYM NO IMPOSED FORCE }
+   1;     { FORCE IMPOSED on BOUNDARY }
+   0;     { DELETED IF EXISTS }
+ @;
+
+ { SURFACE: BASE with FIXATION }
+   2;      { FIXATION of FIXED DISPLACEMENTS }
+   1;      { CONSTANT }
+   3;      { NUMBER of FIXED DISPLACEMENT COMPONENTS }
+   1; 2; 3;{ NUMBER of EACH COMPONENT }
+   0; 0; 0;{ IMPOSED FIXATION VALUES of DISPLACEMENTS }
+ @;
+
+@;  {end of PLSV of the OBJECT}
+@;
+
+6;  { EIGENVALUE & VECTORS solver }
+ 1;    { SUB SPACES }
+ 0;    { MINIMUM VALUE of EIGENVALUES to be COMPUTED? }
+ 1E9;  { MAXIMUM VALUE of EIGENVALUES to be COMPUTED? }
+@;
+
+8; {DRAWING OF DISPLACEMENTS AND STRESSES}
+  2;   {DISPLACEMENTS}
+  2;   {AMPLIFICATION OF DISPLACEMENTS}
+  100; {AMPLIFICATION COEFFICIENT}
+  90; 90; {EXECUTE THE DRAWING}
+
+CLOSE;

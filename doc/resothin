@@ -1,0 +1,23 @@
+Choose among
+
+1: Density Specific heat Conductivity INDEPENDENT of TIME & TEMP
+if CAPACITY, CONDUCTIVITY, HEAT TRANSFER COEFFICIENT are
+   INDEPENDENT of TIME and TEMPERATURE
+and if SOURCES and CONTACTS depend ONLY of TIME (Not TEMPERATURE)
+
+2: At least one SOURCE & CONTACT is DEPENDENT of TIME & TEMP
+if CAPACITY, CONDUCTIVITY, HEAT TRANSFER COEFFICIENT are
+   INDEPENDENT of TIME and TEMPERATURE
+and if SOURCES and CONTACTS depend of TIME and TEMPERATURE
+
+
+3: At least one COEFFICIENT DEPENDENT of TIME & TEMPERATURE
+if ONE of the HEAT COEFFICIENTS are DEPENDENT of TIME & TEMPERATURE
+
+Remark:
+The second option requires fix point iterations
+on the second member and the matrices are constants.
+
+The third option requires fix point iterations with
+a computation of the matrices for each iteration
+=> important cost

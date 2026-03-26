@@ -1,0 +1,5 @@
+variable NoXYZMod 'COMPONENT NUMBER or VELOCITY MAGNITUDE' entier
+( 1: 'Choice of Velocity X-Component'
+, 2: 'Choice of Velocity Y-Component'
+, 3: 'Choice of Velocity Z-Component'
+, 4: 'Choice of |Velocity Magnitude|' );

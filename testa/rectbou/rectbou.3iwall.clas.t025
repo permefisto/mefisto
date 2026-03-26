@@ -1,0 +1,335 @@
+{ ========================================================================== }
+{ MEFISTO Software     : Mars 11, 2023 version                               }
+{ USER's  Name         : Alain Perronnet                                     }
+{ Project Name         : rectbou  Classic  tempAB=10->20  3 isolated walls   }
+{ Date                 : 2023/03/11  10 55m                                  }
+{ ========================================================================== }
+
+DefVar  PrISA;   PrISA=101325; { Pa International Standard Atmosphere Pressure at sea level}
+DefVar  G;       G=9.8;        { m/s/s EARTH PESANTOR ACCELERATION}
+
+DefVar  CoGrPr;  CoGrPr=1.; {PRESSURE GRADIENT Coefficient CoGrPr in NAVIER-STOKES Equations}
+
+DefVar  RhoAir;         RhoAir=1.2922;        { kg/m3 Wet Air Mass Density at sea level}
+DefVar  HeatMassCpAir;  HeatMassCpAir=1005;   { Air Heat Mass Capacity J/K/kg }
+DefVar  HeatConducAir;  HeatConducAir=0.024;  { Air Heat Conductivity W/m/K }
+DefVar  CobousAir;      CobousAir=172E-6;     { Air Thermal Expansion 1/K
+                                               (L - L0)/L0 = CobousAir (Temp - Temp0)
+                                                OR BOUSSINESQ Coefficient of formula
+                                               (Rho0-Rho)/Rho = CobousAir (Temp-Temp0) }
+DefVar  MuAir;   MuAir=18.5E-6;      { kg/(m.s) or Pa.s Air Dynamic Viscosity=18.5 10-6}
+DefVar  NuAir;   NuAir=MuAir/RhoAir; { m2/s Air Kinematic Viscosity=15.6 10-6 a 20 C}
+
+
+DefVar  RhoWater;         RhoWater=1000;        { kg/m3 Water Mass Density }
+DefVar  HeatMassCpWater;  HeatMassCpWater=4185; { Water Heat Mass Capacity J/K/kg at 20C }
+DefVar  HeatConducWater;  HeatConducWater=0.6;  { Water Heat Conductivity W/m/K }
+DefVar  CobousWater;      CobousWater=206E-6;   { Water Thermal Expansion 1/K at 20C
+                                                 (L - L0)/L0 = CobousWater (Temp - Temp0)
+                                                  OR BOUSSINESQ Coefficient of formula
+                                                 (Rho0-Rho)/Rho = CobousWater (Temp-Temp0) }
+DefVar  MuWater;   MuWater=1.01E-3;   { kg/(m.s) or Pa.s Water Dynamic Viscosity at 20 C }
+DefVar  NuWater;   NuWater=MuWater/RhoWater; { m2/s Water Kinematic Viscosity=15.6 10-6 at 20 C}
+
+
+DefVar  RhoClassic;         RhoClassic=1;        { kg/m3 Classic Mass Density }
+DefVar  HeatMassCpClassic;  HeatMassCpClassic=1; { Classic Heat Mass Capacity J/K/kg }
+DefVar  HeatConducClassic;  HeatConducClassic=1; { Classic Heat Conductivity W/m/K }
+DefVar  CobousClassic;      CobousClassic=1;     { Classic Thermal Expansion 1/K }
+DefVar  MuClassic;          MuClassic=1;    { kg/(m.s) or Pa.s Classic Dynamic Viscosity}
+DefVar  NuClassic;  NuClassic=MuClassic/RhoClassic; { m2/s Classic Kinematic Viscosity }
+
+DefVar  TempAB;  TempAB=10;   { Celsius Degree Temperature on edge AB }
+
+{ Initial Temperature is TempAB degrees }
+DefFunc InitTemperature(t,x,y,z,ntyplsv,nuplsv);
+ InitTemperature = TempAB;
+EndFunc;
+
+{ Initial Pressure is Y-linear from 0 y=ymax to 9.8 ymax at y=0 }
+DefFunc InitPressure(t,x,y,z,ntyplsv,nuplsv);
+  { InitPressure = G * (ymax-y); }
+  InitPressure = 0;
+EndFunc;
+
+{ Temperature on AB depends of TIME }
+DefFunc TemperatureAB(t,x,y,z,ntyplsv,nuplsv,temper0);
+  if t<=10 then
+    TemperatureAB = TempAB + t;
+  else
+    TemperatureAB = 20;
+  endif
+EndFunc;
+
+
+2; { DATA INPUT of the FLUID ========================================= }
+
+ { SURFACE: ABCD }
+ 1;       { Rho  Mass Density }
+ 1;       { Mass Constant }
+ RhoClassic;  { DMASSE Value of the constant mass density of CLASSIC }
+ 
+ 2;       { Mhu Dynamic FLUID VISCOSITY }
+ 1;       { CONSTANT Dynamic Viscosity }
+ MuClassic;   { FLUID DYNAMIC VISCOSITY value }
+
+ 8;       { CoGrPr PRESSURE GRADIENT Coefficient in Navier-Stokes Equations }
+ 1;       { Constant Pressure Coefficient }
+ CoGrPr;  { Pressure Gradient Coefficient Value }
+
+
+{ Avec g=0 Seule la PRESSION DYNAMIQUE (sans la pression hydrostatique) sera calculee }
+ 3;       { FOmega INTERIOR FORCES=PESANTOR -G Y-axis is TAKEN IN ACCOUNT in BOUSSINESQ}
+ 1;       { constant force }
+ 2;       { NBCOF0 'number of force components' entier ; }
+ 1;  2;   { NUCOF0(1..NBCOF0) 'number of each force component' entier ; }
+ 0;  0;   { -RhoClassic * G; FORCE(1..NBCOF0) 'Value of X and Y-force component' reel }
+
+10;       { CoBOUS BOUSSINESQ THERMAL EXPANSION Coefficient }
+ 1;       { Constant BOUSSINESQ Coefficient }
+CobousClassic;{ Value    BOUSSINESQ Coefficient of formula
+                 Rho0-Rho = Rho CobousClassic (Temp-Temp0)  <=>
+                 L   - L0 = L0  CobousClassic (Temp-Temp0)  (where L=Length) }
+
+ 4 ;      { INITIAL VELOCITIES ..........}
+ 1;       { velocity fixed by a constant }
+ 2;       { NBCOBV number of components of the fixed velocity }
+ 1; 2;    { NUCOBV(1..NBCOBV) nb of each component of the fixed velocity}
+ 0; 0;    { Value of INITIAL VELOCITY }
+
+ 5;       { INITIAL PRESSURE ......... }
+-1;       { INITIAL PRESSURE Function }
+ InitPressure; { Initial Pressure Function NAME  }
+ @;
+
+ { LINE: AB }
+ 2;       { Fixation of the VELOCITY }
+ 1;       { constant fixed velocity }
+ 2;       { NBCOBV number of components of the fixed velocity }
+ 1; 2;    { NUCOBV(1..NBCOBV) nb of each component of the fixed velocity}
+ 0; 0;    { BLVITE(1..NBCOBV) Value of the fixation }
+ @;
+
+ { LINE: BC }
+ 2;       { Fixation of the VELOCITY }
+ 1;       { constant fixed velocity }
+ 2;       { NBCOBV number of components of the fixed velocity }
+ 1; 2;    { NUCOBV(1..NBCOBV) nb of each component of the fixed velocity}
+ 0; 0;    { BLVITE(1..NBCOBV) Value of the fixation }
+ @;
+
+ { LINE: CD }
+ 2;       { Fixation of the VELOCITY }
+ 1;       { constant fixed velocity }
+ 2;       { NBCOBV number of components of the fixed velocity }
+ 1; 2;    { NUCOBV(1..NBCOBV) nb of each component of the fixed velocity}
+ 0; 0;    { BLVITE(1..NBCOBV) Value of the fixation }
+ @;
+
+ { LINE: DA }
+ 2;       { Fixation of the VELOCITY }
+ 1;       { constant fixed velocity }
+ 2;       { NBCOBV number of components of the fixed velocity }
+ 1; 2;    { NUCOBV(1..NBCOBV) nb of each component of the fixed velocity}
+ 0; 0;    { BLVITE(1..NBCOBV) Value of the fixation }
+ @;
+
+ { POINT: A }
+ 2;    { Fixation of the VELOCITY }
+ 1;    { constant fixed velocity }
+ 2;    { NBCOBV number of components of the fixed velocity }
+ 1; 2; { NUCOBV(1..NBCOBV) nb of each component of the fixed velocity}
+ 0; 0; { BLVITE(1..NBCOBV) Value of the fixation }
+ @;
+
+ { POINT: B }
+ 2;    { Fixation of the VELOCITY }
+ 1;    { constant fixed velocity }
+ 2;    { NBCOBV number of components of the fixed velocity }
+ 1; 2; { NUCOBV(1..NBCOBV) nb of each component of the fixed velocity}
+ 0; 0; { BLVITE(1..NBCOBV) Value of the fixation }
+ @;
+
+ { POINT: C }
+ 2;    { Fixation of the VELOCITY }
+ 1;    { constant fixed velocity }
+ 2;    { NBCOBV number of components of the fixed velocity }
+ 1; 2; { NUCOBV(1..NBCOBV) nb of each component of the fixed velocity}
+ 0; 0; { BLVITE(1..NBCOBV) Value of the fixation }
+ @;
+
+ { POINT: D }
+ 2;    { Fixation of the VELOCITY }
+ 1;    { constant fixed velocity }
+ 2;    { NBCOBV number of components of the fixed velocity }
+ 1; 2; { NUCOBV(1..NBCOBV) nb of each component of the fixed velocity}
+ 0; 0; { BLVITE(1..NBCOBV) Value of the fixation }
+ @;
+
+ { POINT: CDMIDDLE }
+ 3;    { Fixation of the PRESSURE }
+ 1;    { constant PRESSURE }
+ 0;    { BLPRES Value of the PRESSURE }
+ @;
+@;
+
+
+3; { GIVE the INPUT HEAT DATA of FLUID =================================== }
+
+{ SURFACE: ABCD }
+{ already done }
+ 1;           { Rho MASS Density }
+ 1;           { Constant MASS density }
+ RhoClassic;      { DMASSE 'Value of the density of MASS' reel ; }
+
+ 7;           { Cp MASSIC HEAT CAPACITY Density }
+ 1;           { constant massic heat }
+ HeatMassCpClassic;  { CHAMAS 'value of the massic heat' reel ; }
+
+ 2;           { [A] HEAT CONDUCTIVITY }
+ 3;           { 2D HOMOGENEOUS ISOTROPIC material }
+ HeatConducClassic;  { CONDUC 'constant material conductivity' reel ; }
+
+{ already done }
+10;            { CoBOUS BOUSSINESQ THERMAL EXPANSION Coefficient }
+ 1;            { Constant BOUSSINESQ Coefficient }
+ CobousClassic;    { Value    BOUSSINESQ Coefficient of formula
+                 Rho0-Rho = Rho CobousClassic (Temp-Temp0)  <=>
+                 L   - L0 = L0  CobousClassic (Temp-Temp0)  (where L=Length) }
+
+ 8;               { INITIAL TEMPERATURE ............. }
+-1;               { INITIAL TEMPERATURE FUNCTION }
+ InitTemperature; { Name of the INITIAL TEMPERATURE FUNCTION }
+@;
+
+ { LINE: AB }
+ 3;              { CONTACT Fixation of TEMPERATURE }
+ -1;             { fixed temperature FUNCTION }
+ TemperatureAB;  { TEMPERATURE }
+@;
+
+ { LINE: BC }
+ { Heat FLUX=0 }
+ @;
+
+ { LINE: CD   ISOLATED }
+ { Heat FLUX=0 }
+@;
+
+ { LINE: DA }
+ { Heat FLUX=0 }
+@
+
+ { POINT: A }
+ 3;              { CONTACT Fixation of TEMPERATURE }
+ -1;             { fixed temperature FUNCTION }
+ TemperatureAB;  { TEMPERATURE FUNCTION NAME }
+@;
+
+ { POINT: B }
+ 3;              { CONTACT Fixation of TEMPERATURE }
+ -1;             { fixed temperature FUNCTION }
+ TemperatureAB;  { TEMPERATURE }
+@;
+
+ { POINT: C }
+@;
+
+ { POINT: D }
+@;
+
+ { POINT: CDMIDDLE }
+@;
+@;
+
+20;    { PRECISION DATA  to STOP the CONJUGATE GRADIENT ITERATIONS }
+ 1e-3; { EPSILON   VALUE to STOP the CONJUGATE GRADIENT ITERATIONS }
+@;
+
+9;  { UNSTEADY BOUSSINESQ HEAT NAVIER-STOKES SOLVER ==================== }
+    1; { CROUT FACTORIZATION L D tL }
+          { or 2; 1;  Gradient conjugue Matrice MORSE }
+
+DefVar InitTime,        FinalTime;
+       InitTime=0.0;    FinalTime=25;
+DefVar StepTime,        StoreStepTime;
+       StepTime=0.1;
+       StoreStepTime=StepTime; { computed vectors are stored on files}
+
+   InitTime;  { INITIAL TIME }
+   FinalTime; { FINAL   TIME }
+   StepTime;  { CONSTANT STEP of TIME (seconds) }
+  (FinalTime-InitTime)/StoreStepTime;  { NUMBER of STORED SOLUTION VECTORS }
+@;
+@;
+@;
+
+10; { DRAWING of VELOCITIES PRESSURES ===========================}
+
+ 2;   { INITIAL and FINAL TIME of SOLUTIONS VECTORS to DRAW }
+ InitTime;   { INITIAL TIME }
+ FinalTime;  { FINAL   TIME }
+
+ 5; { The TEMPERATURE drawings }
+ 2;   { ZONES of ISOTHERMAL COLORS }
+ 90;  { Drawing of ZONES of COLORS }
+ 90;  { Continue the DRAWING }
+ @;
+ @;
+ 7;   { SURFACE(X,Y,TEMPERATURE(X,Y)) }
+ 90;  { DRAWING of SOLUTION from Z }
+ 90;  { Continue the DRAWING }
+ @;
+ @;
+
+ 1; { The PRESSURE drawings }
+ 2;  { ISO-PRESSURES COLOR ZONES }
+ 90; { Drawing of ZONES of COLORS }
+ 90; { Continue the DRAWING }
+ @;
+ @;
+ @;
+
+ 2;  { The VELOCITY is drawn with ARROWS }
+ 90;  { DRAWING of VELOCITY ARROWS }
+ 90;  { Continue the DRAWING }
+ @;
+ @;
+
+QUIT;
+
+
+ 3;   { One VELOCITY COMPONENT X Y Z or the VELOCITY MAGNITUDE }
+ 0;   { CHOICE of X Y Z COMPONENT or VELOCITY MAGNITUDE }
+ 4;   { Choice of |Velocity Magnitude| }
+ 9;   { In 2D SURFACE(X,Y,Velocity(X,Y)) }
+ 90;  { DRAWING of SOLUTION from Z }
+ 90;  { Continue the DRAWING }
+ @;
+ @;
+ @;
+
+ 9; { The STREAM FUNCTION Psi ou (Vx,Vy)=(dPsi/dy,-dPsi/dx) }
+ 9;  { 3d-SURFACE(X,Y,StreamFunction(X,Y)) }
+ 90; { DRAWING of SOLUTION from Z }
+ 90; { Continue the DRAWING }
+ @;
+ @;
+
+ 2;  { COLOR ZONES of ISO-STREAM FUNCTION }
+ 90; { Drawing of ZONES of COLORS }
+ 90; { Continue the DRAWING }
+ @;
+ @;
+ @;
+
+ 10; { The VORTICITY=Rotational Velocity=dVy/dx-dVx/dy }
+ 2;   { |Rot VELOCITY| ISO-COLOR ZONES }
+ 90;  { Drawing of ZONES of COLORS }
+ 90;  { Continue the DRAWING }
+ @;
+ @;
+ @;
+ @;
+
+CLOSE;

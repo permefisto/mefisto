@@ -1,0 +1,3 @@
+variable METHVVPR 'Methode VVPR' entier
+ ( 1 : 'SOUS ESPACES'
+ , 2 : 'ITERATION INVERSE' )  ;

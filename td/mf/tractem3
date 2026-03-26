@@ -1,0 +1,7 @@
+variable TRACTEM3 'trace des SOLUTIONS 3d' entier
+ (  1 :  'ISO-SOLUTIONS'
+ ,  2 :  'ZONES COULEURS ISO-SOLUTIONS'
+ ,  3 :  'ZONES par SECTIONS X ou Y ou Z=CTE'
+ ,  4 :  'PROFILS dans PLANS X ou Y ou Z=CTE'
+ ,  5 :  'LE LONG d''une DROITE def 2 POINTS'
+ ,  8 :  'ERREUR ABSOLUE avec SOLUTION_EXACTE()' ) ;

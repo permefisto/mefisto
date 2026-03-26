@@ -1,0 +1,124 @@
+{ ==================================================================== }
+{ Logiciel MEFISTO     : Version Decembre 1999                         }
+{ Nom de l'Utilisateur : perronne                                      }
+{ Nom du Projet        : demo                                          }
+{ Date                 : 28/05/00                                      }
+{ Heure                : 10h 07m 40s                                   }
+{ ==================================================================== }
+@;
+@;
+@;
+defvar pis2; pis2=atan(1)*2;
+defvar arete; arete=0.007;
+
+10; { TRACE du MAILLAGE des PLSVO }
+ 2;  { Toutes les LIGNES }
+ 1;  { Tous les POINTS }
+ @;
+@;
+
+ 2; {LIGNES}
+ ax1ax2; i; 2; (r2-r1)/arete; 1; ax1; ax2; { segment de droite }
+ { DANS LE LEXIQUE ~>TRANSFO }
+ { segment de droite }
+ { NBARLI 'nombre d''aretes de la ligne' entier ; }
+ { RAIGEO 'raison geometrique espacant les sommets' reel ; }
+ { DANS LE LEXIQUE ~>POINT }
+ { DANS LE LEXIQUE ~>POINT }
+ { NOM de la LIGNE ou ABANDON? }
+ ay1ay2; i; 2; (r2-r1)/arete;  1; ay1; ay2; { segment de droite }
+ ax1am1ay1; i; 3; pis2*r1/arete; 1; ax1; ay1; am1; { arc de cercle }
+ ax2am2ay2; i; 3; pis2*r2/arete; 1; ax2; ay2; am2; { arc de cercle }
+
+ ax1bx1; i; 2; zb/arete;  1; ax1; bx1;
+ ay1by1; i; 2; zb/arete;  1; ay1; by1;
+
+ ax2bx2; i; 2; zb/arete;       1; ax2; bx2; { segment de droite }
+ ay2by2; i; 2; zb/arete;       1; ay2; by2; { segment de droite }
+
+ bx1bx2; i; 2; (r2-r1)/arete;    1; bx1; bx2; { segment de droite }
+ by1by2; i; 2; (r2-r1)/arete;    1; by1; by2; { segment de droite }
+ bx1bm1by1; i; 3; pis2*r1/arete; 1; bx1; by1; bm1; { arc de cercle }
+ bx2bm2by2; i; 3; pis2*r2/arete; 1; bx2; by2; bm2; { arc de cercle }
+
+ bx1cx1; i; 2; (zc-zb)/arete;    1; bx1; cx1;
+ by1cy1; i; 2; (zc-zb)/arete;    1; by1; cy1;
+
+ bx2bx3; i; 2; (r3-r2)/arete;    1; bx2; bx3; { segment de droite }
+ by2by3; i; 2; (r3-r2)/arete;    1; by2; by3; { segment de droite }
+ bx3bm3by3; i; 3; pis2*r3/arete; 1; bx3; by3; bm3; { arc de cercle }
+
+ bx3cx3; i; 2; (zc-zb)/arete;  1; bx3; cx3; { segment de droite }
+ by3cy3; i; 2; (zc-zb)/arete;  1; by3; cy3; { segment de droite }
+
+ cx1cx3;     i; 2; (r3-r1)/arete; 1; cx1; cx3; { segment de droite }
+ cx1cm1cy1;  i; 3; pis2*r1/arete; 1; cx1; cy1; cm1;   { arc de cercle }
+ cy1cpd;     i; 2; (yp-r1)/arete; 1; cy1; cpd; { segment de droite }
+ cx3cmpgcpg; i; 3; r3*alfa/arete; 1; cx3; cpg; cmpg;  { arc de cercle }
+ cpgcm3cy3;  i; 3; r3*beta/arete; 1; cpg; cy3; cm3;   { arc de cercle }
+ cpgcpd;     i; 2; r3*cos(alfa)/arete; 1; cpg; cpd; { segment de droite }
+ cpdcy3;     i; 2; (r3-yp)/arete; 1; cpd; cy3; { segment de droite }
+
+ cpdcdyp;     i; 2; (zd-r4-zc)/arete;   1; cpd;  cdyp;
+ cdypdmpdeyp; i; 3; pis2*2*r4/arete;    1; cdyp; deyp; dmp;
+ deypepd;     i; 2; (ze-r4-zd)/arete;   1; deyp; epd;
+ epgepd;      i; 2; r3*cos(alfa)/arete; 1; epg;  epd;
+ epdey3;      i; 2; (r3-yp)/arete;      1; epd;  ey3;
+ epgem3ey3;   i; 3; r3*beta/arete;      1; epg;  ey3;  em3;
+
+ deypdey3;    i; 2; (r3-yp)/arete;      1; deyp; dey3;
+ cdypcdy3;    i; 2; (r3-yp)/arete;      1; cdyp; cdy3;
+
+ cpgepg;  i; 2; (ze-zc)/arete;    1; cpg;  epg;
+ cy3cdy3; i; 2; (zd-r4-zc)/arete; 1; cy3; cdy3;
+ dey3ey3; i; 2; (ze-r4-zd)/arete; 1; dey3; ey3;
+ cdy3dm3dey3; i; 3; pis2*2*r4/arete; 1; cdy3; dey3; dm3;
+ cx3cy3; i; 51; 2; cx3cmpgcpg; cpgcm3cy3;
+@;
+
+6; {transformations}
+ proj_cyl3; 4; {projection sur le cylindre de rayon r3 selon -oY}
+ deffonc cylindre3(x,y,z); cylindre3= x**2 + y**2 - r3**2; finfonc;
+   cylindre3;
+   -2; {projection selon -oY}
+
+ c3;  6;  { transformation de R3 -> R3 definie par 3 fonctions }
+ deffonc c3x(x,y,z); c3x=r3*sin(x/r3); finfonc;   c3x;
+ deffonc c3y(x,y,z); c3y=r3*cos(x/r3); finfonc;   c3y;
+ deffonc c3z(x,y,z); c3z=z;            finfonc;   c3z;
+
+ c3m1; 6; { transformation de R3 -> R3 definie par 3 fonctions }
+ deffonc c3m1x(x,y,z);
+    si y<1e-5          { traitement de la tangente infinie }
+    alors  si y>0 
+           alors c3m1x= r3*pis2;
+           sinon c3m1x=-r3*pis2;
+           finsi;
+    sinon  c3m1x=r3*atan(x/y); 
+    finsi;
+ finfonc;    
+ deffonc c3m1y(x,y,z); c3m1y=r3; finfonc;
+ deffonc c3m1z(x,y,z); c3m1z=z;  finfonc;
+ c3m1x;  c3m1y;  c3m1z; 
+@;
+
+2;
+ intersec; proj_cyl3; 50; cdy3dm3dey3;
+ bx;    i; 51; 2; bx1bx2; bx2bx3;
+ by;    i; 51; 2; by1by2; by2by3;
+ cy;    i; 51; 2; cy1cpd; cpdcy3;
+ cxypd; i; 51; 5; cx1cx3; cx3cmpgcpg; cpgcpd; cy1cpd; cx1cm1cy1;
+ cepg;  i; 51; 6; cpgcpd; cpdcdyp; cdypdmpdeyp; deypepd; epgepd; cpgepg;
+ cy3;   i; 51; 3; cy3cdy3; intersec; dey3ey3;
+ cyl3;  i; 51; 4; cpgcm3cy3; cy3; epgem3ey3; cpgepg;
+ cyce3plan; c3m1; 50; cyl3;
+ edg;   i; 51; 3; epgem3ey3; epdey3; epgepd;
+ la;    i; 51; 4; ax1ax2; ax2am2ay2; ay1ay2; ax1am1ay1;
+
+@;
+
+10; { TRACE du MAILLAGE des PLSVO }
+ 2; { Toutes les LIGNES }
+@;
+
+fermer;

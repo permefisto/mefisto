@@ -1,0 +1,74 @@
+      SUBROUTINE PTDSOC( PT, PTXYZD, NOSOOC, NONOUI )
+C+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+C BUT :    LE POINT EST IL DANS L'OCTAEDRE REGULIER DE SOMMETS NOSOOC ?
+C -----
+C ENTREES:
+C --------
+C PT     : LES 3 COORDONNEES DU POINT
+C PTXYZD : X Y Z DISTANCE SOUHAITEE DES POINTS
+C NOSOOC : LE NUMERO DES 6 SOMMETS DU OCTAEDRE
+C
+C SORTIES:
+C --------
+C NONOUI  : 1 SI LE POINT EST DANS L'OCTAEDRE
+C           0 SI LE POINT P EST EXTERIEUR A L'OCTAEDRE
+C+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+C AUTEUR : ALAIN PERRONNET  ANALYSE NUMERIQUE PARIS UPMC   NOVEMBRE 1992
+C....................................................................012
+      INTEGER           NOSOOC(6)
+      DOUBLE PRECISION  PTXYZD(4,*),PT(3),D,DT,VOLTET
+C
+C     CALCUL DU DETERMINANT DE 1 3 2 4
+      D = VOLTET( PTXYZD(1,NOSOOC(1)), PTXYZD(1,NOSOOC(3)),
+     %            PTXYZD(1,NOSOOC(2)), PTXYZD(1,NOSOOC(4)) )
+ccc      D = -1D-8 * D    9/9/19
+      D = -1D-9 * D
+C
+C     CALCUL DU DETERMINANT DE 1 3 2 PT
+      DT = VOLTET( PTXYZD(1,NOSOOC(1)), PTXYZD(1,NOSOOC(3)),
+     %             PTXYZD(1,NOSOOC(2)), PT )
+      IF( DT .LT. D ) GOTO 9000
+C
+C     CALCUL DU DETERMINANT DE 1 4 3 PT
+      DT = VOLTET( PTXYZD(1,NOSOOC(1)), PTXYZD(1,NOSOOC(4)),
+     %             PTXYZD(1,NOSOOC(3)), PT )
+      IF( DT .LT. D ) GOTO 9000
+C
+C     CALCUL DU DETERMINANT DE 1 5 4 PT
+      DT = VOLTET( PTXYZD(1,NOSOOC(1)), PTXYZD(1,NOSOOC(5)),
+     %             PTXYZD(1,NOSOOC(4)), PT )
+      IF( DT .LT. D ) GOTO 9000
+C
+C     CALCUL DU DETERMINANT DE 1 2 5 PT
+      DT = VOLTET( PTXYZD(1,NOSOOC(1)), PTXYZD(1,NOSOOC(2)),
+     %             PTXYZD(1,NOSOOC(5)), PT )
+      IF( DT .LT. D ) GOTO 9000
+C
+C     CALCUL DU DETERMINANT DE 2 3 6 PT
+      DT = VOLTET( PTXYZD(1,NOSOOC(2)), PTXYZD(1,NOSOOC(3)),
+     %             PTXYZD(1,NOSOOC(6)), PT )
+      IF( DT .LT. D ) GOTO 9000
+C
+C     CALCUL DU DETERMINANT DE 3 4 6 PT
+      DT = VOLTET( PTXYZD(1,NOSOOC(3)), PTXYZD(1,NOSOOC(4)),
+     %             PTXYZD(1,NOSOOC(6)), PT )
+      IF( DT .LT. D ) GOTO 9000
+C
+C     CALCUL DU DETERMINANT DE 4 5 6 PT
+      DT = VOLTET( PTXYZD(1,NOSOOC(4)), PTXYZD(1,NOSOOC(5)),
+     %             PTXYZD(1,NOSOOC(6)), PT )
+      IF( DT .LT. D ) GOTO 9000
+C
+C     CALCUL DU DETERMINANT DE 5 2 6 PT
+      DT = VOLTET( PTXYZD(1,NOSOOC(5)), PTXYZD(1,NOSOOC(2)),
+     %             PTXYZD(1,NOSOOC(6)), PT )
+      IF( DT .LT. D ) GOTO 9000
+C
+C     PT EST DANS OU SUR L'OCTAEDRE
+      NONOUI = 1
+      RETURN
+C
+C     POINT NON DANS L'OCTAEDRE
+ 9000 NONOUI = 0
+      RETURN
+      END

@@ -1,0 +1,14 @@
+deftms ~>>>VITESSEFLUIDE 'Vitesse du FLUIDE THERMIQUE'
+variable muet DATE   'date de creation du tableau'   reel2  ;
+variable muet NUTD   'numero du tableau descripteur' entier ; 
+variable      LTVIFL 'Type de la Vitesse du Fluide Thermique'  entier 
+(  2 : 'VECTEUR Vitesse du Fluide Thermique' 
+,  1 : 'CONSTANTE Vitesse du Fluide Thermique' 
+, -1 : 'FONCTION Vitesse du Fluide Thermique' 
+,  0 : 'Vitesse du Fluide Thermique a SUPPRIMER'  ) ;
+cas LTVIFL
+ 1 : variable NBVIFL 'Nombre composantes de la Vitesse' entier ;
+     tableau  VAVIFL(1..NBVIFL) 'Vitesse du Fluide Thermique' reel ; 
+-1 : variable NFVIFL 'Nom fonction Vitesse du Fluide Thermique' ^~>FONCTION ;
+fincas ;   
+fintms ;

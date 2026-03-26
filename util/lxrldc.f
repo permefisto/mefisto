@@ -1,0 +1,115 @@
+      SUBROUTINE LXRLDC( NTLX   , KNOMRL , NBCANM , MXNMRL , MOATRL,
+     %                   MXATRL )
+C+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+C BUT :    DECLARER UNE RELATION DANS LE LEXIQUE NTLX
+C -----
+C
+C ENTREES:
+C --------
+C NTLX   : NUMERO DU TABLEAU MS CONTENANT LE LEXIQUE
+C KNOMRL : NOM DE LA RELATION DANS LE LEXIQUE
+C NBCANM : NOMBRE DE CARACTERES PAR NOM D'UNE RELATION
+C MXNMRL : NOMBRE MAXIMAL DE NOMS DANS LA RELATION
+C MOATRL : NOMBRE MAXIMAL DE MOTS POUR L'ENSEMBLE DES VALEURS
+C          DES ATTRIBUTS PAR NOM
+C
+C ENTREE ET SORTIE :
+C ------------------
+C MXATRL : NOMBRE MAXIMAL D'ATTRIBUTS DE LA RELATION MXATRL<=MOATRL
+C+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+C PROGRAMMEUR : ALAIN PERRONNET ANALYSE NUMERIQUE PARIS SEPTEMBRE 1986
+C+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+      include"./incl/msvaau.inc"
+      include"./incl/gsmenu.inc"
+      include"./incl/pp.inc"
+      COMMON            MCN(MOTMCN)
+      INTEGER           INOM(18)
+      CHARACTER*(*)     KNOMRL
+      CHARACTER*4       KTYPE
+C
+C     COHERENCE DE LA DONNEE
+      IF( MXATRL .GT. MOATRL ) THEN
+         NBLGRC(NRERR) = 1
+         KERR(1) =
+     %'IMPOSSIBLE AVOIR PLUS D''ATTRIBUTS QUE DE MOTS POUR VALEURS'
+         CALL LEREUR
+         MXATRL = MOATRL
+      ENDIF
+C
+C     LE NOMBRE D ENTIERS OCCUPES NBCANM CARACTERES
+      NBENNM = ( NBCANM - 1 ) / NBCHMO + 1
+C
+C     NOMBRE D ENTIERS POUR LE NOM ET SES ATTRIBUTS
+      M1RL   = MAX( 7 , NBENNM + 1 + MOATRL )
+C
+C     DECLARATION DE LA RELATION DE NOM KNOMRL
+C     ----------------------------------------
+      CALL LXNMDC( NTLX , KNOMRL , 'RELA' , 'ENTIER' ,
+     %             M1RL * (2+MXNMRL+MXATRL) , NRETOU )
+      IF( NRETOU .GT. 0 ) RETURN
+C
+C     OUVERTURE DE CE TABLEAU RELATION
+      CALL LXNMOU( NTLX , KNOMRL , KTYPE , NTRL , MNRL )
+C
+C     INITIALISATION RELATION D ADRESSE MNRL DANS LE SUPER TABLEAU MC
+C     ---------------------------------------------------------------
+C     LE NOMBRE D ENTIERS PAR NOM
+      MCN(MNRL    ) = M1RL
+C     LE NOMBRE MAXIMAL DE NOMS DE LA RELATION
+      MCN(MNRL + 1) = MXNMRL
+C     NOMBRE D ENTIERS NECESSAIRES AU STOCKAGE D UN NOM DU RELATION
+      MCN(MNRL + 2) = NBENNM
+C     NOMBRE DE CARACTERES D'UN NOM DU RELATION
+      MCN(MNRL + 3) = NBCANM
+C     NUMERO DU TAMS DU LEXIQUE PERE
+      MCN(MNRL + 4) = NTLX
+C     INDICE COLONNE DU 1-ER NOM OCCUPE DE LA RELATION
+      MCN(MNRL + 5) = 0
+C     INDICE COLONNE DU 1-ER NOM VIDE , LIBRE DE LA RELATION
+      MCN(MNRL + 6) = 1
+C
+C     INITIALISATION A 'V DE' DES NOMS DE LA RELATION
+C     -----------------------------------------------
+      CALL NOMENT( NBENNM , 'V DE' , INOM )
+      MN    = MNRL
+      DO 20 I=1,MXNMRL
+C        LE NOM DE LA RELATION VIDE POUR L'INSTANT
+         MN = MN + M1RL
+         DO 10 J=0,NBENNM - 1
+            MCN( MN + J ) = INOM( J + 1 )
+ 10      CONTINUE
+C        LE CHAINAGE SUR LE SUIVANT
+         MCN( MN + NBENNM ) = I + 1
+ 20   CONTINUE
+C     LE DERNIER CHAINAGE POINTE SUR 0
+      MCN( MN + NBENNM ) = 0
+C
+C     LA PARTIE DESCRIPTION DES ATTRIBUTS
+C     -----------------------------------
+      MN = MN + M1RL
+      DO 40 I=0,6
+         MCN( MN + I ) = MCN( MNRL + I )
+ 40   CONTINUE
+C     NOMBRE MAXIMAL DE MOTS DES VALEURS DES ATTRIBUTS
+      MCN( MN + 4 ) = MOATRL
+C     NOMBRE MAXIMAL DES ATTRIBUTS D'UN NOM DE LA RELATION
+      MCN( MN + 1 ) = MXATRL
+C
+      DO 70 I=1,MXATRL
+C        LE NOM DE L'ATTRIBUT VIDE POUR L'INSTANT
+         MN = MN + M1RL
+         DO 50 J=0,NBENNM - 1
+            MCN( MN + J ) = INOM( J + 1 )
+ 50      CONTINUE
+C        LE CHAINAGE SUR LE SUIVANT
+         MCN( MN + NBENNM ) = I + 1
+C        PAS DE MOTS ASSOCIES A CET ATTRIBUT POUR L'INSTANT
+         DO 60 J = NBENNM+1 , NBENNM+MOATRL
+            MCN(MN+J) = 0
+ 60      CONTINUE
+ 70   CONTINUE
+C     LE DERNIER CHAINAGE POINTE SUR 0
+      MCN( MN + NBENNM ) = 0
+C
+C     LA RELATION EST OUVERTE
+      END

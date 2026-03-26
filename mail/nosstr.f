@@ -1,0 +1,70 @@
+      INTEGER FUNCTION NOSSTR( P, PXYD, NT, LETREE )
+C+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+C BUT :    CALCULER LE NUMERO 0 A 3 DU SOUS-TRIANGLE TE CONTENANT
+C -----    LE POINT P
+C
+C ENTREES:
+C --------
+C P      : POINT DE R**2 CONTENU DANS LE TE NT DE LETREE
+C PXYD   : X Y DISTANCE DES POINTS
+C NT     : NUMERO LETREE DU TE DE TE VOISIN A CALCULER
+C LETREE : ARBRE-4 DES TRIANGLES EQUILATERAUX (TE) FOND DE LA TRIANGULATION
+C      LETREE(0,0)  NO DU 1-ER TE VIDE DANS LETREE
+C      LETREE(0,1) : MAXIMUM DU 1-ER INDICE DE LETREE (ICI 8)
+C      LETREE(0,2) : MAXIMUM DECLARE DU 2-EME INDICE DE LETREE (ICI MXTREE)
+C      LETREE(0:8,1) : RACINE DE L'ARBRE  (TRIANGLE SANS SUR TRIANGLE)
+C      SI LETREE(0,.)>0 ALORS
+C         LETREE(0:3,J) : NO (>0) LETREE DES 4 SOUS-TRIANGLES DU TRIANGLE J
+C      SINON
+C         LETREE(0:3,J) :-NO PXYD DES 1 …A 4 POINTS INTERNES AU TRIANGLE J
+C                         0  SI PAS DE POINT
+C                       ( J EST ALORS UNE FEUILLE DE L'ARBRE )
+C      LETREE(4,J) : NO LETREE DU SUR-TRIANGLE DU TRIANGLE J
+C      LETREE(5,J) : 0 1 2 3 NO DU SOUS-TRIANGLE J POUR SON SUR-TRIANGLE
+C      LETREE(6:8,J) : NO PXYD DES 3 SOMMETS DU TRIANGLE J
+C
+C SORTIES :
+C ---------
+C NOSSTR : 0 SI LE SOUS-TRIANGLE CENTRAL CONTIENT P
+C          I =1,2,3 NUMERO DU SOUS-TRIANGLE CONTENANT P
+C+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+C AUTEUR : ALAIN PERRONNET  ANALYSE NUMERIQUE PARIS UPMC    FEVRIER 1992
+C2345X7..............................................................012
+      INTEGER           LETREE(0:8,0:*)
+      DOUBLE PRECISION  PXYD(3,*), P(2),
+     %                  X1, Y1, X21, Y21, X31, Y31, D, XE, YE
+C
+C     LE NUMERO DES 3 SOMMETS DU TRIANGLE
+      NS1 = LETREE( 6, NT )
+      NS2 = LETREE( 7, NT )
+      NS3 = LETREE( 8, NT )
+C
+C     LES COORDONNEES ENTRE 0 ET 1 DU POINT P
+      X1  = PXYD(1,NS1)
+      Y1  = PXYD(2,NS1)
+C
+      X21 = PXYD(1,NS2) - X1
+      Y21 = PXYD(2,NS2) - Y1
+C
+      X31 = PXYD(1,NS3) - X1
+      Y31 = PXYD(2,NS3) - Y1
+C
+      D   = 1.0 / ( X21 * Y31 - X31 * Y21 )
+C
+      XE  = ( ( P(1) - X1 ) * Y31 - ( P(2) - Y1 ) * X31 ) * D
+      YE  = ( ( P(2) - Y1 ) * X21 - ( P(1) - X1 ) * Y21 ) * D
+C
+      IF( XE .GT. 0.5D0 ) THEN
+C        SOUS-TRIANGLE DROIT
+         NOSSTR = 2
+      ELSE IF( YE .GT. 0.5D0 ) THEN
+C        SOUS-TRIANGLE HAUT
+         NOSSTR = 3
+      ELSE IF( XE+YE .LT. 0.5D0 ) THEN
+C        SOUS-TRIANGLE GAUCHE
+         NOSSTR = 1
+      ELSE
+C        SOUS-TRIANGLE CENTRAL
+         NOSSTR = 0
+      ENDIF
+      END

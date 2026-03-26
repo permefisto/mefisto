@@ -1,0 +1,308 @@
+      SUBROUTINE LISTTR( KNOMLI, NUCOTE, NBSOCT, MNSOCT,
+     %                   XYZ3ST, RLONGC,
+     %                   NBSOLI, MNXY,  IERR )
+C+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+C BUT :    FORMER LE TABLEAU DES COORDONNEES DES SOMMETS DU CONTOUR
+C -----    D'UN TRIANGLE DEFINI PAR SES 3 LIGNES STRUCTUREES
+C          A PARTIR DES LONGUEURS DES 3 COTES
+C
+C ENTREES:
+C --------
+C KNOMLI : NOM DE 24 CARACTERES DE LA LIGNE CONTOUR DU TRIANGLE PLAN
+C NUCOTE : NUCOTE(3) NUMERO DE 1 A 3 DU COTE 3 PARMI LES 3 LIGNES...
+C          SI NUCOTE(3)=-2 LE COTE 3 EST LA LIGNE 2 A PARCOURIR
+C                          EN SENS INVERSE DE SON RANGEMENT...
+C          POUR LE SENS C1:S1S2 C2:S2S3 C3:S3S1
+C
+C                S3
+C                |  \
+C                |    \
+C          C3   \/     /\ C2
+C                |         \
+C                |            \
+C                S1---->-------S2
+C                      C1
+C
+C NBSOCT : NOMBRE DE SOMMETS DE CHACUN DES 3 COTES
+C MNSOCT : ADRESSE MCN DU TMS 'XYZSOMMET' DES 3 LIGNES STRUCTUREES
+C
+C SORTIES:
+C --------
+C NUCOTE : PAR PERMUTATION CIRCULAIRE LE COTE DE PLUS GRANDE LONGUEUR
+C          DEVIENT LE COTE 1
+C XYZ3ST : 3 COORDONNEES DES 3 SOMMETS DU TRIANGLE COURBE
+C NBSOCT : NOMBRE DE SOMMETS DE CHACUN DES 3 COTES
+C RLONGC : LONGUEUR DES ARETES DES 3 COTES DU TRIANGLE DANS LE SENS CI-DESSUS
+C NBSOLI : NOMBRE DE SOMMETS OU D'ARETES DU CONTOUR FERME DU TRIANGLE
+C MNXY   : ADRESSE MCN DES 3 COORDONNEES DES SOMMETS SUR LE CONTOUR
+C          DU TRIANGLE DE COTES DE LONGUEURS EGALES A CELLES DU TRIANGLE COURBE
+C IERR   : 0 SI PAS D'ERREUR, 1 SI LIGNE NON FERMEE OU TRIANGLE PLAN
+C          NON CONSTRUCTIBLE
+C+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+C AUTEUR : ALAIN PERRONNET  ANALYSE NUMERIQUE PARIS         OCTOBRE 1996
+C234567..............................................................012
+      IMPLICIT INTEGER (W)
+      include"./incl/ntmnlt.inc"
+      include"./incl/gsmenu.inc"
+      include"./incl/a___nsef.inc"
+      include"./incl/a___xyzsommet.inc"
+      INTEGER           NUCOTE(1:3), MNSOCT(1:3), NBSOCT(1:3)
+      include"./incl/pp.inc"
+      COMMON            MCN(MOTMCN)
+      REAL              RMCN(1)
+      EQUIVALENCE      (MCN(1),RMCN(1))
+      REAL              RLONGC(1:3), XYZ3ST(3,3)
+      CHARACTER*(*)     KNOMLI
+C
+C     CALCUL DES LONGUEURS ET DU NOMBRE DE SOMMETS DES 3 COTES
+      DO 10 I=1,3
+         CALL LISTLO( MNSOCT(I), RLONGC(I) )
+         IF( RLONGC(I) .LE. 0.0 ) THEN
+            NBLGRC(NRERR) = 1
+            WRITE(KERR(MXLGER)(1:2),'(I2)') I
+            KERR(1) = 'COTE' // KERR(MXLGER)(1:2) //' DE LONGUEUR NULLE'
+            CALL LEREUR
+            IERR = 1
+         ENDIF
+ 10   CONTINUE
+      IF( IERR .NE. 0 ) RETURN
+C
+C     LE COTE LE PLUS LONG DEVIENT LE COTE 1 DU TRIANGLE
+      P = MAX( RLONGC(1), RLONGC(2), RLONGC(3) )
+      DO 16 I=1,3
+         IF( P .EQ. RLONGC(I) ) GOTO 17
+ 16   CONTINUE
+C
+C     LE COTE LE PLUS LONG EST LE I-EME COTE:
+C     IL DEVIENT PAR PERMUTATION CIRCULAIRE LE PREMIER
+ 17   DO 18 I1=1,3
+         IF( ABS(NUCOTE(1)) .EQ. I ) THEN
+C           LE COTE 1 EST MAINTENANT L'ANCIEN COTE I
+            GOTO 19
+         ENDIF
+C        PERMUTATION 2 DEVIENT 1, 3 DEVIENT 2, 1 DEVIENT 3
+         CALL PECI3R( NUCOTE )
+ 18   CONTINUE
+C
+C     SI LE COTE 1 EST DANS LE SENS RETROGRADE, ALORS CHANGEMENT DE SENS
+ 19   IF( NUCOTE(1) .LT. 0 ) THEN
+         NUCOTE(1) = -NUCOTE(1)
+         I1        =  NUCOTE(2)
+         NUCOTE(2) = -NUCOTE(3)
+         NUCOTE(3) = -I1
+      ENDIF
+C
+C     CALCUL DES LONGUEURS DES 3 COTES . LE PLUS GRAND EST EN PREMIER
+      DO 20 I=1,3
+         N = ABS( NUCOTE(I) )
+         CALL LISTLO( MNSOCT(N), RLONGC(I) )
+ 20   CONTINUE
+      IF( IERR .NE. 0 ) RETURN
+C
+C     LE TRIANGLE PLAN EST IL CONSTRUCTIBLE?
+      IF( RLONGC(1) .GE. RLONGC(2)+RLONGC(3) ) THEN
+         NBLGRC(NRERR) = 2
+         KERR(1) = 'LE TRIANGLE COURBE PROJETE N EST PAS UN TRIANGLE'
+         KERR(2) = '1 COTE EST TROP LONG POUR LES 2 AUTRES'
+         CALL LEREUR
+         IERR = 2
+         RETURN
+      ENDIF
+C
+C     LES 3 COTES FORMENT ILS UNE LIGNE FERMEE ?
+C     LES 3 COTES SONT PARCOURUS DANS LE SENS DIRECT (OU RETROGRADE)
+C     C1:S1->S2  C2:S2->S3  C3:S3->S1
+C     --------------------------------------------------------------
+      DO 23 I=1,3
+C        LE NUMERO DE LA LIGNE (1 A 3) DU COTE I
+         N1 = ABS( NUCOTE(I) )
+C        L'ADRESSE DU DERNIER POINT DE LA LIGNE DU COTE I
+         IF( NUCOTE(I) .GT. 0 ) THEN
+C           L'ADRESSE DU DERNIER POINT DE LA LIGNE DU COTE I
+            MN1 = MNSOCT(N1) + WYZSOM + NBSOCT(N1) * 3 - 3
+         ELSE
+C           L'ADRESSE DU DERNIER POINT DE LA LIGNE DU COTE I
+            MN1 = MNSOCT(N1) + WYZSOM
+         ENDIF
+C        L'ADRESSE DU PREMIER POINT DE LA LIGNE DU COTE I+1
+         IF( I .LT. 3 ) THEN
+            I1 = I+1
+         ELSE
+            I1 = 1
+         ENDIF
+         N2 = ABS( NUCOTE(I1) )
+         IF( NUCOTE(I1) .GT. 0 ) THEN
+C           L'ADRESSE DU PREMIER POINT DE LA LIGNE DU COTE I1
+            MN2 = MNSOCT(N2) + WYZSOM
+         ELSE
+C           L'ADRESSE DU PREMIER POINT DE LA LIGNE DU COTE I1
+            MN2 = MNSOCT(N2) + WYZSOM + NBSOCT(N2) * 3 - 3
+         ENDIF
+C        IDENTIFICATION DE CES 2 SOMMETS
+         CALL XYZIDE( RMCN(MN1), RMCN(MN2), IDENTQ )
+         IF( IDENTQ .EQ. 0 ) THEN
+C           ERREUR : LIGNE NON FERMEE
+            NBLGRC(NRERR) = 2
+            KERR(1) = 'CONTOUR NE FORMANT PAS UNE LIGNE FERMEE'
+            WRITE(KERR(MXLGER)(1:6),'(I6)') I
+            KERR(2) = 'COTE ' // KERR(MXLGER)(1:6)
+     %             // ' SANS LIGNE SUIVANTE'
+            CALL LEREUR
+            IERR = 1
+            RETURN
+         ENDIF
+ 23   CONTINUE
+C
+C     GENERATION DES 2 COORDONNEES DU SOMMET S3 DU TRIANGLE RESPECTANT LA
+C     LONGUEUR DES 3 COTES
+C     -------------------------------------------------------------------
+      N2 = NBSOCT( ABS( NUCOTE(1) ) )
+      N3 = N2 + NBSOCT( ABS( NUCOTE(2) ) ) - 1
+      CALL SOTR3L( RLONGC, X3, Y3, IERR )
+C
+C     CONSTRUCTION DU TABLEAU DES 2 COORDONNES DES POINTS DE LA
+C     LIGNE FERMEE CONTOUR
+C     ---------------------------------------------------------
+      NBSOLI = N3 + NBSOCT( ABS( NUCOTE(3) ) ) - 2
+ 25   CALL LXLXOU( NTLIGN , KNOMLI , NTLXLI , MNLXLI )
+C
+C     S'IL N'EXISTE PAS IL EST CREE
+      IF( NTLXLI .LE. 0 ) THEN
+         CALL LXLXDC( NTLIGN , KNOMLI , 24 , 8 )
+         GOTO 25
+      ENDIF
+C
+C     SI LE TABLEAU XYZSOMMET EXISTE ALORS IL EST DETRUIT
+      CALL LXTSOU( NTLXLI , 'XYZSOMMET' ,  NTSOLI  , MNSOLI )
+      IF( NTSOLI .GT. 0 ) THEN
+         CALL LXTSDS( NTLXLI, 'XYZSOMMET' )
+      ENDIF
+      CALL LXTNDC( NTLXLI , 'XYZSOMMET' , 'ENTIER' , WYZSOM + 3*NBSOLI )
+      CALL LXTSOU( NTLXLI , 'XYZSOMMET' ,  NTSOLI  , MNSOLI )
+      MNXY = MNSOLI + WYZSOM
+      MNS  = MNXY
+C
+C     LE COTE 1 SUR L'AXE DES X DU TRIANGLE PLAN
+C     ------------------------------------------
+C     ( IL IMPOSE SON SENS A CELUI DU PARCOURS DU TRIANGLE)
+      N    = ABS( NUCOTE(1) )
+      MNL0 = MNSOCT(N) + WYZSOM
+C     LE 1-ER SOMMET DU TRIANGLE COURBE
+      XYZ3ST(1,1) = RMCN(MNL0)
+      XYZ3ST(2,1) = RMCN(MNL0+1)
+      XYZ3ST(3,1) = RMCN(MNL0+2)
+      RMCN(MNS  ) = 0.0
+      RMCN(MNS+1) = 0.0
+      RMCN(MNS+2) = 0.0
+      RL = 0.0
+      DO 30 J=2,N2
+         MNL1 = MNL0 + 3
+C        LA LONGUEUR DE L'ARETE
+         RL   = RL + DIST2P( RMCN(MNL0), RMCN(MNL1) )
+         MNL0 = MNL1
+C        LE POINT SUIVANT
+         MNS  = MNS + 3
+         RMCN(MNS  ) = RL
+         RMCN(MNS+1) = 0.0
+         RMCN(MNS+2) = 0.0
+ 30   CONTINUE
+C     LE 2-EME SOMMET DU TRIANGLE COURBE
+      XYZ3ST(1,2) = RMCN(MNL0)
+      XYZ3ST(2,2) = RMCN(MNL0+1)
+      XYZ3ST(3,2) = RMCN(MNL0+2)
+C
+C     LE COTE 2 : DU SOMMET 2 AU SOMMET 3 DU TRIANGLE PLAN
+C     ----------------------------------------------------
+      N    = ABS( NUCOTE(2) )
+      MNL0 = MNSOCT(N) + WYZSOM
+      IF( NUCOTE(2) .LT. 0 ) THEN
+         NSENS = -3
+         MNL0  = MNL0 + 3 * MCN( MNSOCT(N) + WNBSOM ) - 3
+      ELSE
+         NSENS = 3
+      ENDIF
+      RL = 0.0
+      DO 40 J=N2+1,N3
+         MNL1 = MNL0 + NSENS
+C        LA LONGUEUR DE L'ARETE
+         RL   = RL + DIST2P( RMCN(MNL0), RMCN(MNL1) )
+         MNL0 = MNL1
+C        LE POINT SUIVANT
+         MNS  = MNS + 3
+         C    = RL / RLONGC(2)
+         RMCN(MNS  ) = RLONGC(1) + C * (X3-RLONGC(1))
+         RMCN(MNS+1) = C * Y3
+         RMCN(MNS+2) = 0.0
+ 40   CONTINUE
+C     LE 3-EME SOMMET DU TRIANGLE COURBE
+      XYZ3ST(1,3) = RMCN(MNL0)
+      XYZ3ST(2,3) = RMCN(MNL0+1)
+      XYZ3ST(3,3) = RMCN(MNL0+2)
+C     SUPPRESSION DES ERREURS D'ARRONDI
+      RMCN(MNS  ) = X3
+      RMCN(MNS+1) = Y3
+      RMCN(MNS+2) = 0.0
+C
+C     LE COTE 3 : DU SOMMET 3 AU SOMMET 1 DU TRIANGLE PLAN
+C     ----------------------------------------------------
+      N    = ABS( NUCOTE(3) )
+      MNL0 = MNSOCT(N) + WYZSOM
+      IF( NUCOTE(3) .LT. 0 ) THEN
+         NSENS = -3
+         MNL0  = MNL0 + 3 * MCN( MNSOCT(N) + WNBSOM ) - 3
+      ELSE
+         NSENS = 3
+      ENDIF
+      RL = 0.0
+      DO 50 J=N3+1,NBSOLI
+         MNL1 = MNL0 + NSENS
+C        LA LONGUEUR DE L'ARETE
+         RL   = RL + DIST2P( RMCN(MNL0), RMCN(MNL1) )
+         MNL0 = MNL1
+C        LE POINT SUIVANT
+         MNS  = MNS + 3
+         C    = 1.0 - RL / RLONGC(3)
+         RMCN(MNS  ) = X3 * C
+         RMCN(MNS+1) = Y3 * C
+         RMCN(MNS+2) = 0.0
+ 50   CONTINUE
+C
+C     FIN DE REMPLISSAGE DU TABLEAUX XYZSOMMET DE LA LIGNE CONTOUR
+      MCN(MNSOLI+WNBSOM) = NBSOLI
+      MCN(MNSOLI+WBCOOR) = 3
+C     LA DATE DE CREATION
+      CALL ECDATE( MCN(MNSOLI) )
+C     LE NUMERO DU TABLEAU DESCRIPTEUR
+      MCN( MNSOLI + WNBTGS ) = 0
+      MCN( MNSOLI + MOTVAR(6) ) = NONMTD( '~>>>XYZSOMMET' )
+C
+C     SI LE TABLEAU NSEF EXISTE ALORS IL EST DETRUIT
+      CALL LXTSOU( NTLXLI , 'NSEF' ,  NTARLI  , MNARLI )
+      IF( NTARLI .GT. 0 ) THEN
+         CALL LXTSDS( NTLXLI, 'NSEF' )
+      ENDIF
+C     CREATION DU TABLEAU NSEF
+      CALL LXTNDC( NTLXLI , 'NSEF' , 'ENTIER' , WUSOEF + 2 * NBSOLI )
+      CALL LXTSOU( NTLXLI , 'NSEF' ,  NTARLI  , MNARLI )
+      MCN(MNARLI+WUTYOB) = 2
+      MCN(MNARLI+WUTYMA) = 0
+      MCN(MNARLI+WBSOEF) = 2
+      MCN(MNARLI+WBEFOB) = NBSOLI
+      MNL0 = MNARLI+WUSOEF
+      DO 60 J=1,NBSOLI
+         MCN(MNL0  ) = J
+         MCN(MNL0+1) = J+1
+         MNL0 = MNL0 + 2
+ 60   CONTINUE
+      MCN(MNL0-1) = 1
+C     LE TYPE DE FERMETURE: LIGNE FERMEE
+      MCN( MNARLI + WUTFMA ) = 1
+C     PAS DE TANGENTES STOCKEES
+      MCN( MNARLI + WBTGEF ) = 0
+      MCN( MNARLI + WBEFAP ) = 0
+      MCN( MNARLI + WBEFTG ) = 0
+C     LA DATE DE CREATION
+      CALL ECDATE( MCN(MNARLI) )
+C     LE NUMERO DU TABLEAU DESCRIPTEUR
+      MCN( MNARLI + MOTVAR(6) ) = NONMTD( '~>>>NSEF' )
+      END

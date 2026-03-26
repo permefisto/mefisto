@@ -1,0 +1,12 @@
+deftms ~>>>COEFTEMPERATURE 'Coefficient in front of the Temperature'
+variable muet DATE 'date of creation of the TMS'   reel2  ;
+variable muet NUTD 'number of the descriptor array TD' entier ; 
+variable      LTCOET 'Type of Coefficient of Temperature' entier 
+(  1 : 'constant coefficient of temperature'
+, -1 : 'function coefficient of temperature'
+,  0 : 'delete the coefficient of temperature' ) ;
+cas LTCOET
+ 1 : variable COEFTE 'value of temperature coefficient'  reel ; 
+-1 : variable NFCOET 'name of function of temperature coefficient' ^~>FONCTION ;
+fincas ;   
+fintms ;

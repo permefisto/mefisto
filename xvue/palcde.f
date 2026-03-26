@@ -1,0 +1,631 @@
+      SUBROUTINE PALCDE( NOPALC )
+C++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+C BUT : DEFINIR LES COULEURS N1COUL A NDCOUL DE LA PALETTE N DES COULEURS
+C -----
+C ENTREE :
+C --------
+C NOPALC : NUMERO DE LA PALETTE DES COULEURS A GENERER
+C          LE NUMERO DE 1 A 15 DEFINIT LA PALETTE DES COULEURS
+C    1:LES COULEURS VARIENT RAPIDEMENT ET S'ASSOMBRISSENT L'INTENSITE DECROIT
+C    2:LES COULEURS VARIENT RAPIDEMENT ET S'ASSOMBRISSENT.
+C    3:PALETTE ARC EN CIEL
+C    4:PALETTE DU CYAN    AU BLEU  PUIS AU BLEU  NOIR
+C    5:PALETTE DU JAUNE   AU ROUGE PUIS AU ROUGE NOIR
+C    6:PALETTE DU JAUNE   AU VERT  PUIS AU VERT  NOIR
+C    7:PALETTE DU MAGENTA AU ROUGE PUIS AU ROUGE NOIR
+C    8:PALETTE DU MAGENTA AU BLEU  PUIS AU BLEU  NOIR
+C    9:PALETTE DU CYAN    AU VERT  PUIS AU VERT  NOIR
+C   10:PALETTE DE 256 GRIS
+C   11:PALETTE ARC EN CIEL CLAIRE SANS VERT POUR LES ISOVALEURS
+C   12:PALETTE DU BLEU AU ROUGE PAR LE VERT JAUNE ORANGE POUR LA QUALITE DES EF
+C   13:LES COULEURS PASSENT DU ROUGE AU VERT EN PASSANT PAR LE JAUNE AVEC
+C      PASSAGE RESSERE AUTOUR DU JAUNE ET DU NOIR EST AJOUTE AUX COULEURS
+C   14:PALETTE ARC EN CIEL    CONTINU POUR LES ZONES ISOVALEURS
+C   15:PALETTE ARC EN CIEL DISCONTINU POUR LES ZONES ISOVALEURS
+C   16:PALETTE BLEU BLANC ROUGE  POUR LES ISOVALEURS
+C   17:PALETTE MIXTE ARC EN CIEL 11 + 128 GRIS
+C++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+C AUTEUR : ALAIN PERRONNET LABO ANALYSE NUMERIQUE PARIS 6    Fevrier 1986
+C MODIF  : ALAIN PERRONNET TIMS NTU TAIPEI TAIWAN           Novembre 2009
+C AJOUTS : ALAIN PERRONNET LJLL UPMC & St Pierre du Perray Septembre 2012
+C AJOUTS : ALAIN PERRONNET             St Pierre du Perray  Decembre 2020
+C........................................................................
+      include"./incl/xvpalette.inc"
+      include"./incl/trvari.inc"
+      INTRINSIC     INT
+      REAL          FAC, FACT
+      CHARACTER*14  TEINTE(6),TEINT
+      CHARACTER*8   COULEU(7)
+      DATA          COULEU/'ROUGE ','JAUNE ','VERT ','CYAN ',
+     %                     'BLEU ','MAGENTA ','ROUGE ' /
+      DATA          TEINTE/'ROUGE JAUNE ','JAUNE VERT ','VERT CYAN ',
+     %                 'CYAN BLEU ','BLEU MAGENTA ','MAGENTA ROUGE '/
+
+C     PROTECTION SUR UN ECRAN NOIR ET BLANC
+      IF( NDCOUL - N1COUL .EQ. 1 ) THEN
+         GOTO 9999
+      ENDIF
+
+C     LE NUMERO DE LA COULEUR AVANT LA 1-ERE A GENERER
+      L = NDCORE
+
+C     CHOIX DE LA PALETTE INDIQUEE
+      N = NOPALC
+      IF( N .LE. 0 .OR. N .GT. 17 ) N = 11
+
+C     CHARGEMENT DE LA PALETTE SI CE N'EST CELLE CHARGEE ACTUELLEMENT
+      IF( N .EQ. NOPACL ) GOTO 9999
+
+ccc      print *,'palcde: Chargement de la palette des couleurs',NOPALC
+
+C     LE NUMERO DE LA PALETTE ACTUELLE EST MIS DANS TRVARI
+      NOPACL = N
+
+C     LE NOMBRE DE COULEURS A CHARGER
+      NBCOUL = NDCOUL - NDCORE
+
+C     PRCTEI : INDIQUE LA PLACE DE LA TEINTE A DEFINIR ENTRE LES
+C              DEUX TEINTES PRECEDENTES (EN POUR-CENT) :
+C              0%  POUR LA PREMIERE ... 100% POUR LA SECONDE
+C     PRCINT : L'INTENSITE DE LA COULEUR EN POUR-CENT (DE 0% A 100%)
+C              0% COULEUR FONCEE NOIRE ... 100% COULEUR CLAIRE
+C     PRCPUR : LA PURETE DE LA COULEUR EN POUR-CENT (DE 0% A 100%)
+C              0% COULEUR GRISE (LAVEE DE BLANC) ... 100% COULEUR PURE
+
+      GOTO(  100,  200,  300,  400,  500,  600,  700,  800,  900,
+     %      1000, 1100, 1200, 1300, 1400, 1100, 1600, 1700 ), N
+
+C     PALETTE 1
+C     =========
+C     L'INTENSITE PASSE DE 90.0 A 50.0
+ 100  PRCINT = 90.
+C     LA PURETE EST A 100.
+      PRCPUR = 100.
+      DO I=1,20
+C        L'INTENSITE DECROIT LENTEMENT DU CLAIR VERS LE SOMBRE
+         DO K=1,6
+C           LA TEINTE VARIE VITE
+            PRCTEI = 0.
+            DO M=1,2
+               L = L + 1
+               IF( L .GT. NDCOUL ) GOTO 9990
+               CALL COUTIP(L, TEINTE(K), PRCTEI, PRCINT, PRCPUR)
+               PRCTEI = PRCTEI + 50.
+            ENDDO
+         ENDDO
+         PRCINT = PRCINT - 2.
+      ENDDO
+      GOTO 9990
+
+C     PALETTE 2
+C     =========
+C     LA PURETE ET L'INTENSITE SONT A 100.
+ 200  PRCINT = 100.
+      PRCPUR = 100.
+      DO I=1,40
+C        L'INTENSITE DECROIT LENTEMENT DU CLAIR VERS LE SOMBRE
+         DO K=1,6
+C           LA COULEUR VARIE VITE
+            L = L + 1
+            IF( L .GT. NDCOUL ) GOTO 9990
+            CALL COUTIP(L, COULEU(K), 0.0, PRCINT, PRCPUR)
+         ENDDO
+         PRCINT = PRCINT - 2.
+      ENDDO
+      GOTO 9990
+
+C     PALETTE 3
+C     =========
+C     L'INTENSITE ET LA PURETE VALENT 100.0 POUR CENT
+ 300  PRCINT = 100.0
+      PRCPUR = 100.0
+C     LA TEINTE DECRIT L'ARC EN CIEL DU ROUGE AU ROUGE
+      D      = 100.0 / ( NDCOUL - L )
+      PRCTEI = 0.
+      TEINT  = 'ROUGE ROUGE '
+      DO I=L+1,NDCOUL
+C        LA COULEUR VARIE LENTEMENT DU ROUGE AU ROUGE
+C        LE POURCENTAGE DE LA TEINTE VARIE DE 0.0 A 100.0
+         PRCTEI = PRCTEI + D
+         CALL COUTIP( I, TEINT, PRCTEI, PRCINT, PRCPUR )
+      ENDDO
+      GOTO 9990
+
+C     PALETTE 4
+C     =========
+C     LES COULEURS PASSENT DU CYAN AU BLEU PUIS AU BLEU NOIR
+ 400  NB     = 170
+      D      = 100.0 / NB
+      PRCINT = 100.
+      PRCPUR = 100.
+      PRCTEI = 0.0
+      TEINT  = 'CYAN BLEU '
+      DO I = L+1, L+NB
+C        DU CYAN EST RETIRE POUR AJOUTER DU BLEU
+         PRCTEI = PRCTEI + D
+         CALL COUTIP( I, TEINT, PRCTEI, PRCINT, PRCPUR )
+      ENDDO
+
+C     DU NOIR EST AJOUTE AU BLEU
+      D = 90.0 / (NDCOUL - L - NB )
+      DO I = L + NB + 1, NDCOUL
+         PRCINT = PRCINT - D
+         CALL COUTIP( I, TEINT, PRCTEI, PRCINT, PRCPUR )
+      ENDDO
+
+C     LA COULEUR L+1 EST BLANC
+CCC      CALL COUTIP( L+1, TEINT, PRCTEI, 100.0, 0.0 )
+      GOTO 9990
+
+C     PALETTE 5
+C     =========
+C     LES COULEURS PASSENT DU JAUNE AU ROUGE PUIS AU ROUGE NOIR
+ 500  NB     = 90
+      PRCTEI = 100.0
+      TEINT  = 'ROUGE JAUNE'
+      VARTEI = 100.0 / NB
+      PRCPUR = 100.0
+CCC      PRCPUR =  70.0
+CCC      VARPUR = (99.8 - PRCPUR) / NB
+      PRCINT = 100.0
+      DO I = L+1, L+NB
+         CALL COUTIP( I, TEINT, PRCTEI, PRCINT, PRCPUR )
+C        DU JAUNE EST RETIRE POUR AJOUTER DU ROUGE
+         PRCTEI = PRCTEI - VARTEI
+CCC         PRCPUR = PRCPUR + VARPUR
+      ENDDO
+      L = L + NB
+C
+C     DU NOIR EST AJOUTE AU ROUGE
+      PRCPUR = 100.0
+      D      = 90.0 / (NDCOUL - L )
+      DO I = L + 1, NDCOUL
+         PRCINT = PRCINT - D
+         CALL COUTIP( I, COULEU(1), 0.0, PRCINT, PRCPUR )
+      ENDDO
+      GOTO 9990
+
+C     PALETTE 6
+C     =========
+C     LES COULEURS PASSENT DU JAUNE AU VERT PUIS AU VERT NOIR
+ 600  NB     = 160
+      D      = 100.0 / NB
+      PRCINT = 100.0
+      PRCPUR = 100.
+      PRCTEI = 0.0
+      TEINT  = 'JAUNE VERT'
+      DO I = L+1, L+NB
+C        DU JAUNE EST RETIRE POUR AJOUTER DU VERT
+         PRCTEI = PRCTEI + D
+         CALL COUTIP( I, TEINT, PRCTEI, PRCINT, PRCPUR )
+      ENDDO
+
+C     DU NOIR EST AJOUTE AU VERT
+      D = 90.0 / (NDCOUL - L - NB )
+      DO I = L + NB + 1, NDCOUL
+         PRCINT = PRCINT - D
+         CALL COUTIP( I, TEINT, PRCTEI, PRCINT, PRCPUR )
+      ENDDO
+      GOTO 9990
+
+C     PALETTE 7
+C     =========
+C     LES COULEURS PASSENT DU MAGENTA AU ROUGE PUIS AU ROUGE NOIR
+ 700  NB     = 150
+      D      = 100.0 / NB
+      PRCINT = 100.0
+      PRCPUR = 100.0
+      PRCTEI = 0.0
+      TEINT  = 'MAGENTA ROUGE'
+      DO I = L+1, L+NB
+C        DU MAGENTA EST RETIRE POUR AJOUTER DU ROUGE
+         PRCTEI = PRCTEI + D
+         CALL COUTIP( I, TEINT, PRCTEI, PRCINT, PRCPUR )
+      ENDDO
+
+C     DU NOIR EST AJOUTE AU ROUGE
+      D = 90.0 / (NDCOUL - L - NB )
+      DO I = L + NB + 1, NDCOUL
+         PRCINT = PRCINT - D
+         CALL COUTIP( I, TEINT, PRCTEI, PRCINT, PRCPUR )
+      ENDDO
+      GOTO 9990
+
+C     PALETTE 8
+C     =========
+C     LES COULEURS PASSENT DU MAGENTA AU BLEU AVEC DE PLUS EN PLUS DE NOIR
+ 800  D      = 100.0 / NBCOUL
+      PRCTEI = 100.0
+      PRCINT = 100.0
+      PRCPUR = 100.0
+      TEINT  = 'BLEU MAGENTA'
+      DO I = L+1, L+NBCOUL
+         CALL COUTIP( I, TEINT, PRCTEI, PRCINT, PRCPUR )
+C        DU MAGENTA EST RETIRE POUR AJOUTER DU BLEU
+         PRCTEI = PRCTEI - D
+C        DU NOIR EST AJOUTE
+         PRCINT = PRCINT - D/1.5
+      ENDDO
+      GOTO 9990
+
+C     PALETTE 9
+C     =========
+C     LES COULEURS PASSENT DU CYAN AU VERT PUIS AU VERT NOIR
+ 900  NB     = 170
+      D      = 100.0 / NB
+      PRCINT = 100.0
+      PRCPUR = 100.0
+      PRCTEI = 100.0
+      TEINT  = 'VERT CYAN'
+      DO I = L+1, L+NB
+C        DU CYAN EST RETIRE POUR AJOUTER DU VERT
+         PRCTEI = PRCTEI - D
+         CALL COUTIP( I, TEINT, PRCTEI, PRCINT, PRCPUR )
+      ENDDO
+
+C     DU NOIR EST AJOUTE AU VERT
+      D = 90.0 / (NDCOUL - L - NB )
+      DO I = L + NB + 1, NDCOUL
+         PRCINT = PRCINT - D
+         CALL COUTIP( I, TEINT, PRCTEI, PRCINT, PRCPUR )
+      ENDDO
+      GOTO 9990
+
+C     PALETTE 10
+C     ==========
+C     LES COULEURS SONT GRISES
+ 1000 R = 1.0 / (NBCOUL+1)
+      DO I = 1, NBCOUL
+         PROUGE(NDCORE+I) = FLOAT( NBCOUL-I ) * R
+         PVERT (NDCORE+I) = FLOAT( NBCOUL-I ) * R
+         PBLEU (NDCORE+I) = FLOAT( NBCOUL-I ) * R
+      ENDDO
+      GOTO 9990
+
+C     PALETTE 11
+C     ==========
+C     PALETTE ARC-EN-CIEL CLAIRE SANS VERT POUR TRACER DES ISOVALEURS
+ 1100 NBFOIS = NBCOUL / 6
+      NOCOLOR = NDCORE
+
+C     LES COULEURS : BLEU - CYAN
+      NBF = INT( NBFOIS*1.1 )
+      DO I = 1, NBF
+         R = FLOAT( I ) / NBF
+         PROUGE(NOCOLOR+I) = 0.0
+         PVERT (NOCOLOR+I) = R
+         PBLEU (NOCOLOR+I) = 1.0
+      ENDDO
+      NOCOLOR = NOCOLOR + NBF
+
+C     LES COULEURS : CYAN - VERT
+      NBF = INT( NBFOIS*1.0 )
+      DO I=1,NBF
+         R = FLOAT( I ) / NBF
+         PROUGE(NOCOLOR+I) = 0.0
+         PVERT (NOCOLOR+I) = 1.0
+         PBLEU (NOCOLOR+I) = 1.0 - R
+      ENDDO
+      NOCOLOR = NOCOLOR + NBF
+
+C     LES COULEURS : VERT - JAUNE
+      NBF = INT( NBFOIS*1.0 )
+      DO I=1,NBF
+         R = FLOAT( I ) / NBF
+         PROUGE(NOCOLOR+I) = R
+         PVERT (NOCOLOR+I) = 1.0
+         PBLEU (NOCOLOR+I) = 0.0
+      ENDDO
+      NOCOLOR = NOCOLOR + NBF
+
+C     LES COULEURS : JAUNE - ORANGE - ROUGE
+      NBF = INT( NBFOIS*2.0 )
+      DO I=1,NBF
+         R = FLOAT( I ) / NBF
+         PROUGE(NOCOLOR+I) = 1.0
+         PVERT (NOCOLOR+I) = 1.0 - R
+         PBLEU (NOCOLOR+I) = 0.
+      ENDDO
+      NOCOLOR = NOCOLOR + NBF
+
+C     LES COULEURS : ROUGE - MAGENTA
+      NBF = NDCOUL - NOCOLOR
+      DO I=1,NBF
+         R = FLOAT( I ) / NBF
+         PROUGE(NOCOLOR+I) = 1.0
+         PVERT (NOCOLOR+I) = 0.
+         PBLEU (NOCOLOR+I) = R
+      ENDDO
+      IF( NOPALC .EQ. 15 ) GOTO 1500
+      GOTO 9990
+
+C     PALETTE 12
+C     =========
+C     LES COULEURS PASSENT DU ROUGE AU VERT EN PASSANT PAR LE JAUNE
+C     PASSAGE RESSERE AUTOUR DU JAUNE ET DU BLANC EST AJOUTE AUX COULEURS
+C     ATTENTION : PRCTEI DOIT ETRE INFERIEUR OU EGAL A 100
+ 1200 PRCINT = 100.
+      PRCPUR = 100.
+      NBFOIS = ( NDCOUL - N1COUL + 1 ) / 10
+      DO I = 1,10
+C        DU ROUGE EST RETIRE
+         IF (I.EQ.1) THEN
+           TEINT  = 'ROUGE VERT '
+           PRCTEI = 0
+         ELSE IF(I.EQ.2) THEN
+           TEINT  = 'ROUGE VERT '
+           PRCTEI = 30
+         ELSE IF(I.EQ.3) THEN
+           TEINT  = 'ROUGE VERT '
+           PRCTEI = 40
+         ELSE IF(I.EQ.4) THEN
+           TEINT  = 'ROUGE VERT '
+           PRCTEI = 50
+         ELSE IF(I.EQ.5) THEN
+           TEINT  = 'ROUGE VERT '
+           PRCTEI = 60
+         ELSE IF(I.EQ.6) THEN
+           TEINT  = 'ROUGE VERT '
+           PRCTEI = 90
+         ELSE IF(I.EQ.7) THEN
+           TEINT  = 'VERT CYAN '
+           PRCTEI = 50
+         ELSE IF(I.EQ.8) THEN
+           TEINT  = 'VERT CYAN '
+           PRCTEI = 80
+         ELSE IF(I.EQ.9) THEN
+           TEINT  = 'CYAN BLEU '
+           PRCTEI = 20
+         ELSE IF(I.EQ.10) THEN
+           TEINT  = 'CYAN BLEU '
+           PRCTEI = 100
+         ENDIF
+C        COULEUR PASSEE PAR LE SOLEIL PAR AJOUT DE BLANC A LA COULEUR
+         PRCPUR = 100.0
+         DO 1210 J=0,NBFOIS-1
+           NI = N1COUL - 1 + I + J * 10
+           IF (NI .GT. NDCOUL) GOTO 1210
+           CALL COUTIP( NI, TEINT, PRCTEI, PRCINT, PRCPUR )
+C          ON AJOUTE DU BLANC A LA COULEUR
+           PRCPUR = PRCPUR - 1.8
+ 1210   ENDDO
+      ENDDO
+
+C     LE RESTE DE LA PALETTE EN BLEU PUR
+      TEINT  = 'BLEU '
+      PRCPUR = 100.0
+ccc      NI     = N1COUL + 9 + NBFOIS * 10
+      DO J = NI+1,NDCOUL
+         CALL COUTIP( J, TEINT, PRCTEI, PRCINT, PRCPUR )
+C        ON AJOUTE DU BLANC A LA COULEUR
+         PRCPUR = PRCPUR - 1.8
+      ENDDO
+      GOTO 9990
+
+C     PALETTE 13
+C     ==========
+C     LES COULEURS PASSENT DU ROUGE AU VERT EN PASSANT PAR LE JAUNE
+C     PASSAGE RESSERE AUTOUR DU JAUNE ET DU NOIR EST AJOUTE AUX COULEURS
+C     ATTENTION : PRCTEI DOIT ETRE INFERIEUR OU EGAL A 100
+ 1300 PRCINT = 100.
+      PRCPUR = 100.
+      NBFOIS = ( NDCOUL - N1COUL + 1 ) / 10
+      DO I = 1,10
+C        DU ROUGE EST RETIRE
+         IF (I.EQ.1) THEN
+           TEINT  = 'ROUGE VERT '
+           PRCTEI = 0
+         ELSE IF(I.EQ.2) THEN
+           TEINT  = 'ROUGE VERT '
+           PRCTEI = 30
+         ELSE IF(I.EQ.3) THEN
+           TEINT  = 'ROUGE VERT '
+           PRCTEI = 40
+         ELSE IF(I.EQ.4) THEN
+           TEINT  = 'ROUGE VERT '
+           PRCTEI = 50
+         ELSE IF(I.EQ.5) THEN
+           TEINT  = 'ROUGE VERT '
+           PRCTEI = 60
+         ELSE IF(I.EQ.6) THEN
+           TEINT  = 'ROUGE VERT '
+           PRCTEI = 90
+         ELSE IF(I.EQ.7) THEN
+           TEINT  = 'VERT CYAN '
+           PRCTEI = 50
+         ELSE IF(I.EQ.8) THEN
+           TEINT  = 'VERT CYAN '
+           PRCTEI = 80
+         ELSE IF(I.EQ.9) THEN
+           TEINT  = 'CYAN BLEU '
+           PRCTEI = 20
+         ELSE IF(I.EQ.10) THEN
+           TEINT  = 'CYAN BLEU '
+           PRCTEI = 100
+         ENDIF
+C        COULEUR ASSOMBRIE PAR AJOUT DE NOIR
+         PRCINT = 40.0
+         X = (100-PRCINT) / NBFOIS
+         DO 1310 J=0,NBFOIS-1
+           NI = N1COUL - 1 + I + J * 10
+           IF (NI .GT. NDCOUL) GOTO 1310
+           CALL COUTIP( NI, TEINT, PRCTEI, PRCINT, PRCPUR )
+C          ON AJOUTE DU NOIR A LA COULEUR
+           PRCINT = PRCINT + X
+ 1310   ENDDO
+      ENDDO
+      GOTO 9990
+
+C     PALETTE 14
+C     ==========
+C     PALETTE ARC-EN-CIEL UN PEU CLAIRE ET AVEC DU VERT
+ 1400 NBFOIS  = NBCOUL / 5
+      NOCOLOR = NDCORE
+
+C     LES COULEURS : BLEU - CYAN
+      NBF = INT( NBFOIS*1.1 )
+      DO I = 1, NBF
+         PROUGE(NOCOLOR+I) = 0.1
+         PVERT (NOCOLOR+I) = 0.95 * FLOAT( I ) / NBF
+         PBLEU (NOCOLOR+I) = 0.6 + 0.35 * FLOAT( I ) / NBF
+      ENDDO
+      NOCOLOR = NOCOLOR + NBF
+
+C     LES COULEURS : CYAN - VERT
+      NBF = INT( NBFOIS*0.6 )
+      DO I=1,NBF
+         PROUGE(NOCOLOR+I) = 0.1
+         PVERT (NOCOLOR+I) = 0.95 - 0.15 * FLOAT( I ) / NBF
+         PBLEU (NOCOLOR+I) = 0.95 * FLOAT( NBF-I ) / NBF
+      ENDDO
+      NOCOLOR = NOCOLOR + NBF
+
+C     LES COULEURS : VERT - JAUNE
+      NBF = INT( NBFOIS*0.8 )
+      DO I=1,NBF
+         PROUGE(NOCOLOR+I) = 0.1 + 0.85 * FLOAT( I ) / NBF
+         PVERT (NOCOLOR+I) = 0.8 + 0.15 * FLOAT( I ) / NBF
+         PBLEU (NOCOLOR+I) = 0.1
+      ENDDO
+      NOCOLOR = NOCOLOR + NBF
+
+C     LES COULEURS : JAUNE - ROUGE
+      NBF = INT( NBFOIS*1.6 )
+      DO I=1,NBF
+         PROUGE(NOCOLOR+I) = 0.95
+         PVERT (NOCOLOR+I) = 0.1 + 0.85 * FLOAT( NBF-I ) / NBF
+         PBLEU (NOCOLOR+I) = 0.1
+      ENDDO
+      NOCOLOR = NOCOLOR + NBF
+
+C     LES COULEURS : ROUGE - MAGENTA
+      NBF = NDCOUL - NOCOLOR
+      DO I=1,NBF
+         PROUGE(NOCOLOR+I) = 0.85 +  0.1 * FLOAT( NBF-I ) / NBF
+         PVERT (NOCOLOR+I) = 0.1
+         PBLEU (NOCOLOR+I) = 0.1  + 0.85 * FLOAT( I ) / NBF
+      ENDDO
+      GOTO 9990
+
+C     PALETTE 15
+C     ==========
+C     15:PALETTE ARC EN CIEL DISCONTINU POUR LES ZONES ISOVALEURS
+C     SEULES 10 COULEURS SONT RETENUES DE LA PALETTE 14
+C     => DISCONTINUITE DES ZONES DE 10 COULEURS
+ 1500 NBF = NBCOUL / 10
+      NOCOLOR = NDCORE
+      NOC     = NDCORE
+      DO K=1,10
+         DO I=1,NBF
+            NOC = NOC + 1
+            PROUGE(NOC) = PROUGE(NOCOLOR+1)
+            PVERT (NOC) = PVERT (NOCOLOR+1)
+            PBLEU (NOC) = PBLEU (NOCOLOR+1)
+         ENDDO
+         NOCOLOR = NOC
+      ENDDO
+
+C     COMPLEMENT EN MAGENTA
+      DO I=NOC, NDCOUL
+         PROUGE(I) = PROUGE(NOCOLOR+1)
+         PVERT (I) = PVERT (NOCOLOR+1)
+         PBLEU (I) = PBLEU (NOCOLOR+1)
+      ENDDO
+      GOTO 9990
+
+C     PALETTE 16
+C     ==========
+C     PALETTE BLEU BLANC ROUGE
+C     LES COULEURS : BLEU a BLANC
+ 1600 FACT = 0.4
+      NOCOLOR = NDCORE
+      NBF = NBCOUL / 2
+      DO I = 1, NBF
+         FAC = ( FACT * (NBF-I) + 1.0 * I ) / NBF
+         PROUGE(NOCOLOR+I) = FLOAT( I ) / NBF * FAC
+         PVERT (NOCOLOR+I) = FLOAT( I ) / NBF * FAC
+         PBLEU (NOCOLOR+I) = FAC
+      ENDDO
+
+C     LES COULEURS : BLANC a ROUGE
+      NOCOLOR = NOCOLOR + NBF
+      DO I=NBCOUL, NBF+1, -1
+         FAC = ( FACT * (NBCOUL-I) + 1.0 * (I-NBF-1) ) / (NBCOUL-NBF-1)
+         NOCOLOR = NOCOLOR + 1
+         PROUGE(NOCOLOR) = FAC
+         PVERT (NOCOLOR) = FLOAT( I-NBF-1 ) / (NBCOUL-NBF-1) * FAC
+         PBLEU (NOCOLOR) = FLOAT( I-NBF-1 ) / (NBCOUL-NBF-1) * FAC
+      ENDDO
+      GOTO 9990
+
+C     PALETTE 17
+C     ==========
+C     1/2 PALETTE ARC-EN-CIEL CLAIRE SANS VERT POUR TRACER DES ISOVALEURS
+C    +1/2 PALETTE DE GRIS
+ 1700 NBCOUL2 = NBCOUL / 2
+
+C     LES NBCOUL2 ARC EN CIEL
+      NBFOIS  = NBCOUL2 / 4
+      NOCOLOR = NDCORE
+
+C     LES COULEURS : BLEU - CYAN
+      NBF = NINT( NBFOIS*1.1 )
+      DO I = 1, NBF
+         PROUGE(NOCOLOR+I) = 0.1
+         PVERT (NOCOLOR+I) = 0.7 * FLOAT( I ) / NBF
+         PBLEU (NOCOLOR+I) = 0.4 + 0.3 * FLOAT( I ) / NBF
+      ENDDO
+      NOCOLOR = NOCOLOR + NBF
+
+C     LES COULEURS : CYAN - JAUNE
+      NBF = NINT( NBFOIS*0.8 )
+      DO I=1,NBF
+         PROUGE(NOCOLOR+I) = 0.1  + 0.6 * FLOAT( I ) / NBF
+         PVERT (NOCOLOR+I) = 0.7
+         PBLEU (NOCOLOR+I) = 0.1  + 0.6 * FLOAT( NBF-I ) / NBF
+      ENDDO
+      NOCOLOR = NOCOLOR + NBF
+
+C     LES COULEURS : JAUNE - ORANGE - ROUGE
+      NBF = NINT( NBFOIS*1.7 )
+      DO I=1,NBF
+         PROUGE(NOCOLOR+I) = 0.7
+         PVERT (NOCOLOR+I) = 0.1 + 0.6 * FLOAT( NBF-I ) / NBF
+         PBLEU (NOCOLOR+I) = 0.1
+      ENDDO
+      NOCOLOR = NOCOLOR + NBF
+
+C     LES COULEURS : ROUGE - MAGENTA  JUSQU'A NDCORE+NBCOUL2
+      NBF = NDCORE+NBCOUL2 - NOCOLOR
+      DO I=1,NBF
+         PROUGE(NOCOLOR+I) = 0.4 + 0.3 * FLOAT( NBF-I ) / NBF
+         PVERT (NOCOLOR+I) = 0.1
+         PBLEU (NOCOLOR+I) = 0.1 + 0.8 * FLOAT( I ) / NBF
+      ENDDO
+
+C     LES NBCOUL2 GRIS EN FIN DE LA PALETTE
+      R = 1.0 / (NBCOUL2+1)
+      DO I = 1, NBCOUL2
+         PROUGE(NDCORE+NBCOUL2+I) = FLOAT( NBCOUL2-I ) * R
+         PVERT (NDCORE+NBCOUL2+I) = FLOAT( NBCOUL2-I ) * R
+         PBLEU (NDCORE+NBCOUL2+I) = FLOAT( NBCOUL2-I ) * R
+      ENDDO
+
+      GOTO 9990
+
+C     =============================================
+C     CHARGEMENT DE LA PALETTE DES COULEURS DANS XV
+C     =============================================
+ 9990 CALL XVACTIVERVB( NOPALC, NDCOUL+1, PROUGE, PVERT, PBLEU )
+
+ccc 9999 print *
+ccc      print *,'PALETTE',NOPALC
+ccc      do 111 i=0,255
+ccc         print *,'Couleur',i,': rouge=',PROUGE(i),
+ccc     %           ' vert=',PVERT(i),' bleu=',PBLEU(i)
+ccc 111  enddo
+cccC     TRACE DE LA PALETTE DES COULEURS
+ccc 9999 CALL TRPALETTE( NOPALC )
+
+ 9999 RETURN
+      END
