@@ -1,6 +1,6 @@
-# Exécutables compilés
+# Exécutables compilés (sauf pxyz)
 pp/pp*
-pp/pxyz
+!pp/pxyz
 
 # Fichiers objets et modules Fortran
 *.o
