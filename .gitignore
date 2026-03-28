@@ -1,0 +1,29 @@
+# Exécutables compilés
+pp/pp*
+pp/pxyz
+
+# Fichiers objets et modules Fortran
+*.o
+*.mod
+*.a
+
+# Fichiers temporaires éditeur
+*.swp
+*.swo
+*~
+\#*\#
+
+# Fichier de chemin généré à la compilation
+incl/homdir.inc
+
+# Fichiers de sortie de calcul
+*.vtu
+*.vtk
+*.dat
+*.res
+*.out
+
+# Projets utilisateur (hors du dépôt source)
+# (MEFISTOX est externe, mais au cas où)
+*.meshbf.bak
+*.stoke*.bak
