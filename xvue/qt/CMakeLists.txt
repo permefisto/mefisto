@@ -41,9 +41,9 @@ target_compile_options(xvueqt PRIVATE -fno-openmp -Wall -Wextra)
 # Expected count after Option A resolution of Planner Alert: 57.
 add_custom_target(verify_abi ALL
     COMMAND ${CMAKE_COMMAND} -E echo "verify_abi: counting ABI symbols in libxvueqt.a..."
-    COMMAND sh -c "nm $<TARGET_FILE:xvueqt> | grep -c ' T [a-zA-Z_][a-zA-Z0-9_]*_$$' > nm_count.txt"
-    COMMAND sh -c "grep -c '^[[:space:]]*\\(void\\|int\\|float\\|double\\|long\\|short\\|unsigned\\|void[[:space:]]*\\*\\)[[:space:]]*proc(' ${CMAKE_CURRENT_SOURCE_DIR}/include/xvue_qt_api.h > hdr_count.txt"
-    COMMAND sh -c "NM_COUNT=$$(cat nm_count.txt); HDR_COUNT=$$(cat hdr_count.txt); echo \"nm count: $$NM_COUNT  header count: $$HDR_COUNT\"; if [ \"$$NM_COUNT\" != \"$$HDR_COUNT\" ]; then echo 'ERROR: ABI symbol count drift between libxvueqt.a and xvue_qt_api.h' >&2; exit 1; fi; if [ \"$$NM_COUNT\" != \"57\" ]; then echo \"WARNING: expected 57 Fortran-facing entries (Option A of Planner Alert), got $$NM_COUNT\" >&2; fi"
+    COMMAND sh ${CMAKE_CURRENT_SOURCE_DIR}/cmake/verify_abi.sh
+        $<TARGET_FILE:xvueqt>
+        ${CMAKE_CURRENT_SOURCE_DIR}/include/xvue_qt_api.h
     DEPENDS xvueqt
     WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}
     VERBATIM
