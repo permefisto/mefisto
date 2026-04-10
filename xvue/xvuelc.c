@@ -2827,7 +2827,7 @@ void proc(valvarenv)( char *nom, int *lval_admis,
 AUTEUR : P LAUG ou F. HECHT INRIA                                      Mars 1991
 12345X7..............................................................012345678*/  
 {
-   char  *ptenv, *getenv() ;
+   char  *ptenv ;
    int    i ;
 
    ptenv = getenv(nom) ;
