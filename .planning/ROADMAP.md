@@ -36,7 +36,7 @@ Decimal phases appear between their surrounding integers in numeric order.
   4. `bin/cbl_tout` (the legacy X11 path) still builds the original `pp/pp*` executables unchanged, and all 5 canonical `testa/` cases selected as baseline still run on X11.
   5. `xvue/README_COORDS.md` documents the audited Y-axis convention (origin, up/down, where inversion happens) and `.planning/validation/BASELINE.md` lists the 5 canonical `testa/` cases (one per module: mesher, elas, flui, ther, nlse).
 **Plans**: 4 plans
-  - [ ] 00-01-PLAN.md — Prerequisites: apt install qt6-base-dev + verify legacy X11 baseline (BUILD-07 anchor)
+  - [x] 00-01-PLAN.md — Prerequisites: apt install qt6-base-dev + verify legacy X11 baseline (BUILD-07 anchor)
   - [ ] 00-02-PLAN.md — CMake scaffold + xvue_qt_api.h (57 entries) + warn-once stubs → libxvueqt.a (BUILD-01..05, BUILD-08)
   - [ ] 00-03-PLAN.md — bin/cbl_tout_qt + 5 per-module cb*_qt clones → pp/pp*_qt smoke-tested (BUILD-06)
   - [ ] 00-04-PLAN.md — xvue/README_COORDS.md + .planning/validation/BASELINE.md + clean-tree rebuild + 5-case legacy run (BUILD-09, BUILD-10)
