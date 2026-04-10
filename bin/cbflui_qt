@@ -17,14 +17,14 @@ then
   LANGUE=ANGLAISE
   echo
   echo ========================================================================
-  echo MEFISTO-LINUX 64bits: Compilation f+OpenMP + Link Editor of ppflui.f (Qt)
+  echo "MEFISTO-LINUX 64bits: Compilation f+OpenMP + Link Editor of ppflui.f (Qt)"
   echo ========================================================================
 else
   LANGAGE=0
   LANGUE=FRANCAISE
   echo
   echo =============================================================================
-  echo MEFISTO-LINUX 64bits: Compilation f+OpenMP + Edition de liens de ppflui.f (Qt)
+  echo "MEFISTO-LINUX 64bits: Compilation f+OpenMP + Edition de liens de ppflui.f (Qt)"
   echo =============================================================================
 fi
 

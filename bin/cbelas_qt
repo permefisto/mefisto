@@ -18,14 +18,14 @@ then
   LANGUE=ANGLAISE
   echo
   echo ==========================================================================
-  echo MEFISTO-LINUX 64bits: Compilation f95+OpenMP + Link Editor of ppelas.f (Qt)
+  echo "MEFISTO-LINUX 64bits: Compilation f95+OpenMP + Link Editor of ppelas.f (Qt)"
   echo ==========================================================================
 else
   LANGAGE=0
   LANGUE=FRANCAISE
   echo
   echo ===============================================================================
-  echo MEFISTO-LINUX 64bits: Compilation f95+OpenMP + Edition de liens de ppelas.f (Qt)
+  echo "MEFISTO-LINUX 64bits: Compilation f95+OpenMP + Edition de liens de ppelas.f (Qt)"
   echo ===============================================================================
 fi
 
