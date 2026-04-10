@@ -1,10 +1,11 @@
 ---
 phase: 0
 slug: build-skeleton-abi-stubs
-status: draft
-nyquist_compliant: false
-wave_0_complete: false
+status: approved
+nyquist_compliant: true
+wave_0_complete: true
 created: 2026-04-10
+updated: 2026-04-10
 ---
 
 # Phase 0 — Validation Strategy
@@ -36,11 +37,18 @@ created: 2026-04-10
 
 ## Per-Task Verification Map
 
-*Populated by the planner. Each task must map to a command that can be run from the repo root and exits non-zero on failure.*
-
-| Task ID | Plan | Wave | Requirement | Threat Ref | Secure Behavior | Test Type | Automated Command | File Exists | Status |
-|---------|------|------|-------------|------------|-----------------|-----------|-------------------|-------------|--------|
-| TBD | TBD | TBD | BUILD-01..10 | — | N/A (no runtime behavior — link-complete stubs only) | build/link | TBD | ❌ W0 | ⬜ pending |
+| Task ID | Plan | Wave | Requirement | Test Type | Automated Command | Status |
+|---------|------|------|-------------|-----------|-------------------|--------|
+| 00-01-01 | 01 | 1 | BUILD-01 (env) | human-checkpoint | `dpkg -s qt6-base-dev qt6-base-dev-tools` and `cmake --find-package -DNAME=Qt6 -DCOMPILER_ID=GNU -DLANGUAGE=CXX -DMODE=EXIST` | ⬜ pending |
+| 00-01-02 | 01 | 1 | BUILD-07 (legacy anchor) | build | `cd $MEFISTO && bin/cbl_tout && test -x pp/ppmail && test -x pp/ppelas && test -x pp/ppflui && test -x pp/ppther && test -x pp/ppnlse` | ⬜ pending |
+| 00-02-01 | 02 | 2 | BUILD-04 (header) | grep | `test -f xvue/qt/include/xvue_qt_api.h && grep -c 'proc(xv' xvue/qt/include/xvue_qt_api.h` (expect 57) | ⬜ pending |
+| 00-02-02 | 02 | 2 | BUILD-05 (stubs) | compile | `g++ -c xvue/qt/src/xvue_qt_api.cpp -Ixvue/qt/include -fPIC -o /tmp/stubs.o` | ⬜ pending |
+| 00-02-03 | 02 | 2 | BUILD-01, BUILD-02, BUILD-03, BUILD-08 | cmake+nm | `cmake -S xvue/qt -B xvue/qt/build && cmake --build xvue/qt/build && nm xvue/qt/build/libxvueqt.a \| grep -c ' T [a-zA-Z_][a-zA-Z0-9_]*_$'` (expect 57) | ⬜ pending |
+| 00-03-01 | 03 | 3 | BUILD-06 (cbl_tout_qt) | script | `test -x bin/cbl_tout_qt && bash -n bin/cbl_tout_qt` | ⬜ pending |
+| 00-03-02 | 03 | 3 | BUILD-06 (cb*_qt clones) | script | `for m in cbmail cbelas cbflui cbther cbnlse; do test -x bin/${m}_qt && bash -n bin/${m}_qt; done` | ⬜ pending |
+| 00-03-03 | 03 | 3 | BUILD-06 (smoke test) | run | `bin/cbl_tout_qt && for e in ppmail ppelas ppflui ppther ppnlse; do test -x pp/${e}_qt; done` | ⬜ pending |
+| 00-04-01 | 04 | 4 | BUILD-09, BUILD-10 | files | `test -f xvue/README_COORDS.md && test -f .planning/validation/BASELINE.md` | ⬜ pending |
+| 00-04-02 | 04 | 4 | BUILD-07 (regression) | human-verify | Clean tree rebuild: `git clean -fdx pp xvue/qt/build && bin/cbl_tout_qt && bin/cbl_tout && run 5 canonical testa cases` | ⬜ pending |
 
 *Status: ⬜ pending · ✅ green · ❌ red · ⚠️ flaky*
 

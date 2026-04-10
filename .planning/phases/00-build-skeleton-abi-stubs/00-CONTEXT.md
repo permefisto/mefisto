@@ -17,8 +17,8 @@ Every `extern "C"` entry point in `xvue/xvuelc.c` gets a no-op stub in C++ with 
 
 ### Directory layout (A1)
 - **D-01:** All new C++ sources, headers, and the scoped `CMakeLists.txt` live in a new `xvue/qt/` subfolder. The existing `xvue/*.f` wrappers (~224 files) and `xvue/xvuelc.c` stay untouched at the top level of `xvue/`.
-- **D-02:** No file outside `xvue/qt/` is edited by Phase 0 *except* the new `bin/cbl_tout_qt` and `bin/cb*_qt` scripts. The rest of the repository — including `incl/`, `mail/`, `elas/`, `flui/`, `ther/`, `nlse/`, `reso/`, `util/`, `prpr/` — is read-only in this phase.
-- **D-03:** `xvue/qt/README_COORDS.md` documents the audited Y-axis convention (origin location, Y-up vs Y-down, whether inversion happens in C or in Fortran) derived from reading `xvue/xvuelc.c`. This file is created in Phase 0 and referenced from every subsequent phase.
+- **D-02:** No file outside `xvue/qt/` is edited by Phase 0 *except* (a) the new `bin/cbl_tout_qt` and `bin/cb*_qt` scripts, and (b) `xvue/README_COORDS.md` (see D-03). The rest of the repository — including `incl/`, `mail/`, `elas/`, `flui/`, `ther/`, `nlse/`, `reso/`, `util/`, `prpr/` — is read-only in this phase.
+- **D-03:** `xvue/README_COORDS.md` (top-level `xvue/`, NOT inside `xvue/qt/`) documents the audited Y-axis convention (origin location, Y-up vs Y-down, whether inversion happens in C or in Fortran) derived from reading `xvue/xvuelc.c`. This file is created in Phase 0 and referenced from every subsequent phase. Rationale: the convention is shared by both X11 and Qt backends so the doc belongs at the backend-neutral `xvue/` level, not inside the Qt-specific subfolder. Resolved 2026-04-10 after checker flagged conflict with ROADMAP.md; user confirmed top-level placement.
 
 ### ABI header organization (B1)
 - **D-04:** One single header `xvue/qt/include/xvue_qt_api.h` declares every `extern "C"` entry point that exists in `xvue/xvuelc.c`. No category splits. This matches the one-big-blob nature of `xvuelc.c` itself and keeps grep/diff simple.
@@ -51,10 +51,10 @@ Every `extern "C"` entry point in `xvue/xvuelc.c` gets a no-op stub in C++ with 
 ### Claude's Discretion
 
 - **Debug thread-affinity assertion macro** — define `XVUE_QT_ASSERT_MAIN_THREAD()` as `Q_ASSERT(QThread::currentThread() == qApp->thread())` in debug builds (`#ifdef QT_DEBUG`) and empty in release. For Phase 0 stubs it's a no-op because there is no `qApp` yet, but the macro is declared in `xvue_qt_api.h` so Phase 1+ can drop it into every entry point body.
-- **File naming and internal organization inside `xvue/qt/`** — the expected layout is `xvue/qt/CMakeLists.txt`, `xvue/qt/include/xvue_qt_api.h`, `xvue/qt/src/xvue_qt_api.cpp` (the stubs), `xvue/qt/README_COORDS.md`, `xvue/qt/build/` (gitignored). Additional files land in Phase 1+.
+- **File naming and internal organization inside `xvue/qt/`** — the expected layout is `xvue/qt/CMakeLists.txt`, `xvue/qt/include/xvue_qt_api.h`, `xvue/qt/src/xvue_qt_api.cpp` (the stubs), `xvue/qt/build/` (gitignored). Additional files land in Phase 1+. Note: `README_COORDS.md` lives at top-level `xvue/` per D-03, not inside `xvue/qt/`.
 - **Stub categorization for future phases** — the ~60 stubs in `xvue_qt_api.cpp` may be grouped by category with `// === Phase 2: Drawing primitives ===` style comment banners to make later phases easy to navigate, but this is a readability choice, not a commitment.
 - **pkg-config vs find_package for Qt detection in shell scripts** — the final shell linker line uses `$(pkg-config --libs Qt6Widgets Qt6Gui Qt6Core Qt6PrintSupport)` for portability; CMake itself uses `find_package(Qt6 ... COMPONENTS Widgets Gui Core PrintSupport)` internally. Both mechanisms are acceptable.
-- **Formatting of `xvue/qt/README_COORDS.md`** — short free-form Markdown documenting what the Y-axis audit found. Content matters; layout doesn't.
+- **Formatting of `xvue/README_COORDS.md`** — short free-form Markdown documenting what the Y-axis audit found. Content matters; layout doesn't.
 
 </decisions>
 
@@ -129,7 +129,7 @@ Every `extern "C"` entry point in `xvue/xvuelc.c` gets a no-op stub in C++ with 
 - **Linker line in `bin/cb*_qt` scripts** — the only touch point between the Fortran build and the Qt layer. The Qt clones replace `xvue/xvuelc.o` in the existing `gfortran ... -lX11 -o pp/pp*` line with a Qt-linked static-library reference (D-08). Every phase after 0 only **grows** `libxvueqt.a` — the linker line does not change again until Phase 9 retirement.
 - **CMake inside shell** — the Qt clones call `cmake -S xvue/qt -B xvue/qt/build && cmake --build xvue/qt/build` as a preliminary step before the gfortran link. This is the **only** place where CMake touches the build.
 - **`xvue/qt/build/libxvueqt.a`** — the handoff artifact. Produced by CMake, consumed by shell scripts. Path is stable and referenced by relative path from `$MEFISTO`.
-- **`xvue/qt/README_COORDS.md`** — produced by Phase 0, consumed by every phase that touches drawing (Phases 1–7). Encodes the Y-axis convention audit result as a read-only reference.
+- **`xvue/README_COORDS.md`** — produced by Phase 0, consumed by every phase that touches drawing (Phases 1–7). Encodes the Y-axis convention audit result as a read-only reference. Lives at top-level `xvue/` per D-03, not inside `xvue/qt/`.
 - **`.planning/validation/BASELINE.md`** — produced by Phase 0, consumed by every phase for end-of-phase validation. Stable list of 5 test cases.
 
 </code_context>
