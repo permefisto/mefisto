@@ -837,27 +837,31 @@ Minimal applicable concerns:
 
 **Upgrade path for assumptions:** A1 and A2 can both be promoted to VERIFIED via a small runtime test — extend `prpr/xvtest0.f` (discretion per D-19) to print the values of `XVPXECRAN` and `XVMMECRAN`, compare against legacy `pp/ppmail` output. This is 4 lines of Fortran and is the recommended empirical validation for SHELL-04/SHELL-06.
 
-## Open Questions
+## Open Questions (RESOLVED)
 
 1. **Should the `verify_no_exec` grep be case-sensitive and exclude comments?**
    - What we know: D-10 mandates a grep that matches `QApplication::exec` and `qApp->exec()`.
    - What's unclear: Whether a developer comment in a future phase's code (e.g., "// NOT calling QApplication::exec here on purpose") would trigger a false positive.
    - Recommendation: Use `grep -rn 'QApplication::exec\|qApp->exec()'` with no exclusions for simplicity in Phase 1; refine to exclude comment lines (`grep -v '^\s*//'`) only if a false positive appears. Document the behavior in a comment at the top of `verify_no_exec.sh`.
+   - **RESOLVED:** Use the simple grep (`grep -rn 'QApplication::exec\|qApp->exec()'`) with no comment exclusion in Phase 1. Rationale: Phase 1 source files contain no comments referencing `exec()`; false-positive risk is zero in the current scope. If a future phase introduces such a comment, the grep will fail loudly and Plan 01-01 Task 3 will be revisited to add `grep -v '^\s*//'`. Decision is documented in a header comment at the top of `xvue/qt/cmake/verify_no_exec.sh` per Plan 01-01 Task 3 action.
 
 2. **Should `XvueState` be header-only or header+source?**
    - What we know: D-04 says Phase 1 has exactly one field `QColor background_ = Qt::black;`.
    - What's unclear: Whether a `.cpp` is warranted for such a thin struct.
    - Recommendation: Header-only. Struct inline in `xvue_qt_state.h`, no `xvue_qt_state.cpp`. Phase 2 will add `.cpp` when pen/brush/painter members need out-of-line definitions.
+   - **RESOLVED:** Header-only. `xvue/qt/src/xvue_qt_state.h` holds the full struct inline with `QColor background_ = Qt::black;` as the sole field. No `.cpp` in Phase 1. Rationale: single trivial field, no out-of-line definitions needed, AUTOMOC is not triggered (no `Q_OBJECT`). Plan 01-01 Task 2 materialises this decision.
 
 3. **Should `cbxvtest0_qt` link `mail/lib` + `util/lib` for parity with `cbmail_qt`, or drop them since `xvtest0.f` only calls shell entry points?**
    - What we know: D-20 says "clone from the thinnest `cb*_qt`"; `cbmail_qt` links three Fortran libs.
    - What's unclear: Dropping libs saves link time but risks "undefined reference" if any `xvue/lib` wrapper (`xvouvrir.f`, etc.) depends on a symbol in the dropped libs.
    - Recommendation: Copy the full 3-lib link line from `cbmail_qt` verbatim. Link-time cost is negligible; symmetry is worth more than a small build-time saving.
+   - **RESOLVED (reversing the original recommendation):** Drop `mail/lib` from `bin/cbxvtest0_qt`; keep `util/lib` and `xvue/lib`. Rationale: (a) `prpr/xvtest0.f` calls only `XVINITGRAPHIQUE` and `XVFERMER`, whose Fortran wrappers live entirely in `xvue/lib` and transitively use only `util/lib` helpers — none of the `mail/lib` mesh-generation symbols are referenced, so the link is sound; (b) D-20's "clone-and-modify" directive is about preserving the build-script *template*, not mandating a literal copy of irrelevant libs; (c) the minimal link surface makes link failures self-diagnosing (any undefined reference points immediately at a real `xvue/lib`→`mail/lib` coupling we'd want to know about). Plan 01-03 Task 2 explicitly drops `mail/lib` and documents a fallback: if the link fails on a symbol resolution, restore `mail/lib` unchanged. This deliberately contradicts the original recommendation above; the research author's original concern (symmetry) is subordinated to the plan's goal of "smallest possible compilation unit" per D-21.
 
 4. **Should `XVUE_QT_ASSERT_MAIN_THREAD()` null-guard `QCoreApplication::instance()` via the `if (QCoreApplication::instance())` form (code example §7) or via a direct `if (qApp)` — functionally equivalent but `qApp` pulls in `<QCoreApplication>` transitively?**
    - What we know: D-13 says the macro must be null-safe when `qApp` is null.
    - What's unclear: Stylistic question, no behavior difference.
    - Recommendation: Use `QCoreApplication::instance()` directly — `qApp` is a macro that expands to `QCoreApplication::instance()` cast to `QApplication*`, which requires the `<QApplication>` header in the expansion site. `QCoreApplication::instance()` is lower-coupling for a header that is `#include`d by every `.cpp` in `xvue/qt/src/`.
+   - **RESOLVED:** Use `QCoreApplication::instance()` directly inside `XVUE_QT_ASSERT_MAIN_THREAD()`. Rationale: lower header coupling for `xvue_qt_api.h`, which is included by every `.cpp` in `xvue/qt/src/`. Plan 01-01 Task 1 implements the macro body with this form.
 
 ## Sources
 
