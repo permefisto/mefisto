@@ -612,24 +612,51 @@ void proc(xvrectangle)(int *x, int *y, int *width, int *height) {
     xvue_qt_draw_rect_common(*x, *y, *width, *height);
 }
 
-// ---- 46. xvbordarcellipse_ ----
+// ---- 46. xvbordarcellipse_ (D-14, RESEARCH Q1: drawArc, DRAW-05) ----
+// Legacy xvuelc.c:2554 -- uses XDrawArc, outline only, float* angles in degrees.
+// X11 x64 (1/64 deg) -> Qt x16 (1/16 deg). NOT x64.
 void proc(xvbordarcellipse)(int *x, int *y, int *width, int *height,
                             float *angle1, float *angle2) {
     XvueApp::ensure();
     XVUE_QT_ASSERT_MAIN_THREAD();
-    static bool warned = false;
-    warn_once(warned, "xvbordarcellipse_");
-    (void)x; (void)y; (void)width; (void)height; (void)angle1; (void)angle2;
+    auto& win = XvueApp::window_slot();
+    if (!win) return;
+    auto* st = win->state();
+    if (!st || !st->painter_ || !st->painter_->isActive()) return;
+
+    const QRect bbox(*x - *width, *y - *height,
+                     *width * 2,  *height * 2);
+    const int start_16 = static_cast<int>(*angle1 * 16.0f);
+    const int span_16  = static_cast<int>(*angle2 * 16.0f);
+
+    st->painter_->drawArc(bbox, start_16, span_16);  // outline -- matches XDrawArc
+
+    if (win->canvas()) win->canvas()->update();
+    QCoreApplication::processEvents(QEventLoop::ExcludeUserInputEvents);
 }
 
-// ---- 47. xvarcellipse_ ----
+// ---- 47. xvarcellipse_ (D-14, RESEARCH Q1 CORRECTION: drawPie, DRAW-05) ----
+// Legacy xvuelc.c:2616 -- uses XFillArc (filled pie slice to center).
+// Qt's equivalent of XFillArc is drawPie, NOT drawArc. drawArc would only
+// stroke the curve; XFillArc fills the pie wedge. See 02-RESEARCH.md Q1.
 void proc(xvarcellipse)(int *x, int *y, int *width, int *height,
                         float *angle1, float *angle2) {
     XvueApp::ensure();
     XVUE_QT_ASSERT_MAIN_THREAD();
-    static bool warned = false;
-    warn_once(warned, "xvarcellipse_");
-    (void)x; (void)y; (void)width; (void)height; (void)angle1; (void)angle2;
+    auto& win = XvueApp::window_slot();
+    if (!win) return;
+    auto* st = win->state();
+    if (!st || !st->painter_ || !st->painter_->isActive()) return;
+
+    const QRect bbox(*x - *width, *y - *height,
+                     *width * 2,  *height * 2);
+    const int start_16 = static_cast<int>(*angle1 * 16.0f);
+    const int span_16  = static_cast<int>(*angle2 * 16.0f);
+
+    st->painter_->drawPie(bbox, start_16, span_16);  // filled wedge -- matches XFillArc
+
+    if (win->canvas()) win->canvas()->update();
+    QCoreApplication::processEvents(QEventLoop::ExcludeUserInputEvents);
 }
 
 // ---- 48. tempscpu_ ----
