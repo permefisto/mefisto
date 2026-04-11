@@ -440,6 +440,7 @@ void proc(xvtexte)(char string[], int *length, int *x1, int *y1) {
 }
 
 // ---- 30. xvface_ (D-11, DRAW-03) ----
+// Legacy: XFillPolygon -- fill only, no edge stroke (WR-01).
 void proc(xvface)(int *n, MefistoPoint *pts) {
     XvueApp::ensure();
     XVUE_QT_ASSERT_MAIN_THREAD();
@@ -454,10 +455,15 @@ void proc(xvface)(int *n, MefistoPoint *pts) {
     for (int i = 0; i < *n; ++i) {
         poly << QPoint(pts[i].x, pts[i].y);
     }
+    // WR-01: drawPolygon strokes the outline with the current pen. Legacy
+    // XFillPolygon only fills. Suppress the pen for the fill step so the
+    // two colors stay independent once Phase 3 unlocks pen/brush divergence.
+    QPen saved_pen = st->painter_->pen();
+    st->painter_->setPen(Qt::NoPen);
     st->painter_->drawPolygon(poly, Qt::OddEvenFill);  // auto 1<->n close
+    st->painter_->setPen(saved_pen);
 
     if (win->canvas()) win->canvas()->update();
-    QCoreApplication::processEvents(QEventLoop::ExcludeUserInputEvents);
 }
 
 // ---- 31. xvtypetrait_ (D-17, D-19, DRAW-06) ----
@@ -549,11 +555,22 @@ void proc(xvfacetraits)(int *ncf, int *nca, int *n, MefistoPoint *pts) {
     for (int i = 0; i < *n; ++i) {
         poly << QPoint(pts[i].x, pts[i].y);
     }
+    // WR-01: split fill and outline cleanly. Fill must not stroke the edge
+    // (setPen(Qt::NoPen)); outline must not re-fill (setBrush(Qt::NoBrush)).
+    // Without this, once Phase 3 differentiates ncf/nca colors, the fill
+    // step would paint the edge in the fill color and the outline step
+    // would repaint with the edge color, wasting work and producing a
+    // thicker edge line than legacy.
+    QPen   saved_pen   = st->painter_->pen();
+    QBrush saved_brush = st->painter_->brush();
+    st->painter_->setPen(Qt::NoPen);
     st->painter_->drawPolygon(poly, Qt::OddEvenFill);  // fill (D-12 order)
+    st->painter_->setPen(saved_pen);
+    st->painter_->setBrush(Qt::NoBrush);
     st->painter_->drawPolygon(poly);                   // outline (D-12 order)
+    st->painter_->setBrush(saved_brush);
 
     if (win->canvas()) win->canvas()->update();
-    QCoreApplication::processEvents(QEventLoop::ExcludeUserInputEvents);
 }
 
 // ---- 37. xvsouris_ ----
