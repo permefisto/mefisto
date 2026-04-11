@@ -528,21 +528,23 @@ void proc(xvrectangle)(int *x, int *y, int *width, int *height) {
 }
 
 // ---- 46. xvbordarcellipse_ ----
-void proc(xvbordarcellipse)(int *x, int *y, int *width, int *height, int *a1, int *a2) {
+void proc(xvbordarcellipse)(int *x, int *y, int *width, int *height,
+                            float *angle1, float *angle2) {
     XvueApp::ensure();
     XVUE_QT_ASSERT_MAIN_THREAD();
     static bool warned = false;
     warn_once(warned, "xvbordarcellipse_");
-    (void)x; (void)y; (void)width; (void)height; (void)a1; (void)a2;
+    (void)x; (void)y; (void)width; (void)height; (void)angle1; (void)angle2;
 }
 
 // ---- 47. xvarcellipse_ ----
-void proc(xvarcellipse)(int *x, int *y, int *width, int *height, int *a1, int *a2) {
+void proc(xvarcellipse)(int *x, int *y, int *width, int *height,
+                        float *angle1, float *angle2) {
     XvueApp::ensure();
     XVUE_QT_ASSERT_MAIN_THREAD();
     static bool warned = false;
     warn_once(warned, "xvarcellipse_");
-    (void)x; (void)y; (void)width; (void)height; (void)a1; (void)a2;
+    (void)x; (void)y; (void)width; (void)height; (void)angle1; (void)angle2;
 }
 
 // ---- 48. tempscpu_ ----

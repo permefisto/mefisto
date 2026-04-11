@@ -138,8 +138,10 @@ void  proc(xvfbordrectangle)(int *x, int *y, int *width, int *height);      // x
 void  proc(xvbordrectangle)(int *x, int *y, int *width, int *height);       // xvuelc.c:2443
 void  proc(xvfrectangle)(int *x, int *y, int *width, int *height);          // xvuelc.c:2489
 void  proc(xvrectangle)(int *x, int *y, int *width, int *height);           // xvuelc.c:2507
-void  proc(xvbordarcellipse)(int *x, int *y, int *width, int *height, int *a1, int *a2); // xvuelc.c:2554
-void  proc(xvarcellipse)(int *x, int *y, int *width, int *height, int *a1, int *a2);     // xvuelc.c:2616
+void  proc(xvbordarcellipse)(int *x, int *y, int *width, int *height,
+                             float *angle1, float *angle2);              // xvuelc.c:2554 (D-33: literal)
+void  proc(xvarcellipse)(int *x, int *y, int *width, int *height,
+                         float *angle1, float *angle2);                  // xvuelc.c:2616 (D-33: literal)
 
 // ---- 15. Time / date / host / env ----
 void  proc(tempscpu)(double *tclock);                                       // xvuelc.c:2678
