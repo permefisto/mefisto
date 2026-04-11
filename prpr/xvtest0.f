@@ -66,6 +66,10 @@ C     ellipse arcs (DRAW-05) — REAL*4 angles per corrected ABI
       A1 = -45.0
       A2 = 180.0
       CALL XVBORDARCELLIPSE(600, 150,  60,  60, A1, A2)
+C     flush the pre-effacer scene and hold for visual inspection:
+C     Checks 1 (geometry), 2 (pen styles), 3 (antialiasing), 5 (resize).
+      CALL XVVOIR
+      CALL SLEEP(15)
 C     clear mid-sequence, then draw with new pen style
       CALL EFFACER
       CALL XVTYPETRAIT(1)
@@ -81,13 +85,16 @@ C     (SHELL-01, SHELL-06). XVINITGRAPHIQUE has already pumped the
 C     event loop until the window is exposed, so the window is mapped
 C     and painted before SLEEP starts; the X server keeps the Expose
 C     content on screen while the Fortran main blocks in SLEEP.
-      CALL SLEEP(1)
+C     Second hold shows the post-effacer state only — verifies
+C     Check 4 (effacer cleared the pre-effacer scene) and DRAW-06
+C     pen style variety on the dashed lines.
+      CALL SLEEP(10)
       PRINT *,'[xvtest0] premier appel XVFERMER'
       CALL XVFERMER
 C
       PRINT *,'[xvtest0] second appel XVINITGRAPHIQUE (reopen)'
       CALL XVINITGRAPHIQUE
-      CALL SLEEP(1)
+      CALL SLEEP(3)
       PRINT *,'[xvtest0] second appel XVFERMER'
       CALL XVFERMER
 C
