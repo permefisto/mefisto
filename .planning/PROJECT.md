@@ -137,4 +137,4 @@ This document evolves at phase transitions and milestone boundaries.
 4. Update Context with current state
 
 ---
-*Last updated: 2026-04-10 after initialization*
+*Last updated: 2026-04-11 after Phase 0 (build-skeleton-abi-stubs) completion — CMake skeleton + 57 ABI stubs + parallel `bin/cbl_tout_qt` build path in place. No Active requirements validated yet (Phase 0 is scaffolding only); 5 legacy X11 `testa/` baseline runs deferred to `00-HUMAN-UAT.md`.*
