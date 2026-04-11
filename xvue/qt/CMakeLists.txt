@@ -18,6 +18,9 @@ find_package(Qt6 REQUIRED COMPONENTS Core Gui Widgets PrintSupport)
 
 add_library(xvueqt STATIC
     src/xvue_qt_api.cpp
+    src/xvue_qt_app.cpp
+    src/xvue_qt_window.cpp
+    src/xvue_qt_canvas.cpp
 )
 
 target_include_directories(xvueqt PUBLIC
@@ -44,6 +47,19 @@ add_custom_target(verify_abi ALL
     COMMAND sh ${CMAKE_CURRENT_SOURCE_DIR}/cmake/verify_abi.sh
         $<TARGET_FILE:xvueqt>
         ${CMAKE_CURRENT_SOURCE_DIR}/include/xvue_qt_api.h
+    DEPENDS xvueqt
+    WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}
+    VERBATIM
+)
+
+# D-10: SHELL-03 enforcement — fail the build if QApplication::exec or
+# qApp->exec() appears in xvue/qt/src or xvue/qt/include. Mirrors the Phase 0
+# verify_abi pattern: a POST_BUILD grep that aborts if it finds a match.
+add_custom_target(verify_no_exec ALL
+    COMMAND ${CMAKE_COMMAND} -E echo "verify_no_exec: scanning for QApplication::exec..."
+    COMMAND sh ${CMAKE_CURRENT_SOURCE_DIR}/cmake/verify_no_exec.sh
+        ${CMAKE_CURRENT_SOURCE_DIR}/src
+        ${CMAKE_CURRENT_SOURCE_DIR}/include
     DEPENDS xvueqt
     WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}
     VERBATIM
