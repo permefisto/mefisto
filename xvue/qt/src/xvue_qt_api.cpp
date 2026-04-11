@@ -330,7 +330,7 @@ void proc(effacer)(void) {
     if (win->canvas()) {
         win->canvas()->update();
     }
-    QCoreApplication::processEvents(QEventLoop::ExcludeUserInputEvents);
+    // WR-02: deferred flush -- xvvoir_/xvpause_ pump the event loop.
 }
 
 // ---- 23. xvfond_ ----
@@ -374,7 +374,7 @@ void proc(xvfond)(int *icolor) {
             win->canvas()->update();
         }
     }
-    QCoreApplication::processEvents(QEventLoop::ExcludeUserInputEvents);
+    // WR-02: deferred flush -- xvvoir_/xvpause_ pump the event loop.
 }
 
 // ---- 24. xvchargefonte_ ----
@@ -470,6 +470,7 @@ void proc(xvface)(int *n, MefistoPoint *pts) {
 void proc(xvtypetrait)(int *ptype) {
     XvueApp::ensure();
     XVUE_QT_ASSERT_MAIN_THREAD();
+    if (!ptype) return;   // WR-03
     auto& win = XvueApp::window_slot();
     if (!win) return;
     auto* st = win->state();
@@ -482,6 +483,7 @@ void proc(xvtypetrait)(int *ptype) {
 void proc(xvepaisseur)(int *pepais) {
     XvueApp::ensure();
     XVUE_QT_ASSERT_MAIN_THREAD();
+    if (!pepais) return;   // WR-03
     auto& win = XvueApp::window_slot();
     if (!win) return;
     auto* st = win->state();
@@ -494,13 +496,14 @@ void proc(xvepaisseur)(int *pepais) {
 void proc(xvtrait)(int *x1, int *y1, int *x2, int *y2) {
     XvueApp::ensure();
     XVUE_QT_ASSERT_MAIN_THREAD();
+    if (!x1 || !y1 || !x2 || !y2) return;   // WR-03
     auto& win = XvueApp::window_slot();
     if (!win) return;
     auto* st = win->state();
     if (!st || !st->painter_ || !st->painter_->isActive()) return;
     st->painter_->drawLine(*x1, *y1, *x2, *y2);
     if (win->canvas()) win->canvas()->update();
-    QCoreApplication::processEvents(QEventLoop::ExcludeUserInputEvents);
+    // WR-02: deferred flush -- xvvoir_/xvpause_ pump the event loop.
 }
 
 // ---- 33. xvftrait_ (D-09 -- semantically identical to xvtrait_ under
@@ -536,7 +539,7 @@ void proc(xvtraits)(int *nbpoints, MefistoPoint *points) {
                                    static_cast<int>(qpts.size()));
     }
     if (win->canvas()) win->canvas()->update();
-    QCoreApplication::processEvents(QEventLoop::ExcludeUserInputEvents);
+    // WR-02: deferred flush -- xvvoir_/xvpause_ pump the event loop.
 }
 
 // ---- 36. xvfacetraits_ (D-12, DRAW-03) ----
@@ -662,6 +665,7 @@ void proc(xvbordarcellipse)(int *x, int *y, int *width, int *height,
                             float *angle1, float *angle2) {
     XvueApp::ensure();
     XVUE_QT_ASSERT_MAIN_THREAD();
+    if (!x || !y || !width || !height || !angle1 || !angle2) return;  // WR-03
     auto& win = XvueApp::window_slot();
     if (!win) return;
     auto* st = win->state();
@@ -675,7 +679,7 @@ void proc(xvbordarcellipse)(int *x, int *y, int *width, int *height,
     st->painter_->drawArc(bbox, start_16, span_16);  // outline -- matches XDrawArc
 
     if (win->canvas()) win->canvas()->update();
-    QCoreApplication::processEvents(QEventLoop::ExcludeUserInputEvents);
+    // WR-02: deferred flush -- xvvoir_/xvpause_ pump the event loop.
 }
 
 // ---- 47. xvarcellipse_ (D-14, RESEARCH Q1 CORRECTION: drawPie, DRAW-05) ----
@@ -686,6 +690,7 @@ void proc(xvarcellipse)(int *x, int *y, int *width, int *height,
                         float *angle1, float *angle2) {
     XvueApp::ensure();
     XVUE_QT_ASSERT_MAIN_THREAD();
+    if (!x || !y || !width || !height || !angle1 || !angle2) return;  // WR-03
     auto& win = XvueApp::window_slot();
     if (!win) return;
     auto* st = win->state();
@@ -699,7 +704,7 @@ void proc(xvarcellipse)(int *x, int *y, int *width, int *height,
     st->painter_->drawPie(bbox, start_16, span_16);  // filled wedge -- matches XFillArc
 
     if (win->canvas()) win->canvas()->update();
-    QCoreApplication::processEvents(QEventLoop::ExcludeUserInputEvents);
+    // WR-02: deferred flush -- xvvoir_/xvpause_ pump the event loop.
 }
 
 // ---- 48. tempscpu_ ----
