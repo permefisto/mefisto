@@ -9,6 +9,7 @@
 // Per D-17: warn-once diagnostic pattern is a per-function `static bool warned`.
 
 #include <cstdio>
+#include <cstring>
 #include "xvue_qt_api.h"
 #include "xvue_qt_app.h"
 #include "xvue_qt_window.h"
@@ -18,13 +19,17 @@
 #include <QCoreApplication>
 #include <QElapsedTimer>
 #include <QEventLoop>
+#include <QFont>
+#include <QFontMetrics>
 #include <QGuiApplication>
+#include <QLatin1Char>
 #include <QPainter>
 #include <QPixmap>
 #include <QPoint>
 #include <QPolygon>
 #include <QRect>
 #include <QScreen>
+#include <QString>
 #include <QWindow>
 #include <vector>
 
@@ -65,6 +70,30 @@ inline void xvue_qt_draw_rect_common(int x, int y, int w, int h, RectMode mode) 
         st->painter_->fillRect(r, st->painter_->brush());
     }
     if (win->canvas()) win->canvas()->update();
+}
+
+// Phase 3 D-06 + Pitfall 7: xvtexte_ and xvftexte_ share this body under
+// the Phase 2 single-backing model (02/D-05). In legacy xvuelc.c the two
+// drew to DIFFERENT targets (mempx at :1658 vs fenetre_mef at :1678); the
+// collapse here is legal ONLY because Phase 2 unified the draw target.
+// If a future phase reintroduces multiple draw targets, revisit.
+inline void xvue_qt_draw_text_common(const char* string, int length,
+                                     int x1, int y1) {
+    if (!string || length <= 0) return;              // WR-03 null-guard
+    auto& win = XvueApp::window_slot();
+    if (!win) return;
+    auto* st = win->state();
+    if (!st || !st->painter_ || !st->painter_->isActive() || !st->backing_) return;
+
+    // Pitfall 4: TWO-ARG fromLatin1 — the legacy Fortran strings are NOT
+    // NUL-terminated; explicit length is mandatory.
+    QString qstr = QString::fromLatin1(string, length);
+    st->painter_->setFont(st->current_font_);        // cheap no-op if unchanged
+    st->painter_->drawText(x1, y1, qstr);            // baseline form (D-06)
+
+    // Phase 2 D-01 epilogue: drawing primitives flush.
+    if (win->canvas()) win->canvas()->update();
+    QCoreApplication::processEvents(QEventLoop::ExcludeUserInputEvents);
 }
 
 } // anonymous namespace
@@ -377,22 +406,53 @@ void proc(xvfond)(int *icolor) {
     // WR-02: deferred flush -- xvvoir_/xvpause_ pump the event loop.
 }
 
-// ---- 24. xvchargefonte_ ----
+// ---- 24. xvchargefonte_ (Phase 3 D-04, TEXT-01) ----
+// Bundled DejaVu Sans Mono at XvueState::kFontSizes[*nofont]. QFont is RAII
+// (Pitfall 6) so *nofont0 (the legacy "previous font to free") is ignored.
 void proc(xvchargefonte)(int *nofont0, int *nofont, int *largpx, int *hautpx) {
     XvueApp::ensure();
     XVUE_QT_ASSERT_MAIN_THREAD();
-    static bool warned = false;
-    warn_once(warned, "xvchargefonte_");
-    (void)nofont0; (void)nofont; (void)largpx; (void)hautpx;
+    (void)nofont0;  // Pitfall 6: QFont is RAII, no explicit free needed
+
+    if (!nofont || !largpx || !hautpx) return;       // WR-03
+
+    int idx = *nofont;
+    if (idx < 0) idx = 0;
+    if (idx >= XvueState::kNbFonts) idx = XvueState::kNbFonts - 1;
+
+    auto& win = XvueApp::window_slot();
+    if (!win) { *largpx = 0; *hautpx = 0; return; }
+    auto* st = win->state();
+    if (!st) { *largpx = 0; *hautpx = 0; return; }
+
+    st->current_font_size_idx_ = idx;
+    st->current_font_ = QFont(QStringLiteral("DejaVu Sans Mono"),
+                              XvueState::kFontSizes[idx]);
+    st->current_metrics_ = QFontMetrics(st->current_font_);
+
+    if (st->painter_ && st->painter_->isActive()) {
+        st->painter_->setFont(st->current_font_);
+    }
+
+    *largpx = st->current_metrics_.horizontalAdvance(QLatin1Char('0'));
+    *hautpx = st->current_metrics_.height();
 }
 
-// ---- 25. xvnbpixeltexte_ ----
+// ---- 25. xvnbpixeltexte_ (Phase 3 D-05, TEXT-02) ----
 void proc(xvnbpixeltexte)(char *texte, int *length, int *nbpxla, int *nbpxha) {
     XvueApp::ensure();
     XVUE_QT_ASSERT_MAIN_THREAD();
-    static bool warned = false;
-    warn_once(warned, "xvnbpixeltexte_");
-    (void)texte; (void)length; (void)nbpxla; (void)nbpxha;
+    if (!texte || !length || !nbpxla || !nbpxha) return;   // WR-03
+
+    auto& win = XvueApp::window_slot();
+    if (!win) { *nbpxla = 0; *nbpxha = 0; return; }
+    auto* st = win->state();
+    if (!st) { *nbpxla = 0; *nbpxha = 0; return; }
+
+    // Pitfall 4: TWO-ARG fromLatin1 — explicit length from Fortran.
+    QString qstr = QString::fromLatin1(texte, *length);
+    *nbpxla = st->current_metrics_.horizontalAdvance(qstr);
+    *nbpxha = st->current_metrics_.height();
 }
 
 // ---- 26. xvfermer_ ----
@@ -421,22 +481,21 @@ void proc(xvpxfenetre)(int *x, int *y) {
     *y = win->canvas()->height();
 }
 
-// ---- 28. xvftexte_ ----
+// ---- 28. xvftexte_ (Phase 3 D-06, TEXT-03) ----
+// Shares body with xvtexte_ under Phase 2 single-backing (02/D-05, Pitfall 7).
 void proc(xvftexte)(char string[], int *length, int *x1, int *y1) {
     XvueApp::ensure();
     XVUE_QT_ASSERT_MAIN_THREAD();
-    static bool warned = false;
-    warn_once(warned, "xvftexte_");
-    (void)string; (void)length; (void)x1; (void)y1;
+    if (!string || !length || !x1 || !y1) return;      // WR-03
+    xvue_qt_draw_text_common(string, *length, *x1, *y1);
 }
 
-// ---- 29. xvtexte_ ----
+// ---- 29. xvtexte_ (Phase 3 D-06, TEXT-03) ----
 void proc(xvtexte)(char string[], int *length, int *x1, int *y1) {
     XvueApp::ensure();
     XVUE_QT_ASSERT_MAIN_THREAD();
-    static bool warned = false;
-    warn_once(warned, "xvtexte_");
-    (void)string; (void)length; (void)x1; (void)y1;
+    if (!string || !length || !x1 || !y1) return;      // WR-03
+    xvue_qt_draw_text_common(string, *length, *x1, *y1);
 }
 
 // ---- 30. xvface_ (D-11, DRAW-03) ----
