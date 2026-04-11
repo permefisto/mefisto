@@ -20,11 +20,18 @@ C
 C
       PRINT *,'[xvtest0] premier appel XVINITGRAPHIQUE'
       CALL XVINITGRAPHIQUE
+C     Hold the window on screen long enough to be visually verified
+C     (SHELL-01, SHELL-06). XVINITGRAPHIQUE has already pumped the
+C     event loop until the window is exposed, so the window is mapped
+C     and painted before SLEEP starts; the X server keeps the Expose
+C     content on screen while the Fortran main blocks in SLEEP.
+      CALL SLEEP(1)
       PRINT *,'[xvtest0] premier appel XVFERMER'
       CALL XVFERMER
 C
       PRINT *,'[xvtest0] second appel XVINITGRAPHIQUE (reopen)'
       CALL XVINITGRAPHIQUE
+      CALL SLEEP(1)
       PRINT *,'[xvtest0] second appel XVFERMER'
       CALL XVFERMER
 C
