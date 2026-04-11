@@ -3,15 +3,15 @@ gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
 status: executing
-stopped_at: Completed 01-01-PLAN.md (scaffolding)
-last_updated: "2026-04-11T09:25:40.002Z"
+stopped_at: Completed 01-02-PLAN.md
+last_updated: "2026-04-11T09:43:48.802Z"
 last_activity: 2026-04-11
 progress:
   total_phases: 10
   completed_phases: 1
   total_plans: 7
-  completed_plans: 5
-  percent: 71
+  completed_plans: 6
+  percent: 86
 ---
 
 # Project State
@@ -26,7 +26,7 @@ See: .planning/PROJECT.md (updated 2026-04-10)
 ## Current Position
 
 Phase: 01 (window-shell-xvueapp-xvuewindow-xvuecanvas) — EXECUTING
-Plan: 2 of 3
+Plan: 3 of 3
 Status: Ready to execute
 Last activity: 2026-04-11
 
@@ -53,6 +53,7 @@ Progress: [░░░░░░░░░░] 0%
 
 *Updated after each plan completion*
 | Phase 01-window-shell-xvueapp-xvuewindow-xvuecanvas P01 | 19min | 3 tasks | 10 files |
+| Phase 01 P02 | 15min | 2 tasks | 1 files |
 
 ## Accumulated Context
 
@@ -67,6 +68,8 @@ Recent decisions affecting current work:
 - Init: Parallel X11 build kept alive for one release cycle for A/B validation
 - Init: 9-phase roadmap adopted from research SUMMARY.md (dependency-forced)
 - [Phase 01-window-shell-xvueapp-xvuewindow-xvuecanvas]: Phase 1 scaffolding landed: XvueApp/Window/Canvas/State quartet + SHELL-03 verify_no_exec guard + SHELL-07 real macro body
+- [Phase 01]: xvfond_ with no open window is a documented no-op in Phase 1 (XvueState owned by XvueWindow)
+- [Phase 01]: Macro retrofit via single replace_all on 'static bool warned = false;' — 51 stubs updated in one shot preserving D-18 ordering
 
 ### Pending Todos
 
@@ -81,6 +84,6 @@ None yet.
 
 ## Session Continuity
 
-Last session: 2026-04-11T09:25:39.998Z
-Stopped at: Completed 01-01-PLAN.md (scaffolding)
+Last session: 2026-04-11T09:43:40.141Z
+Stopped at: Completed 01-02-PLAN.md
 Resume file: None
