@@ -16,9 +16,11 @@
 #include "xvue_qt_state.h"
 #include <QApplication>
 #include <QCoreApplication>
+#include <QElapsedTimer>
 #include <QEventLoop>
 #include <QGuiApplication>
 #include <QScreen>
+#include <QWindow>
 
 namespace {
 
@@ -82,9 +84,26 @@ void proc(xvinitgraphique)(void) {
         win = std::make_unique<XvueWindow>();
     }
     win->show();
+    win->raise();
+    win->activateWindow();
 
-    // D-01 / Pitfall 4: ExcludeUserInputEvents is mandatory.
-    QCoreApplication::processEvents(QEventLoop::ExcludeUserInputEvents);
+    // D-01 revised 2026-04-11 (debug phase-01-xvtest0-teardown-segfault):
+    // the original "exactly one processEvents" rule is insufficient on X11
+    // to actually realize a window (MapRequest, ConfigureNotify, Expose
+    // each need their own trip through the event loop). We pump in a
+    // bounded loop until QWindow::isExposed() is true or the 2 s timeout
+    // fires (so a broken display cannot hang the Fortran main). The
+    // ExcludeUserInputEvents flag remains mandatory (Pitfall 4).
+    QElapsedTimer t;
+    t.start();
+    const int timeout_ms = 2000;
+    QWindow* wh = win->windowHandle();
+    while (t.elapsed() < timeout_ms) {
+        QCoreApplication::processEvents(
+            QEventLoop::ExcludeUserInputEvents, 20);
+        wh = win->windowHandle();  // may become non-null after first pump
+        if (wh && wh->isExposed()) break;
+    }
 }
 
 // ---- 6. xtinit_ ----
@@ -331,6 +350,12 @@ void proc(xvfermer)(void) {
     // D-06: destroy the window only. Do NOT touch qApp, do NOT call
     // qApp->quit(). The QApplication lives until the atexit handler.
     XvueApp::window_slot().reset();
+    // D-06 addendum 2026-04-11 (debug phase-01-xvtest0-teardown-segfault):
+    // drain DeferredDelete events queued by the widget-hierarchy teardown
+    // immediately, while Qt is in a well-defined state. Otherwise these
+    // events survive until the atexit handler and risk running against a
+    // torn-down Qt. ExcludeUserInputEvents per Pitfall 4.
+    QCoreApplication::processEvents(QEventLoop::ExcludeUserInputEvents);
 }
 
 // ---- 27. xvpxfenetre_ ----
