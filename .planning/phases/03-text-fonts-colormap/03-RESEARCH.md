@@ -797,23 +797,20 @@ void proc(xvinfo)( int *ix, int *iy, int *maxfonts,
 
 ---
 
-## Open Questions
+## Open Questions (RESOLVED)
 
-1. **Does the user want `xvCouleursImposees` / `xvStockeRGBtoColormap` / `xvColormapToRGB` to stay as internal C++ helpers (Phase 0's decision) or to be promoted to ABI symbols as CONTEXT.md D-15/D-16 suggests?**
+**RESOLVED 2026-04-11:** All four questions were confirmed by the user during /gsd-plan-phase. CONTEXT.md D-13, D-15, D-16, D-17 amended in place to reflect the research recommendations. See CONTEXT.md `[AMENDED 2026-04-11 post-research]` markers.
+
+1. **Does the user want `xvCouleursImposees` / `xvStockeRGBtoColormap` / `xvColormapToRGB` to stay as internal C++ helpers (Phase 0's decision) or to be promoted to ABI symbols as CONTEXT.md D-15/D-16 suggests?** — **RESOLVED: file-static C++ helpers. See CONTEXT.md D-15/D-16 AMENDED.** Phase 3 adds ZERO new public ABI symbols; 57-symbol count preserved per 00/D-33.
    - What we know: Zero Fortran callers, Phase 0 deliberately excluded them from the public header, 00-02-SUMMARY.md:43 documents the decision.
    - What's unclear: CONTEXT.md was written later and appears to assume they are entry points.
    - Recommendation: Confirm Phase 0's decision still holds. Implement as file-static C++ helpers (no ABI impact). If user wants them promoted, that's a separate 3-symbol ABI expansion that needs `bin/verify_abi` count update (57 → 60) and `xvue/qt/include/xvue_qt_api.h` additions.
 
-2. **Should the `xvactivervb_` body bulk-write the palette (Example 5) or transient-color-only (D-17)?**
-   - What we know: Legacy body at xvuelc.c:1072-1116 bulk-writes and calls `xvStockeRGBtoColormap`. The single Fortran caller at `xvue/palcde.f:619` passes `NDCOUL+1` cells — clearly a bulk operation.
-   - What's unclear: D-17's "one-shot transient RGB" interpretation seems to confuse `xvactivervb_` with a hypothetical "draw with this raw RGB" primitive that does not exist in the legacy ABI.
-   - Recommendation: Override D-17. Implement per Example 5. Flag in plan for user confirmation.
+2. **Should the `xvactivervb_` body bulk-write the palette (Example 5) or transient-color-only (D-17)?** — **RESOLVED: bulk palette-load. See CONTEXT.md D-17 AMENDED.** Copy `r/g/b[0..nbcells-1]` into `red/green/blue[]`, mark dirty, no `foreground_` touch, no painter.
 
-3. **Does `norgb[]` get dropped entirely, or kept as identity-stub inside an internal helper?**
-   - What we know: Zero Fortran callers. Zero Qt ABI exposure. Only reference would be inside an internal `xvStockeRGBtoColormap` helper whose own purpose evaporates under Qt's `QColor::setPen` direct path.
-   - Recommendation: Drop entirely. Planner chooses.
+3. **Does `norgb[]` get dropped entirely, or kept as identity-stub inside an internal helper?** — **RESOLVED: dropped entirely. See CONTEXT.md D-13 AMENDED.** Zero callers, no field in XvueState.
 
-4. **Wave 0 ordering — does the palette `palette_init_once()` run before or after the first `xvrecuprgbdec_` call?**
+4. **Wave 0 ordering — does the palette `palette_init_once()` run before or after the first `xvrecuprgbdec_` call?** — **RESOLVED: palette_init_once() fires inside XvueState ctor (called from XvueWindow ctor inside xvinitgraphique_), strictly before xvinfo_ returns and therefore before xvue/xvinit.f:143's XVRECUPRGBDEC call. See Pitfall 2 architecture and 03-01-PLAN.md Task 2.**
    - What we know: `xvue/xvinit.f:143` calls `XVRECUPRGBDEC` immediately after `XVINFO`. Palette must be populated by then.
    - Recommendation: Invoke `palette_init_once()` in `XvueState` ctor which runs inside `XvueWindow` ctor which runs inside `xvinitgraphique_` — well before `xvinfo_` is called. Covered by D-11 and Pitfall 2. Document explicitly in the plan task.
 
