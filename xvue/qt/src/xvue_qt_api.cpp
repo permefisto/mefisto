@@ -21,8 +21,12 @@
 #include <QGuiApplication>
 #include <QPainter>
 #include <QPixmap>
+#include <QPoint>
+#include <QPolygon>
+#include <QRect>
 #include <QScreen>
 #include <QWindow>
+#include <vector>
 
 namespace {
 
@@ -405,13 +409,25 @@ void proc(xvtexte)(char string[], int *length, int *x1, int *y1) {
     (void)string; (void)length; (void)x1; (void)y1;
 }
 
-// ---- 30. xvface_ ----
+// ---- 30. xvface_ (D-11, DRAW-03) ----
 void proc(xvface)(int *n, MefistoPoint *pts) {
     XvueApp::ensure();
     XVUE_QT_ASSERT_MAIN_THREAD();
-    static bool warned = false;
-    warn_once(warned, "xvface_");
-    (void)n; (void)pts;
+    auto& win = XvueApp::window_slot();
+    if (!win) return;
+    auto* st = win->state();
+    if (!st || !st->painter_ || !st->painter_->isActive()) return;
+    if (!n || *n < 3 || !pts) return;
+
+    QPolygon poly;
+    poly.reserve(*n);
+    for (int i = 0; i < *n; ++i) {
+        poly << QPoint(pts[i].x, pts[i].y);
+    }
+    st->painter_->drawPolygon(poly, Qt::OddEvenFill);  // auto 1<->n close
+
+    if (win->canvas()) win->canvas()->update();
+    QCoreApplication::processEvents(QEventLoop::ExcludeUserInputEvents);
 }
 
 // ---- 31. xvtypetrait_ ----
@@ -432,40 +448,76 @@ void proc(xvepaisseur)(int *pepais) {
     (void)pepais;
 }
 
-// ---- 33. xvftrait_ ----
-void proc(xvftrait)(int *x1, int *y1, int *x2, int *y2) {
-    XvueApp::ensure();
-    XVUE_QT_ASSERT_MAIN_THREAD();
-    static bool warned = false;
-    warn_once(warned, "xvftrait_");
-    (void)x1; (void)y1; (void)x2; (void)y2;
-}
-
-// ---- 34. xvtrait_ ----
+// ---- 34. xvtrait_ (D-09, DRAW-02) ----
 void proc(xvtrait)(int *x1, int *y1, int *x2, int *y2) {
     XvueApp::ensure();
     XVUE_QT_ASSERT_MAIN_THREAD();
-    static bool warned = false;
-    warn_once(warned, "xvtrait_");
-    (void)x1; (void)y1; (void)x2; (void)y2;
+    auto& win = XvueApp::window_slot();
+    if (!win) return;
+    auto* st = win->state();
+    if (!st || !st->painter_ || !st->painter_->isActive()) return;
+    st->painter_->drawLine(*x1, *y1, *x2, *y2);
+    if (win->canvas()) win->canvas()->update();
+    QCoreApplication::processEvents(QEventLoop::ExcludeUserInputEvents);
 }
 
-// ---- 35. xvtraits_ ----
+// ---- 33. xvftrait_ (D-09 -- semantically identical to xvtrait_ under
+// the single-backing model; legacy window-vs-mempx split obsolete) ----
+void proc(xvftrait)(int *x1, int *y1, int *x2, int *y2) {
+    proc(xvtrait)(x1, y1, x2, y2);
+}
+
+// ---- 35. xvtraits_ (D-10, DRAW-02) ----
 void proc(xvtraits)(int *nbpoints, MefistoPoint *points) {
     XvueApp::ensure();
     XVUE_QT_ASSERT_MAIN_THREAD();
-    static bool warned = false;
-    warn_once(warned, "xvtraits_");
-    (void)nbpoints; (void)points;
+    auto& win = XvueApp::window_slot();
+    if (!win) return;
+    auto* st = win->state();
+    if (!st || !st->painter_ || !st->painter_->isActive()) return;
+    if (!nbpoints || *nbpoints < 2 || !points) return;
+
+    constexpr int STACK_LIMIT = 128;
+    if (*nbpoints <= STACK_LIMIT) {
+        QPoint qpts[STACK_LIMIT];
+        for (int i = 0; i < *nbpoints; ++i) {
+            qpts[i] = QPoint(points[i].x, points[i].y);
+        }
+        st->painter_->drawPolyline(qpts, *nbpoints);
+    } else {
+        std::vector<QPoint> qpts;
+        qpts.reserve(*nbpoints);
+        for (int i = 0; i < *nbpoints; ++i) {
+            qpts.emplace_back(points[i].x, points[i].y);
+        }
+        st->painter_->drawPolyline(qpts.data(),
+                                   static_cast<int>(qpts.size()));
+    }
+    if (win->canvas()) win->canvas()->update();
+    QCoreApplication::processEvents(QEventLoop::ExcludeUserInputEvents);
 }
 
-// ---- 36. xvfacetraits_ ----
+// ---- 36. xvfacetraits_ (D-12, DRAW-03) ----
 void proc(xvfacetraits)(int *ncf, int *nca, int *n, MefistoPoint *pts) {
     XvueApp::ensure();
     XVUE_QT_ASSERT_MAIN_THREAD();
-    static bool warned = false;
-    warn_once(warned, "xvfacetraits_");
-    (void)ncf; (void)nca; (void)n; (void)pts;
+    (void)ncf; (void)nca;  // TODO(phase 3): honor fill/edge color indices
+    auto& win = XvueApp::window_slot();
+    if (!win) return;
+    auto* st = win->state();
+    if (!st || !st->painter_ || !st->painter_->isActive()) return;
+    if (!n || *n < 3 || !pts) return;
+
+    QPolygon poly;
+    poly.reserve(*n);
+    for (int i = 0; i < *n; ++i) {
+        poly << QPoint(pts[i].x, pts[i].y);
+    }
+    st->painter_->drawPolygon(poly, Qt::OddEvenFill);  // fill (D-12 order)
+    st->painter_->drawPolygon(poly);                   // outline (D-12 order)
+
+    if (win->canvas()) win->canvas()->update();
+    QCoreApplication::processEvents(QEventLoop::ExcludeUserInputEvents);
 }
 
 // ---- 37. xvsouris_ ----
