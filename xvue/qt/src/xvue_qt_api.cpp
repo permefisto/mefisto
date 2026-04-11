@@ -10,6 +10,15 @@
 
 #include <cstdio>
 #include "xvue_qt_api.h"
+#include "xvue_qt_app.h"
+#include "xvue_qt_window.h"
+#include "xvue_qt_canvas.h"
+#include "xvue_qt_state.h"
+#include <QApplication>
+#include <QCoreApplication>
+#include <QEventLoop>
+#include <QGuiApplication>
+#include <QScreen>
 
 namespace {
 
@@ -55,8 +64,19 @@ void proc(nomrepmefisto)(char *chaine, int *size) {
 
 // ---- 5. xvinitgraphique_ ----
 void proc(xvinitgraphique)(void) {
-    static bool warned = false;
-    warn_once(warned, "xvinitgraphique_");
+    XvueApp::ensure();
+    XVUE_QT_ASSERT_MAIN_THREAD();
+
+    auto& win = XvueApp::window_slot();
+    if (!win) {
+        // D-07: lazy (re)allocation. QApplication is NOT recreated — call_once
+        // guarantees exactly-one. D-02: title "MEFISTO", 800x600 set in ctor.
+        win = std::make_unique<XvueWindow>();
+    }
+    win->show();
+
+    // D-01 / Pitfall 4: ExcludeUserInputEvents is mandatory.
+    QCoreApplication::processEvents(QEventLoop::ExcludeUserInputEvents);
 }
 
 // ---- 6. xtinit_ ----
@@ -67,16 +87,29 @@ void proc(xtinit)(void) {
 
 // ---- 7. xvpxecran_ ----
 void proc(xvpxecran)(int *xp, int *yp) {
-    static bool warned = false;
-    warn_once(warned, "xvpxecran_");
-    (void)xp; (void)yp;
+    XvueApp::ensure();
+    XVUE_QT_ASSERT_MAIN_THREAD();
+    // D-16: logical pixels from the primary screen, callable before
+    // xvinitgraphique_ (D-18). Multi-monitor awareness deferred.
+    QScreen* s = QGuiApplication::primaryScreen();
+    if (s && xp && yp) {
+        *xp = s->size().width();
+        *yp = s->size().height();
+    }
 }
 
 // ---- 8. xvmmecran_ ----
 void proc(xvmmecran)(int *xmm, int *ymm) {
-    static bool warned = false;
-    warn_once(warned, "xvmmecran_");
-    (void)xmm; (void)ymm;
+    XvueApp::ensure();
+    XVUE_QT_ASSERT_MAIN_THREAD();
+    // D-17: physical millimetres from QScreen::physicalSize(). Qt 6 guarantees
+    // mm regardless of DPR.
+    QScreen* s = QGuiApplication::primaryScreen();
+    if (s && xmm && ymm) {
+        QSizeF mm = s->physicalSize();
+        *xmm = static_cast<int>(mm.width()  + 0.5);
+        *ymm = static_cast<int>(mm.height() + 0.5);
+    }
 }
 
 // ---- 9. initaccrochage_ ----
@@ -90,12 +123,38 @@ void proc(xvinfo)( int *ix, int *iy, int *maxfonts,
                    int *n1coref, int *ndcoref, int *n1coelf,
                    int *ndcoelf, int *n1coulf, int *ndcoulf, int *nbcolo,
                    char namefonts[][256], int nbchar[], int *nbfonts, int *visuclass ) {
-    static bool warned = false;
-    warn_once(warned, "xvinfo_");
-    (void)ix; (void)iy; (void)maxfonts;
-    (void)n1coref; (void)ndcoref; (void)n1coelf;
-    (void)ndcoelf; (void)n1coulf; (void)ndcoulf; (void)nbcolo;
-    (void)namefonts; (void)nbchar; (void)nbfonts; (void)visuclass;
+    XvueApp::ensure();
+    XVUE_QT_ASSERT_MAIN_THREAD();
+
+    // D-03: Phase 1 partial. Resize the window if it exists; everything else
+    // (palette ranges, font tables, visual class) is zeroed out and the
+    // warn-once line is kept verbatim from the Phase 0 pattern. Phase 3 will
+    // replace the palette/font branch with real colormap plumbing.
+    auto& win = XvueApp::window_slot();
+    if (win && ix && iy) {
+        win->resize(*ix, *iy);
+    }
+
+    // Zero palette/font outputs so Fortran callers see deterministic values.
+    if (maxfonts)  *maxfonts  = 0;
+    if (n1coref)   *n1coref   = 0;
+    if (ndcoref)   *ndcoref   = 0;
+    if (n1coelf)   *n1coelf   = 0;
+    if (ndcoelf)   *ndcoelf   = 0;
+    if (n1coulf)   *n1coulf   = 0;
+    if (ndcoulf)   *ndcoulf   = 0;
+    if (nbcolo)    *nbcolo    = 0;
+    if (nbfonts)   *nbfonts   = 0;
+    if (visuclass) *visuclass = 0;
+    (void)namefonts;
+    (void)nbchar;
+
+    static bool warned_xvinfo_partial = false;
+    if (!warned_xvinfo_partial) {
+        std::fprintf(stderr,
+            "xvue-qt: stub xvinfo_ palette outputs not implemented yet\n");
+        warned_xvinfo_partial = true;
+    }
 }
 
 // ---- 11. xvrecuprgbdec_ ----
@@ -177,9 +236,38 @@ void proc(effacer)(void) {
 
 // ---- 23. xvfond_ ----
 void proc(xvfond)(int *icolor) {
-    static bool warned = false;
-    warn_once(warned, "xvfond_");
-    (void)icolor;
+    XvueApp::ensure();
+    XVUE_QT_ASSERT_MAIN_THREAD();
+    if (!icolor) return;
+
+    // D-14: Phase 1 has no palette yet. Minimal 2-entry mapping matches the
+    // legacy X11 BlackPixel/WhitePixel convention (xvuelc.c:935 et seq.).
+    QColor chosen = Qt::black;
+    if (*icolor == 0) {
+        chosen = Qt::black;
+    } else if (*icolor == 1) {
+        chosen = Qt::white;
+    } else {
+        static bool warned_xvfond_range = false;
+        if (!warned_xvfond_range) {
+            std::fprintf(stderr,
+                "xvue-qt: xvfond_ palette index %d out of Phase 1 range "
+                "(Phase 3 will add full colormap)\n", *icolor);
+            warned_xvfond_range = true;
+        }
+        chosen = Qt::black;
+    }
+
+    // D-15: update XvueState::background_ through the live window, schedule
+    // repaint. With no open window, xvfond_ is a no-op past the warn-once line
+    // (Phase 1 XvueState is owned by XvueWindow).
+    auto& win = XvueApp::window_slot();
+    if (win) {
+        win->state()->background_ = chosen;
+        if (win->canvas()) {
+            win->canvas()->update();
+        }
+    }
 }
 
 // ---- 24. xvchargefonte_ ----
@@ -198,8 +286,11 @@ void proc(xvnbpixeltexte)(char *texte, int *length, int *nbpxla, int *nbpxha) {
 
 // ---- 26. xvfermer_ ----
 void proc(xvfermer)(void) {
-    static bool warned = false;
-    warn_once(warned, "xvfermer_");
+    XvueApp::ensure();
+    XVUE_QT_ASSERT_MAIN_THREAD();
+    // D-06: destroy the window only. Do NOT touch qApp, do NOT call
+    // qApp->quit(). The QApplication lives until the atexit handler.
+    XvueApp::window_slot().reset();
 }
 
 // ---- 27. xvpxfenetre_ ----
