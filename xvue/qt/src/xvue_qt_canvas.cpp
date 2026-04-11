@@ -8,6 +8,7 @@
 #include <QPaintEvent>
 #include <QResizeEvent>
 #include <QPixmap>
+#include <cstdio>
 
 XvueCanvas::XvueCanvas(XvueState* state, QWidget* parent)
     : QWidget(parent), state_(state)
@@ -37,19 +38,26 @@ void XvueCanvas::resizeEvent(QResizeEvent* event) {
     const QSize logical = size();
     const QSize device  = logical * dpr;
 
-    // (a) end old painter BEFORE deleting its device (Pitfall 7)
-    if (state_->painter_ && state_->painter_->isActive()) {
-        state_->painter_->end();
-    }
-
-    // (b)(c) allocate new backing in device pixels, tag with DPR so QPainter
-    //       on it takes LOGICAL coordinates (Pitfall 8).
+    // WR-05: reorder so that every allocation that may throw happens BEFORE
+    // we tear down the old painter/backing. If allocation fails mid-resize,
+    // the old painter+backing stay intact and remain usable.
     QPixmap* old_backing = state_->backing_;
-    QPixmap* new_backing = new QPixmap(device);
+
+    QPixmap* new_backing = nullptr;
+    try {
+        new_backing = new QPixmap(device);
+    } catch (...) {
+        std::fprintf(stderr,
+            "xvue-qt: resizeEvent: new QPixmap(%dx%d) failed; "
+            "keeping previous backing\n",
+            device.width(), device.height());
+        return;  // old painter+backing untouched
+    }
     new_backing->setDevicePixelRatio(dpr);
 
     // (d)(e) fill background, then blit old content top-left (DRAW-09,
     //       README_RESIZE.md invariants 2 and 3). One scoped temp painter.
+    //       Do this BEFORE touching state_->painter_ so we can still bail.
     {
         QPainter tmp(new_backing);
         tmp.fillRect(new_backing->rect(), state_->background_);
@@ -59,15 +67,35 @@ void XvueCanvas::resizeEvent(QResizeEvent* event) {
         }
     }  // ~QPainter tmp — end() called
 
+    // Only now is it safe to tear down the old painter/backing:
+    // (a) end old painter BEFORE deleting its device (Pitfall 7)
+    if (state_->painter_ && state_->painter_->isActive()) {
+        state_->painter_->end();
+    }
+
     // (f) delete old, (g) swap
     delete old_backing;
     state_->backing_ = new_backing;
 
     // (h)(i) recreate/begin the long-lived painter on the new backing
     if (!state_->painter_) {
-        state_->painter_ = new QPainter();
+        try {
+            state_->painter_ = new QPainter();
+        } catch (...) {
+            std::fprintf(stderr,
+                "xvue-qt: resizeEvent: new QPainter() failed; "
+                "display will freeze until next successful resize\n");
+            return;
+        }
     }
-    state_->painter_->begin(new_backing);
+    if (!state_->painter_->begin(new_backing)) {
+        // WR-05: loud diagnostic so a frozen display is not silent.
+        std::fprintf(stderr,
+            "xvue-qt: resizeEvent: QPainter::begin failed on %dx%d backing; "
+            "display will freeze until next successful resize\n",
+            device.width(), device.height());
+        return;
+    }
 
     // (j) DRAW-08 + Pitfall 5: hints do not carry across begin()/end()
     state_->painter_->setRenderHint(QPainter::Antialiasing, true);
