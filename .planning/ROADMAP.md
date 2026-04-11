@@ -52,7 +52,7 @@ Decimal phases appear between their surrounding integers in numeric order.
   4. `xvpxecran_`/`xvmmecran_` return screen dimensions in logical pixels from `QScreen`, and the window renders identically-sized to the X11 backend on a `QT_SCALE_FACTOR=2` or 4K HiDPI display.
   5. Every `extern "C"` entry point contains a debug-build `Q_ASSERT(QThread::currentThread() == qApp->thread())` to catch off-main-thread graphics calls.
 **Plans**: 3 plans
-  - [ ] 01-01-PLAN.md — Scaffold XvueApp/Window/Canvas/State + CMake sources + verify_no_exec guard + SHELL-07 macro body
+  - [x] 01-01-PLAN.md — Scaffold XvueApp/Window/Canvas/State + CMake sources + verify_no_exec guard + SHELL-07 macro body
   - [ ] 01-02-PLAN.md — Rewrite 7 SHELL entry bodies in xvue_qt_api.cpp + bulk macro retrofit into all stubs
   - [ ] 01-03-PLAN.md — prpr/xvtest0.f + bin/cbxvtest0_qt + full-suite validation wave (visual gate)
 **UI hint**: yes

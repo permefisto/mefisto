@@ -24,11 +24,11 @@ Requirements for the initial Qt 6 backend release. Each maps to exactly one road
 
 - [ ] **SHELL-01**: `xvinitgraphique_` opens a `QMainWindow` whose central widget is an `XvueCanvas` `QWidget`, creating the `QApplication` on first call via `std::call_once` with static fabricated `argc`/`argv`.
 - [ ] **SHELL-02**: `xvfermer_` closes the window but does **not** destroy the `QApplication`; the `QApplication` is torn down only at process exit via an `atexit`-registered handler. Reopening the window (second call to `xvinitgraphique_`) must not crash or log a "QApplication: there can only be one" assertion.
-- [ ] **SHELL-03**: `QApplication::exec()` is never called anywhere in `xvue/`, enforced by a pre-commit `grep` rule or CMake target that fails if the string appears in `xvue/*.cpp`.
+- [x] **SHELL-03**: `QApplication::exec()` is never called anywhere in `xvue/`, enforced by a pre-commit `grep` rule or CMake target that fails if the string appears in `xvue/*.cpp`.
 - [ ] **SHELL-04**: `xvpxecran_` and `xvmmecran_` return screen dimensions from `QScreen` in **logical** pixels (device-independent); the convention is documented and Fortran callers rely on it unchanged.
 - [ ] **SHELL-05**: `xvfond_` sets the background color of the `XvueCanvas` without corrupting the backing pixmap.
 - [ ] **SHELL-06**: The window correctly renders at `devicePixelRatioF > 1.0` on a HiDPI display (4K monitor or `QT_SCALE_FACTOR=2`) without doubling or halving the mesh size relative to the X11 backend.
-- [ ] **SHELL-07**: Every `extern "C"` entry point contains a debug-build assertion `Q_ASSERT(QThread::currentThread() == qApp->thread())` to catch accidental graphics calls from OpenMP worker threads.
+- [x] **SHELL-07**: Every `extern "C"` entry point contains a debug-build assertion `Q_ASSERT(QThread::currentThread() == qApp->thread())` to catch accidental graphics calls from OpenMP worker threads.
 
 ### Draw — drawing primitives and backing pixmap
 
@@ -174,11 +174,11 @@ Populated during roadmap creation — all v1 requirements mapped to exactly one 
 | BUILD-10 | Phase 0 | Pending |
 | SHELL-01 | Phase 1 | Pending |
 | SHELL-02 | Phase 1 | Pending |
-| SHELL-03 | Phase 1 | Pending |
+| SHELL-03 | Phase 1 | Complete |
 | SHELL-04 | Phase 1 | Pending |
 | SHELL-05 | Phase 1 | Pending |
 | SHELL-06 | Phase 1 | Pending |
-| SHELL-07 | Phase 1 | Pending |
+| SHELL-07 | Phase 1 | Complete |
 | DRAW-01 | Phase 2 | Pending |
 | DRAW-02 | Phase 2 | Pending |
 | DRAW-03 | Phase 2 | Pending |
