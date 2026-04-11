@@ -35,14 +35,22 @@ static_assert(sizeof(MefistoPoint) == 4,
               "MefistoPoint must match Xlib XPoint layout (4 bytes)");
 
 // -------------------------------------------------------------------
-// Debug thread-affinity macro — Phase 0 no-op (no qApp yet).
-// Phase 1+ will drop it into every entry-point body.
+// Debug thread-affinity macro — Phase 1 body (SHELL-07, D-12/D-13).
+// Null-guarded: qApp may be null on the very first call before
+// XvueApp::ensure() has run (e.g. xvpxecran_ callable standalone).
+// Every real Phase 1 entry point therefore calls XvueApp::ensure()
+// as its first statement, then this macro; the null-guard keeps the
+// assertion safe for any caller that violates that order.
 // -------------------------------------------------------------------
 #ifdef QT_DEBUG
 #  include <QThread>
-#  include <QCoreApplication>
-#  define XVUE_QT_ASSERT_MAIN_THREAD() \
-      Q_ASSERT(QThread::currentThread() == QCoreApplication::instance()->thread())
+#  include <QApplication>
+#  define XVUE_QT_ASSERT_MAIN_THREAD()                                    \
+      do {                                                                \
+          if (qApp) {                                                     \
+              Q_ASSERT(QThread::currentThread() == qApp->thread());       \
+          }                                                               \
+      } while (0)
 #else
 #  define XVUE_QT_ASSERT_MAIN_THREAD() ((void)0)
 #endif
