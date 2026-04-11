@@ -39,14 +39,32 @@ inline void warn_once(bool &flag, const char *name) {
 
 // File-local helper (D-13). Not part of the Fortran ABI.
 // All four xv*rectangle_ entry points route through this one implementation.
-inline void xvue_qt_draw_rect_common(int x, int y, int w, int h) {
+//
+// CR-01 (2026-04-11): legacy X11 distinguishes outline-only
+// (XDrawRectangle: xvfbordrectangle_/xvbordrectangle_) from fill-only
+// (XFillRectangle: xvfrectangle_/xvrectangle_). QPainter::drawRect strokes
+// AND fills in one call, so the four symbols must dispatch on an explicit
+// mode and use Qt::NoBrush / fillRect to keep the legacy semantics when
+// pen and brush colors diverge (Phase 3).
+enum class RectMode { Outline, Fill };
+
+inline void xvue_qt_draw_rect_common(int x, int y, int w, int h, RectMode mode) {
     auto& win = XvueApp::window_slot();
     if (!win) return;
     auto* st = win->state();
     if (!st || !st->painter_ || !st->painter_->isActive()) return;
-    st->painter_->drawRect(QRect(x, y, w, h));
+    const QRect r(x, y, w, h);
+    if (mode == RectMode::Outline) {
+        // XDrawRectangle: stroke only, no fill.
+        QBrush saved = st->painter_->brush();
+        st->painter_->setBrush(Qt::NoBrush);
+        st->painter_->drawRect(r);
+        st->painter_->setBrush(saved);
+    } else {
+        // XFillRectangle: fill only, no outline.
+        st->painter_->fillRect(r, st->painter_->brush());
+    }
     if (win->canvas()) win->canvas()->update();
-    QCoreApplication::processEvents(QEventLoop::ExcludeUserInputEvents);
 }
 
 } // anonymous namespace
@@ -585,31 +603,39 @@ void proc(xvpause)(void) {
 }
 
 // ---- 42. xvfbordrectangle_ (D-13, DRAW-04) ----
+// Legacy: XDrawRectangle -- outline only.
 void proc(xvfbordrectangle)(int *x, int *y, int *width, int *height) {
     XvueApp::ensure();
     XVUE_QT_ASSERT_MAIN_THREAD();
-    xvue_qt_draw_rect_common(*x, *y, *width, *height);
+    if (!x || !y || !width || !height) return;   // WR-03
+    xvue_qt_draw_rect_common(*x, *y, *width, *height, RectMode::Outline);
 }
 
 // ---- 43. xvbordrectangle_ (D-13, DRAW-04) ----
+// Legacy: XDrawRectangle -- outline only.
 void proc(xvbordrectangle)(int *x, int *y, int *width, int *height) {
     XvueApp::ensure();
     XVUE_QT_ASSERT_MAIN_THREAD();
-    xvue_qt_draw_rect_common(*x, *y, *width, *height);
+    if (!x || !y || !width || !height) return;   // WR-03
+    xvue_qt_draw_rect_common(*x, *y, *width, *height, RectMode::Outline);
 }
 
 // ---- 44. xvfrectangle_ (D-13, DRAW-04) ----
+// Legacy: XFillRectangle -- fill only.
 void proc(xvfrectangle)(int *x, int *y, int *width, int *height) {
     XvueApp::ensure();
     XVUE_QT_ASSERT_MAIN_THREAD();
-    xvue_qt_draw_rect_common(*x, *y, *width, *height);
+    if (!x || !y || !width || !height) return;   // WR-03
+    xvue_qt_draw_rect_common(*x, *y, *width, *height, RectMode::Fill);
 }
 
 // ---- 45. xvrectangle_ (D-13, DRAW-04) ----
+// Legacy: XFillRectangle -- fill only.
 void proc(xvrectangle)(int *x, int *y, int *width, int *height) {
     XvueApp::ensure();
     XVUE_QT_ASSERT_MAIN_THREAD();
-    xvue_qt_draw_rect_common(*x, *y, *width, *height);
+    if (!x || !y || !width || !height) return;   // WR-03
+    xvue_qt_draw_rect_common(*x, *y, *width, *height, RectMode::Fill);
 }
 
 // ---- 46. xvbordarcellipse_ (D-14, RESEARCH Q1: drawArc, DRAW-05) ----
