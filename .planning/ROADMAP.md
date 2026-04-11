@@ -67,7 +67,11 @@ Decimal phases appear between their surrounding integers in numeric order.
   3. `xvface_` and `xvfacetraits_` work unchanged from their Fortran callers because the C bridge uses a `struct MefistoPoint { short x; short y; }` byte-identical to `XPoint`.
   4. Pen style (`xvtypetrait_`), pen width (`xvepaisseur_`), and `effacer_`/`xvvoir_`/`xvpxfenetre_` behave identically to X11; `QPainter::Antialiasing` is enabled by default.
   5. Resizing the canvas window reallocates the backing pixmap preserving prior content per a documented convention.
-**Plans**: TBD
+**Plans**: 4 plans
+  - [ ] 02-01-PLAN.md — Wave 0: MEFISTO_POINT_AUDIT + README_RESIZE + ABI ellipse signature fix (int*→float*) + extended xvtest0.f draw-coverage driver
+  - [ ] 02-02-PLAN.md — Wave 1: XvueState growth + XvueCanvas paintEvent/resizeEvent backing lifecycle + effacer_/xvvoir_/xvpxfenetre_/xvfond_ real bodies (DRAW-01, DRAW-07, DRAW-08, DRAW-09)
+  - [ ] 02-03-PLAN.md — Wave 2: line/polyline/polygon/rectangle/arc primitives with drawPie/drawArc x16 angle correction + pen state (DRAW-02..06)
+  - [ ] 02-04-PLAN.md — Wave 3: clean rebuild, human visual checkpoint, 02-VALIDATION.md closure
 **UI hint**: yes
 
 ### Phase 3: Text, fonts, colormap
