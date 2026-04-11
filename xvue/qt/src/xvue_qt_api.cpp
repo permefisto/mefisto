@@ -35,6 +35,8 @@ extern "C" {
 
 // ---- 1. languemefisto_ ----
 void proc(languemefisto)(int *langue) {
+    XvueApp::ensure();
+    XVUE_QT_ASSERT_MAIN_THREAD();
     static bool warned = false;
     warn_once(warned, "languemefisto_");
     (void)langue;
@@ -42,6 +44,8 @@ void proc(languemefisto)(int *langue) {
 
 // ---- 2. dctnmc_ (returns void*) ----
 void *proc(dctnmc)(int *nboctets) {
+    XvueApp::ensure();
+    XVUE_QT_ASSERT_MAIN_THREAD();
     static bool warned = false;
     warn_once(warned, "dctnmc_");
     (void)nboctets;
@@ -50,6 +54,8 @@ void *proc(dctnmc)(int *nboctets) {
 
 // ---- 3. dstnmc_ ----
 void proc(dstnmc)(void *mcoctets) {
+    XvueApp::ensure();
+    XVUE_QT_ASSERT_MAIN_THREAD();
     static bool warned = false;
     warn_once(warned, "dstnmc_");
     (void)mcoctets;
@@ -57,6 +63,8 @@ void proc(dstnmc)(void *mcoctets) {
 
 // ---- 4. nomrepmefisto_ ----
 void proc(nomrepmefisto)(char *chaine, int *size) {
+    XvueApp::ensure();
+    XVUE_QT_ASSERT_MAIN_THREAD();
     static bool warned = false;
     warn_once(warned, "nomrepmefisto_");
     (void)chaine; (void)size;
@@ -81,6 +89,8 @@ void proc(xvinitgraphique)(void) {
 
 // ---- 6. xtinit_ ----
 void proc(xtinit)(void) {
+    XvueApp::ensure();
+    XVUE_QT_ASSERT_MAIN_THREAD();
     static bool warned = false;
     warn_once(warned, "xtinit_");
 }
@@ -114,6 +124,8 @@ void proc(xvmmecran)(int *xmm, int *ymm) {
 
 // ---- 9. initaccrochage_ ----
 void proc(initaccrochage)(void) {
+    XvueApp::ensure();
+    XVUE_QT_ASSERT_MAIN_THREAD();
     static bool warned = false;
     warn_once(warned, "initaccrochage_");
 }
@@ -159,6 +171,8 @@ void proc(xvinfo)( int *ix, int *iy, int *maxfonts,
 
 // ---- 11. xvrecuprgbdec_ ----
 void proc(xvrecuprgbdec)(int *nbcolor, float *r, float *g, float *b) {
+    XvueApp::ensure();
+    XVUE_QT_ASSERT_MAIN_THREAD();
     static bool warned = false;
     warn_once(warned, "xvrecuprgbdec_");
     (void)nbcolor; (void)r; (void)g; (void)b;
@@ -167,6 +181,8 @@ void proc(xvrecuprgbdec)(int *nbcolor, float *r, float *g, float *b) {
 // ---- 12. xvactivervb_ ----
 void proc(xvactivervb)( int *palcour, int *nbcells,
                         float r[], float g[], float b[] ) {
+    XvueApp::ensure();
+    XVUE_QT_ASSERT_MAIN_THREAD();
     static bool warned = false;
     warn_once(warned, "xvactivervb_");
     (void)palcour; (void)nbcells; (void)r; (void)g; (void)b;
@@ -174,6 +190,8 @@ void proc(xvactivervb)( int *palcour, int *nbcells,
 
 // ---- 13. xvcouleur_ ----
 void proc(xvcouleur)(int *icolor) {
+    XvueApp::ensure();
+    XVUE_QT_ASSERT_MAIN_THREAD();
     static bool warned = false;
     warn_once(warned, "xvcouleur_");
     (void)icolor;
@@ -181,6 +199,8 @@ void proc(xvcouleur)(int *icolor) {
 
 // ---- 14. xvpostscript_ ----
 void proc(xvpostscript)(int *lasops) {
+    XvueApp::ensure();
+    XVUE_QT_ASSERT_MAIN_THREAD();
     static bool warned = false;
     warn_once(warned, "xvpostscript_");
     (void)lasops;
@@ -188,48 +208,64 @@ void proc(xvpostscript)(int *lasops) {
 
 // ---- 15. fenetremempx_ ----
 void proc(fenetremempx)(void) {
+    XvueApp::ensure();
+    XVUE_QT_ASSERT_MAIN_THREAD();
     static bool warned = false;
     warn_once(warned, "fenetremempx_");
 }
 
 // ---- 16. mempxfenetre_ ----
 void proc(mempxfenetre)(void) {
+    XvueApp::ensure();
+    XVUE_QT_ASSERT_MAIN_THREAD();
     static bool warned = false;
     warn_once(warned, "mempxfenetre_");
 }
 
 // ---- 17. sauvefenetre_ ----
 void proc(sauvefenetre)(void) {
+    XvueApp::ensure();
+    XVUE_QT_ASSERT_MAIN_THREAD();
     static bool warned = false;
     warn_once(warned, "sauvefenetre_");
 }
 
 // ---- 18. restaurefenetre_ ----
 void proc(restaurefenetre)(void) {
+    XvueApp::ensure();
+    XVUE_QT_ASSERT_MAIN_THREAD();
     static bool warned = false;
     warn_once(warned, "restaurefenetre_");
 }
 
 // ---- 19. sauvemempx_ ----
 void proc(sauvemempx)(void) {
+    XvueApp::ensure();
+    XVUE_QT_ASSERT_MAIN_THREAD();
     static bool warned = false;
     warn_once(warned, "sauvemempx_");
 }
 
 // ---- 20. restauremempx_ ----
 void proc(restauremempx)(void) {
+    XvueApp::ensure();
+    XVUE_QT_ASSERT_MAIN_THREAD();
     static bool warned = false;
     warn_once(warned, "restauremempx_");
 }
 
 // ---- 21. effacemempx_ ----
 void proc(effacemempx)(void) {
+    XvueApp::ensure();
+    XVUE_QT_ASSERT_MAIN_THREAD();
     static bool warned = false;
     warn_once(warned, "effacemempx_");
 }
 
 // ---- 22. effacer_ ----
 void proc(effacer)(void) {
+    XvueApp::ensure();
+    XVUE_QT_ASSERT_MAIN_THREAD();
     static bool warned = false;
     warn_once(warned, "effacer_");
 }
@@ -272,6 +308,8 @@ void proc(xvfond)(int *icolor) {
 
 // ---- 24. xvchargefonte_ ----
 void proc(xvchargefonte)(int *nofont0, int *nofont, int *largpx, int *hautpx) {
+    XvueApp::ensure();
+    XVUE_QT_ASSERT_MAIN_THREAD();
     static bool warned = false;
     warn_once(warned, "xvchargefonte_");
     (void)nofont0; (void)nofont; (void)largpx; (void)hautpx;
@@ -279,6 +317,8 @@ void proc(xvchargefonte)(int *nofont0, int *nofont, int *largpx, int *hautpx) {
 
 // ---- 25. xvnbpixeltexte_ ----
 void proc(xvnbpixeltexte)(char *texte, int *length, int *nbpxla, int *nbpxha) {
+    XvueApp::ensure();
+    XVUE_QT_ASSERT_MAIN_THREAD();
     static bool warned = false;
     warn_once(warned, "xvnbpixeltexte_");
     (void)texte; (void)length; (void)nbpxla; (void)nbpxha;
@@ -295,6 +335,8 @@ void proc(xvfermer)(void) {
 
 // ---- 27. xvpxfenetre_ ----
 void proc(xvpxfenetre)(int *x, int *y) {
+    XvueApp::ensure();
+    XVUE_QT_ASSERT_MAIN_THREAD();
     static bool warned = false;
     warn_once(warned, "xvpxfenetre_");
     (void)x; (void)y;
@@ -302,6 +344,8 @@ void proc(xvpxfenetre)(int *x, int *y) {
 
 // ---- 28. xvftexte_ ----
 void proc(xvftexte)(char string[], int *length, int *x1, int *y1) {
+    XvueApp::ensure();
+    XVUE_QT_ASSERT_MAIN_THREAD();
     static bool warned = false;
     warn_once(warned, "xvftexte_");
     (void)string; (void)length; (void)x1; (void)y1;
@@ -309,6 +353,8 @@ void proc(xvftexte)(char string[], int *length, int *x1, int *y1) {
 
 // ---- 29. xvtexte_ ----
 void proc(xvtexte)(char string[], int *length, int *x1, int *y1) {
+    XvueApp::ensure();
+    XVUE_QT_ASSERT_MAIN_THREAD();
     static bool warned = false;
     warn_once(warned, "xvtexte_");
     (void)string; (void)length; (void)x1; (void)y1;
@@ -316,6 +362,8 @@ void proc(xvtexte)(char string[], int *length, int *x1, int *y1) {
 
 // ---- 30. xvface_ ----
 void proc(xvface)(int *n, MefistoPoint *pts) {
+    XvueApp::ensure();
+    XVUE_QT_ASSERT_MAIN_THREAD();
     static bool warned = false;
     warn_once(warned, "xvface_");
     (void)n; (void)pts;
@@ -323,6 +371,8 @@ void proc(xvface)(int *n, MefistoPoint *pts) {
 
 // ---- 31. xvtypetrait_ ----
 void proc(xvtypetrait)(int *ptype) {
+    XvueApp::ensure();
+    XVUE_QT_ASSERT_MAIN_THREAD();
     static bool warned = false;
     warn_once(warned, "xvtypetrait_");
     (void)ptype;
@@ -330,6 +380,8 @@ void proc(xvtypetrait)(int *ptype) {
 
 // ---- 32. xvepaisseur_ ----
 void proc(xvepaisseur)(int *pepais) {
+    XvueApp::ensure();
+    XVUE_QT_ASSERT_MAIN_THREAD();
     static bool warned = false;
     warn_once(warned, "xvepaisseur_");
     (void)pepais;
@@ -337,6 +389,8 @@ void proc(xvepaisseur)(int *pepais) {
 
 // ---- 33. xvftrait_ ----
 void proc(xvftrait)(int *x1, int *y1, int *x2, int *y2) {
+    XvueApp::ensure();
+    XVUE_QT_ASSERT_MAIN_THREAD();
     static bool warned = false;
     warn_once(warned, "xvftrait_");
     (void)x1; (void)y1; (void)x2; (void)y2;
@@ -344,6 +398,8 @@ void proc(xvftrait)(int *x1, int *y1, int *x2, int *y2) {
 
 // ---- 34. xvtrait_ ----
 void proc(xvtrait)(int *x1, int *y1, int *x2, int *y2) {
+    XvueApp::ensure();
+    XVUE_QT_ASSERT_MAIN_THREAD();
     static bool warned = false;
     warn_once(warned, "xvtrait_");
     (void)x1; (void)y1; (void)x2; (void)y2;
@@ -351,6 +407,8 @@ void proc(xvtrait)(int *x1, int *y1, int *x2, int *y2) {
 
 // ---- 35. xvtraits_ ----
 void proc(xvtraits)(int *nbpoints, MefistoPoint *points) {
+    XvueApp::ensure();
+    XVUE_QT_ASSERT_MAIN_THREAD();
     static bool warned = false;
     warn_once(warned, "xvtraits_");
     (void)nbpoints; (void)points;
@@ -358,6 +416,8 @@ void proc(xvtraits)(int *nbpoints, MefistoPoint *points) {
 
 // ---- 36. xvfacetraits_ ----
 void proc(xvfacetraits)(int *ncf, int *nca, int *n, MefistoPoint *pts) {
+    XvueApp::ensure();
+    XVUE_QT_ASSERT_MAIN_THREAD();
     static bool warned = false;
     warn_once(warned, "xvfacetraits_");
     (void)ncf; (void)nca; (void)n; (void)pts;
@@ -365,6 +425,8 @@ void proc(xvfacetraits)(int *ncf, int *nca, int *n, MefistoPoint *pts) {
 
 // ---- 37. xvsouris_ ----
 void proc(xvsouris)(int *notypeevent, int *nbc, int *x1, int *y1) {
+    XvueApp::ensure();
+    XVUE_QT_ASSERT_MAIN_THREAD();
     static bool warned = false;
     warn_once(warned, "xvsouris_");
     (void)notypeevent; (void)nbc; (void)x1; (void)y1;
@@ -372,6 +434,8 @@ void proc(xvsouris)(int *notypeevent, int *nbc, int *x1, int *y1) {
 
 // ---- 38. xvsouris2_ ----
 void proc(xvsouris2)(int *items, int *pmin0, int *notypeevent, int *ibutton, int *x1, int *y1) {
+    XvueApp::ensure();
+    XVUE_QT_ASSERT_MAIN_THREAD();
     static bool warned = false;
     warn_once(warned, "xvsouris2_");
     (void)items; (void)pmin0; (void)notypeevent; (void)ibutton; (void)x1; (void)y1;
@@ -379,6 +443,8 @@ void proc(xvsouris2)(int *items, int *pmin0, int *notypeevent, int *ibutton, int
 
 // ---- 39. deplsouris_ ----
 void proc(deplsouris)(int *x, int *y) {
+    XvueApp::ensure();
+    XVUE_QT_ASSERT_MAIN_THREAD();
     static bool warned = false;
     warn_once(warned, "deplsouris_");
     (void)x; (void)y;
@@ -386,18 +452,24 @@ void proc(deplsouris)(int *x, int *y) {
 
 // ---- 40. xvvoir_ ----
 void proc(xvvoir)(void) {
+    XvueApp::ensure();
+    XVUE_QT_ASSERT_MAIN_THREAD();
     static bool warned = false;
     warn_once(warned, "xvvoir_");
 }
 
 // ---- 41. xvpause_ ----
 void proc(xvpause)(void) {
+    XvueApp::ensure();
+    XVUE_QT_ASSERT_MAIN_THREAD();
     static bool warned = false;
     warn_once(warned, "xvpause_");
 }
 
 // ---- 42. xvfbordrectangle_ ----
 void proc(xvfbordrectangle)(int *x, int *y, int *width, int *height) {
+    XvueApp::ensure();
+    XVUE_QT_ASSERT_MAIN_THREAD();
     static bool warned = false;
     warn_once(warned, "xvfbordrectangle_");
     (void)x; (void)y; (void)width; (void)height;
@@ -405,6 +477,8 @@ void proc(xvfbordrectangle)(int *x, int *y, int *width, int *height) {
 
 // ---- 43. xvbordrectangle_ ----
 void proc(xvbordrectangle)(int *x, int *y, int *width, int *height) {
+    XvueApp::ensure();
+    XVUE_QT_ASSERT_MAIN_THREAD();
     static bool warned = false;
     warn_once(warned, "xvbordrectangle_");
     (void)x; (void)y; (void)width; (void)height;
@@ -412,6 +486,8 @@ void proc(xvbordrectangle)(int *x, int *y, int *width, int *height) {
 
 // ---- 44. xvfrectangle_ ----
 void proc(xvfrectangle)(int *x, int *y, int *width, int *height) {
+    XvueApp::ensure();
+    XVUE_QT_ASSERT_MAIN_THREAD();
     static bool warned = false;
     warn_once(warned, "xvfrectangle_");
     (void)x; (void)y; (void)width; (void)height;
@@ -419,6 +495,8 @@ void proc(xvfrectangle)(int *x, int *y, int *width, int *height) {
 
 // ---- 45. xvrectangle_ ----
 void proc(xvrectangle)(int *x, int *y, int *width, int *height) {
+    XvueApp::ensure();
+    XVUE_QT_ASSERT_MAIN_THREAD();
     static bool warned = false;
     warn_once(warned, "xvrectangle_");
     (void)x; (void)y; (void)width; (void)height;
@@ -426,6 +504,8 @@ void proc(xvrectangle)(int *x, int *y, int *width, int *height) {
 
 // ---- 46. xvbordarcellipse_ ----
 void proc(xvbordarcellipse)(int *x, int *y, int *width, int *height, int *a1, int *a2) {
+    XvueApp::ensure();
+    XVUE_QT_ASSERT_MAIN_THREAD();
     static bool warned = false;
     warn_once(warned, "xvbordarcellipse_");
     (void)x; (void)y; (void)width; (void)height; (void)a1; (void)a2;
@@ -433,6 +513,8 @@ void proc(xvbordarcellipse)(int *x, int *y, int *width, int *height, int *a1, in
 
 // ---- 47. xvarcellipse_ ----
 void proc(xvarcellipse)(int *x, int *y, int *width, int *height, int *a1, int *a2) {
+    XvueApp::ensure();
+    XVUE_QT_ASSERT_MAIN_THREAD();
     static bool warned = false;
     warn_once(warned, "xvarcellipse_");
     (void)x; (void)y; (void)width; (void)height; (void)a1; (void)a2;
@@ -440,6 +522,8 @@ void proc(xvarcellipse)(int *x, int *y, int *width, int *height, int *a1, int *a
 
 // ---- 48. tempscpu_ ----
 void proc(tempscpu)(double *tclock) {
+    XvueApp::ensure();
+    XVUE_QT_ASSERT_MAIN_THREAD();
     static bool warned = false;
     warn_once(warned, "tempscpu_");
     (void)tclock;
@@ -447,6 +531,8 @@ void proc(tempscpu)(double *tclock) {
 
 // ---- 49. secondes1970_ ----
 void proc(secondes1970)(double *secondes) {
+    XvueApp::ensure();
+    XVUE_QT_ASSERT_MAIN_THREAD();
     static bool warned = false;
     warn_once(warned, "secondes1970_");
     (void)secondes;
@@ -454,6 +540,8 @@ void proc(secondes1970)(double *secondes) {
 
 // ---- 50. secondes1969_ ----
 void proc(secondes1969)(double *secondes) {
+    XvueApp::ensure();
+    XVUE_QT_ASSERT_MAIN_THREAD();
     static bool warned = false;
     warn_once(warned, "secondes1969_");
     (void)secondes;
@@ -461,6 +549,8 @@ void proc(secondes1969)(double *secondes) {
 
 // ---- 51. nomordinateurhote_ ----
 void proc(nomordinateurhote)(char *host, int *nbcar) {
+    XvueApp::ensure();
+    XVUE_QT_ASSERT_MAIN_THREAD();
     static bool warned = false;
     warn_once(warned, "nomordinateurhote_");
     (void)host; (void)nbcar;
@@ -468,6 +558,8 @@ void proc(nomordinateurhote)(char *host, int *nbcar) {
 
 // ---- 52. ladate_ ----
 void proc(ladate)(int *a, int *m, int *j) {
+    XvueApp::ensure();
+    XVUE_QT_ASSERT_MAIN_THREAD();
     static bool warned = false;
     warn_once(warned, "ladate_");
     (void)a; (void)m; (void)j;
@@ -475,6 +567,8 @@ void proc(ladate)(int *a, int *m, int *j) {
 
 // ---- 53. heureminuteseconde_ ----
 void proc(heureminuteseconde)(int *h, int *m, int *s, int *millis) {
+    XvueApp::ensure();
+    XVUE_QT_ASSERT_MAIN_THREAD();
     static bool warned = false;
     warn_once(warned, "heureminuteseconde_");
     (void)h; (void)m; (void)s; (void)millis;
@@ -483,6 +577,8 @@ void proc(heureminuteseconde)(int *h, int *m, int *s, int *millis) {
 // ---- 54. valvarenv_ ----
 void proc(valvarenv)( char *nom, int *lval_admis,
                       char *val, int *lval_trouve ) {
+    XvueApp::ensure();
+    XVUE_QT_ASSERT_MAIN_THREAD();
     static bool warned = false;
     warn_once(warned, "valvarenv_");
     (void)nom; (void)lval_admis; (void)val; (void)lval_trouve;
@@ -490,6 +586,8 @@ void proc(valvarenv)( char *nom, int *lval_admis,
 
 // ---- 55. xvinitierps_ ----
 void proc(xvinitierps)(int *modeps) {
+    XvueApp::ensure();
+    XVUE_QT_ASSERT_MAIN_THREAD();
     static bool warned = false;
     warn_once(warned, "xvinitierps_");
     (void)modeps;
@@ -497,6 +595,8 @@ void proc(xvinitierps)(int *modeps) {
 
 // ---- 56. xvimprimerps_ ----
 void proc(xvimprimerps)(char nomfichier[], int *length) {
+    XvueApp::ensure();
+    XVUE_QT_ASSERT_MAIN_THREAD();
     static bool warned = false;
     warn_once(warned, "xvimprimerps_");
     (void)nomfichier; (void)length;
@@ -504,6 +604,8 @@ void proc(xvimprimerps)(char nomfichier[], int *length) {
 
 // ---- 57. xvsauverps_ ----
 void proc(xvsauverps)(char nomfichier[], int *length) {
+    XvueApp::ensure();
+    XVUE_QT_ASSERT_MAIN_THREAD();
     static bool warned = false;
     warn_once(warned, "xvsauverps_");
     (void)nomfichier; (void)length;
