@@ -68,10 +68,10 @@ Decimal phases appear between their surrounding integers in numeric order.
   4. Pen style (`xvtypetrait_`), pen width (`xvepaisseur_`), and `effacer_`/`xvvoir_`/`xvpxfenetre_` behave identically to X11; `QPainter::Antialiasing` is enabled by default.
   5. Resizing the canvas window reallocates the backing pixmap preserving prior content per a documented convention.
 **Plans**: 4 plans
-  - [ ] 02-01-PLAN.md — Wave 0: MEFISTO_POINT_AUDIT + README_RESIZE + ABI ellipse signature fix (int*→float*) + extended xvtest0.f draw-coverage driver
-  - [ ] 02-02-PLAN.md — Wave 1: XvueState growth + XvueCanvas paintEvent/resizeEvent backing lifecycle + effacer_/xvvoir_/xvpxfenetre_/xvfond_ real bodies (DRAW-01, DRAW-07, DRAW-08, DRAW-09)
-  - [ ] 02-03-PLAN.md — Wave 2: line/polyline/polygon/rectangle/arc primitives with drawPie/drawArc x16 angle correction + pen state (DRAW-02..06)
-  - [ ] 02-04-PLAN.md — Wave 3: clean rebuild, human visual checkpoint, 02-VALIDATION.md closure
+  - [x] 02-01-PLAN.md — Wave 0: MEFISTO_POINT_AUDIT + README_RESIZE + ABI ellipse signature fix (int*→float*) + extended xvtest0.f draw-coverage driver
+  - [x] 02-02-PLAN.md — Wave 1: XvueState growth + XvueCanvas paintEvent/resizeEvent backing lifecycle + effacer_/xvvoir_/xvpxfenetre_/xvfond_ real bodies (DRAW-01, DRAW-07, DRAW-08, DRAW-09)
+  - [x] 02-03-PLAN.md — Wave 2: line/polyline/polygon/rectangle/arc primitives with drawPie/drawArc x16 angle correction + pen state (DRAW-02..06)
+  - [x] 02-04-PLAN.md — Wave 3: clean rebuild, human visual checkpoint, 02-VALIDATION.md closure
 **UI hint**: yes
 
 ### Phase 3: Text, fonts, colormap
@@ -168,7 +168,7 @@ Phases execute in numeric order: 0 → 1 → 2 → 3 → 4 → 5 → 6 → 7 →
 |-------|----------------|--------|-----------|
 | 0. Build skeleton & ABI stubs | 0/TBD | Not started | - |
 | 1. Window shell | 3/3 | Complete | 2026-04-11 |
-| 2. Drawing primitives & backing pixmap | 0/TBD | Not started | - |
+| 2. Drawing primitives & backing pixmap | 4/4 | Complete | 2026-04-11 |
 | 3. Text, fonts, colormap | 0/TBD | Not started | - |
 | 4. Pixmap save/restore | 0/TBD | Not started | - |
 | 5. Event bridge & blocking reads | 0/TBD | Not started | - |
