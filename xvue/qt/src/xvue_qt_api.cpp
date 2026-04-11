@@ -37,6 +37,18 @@ inline void warn_once(bool &flag, const char *name) {
     }
 }
 
+// File-local helper (D-13). Not part of the Fortran ABI.
+// All four xv*rectangle_ entry points route through this one implementation.
+inline void xvue_qt_draw_rect_common(int x, int y, int w, int h) {
+    auto& win = XvueApp::window_slot();
+    if (!win) return;
+    auto* st = win->state();
+    if (!st || !st->painter_ || !st->painter_->isActive()) return;
+    st->painter_->drawRect(QRect(x, y, w, h));
+    if (win->canvas()) win->canvas()->update();
+    QCoreApplication::processEvents(QEventLoop::ExcludeUserInputEvents);
+}
+
 } // anonymous namespace
 
 extern "C" {
@@ -430,22 +442,28 @@ void proc(xvface)(int *n, MefistoPoint *pts) {
     QCoreApplication::processEvents(QEventLoop::ExcludeUserInputEvents);
 }
 
-// ---- 31. xvtypetrait_ ----
+// ---- 31. xvtypetrait_ (D-17, D-19, DRAW-06) ----
 void proc(xvtypetrait)(int *ptype) {
     XvueApp::ensure();
     XVUE_QT_ASSERT_MAIN_THREAD();
-    static bool warned = false;
-    warn_once(warned, "xvtypetrait_");
-    (void)ptype;
+    auto& win = XvueApp::window_slot();
+    if (!win) return;
+    auto* st = win->state();
+    if (!st) return;
+    st->pen_style_ = *ptype;
+    st->applyPen();   // applyPen() self-gates on painter_->isActive()
 }
 
-// ---- 32. xvepaisseur_ ----
+// ---- 32. xvepaisseur_ (D-18, DRAW-06) ----
 void proc(xvepaisseur)(int *pepais) {
     XvueApp::ensure();
     XVUE_QT_ASSERT_MAIN_THREAD();
-    static bool warned = false;
-    warn_once(warned, "xvepaisseur_");
-    (void)pepais;
+    auto& win = XvueApp::window_slot();
+    if (!win) return;
+    auto* st = win->state();
+    if (!st) return;
+    st->pen_width_base_ = *pepais;
+    st->applyPen();
 }
 
 // ---- 34. xvtrait_ (D-09, DRAW-02) ----
@@ -566,40 +584,32 @@ void proc(xvpause)(void) {
     warn_once(warned, "xvpause_");
 }
 
-// ---- 42. xvfbordrectangle_ ----
+// ---- 42. xvfbordrectangle_ (D-13, DRAW-04) ----
 void proc(xvfbordrectangle)(int *x, int *y, int *width, int *height) {
     XvueApp::ensure();
     XVUE_QT_ASSERT_MAIN_THREAD();
-    static bool warned = false;
-    warn_once(warned, "xvfbordrectangle_");
-    (void)x; (void)y; (void)width; (void)height;
+    xvue_qt_draw_rect_common(*x, *y, *width, *height);
 }
 
-// ---- 43. xvbordrectangle_ ----
+// ---- 43. xvbordrectangle_ (D-13, DRAW-04) ----
 void proc(xvbordrectangle)(int *x, int *y, int *width, int *height) {
     XvueApp::ensure();
     XVUE_QT_ASSERT_MAIN_THREAD();
-    static bool warned = false;
-    warn_once(warned, "xvbordrectangle_");
-    (void)x; (void)y; (void)width; (void)height;
+    xvue_qt_draw_rect_common(*x, *y, *width, *height);
 }
 
-// ---- 44. xvfrectangle_ ----
+// ---- 44. xvfrectangle_ (D-13, DRAW-04) ----
 void proc(xvfrectangle)(int *x, int *y, int *width, int *height) {
     XvueApp::ensure();
     XVUE_QT_ASSERT_MAIN_THREAD();
-    static bool warned = false;
-    warn_once(warned, "xvfrectangle_");
-    (void)x; (void)y; (void)width; (void)height;
+    xvue_qt_draw_rect_common(*x, *y, *width, *height);
 }
 
-// ---- 45. xvrectangle_ ----
+// ---- 45. xvrectangle_ (D-13, DRAW-04) ----
 void proc(xvrectangle)(int *x, int *y, int *width, int *height) {
     XvueApp::ensure();
     XVUE_QT_ASSERT_MAIN_THREAD();
-    static bool warned = false;
-    warn_once(warned, "xvrectangle_");
-    (void)x; (void)y; (void)width; (void)height;
+    xvue_qt_draw_rect_common(*x, *y, *width, *height);
 }
 
 // ---- 46. xvbordarcellipse_ ----
