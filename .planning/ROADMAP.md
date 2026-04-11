@@ -13,7 +13,7 @@ xvue-qt replaces MEFISTO's ~3619-line `xvue/xvuelc.c` Xlib backend with a Qt 6 C
 Decimal phases appear between their surrounding integers in numeric order.
 
 - [ ] **Phase 0: Build skeleton & ABI stubs** - CMake + `libxvueqt.a` + no-op `extern "C"` stubs + `bin/cbl_tout_qt` link-through
-- [ ] **Phase 1: Window shell** - `XvueApp`/`XvueWindow`/`XvueCanvas` — an empty Qt window opens via `xvinitgraphique_`
+- [x] **Phase 1: Window shell** - `XvueApp`/`XvueWindow`/`XvueCanvas` — an empty Qt window opens via `xvinitgraphique_`
 - [ ] **Phase 2: Drawing primitives & backing pixmap** - `XvueState` + persistent `QPainter` on off-screen `QPixmap`; lines, polygons, rectangles, ellipses
 - [ ] **Phase 3: Text, fonts, colormap** - Font loading, text metrics, indexed palette mirroring X11 colormap semantics
 - [ ] **Phase 4: Pixmap save/restore** - Double-buffering slots for `fenetremempx`/`sauvefenetre` rubber-band workflow
@@ -54,7 +54,7 @@ Decimal phases appear between their surrounding integers in numeric order.
 **Plans**: 3 plans
   - [x] 01-01-PLAN.md — Scaffold XvueApp/Window/Canvas/State + CMake sources + verify_no_exec guard + SHELL-07 macro body
   - [x] 01-02-PLAN.md — Rewrite 7 SHELL entry bodies in xvue_qt_api.cpp + bulk macro retrofit into all stubs
-  - [ ] 01-03-PLAN.md — prpr/xvtest0.f + bin/cbxvtest0_qt + full-suite validation wave (visual gate)
+  - [x] 01-03-PLAN.md — prpr/xvtest0.f + bin/cbxvtest0_qt + full-suite validation wave (visual gate)
 **UI hint**: yes
 
 ### Phase 2: Drawing primitives & backing pixmap
@@ -163,7 +163,7 @@ Phases execute in numeric order: 0 → 1 → 2 → 3 → 4 → 5 → 6 → 7 →
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
 | 0. Build skeleton & ABI stubs | 0/TBD | Not started | - |
-| 1. Window shell | 0/TBD | Not started | - |
+| 1. Window shell | 3/3 | Complete | 2026-04-11 |
 | 2. Drawing primitives & backing pixmap | 0/TBD | Not started | - |
 | 3. Text, fonts, colormap | 0/TBD | Not started | - |
 | 4. Pixmap save/restore | 0/TBD | Not started | - |

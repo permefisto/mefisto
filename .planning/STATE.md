@@ -3,8 +3,8 @@ gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
 status: executing
-stopped_at: Completed 01-02-PLAN.md
-last_updated: "2026-04-11T09:43:48.802Z"
+stopped_at: Completed 01-03-PLAN.md (Phase 1 complete)
+last_updated: "2026-04-11T10:30:00.000Z"
 last_activity: 2026-04-11
 progress:
   total_phases: 10
@@ -25,9 +25,9 @@ See: .planning/PROJECT.md (updated 2026-04-10)
 
 ## Current Position
 
-Phase: 01 (window-shell-xvueapp-xvuewindow-xvuecanvas) — EXECUTING
-Plan: 3 of 3
-Status: Ready to execute
+Phase: 01 (window-shell-xvueapp-xvuewindow-xvuecanvas) — COMPLETE
+Plan: 3 of 3 (all plans complete)
+Status: Phase complete — ready to begin Phase 2
 Last activity: 2026-04-11
 
 Progress: [░░░░░░░░░░] 0%
@@ -54,6 +54,7 @@ Progress: [░░░░░░░░░░] 0%
 *Updated after each plan completion*
 | Phase 01-window-shell-xvueapp-xvuewindow-xvuecanvas P01 | 19min | 3 tasks | 10 files |
 | Phase 01 P02 | 15min | 2 tasks | 1 files |
+| Phase 01 P03 | ~60min | 3 tasks | 5 files |
 
 ## Accumulated Context
 
@@ -70,6 +71,10 @@ Recent decisions affecting current work:
 - [Phase 01-window-shell-xvueapp-xvuewindow-xvuecanvas]: Phase 1 scaffolding landed: XvueApp/Window/Canvas/State quartet + SHELL-03 verify_no_exec guard + SHELL-07 real macro body
 - [Phase 01]: xvfond_ with no open window is a documented no-op in Phase 1 (XvueState owned by XvueWindow)
 - [Phase 01]: Macro retrofit via single replace_all on 'static bool warned = false;' — 51 stubs updated in one shot preserving D-18 ordering
+- [Phase 01-03]: D-08 revised — QApplication deliberately leaked at atexit (qapp_.release() not reset()). Destroying QApplication in atexit alongside libgfortran races and crashes on Linux/Qt 6.
+- [Phase 01-03]: D-01 revised — xvinitgraphique_ uses bounded-loop exposure pump (QElapsedTimer + isExposed()) not a single processEvents. X11 needs MapRequest/ConfigureNotify/Expose sequence.
+- [Phase 01-03]: D-06 addendum — xvfermer_ drains deleteLater queue with processEvents after window_.reset(). Prevents stale DeferredDelete events at atexit.
+- [Phase 01-03]: SHELL-01/02/06 empirically validated by human visual check — two 800x600 "MEFISTO" windows, exit 0, HiDPI ~2x scaling confirmed.
 
 ### Pending Todos
 
@@ -84,6 +89,6 @@ None yet.
 
 ## Session Continuity
 
-Last session: 2026-04-11T09:43:40.141Z
-Stopped at: Completed 01-02-PLAN.md
+Last session: 2026-04-11T10:30:00.000Z
+Stopped at: Completed 01-03-PLAN.md (Phase 1 complete)
 Resume file: None

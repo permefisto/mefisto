@@ -172,13 +172,13 @@ Populated during roadmap creation — all v1 requirements mapped to exactly one 
 | BUILD-08 | Phase 0 | Pending |
 | BUILD-09 | Phase 0 | Pending |
 | BUILD-10 | Phase 0 | Pending |
-| SHELL-01 | Phase 1 | Complete |
-| SHELL-02 | Phase 1 | Complete |
-| SHELL-03 | Phase 1 | Complete |
-| SHELL-04 | Phase 1 | Complete |
-| SHELL-05 | Phase 1 | Complete |
-| SHELL-06 | Phase 1 | Complete |
-| SHELL-07 | Phase 1 | Complete |
+| SHELL-01 | Phase 1 | Complete — Validated in Phase 01-03 (human visual: two 800x600 MEFISTO windows, exit 0) |
+| SHELL-02 | Phase 1 | Complete — Validated in Phase 01-03 (human visual: second window, no singleton assertion) |
+| SHELL-03 | Phase 1 | Complete — Validated in Phase 01-01 (verify_no_exec injection test) |
+| SHELL-04 | Phase 1 | Complete — Validated in Phase 01-02 (xvpxecran_/xvmmecran_ compiled and linked) |
+| SHELL-05 | Phase 1 | Complete — Validated in Phase 01-02 (xvfond_ compiled and linked) |
+| SHELL-06 | Phase 1 | Complete — Validated in Phase 01-03 (human visual: QT_SCALE_FACTOR=2 visibly larger windows, exit 0) |
+| SHELL-07 | Phase 1 | Complete — Validated in Phase 01-02 (57/57 stubs carry XVUE_QT_ASSERT_MAIN_THREAD) |
 | DRAW-01 | Phase 2 | Pending |
 | DRAW-02 | Phase 2 | Pending |
 | DRAW-03 | Phase 2 | Pending |
@@ -244,4 +244,4 @@ Populated during roadmap creation — all v1 requirements mapped to exactly one 
 
 ---
 *Requirements defined: 2026-04-10*
-*Last updated: 2026-04-10 after initial definition*
+*Last updated: 2026-04-11 — SHELL-01/02/06 validated in Phase 01-03; SHELL-03/04/05/07 validated in Phase 01-01/01-02*
