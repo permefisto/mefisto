@@ -19,6 +19,8 @@
 #include <QElapsedTimer>
 #include <QEventLoop>
 #include <QGuiApplication>
+#include <QPainter>
+#include <QPixmap>
 #include <QScreen>
 #include <QWindow>
 
@@ -281,12 +283,20 @@ void proc(effacemempx)(void) {
     warn_once(warned, "effacemempx_");
 }
 
-// ---- 22. effacer_ ----
+// ---- 22. effacer_ (D-15) ----
 void proc(effacer)(void) {
     XvueApp::ensure();
     XVUE_QT_ASSERT_MAIN_THREAD();
-    static bool warned = false;
-    warn_once(warned, "effacer_");
+    auto& win = XvueApp::window_slot();
+    if (!win) return;
+    auto* st = win->state();
+    if (st && st->painter_ && st->painter_->isActive() && st->backing_) {
+        st->painter_->fillRect(st->backing_->rect(), st->background_);
+    }
+    if (win->canvas()) {
+        win->canvas()->update();
+    }
+    QCoreApplication::processEvents(QEventLoop::ExcludeUserInputEvents);
 }
 
 // ---- 23. xvfond_ ----
@@ -316,13 +326,21 @@ void proc(xvfond)(int *icolor) {
     // D-15: update XvueState::background_ through the live window, schedule
     // repaint. With no open window, xvfond_ is a no-op past the warn-once line
     // (Phase 1 XvueState is owned by XvueWindow).
+    // Phase 2 (D-24): re-fill the backing with the new background and flush.
     auto& win = XvueApp::window_slot();
     if (win) {
-        win->state()->background_ = chosen;
+        auto* st = win->state();
+        if (st) {
+            st->background_ = chosen;
+            if (st->painter_ && st->painter_->isActive() && st->backing_) {
+                st->painter_->fillRect(st->backing_->rect(), st->background_);
+            }
+        }
         if (win->canvas()) {
             win->canvas()->update();
         }
     }
+    QCoreApplication::processEvents(QEventLoop::ExcludeUserInputEvents);
 }
 
 // ---- 24. xvchargefonte_ ----
@@ -358,13 +376,15 @@ void proc(xvfermer)(void) {
     QCoreApplication::processEvents(QEventLoop::ExcludeUserInputEvents);
 }
 
-// ---- 27. xvpxfenetre_ ----
+// ---- 27. xvpxfenetre_ (D-23) ----
 void proc(xvpxfenetre)(int *x, int *y) {
     XvueApp::ensure();
     XVUE_QT_ASSERT_MAIN_THREAD();
-    static bool warned = false;
-    warn_once(warned, "xvpxfenetre_");
-    (void)x; (void)y;
+    if (!x || !y) return;
+    auto& win = XvueApp::window_slot();
+    if (!win || !win->canvas()) { *x = 0; *y = 0; return; }
+    *x = win->canvas()->width();   // logical pixels (SHELL-06)
+    *y = win->canvas()->height();
 }
 
 // ---- 28. xvftexte_ ----
@@ -475,12 +495,15 @@ void proc(deplsouris)(int *x, int *y) {
     (void)x; (void)y;
 }
 
-// ---- 40. xvvoir_ ----
+// ---- 40. xvvoir_ (D-02) ----
 void proc(xvvoir)(void) {
     XvueApp::ensure();
     XVUE_QT_ASSERT_MAIN_THREAD();
-    static bool warned = false;
-    warn_once(warned, "xvvoir_");
+    auto& win = XvueApp::window_slot();
+    if (win && win->canvas()) {
+        win->canvas()->update();
+    }
+    QCoreApplication::processEvents(QEventLoop::ExcludeUserInputEvents);
 }
 
 // ---- 41. xvpause_ ----
