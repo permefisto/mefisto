@@ -19,8 +19,9 @@ find_package(Qt6 REQUIRED COMPONENTS Core Gui Widgets PrintSupport)
 add_library(xvueqt STATIC
     src/xvue_qt_api.cpp
     src/xvue_qt_app.cpp
-    src/xvue_qt_window.cpp
     src/xvue_qt_canvas.cpp
+    src/xvue_qt_state.cpp
+    src/xvue_qt_window.cpp
 )
 
 target_include_directories(xvueqt PUBLIC
