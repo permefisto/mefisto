@@ -3,15 +3,15 @@ gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
 status: executing
-stopped_at: Phase 2 context gathered
-last_updated: "2026-04-12T20:37:22.988Z"
-last_activity: 2026-04-12 -- Phase 03.1 execution started
+stopped_at: Phase 03.1 complete — plan 03-04 unblocked
+last_updated: "2026-04-12T23:30:00.000Z"
+last_activity: 2026-04-12 -- Phase 03.1 complete — plan 03-04 unblocked
 progress:
   total_phases: 11
   completed_phases: 3
-  total_plans: 18
-  completed_plans: 14
-  percent: 78
+  total_plans: 21
+  completed_plans: 17
+  percent: 81
 ---
 
 # Project State
@@ -21,16 +21,16 @@ progress:
 See: .planning/PROJECT.md (updated 2026-04-10)
 
 **Core value:** Every MEFISTO workflow that works today through X11 keeps working through the new Qt 6 interface, with Fortran solver code unchanged.
-**Current focus:** Phase 03.1 — build-xvtest1-4-driver-infrastructure-on-both-backends-qt-le
+**Current focus:** Phase 03 — plan 03-04 (Phase 3 A/B catch-up gate), newly unblocked by Phase 03.1
 
 ## Current Position
 
-Phase: 03.1 (build-xvtest1-4-driver-infrastructure-on-both-backends-qt-le) — EXECUTING
-Plan: 1 of 3
-Status: Executing Phase 03.1
-Last activity: 2026-04-12 -- Phase 03.1 execution started
+Phase: 03 (text-fonts-colormap) — resuming plan 03-04 after Phase 03.1 closure
+Plan: 4 of 4 (Phase 03.1 was a 3-plan insertion between Phase 3 plans 03 and 04)
+Status: Phase 03.1 COMPLETE; ready to execute Phase 03 plan 04
+Last activity: 2026-04-12 -- Phase 03.1 complete — plan 03-04 unblocked
 
-Progress: [░░░░░░░░░░] 0%
+Progress: [██████████] 100% (Phase 03.1)
 
 ## Performance Metrics
 
@@ -76,10 +76,16 @@ Recent decisions affecting current work:
 - [Phase 01-03]: D-01 revised — xvinitgraphique_ uses bounded-loop exposure pump (QElapsedTimer + isExposed()) not a single processEvents. X11 needs MapRequest/ConfigureNotify/Expose sequence.
 - [Phase 01-03]: D-06 addendum — xvfermer_ drains deleteLater queue with processEvents after window_.reset(). Prevents stale DeferredDelete events at atexit.
 - [Phase 01-03]: SHELL-01/02/06 empirically validated by human visual check — two 800x600 "MEFISTO" windows, exit 0, HiDPI ~2x scaling confirmed.
+- [Phase 03.1-01]: xtinit_ promoted from warn-once stub to proc(xvinitgraphique)() forwarding body — unblocks XVOUVRIR → XVINIT chain on Qt backend.
+- [Phase 03.1-02]: 9 new cb* build scripts (5 legacy + 4 Qt) + cbl_tout/cbl_tout_qt wiring; Pitfall 6 closed (legacy cbxvtest0 was missing).
+- [Phase 03.1-03]: xvinfo_ no longer writes *maxfonts — the legacy contract is a pure input/capacity parameter. Writing through a Fortran PARAMETER-sourced actual crashed under gfortran -O in xvtest1..4_qt.
+- [Phase 03.1-03]: 03-04 Task 1 smoke exit code tolerance expanded to {0, 124, 143} — timeout --preserve-status forwards SIGTERM (143), not 124.
+- [Phase 03.1-03]: Legacy xvtest0/xvtest1 pre-existing xvue/xvuelc.c crashes deferred to a future legacy-hardening pass (see 03.1-NOTES.md + deferred-items.md).
 
 ### Roadmap Evolution
 
 - Phase 03.1 inserted after Phase 3: Build xvtest1..4 driver infrastructure on both backends (Qt + legacy X11) to unblock Phase 3 A/B catch-up gate (URGENT)
+- Phase 03.1 CLOSED 2026-04-12: 3 plans, ABI stable at 57, Qt drivers green, 03-04 Task 1 hardened harness landed in-place.
 
 ### Pending Todos
 
@@ -94,6 +100,6 @@ None yet.
 
 ## Session Continuity
 
-Last session: 2026-04-11T13:31:30.596Z
-Stopped at: Phase 2 context gathered
-Resume file: .planning/phases/02-drawing-primitives-backing-pixmap/02-CONTEXT.md
+Last session: 2026-04-12T23:30:00.000Z
+Stopped at: Phase 03.1 complete — plan 03-04 unblocked
+Resume file: .planning/phases/03-text-fonts-colormap/03-04-PLAN.md
