@@ -76,13 +76,13 @@ Decimal phases appear between their surrounding integers in numeric order.
 
 ### Phase 02.1: Qt drawing-primitive A/B gaps (xvface color state, multi-object 3D composition, dashed pen style) (INSERTED)
 
-**Goal:** [Urgent work - to be planned]
-**Requirements**: TBD
+**Goal:** Fix the single Qt-backend root cause (`xvfacetraits_` dropping its `ncf`/`nca` color arguments via `(void)ncf; (void)nca;`) that blocks the Phase 3 A/B visual gate on xvtest2 and xvtest4. Research (02.1-RESEARCH.md) identified this as the only real bug; the "multi-object 3D" and "dashed pen" symptoms are downstream artifacts of the same color-drop and resolve automatically once `ncf`/`nca` are honored. Legacy X11 and Fortran wrappers stay bit-identical (BUILD-07 / VALID-02 / ABI freeze at 57).
+**Requirements**: BUILD-07, VALID-02 (preservation guards — no new IDs)
 **Depends on:** Phase 2
-**Plans:** 0 plans
+**Plans:** 1 plan
 
 Plans:
-- [ ] TBD (run /gsd-plan-phase 02.1 to break down)
+- [ ] 02.1-01-PLAN.md — Fix xvfacetraits_ ncf/nca color switch + A/B re-capture (single wave, single file: xvue/qt/src/xvue_qt_api.cpp)
 
 ### Phase 3: Text, fonts, colormap
 **Goal**: Text rendering and the indexed-palette colormap faithfully mirror the X11 backend, with scientific colormaps frozen against system dark-mode so color-encoded physical data stays accurate.
