@@ -263,7 +263,15 @@ void proc(xvinfo)( int *ix, int *iy, int *maxfonts,
 
     int nfonts = XvueState::kNbFonts;
     if (maxfonts && *maxfonts > 0 && *maxfonts < nfonts) nfonts = *maxfonts;
-    if (maxfonts) *maxfonts = nfonts;
+    // Phase 03.1 Plan 03 — Rule 1 bug fix:
+    //   Do NOT write back to *maxfonts. The sole live callers
+    //   (xvue/xvinit.f:84, xvue/xvpxfe.f:65) pass the Fortran PARAMETER
+    //   constant MAXFONTS (=512 from incl/xvfontes.inc). gfortran -O may
+    //   place PARAMETER-sourced actual arguments in read-only memory, so
+    //   writing through the pointer crashes with SIGSEGV at the first
+    //   xvtest1..4 run. The legacy C backend (xvue/xvuelc.c:612-1042)
+    //   never writes *maxfonts — it is a pure input/capacity parameter.
+    //   Matching that contract is both correct and safe.
     if (nbfonts)  *nbfonts  = nfonts;
     if (namefonts && nbchar) {
         for (int k = 0; k < nfonts; ++k) {
