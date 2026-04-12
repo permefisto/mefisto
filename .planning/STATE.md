@@ -2,16 +2,16 @@
 gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
-status: completed
+status: executing
 stopped_at: Phase 2 context gathered
-last_updated: "2026-04-11T13:31:30.601Z"
-last_activity: 2026-04-11
+last_updated: "2026-04-12T20:34:26.554Z"
+last_activity: 2026-04-12 -- Phase 03.1 planning complete
 progress:
-  total_phases: 10
-  completed_phases: 2
-  total_plans: 7
-  completed_plans: 7
-  percent: 100
+  total_phases: 11
+  completed_phases: 3
+  total_plans: 18
+  completed_plans: 14
+  percent: 78
 ---
 
 # Project State
@@ -21,14 +21,14 @@ progress:
 See: .planning/PROJECT.md (updated 2026-04-10)
 
 **Core value:** Every MEFISTO workflow that works today through X11 keeps working through the new Qt 6 interface, with Fortran solver code unchanged.
-**Current focus:** Phase 01 — window-shell-xvueapp-xvuewindow-xvuecanvas
+**Current focus:** Phase 03 — text-fonts-colormap
 
 ## Current Position
 
-Phase: 2
-Plan: Not started
-Status: Phase complete — ready to begin Phase 2
-Last activity: 2026-04-11
+Phase: 03 (text-fonts-colormap) — EXECUTING
+Plan: 1 of 4
+Status: Ready to execute
+Last activity: 2026-04-12 -- Phase 03.1 planning complete
 
 Progress: [░░░░░░░░░░] 0%
 
@@ -76,6 +76,10 @@ Recent decisions affecting current work:
 - [Phase 01-03]: D-01 revised — xvinitgraphique_ uses bounded-loop exposure pump (QElapsedTimer + isExposed()) not a single processEvents. X11 needs MapRequest/ConfigureNotify/Expose sequence.
 - [Phase 01-03]: D-06 addendum — xvfermer_ drains deleteLater queue with processEvents after window_.reset(). Prevents stale DeferredDelete events at atexit.
 - [Phase 01-03]: SHELL-01/02/06 empirically validated by human visual check — two 800x600 "MEFISTO" windows, exit 0, HiDPI ~2x scaling confirmed.
+
+### Roadmap Evolution
+
+- Phase 03.1 inserted after Phase 3: Build xvtest1..4 driver infrastructure on both backends (Qt + legacy X11) to unblock Phase 3 A/B catch-up gate (URGENT)
 
 ### Pending Todos
 
