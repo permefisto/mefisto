@@ -95,10 +95,10 @@ Decimal phases appear between their surrounding integers in numeric order.
 **Goal:** Produce pp/ppxvtest{0..4}(_qt) on both Qt and legacy X11 backends (9 new cb* scripts + 2 top-level edits), fix the Qt-side xtinit_ warn-once stub so XVOUVRIR opens a real window, and harden plan 03-04 Task 1 smoke (timeout 5s, enriched grep including xtinit_, xvtest1 STOP tolerance) so the Phase 3 A/B visual gate can execute.
 **Requirements**: BUILD-07, VALID-02, TEXT-01..06 (inherited — no new IDs)
 **Depends on:** Phase 3
-**Plans:** 3 plans
+**Plans:** 1/3 plans executed
 
 Plans:
-- [ ] 03.1-01-PLAN.md — Wave 0: A6 grep verification + Qt-side xtinit_ promotion (xvue/qt/src/xvue_qt_api.cpp), X11 untouched
+- [x] 03.1-01-PLAN.md — Wave 0: A6 grep verification + Qt-side xtinit_ promotion (xvue/qt/src/xvue_qt_api.cpp), X11 untouched
 - [ ] 03.1-02-PLAN.md — Wave 1: 9 new cb* scripts (5 legacy + 4 Qt) + top-level wiring into cbl_tout{,_qt}
 - [ ] 03.1-03-PLAN.md — Wave 2: hardened headless smoke + ABI recheck + 03-04 Task 1 patch + NOTES.md + SUMMARY.md
 
