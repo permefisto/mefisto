@@ -1,0 +1,69 @@
+#!/bin/bash
+#
+# cbxvtest3 — Phase 3 A/B driver N (legacy X11 backend)
+# compilation et edition de liens de xvtest3.f
+# Created by Phase 03.1 — mirrors bin/cbmail link pattern without mail/lib.
+
+cd $MEFISTO
+if !(test -d pp)
+then
+  mkdir pp
+fi
+
+if test -f $MEFISTO/td/m/anglais
+then
+  LANGAGE=1
+  LANGUE=ANGLAISE
+  echo
+  echo ========================================================================
+  echo "MEFISTO-LINUX 64bits: Compilation f+OpenMp + Link Editor of xvtest3.f (X11)"
+  echo ========================================================================
+else
+  LANGAGE=0
+  LANGUE=FRANCAISE
+  echo
+  echo =============================================================================
+  echo "MEFISTO-LINUX 64bits: Compilation f+OpenMp + Edition de liens de xvtest3.f (X11)"
+  echo =============================================================================
+fi
+
+if !(test -f xvue/xvuelc.o)
+then
+  bin/ccxvue
+fi
+
+nompp=pp/ppxvtest3
+if test -f $nompp
+then
+  rm $nompp
+fi
+
+echo "gfortran -Wall -mcmodel=large -m64 -O -fopenmp -I. $MEFISTO/prpr/xvtest3.f -o $nompp"
+gfortran -Wall -mcmodel=large -m64 -O -fopenmp -I. prpr/xvtest3.f \
+     util/lib xvue/lib xvue/xvuelc.o \
+    -lgfortran -L/usr/X11R6/lib64 -lX11 -o $nompp
+
+if test -f xvtest3.o
+then
+  rm xvtest3.o
+fi
+
+if test -f $nompp
+then
+  chmod 755 $nompp
+  ls -l $MEFISTO/pp
+  echo
+  if [ $LANGAGE = 0 ]
+  then
+    echo "$MEFISTO/$nompp est CORRECT pour executer PHASE 3 A/B TEST 3 (X11)"
+  else
+    echo "$MEFISTO/$nompp is CORRECT to execute PHASE 3 A/B TEST 3 (X11)"
+  fi
+else
+  if [ $LANGAGE = 0 ]
+  then
+    echo "$MEFISTO/$nompp est INCORRECT. PHASE 3 A/B TEST 3 (X11) est NON EXECUTABLE"
+  else
+    echo "$MEFISTO/$nompp is INCORRECT. PHASE 3 A/B TEST 3 (X11) is NOT EXECUTABLE"
+  fi
+fi
