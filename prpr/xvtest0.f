@@ -21,6 +21,11 @@ C     run produit des messages stdout et exit 0 sans dessiner.
 C
       INTEGER*2 PTS(2,8)
       REAL*4    A1, A2
+      INTEGER   NOFONT0, NOFONT, NPLACA, NPHACA
+      INTEGER   ICOL, IX1, IY1, IX2, IY2
+      INTEGER   NLEN, NPXLA, NPXHA, NOPALC, NBCELLS, I
+      REAL      PROUGE_CUS(10), PVERT_CUS(10), PBLEU_CUS(10)
+      CHARACTER*32 LABEL
 C
       PRINT *
       PRINT *,'==========================================='
@@ -80,6 +85,49 @@ C     clear mid-sequence, then draw with new pen style
       CALL XVVOIR
 C     -- end draw-coverage section --------------------------------
 C
+C     -- begin TEXT coverage section (Phase 3, D-24) ---------------
+C     Exercises TEXT-01..TEXT-05 Phase 3 entry points.
+C
+C     (a) Load font index 2 (12pt DejaVu Sans Mono).
+      NOFONT0 = 0
+      NOFONT  = 2
+      CALL XVCHARGEFONTE(NOFONT0, NOFONT, NPLACA, NPHACA)
+C
+C     (b) Draw 8 labeled colored lines, one per imposed-default.
+      DO 100 ICOL = 0, 7
+        CALL XVCOULEUR(ICOL)
+        IX1 = 50
+        IY1 = 100 + ICOL*25
+        IX2 = 250
+        IY2 = IY1
+        CALL XVTRAIT(IX1, IY1, IX2, IY2)
+        WRITE(LABEL,'(A,I1)') 'COLOR-', ICOL
+        NLEN = 7
+        CALL XVTEXTE(LABEL, NLEN, 270, IY1)
+  100 CONTINUE
+C
+C     (c) Exercise XVACTIVERVB with a ramp at indices 0..8.
+      NOPALC  = 0
+      NBCELLS = 9
+      DO 110 I = 1, 9
+        PROUGE_CUS(I) = 0.1 * I
+        PVERT_CUS (I) = 1.0 - 0.1 * I
+        PBLEU_CUS (I) = 0.5
+  110 CONTINUE
+      CALL XVACTIVERVB(NOPALC, NBCELLS, PROUGE_CUS, PVERT_CUS,
+     +                 PBLEU_CUS)
+      CALL XVCOULEUR(8)
+      CALL XVTRAIT(50, 320, 250, 320)
+      CALL XVTEXTE('RVB-CUSTOM', 10, 270, 320)
+C
+C     (d) Exercise XVNBPIXELTEXTE + bounding box.
+      CALL XVCOULEUR(1)
+      CALL XVNBPIXELTEXTE('MESURE-XVNBPIXELTEXTE', 21, NPXLA,NPXHA)
+      CALL XVTEXTE('MESURE-XVNBPIXELTEXTE', 21, 50, 360)
+      CALL XVBORDRECTANGLE(50, 360 - NPXHA, NPXLA, NPXHA)
+C     -- end TEXT coverage section ----------------------------------
+C
+      CALL XVVOIR
 C     Hold the window on screen long enough to be visually verified
 C     (SHELL-01, SHELL-06). XVINITGRAPHIQUE has already pumped the
 C     event loop until the window is exposed, so the window is mapped
