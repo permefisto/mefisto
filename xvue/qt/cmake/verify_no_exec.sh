@@ -29,4 +29,24 @@ if [ -n "$MATCHES" ]; then
 fi
 
 echo "verify_no_exec: OK (no forbidden tokens in $SRC_DIR or $INC_DIR)"
+
+# Phase 3 D-19: palette-leak guard. XvueCanvas + xvue_qt_api.cpp must
+# never read qApp->palette() or this->palette() — those would leak the
+# system dark-mode QPalette into the backing pixmap (TEXT-06). Scoped
+# grep (Pitfall 8) — window/app TUs may legitimately touch palette in
+# Phase 6, so they are excluded.
+PAL_MATCHES=$(grep -n -E 'qApp->palette|->palette\(\)' \
+    "$SRC_DIR"/xvue_qt_canvas.cpp \
+    "$SRC_DIR"/xvue_qt_canvas.h \
+    "$SRC_DIR"/xvue_qt_api.cpp \
+    2>/dev/null || true)
+
+if [ -n "$PAL_MATCHES" ]; then
+    echo "ERROR: TEXT-06/D-19 violation — qApp->palette / ->palette() forbidden in xvue_qt_canvas.* and xvue_qt_api.cpp" >&2
+    echo "Offending matches:" >&2
+    echo "$PAL_MATCHES" >&2
+    exit 1
+fi
+
+echo "verify_no_exec: OK (palette-leak scan clean in canvas + api)"
 exit 0

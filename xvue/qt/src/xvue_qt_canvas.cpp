@@ -13,6 +13,13 @@
 XvueCanvas::XvueCanvas(XvueState* state, QWidget* parent)
     : QWidget(parent), state_(state)
 {
+    // Phase 3 D-20: dark-mode-freeze defensive guards. Remove the canvas
+    // from Qt's style-system auto-fill path so even a future stylesheet in
+    // Phase 6 cannot recolor the backing pixmap. WA_OpaquePaintEvent tells
+    // Qt the widget will paint every pixel itself on every paintEvent.
+    setAutoFillBackground(false);
+    setAttribute(Qt::WA_OpaquePaintEvent, true);
+
     // D-04: DO NOT allocate backing_ here. Qt 6 guarantees resizeEvent fires
     // before the first paintEvent on X11/Wayland (Pitfall 6). The first
     // resizeEvent after construction performs the initial allocation.
@@ -99,6 +106,7 @@ void XvueCanvas::resizeEvent(QResizeEvent* event) {
 
     // (j) DRAW-08 + Pitfall 5: hints do not carry across begin()/end()
     state_->painter_->setRenderHint(QPainter::Antialiasing, true);
+    state_->painter_->setRenderHint(QPainter::TextAntialiasing, true);  // D-07
 
     // (k) re-push pen+brush through applyPen() (D-22, Pitfall 5)
     state_->applyPen();

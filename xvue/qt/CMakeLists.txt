@@ -24,6 +24,15 @@ add_library(xvueqt STATIC
     src/xvue_qt_window.cpp
 )
 
+# Phase 3 D-01/D-02: bundle DejaVuSansMono.ttf into libxvueqt.a via Qt
+# resource system. Static-lib case — see Pitfall 1 in 03-RESEARCH.md:
+# Q_INIT_RESOURCE(xvue_fonts) MUST be called at runtime from
+# XvueApp::ensure() (see Task 2) or addApplicationFont returns -1.
+qt_add_resources(xvueqt xvue_fonts
+    PREFIX "/xvue/qt/fonts"
+    FILES fonts/DejaVuSansMono.ttf
+)
+
 target_include_directories(xvueqt PUBLIC
     ${CMAKE_CURRENT_SOURCE_DIR}/include
 )
