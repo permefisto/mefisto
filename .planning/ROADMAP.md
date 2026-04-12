@@ -74,6 +74,16 @@ Decimal phases appear between their surrounding integers in numeric order.
   - [x] 02-04-PLAN.md — Wave 3: clean rebuild, human visual checkpoint, 02-VALIDATION.md closure
 **UI hint**: yes
 
+### Phase 02.1: Qt drawing-primitive A/B gaps (xvface color state, multi-object 3D composition, dashed pen style) (INSERTED)
+
+**Goal:** [Urgent work - to be planned]
+**Requirements**: TBD
+**Depends on:** Phase 2
+**Plans:** 0 plans
+
+Plans:
+- [ ] TBD (run /gsd-plan-phase 02.1 to break down)
+
 ### Phase 3: Text, fonts, colormap
 **Goal**: Text rendering and the indexed-palette colormap faithfully mirror the X11 backend, with scientific colormaps frozen against system dark-mode so color-encoded physical data stays accurate.
 **Depends on**: Phase 2

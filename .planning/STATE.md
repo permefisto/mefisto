@@ -2,10 +2,10 @@
 gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
-status: completed
+status: executing
 stopped_at: Phase 03.1 complete — plan 03-04 unblocked
-last_updated: "2026-04-12T23:03:33.836Z"
-last_activity: 2026-04-12
+last_updated: "2026-04-12T23:06:12.678Z"
+last_activity: 2026-04-12 -- Phase 03 execution started
 progress:
   total_phases: 11
   completed_phases: 4
@@ -21,14 +21,14 @@ progress:
 See: .planning/PROJECT.md (updated 2026-04-10)
 
 **Core value:** Every MEFISTO workflow that works today through X11 keeps working through the new Qt 6 interface, with Fortran solver code unchanged.
-**Current focus:** Phase 03 — plan 03-04 (Phase 3 A/B catch-up gate), newly unblocked by Phase 03.1
+**Current focus:** Phase 03 — text-fonts-colormap
 
 ## Current Position
 
-Phase: 4
-Plan: Not started
-Status: Phase 03.1 COMPLETE; ready to execute Phase 03 plan 04
-Last activity: 2026-04-12
+Phase: 03 (text-fonts-colormap) — EXECUTING
+Plan: 1 of 4
+Status: Executing Phase 03
+Last activity: 2026-04-12 -- Phase 03 execution started
 
 Progress: [██████████] 100% (Phase 03.1)
 
@@ -87,6 +87,7 @@ Recent decisions affecting current work:
 
 - Phase 03.1 inserted after Phase 3: Build xvtest1..4 driver infrastructure on both backends (Qt + legacy X11) to unblock Phase 3 A/B catch-up gate (URGENT)
 - Phase 03.1 CLOSED 2026-04-12: 3 plans, ABI stable at 57, Qt drivers green, 03-04 Task 1 hardened harness landed in-place.
+- Phase 02.1 inserted after Phase 2: Qt drawing-primitive A/B gaps (xvface color state, multi-object 3D composition, dashed pen style) (URGENT — surfaced by 03-04 Task 2 A/B gate failure on xvtest2/xvtest4)
 
 ### Pending Todos
 
