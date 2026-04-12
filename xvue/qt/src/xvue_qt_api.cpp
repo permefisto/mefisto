@@ -172,11 +172,26 @@ void proc(xvinitgraphique)(void) {
 }
 
 // ---- 6. xtinit_ ----
+// Phase 03.1 Pitfall 1 fix: promoted from warn-once stub to a real
+// body so that XVOUVRIR -> XTINIT -> (XVINIT chain) opens a Qt window
+// on the Qt backend the same way XVINITGRAPHIQUE does on the xvtest0
+// code path. Idempotency is provided by window_slot()'s "if (!win)"
+// lazy alloc — calling XVINITGRAPHIQUE after XTINIT (or in any order)
+// does NOT double-create. XvueApp::ensure() is guarded by call_once
+// per D-07. See .planning/phases/03.1-.../03.1-RESEARCH.md §Pitfall 1.
+//
+// The legacy X11 backend (xvue/xvuelc.c) retains its own independent
+// xtinit_ body — this fix is Qt-side only, preserving BUILD-07
+// bit-identity on the legacy path.
 void proc(xtinit)(void) {
     XvueApp::ensure();
     XVUE_QT_ASSERT_MAIN_THREAD();
-    static bool warned = false;
-    warn_once(warned, "xtinit_");
+    // Forward to xvinitgraphique_'s body: lazy-alloc window_slot,
+    // show/raise/activate, pump the bounded exposure loop. This is
+    // idempotent — a subsequent xvinitgraphique_ call from any other
+    // Fortran path will reuse the existing XvueWindow via the
+    // "if (!win)" guard inside xvinitgraphique_.
+    proc(xvinitgraphique)();
 }
 
 // ---- 7. xvpxecran_ ----
