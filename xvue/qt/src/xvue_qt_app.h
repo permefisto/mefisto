@@ -23,6 +23,9 @@ public:
     // cache the returned reference across xvfermer_ calls.
     static std::unique_ptr<XvueWindow>& window_slot();
 
+    static int font_id_;
+    static void load_bundled_font_();
+
 private:
     static std::once_flag                     once_flag_;
     static std::unique_ptr<QApplication>      qapp_;

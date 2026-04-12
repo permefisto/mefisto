@@ -29,7 +29,7 @@ add_library(xvueqt STATIC
 # Q_INIT_RESOURCE(xvue_fonts) MUST be called at runtime from
 # XvueApp::ensure() (see Task 2) or addApplicationFont returns -1.
 qt_add_resources(xvueqt xvue_fonts
-    PREFIX "/xvue/qt/fonts"
+    PREFIX "/xvue/qt"
     FILES fonts/DejaVuSansMono.ttf
 )
 

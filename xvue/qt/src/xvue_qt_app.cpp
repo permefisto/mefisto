@@ -17,11 +17,29 @@
 #include <QApplication>
 #include <QCoreApplication>
 #include <QEventLoop>
+#include <QFontDatabase>
+#include <QStringLiteral>
+#include <cstdio>
 #include <cstdlib>
 
 std::once_flag                     XvueApp::once_flag_;
 std::unique_ptr<QApplication>      XvueApp::qapp_;
 std::unique_ptr<XvueWindow>        XvueApp::window_;
+int                                XvueApp::font_id_ = -1;
+
+void XvueApp::load_bundled_font_()
+{
+    if (font_id_ >= 0) return;
+    Q_INIT_RESOURCE(xvue_fonts);
+    font_id_ = QFontDatabase::addApplicationFont(
+        QStringLiteral(":/xvue/qt/fonts/DejaVuSansMono.ttf"));
+    if (font_id_ < 0) {
+        std::fprintf(stderr,
+            "xvue-qt: WARNING — bundled DejaVuSansMono.ttf failed to "
+            "load from Qt resource path; falling back to platform "
+            "default monospace font.\n");
+    }
+}
 
 void XvueApp::ensure() {
     std::call_once(once_flag_, []{
@@ -34,6 +52,7 @@ void XvueApp::ensure() {
         qapp_ = std::make_unique<QApplication>(fake_argc, fake_argv);
         std::atexit(&XvueApp::teardown_atexit);
     });
+    load_bundled_font_();
 }
 
 QApplication* XvueApp::qapp() {

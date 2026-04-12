@@ -5,6 +5,8 @@
 // NEVER reorder existing fields — background_ stays first.
 #pragma once
 #include <QColor>
+#include <QFont>
+#include <QFontMetrics>
 #include <QPen>
 #include <QBrush>
 #include <Qt>
@@ -13,6 +15,8 @@ class QPixmap;
 class QPainter;
 
 struct XvueState {
+    XvueState();
+
     // Phase 1 — untouched. Matches legacy BlackPixel default
     // (xvue/xvuelc.c:935). Keeping the same default prevents visible drift in
     // the Phase 8 A/B validation.
@@ -36,6 +40,21 @@ struct XvueState {
     // Rebuild pen_ and brush_ from pen_style_/pen_width_base_/foreground_,
     // push to painter_ if the painter is active.
     void applyPen();
+
+    static constexpr int kFontSizes[10] = {8, 10, 12, 14, 16, 18, 20, 24, 28, 32};
+    static constexpr int kNbFonts = 10;
+
+    QFont        current_font_;
+    int          current_font_size_idx_ = 2;
+    QFontMetrics current_metrics_{current_font_};
+
+    static constexpr int kMaxPalette = 256;
+    static float   red[kMaxPalette];
+    static float   green[kMaxPalette];
+    static float   blue[kMaxPalette];
+    static QColor  palette_cache_[kMaxPalette];
+    static bool    palette_cache_dirty_[kMaxPalette];
+    static bool    palette_initialized_;
 
     // Ends painter_ (if active), deletes painter_, deletes backing_.
     ~XvueState();
