@@ -4,8 +4,8 @@ milestone: v1.0
 milestone_name: milestone
 status: executing
 stopped_at: Phase 2 context gathered
-last_updated: "2026-04-12T20:34:26.554Z"
-last_activity: 2026-04-12 -- Phase 03.1 planning complete
+last_updated: "2026-04-12T20:37:22.988Z"
+last_activity: 2026-04-12 -- Phase 03.1 execution started
 progress:
   total_phases: 11
   completed_phases: 3
@@ -21,14 +21,14 @@ progress:
 See: .planning/PROJECT.md (updated 2026-04-10)
 
 **Core value:** Every MEFISTO workflow that works today through X11 keeps working through the new Qt 6 interface, with Fortran solver code unchanged.
-**Current focus:** Phase 03 — text-fonts-colormap
+**Current focus:** Phase 03.1 — build-xvtest1-4-driver-infrastructure-on-both-backends-qt-le
 
 ## Current Position
 
-Phase: 03 (text-fonts-colormap) — EXECUTING
-Plan: 1 of 4
-Status: Ready to execute
-Last activity: 2026-04-12 -- Phase 03.1 planning complete
+Phase: 03.1 (build-xvtest1-4-driver-infrastructure-on-both-backends-qt-le) — EXECUTING
+Plan: 1 of 3
+Status: Executing Phase 03.1
+Last activity: 2026-04-12 -- Phase 03.1 execution started
 
 Progress: [░░░░░░░░░░] 0%
 
