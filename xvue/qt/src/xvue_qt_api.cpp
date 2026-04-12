@@ -9,6 +9,7 @@
 // Per D-17: warn-once diagnostic pattern is a per-function `static bool warned`.
 
 #include <cstdio>
+#include <cstring>
 #include "xvue_qt_api.h"
 #include "xvue_qt_app.h"
 #include "xvue_qt_window.h"
@@ -18,13 +19,17 @@
 #include <QCoreApplication>
 #include <QElapsedTimer>
 #include <QEventLoop>
+#include <QFont>
+#include <QFontMetrics>
 #include <QGuiApplication>
+#include <QLatin1Char>
 #include <QPainter>
 #include <QPixmap>
 #include <QPoint>
 #include <QPolygon>
 #include <QRect>
 #include <QScreen>
+#include <QString>
 #include <QWindow>
 #include <vector>
 
@@ -65,6 +70,30 @@ inline void xvue_qt_draw_rect_common(int x, int y, int w, int h, RectMode mode) 
         st->painter_->fillRect(r, st->painter_->brush());
     }
     if (win->canvas()) win->canvas()->update();
+}
+
+// Phase 3 D-06 + Pitfall 7: xvtexte_ and xvftexte_ share this body under
+// the Phase 2 single-backing model (02/D-05). In legacy xvuelc.c the two
+// drew to DIFFERENT targets (mempx at :1658 vs fenetre_mef at :1678); the
+// collapse here is legal ONLY because Phase 2 unified the draw target.
+// If a future phase reintroduces multiple draw targets, revisit.
+inline void xvue_qt_draw_text_common(const char* string, int length,
+                                     int x1, int y1) {
+    if (!string || length <= 0) return;              // WR-03 null-guard
+    auto& win = XvueApp::window_slot();
+    if (!win) return;
+    auto* st = win->state();
+    if (!st || !st->painter_ || !st->painter_->isActive() || !st->backing_) return;
+
+    // Pitfall 4: TWO-ARG fromLatin1 — the legacy Fortran strings are NOT
+    // NUL-terminated; explicit length is mandatory.
+    QString qstr = QString::fromLatin1(string, length);
+    st->painter_->setFont(st->current_font_);        // cheap no-op if unchanged
+    st->painter_->drawText(x1, y1, qstr);            // baseline form (D-06)
+
+    // Phase 2 D-01 epilogue: drawing primitives flush.
+    if (win->canvas()) win->canvas()->update();
+    QCoreApplication::processEvents(QEventLoop::ExcludeUserInputEvents);
 }
 
 } // anonymous namespace
@@ -193,63 +222,131 @@ void proc(xvinfo)( int *ix, int *iy, int *maxfonts,
     XvueApp::ensure();
     XVUE_QT_ASSERT_MAIN_THREAD();
 
-    // D-03: Phase 1 partial. Resize the window if it exists; everything else
-    // (palette ranges, font tables, visual class) is zeroed out and the
-    // warn-once line is kept verbatim from the Phase 0 pattern. Phase 3 will
-    // replace the palette/font branch with real colormap plumbing.
+    // D-03: window resize portion from Phase 1 stays.
     auto& win = XvueApp::window_slot();
     if (win && ix && iy) {
         win->resize(*ix, *iy);
     }
 
-    // Zero palette/font outputs so Fortran callers see deterministic values.
-    if (maxfonts)  *maxfonts  = 0;
-    if (n1coref)   *n1coref   = 0;
-    if (ndcoref)   *ndcoref   = 0;
-    if (n1coelf)   *n1coelf   = 0;
-    if (ndcoelf)   *ndcoelf   = 0;
-    if (n1coulf)   *n1coulf   = 0;
-    if (ndcoulf)   *ndcoulf   = 0;
-    if (nbcolo)    *nbcolo    = 0;
-    if (nbfonts)   *nbfonts   = 0;
-    if (visuclass) *visuclass = 0;
-    (void)namefonts;
-    (void)nbchar;
+    // Phase 3 D-22/D-23: real font enumeration + palette ranges.
+    // Pitfall 2 ordering: palette_init_once() already ran inside XvueState
+    // ctor (via XvueWindow ctor via xvinitgraphique_), so any caller that
+    // reads red/green/blue immediately after xvinfo_ returns (e.g.
+    // xvue/xvinit.f:143 calling XVRECUPRGBDEC) sees populated data.
+    static const char* const kListFonts[XvueState::kNbFonts] = {
+        "DejaVu Sans Mono 8pt",
+        "DejaVu Sans Mono 10pt",
+        "DejaVu Sans Mono 12pt",
+        "DejaVu Sans Mono 14pt",
+        "DejaVu Sans Mono 16pt",
+        "DejaVu Sans Mono 18pt",
+        "DejaVu Sans Mono 20pt",
+        "DejaVu Sans Mono 24pt",
+        "DejaVu Sans Mono 28pt",
+        "DejaVu Sans Mono 32pt",
+    };
 
-    static bool warned_xvinfo_partial = false;
-    if (!warned_xvinfo_partial) {
-        std::fprintf(stderr,
-            "xvue-qt: stub xvinfo_ palette outputs not implemented yet\n");
-        warned_xvinfo_partial = true;
+    int nfonts = XvueState::kNbFonts;
+    if (maxfonts && *maxfonts > 0 && *maxfonts < nfonts) nfonts = *maxfonts;
+    if (maxfonts) *maxfonts = nfonts;
+    if (nbfonts)  *nbfonts  = nfonts;
+    if (namefonts && nbchar) {
+        for (int k = 0; k < nfonts; ++k) {
+            std::strncpy(namefonts[k], kListFonts[k], 255);
+            namefonts[k][255] = '\0';
+            nbchar[k] = static_cast<int>(std::strlen(kListFonts[k]));
+        }
     }
+
+    if (visuclass) *visuclass = 4;   // TrueColor — Qt is always 24-bit
+
+    // Palette ranges (legacy xvinfo semantics — ref xvuelc.c:612-1042):
+    //   [0..15]   = imposed defaults
+    //   [16..255] = user-modifiable
+    if (n1coref)  *n1coref  = 0;
+    if (ndcoref)  *ndcoref  = 15;
+    if (n1coelf)  *n1coelf  = 0;
+    if (ndcoelf)  *ndcoelf  = 15;
+    if (n1coulf)  *n1coulf  = 16;
+    if (ndcoulf)  *ndcoulf  = 255;
+    if (nbcolo)   *nbcolo   = 256;
 }
 
-// ---- 11. xvrecuprgbdec_ ----
+// ---- 11. xvrecuprgbdec_ (Phase 3 D-18, TEXT-05) ----
+// Read-only snapshot of the process-lifetime palette into Fortran arrays.
+// Pitfall 2: palette_init_once() runs inside XvueState ctor, which is
+// inside XvueWindow ctor, which is called from xvinitgraphique_ — strictly
+// before xvue/xvinit.f:143's XVRECUPRGBDEC call (the only live caller per
+// the call-site audit in 03-RESEARCH.md).
 void proc(xvrecuprgbdec)(int *nbcolor, float *r, float *g, float *b) {
     XvueApp::ensure();
     XVUE_QT_ASSERT_MAIN_THREAD();
-    static bool warned = false;
-    warn_once(warned, "xvrecuprgbdec_");
-    (void)nbcolor; (void)r; (void)g; (void)b;
+    if (!nbcolor || !r || !g || !b) return;            // WR-03
+
+    int n = *nbcolor;
+    if (n < 0) n = 0;
+    if (n > XvueState::kMaxPalette) n = XvueState::kMaxPalette;
+
+    for (int i = 0; i < n; ++i) {
+        r[i] = XvueState::red[i];
+        g[i] = XvueState::green[i];
+        b[i] = XvueState::blue[i];
+    }
 }
 
-// ---- 12. xvactivervb_ ----
+// ---- 12. xvactivervb_ (Phase 3 D-17 AMENDED per A3, TEXT-05) ----
+// Bulk palette load. Research correction over the original D-17 text:
+// the single live caller xvue/palcde.f:619 passes NDCOUL+1 cells, so this
+// is a full user-palette refresh, NOT a transient one-shot color write.
+// Matches legacy xvuelc.c:1072-1116 bulk-copy semantics.
 void proc(xvactivervb)( int *palcour, int *nbcells,
                         float r[], float g[], float b[] ) {
     XvueApp::ensure();
     XVUE_QT_ASSERT_MAIN_THREAD();
-    static bool warned = false;
-    warn_once(warned, "xvactivervb_");
-    (void)palcour; (void)nbcells; (void)r; (void)g; (void)b;
+    (void)palcour;  // palcourc was a PostScript state var, dropped (02/D-26)
+    if (!nbcells || !r || !g || !b) return;            // WR-03
+
+    int n = *nbcells;
+    if (n < 0) n = 0;
+    if (n > XvueState::kMaxPalette) n = XvueState::kMaxPalette;
+
+    for (int i = 0; i < n; ++i) {
+        XvueState::red[i]   = r[i];
+        XvueState::green[i] = g[i];
+        XvueState::blue[i]  = b[i];
+        XvueState::palette_cache_dirty_[i] = true;
+    }
+    // No painter touch, no flush — xvcouleur_ picks up new values via the
+    // dirty-flag rebuild on its next call.
 }
 
-// ---- 13. xvcouleur_ ----
+// ---- 13. xvcouleur_ (Phase 3 D-14, TEXT-04) ----
+// State-change entry: install palette_cache_[i] as current foreground.
+// NO flush — drawing primitives run their own D-01 epilogue.
 void proc(xvcouleur)(int *icolor) {
     XvueApp::ensure();
     XVUE_QT_ASSERT_MAIN_THREAD();
-    static bool warned = false;
-    warn_once(warned, "xvcouleur_");
-    (void)icolor;
+    if (!icolor) return;                                // WR-03
+
+    int i = *icolor;
+    if (i < 0 || i >= XvueState::kMaxPalette) i = 1;    // legacy "fallback to red"
+
+    auto& win = XvueApp::window_slot();
+    if (!win) return;
+    auto* st = win->state();
+    if (!st) return;
+
+    if (XvueState::palette_cache_dirty_[i]) {
+        XvueState::palette_cache_[i] = QColor::fromRgbF(
+            XvueState::red[i],
+            XvueState::green[i],
+            XvueState::blue[i]);
+        XvueState::palette_cache_dirty_[i] = false;
+    }
+
+    st->foreground_ = XvueState::palette_cache_[i];
+    st->applyPen();  // 02/D-20 syncs brush + pen from foreground_
+    // D-14: no update(), no processEvents — state-change only.
 }
 
 // ---- 14. xvpostscript_ ----
@@ -333,66 +430,88 @@ void proc(effacer)(void) {
     // WR-02: deferred flush -- xvvoir_/xvpause_ pump the event loop.
 }
 
-// ---- 23. xvfond_ ----
+// ---- 23. xvfond_ (Phase 3: retired Phase 2 two-entry hack) ----
+// Phase 2 used a hardcoded {black, white} 2-entry palette (D-14). Phase 3
+// routes the color source through the real palette_cache_ the same way
+// xvcouleur_ does, while preserving the Phase 2 D-24 fillRect mechanism.
 void proc(xvfond)(int *icolor) {
     XvueApp::ensure();
     XVUE_QT_ASSERT_MAIN_THREAD();
-    if (!icolor) return;
+    if (!icolor) return;                               // WR-03
 
-    // D-14: Phase 1 has no palette yet. Minimal 2-entry mapping matches the
-    // legacy X11 BlackPixel/WhitePixel convention (xvuelc.c:935 et seq.).
-    QColor chosen = Qt::black;
-    if (*icolor == 0) {
-        chosen = Qt::black;
-    } else if (*icolor == 1) {
-        chosen = Qt::white;
-    } else {
-        static bool warned_xvfond_range = false;
-        if (!warned_xvfond_range) {
-            std::fprintf(stderr,
-                "xvue-qt: xvfond_ palette index %d out of Phase 1 range "
-                "(Phase 3 will add full colormap)\n", *icolor);
-            warned_xvfond_range = true;
-        }
-        chosen = Qt::black;
+    int i = *icolor;
+    if (i < 0 || i >= XvueState::kMaxPalette) i = 0;   // default to index 0 (black)
+
+    auto& win = XvueApp::window_slot();
+    if (!win) return;
+    auto* st = win->state();
+    if (!st) return;
+
+    if (XvueState::palette_cache_dirty_[i]) {
+        XvueState::palette_cache_[i] = QColor::fromRgbF(
+            XvueState::red[i], XvueState::green[i], XvueState::blue[i]);
+        XvueState::palette_cache_dirty_[i] = false;
     }
 
-    // D-15: update XvueState::background_ through the live window, schedule
-    // repaint. With no open window, xvfond_ is a no-op past the warn-once line
-    // (Phase 1 XvueState is owned by XvueWindow).
-    // Phase 2 (D-24): re-fill the backing with the new background and flush.
-    auto& win = XvueApp::window_slot();
-    if (win) {
-        auto* st = win->state();
-        if (st) {
-            st->background_ = chosen;
-            if (st->painter_ && st->painter_->isActive() && st->backing_) {
-                st->painter_->fillRect(st->backing_->rect(), st->background_);
-            }
-        }
-        if (win->canvas()) {
-            win->canvas()->update();
-        }
+    // D-15: update XvueState::background_ through the live window, repaint.
+    // Phase 2 D-24: re-fill the backing with the new background and flush.
+    st->background_ = XvueState::palette_cache_[i];
+    if (st->painter_ && st->painter_->isActive() && st->backing_) {
+        st->painter_->fillRect(st->backing_->rect(), st->background_);
+    }
+    if (win->canvas()) {
+        win->canvas()->update();
     }
     // WR-02: deferred flush -- xvvoir_/xvpause_ pump the event loop.
 }
 
-// ---- 24. xvchargefonte_ ----
+// ---- 24. xvchargefonte_ (Phase 3 D-04, TEXT-01) ----
+// Bundled DejaVu Sans Mono at XvueState::kFontSizes[*nofont]. QFont is RAII
+// (Pitfall 6) so *nofont0 (the legacy "previous font to free") is ignored.
 void proc(xvchargefonte)(int *nofont0, int *nofont, int *largpx, int *hautpx) {
     XvueApp::ensure();
     XVUE_QT_ASSERT_MAIN_THREAD();
-    static bool warned = false;
-    warn_once(warned, "xvchargefonte_");
-    (void)nofont0; (void)nofont; (void)largpx; (void)hautpx;
+    (void)nofont0;  // Pitfall 6: QFont is RAII, no explicit free needed
+
+    if (!nofont || !largpx || !hautpx) return;       // WR-03
+
+    int idx = *nofont;
+    if (idx < 0) idx = 0;
+    if (idx >= XvueState::kNbFonts) idx = XvueState::kNbFonts - 1;
+
+    auto& win = XvueApp::window_slot();
+    if (!win) { *largpx = 0; *hautpx = 0; return; }
+    auto* st = win->state();
+    if (!st) { *largpx = 0; *hautpx = 0; return; }
+
+    st->current_font_size_idx_ = idx;
+    st->current_font_ = QFont(QStringLiteral("DejaVu Sans Mono"),
+                              XvueState::kFontSizes[idx]);
+    st->current_metrics_ = QFontMetrics(st->current_font_);
+
+    if (st->painter_ && st->painter_->isActive()) {
+        st->painter_->setFont(st->current_font_);
+    }
+
+    *largpx = st->current_metrics_.horizontalAdvance(QLatin1Char('0'));
+    *hautpx = st->current_metrics_.height();
 }
 
-// ---- 25. xvnbpixeltexte_ ----
+// ---- 25. xvnbpixeltexte_ (Phase 3 D-05, TEXT-02) ----
 void proc(xvnbpixeltexte)(char *texte, int *length, int *nbpxla, int *nbpxha) {
     XvueApp::ensure();
     XVUE_QT_ASSERT_MAIN_THREAD();
-    static bool warned = false;
-    warn_once(warned, "xvnbpixeltexte_");
-    (void)texte; (void)length; (void)nbpxla; (void)nbpxha;
+    if (!texte || !length || !nbpxla || !nbpxha) return;   // WR-03
+
+    auto& win = XvueApp::window_slot();
+    if (!win) { *nbpxla = 0; *nbpxha = 0; return; }
+    auto* st = win->state();
+    if (!st) { *nbpxla = 0; *nbpxha = 0; return; }
+
+    // Pitfall 4: TWO-ARG fromLatin1 — explicit length from Fortran.
+    QString qstr = QString::fromLatin1(texte, *length);
+    *nbpxla = st->current_metrics_.horizontalAdvance(qstr);
+    *nbpxha = st->current_metrics_.height();
 }
 
 // ---- 26. xvfermer_ ----
@@ -421,22 +540,21 @@ void proc(xvpxfenetre)(int *x, int *y) {
     *y = win->canvas()->height();
 }
 
-// ---- 28. xvftexte_ ----
+// ---- 28. xvftexte_ (Phase 3 D-06, TEXT-03) ----
+// Shares body with xvtexte_ under Phase 2 single-backing (02/D-05, Pitfall 7).
 void proc(xvftexte)(char string[], int *length, int *x1, int *y1) {
     XvueApp::ensure();
     XVUE_QT_ASSERT_MAIN_THREAD();
-    static bool warned = false;
-    warn_once(warned, "xvftexte_");
-    (void)string; (void)length; (void)x1; (void)y1;
+    if (!string || !length || !x1 || !y1) return;      // WR-03
+    xvue_qt_draw_text_common(string, *length, *x1, *y1);
 }
 
-// ---- 29. xvtexte_ ----
+// ---- 29. xvtexte_ (Phase 3 D-06, TEXT-03) ----
 void proc(xvtexte)(char string[], int *length, int *x1, int *y1) {
     XvueApp::ensure();
     XVUE_QT_ASSERT_MAIN_THREAD();
-    static bool warned = false;
-    warn_once(warned, "xvtexte_");
-    (void)string; (void)length; (void)x1; (void)y1;
+    if (!string || !length || !x1 || !y1) return;      // WR-03
+    xvue_qt_draw_text_common(string, *length, *x1, *y1);
 }
 
 // ---- 30. xvface_ (D-11, DRAW-03) ----
