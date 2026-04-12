@@ -84,8 +84,8 @@ Decimal phases appear between their surrounding integers in numeric order.
   3. `xvcouleur_` plus the `xvCouleursImposees_`/`xvStockeRGBtoColormap_`/`xvColormapToRGB_`/`xvrecuprgbdec_`/`xvactivervb_` family populate and query a `std::array<QColor, MAX_PALETTE>` whose RGB values match X11 within 1 bit per channel on a 24-bit display.
   4. Enabling system dark-mode changes only the window chrome via `QPalette`; the backing-pixmap stress/temperature/velocity colormaps are unchanged.
 **Plans**: 4 plans
-  - [ ] 03-01-PLAN.md — Wave 0: bundle DejaVuSansMono TTF + qt_add_resources + verify_no_exec palette grep + XvueState palette/font grow + XvueApp font load + XvueCanvas ctor/resize guards + xvtest0.f TEXT coverage extension
-  - [ ] 03-02-PLAN.md — Wave 1: 7 real bodies (xvchargefonte_, xvnbpixeltexte_, xvtexte_/xvftexte_ collapsed, xvcouleur_, xvactivervb_ bulk-load, xvrecuprgbdec_) + xvinfo_ palette/font fill + retire xvfond_ hack
+  - [x] 03-01-PLAN.md — Wave 0: bundle DejaVuSansMono TTF + qt_add_resources + verify_no_exec palette grep + XvueState palette/font grow + XvueApp font load + XvueCanvas ctor/resize guards + xvtest0.f TEXT coverage extension
+  - [x] 03-02-PLAN.md — Wave 1: 7 real bodies (xvchargefonte_, xvnbpixeltexte_, xvtexte_/xvftexte_ collapsed, xvcouleur_, xvactivervb_ bulk-load, xvrecuprgbdec_) + xvinfo_ palette/font fill + retire xvfond_ hack
   - [ ] 03-03-PLAN.md — Wave 2: clean rebuild + xvtest0 visual checkpoint (fonts + 8 colored lines + xvactivervb + xvnbpixeltexte box + resize preserve)
   - [ ] 03-04-PLAN.md — Wave 3: A/B catch-up gate vs prpr/xvtest1..4 + 5 canonical testa cases (D-26 hard gate) + 03-VALIDATION.md closure
 **UI hint**: yes
