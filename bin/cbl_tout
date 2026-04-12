@@ -78,6 +78,11 @@ $MEFISTO/bin/cbther
 $MEFISTO/bin/cbflui
 $MEFISTO/bin/cbnlse
 $MEFISTO/bin/cbpoba
+$MEFISTO/bin/cbxvtest0
+$MEFISTO/bin/cbxvtest1
+$MEFISTO/bin/cbxvtest2
+$MEFISTO/bin/cbxvtest3
+$MEFISTO/bin/cbxvtest4
 
 #
 echo Le repertoire $MEFISTO/pp :

@@ -93,6 +93,11 @@ $MEFISTO/bin/cbelas_qt
 $MEFISTO/bin/cbther_qt
 $MEFISTO/bin/cbflui_qt
 $MEFISTO/bin/cbnlse_qt
+$MEFISTO/bin/cbxvtest0_qt
+$MEFISTO/bin/cbxvtest1_qt
+$MEFISTO/bin/cbxvtest2_qt
+$MEFISTO/bin/cbxvtest3_qt
+$MEFISTO/bin/cbxvtest4_qt
 
 #
 echo Le repertoire $MEFISTO/pp :
