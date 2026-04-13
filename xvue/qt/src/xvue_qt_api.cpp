@@ -726,10 +726,13 @@ void proc(xvfacetraits)(int *ncf, int *nca, int *n, MefistoPoint *pts) {
     apply_palette_foreground(st, *nca);                 // rebuilds pen with nca color, preserves dash style
     st->painter_->setBrush(Qt::NoBrush);
     st->painter_->drawPolygon(poly);                    // outline (D-12 order) — uses current pen (incl dash)
-    // Legacy leaves foreground at nca; do not restore. Brush is left at
-    // Qt::NoBrush but the next applyPen()/xvcouleur_ call will refresh it.
-    // WR-04: restore brush defensively so subsequent primitives that read
-    // st->painter_->brush() (e.g. xvface_) see the canonical ncf→nca final state.
+    // IN-03 / WR-04: legacy leaves foreground_ at nca (we match that by
+    // not touching foreground_). The outline step above left the painter
+    // brush at Qt::NoBrush; while any subsequent xvcouleur_/applyPen()
+    // would refresh it, WR-04 tightens the post-condition by restoring
+    // the brush here so primitives that read the live painter brush
+    // directly (e.g. xvface_) observe the canonical post-ncf->nca final
+    // state without depending on an intervening state-change call.
     st->painter_->setBrush(QBrush(st->foreground_, Qt::SolidPattern));
 
     if (win->canvas()) win->canvas()->update();
