@@ -7,14 +7,22 @@ C AUTEUR : xvue-qt migration team   AVRIL 2026
 C2345X7..............................................................012
 C
 C     Driver minimal pour la validation Phase 1 du backend Qt 6 :
-C     chaque appel a XVINITGRAPHIQUE doit afficher une fenetre blanche
-C     "MEFISTO" de 800x600 pixels, et chaque XVFERMER doit la detruire
-C     sans toucher au QApplication. Deux cycles sont executes pour
-C     verifier que la reouverture ne declenche pas l'assertion
-C     "QApplication: there can only be one".
+C     chaque appel a XVOUVRIR doit afficher une fenetre blanche
+C     "MEFISTO" et chaque XVFERMER doit la detruire sans toucher au
+C     QApplication. Deux cycles sont executes pour verifier que la
+C     reouverture ne declenche pas l'assertion "QApplication: there
+C     can only be one".
 C
-C     Entre le premier XVINITGRAPHIQUE et le premier XVFERMER, une
-C     section "draw-coverage" (D-36, Phase 2) exerce chaque primitive
+C     XVOUVRIR est l'entree officielle des deux backends (legacy X11
+C     et Qt 6) : elle appelle XTINIT (ouverture display/QApplication)
+C     puis XVINIT (ouverture fenetre + pixmap + couleurs + polices).
+C     Appeler xvinitgraphique_ directement ne cree la fenetre et le
+C     pixmap que dans la backend Qt ; sur le backend X11 la fenetre
+C     et le pixmap ne sont crees que par XVINFO appele depuis XVINIT,
+C     ce qui imposait autrefois l'usage de XVOUVRIR.
+C
+C     Entre le premier XVOUVRIR et le premier XVFERMER, une section
+C     "draw-coverage" (D-36, Phase 2) exerce chaque primitive
 C     DRAW-01..09 et chaque style de pinceau (0/1/2). En Wave 0 les
 C     corps des primitives sont encore des stubs warn-once, donc le
 C     run produit des messages stdout et exit 0 sans dessiner.
@@ -32,8 +40,8 @@ C
       PRINT *,'Phase 1+2: cycle open/close + primitives'
       PRINT *,'==========================================='
 C
-      PRINT *,'[xvtest0] premier appel XVINITGRAPHIQUE'
-      CALL XVINITGRAPHIQUE
+      PRINT *,'[xvtest0] premier appel XVOUVRIR'
+      CALL XVOUVRIR
 C
 C     -- Phase 2 draw-coverage section (D-36) --------------------
 C     pen style 0 (solid), width default
@@ -73,6 +81,11 @@ C     ellipse arcs (DRAW-05) — REAL*4 angles per corrected ABI
       CALL XVBORDARCELLIPSE(600, 150,  60,  60, A1, A2)
 C     flush the pre-effacer scene and hold for visual inspection:
 C     Checks 1 (geometry), 2 (pen styles), 3 (antialiasing), 5 (resize).
+C     MEMPXFENETRE copies the off-screen pixmap to fenetre_mef — xvvoir_
+C     itself only calls XRaiseWindow+XFlush since 1999 (window-manager
+C     blocking bug) and does NOT copy the pixmap. Without MEMPXFENETRE
+C     the drawings stay invisible in mempx. (cf. xvue/xvuelc.c:2476.)
+      CALL MEMPXFENETRE
       CALL XVVOIR
       CALL SLEEP(15)
 C     clear mid-sequence, then draw with new pen style
@@ -82,6 +95,7 @@ C     clear mid-sequence, then draw with new pen style
       CALL XVTYPETRAIT(2)
       CALL XVEPAISSEUR(2)
       CALL XVTRAIT( 50, 470, 750, 470)
+      CALL MEMPXFENETRE
       CALL XVVOIR
 C     -- end draw-coverage section --------------------------------
 C
@@ -127,6 +141,7 @@ C     (d) Exercise XVNBPIXELTEXTE + bounding box.
       CALL XVBORDRECTANGLE(50, 360 - NPXHA, NPXLA, NPXHA)
 C     -- end TEXT coverage section ----------------------------------
 C
+      CALL MEMPXFENETRE
       CALL XVVOIR
 C     Hold the window on screen long enough to be visually verified
 C     (SHELL-01, SHELL-06). XVINITGRAPHIQUE has already pumped the
@@ -140,8 +155,8 @@ C     pen style variety on the dashed lines.
       PRINT *,'[xvtest0] premier appel XVFERMER'
       CALL XVFERMER
 C
-      PRINT *,'[xvtest0] second appel XVINITGRAPHIQUE (reopen)'
-      CALL XVINITGRAPHIQUE
+      PRINT *,'[xvtest0] second appel XVOUVRIR (reopen)'
+      CALL XVOUVRIR
       CALL SLEEP(3)
       PRINT *,'[xvtest0] second appel XVFERMER'
       CALL XVFERMER
