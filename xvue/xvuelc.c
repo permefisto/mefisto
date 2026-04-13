@@ -1644,7 +1644,23 @@ void proc(xvfermer)()
     int hv = atoi(hold_env);
     if (hv >= 0 && hv <= 60000) hold_ms = hv;
   }
-  if (display_mef != NULL) XFlush(display_mef);
+  /* Force-copy the off-screen pixmap onto the visible window before the
+     external screenshot tool has a chance to capture. Many solver
+     drawing paths (trelas / trflui / trnlse etc.) draw to mempx and
+     rely on an explicit MEMPXFENETRE call to make the result visible;
+     under MEFISTO_BATCH_X11 that call often never happens because the
+     batch flow ends via a FERMER/CLOSE token that short-circuits the
+     usual menu teardown. Mirroring the copy here guarantees the final
+     mempx state is on screen regardless of how the batch flow exited. */
+  if (display_mef != NULL)
+  {
+    if (mempx != 0 && fenetre_mef != 0)
+    {
+      XCopyArea( display_mef, mempx, fenetre_mef, gc_mef,
+                 0, 0, lapxfe, lhpxfe, 0, 0 );
+    }
+    XFlush(display_mef);
+  }
   if (ready_path != NULL && ready_path[0] != '\0')
   {
     FILE *f = fopen(ready_path, "w");
