@@ -110,6 +110,9 @@ C        INITIALISATIONS POUR EVITER LES TRACES X11
          INTERA = 0
          LAPXFE = 800
          LHPXFE = 600
+C        HYBRID BATCH+X11 OVERRIDE. cf prpr/ppmail.f for full comment.
+         CALL GETENV( 'MEFISTO_BATCH_X11', ARGUMENT )
+         IF( ARGUMENT .NE. ' ' ) INTERA = 1
          IF( LANGAG .EQ. 0 ) THEN
          WRITE(IMPRIM,*) 'Mefisto-NLSER: Nom Fichier Donnees=',NMFILEDO
          WRITE(IMPRIM,*) 'Mefisto-NLSER s''execute en mode BATCH'

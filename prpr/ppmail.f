@@ -109,6 +109,19 @@ C        INITIALISATIONS POUR EVITER LES TRACES X11
          INTERA = 0
          LAPXFE = 800
          LHPXFE = 600
+C        HYBRID BATCH+X11 OVERRIDE for automated visual capture.
+C        When MEFISTO_BATCH_X11 is set in the environment, keep reading
+C        the data file (batch-driven workflow) but also open the X11
+C        window so the drawing commands embedded in the batch file
+C        produce visible output. Required for driver-less A/B captures
+C        of testa cases (cf. bin/xvtest-capture.sh workflow). No effect
+C        on normal batch runs — the env var defaults to empty.
+         CALL GETENV( 'MEFISTO_BATCH_X11', ARGUMENT )
+C        INTERA=1 : ecran graphique, PAS de clavier, PAS de souris.
+C        Suffisant pour capture: LEREUR renvoie immediatement au lieu
+C        d'attendre un clic (cf xvue/lereur.f:64), et toutes les traces
+C        graphiques du fichier batch restent actives.
+         IF( ARGUMENT .NE. ' ' ) INTERA = 1
          IF( LANGAG .EQ. 0 ) THEN
          WRITE(IMPRIM,*)'Mefisto-MAILLER: Nom Fichier Donnees=',NMFILEDO
          WRITE(IMPRIM,*)'Mefisto-MAILLER s''execute en mode BATCH'
