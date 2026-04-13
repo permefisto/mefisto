@@ -343,6 +343,24 @@ void proc(xvactivervb)( int *palcour, int *nbcells,
     // dirty-flag rebuild on its next call.
 }
 
+// IN-02: shared palette-index clamp + dirty-cache rebuild used by
+// xvcouleur_, xvfond_, and apply_palette_foreground. Returns the resolved
+// QColor; callers decide whether to write foreground_/background_ and
+// whether to call applyPen(). File-local (static) by design — all call
+// sites are in this translation unit.
+static const QColor& palette_resolve(int icolor, int fallback) {
+    int i = icolor;
+    if (i < 0 || i >= XvueState::kMaxPalette) i = fallback;
+    if (XvueState::palette_cache_dirty_[i]) {
+        XvueState::palette_cache_[i] = QColor::fromRgbF(
+            XvueState::red[i],
+            XvueState::green[i],
+            XvueState::blue[i]);
+        XvueState::palette_cache_dirty_[i] = false;
+    }
+    return XvueState::palette_cache_[i];
+}
+
 // ---- 13. xvcouleur_ (Phase 3 D-14, TEXT-04) ----
 // State-change entry: install palette_cache_[i] as current foreground.
 // NO flush — drawing primitives run their own D-01 epilogue.
@@ -351,23 +369,13 @@ void proc(xvcouleur)(int *icolor) {
     XVUE_QT_ASSERT_MAIN_THREAD();
     if (!icolor) return;                                // WR-03
 
-    int i = *icolor;
-    if (i < 0 || i >= XvueState::kMaxPalette) i = 1;    // legacy "fallback to red"
-
     auto& win = XvueApp::window_slot();
     if (!win) return;
     auto* st = win->state();
     if (!st) return;
 
-    if (XvueState::palette_cache_dirty_[i]) {
-        XvueState::palette_cache_[i] = QColor::fromRgbF(
-            XvueState::red[i],
-            XvueState::green[i],
-            XvueState::blue[i]);
-        XvueState::palette_cache_dirty_[i] = false;
-    }
-
-    st->foreground_ = XvueState::palette_cache_[i];
+    // IN-02: legacy "fallback to red" (index 1) via shared helper.
+    st->foreground_ = palette_resolve(*icolor, 1);
     st->applyPen();  // 02/D-20 syncs brush + pen from foreground_
     // D-14: no update(), no processEvents — state-change only.
 }
@@ -462,23 +470,15 @@ void proc(xvfond)(int *icolor) {
     XVUE_QT_ASSERT_MAIN_THREAD();
     if (!icolor) return;                               // WR-03
 
-    int i = *icolor;
-    if (i < 0 || i >= XvueState::kMaxPalette) i = 0;   // default to index 0 (black)
-
     auto& win = XvueApp::window_slot();
     if (!win) return;
     auto* st = win->state();
     if (!st) return;
 
-    if (XvueState::palette_cache_dirty_[i]) {
-        XvueState::palette_cache_[i] = QColor::fromRgbF(
-            XvueState::red[i], XvueState::green[i], XvueState::blue[i]);
-        XvueState::palette_cache_dirty_[i] = false;
-    }
-
+    // IN-02: xvfond_ defaults to palette index 0 (black) via shared helper.
     // D-15: update XvueState::background_ through the live window, repaint.
     // Phase 2 D-24: re-fill the backing with the new background and flush.
-    st->background_ = XvueState::palette_cache_[i];
+    st->background_ = palette_resolve(*icolor, 0);
     if (st->painter_ && st->painter_->isActive() && st->backing_) {
         st->painter_->fillRect(st->backing_->rect(), st->background_);
     }
@@ -684,19 +684,11 @@ void proc(xvtraits)(int *nbpoints, MefistoPoint *points) {
 }
 
 // Internal helper — inline palette install for callers that already hold
-// a resolved XvueState*. Mirrors proc(xvcouleur) body lines 354-371 but
-// skips XvueApp::ensure()/thread-assert/window-slot re-lookup.
+// a resolved XvueState*. Mirrors proc(xvcouleur) body but skips
+// XvueApp::ensure()/thread-assert/window-slot re-lookup. IN-02: delegates
+// clamp + dirty-cache rebuild to the shared palette_resolve() helper.
 static void apply_palette_foreground(XvueState* st, int icolor) {
-    int i = icolor;
-    if (i < 0 || i >= XvueState::kMaxPalette) i = 1;   // legacy fallback
-    if (XvueState::palette_cache_dirty_[i]) {
-        XvueState::palette_cache_[i] = QColor::fromRgbF(
-            XvueState::red[i],
-            XvueState::green[i],
-            XvueState::blue[i]);
-        XvueState::palette_cache_dirty_[i] = false;
-    }
-    st->foreground_ = XvueState::palette_cache_[i];
+    st->foreground_ = palette_resolve(icolor, 1);  // legacy fallback to red
     st->applyPen();  // rebuilds pen from pen_style_ + foreground_, brush from foreground_
 }
 
