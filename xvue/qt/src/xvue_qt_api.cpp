@@ -709,15 +709,19 @@ void proc(xvfacetraits)(int *ncf, int *nca, int *n, MefistoPoint *pts) {
     }
 
     // 02.1/D-1: mirror xvue/xvuelc.c:2055,2064 — install ncf, fill; install
-    // nca, outline. applyPen() rebuilds pen from pen_style_ so the dashed
-    // style set by xvtypetrait_ survives the outline step. WR-01: fill must
-    // not stroke (setPen(Qt::NoPen)); outline must not re-fill
-    // (setBrush(Qt::NoBrush)).
+    // nca, outline. Dashed style set by xvtypetrait_ survives the outline
+    // step because pen_style_ is threaded through XvueState::applyPen()
+    // (see xvue_qt_state.cpp:136-142), which rebuilds pen_ from
+    // pen_style_ + foreground_ on every apply_palette_foreground() call.
+    // WR-01: fill must not stroke (setPen(Qt::NoPen)); outline must not
+    // re-fill (setBrush(Qt::NoBrush)).
     apply_palette_foreground(st, *ncf);
-    QPen   saved_pen_after_ncf = st->painter_->pen();   // pen with dash style, ncf color
     st->painter_->setPen(Qt::NoPen);
     st->painter_->drawPolygon(poly, Qt::OddEvenFill);   // fill (D-12 order)
-    st->painter_->setPen(saved_pen_after_ncf);          // restore dashed pen before switching color
+    // IN-01: no pen restore between fill and outline — the next
+    // apply_palette_foreground(st, *nca) call invokes applyPen() which
+    // unconditionally rebuilds pen_ from pen_style_ + foreground_, so any
+    // intermediate setPen(Qt::NoPen) is immediately superseded.
 
     apply_palette_foreground(st, *nca);                 // rebuilds pen with nca color, preserves dash style
     st->painter_->setBrush(Qt::NoBrush);
