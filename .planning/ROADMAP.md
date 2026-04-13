@@ -97,7 +97,7 @@ Plans:
   - [x] 03-01-PLAN.md — Wave 0: bundle DejaVuSansMono TTF + qt_add_resources + verify_no_exec palette grep + XvueState palette/font grow + XvueApp font load + XvueCanvas ctor/resize guards + xvtest0.f TEXT coverage extension
   - [x] 03-02-PLAN.md — Wave 1: 7 real bodies (xvchargefonte_, xvnbpixeltexte_, xvtexte_/xvftexte_ collapsed, xvcouleur_, xvactivervb_ bulk-load, xvrecuprgbdec_) + xvinfo_ palette/font fill + retire xvfond_ hack
   - [x] 03-03-PLAN.md — Wave 2: clean rebuild + xvtest0 visual checkpoint (fonts + 8 colored lines + xvactivervb + xvnbpixeltexte box + resize preserve)
-  - [ ] 03-04-PLAN.md — Wave 3: A/B catch-up gate vs prpr/xvtest1..4 + 5 canonical testa cases (D-26 hard gate) + 03-VALIDATION.md closure
+  - [x] 03-04-PLAN.md — Wave 3: A/B catch-up gate vs prpr/xvtest1..4 + 5 canonical testa cases (D-26 hard gate) + 03-VALIDATION.md closure
 **UI hint**: yes
 
 ### Phase 03.1: Build xvtest1..4 driver infrastructure on both backends (Qt + legacy X11) to unblock Phase 3 A/B catch-up gate (INSERTED)
@@ -105,7 +105,7 @@ Plans:
 **Goal:** Produce pp/ppxvtest{0..4}(_qt) on both Qt and legacy X11 backends (9 new cb* scripts + 2 top-level edits), fix the Qt-side xtinit_ warn-once stub so XVOUVRIR opens a real window, and harden plan 03-04 Task 1 smoke (timeout 5s, enriched grep including xtinit_, xvtest1 STOP tolerance) so the Phase 3 A/B visual gate can execute.
 **Requirements**: BUILD-07, VALID-02, TEXT-01..06 (inherited — no new IDs)
 **Depends on:** Phase 3
-**Plans:** 4/3 plans complete
+**Plans:** 4/4 plans complete
 
 Plans:
 - [x] 03.1-01-PLAN.md — Wave 0: A6 grep verification + Qt-side xtinit_ promotion (xvue/qt/src/xvue_qt_api.cpp), X11 untouched
