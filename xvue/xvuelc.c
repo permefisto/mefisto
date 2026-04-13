@@ -1595,11 +1595,23 @@ void proc(xvnbpixeltexte)( char *texte, int *length, int *nbpxla, int *nbpxha )
 ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
  AUTEUR : DOURSAT CHRISTOPHE UPMC ANALYSE NUMERIQUE PARIS          NOVEMBRE 1994
 12345X7..............................................................012345678*/ 
-{        
-  int  direction ; 
+{
+  int  direction ;
 
+  /* Guard against the case where no font has been loaded yet (struc_police
+     still NULL). Happens when xvnbpixeltexte_ is called before any
+     xvchargefonte_ / choixfonte — e.g., xvtest3 early-init under Xvfb with
+     MEFISTO_XVSOURIS_AUTOEXIT where the font load is deferred. Return zero
+     extents so the caller can decide how to lay out; dereferencing
+     struc_police would SIGSEGV. */
+  if (struc_police == NULL)
+  {
+    *nbpxla = 0;
+    *nbpxha = 0;
+    return;
+  }
   XTextExtents(struc_police , texte , *length , &direction ,
-               &ascent_pol , &descent_pol , &mesure ) ;  
+               &ascent_pol , &descent_pol , &mesure ) ;
   *nbpxla = mesure.width ;
   *nbpxha = mesure.ascent + mesure.descent ;
 }
@@ -1613,7 +1625,34 @@ void proc(xvfermer)()
  MODIFS : PERRONNET ALAIN LJLL UPMC PARIS & Saintt PIERRE DU PERRAY OCTOBRE 2013
 12345X7..............................................................012345678*/ 
 {
- /* XUnmapWindow( display_mef, fenetre_mef); la fenetre devient invisible */ 
+  /* Headless-test capture hook. Right before tearing down the display,
+     honor two optional environment variables for automated screenshotting:
+       MEFISTO_XVFERMER_READY_FILE : path to a sentinel file to create just
+           before the hold starts. A capture script can poll for this file
+           and grab the root window the instant it appears, guaranteeing
+           the final rendered state is on screen regardless of how many
+           XVSOURIS stages the driver cycled through under AUTOEXIT.
+       MEFISTO_XVFERMER_HOLD_MS : milliseconds to sleep after flushing and
+           creating the sentinel, before destroying the window. Gives the
+           external capture tool a deterministic capture window. Default 0
+           (no hold) when not set; clamped to [0, 60000]. */
+  char *ready_path = getenv("MEFISTO_XVFERMER_READY_FILE");
+  char *hold_env   = getenv("MEFISTO_XVFERMER_HOLD_MS");
+  int   hold_ms    = 0;
+  if (hold_env != NULL && hold_env[0] != '\0')
+  {
+    int hv = atoi(hold_env);
+    if (hv >= 0 && hv <= 60000) hold_ms = hv;
+  }
+  if (display_mef != NULL) XFlush(display_mef);
+  if (ready_path != NULL && ready_path[0] != '\0')
+  {
+    FILE *f = fopen(ready_path, "w");
+    if (f != NULL) { fputs("ready\n", f); fclose(f); }
+  }
+  if (hold_ms > 0) usleep((useconds_t)hold_ms * 1000);
+
+ /* XUnmapWindow( display_mef, fenetre_mef); la fenetre devient invisible */
   XFreeFontNames( listfonts );
   XFreeGC(        display_mef, gc_mef );
   XFreeColormap(  display_mef, color_map );
@@ -2155,9 +2194,36 @@ void proc(xvsouris)( int *notypeevent, int *nbc, int *x1, int *y1 )
   int      nb;
   char     buffer[20];
   KeySym  *keysym;   /*  incidence */
-   
+  char    *autoexit;
+
   *notypeevent = 0;
   flag=0;
+
+  /* Headless-test short-circuit. When MEFISTO_XVSOURIS_AUTOEXIT is set in
+     the environment, do not block on XNextEvent — flush pending output,
+     sleep MEFISTO_XVSOURIS_AUTOEXIT_DELAY_MS milliseconds (default 500) so
+     an external screenshot tool (import, xwd, ...) has time to capture the
+     rendered window, then return a synthetic SPACE keypress so the caller
+     loops of the form "IF (NOTYEV .NE. 2) GOTO 100" exit cleanly and the
+     driver reaches XVFERMER on its own. Interactive use is unchanged. */
+  autoexit = getenv("MEFISTO_XVSOURIS_AUTOEXIT");
+  if (autoexit != NULL && autoexit[0] != '\0')
+  {
+    int delay_ms = 500;
+    char *delay_env = getenv("MEFISTO_XVSOURIS_AUTOEXIT_DELAY_MS");
+    if (delay_env != NULL && delay_env[0] != '\0')
+    {
+      int d = atoi(delay_env);
+      if (d >= 0 && d <= 60000) delay_ms = d;
+    }
+    if (display_mef != NULL) XFlush(display_mef);
+    if (delay_ms > 0) usleep((useconds_t)delay_ms * 1000);
+    *notypeevent = 2;   /* KEY pressed */
+    *nbc         = ' '; /* space key — neither 27 (Esc) nor 64 (@), so NOT an ABANDON */
+    *x1          = 0;
+    *y1          = 0;
+    return;
+  }
 
   while (!flag)
   {
@@ -2270,14 +2336,35 @@ void proc(xvsouris2)( int *items, int *pmin0,
   int     nb,nbitem,mots,d,dmin,pmin,p,k;
   char    buffer[20];
   KeySym *keysym;   /*  incidence */
-   
+  char   *autoexit;
+
   *notypeevent = 0;
   flag = 0;
+
+  /* Headless-test short-circuit — same contract as xvsouris_ above. */
+  autoexit = getenv("MEFISTO_XVSOURIS_AUTOEXIT");
+  if (autoexit != NULL && autoexit[0] != '\0')
+  {
+    int delay_ms = 500;
+    char *delay_env = getenv("MEFISTO_XVSOURIS_AUTOEXIT_DELAY_MS");
+    if (delay_env != NULL && delay_env[0] != '\0')
+    {
+      int dv = atoi(delay_env);
+      if (dv >= 0 && dv <= 60000) delay_ms = dv;
+    }
+    if (display_mef != NULL) XFlush(display_mef);
+    if (delay_ms > 0) usleep((useconds_t)delay_ms * 1000);
+    *notypeevent = 2;
+    *ibutton     = ' ';
+    *x1          = 0;
+    *y1          = 0;
+    return;
+  }
 
   while (!flag)
   {
     XNextEvent(display_mef, &event);
-    if(event.type == MotionNotify || event.type == ButtonPress) 
+    if(event.type == MotionNotify || event.type == ButtonPress)
     {
       /* Un bouton presse avec ou sans deplacement */
       *notypeevent = 5;   /* accrochage actif */
