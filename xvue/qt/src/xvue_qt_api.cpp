@@ -9,7 +9,9 @@
 // Per D-17: warn-once diagnostic pattern is a per-function `static bool warned`.
 
 #include <cstdio>
+#include <cstdlib>
 #include <cstring>
+#include <unistd.h>
 #include "xvue_qt_api.h"
 #include "xvue_qt_app.h"
 #include "xvue_qt_window.h"
@@ -541,6 +543,91 @@ void proc(xvnbpixeltexte)(char *texte, int *length, int *nbpxla, int *nbpxha) {
 void proc(xvfermer)(void) {
     XvueApp::ensure();
     XVUE_QT_ASSERT_MAIN_THREAD();
+    // Headless-test capture hook — matches the legacy xvuelc.c contract
+    // (cf. xvue/xvuelc.c xvfermer_). Three optional env vars:
+    //   MEFISTO_XVFERMER_READY_FILE  — path to touch right before
+    //       destroying the window so an external screenshot tool can
+    //       grab the final rendered state (root-window capture path).
+    //   MEFISTO_XVFERMER_HOLD_MS     — milliseconds to sleep after
+    //       flushing + touching the sentinel, before the window
+    //       is destroyed. Default 0 (no hold).
+    //   MEFISTO_QT_CAPTURE_PATH      — if set, call QWidget::grab()
+    //       on the canvas and save directly to this PNG path before
+    //       destroying the window. Works under QT_QPA_PLATFORM=offscreen
+    //       with NO X11 dependency, so it does not need xcb-cursor0 or
+    //       an Xvfb server — ideal for headless CI and for cases where
+    //       the xcb platform plugin fails to initialise.
+    // All three default to "no-op" when unset; interactive behavior is
+    // unchanged. Qt-side counterpart of the legacy hook (commit e029b84)
+    // with the extra in-process grab() path for full headless support.
+    {
+        auto& win = XvueApp::window_slot();
+        if (win && win->canvas()) {
+            win->canvas()->update();
+        }
+        QCoreApplication::processEvents(QEventLoop::ExcludeUserInputEvents);
+
+        const char* qt_capture_path = std::getenv("MEFISTO_QT_CAPTURE_PATH");
+        if (qt_capture_path && qt_capture_path[0] != '\0') {
+            // In-process screenshot of the XvueState backing pixmap —
+            // this is the authoritative surface every Phase 2 drawing
+            // primitive paints on (see xvue_qt_canvas.cpp:35-36:
+            // "paintEvent = drawPixmap blit ONLY" from state_->backing_).
+            // Capturing it directly bypasses the widget paint pipeline,
+            // which under QT_QPA_PLATFORM=offscreen does not always
+            // trigger a full repaint between update() and grab(), and
+            // guarantees the captured PNG matches exactly what the
+            // drawing primitives produced up to this point. Also ends
+            // any active painter session first so the pixmap is in a
+            // consistent readable state.
+            XvueState* st = (win ? win->state() : nullptr);
+            if (st && st->backing_) {
+                if (st->painter_ && st->painter_->isActive()) {
+                    st->painter_->end();
+                }
+                if (!st->backing_->save(
+                        QString::fromLatin1(qt_capture_path), "PNG")) {
+                    std::fprintf(stderr,
+                        "xvue-qt: failed to save backing to "
+                        "MEFISTO_QT_CAPTURE_PATH=%s\n",
+                        qt_capture_path);
+                }
+            } else if (win && win->canvas()) {
+                // Fallback to widget grab if no backing is available
+                // (e.g., the driver never called xvinfo_ to allocate it).
+                QPixmap shot = win->canvas()->grab();
+                if (!shot.save(
+                        QString::fromLatin1(qt_capture_path), "PNG")) {
+                    std::fprintf(stderr,
+                        "xvue-qt: failed to save widget grab to "
+                        "MEFISTO_QT_CAPTURE_PATH=%s\n",
+                        qt_capture_path);
+                }
+            }
+        }
+
+        const char* ready_path = std::getenv("MEFISTO_XVFERMER_READY_FILE");
+        const char* hold_env   = std::getenv("MEFISTO_XVFERMER_HOLD_MS");
+        int hold_ms = 0;
+        if (hold_env && hold_env[0] != '\0') {
+            int hv = std::atoi(hold_env);
+            if (hv >= 0 && hv <= 60000) hold_ms = hv;
+        }
+        if (ready_path && ready_path[0] != '\0') {
+            FILE* f = std::fopen(ready_path, "w");
+            if (f) { std::fputs("ready\n", f); std::fclose(f); }
+        }
+        if (hold_ms > 0) {
+            // Pump the event loop during the hold so paint events
+            // delivered to the canvas actually reach the X server.
+            QElapsedTimer t; t.start();
+            while (t.elapsed() < hold_ms) {
+                QCoreApplication::processEvents(
+                    QEventLoop::ExcludeUserInputEvents, 50);
+                usleep(10 * 1000);
+            }
+        }
+    }
     // D-06: destroy the window only. Do NOT touch qApp, do NOT call
     // qApp->quit(). The QApplication lives until the atexit handler.
     XvueApp::window_slot().reset();
@@ -739,9 +826,42 @@ void proc(xvfacetraits)(int *ncf, int *nca, int *n, MefistoPoint *pts) {
 }
 
 // ---- 37. xvsouris_ ----
+// Headless-test short-circuit: when MEFISTO_XVSOURIS_AUTOEXIT is set,
+// return a synthetic SPACE keypress so driver loops of the form
+//   IF (NOTYEV .NE. 2) GOTO 100
+// exit on first iteration. Pairs with the MEFISTO_XVFERMER_* capture
+// hook above and matches the legacy xvuelc.c contract.
+//
+// When the env var is not set, the Qt-side behavior stays the stub it
+// was before (returns no event — the driver's input loop is expected
+// to be handled by the Qt event pump). Interactive paths are never
+// regressed.
 void proc(xvsouris)(int *notypeevent, int *nbc, int *x1, int *y1) {
     XvueApp::ensure();
     XVUE_QT_ASSERT_MAIN_THREAD();
+    const char* autoexit = std::getenv("MEFISTO_XVSOURIS_AUTOEXIT");
+    if (autoexit && autoexit[0] != '\0') {
+        int delay_ms = 500;
+        const char* delay_env = std::getenv("MEFISTO_XVSOURIS_AUTOEXIT_DELAY_MS");
+        if (delay_env && delay_env[0] != '\0') {
+            int d = std::atoi(delay_env);
+            if (d >= 0 && d <= 60000) delay_ms = d;
+        }
+        // Paint the canvas and pump events so the window is up to date.
+        auto& win = XvueApp::window_slot();
+        if (win && win->canvas()) win->canvas()->update();
+        QElapsedTimer t; t.start();
+        while (t.elapsed() < delay_ms) {
+            QCoreApplication::processEvents(
+                QEventLoop::ExcludeUserInputEvents, 25);
+            usleep(5 * 1000);
+        }
+        if (notypeevent) *notypeevent = 2;
+        if (nbc)         *nbc         = ' ';
+        if (x1)          *x1          = 0;
+        if (y1)          *y1          = 0;
+        return;
+    }
     static bool warned = false;
     warn_once(warned, "xvsouris_");
     (void)notypeevent; (void)nbc; (void)x1; (void)y1;
@@ -751,6 +871,29 @@ void proc(xvsouris)(int *notypeevent, int *nbc, int *x1, int *y1) {
 void proc(xvsouris2)(int *items, int *pmin0, int *notypeevent, int *ibutton, int *x1, int *y1) {
     XvueApp::ensure();
     XVUE_QT_ASSERT_MAIN_THREAD();
+    const char* autoexit = std::getenv("MEFISTO_XVSOURIS_AUTOEXIT");
+    if (autoexit && autoexit[0] != '\0') {
+        int delay_ms = 500;
+        const char* delay_env = std::getenv("MEFISTO_XVSOURIS_AUTOEXIT_DELAY_MS");
+        if (delay_env && delay_env[0] != '\0') {
+            int d = std::atoi(delay_env);
+            if (d >= 0 && d <= 60000) delay_ms = d;
+        }
+        auto& win = XvueApp::window_slot();
+        if (win && win->canvas()) win->canvas()->update();
+        QElapsedTimer t; t.start();
+        while (t.elapsed() < delay_ms) {
+            QCoreApplication::processEvents(
+                QEventLoop::ExcludeUserInputEvents, 25);
+            usleep(5 * 1000);
+        }
+        if (notypeevent) *notypeevent = 2;
+        if (ibutton)     *ibutton     = ' ';
+        if (x1)          *x1          = 0;
+        if (y1)          *y1          = 0;
+        (void)items; (void)pmin0;
+        return;
+    }
     static bool warned = false;
     warn_once(warned, "xvsouris2_");
     (void)items; (void)pmin0; (void)notypeevent; (void)ibutton; (void)x1; (void)y1;

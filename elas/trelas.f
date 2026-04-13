@@ -271,6 +271,15 @@ C
       ENDIF
       CALL LHISTO
 C
+C     Copy mempx -> fenetre_mef so the previous iteration's drawings
+C     (TRCONT / TRDEPL / TRVMTR / TRFRPR / TRZDXY) become visible in
+C     the X11 window before the next 'contdepl' menu prompt. xvvoir_
+C     has been a no-op since 1999 (cf. xvue/xvuelc.c:2476), so without
+C     this the elasticity traces stayed in the off-screen pixmap and
+C     never reached the user — observable in batch+X11 hybrid mode
+C     (MEFISTO_BATCH_X11=1) where the window stayed uniformly empty.
+      CALL MEMPXFENETRE
+C
       CALL LIMTCL( 'contdepl', NMTCL )
       IF( NMTCL .LT. 0 ) GOTO 9000
       IF( NMTCL .EQ. 0 ) THEN

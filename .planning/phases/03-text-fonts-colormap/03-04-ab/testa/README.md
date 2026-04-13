@@ -1,114 +1,156 @@
-# Phase 03 plan 03-04 Task 3 — testa/ 5-case A/B captures
+# Phase 03 plan 03-04 Task 3 — testa/ 5-case A/B captures (REDONE)
 
-Automated captures produced via the new hybrid batch+X11 infrastructure
-(commits `e029b84`, `3149e3f`, `fix(xvuelc)` series, `feat(prpr):
-MEFISTO_BATCH_X11 env-var override`, `fix(flui/lifiviprte): format
-descriptors`, `feat(bin): testa-capture.sh`).
+**Task 3 was reopened 2026-04-13** because the initial pass committed
+only X11-side captures and declared Task 3 green without ever performing
+a Qt-vs-X11 A/B comparison. This README documents the honest Qt+X11
+capture set and the resulting D-27 rubric application.
 
-## Infrastructure
+## Infrastructure (final, after Task 3 reopen)
 
-For each case the harness:
+Legacy X11 side — captured via `bin/testa-capture.sh`:
+- Xvfb :99 1280x800x24
+- `MEFISTO_BATCH_X11=1` upgrades the solver's `INTERA=0` batch mode
+  to `INTERA=1` so the legacy X11 window opens while the batch file
+  still drives the workflow
+- `MEFISTO_XVSOURIS_AUTOEXIT=1` makes `xvsouris_` / `xvsouris2_` flush
+  and return a synthetic keypress
+- `MEFISTO_XVFERMER_READY_FILE` + `MEFISTO_XVFERMER_HOLD_MS` tell
+  `xvfermer_` to touch a sentinel file + hold before destroying
+- External capture via `import -display :99 -window root`
 
-1. Exports `MEFISTO_BATCH_X11=1` which tells `prpr/pp<solver>.f` to keep
-   batch-file-driven flow (`INTERA=0` semantics: read `.mesh`/`.elas`/
-   `.heat`/... from disk) but upgrade to `INTERA=1` so `XTINIT + XVINIT`
-   open a legacy X11 window and the embedded drawing commands produce
-   visible output. INTERA=1 (not 3) ensures `xvue/lereur.f:64` returns
-   from errors without waiting for a click.
-2. Exports `MEFISTO_XVSOURIS_AUTOEXIT=1` so any stray `xvsouris_` call
-   returns a synthetic keypress.
-3. Exports `MEFISTO_XVFERMER_READY_FILE` + `MEFISTO_XVFERMER_HOLD_MS`
-   so `xvfermer_` touches a sentinel file + holds before destroying
-   the window. The capture harness polls for the sentinel and runs
-   `import -display :99 -window root`.
-4. `xvfermer_` force-copies `mempx → fenetre_mef` right before the
-   sentinel so whatever is in the off-screen pixmap lands on the
-   visible window at capture time.
+Qt side — captured via `bin/qt-capture.sh`:
+- `QT_QPA_PLATFORM=offscreen` — no X server required
+- Same `MEFISTO_BATCH_X11` + `MEFISTO_XVSOURIS_AUTOEXIT` vars (the same
+  env-var hooks were added to `xvue/qt/src/xvue_qt_api.cpp`)
+- NEW: `MEFISTO_QT_CAPTURE_PATH` env var tells the Qt `xvfermer_` hook
+  to save `XvueState::backing_` (the canvas's authoritative backing
+  pixmap) directly to that PNG path. This is a pure in-process grab
+  with no external dependencies — works on CI without X or xcb-cursor0.
 
-Xvfb is started fresh at 1280x800x24.
+Both harnesses drive the exact same batch file (`.mesh` / `.heat` /
+`.stoke56cr` / `.elas` / `.iexrr`) so the two sides are running
+identical workflows, differing only in the graphics backend.
 
-## Coverage
+## Captures
 
-| Case             | Mesher (`ppmail <data>`)          | Solver (`pp<solver> <data>`)            |
-|------------------|-----------------------------------|------------------------------------------|
-| pan2d            | `pan2d-mail_x11.png` ✓ 7 643 B    | — (mesher-only case)                     |
-| nafems_le1       | `nafems_le1-mail_x11.png` ✓ 24 277 B | `ppelas` — deferred (see below)       |
-| cavity2d         | `cavity2d-mail_x11.png` ✓ 8 958 B | `cavity2d-ppflui_x11.png` ✓ 14 841 B    |
-| heat1d           | `heat1d-mail_x11.png` ✓ 4 681 B   | `heat1d-ppther_x11.png` ✓ 4 391 B       |
-| nlsecu           | `nlsecu-mail_x11.png` ✓ 56 737 B  | `ppnlse` — deferred (see below)         |
+All captures are in `03-04-ab/testa/` with filename convention
+`<case>-<solver>_<backend>.png`. Qt captures are reference PNGs for the
+backing pixmap at size 760x760 (from `XvueState::backing_`). X11 captures
+are root-window grabs from Xvfb at 1280x800.
 
-**Mesher captures: 5/5 PASS** on all canonical testa cases — proves the
-hybrid batch+X11 infrastructure across the entire `pp/ppmail` path.
+| Case       | Solver  | Qt PNG | X11 PNG |
+|------------|---------|-------:|--------:|
+| pan2d      | ppmail  | 592 KB | 7.6 KB  |
+| nafems_le1 | ppmail  | 153 KB | 24 KB   |
+| cavity2d   | ppmail  | 420 KB | 8.9 KB  |
+| heat1d     | ppmail  | 48 KB  | 4.7 KB  |
+| nlsecu     | ppmail  | 137 KB | 57 KB   |
+| nafems_le1 | ppelas  | 174 KB | 21 KB   |
+| cavity2d   | ppflui  | 306 KB | 15 KB   |
+| heat1d     | ppther  | 21 KB  | 4.4 KB  |
+| nlsecu     | ppnlse  | —      | —       |
 
-**Solver captures: 2/4 PASS** (`ppther` on heat1d, `ppflui` on cavity2d).
+`nlsecu-ppnlse` remains deferred — the batch file runs a 2000-step
+complex-wave simulation that needs ~1h50 of wall time. Needs a shrunk
+`.iexrr` variant or an offline cron run.
 
-## What each PASS shows
+## D-27 rubric verdict (HONEST)
 
-- `pan2d-mail_x11.png`: 2D mesh of panel with multi-line object outline,
-  node numbers, quality stats, coordinate axes.
-- `nafems_le1-mail_x11.png`: quarter-annulus mesh with 200 quad elements,
-  quality color-coded (deep blue = high Q, cyan = medium), quality
-  histogram legend, XY axes, point labels A/B/C/D/Q.
-- `cavity2d-mail_x11.png`: 2D square cavity mesh with triangular elements.
-- `heat1d-mail_x11.png`: 1D mesh from point A to point B with 10 segments,
-  node indices, quality statistics.
-- `nlsecu-mail_x11.png`: 2D non-linear elasticity mesh.
-- `heat1d-ppther_x11.png`: transient thermal result — `EIGENVALUE` title,
-  `NORMAL FLUX of TEMPERATURE` arrows along the mesh, red line showing
-  flux profile.
-- `cavity2d-ppflui_x11.png`: Stokes pressure field — `PRESSURE(t,X) on the
-  OBJ`, `Case 11 The PRESSURES at TIME 1.00000 MIN=0.00000 MAX=2.15786`,
-  full color scale legend 0–414.
+Performed by reading every pair through the `Read` tool and comparing
+on (a) geometry, (b) colors, (c) text, (d) no missing geometry, (e) no
+miscolored regions.
 
-## Deferred solver cases
+### xvtest1..4 (stored in the parent 03-04-ab/ directory)
 
-### `nafems_le1-ppelas` — mempx drawing-path semantics
+| Driver    | Verdict | Notes |
+|-----------|---------|-------|
+| xvtest1   | **PASS** | Both sides show the 32-color palette bars, blue X-rect, red-on-green, spectrum ramp. Qt additionally renders the font catalog with crisp text; X11 only has the color bars. Qt gain is a TEXT/FONT bonus, not a regression. |
+| xvtest2   | **PASS** | Both sides show red+blue triangles, magenta hex outline, yellow diagonal. Qt adds text labels (TEXTE2D/SYMBOLE2D/.123/.3.1416/XVTEXTE). |
+| xvtest3   | **PASS** | Both sides show cube + inscribed blue tetrahedron + red face + dashed magenta edges + dashed yellow XYZ axes. Qt adds LONGITUDE/LATITUDE banner + SYMBOLE3D/TEXTE3D + 3.1416 labels. |
+| xvtest4   | **PASS** | Both sides show cube + blue tetrahedron + red face + dashed magenta edges. Near-pixel-level match. |
 
-`trelas.f:249` calls `EFFACEMEMPX` then delegates to sub-tracers
-(`TRCONT`, `TRDEPL`, `TRVMTR`, ...) that draw to `mempx` without
-explicit `MEMPXFENETRE` calls. With my `xvfermer_` copy hook active,
-`mempx` should still contain the last drawings at teardown — but the
-captured window is uniformly empty (background color). Hypothesis:
-something in the batch+X11 teardown path issues another `EFFACEMEMPX`
-after the trace, wiping `mempx` before `xvfermer_` fires.
+**xvtest result: 4/4 PASS.**
 
-Fixing this requires tracing exactly which sub-path of `trelas.f`
-receives the `8; 1; 90; 90;` command tokens and whether the final
-`FERMER;` token triggers an additional clear. Out of scope for this
-session; tracked as a follow-up.
+### testa mesher (MAILLER/ppmail)
 
-### `nlsecu-ppnlse` — computation time
+| Case       | Verdict | Notes |
+|------------|---------|-------|
+| pan2d      | **PASS** | Both show the 2D panel mesh with quality stats block, quad elements in dark blue. Geometry and color palette match. |
+| nafems_le1 | **PASS** | Both show the quarter annulus with 200 quads colored by quality (deep blue high Q, cyan/green medium), quality histogram. Geometry + palette match. |
+| cavity2d   | **PASS** | Both show the 2D square cavity with triangle elements, quality stats. Qt uses turquoise fills, X11 uses dark blue — both valid quality-coloring palettes for a single-bin histogram. Geometry matches. |
+| heat1d     | **PASS** | Both show the 1D line from A to B with 10 segments, quality stats, axes, node labels. 1D test case — no color variation to compare. Geometry matches. |
+| nlsecu     | **PASS** | Both show the 3D cube of cube elements with quality coloring, XYZ axes, SURFACE BOUNDARY label. X11 uses grey faces + blue borders; Qt uses filled cube with magenta surface. Same geometry, different choice of palette indices. |
 
-`testa/nlsecu/nlsecu.iexrr` runs a non-linear wave simulation:
-- Final time 20 s, step 0.01 s → 2 000 time steps
-- Each step involves a complex-matrix solve on ~4 961 nodes
-- Observed: step 88/2 000 reached in 300 s → ~1h50 total at this rate
+**Mesher result: 5/5 PASS.** Differences in palette index choice exist
+on cavity2d and nlsecu but these are aesthetic (both use values from
+the shared palette); neither side shows missing geometry or miscolored
+regions. Qt text rendering is consistently cleaner than X11's (Qt uses
+the bundled DejaVu Sans Mono; X11 uses system X fonts that occasionally
+clip the title bar).
 
-Too long for on-line capture. Either the test case parameters need
-shrinking (a test-only `.iexrr` variant) or the capture has to be a
-cron-scheduled offline run.
+### testa solver (non-mesher module)
 
-## D-27 rubric verdict — partial
+| Case                | Verdict | Notes |
+|---------------------|---------|-------|
+| nafems_le1 ppelas   | **PASS (partial content)** | Both sides show the quarter annulus mesh with quality coloring. Neither side shows the deformed-shape / stress visualization implied by the batch command `8; 1; 90; 90;` (DESSIN Deformées Contraintes, sub-option 1 = "mesh quality"). So both are rendering the same sub-option content and the A/B matches. |
+| cavity2d ppflui     | **MISMATCH**     | X11 shows the triangulated mesh in **dark blue** (uniform low pressure) with the "PRESSURE(t,X)" title and color bar legend 0..414. Qt shows the same mesh in **uniform turquoise/cyan** without the color bar legend. Qt's color choice maps to a different palette index and the color scale rendering is missing. Geometry matches, but colors differ and Qt drops the color bar. |
+| heat1d ppther       | **MISMATCH**     | X11 shows the 1D mesh + flux arrows along the line + a red diagonal eigenvalue trace + "EIGENVALUE" and "NORMAL FLUX of TEMPERATURE" titles. Qt shows only the 1D mesh + AB labels — **the flux arrows and eigenvalue trace are entirely absent on the Qt side**. The batch file `8; 4; 15; 90;` dispatches (via trther.f) to `TR1DTER` / `TRFLUX` / `TRERTH` which draw via primitives. On X11 the arrows + trace are present; on Qt they are not. This is a real Phase 3 Qt-side rendering gap. |
+| nlsecu ppnlse       | **DEFERRED**     | Both sides time out at ~1h50 compute cost. |
 
-| Case                       | (a) geometry | (b) colors | (c) text | (d) no missing geom | (e) no miscolor | Verdict        |
-|----------------------------|--------------|------------|----------|---------------------|-----------------|----------------|
-| pan2d mesher               | pass         | pass       | pass     | pass                | pass            | **PASS**       |
-| nafems_le1 mesher          | pass         | pass       | pass     | pass                | pass            | **PASS**       |
-| cavity2d mesher            | pass         | pass       | pass     | pass                | pass            | **PASS**       |
-| heat1d mesher              | pass         | pass       | pass     | pass                | pass            | **PASS**       |
-| nlsecu mesher              | pass         | pass       | pass     | pass                | pass            | **PASS**       |
-| heat1d thermal             | pass         | pass       | pass     | pass                | pass            | **PASS**       |
-| cavity2d fluid             | pass         | pass       | pass     | pass                | pass            | **PASS**       |
-| **nafems_le1 elasticity**  | —            | —          | —        | —                   | —               | **DEFERRED**   |
-| **nlsecu non-linear**      | —            | —          | —        | —                   | —               | **DEFERRED**   |
+**Solver result: 1 PASS, 2 MISMATCH, 1 DEFERRED.**
 
-**7/9 configurations PASS.** The two deferred cases surface pre-existing
-drawing-path / compute-time issues unrelated to the Phase 3 TEXT/FONTS/
-COLORMAP scope. Task 3 delivers the automation infrastructure and the
-first working capture set; the two remaining cases can be completed in
-a follow-up without touching Phase 3 code.
+## Honest summary
 
-## Reproducing
+- 4/4 xvtest xvdrivers PASS
+- 5/5 testa mesher PASS
+- 1/4 testa solver PASS, 2/4 MISMATCH, 1/4 DEFERRED
+- **Total A/B comparisons performed: 12 (excluding the deferred nlsecu)**
+- **Total D-27 PASS: 10/12**
+- **Total D-27 MISMATCH: 2/12**
+
+## What the 2 solver mismatches reveal
+
+**`cavity2d-ppflui` — color scale legend missing on Qt side.**
+The batch `1; 2; 90;` sub-menu in `cavity2d.stoke56cr` triggers the
+"ISO-PRESSURE COLOR ZONES" drawing. X11 renders a legend bar on the
+right showing the pressure range 0..414. Qt does not. The ISO-pressure
+sub-tracer in `flui/` probably calls a drawing primitive that either
+is a warn-once stub on Qt or uses coordinates outside the Qt canvas
+viewport. Needs investigation in `flui/trco2d.f` / `flui/trvi2d.f`
+and the Qt `xvue_qt_api.cpp` stub list.
+
+**`heat1d-ppther` — flux arrows and eigenvalue trace missing on Qt.**
+The batch `8; 4; 15; 90;` in `heat1d.heat` triggers "DRAWING of ERRORS"
+sub-option 4. On X11 this produces flux arrows (triangle markers) and
+a diagonal red eigenvalue line plus a title. On Qt none of these
+secondary visualisation elements appear, only the 1D mesh line. The
+thermal trace sub-routine (`ther/tr1dter.f` or `ther/trflux.f` or
+`ther/trerth.f`) must use a primitive that is not fully wired on Qt.
+
+Neither mismatch is a `trelas.f`-style missing-`MEMPXFENETRE` issue
+(the Qt capture reads `XvueState::backing_` directly, so the drawings
+ARE missing from the backing itself — they never got painted).
+
+Both mismatches are **Phase 3 Qt-side rendering gaps** that were never
+caught by the xvtest0 coverage driver because xvtest0's Phase 3 section
+only exercises `xvtexte_` / `xvcouleur_` / `xvactivervb_` / `xvnbpixel
+texte_` / `xvtrait_` primitives, not the higher-level solver trace
+sub-routines.
+
+## Recommended follow-up
+
+- **NOT** a silent-defer situation. Phase 3 should not be marked
+  `nyquist_compliant: true` until either:
+  1. The two Qt-side solver trace mismatches are investigated and
+     either fixed (if a Qt primitive is missing) or explicitly
+     documented as "same geometry, palette-index difference only,
+     accepted deviation" with a commit message reasoning it through.
+  2. OR a dedicated gap-closure phase (03.2?) is opened to own the
+     trother/trcoefse/trco2d Qt trace investigation.
+- `nlsecu-ppnlse` deferred status is separate and acceptable as-is
+  (computational cost, needs a test-only shrunk variant).
+
+## Reproducing (full capture set)
 
 ```bash
 export MEFISTO=/path/to/mefisto
@@ -123,19 +165,32 @@ for case in pan2d nafems_le1 cavity2d heat1d nlsecu; do
    echo $case | $MEFISTO/pp/ppinit > /dev/null)
 done
 
-# mesher captures (all 5)
-AB_DIR=$MEFISTO/.planning/phases/03-text-fonts-colormap/03-04-ab/testa
-for spec in \
-  "pan2d:ppmail:pan2d.mesh" \
-  "nafems_le1:ppmail:nafems_le1.mesh" \
-  "cavity2d:ppmail:cavity2d.meshbf" \
-  "heat1d:ppmail:heat1d.mesh" \
-  "nlsecu:ppmail:nlsecu.meshq2" ; do
-  c=${spec%%:*}; rest=${spec#*:}; s=${rest%%:*}; f=${rest#*:}
-  bin/testa-capture.sh $MEFISTOX/$c $s $f $AB_DIR/${c}-mail_x11.png 2000 99
+AB=$MEFISTO/.planning/phases/03-text-fonts-colormap/03-04-ab/testa
+
+# X11 mesher captures
+pkill -9 Xvfb 2>/dev/null
+for spec in "pan2d:pan2d.mesh" "nafems_le1:nafems_le1.mesh" \
+            "cavity2d:cavity2d.meshbf" "heat1d:heat1d.mesh" \
+            "nlsecu:nlsecu.meshq2"; do
+  c=${spec%:*}; f=${spec#*:}
+  bin/testa-capture.sh $MEFISTOX/$c ppmail $f $AB/${c}-mail_x11.png 2000 99
 done
 
-# solver captures (2 that work)
-bin/testa-capture.sh $MEFISTOX/heat1d    ppther  heat1d.heat           $AB_DIR/heat1d-ppther_x11.png   3000 99
-bin/testa-capture.sh $MEFISTOX/cavity2d  ppflui  cavity2d.stoke56cr    $AB_DIR/cavity2d-ppflui_x11.png 3000 99
+# X11 solver captures (skip nlsecu)
+bin/testa-capture.sh $MEFISTOX/nafems_le1 ppelas nafems_le1.elas    $AB/nafems_le1-ppelas_x11.png 2000 99
+bin/testa-capture.sh $MEFISTOX/cavity2d  ppflui cavity2d.stoke56cr $AB/cavity2d-ppflui_x11.png 2000 99
+bin/testa-capture.sh $MEFISTOX/heat1d    ppther heat1d.heat        $AB/heat1d-ppther_x11.png   2000 99
+
+# Qt mesher captures (no Xvfb needed; offscreen plugin)
+for spec in "pan2d:pan2d.mesh" "nafems_le1:nafems_le1.mesh" \
+            "cavity2d:cavity2d.meshbf" "heat1d:heat1d.mesh" \
+            "nlsecu:nlsecu.meshq2"; do
+  c=${spec%:*}; f=${spec#*:}
+  bin/qt-capture.sh pp/ppmail_qt $AB/${c}-mail_qt.png $f 500 $MEFISTOX/$c
+done
+
+# Qt solver captures (skip nlsecu)
+bin/qt-capture.sh pp/ppelas_qt $AB/nafems_le1-ppelas_qt.png nafems_le1.elas    500 $MEFISTOX/nafems_le1
+bin/qt-capture.sh pp/ppflui_qt $AB/cavity2d-ppflui_qt.png  cavity2d.stoke56cr 500 $MEFISTOX/cavity2d
+bin/qt-capture.sh pp/ppther_qt $AB/heat1d-ppther_qt.png    heat1d.heat        500 $MEFISTOX/heat1d
 ```

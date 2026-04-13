@@ -1,12 +1,12 @@
 ---
 phase: 03
 slug: text-fonts-colormap
-status: validated
-nyquist_compliant: true
+status: reopened
+nyquist_compliant: false
 wave_0_complete: true
 created: 2026-04-11
 updated: 2026-04-13
-approval: approved 2026-04-13 by human visual A/B gate (plan 03-04 tasks 2 + 3) — all 4 xvtest drivers PASS, 7/9 testa configurations PASS, 2/9 deferred (documented in 03-04-ab/testa/README.md)
+reopened_reason: Task 3 was marked green prematurely — only the X11 side was captured, no Qt-side captures were produced, so zero actual Qt-vs-X11 A/B comparisons were performed per the D-27 rubric. Reopening to capture the Qt side, perform the full 5-module A/B, and honestly approve or defer per case.
 ---
 
 # Phase 03 — Validation Strategy
@@ -53,8 +53,8 @@ approval: approved 2026-04-13 by human visual A/B gate (plan 03-04 tasks 2 + 3) 
 | 03-03-T3 | 03-03 | 2 | TEXT-01..06 | — | N/A | docs | Wave 2 approval recorded in 03-03-SUMMARY.md | ✅ | ✅ green |
 | 03-04-T1 | 03-04 | 3 | TEXT-01..06, BUILD-07 | — | N/A | build + run | `bin/cbl_tout && bin/cbl_tout_qt ; bin/xvtest-capture.sh pp/ppxvtestN …_x11.png` (all 4 xvtest drivers Qt + legacy exit 0 under Xvfb :99; timeout-via-SIGTERM path retired by MEFISTO_XVSOURIS_AUTOEXIT hook) | ✅ | ✅ green |
 | 03-04-T2 | 03-04 | 3 | TEXT-01..06, VALID-02 | — | N/A | manual (human-verify) | Human A/B visual gate xvtest1..4 Qt vs X11 per D-27 rubric. Resolved by orchestrator reading PNG captures (commit f3b9a6d) — all 4 pairs PASS. | ✅ | ✅ green |
-| 03-04-T3 | 03-04 | 3 | TEXT-01..06, VALID-02 | — | N/A | manual (human-verify) | Human A/B visual gate on 5 canonical testa/ cases Qt vs X11. Automated via `bin/testa-capture.sh` + `MEFISTO_BATCH_X11=1` hybrid. 7/9 PASS (5/5 mesher, 2/4 solver). 2/9 deferred with documented scope reduction (nafems_le1-ppelas trelas mempx path; nlsecu-ppnlse compute time). See 03-04-ab/testa/README.md. | ✅ | ✅ green (partial) |
-| 03-04-T4 | 03-04 | 3 | TEXT-01..06 | — | N/A | docs | Fill this Per-Task Verification Map + flip `nyquist_compliant: true` + write 03-04-SUMMARY.md + advance STATE.md | ✅ | ✅ green |
+| 03-04-T3 | 03-04 | 3 | TEXT-01..06, VALID-02 | — | N/A | manual (human-verify) | Human A/B visual gate on 5 canonical testa/ cases Qt vs X11. Initial close-out (2026-04-13) was premature — only X11 side captured, zero actual Qt-vs-X11 comparisons performed. REOPENED and redone with full Qt+X11 capture via `bin/testa-capture.sh` + `bin/qt-capture.sh` + `MEFISTO_QT_CAPTURE_PATH` backing-pixmap hook. **Result: 12 pairs compared, 10 PASS, 2 MISMATCH (cavity2d-ppflui color legend missing on Qt; heat1d-ppther flux arrows+eigenvalue trace missing on Qt), 1 DEFERRED (nlsecu ~1h50 compute).** See 03-04-ab/testa/README.md for full D-27 rubric. | ✅ | ⚠️ partial (10/12 PASS, 2/12 MISMATCH = Qt-side Phase 3 trace gaps) |
+| 03-04-T4 | 03-04 | 3 | TEXT-01..06 | — | N/A | docs | Fill this Per-Task Verification Map + update 03-04-SUMMARY.md | ✅ | ✅ green |
 
 *Status: ⬜ pending · ✅ green · ❌ red · ⚠️ flaky*
 
@@ -91,9 +91,60 @@ approval: approved 2026-04-13 by human visual A/B gate (plan 03-04 tasks 2 + 3) 
 - [x] `nyquist_compliant: true` set in frontmatter (updated 2026-04-13 after 03-04-T4 filled the Per-Task Verification Map)
 - [x] TEXT-06 runtime proof explicitly deferred to Phase 6 (documented above)
 
-**Approval:** approved 2026-04-13 by human visual A/B gate (plan 03-04 tasks 2 + 3).
-- Task 2 (xvtest1..4 Qt vs X11): 4/4 PASS per D-27 rubric applied to PNGs captured via `bin/xvtest-capture.sh`.
-- Task 3 (5-case testa Qt vs X11): 7/9 PASS (5/5 mesher, 2/4 solver via hybrid MEFISTO_BATCH_X11 mode). 2/9 deferred with documented scope reduction:
-  - `nafems_le1-ppelas`: `trelas.f` drawing-path dispatch leaves mempx empty at xvfermer_ time even with the new force-copy hook. Requires sub-tracer investigation (TRCONT/TRDEPL/TRVMTR) — out of Phase 3 scope; tracked as follow-up.
-  - `nlsecu-ppnlse`: computational cost (~1h50 for 2000-step complex wave sim) exceeds the synchronous-capture budget. Needs a shrunk `.iexrr` variant or an offline cron job.
-- Infrastructure delivered (commits e029b84, e6ab414, e42b0e0, a0ad1c2, 3149e3f, f3b9a6d, 169c54e, 69d71ff, c853741) is reusable for all future phases' visual A/B gates.
+**Approval:** *REOPENED* 2026-04-13 — Task 3 cannot be signed off until
+the 2 Qt-side solver-trace mismatches are either fixed or explicitly
+accepted as documented palette-index-only deviations.
+
+**Task 2 (xvtest1..4):** 4/4 PASS per D-27 rubric applied to Qt+X11 PNGs
+both captured via the new offscreen + Xvfb harnesses. The Qt side uses
+`XvueState::backing_` direct grab; the X11 side uses `import -window
+root` after the xvfermer_ sentinel hold. Both sides run the same driver
+source. Full visual match for geometry, colors, and dashed edges.
+
+**Task 3 (5 testa cases × 2 modules):** Honest A/B verdict:
+- Mesher 5/5 PASS : pan2d, nafems_le1, cavity2d, heat1d, nlsecu all
+  render the expected 2D/1D/3D mesh with quality-coloring legend on
+  both backends. Small palette-index choice differences (cavity2d and
+  nlsecu use different colors in the same palette) are accepted as
+  both are within the shared MAX_PALETTE and the geometry is identical.
+- Solver 1/4 PASS : nafems_le1-ppelas (both sides render the mesh
+  quality coloring for this sub-option; no deformation visualization on
+  either side, so A/B matches).
+- Solver 2/4 **MISMATCH** : cavity2d-ppflui (Qt drops the color-bar
+  legend for ISO-pressure drawing), heat1d-ppther (Qt fails to render
+  the normal flux arrows + eigenvalue trace; X11 renders both).
+- Solver 1/4 DEFERRED : nlsecu-ppnlse (~1h50 compute cost).
+
+**What the mismatches reveal:** Phase 3 wired TEXT + palette + simple
+drawing primitives on the Qt side, but the higher-level solver trace
+sub-routines (flui/trco2d.f ISO-pressure color bar; ther/tr1dter.f or
+ther/trflux.f thermal flux+eigenvalue) use primitives that are either
+still stubs in xvue_qt_api.cpp or draw through coordinate paths that
+aren't covered by the xvtest0 Phase 3 coverage section. xvtest0's
+coverage is `xvchargefonte + xvtexte + xvcouleur + xvactivervb +
+xvnbpixeltexte + xvtrait`, which is strictly a subset of the primitives
+these solver tracers touch.
+
+**Pre-existing bugs found + fixed as byproducts:**
+- `xvue/xvuelc.c:1401` effacemempx_ NULL guard
+- `xvue/xvuelc.c:1601` xvnbpixeltexte_ NULL-font guard
+- `flui/lifiviprte.f:161,167` FORMAT descriptor parse error (ppflui
+  restart reads)
+- `elas/trelas.f:273` added `CALL MEMPXFENETRE` so the X11 elas tracer
+  actually shows its output before the next menu prompt
+- `prpr/xvtest0.f` use `XVOUVRIR` + `MEMPXFENETRE` for legacy-X11
+  compatibility
+
+**Infrastructure delivered (commits this session):**
+- `xvue/xvuelc.c` headless hooks: `MEFISTO_XVSOURIS_AUTOEXIT`,
+  `MEFISTO_XVFERMER_READY_FILE`, `MEFISTO_XVFERMER_HOLD_MS`
+- `xvue/qt/src/xvue_qt_api.cpp` Qt-side counterpart of the same hooks,
+  plus `MEFISTO_QT_CAPTURE_PATH` that saves `XvueState::backing_`
+  directly (no X server needed — works under QT_QPA_PLATFORM=offscreen)
+- `prpr/pp{mail,elas,flui,ther,nlse}.f` `MEFISTO_BATCH_X11` override
+- `bin/xvtest-capture.sh` — orchestrates xvtest drivers under Xvfb
+- `bin/testa-capture.sh` — orchestrates testa solvers under Xvfb
+- `bin/qt-capture.sh` — orchestrates Qt binaries under offscreen
+
+All this infrastructure is reusable by future phases' visual A/B gates
+and is preserved even though Task 3 itself is not yet signed off.
