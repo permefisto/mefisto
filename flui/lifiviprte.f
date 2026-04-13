@@ -158,13 +158,13 @@ C        AFFICHAGE
      %' PasTemps=',I8,
      %' DimensionEspace=',I1,
      %' NoeudsVitesse=',I9,' NoeudsPression=',I9,
-     %' +NbDLVP=',I10,' +NbDLTE=',I10' reelsD du FICHIER ',A)
+     %' +NbDLVP=',I10,' +NbDLTE=',I10,' reelsD du FICHIER ',A)
 
 20011 FORMAT('lifiviprte: TIME=',E15.7,' READING of NAVSTO=',I2,
      %' StepTimeNb=',I8,
      %' Space Dimension=',I1,
      %' VelocityNodesNb=',I9,' PressureNodesNb=',I9,
-     %' +NbDLVP=',I10' +NbDLTE=',I10,' Dreals on FILE ',A)
+     %' +NbDLVP=',I10,' +NbDLTE=',I10,' Dreals on FILE ',A)
 
 C     FERMETURE DU FICHIER KNOMFIC(1:NBK)
       CLOSE( NFUNIT )
