@@ -1397,6 +1397,11 @@ void proc(effacemempx)()
 but: Effacer le contenu de mempx (mais pas la fenetre_mef)
 ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++*/
 {
+  /* Batch mode: X11 display never opened (INTERA=0 in ppmail/ppelas/...).
+     mempx is a static Pixmap, zero-initialized until xvinfo_ creates it.
+     Skip silently so stray drawing calls from non-interactive code paths
+     do not SIGSEGV on a NULL display_mef. */
+  if (mempx == 0) return;
   /*effacement de la MemoirePx avec la couleur de fond*/
   XSetForeground( display_mef, gc_mef, norgb[background] );
   XFillRectangle( display_mef, mempx, gc_mef, 0, 0, lapxfe, lhpxfe );
