@@ -683,36 +683,58 @@ void proc(xvtraits)(int *nbpoints, MefistoPoint *points) {
     // WR-02: deferred flush -- xvvoir_/xvpause_ pump the event loop.
 }
 
-// ---- 36. xvfacetraits_ (D-12, DRAW-03) ----
+// Internal helper — inline palette install for callers that already hold
+// a resolved XvueState*. Mirrors proc(xvcouleur) body lines 354-371 but
+// skips XvueApp::ensure()/thread-assert/window-slot re-lookup.
+static void apply_palette_foreground(XvueState* st, int icolor) {
+    int i = icolor;
+    if (i < 0 || i >= XvueState::kMaxPalette) i = 1;   // legacy fallback
+    if (XvueState::palette_cache_dirty_[i]) {
+        XvueState::palette_cache_[i] = QColor::fromRgbF(
+            XvueState::red[i],
+            XvueState::green[i],
+            XvueState::blue[i]);
+        XvueState::palette_cache_dirty_[i] = false;
+    }
+    st->foreground_ = XvueState::palette_cache_[i];
+    st->applyPen();  // rebuilds pen from pen_style_ + foreground_, brush from foreground_
+}
+
+// ---- 36. xvfacetraits_ (D-12, DRAW-03; 02.1/D-1: honor ncf/nca) ----
 void proc(xvfacetraits)(int *ncf, int *nca, int *n, MefistoPoint *pts) {
     XvueApp::ensure();
     XVUE_QT_ASSERT_MAIN_THREAD();
-    (void)ncf; (void)nca;  // TODO(phase 3): honor fill/edge color indices
+    if (!ncf || !nca || !n || *n < 3 || !pts) return;   // WR-03
     auto& win = XvueApp::window_slot();
     if (!win) return;
     auto* st = win->state();
     if (!st || !st->painter_ || !st->painter_->isActive()) return;
-    if (!n || *n < 3 || !pts) return;
 
     QPolygon poly;
     poly.reserve(*n);
     for (int i = 0; i < *n; ++i) {
         poly << QPoint(pts[i].x, pts[i].y);
     }
-    // WR-01: split fill and outline cleanly. Fill must not stroke the edge
-    // (setPen(Qt::NoPen)); outline must not re-fill (setBrush(Qt::NoBrush)).
-    // Without this, once Phase 3 differentiates ncf/nca colors, the fill
-    // step would paint the edge in the fill color and the outline step
-    // would repaint with the edge color, wasting work and producing a
-    // thicker edge line than legacy.
-    QPen   saved_pen   = st->painter_->pen();
-    QBrush saved_brush = st->painter_->brush();
+
+    // 02.1/D-1: mirror xvue/xvuelc.c:2055,2064 — install ncf, fill; install
+    // nca, outline. applyPen() rebuilds pen from pen_style_ so the dashed
+    // style set by xvtypetrait_ survives the outline step. WR-01: fill must
+    // not stroke (setPen(Qt::NoPen)); outline must not re-fill
+    // (setBrush(Qt::NoBrush)).
+    apply_palette_foreground(st, *ncf);
+    QPen   saved_pen_after_ncf = st->painter_->pen();   // pen with dash style, ncf color
     st->painter_->setPen(Qt::NoPen);
-    st->painter_->drawPolygon(poly, Qt::OddEvenFill);  // fill (D-12 order)
-    st->painter_->setPen(saved_pen);
+    st->painter_->drawPolygon(poly, Qt::OddEvenFill);   // fill (D-12 order)
+    st->painter_->setPen(saved_pen_after_ncf);          // restore dashed pen before switching color
+
+    apply_palette_foreground(st, *nca);                 // rebuilds pen with nca color, preserves dash style
     st->painter_->setBrush(Qt::NoBrush);
-    st->painter_->drawPolygon(poly);                   // outline (D-12 order)
-    st->painter_->setBrush(saved_brush);
+    st->painter_->drawPolygon(poly);                    // outline (D-12 order) — uses current pen (incl dash)
+    // Legacy leaves foreground at nca; do not restore. Brush is left at
+    // Qt::NoBrush but the next applyPen()/xvcouleur_ call will refresh it.
+    // WR-04: restore brush defensively so subsequent primitives that read
+    // st->painter_->brush() (e.g. xvface_) see the canonical ncf→nca final state.
+    st->painter_->setBrush(QBrush(st->foreground_, Qt::SolidPattern));
 
     if (win->canvas()) win->canvas()->update();
 }
