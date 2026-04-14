@@ -1,10 +1,11 @@
 ---
 phase: 04
 slug: pixmap-save-restore-double-buffering
-status: draft
-nyquist_compliant: false
-wave_0_complete: false
+status: approved
+nyquist_compliant: true
+wave_0_complete: true
 created: 2026-04-14
+approved: 2026-04-14
 ---
 
 # Phase 04 — Validation Strategy
@@ -41,7 +42,13 @@ created: 2026-04-14
 
 | Task ID | Plan | Wave | Requirement | Threat Ref | Secure Behavior | Test Type | Automated Command | File Exists | Status |
 |---------|------|------|-------------|------------|-----------------|-----------|-------------------|-------------|--------|
-| _planner-fills_ | _planner_ | _planner_ | PIXMAP-01 / 02 / 03 / 04 | — / N/A | N/A (read-only pixmap blits) | smoke / integration | _per Validation Architecture map below_ | ❌ Wave 0 | ⬜ pending |
+| 04-01 T1 | 04-01 | 1 | PIXMAP-02, PIXMAP-03 | T-04-01, T-04-02 | saved_canvas_ destroyed before painter_/backing_ (D-03) | unit/build | `bin/cbl_tout_qt && grep -c 'delete saved_canvas_' xvue/qt/src/xvue_qt_state.cpp` | ✅ | ✅ green |
+| 04-01 T2 | 04-01 | 1 | PIXMAP-02, PIXMAP-03 | T-04-01 | helpers TU-local (57-count invariant) | unit/build | `bin/cbl_tout_qt && sh xvue/qt/cmake/verify_abi.sh` | ✅ | ✅ green |
+| 04-01 T3 | 04-01 | 1 | PIXMAP-01, PIXMAP-02, PIXMAP-03 | T-04-04 | every body starts with XVUE_QT_ASSERT_MAIN_THREAD | smoke | `QT_QPA_PLATFORM=offscreen pp/ppxvtest0_qt` emits no warn-once for the 7 symbols | ✅ | ✅ green |
+| 04-02 T1 | 04-02 | 2 | PIXMAP-01, PIXMAP-02, PIXMAP-03 | N/A | driver reads MEFISTO_XVTEST0_SCENE, preserves legacy Phase 1/2/3 path when blank | integration | `bin/cbxvtest0_qt && bin/cbxvtest0` | ✅ | ✅ green |
+| 04-02 T2 | 04-02 | 2 | PIXMAP-01, PIXMAP-02, PIXMAP-03 | N/A | 4 pairwise AE=0 comparisons | integration | `bin/xvtest0-pixmap-roundtrip.sh` exit 0 + 4 PASS lines | ✅ | ✅ green |
+| 04-02 T3 | 04-02 | 2 | — | N/A | closure bookkeeping | doc | this file | ✅ | ✅ green |
+| — | — | — | **PIXMAP-04** | N/A | interactive cavity2d rubber-band-drag no-flicker | HUMAN-UAT (manual) | deferred — requires Phase 5 event bridge | ⚠️ | ⚠️ deferred-to-phase-5 |
 
 *Status: ⬜ pending · ✅ green · ❌ red · ⚠️ flaky*
 
@@ -61,10 +68,10 @@ created: 2026-04-14
 
 ## Wave 0 Requirements
 
-- [ ] `prpr/xvtest0.f` — extend with `PHASE 4 COVERAGE` block (D-15 scene + 3 sub-tests of D-16, bracketed by comment banners matching existing DRAW/TEXT coverage sections). Reads `MEFISTO_XVTEST0_SCENE` (or planner-chosen equivalent) env var via `CALL GETENV` for scene selection.
-- [ ] `bin/xvtest0-pixmap-roundtrip.sh` — new ~50-line wrapper: invokes `pp/ppxvtest0_qt` under `bin/qt-capture.sh` for each sub-test scene with the env-var selector, then pairwise `magick compare -metric AE`. Exit code 0 iff all AE counts are 0.
-- [ ] ImageMagick probe at script start: `command -v magick >/dev/null || { echo "magick not found"; exit 2; }` — already verified installed but keep the guard per CLAUDE.md "ask before acting."
-- [ ] No changes to `bin/cbxvtest0_qt`, `bin/cbl_tout`, `bin/cbl_tout_qt`, or `xvue/qt/CMakeLists.txt` — Phase 4 reuses Phase 03-04 capture infrastructure unchanged.
+- [x] `prpr/xvtest0.f` — extend with `PHASE 4 COVERAGE` block (D-15 scene + 3 sub-tests of D-16, bracketed by comment banners matching existing DRAW/TEXT coverage sections). Reads `MEFISTO_XVTEST0_SCENE` (or planner-chosen equivalent) env var via `CALL GETENV` for scene selection.
+- [x] `bin/xvtest0-pixmap-roundtrip.sh` — new ~50-line wrapper: invokes `pp/ppxvtest0_qt` under `bin/qt-capture.sh` for each sub-test scene with the env-var selector, then pairwise `magick compare -metric AE`. Exit code 0 iff all AE counts are 0.
+- [x] ImageMagick probe at script start: `command -v magick >/dev/null || { echo "magick not found"; exit 2; }` — already verified installed but keep the guard per CLAUDE.md "ask before acting."
+- [x] No changes to `bin/cbxvtest0_qt`, `bin/cbl_tout`, `bin/cbl_tout_qt`, or `xvue/qt/CMakeLists.txt` — Phase 4 reuses Phase 03-04 capture infrastructure unchanged.
 
 *If no gaps surface during planning: "None — existing test infrastructure covers all phase requirements."*
 
@@ -83,12 +90,12 @@ created: 2026-04-14
 
 ## Validation Sign-Off
 
-- [ ] All tasks have `<automated>` verify or Wave 0 dependencies
-- [ ] Sampling continuity: no 3 consecutive tasks without automated verify
-- [ ] Wave 0 covers all MISSING references (`prpr/xvtest0.f` PHASE 4 block, `bin/xvtest0-pixmap-roundtrip.sh`)
-- [ ] No watch-mode flags
-- [ ] Feedback latency < 60s per wave merge
-- [ ] `nyquist_compliant: true` set in frontmatter (flipped after planner fills the Per-Task Verification Map and gsd-plan-checker confirms Dimension 8 green)
-- [ ] PIXMAP-04 explicitly recorded as `deferred-to-phase-5`, not `green` and not `red`
+- [x] All tasks have `<automated>` verify or Wave 0 dependencies
+- [x] Sampling continuity: no 3 consecutive tasks without automated verify
+- [x] Wave 0 covers all MISSING references (`prpr/xvtest0.f` PHASE 4 block, `bin/xvtest0-pixmap-roundtrip.sh`)
+- [x] No watch-mode flags
+- [x] Feedback latency < 60s per wave merge
+- [x] `nyquist_compliant: true` set in frontmatter (flipped after planner fills the Per-Task Verification Map and gsd-plan-checker confirms Dimension 8 green)
+- [x] PIXMAP-04 explicitly recorded as `deferred-to-phase-5`, not `green` and not `red`
 
-**Approval:** *pending* — flips to *approved YYYY-MM-DD* after gsd-plan-checker passes the plan(s).
+**Approval:** *approved 2026-04-14* — all 4 round-trip pairs green per `bin/xvtest0-pixmap-roundtrip.sh`; PIXMAP-04 deferred to Phase 5 per CONTEXT.md D-18.
