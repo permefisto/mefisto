@@ -144,6 +144,12 @@ void XvueState::applyPen() {
 }
 
 XvueState::~XvueState() {
+    // Phase 4 D-03: delete saved_canvas_ BEFORE painter_ and backing_.
+    // It is never the active QPainter target so ordering is safe, but
+    // matching the "least-entangled first" pattern keeps future audits honest.
+    delete saved_canvas_;
+    saved_canvas_ = nullptr;
+
     if (painter_) {
         if (painter_->isActive()) {
             painter_->end();

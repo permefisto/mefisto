@@ -31,6 +31,12 @@ struct XvueState {
     QPixmap*  backing_ = nullptr;
     QPainter* painter_ = nullptr;
 
+    // Phase 4 (D-01, D-02, D-03). Lazily allocated on first sauvefenetre_/
+    // sauvemempx_ call (see xvue_qt_save_to_slot in xvue_qt_api.cpp).
+    // Raw pointer + manual lifecycle matches Phase 2 D-04 ownership style.
+    // DPR set from backing_->devicePixelRatio() at allocation time.
+    QPixmap* saved_canvas_ = nullptr;
+
     // Phase 2 (D-16, D-17, D-18, D-20). Rebuilt by applyPen().
     QPen     pen_;
     QBrush   brush_          = QBrush(Qt::white, Qt::SolidPattern);
