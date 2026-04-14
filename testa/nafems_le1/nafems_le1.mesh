@@ -58,7 +58,8 @@
  @;
 
 10;    { DRAWING of PLSVO MESHES }
- 5;    { All OBJECTS }
+ 5;    { OBJECT or OBJECTS }
+ 1;    { ALL OBJECTS 1 by 1 }
 90;    { EXECUTION of DRAWING }
  @;
 

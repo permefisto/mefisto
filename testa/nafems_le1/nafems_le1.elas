@@ -74,6 +74,10 @@
 @;
  
 8;  { TRACE des CONTRAINTES }
- 1; 90; 90;
+ 1;  { Stresses }
+ 15; { Drawing of STRESSES in ALL FE }
+ 90; { default view: execute drawing }
+ @;  { exit traccont }
+ @;  { exit contdepl }
 FERMER;
 

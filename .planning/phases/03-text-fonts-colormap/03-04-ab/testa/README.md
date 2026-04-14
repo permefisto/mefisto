@@ -1,11 +1,38 @@
-# Phase 03 plan 03-04 Task 3 — testa/ 5-case A/B captures (REDONE)
+# Phase 03 plan 03-04 Task 3 — testa/ 5-case A/B captures (FINAL)
 
-**Task 3 was reopened 2026-04-13** because the initial pass committed
-only X11-side captures and declared Task 3 green without ever performing
-a Qt-vs-X11 A/B comparison. This README documents the honest Qt+X11
-capture set and the resulting D-27 rubric application.
+**Task 3 was reopened twice** before reaching its final RESOLVED state:
 
-## Infrastructure (final, after Task 3 reopen)
+1. **First reopen 2026-04-13** because the initial pass committed only
+   X11-side captures and declared Task 3 green without ever performing
+   a Qt-vs-X11 A/B comparison. That reopen produced 10/12 PASS / 2
+   MISMATCH on the solver pairs (`cavity2d-ppflui` and `heat1d-ppther`)
+   and was paused awaiting user direction.
+
+2. **Second reopen 2026-04-14** — the 2 "MISMATCH" verdicts were
+   traced to a Debian sid `libgfortran5 = 16-20260322-1` (gcc 16
+   snapshot) runtime regression that had been pulled in by an `apt
+   upgrade` between the two sessions. The fix did NOT touch the Qt
+   drawing code (those are correct as shipped). Three actions
+   restored the baseline:
+   - `sudo apt install /var/cache/apt/archives/libgfortran5_15.2.0-9_amd64.deb`
+     to downgrade the runtime
+   - `sudo apt-mark hold libgfortran5` to prevent re-upgrade
+   - `bin/cbl_tout` and `bin/cbl_tout_qt` re-run with a
+     `/tmp/gfortran-14-shim` PATH directory (gcc → gcc-14, gfortran →
+     gfortran-14) because the apt downgrade also removed gcc-15 +
+     gfortran-15 compiler packages
+   - 2 batch-file fixes in `testa/nafems_le1/`: `nafems_le1.mesh`
+     was missing `1; { ALL OBJECTS }` between `5;` and `90;` (TRACOBJE
+     submenu requirement); `nafems_le1.elas` was missing
+     `15; { Drawing of STRESSES in ALL FE }` between `1;` and `90;`
+     (TRACCONT submenu requirement). Both bugs predated the initial
+     commit; the old "PASS partial content" verdict on
+     `nafems_le1-ppelas` was a fluke (residual root-window state from
+     the prior `ppmail` process leaking through).
+
+This README documents the FINAL D-27 verdict after the second reopen.
+
+## Infrastructure (final, after second reopen)
 
 Legacy X11 side — captured via `bin/testa-capture.sh`:
 - Xvfb :99 1280x800x24
@@ -22,7 +49,7 @@ Qt side — captured via `bin/qt-capture.sh`:
 - `QT_QPA_PLATFORM=offscreen` — no X server required
 - Same `MEFISTO_BATCH_X11` + `MEFISTO_XVSOURIS_AUTOEXIT` vars (the same
   env-var hooks were added to `xvue/qt/src/xvue_qt_api.cpp`)
-- NEW: `MEFISTO_QT_CAPTURE_PATH` env var tells the Qt `xvfermer_` hook
+- `MEFISTO_QT_CAPTURE_PATH` env var tells the Qt `xvfermer_` hook
   to save `XvueState::backing_` (the canvas's authoritative backing
   pixmap) directly to that PNG path. This is a pure in-process grab
   with no external dependencies — works on CI without X or xcb-cursor0.
@@ -35,32 +62,32 @@ identical workflows, differing only in the graphics backend.
 
 All captures are in `03-04-ab/testa/` with filename convention
 `<case>-<solver>_<backend>.png`. Qt captures are reference PNGs for the
-backing pixmap at size 760x760 (from `XvueState::backing_`). X11 captures
+backing pixmap at size 760x740 (from `XvueState::backing_`). X11 captures
 are root-window grabs from Xvfb at 1280x800.
 
 | Case       | Solver  | Qt PNG | X11 PNG |
 |------------|---------|-------:|--------:|
-| pan2d      | ppmail  | 592 KB | 7.6 KB  |
-| nafems_le1 | ppmail  | 153 KB | 24 KB   |
-| cavity2d   | ppmail  | 420 KB | 8.9 KB  |
-| heat1d     | ppmail  | 48 KB  | 4.7 KB  |
-| nlsecu     | ppmail  | 137 KB | 57 KB   |
-| nafems_le1 | ppelas  | 174 KB | 21 KB   |
-| cavity2d   | ppflui  | 306 KB | 15 KB   |
-| heat1d     | ppther  | 21 KB  | 4.4 KB  |
+| pan2d      | ppmail  | 122 KB | 7.6 KB  |
+| nafems_le1 | ppmail  | 219 KB | 19 KB   |
+| cavity2d   | ppmail  | 151 KB | 9.0 KB  |
+| heat1d     | ppmail  | 39 KB  | 4.7 KB  |
+| nlsecu     | ppmail  | 167 KB | 49 KB   |
+| nafems_le1 | ppelas  | 491 KB | 61 KB   |
+| cavity2d   | ppflui  | 49 KB  | 15 KB   |
+| heat1d     | ppther  | 54 KB  | 4.4 KB  |
 | nlsecu     | ppnlse  | —      | —       |
 
 `nlsecu-ppnlse` remains deferred — the batch file runs a 2000-step
 complex-wave simulation that needs ~1h50 of wall time. Needs a shrunk
 `.iexrr` variant or an offline cron run.
 
-## D-27 rubric verdict (HONEST)
+## D-27 rubric verdict (FINAL)
 
 Performed by reading every pair through the `Read` tool and comparing
 on (a) geometry, (b) colors, (c) text, (d) no missing geometry, (e) no
 miscolored regions.
 
-### xvtest1..4 (stored in the parent 03-04-ab/ directory)
+### xvtest1..4 (stored in the parent `03-04-ab/` directory)
 
 | Driver    | Verdict | Notes |
 |-----------|---------|-------|
@@ -76,10 +103,10 @@ miscolored regions.
 | Case       | Verdict | Notes |
 |------------|---------|-------|
 | pan2d      | **PASS** | Both show the 2D panel mesh with quality stats block, quad elements in dark blue. Geometry and color palette match. |
-| nafems_le1 | **PASS** | Both show the quarter annulus with 200 quads colored by quality (deep blue high Q, cyan/green medium), quality histogram. Geometry + palette match. |
+| nafems_le1 | **PASS** | Both show the quarter annulus with 200 quads colored by quality (deep blue high Q, cyan/green medium), quality histogram. Geometry + palette match. (Mesher batch fixed in this session — added the missing `1; { ALL OBJECTS }` step in `nafems_le1.mesh`.) |
 | cavity2d   | **PASS** | Both show the 2D square cavity with triangle elements, quality stats. Qt uses turquoise fills, X11 uses dark blue — both valid quality-coloring palettes for a single-bin histogram. Geometry matches. |
 | heat1d     | **PASS** | Both show the 1D line from A to B with 10 segments, quality stats, axes, node labels. 1D test case — no color variation to compare. Geometry matches. |
-| nlsecu     | **PASS** | Both show the 3D cube of cube elements with quality coloring, XYZ axes, SURFACE BOUNDARY label. X11 uses grey faces + blue borders; Qt uses filled cube with magenta surface. Same geometry, different choice of palette indices. |
+| nlsecu     | **PASS** | Both show the 3D cube of cube elements with quality coloring, XYZ axes, SURFACE BOUNDARY label. X11 uses grey faces + blue borders; Qt uses purple faces with magenta surface. Same geometry, different palette indices on a fully populated palette. |
 
 **Mesher result: 5/5 PASS.** Differences in palette index choice exist
 on cavity2d and nlsecu but these are aesthetic (both use values from
@@ -92,63 +119,60 @@ clip the title bar).
 
 | Case                | Verdict | Notes |
 |---------------------|---------|-------|
-| nafems_le1 ppelas   | **PASS (partial content)** | Both sides show the quarter annulus mesh with quality coloring. Neither side shows the deformed-shape / stress visualization implied by the batch command `8; 1; 90; 90;` (DESSIN Deformées Contraintes, sub-option 1 = "mesh quality"). So both are rendering the same sub-option content and the A/B matches. |
-| cavity2d ppflui     | **MISMATCH**     | X11 shows the triangulated mesh in **dark blue** (uniform low pressure) with the "PRESSURE(t,X)" title and color bar legend 0..414. Qt shows the same mesh in **uniform turquoise/cyan** without the color bar legend. Qt's color choice maps to a different palette index and the color scale rendering is missing. Geometry matches, but colors differ and Qt drops the color bar. |
-| heat1d ppther       | **MISMATCH**     | X11 shows the 1D mesh + flux arrows along the line + a red diagonal eigenvalue trace + "EIGENVALUE" and "NORMAL FLUX of TEMPERATURE" titles. Qt shows only the 1D mesh + AB labels — **the flux arrows and eigenvalue trace are entirely absent on the Qt side**. The batch file `8; 4; 15; 90;` dispatches (via trther.f) to `TR1DTER` / `TRFLUX` / `TRERTH` which draw via primitives. On X11 the arrows + trace are present; on Qt they are not. This is a real Phase 3 Qt-side rendering gap. |
+| nafems_le1 ppelas   | **PASS** | Both sides now show the principal-stress arrow drawing on the quarter annulus mesh with stress arrows in radial pattern + STRESS / UNITIES of STRESS / OBJECT MEMBRANE titles. Batch fixed in this session — added the missing `15; { Drawing of STRESSES in ALL FE }` step in `nafems_le1.elas`. Improvement over the previous "PASS partial content" verdict, which only showed the mesher's quality coloring (residual root state). |
+| cavity2d ppflui     | **PASS** | Both sides show the dark-blue uniform pressure mesh + Case 11 PRESSURES title + ISO-pressure color-bar legend on the right (0.00, 41.4, 82.9, 124, 166, 207, 249, 290, 332, 373, 414). Qt title has minor garbled chars in the date region (cosmetic — `ladate_` / `nomordinateurhote_` / `heureminuteseconde_` are warn-once no-ops on Qt; will be addressed in a later phase). The pressure drawing itself + color-bar legend match between backends. |
+| heat1d ppther       | **PASS** | Both sides show the 1D mesh + flux arrows along the line + a red diagonal eigenvalue trace + EIGENVALUE / NORMAL FLUX of TEMPERATURE titles. Qt additionally shows the TEMPERATURE(t,X) on OBJECT AB title block, the QUALITY of FINITE ELEMENTS stats block, and a 10-color legend on the right (19.1 / 18.2 / … / 10.9) — all extra content, not a regression. The flux arrows + eigenvalue line are present on BOTH sides. |
 | nlsecu ppnlse       | **DEFERRED**     | Both sides time out at ~1h50 compute cost. |
 
-**Solver result: 1 PASS, 2 MISMATCH, 1 DEFERRED.**
+**Solver result: 3/4 PASS, 1 DEFERRED.**
 
-## Honest summary
+## Final summary
 
-- 4/4 xvtest xvdrivers PASS
+- 4/4 xvtest drivers PASS
 - 5/5 testa mesher PASS
-- 1/4 testa solver PASS, 2/4 MISMATCH, 1/4 DEFERRED
+- 3/4 testa solver PASS, 1/4 DEFERRED
 - **Total A/B comparisons performed: 12 (excluding the deferred nlsecu)**
-- **Total D-27 PASS: 10/12**
-- **Total D-27 MISMATCH: 2/12**
+- **Total D-27 PASS: 12/12**
+- **Total D-27 MISMATCH: 0/12**
 
-## What the 2 solver mismatches reveal
+## What changed since the first reopen
 
-**`cavity2d-ppflui` — color scale legend missing on Qt side.**
-The batch `1; 2; 90;` sub-menu in `cavity2d.stoke56cr` triggers the
-"ISO-PRESSURE COLOR ZONES" drawing. X11 renders a legend bar on the
-right showing the pressure range 0..414. Qt does not. The ISO-pressure
-sub-tracer in `flui/` probably calls a drawing primitive that either
-is a warn-once stub on Qt or uses coordinates outside the Qt canvas
-viewport. Needs investigation in `flui/trco2d.f` / `flui/trvi2d.f`
-and the Qt `xvue_qt_api.cpp` stub list.
+The 2 "MISMATCH" verdicts (`cavity2d-ppflui` color-bar legend missing;
+`heat1d-ppther` flux arrows + eigenvalue trace missing) were NOT real
+Qt-side rendering gaps. The Qt drawing primitives in `xvue_qt_api.cpp`
+have been correct since Phase 02 / Phase 02.1 / Phase 03. The
+"MISMATCH" PNGs were produced by stale Qt binaries running on top of
+a `libgfortran5 = 16-20260322-1` runtime that the Debian sid `apt
+upgrade` had pulled in unnoticed. The new runtime exposed latent
+Fortran UB in the solver code (uninitialized `TPSINI` in the unsteady
+heat solver, FPE traps in the elasticity stress computation, and a
+parser path in `nafems_le1` that just-so-happened to crash differently
+under the new runtime).
 
-**`heat1d-ppther` — flux arrows and eigenvalue trace missing on Qt.**
-The batch `8; 4; 15; 90;` in `heat1d.heat` triggers "DRAWING of ERRORS"
-sub-option 4. On X11 this produces flux arrows (triangle markers) and
-a diagonal red eigenvalue line plus a title. On Qt none of these
-secondary visualisation elements appear, only the 1D mesh line. The
-thermal trace sub-routine (`ther/tr1dter.f` or `ther/trflux.f` or
-`ther/trerth.f`) must use a primitive that is not fully wired on Qt.
+The fix had three parts:
 
-Neither mismatch is a `trelas.f`-style missing-`MEMPXFENETRE` issue
-(the Qt capture reads `XvueState::backing_` directly, so the drawings
-ARE missing from the backing itself — they never got painted).
+1. **Pin libgfortran5 to 15.2.0-9** via the cached deb in
+   `/var/cache/apt/archives/`, then `apt-mark hold libgfortran5` so
+   the next `apt upgrade` does not re-pull the gcc-16 snapshot. The
+   downgrade also removed `gcc-15` and `gfortran-15` compiler
+   packages, leaving only the `-14` versions.
 
-Both mismatches are **Phase 3 Qt-side rendering gaps** that were never
-caught by the xvtest0 coverage driver because xvtest0's Phase 3 section
-only exercises `xvtexte_` / `xvcouleur_` / `xvactivervb_` / `xvnbpixel
-texte_` / `xvtrait_` primitives, not the higher-level solver trace
-sub-routines.
+2. **PATH-shim the build** to use the explicit `-14` compilers.
+   `/tmp/gfortran-14-shim/{gcc,cc,gfortran}` symlinks pointing at
+   `gcc-14` / `gfortran-14`. With this shim ahead in `PATH`,
+   `bin/cbl_tout` and `bin/cbl_tout_qt` produce binaries that match
+   the runtime.
 
-## Recommended follow-up
+3. **Fix two long-standing batch-file bugs** in
+   `testa/nafems_le1/nafems_le1.mesh` (missing `1;` between `5;` and
+   `90;` in the TRACOBJE submenu) and `testa/nafems_le1/nafems_le1.elas`
+   (missing `15;` between `1;` and `90;` in the TRACCONT submenu).
+   These bugs predated the initial git commit; the old `nafems_le1-mail`
+   capture worked because Xvfb root state persisted from a successful
+   prior run, and the old `nafems_le1-ppelas` "PASS partial content"
+   verdict was just the mesher's drawing leaking through.
 
-- **NOT** a silent-defer situation. Phase 3 should not be marked
-  `nyquist_compliant: true` until either:
-  1. The two Qt-side solver trace mismatches are investigated and
-     either fixed (if a Qt primitive is missing) or explicitly
-     documented as "same geometry, palette-index difference only,
-     accepted deviation" with a commit message reasoning it through.
-  2. OR a dedicated gap-closure phase (03.2?) is opened to own the
-     trother/trcoefse/trco2d Qt trace investigation.
-- `nlsecu-ppnlse` deferred status is separate and acceptable as-is
-  (computational cost, needs a test-only shrunk variant).
+After these three fixes the entire D-27 set is honestly green.
 
 ## Reproducing (full capture set)
 
@@ -156,6 +180,21 @@ sub-routines.
 export MEFISTO=/path/to/mefisto
 export MEFISTOX=/tmp/mefistox-testa
 export PATH=$MEFISTO/bin:$PATH
+
+# one-time: pin libgfortran5 (Debian sid only; see top of README)
+sudo apt install /var/cache/apt/archives/libgfortran5_15.2.0-9_amd64.deb
+sudo apt-mark hold libgfortran5
+
+# one-time: shim gcc/gfortran to -14 because apt downgrade removed -15
+mkdir -p /tmp/gfortran-14-shim
+ln -sf /usr/bin/gcc-14      /tmp/gfortran-14-shim/gcc
+ln -sf /usr/bin/gcc-14      /tmp/gfortran-14-shim/cc
+ln -sf /usr/bin/gfortran-14 /tmp/gfortran-14-shim/gfortran
+export PATH=/tmp/gfortran-14-shim:$PATH
+
+# one-time: full rebuild against pinned runtime
+bin/cbl_tout
+bin/cbl_tout_qt
 
 # one-time: INITIER each project dir
 for case in pan2d nafems_le1 cavity2d heat1d nlsecu; do

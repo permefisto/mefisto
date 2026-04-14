@@ -3,9 +3,9 @@ gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
 status: executing
-stopped_at: Phase 03.1 complete — plan 03-04 unblocked
-last_updated: "2026-04-13T16:17:21.596Z"
-last_activity: 2026-04-13
+stopped_at: Phase 03 plan 03-04 RESOLVED — Task 3 closed at 12/12 PASS after libgfortran5 pin + nafems_le1 batch fixes
+last_updated: "2026-04-14T11:45:00.000Z"
+last_activity: 2026-04-14
 progress:
   total_phases: 12
   completed_phases: 6
@@ -84,6 +84,8 @@ Recent decisions affecting current work:
 - [Phase 03.1-03]: xvinfo_ no longer writes *maxfonts — the legacy contract is a pure input/capacity parameter. Writing through a Fortran PARAMETER-sourced actual crashed under gfortran -O in xvtest1..4_qt.
 - [Phase 03.1-03]: 03-04 Task 1 smoke exit code tolerance expanded to {0, 124, 143} — timeout --preserve-status forwards SIGTERM (143), not 124.
 - [Phase 03.1-03]: Legacy xvtest0/xvtest1 pre-existing xvue/xvuelc.c crashes deferred to a future legacy-hardening pass (see 03.1-NOTES.md + deferred-items.md).
+- [Phase 03-04 reopen close 2026-04-14]: The 2 "MISMATCH" Qt solver traces from the 2026-04-13 first reopen were NOT real Qt rendering gaps. Root cause: Debian sid `apt upgrade` pulled `libgfortran5 = 16-20260322-1` (gcc-16 snapshot) which exposed latent UB in MEFISTO Fortran runtime. Fix: `sudo apt install libgfortran5_15.2.0-9_amd64.deb` (cached) + `apt-mark hold libgfortran5` + rebuild via `/tmp/gfortran-14-shim` PATH (gcc-15/gfortran-15 packages were also removed by the downgrade). Plus 2 long-standing batch-file bugs in `testa/nafems_le1/` (mesher missing `1;` between `5;90;`; elas missing `15;` between `1;90;`) — fixed in-place. Final D-27: 12/12 PASS, 1 DEFERRED (nlsecu).
+- [Phase 03-04 reopen close 2026-04-14]: Build-environment pinning is now an open deferred item — `libgfortran5` must stay on `15.2.0-9` until either Debian sid stabilizes gcc-16 or the latent Fortran UB sites (uninitialized `TPSINI` in `ther/thed1t.f`, FPE traps in elasticity stress paths) are properly initialized in source.
 
 ### Roadmap Evolution
 
@@ -104,6 +106,6 @@ None yet.
 
 ## Session Continuity
 
-Last session: 2026-04-12T23:30:00.000Z
-Stopped at: Phase 03.1 complete — plan 03-04 unblocked
-Resume file: .planning/phases/03-text-fonts-colormap/03-04-PLAN.md
+Last session: 2026-04-14T11:45:00.000Z
+Stopped at: Phase 03 plan 03-04 RESOLVED — Task 3 closed at 12/12 PASS after libgfortran5 pin + nafems_le1 batch fixes
+Resume file: none (HANDOFF.json + .continue-here.md deleted on close)

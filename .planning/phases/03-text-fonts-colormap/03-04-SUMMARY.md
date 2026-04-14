@@ -45,14 +45,14 @@ key-files:
     - .planning/phases/03-text-fonts-colormap/03-04-SUMMARY.md (this file)
 
 verification:
-  must_haves_met: 5/6 (1 partial)
-  status: approved
+  must_haves_met: 6/6
+  status: resolved
   rubric: D-27
   notes: |
     1. pp/ppxvtest{1..4}{,_qt} all exit 0 under QT_QPA_PLATFORM=xcb, no font-load warnings, no warn-once: ✅
     2. Legacy pp/ppxvtest{1..4} (X11 backend) exit 0 — BUILD-07/VALID-02 preserved: ✅
     3. Human xvtest1..4 A/B approval per D-27: ✅ (4/4 pairs PASS — orchestrator-read via Read tool)
-    4. Human testa 5-case A/B approval per D-27: ⚠ partial (7/9 configurations PASS, 2/9 documented scope reduction)
+    4. Human testa 5-case A/B approval per D-27: ✅ (12/12 pairs PASS, 1 DEFERRED nlsecu after 2 reopens — see 03-04-ab/testa/README.md "FINAL")
     5. 03-VALIDATION.md Per-Task Verification Map filled + nyquist_compliant: true: ✅
     6. TEXT-06 runtime proof deferred to Phase 6: ✅
 
@@ -76,6 +76,9 @@ commits:
   - c853741 fix(flui/lifiviprte): missing commas in FORMAT descriptors 10011/20011
   - e42b0e0 feat(xvuelc/xvfermer): mempx->fenetre_mef force-copy before capture hook
   - a0ad1c2 test(03-04): Task 3 — testa 5-case A/B captures + testa-capture.sh harness
+  - 68a3183 test(03-04): REOPEN Task 3 — honest Qt+X11 A/B captures, 10/12 PASS
+  - 272237d wip: phase 03-text-fonts-colormap Task 3 reopen paused — 10/12 PASS, 2 MISMATCH
+  - <next> test(03-04): RESOLVE Task 3 — 12/12 PASS after libgfortran5 pin + nafems_le1 batch fixes
 ---
 
 # Phase 03 plan 04 — completion gate
@@ -186,33 +189,46 @@ bugs surfaced and were fixed:
 
 ### Documented deferrals
 
-- **`nafems_le1-ppelas`**: `trelas.f:249` calls `EFFACEMEMPX` before
-  delegating to sub-tracers (`TRCONT`, `TRDEPL`, `TRVMTR`, ...) that
-  draw to `mempx` without explicit `MEMPXFENETRE` calls. Even with the
-  `xvfermer_` force-copy hook, the captured window is uniformly empty,
-  suggesting an additional `EFFACEMEMPX` is issued somewhere after the
-  trace completes and before `FERMER;` parses. Narrowing this down
-  requires tracing the exact dispatch for the `8; 1; 90; 90;` command
-  chain through `elas/trelas.f` and its callees — out of Phase 3 scope
-  (this is solver-specific drawing semantics, not Phase 3 TEXT/FONTS/
-  COLORMAP code).
+- **`nafems_le1-ppelas`** — RESOLVED 2026-04-14 (was previously listed
+  as deferred, then "PASS partial content", then turned out to be
+  blocked by a long-standing bug in `testa/nafems_le1/nafems_le1.elas`).
+  The batch's `8; 1; 90; 90;` was missing the `15; { Drawing of
+  STRESSES in ALL FE }` step that triggers `TRCOEF` (the actual stress
+  drawing). Adding `15;` between `1;` and `90;` makes the elas tracer
+  produce the expected radial principal-stress arrows on the quarter
+  annulus. The mesher batch `testa/nafems_le1/nafems_le1.mesh` had the
+  same shape of bug — `10; 5; 90;` instead of `10; 5; 1; 90;` — and was
+  also fixed. Both pairs now PASS at 12/12.
 
-- **`nlsecu-ppnlse`**: the `testa/nlsecu/nlsecu.iexrr` batch file runs a
-  non-linear wave simulation with `Final Time 20s` and `Step 0.01s` =
-  2000 time steps, each requiring a complex-matrix solve on ~4961
-  nodes. Observed throughput: time step 88/2000 reached after 300s →
-  extrapolated wall-clock ~1h50. Too long for synchronous capture;
-  needs either a shrunk `.iexrr` variant with fewer time steps (a
-  test-only file) or an offline cron run that deposits the PNG. Out of
-  scope for this session.
+- **`nlsecu-ppnlse`** — STILL DEFERRED. The `testa/nlsecu/nlsecu.iexrr`
+  batch file runs a non-linear wave simulation with `Final Time 20s`
+  and `Step 0.01s` = 2000 time steps, each requiring a complex-matrix
+  solve on ~4961 nodes. Observed throughput: time step 88/2000 reached
+  after 300s → extrapolated wall-clock ~1h50. Too long for synchronous
+  capture; needs either a shrunk `.iexrr` variant with fewer time
+  steps (a test-only file) or an offline cron run that deposits the
+  PNG. Out of scope for this phase.
+
+### Build-environment finding (DEFERRED to a future hardening phase)
+
+The 2 "MISMATCH" verdicts from the first reopen (2026-04-13) were not
+real Qt rendering gaps. They were stale Qt binaries running on top of
+`libgfortran5 = 16-20260322-1` — a gcc-16 snapshot from Debian sid
+that an interim `apt upgrade` had pulled in. The new runtime exposed
+latent UB in MEFISTO Fortran code (uninitialized `TPSINI` in
+`ther/thed1t.f`, FPE traps in the elasticity stress path, etc.). The
+fix in this session was operational: pin libgfortran5 to 15.2.0-9 and
+hold the pin. The latent UB sites still exist in the Fortran source
+and should be properly initialized in a follow-up audit before the
+hold can be released.
 
 ## Phase 3 completion
 
-With Tasks 1 + 2 green and Task 3 at 7/9 with documented scope
-reduction, Plan 03-04 is complete. The Phase 3 `nyquist_compliant: true`
-flag is set in `03-VALIDATION.md`, the Per-Task Verification Map is
-filled, and the phase is ready for 03-VERIFICATION.md and hand-off to
-Phase 4 (pixmap save/restore / double-buffering).
+With Tasks 1 + 2 green and Task 3 at 12/12 PASS + 1 DEFERRED, Plan
+03-04 is RESOLVED. The Phase 3 `nyquist_compliant: true` flag is set
+in `03-VALIDATION.md`, the Per-Task Verification Map shows green for
+all 4 tasks, and the phase is ready for hand-off to Phase 4 (pixmap
+save/restore / double-buffering).
 
 ## Phase 4 handoff
 
