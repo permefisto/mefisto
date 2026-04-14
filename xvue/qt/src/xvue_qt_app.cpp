@@ -27,6 +27,12 @@ std::unique_ptr<QApplication>      XvueApp::qapp_;
 std::unique_ptr<XvueWindow>        XvueApp::window_;
 int                                XvueApp::font_id_ = -1;
 
+// Phase 5 (D-03, EVENT-08). Static zero-init is load-bearing: any call to
+// blockingDepth() before the first RAII guard must observe 0.
+int                                XvueApp::blockingDepth_ = 0;
+
+int XvueApp::blockingDepth() { return blockingDepth_; }
+
 void XvueApp::load_bundled_font_()
 {
     if (font_id_ >= 0) return;
@@ -49,6 +55,11 @@ void XvueApp::ensure() {
         static int   fake_argc = 1;
         static char  arg0[] = "mefisto";
         static char* fake_argv[] = { arg0, nullptr };
+        // Phase 5 (D-05, Pitfall 7). Defensive — default-true on X11 per Qt
+        // docs; setting explicitly documents intent and protects against any
+        // future platform where the default flips. Must be set BEFORE the
+        // QApplication constructor so the dispatcher picks it up during init.
+        QCoreApplication::setAttribute(Qt::AA_CompressHighFrequencyEvents);
         qapp_ = std::make_unique<QApplication>(fake_argc, fake_argv);
         std::atexit(&XvueApp::teardown_atexit);
     });

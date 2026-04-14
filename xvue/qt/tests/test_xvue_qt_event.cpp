@@ -3,9 +3,11 @@
 // All event-bridge test bodies currently QSKIP; each downstream plan replaces
 // a subset with real assertions as the corresponding bridge behavior lands.
 #include "test_helpers.h"
+#include "xvue_qt_app.h"
 
 #include <QtTest/QtTest>
 #include <QApplication>
+#include <QCoreApplication>
 
 class TestXvueQtEvent : public QObject {
     Q_OBJECT
@@ -47,19 +49,36 @@ private slots:
     void testBlockingDepthRAII()          { QSKIP("Plan 02: RAII guard pending"); }
     void testBlockingDepthNested()        { QSKIP("Plan 02: nested guard pending"); }
 
-    // Smoke test — Wave 0 Task 2 lands the probe symbol. Before Task 2 this
-    // test fails at link time (unresolved symbol), so Task 1 acceptance
-    // tolerates a single known link/runtime failure here.
+    // Phase 5 Wave 0 Task 2: XvueApp::blockingDepth() must return 0 in a
+    // fresh process with no nested waitForEvent() calls active.
     void testBlockingDepthAccessorZero() {
-        extern int xvue_qt_test_blocking_depth_probe();  // forward decl
-        QCOMPARE(xvue_qt_test_blocking_depth_probe(), 0);
+        QCOMPARE(XvueApp::blockingDepth(), 0);
+    }
+
+    // Phase 5 Wave 0 Task 2 (D-05, Pitfall 7): AA_CompressHighFrequencyEvents
+    // must be observable once XvueApp::ensure() has constructed the
+    // QApplication. main() below calls XvueApp::ensure() before QTest::qExec,
+    // so the attribute set inside the ensure() call_once lambda is visible
+    // here regardless of X11's default-true behavior.
+    void testCompressHighFrequencyEventsSet() {
+        QVERIFY(QCoreApplication::testAttribute(Qt::AA_CompressHighFrequencyEvents));
     }
 };
 
-// Provide a weak probe symbol so Task 1 can link the test binary even before
-// XvueApp::blockingDepth() lands in Task 2. Task 2 replaces this file's body
-// with a real #include "xvue_qt_app.h" call.
-int xvue_qt_test_blocking_depth_probe() { return 0; }
+// Phase 5 Wave 0 Task 2: custom main instead of QTEST_MAIN so that
+// XvueApp::ensure() owns QApplication construction (and therefore gets to
+// set Qt::AA_CompressHighFrequencyEvents BEFORE the ctor runs — D-05).
+// Using QTEST_MAIN would construct a second QApplication and trip Qt's
+// "only one QApplication instance" assertion.
+int main(int argc, char* argv[]) {
+    (void)argc; (void)argv;
+    XvueApp::ensure();  // constructs the process QApplication (owned by XvueApp)
+    TestXvueQtEvent tc;
+    // Hand qExec a minimal argv — QApplication is already alive.
+    int    qt_argc     = 1;
+    char   qt_arg0[]   = "xvue_qt_event_tests";
+    char*  qt_argv[]   = { qt_arg0, nullptr };
+    return QTest::qExec(&tc, qt_argc, qt_argv);
+}
 
-QTEST_MAIN(TestXvueQtEvent)
 #include "test_xvue_qt_event.moc"

@@ -26,9 +26,22 @@ public:
     static int font_id_;
     static void load_bundled_font_();
 
+    // Phase 5 (D-03, EVENT-08). Re-entrancy counter for nested waitForEvent().
+    // Main-thread-only (SHELL-07) — no atomics. Phase 6 modal dialogs query
+    // this via blockingDepth() > 0 to refuse QDialog::exec() re-entry.
+    static int blockingDepth();
+
+    // RAII guard (declared in Plan 02's xvue_qt_event.h). Friending keeps the
+    // counter strictly internal — only the guard may touch blockingDepth_.
+    friend struct BlockingDepthGuard;
+
 private:
     static std::once_flag                     once_flag_;
     static std::unique_ptr<QApplication>      qapp_;
     static std::unique_ptr<XvueWindow>        window_;
     static void teardown_atexit();
+
+    // Phase 5 (D-03). Process-wide; main thread only (SHELL-07). Initialized
+    // to 0 in xvue_qt_app.cpp — static zero-init is also a safety net.
+    static int blockingDepth_;
 };
