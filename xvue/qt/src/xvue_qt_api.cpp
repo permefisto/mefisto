@@ -94,8 +94,13 @@ inline void xvue_qt_save_to_slot() {
     if (!st->saved_canvas_ || st->saved_canvas_->size() != st->backing_->size()) {
         delete st->saved_canvas_;
         st->saved_canvas_ = new QPixmap(st->backing_->size());
-        st->saved_canvas_->setDevicePixelRatio(st->backing_->devicePixelRatio());
     }
+    // WR-02: Always refresh DPR, even on slot reuse. Qt 6 can change
+    // backing_->devicePixelRatio() when the window moves between monitors
+    // without changing backing_->size() (size is in device pixels), so the
+    // reuse branch must re-sync DPR or restore would misscale. Cheap and
+    // idempotent.
+    st->saved_canvas_->setDevicePixelRatio(st->backing_->devicePixelRatio());
 
     // Scoped temporary painter on saved_canvas_; painter_ on backing_
     // is NOT touched (Phase 2 D-05; Pitfall 2).
