@@ -34,11 +34,85 @@ C
       INTEGER   NLEN, NPXLA, NPXHA, NOPALC, NBCELLS, I
       REAL      PROUGE_CUS(10), PVERT_CUS(10), PBLEU_CUS(10)
       CHARACTER*32 LABEL
+      CHARACTER*32 SCENE
 C
       PRINT *
       PRINT *,'==========================================='
       PRINT *,'Phase 1+2: cycle open/close + primitives'
       PRINT *,'==========================================='
+C
+C     ====================================================
+C     PHASE 4 COVERAGE — pixmap save/restore round-trip
+C     (runs FIRST per 04-RESEARCH Open Question 2, so the
+C     base scene is a clean black canvas; skipped entirely
+C     when MEFISTO_XVTEST0_SCENE is blank to preserve Phase
+C     1/2/3 coverage in the default driver run.)
+C     ====================================================
+      SCENE = ' '
+      CALL GETENV('MEFISTO_XVTEST0_SCENE', SCENE)
+      IF (SCENE .NE. ' ') THEN
+        PRINT *,'[xvtest0] PHASE 4 scene = ', SCENE
+        CALL XVOUVRIR
+        IF (SCENE .EQ. 'P4_BG') THEN
+C         Background-only: XVINITGRAPHIQUE + EFFACER, nothing else.
+          CALL EFFACER
+          CALL MEMPXFENETRE
+          CALL XVVOIR
+          CALL XVFERMER
+          STOP
+        END IF
+C
+C       Default base scene for the other branches.
+        CALL P4BASE
+C
+        IF (SCENE .EQ. 'P4_CTRL') THEN
+C         Mesh-only control — no save/restore, no overlays.
+          CALL MEMPXFENETRE
+          CALL XVVOIR
+          CALL XVFERMER
+          STOP
+        ELSE IF (SCENE .EQ. 'P4_SAVERESTORE') THEN
+          CALL SAUVEFENETRE
+          CALL XVCOULEUR(6)
+          CALL XVBORDRECTANGLE(200, 200, 100, 100)
+          CALL RESTAUREFENETRE
+          CALL MEMPXFENETRE
+          CALL XVVOIR
+          CALL XVFERMER
+          STOP
+        ELSE IF (SCENE .EQ. 'P4_MEMPX_SAVERESTORE') THEN
+          CALL SAUVEMEMPX
+          CALL XVCOULEUR(6)
+          CALL XVBORDRECTANGLE(200, 200, 100, 100)
+          CALL RESTAUREMEMPX
+          CALL MEMPXFENETRE
+          CALL XVVOIR
+          CALL XVFERMER
+          STOP
+        ELSE IF (SCENE .EQ. 'P4_EFFACEMEMPX') THEN
+          CALL EFFACEMEMPX
+          CALL MEMPXFENETRE
+          CALL XVVOIR
+          CALL XVFERMER
+          STOP
+        ELSE IF (SCENE .EQ. 'P4_FENETREMEMPX') THEN
+C         P4BASE already drew the base. On Qt both FENETREMEMPX and
+C         MEMPXFENETRE are intentional no-ops (Phase 4 D-04), so a
+C         capture produced by sandwiching the final XVVOIR between
+C         them MUST equal the P4_CTRL capture pixel-for-pixel.
+C         [Deviation Rule 1] The planner's original action inserted
+C         an extra XVTRAIT here; that would have produced a scene
+C         that could never equal P4_CTRL. Removing it is the only
+C         way to actually prove the no-ops are transparent.
+          CALL FENETREMEMPX
+          CALL MEMPXFENETRE
+          CALL XVVOIR
+          CALL XVFERMER
+          STOP
+        END IF
+C       Unknown scene → fall through to legacy path for safety.
+        CALL XVFERMER
+      END IF
 C
       PRINT *,'[xvtest0] premier appel XVOUVRIR'
       CALL XVOUVRIR
@@ -164,4 +238,36 @@ C
       PRINT *
       PRINT *,'[xvtest0] OK — cycle open/close/open/close + draws'
       STOP
+      END
+C
+      SUBROUTINE P4BASE
+C+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+C BUT : Phase 4 — base scene for round-trip tests.
+C       Draws a 4x4 colored checker (via XVFACE) and a horizontal line.
+C       Deterministic: same input → same backing pixels.
+C+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+      INTEGER*2 PTS(2,4)
+      INTEGER   IR, IC, X0, Y0, W, H, ICOL
+      W = 60
+      H = 60
+      DO 200 IR = 0, 3
+        DO 210 IC = 0, 3
+          X0 = 100 + IC * W
+          Y0 = 100 + IR * H
+          ICOL = 1 + MOD(IR + IC, 7)
+          CALL XVCOULEUR(ICOL)
+          PTS(1,1) = X0
+          PTS(2,1) = Y0
+          PTS(1,2) = X0 + W
+          PTS(2,2) = Y0
+          PTS(1,3) = X0 + W
+          PTS(2,3) = Y0 + H
+          PTS(1,4) = X0
+          PTS(2,4) = Y0 + H
+          CALL XVFACE(4, PTS)
+  210   CONTINUE
+  200 CONTINUE
+      CALL XVCOULEUR(7)
+      CALL XVTRAIT(80, 400, 380, 400)
+      RETURN
       END
