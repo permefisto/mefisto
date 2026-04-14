@@ -74,6 +74,55 @@ inline void xvue_qt_draw_rect_common(int x, int y, int w, int h, RectMode mode) 
     if (win->canvas()) win->canvas()->update();
 }
 
+// Phase 4 (D-07, D-08, D-09): file-local helpers backing the four save/restore
+// entry points. Anonymous-namespace visibility keeps them TU-local so the
+// verify_abi ABI count stays at 57 (Pitfall 7). `inline` hints the linker.
+//
+// Qt 6 allows two QPainters on two DIFFERENT devices concurrently
+// (doc.qt.io/qt-6/qpainter.html "A paint device can only be painted by
+// one painter at a time" — per-device, not per-process). So the save
+// direction uses a temporary scoped painter on saved_canvas_ while the
+// long-lived painter_ stays bound to backing_ (Phase 2 D-05 invariant).
+inline void xvue_qt_save_to_slot() {
+    auto& win = XvueApp::window_slot();
+    if (!win) return;
+    auto* st = win->state();
+    if (!st || !st->painter_ || !st->painter_->isActive() || !st->backing_) return;
+
+    // D-02/D-14: lazy (re)allocation. If slot is null or wrong size,
+    // drop it and allocate fresh. HiDPI via setDevicePixelRatio (02/D-06).
+    if (!st->saved_canvas_ || st->saved_canvas_->size() != st->backing_->size()) {
+        delete st->saved_canvas_;
+        st->saved_canvas_ = new QPixmap(st->backing_->size());
+        st->saved_canvas_->setDevicePixelRatio(st->backing_->devicePixelRatio());
+    }
+
+    // Scoped temporary painter on saved_canvas_; painter_ on backing_
+    // is NOT touched (Phase 2 D-05; Pitfall 2).
+    {
+        QPainter tmp(st->saved_canvas_);
+        tmp.drawPixmap(0, 0, *st->backing_);
+    }
+    // No canvas_->update() — save is invisible to the user.
+}
+
+inline void xvue_qt_restore_from_slot() {
+    auto& win = XvueApp::window_slot();
+    if (!win) return;
+    auto* st = win->state();
+    if (!st || !st->painter_ || !st->painter_->isActive() || !st->backing_) return;
+
+    // D-12: size mismatch is auditable no-op with stderr warning.
+    if (!st->saved_canvas_ || st->saved_canvas_->size() != st->backing_->size()) {
+        std::fprintf(stderr, "xvue-qt: restore_from_slot: no slot or size mismatch\n");
+        return;
+    }
+
+    // Restore direction uses the ACTIVE painter_ on backing_ (02/D-05).
+    st->painter_->drawPixmap(0, 0, *st->saved_canvas_);
+    if (win->canvas()) win->canvas()->update();
+}
+
 // Phase 3 D-06 + Pitfall 7: xvtexte_ and xvftexte_ share this body under
 // the Phase 2 single-backing model (02/D-05). In legacy xvuelc.c the two
 // drew to DIFFERENT targets (mempx at :1658 vs fenetre_mef at :1678); the
