@@ -78,7 +78,7 @@ commits:
   - a0ad1c2 test(03-04): Task 3 — testa 5-case A/B captures + testa-capture.sh harness
   - 68a3183 test(03-04): REOPEN Task 3 — honest Qt+X11 A/B captures, 10/12 PASS
   - 272237d wip: phase 03-text-fonts-colormap Task 3 reopen paused — 10/12 PASS, 2 MISMATCH
-  - <next> test(03-04): RESOLVE Task 3 — 12/12 PASS after libgfortran5 pin + nafems_le1 batch fixes
+  - 56b0228 test(03-04): RESOLVE Task 3 reopen — 12/12 PASS after libgfortran5 pin + nafems_le1 batch fixes
 ---
 
 # Phase 03 plan 04 — completion gate
