@@ -441,59 +441,70 @@ void proc(xvpostscript)(int *lasops) {
 }
 
 // ---- 15. fenetremempx_ ----
+// D-04 (Phase 4): no-op — backing_ is the visible surface (Phase 2 D-04
+// single-backing collapse). No fenetre/mempx distinction on Qt.
 void proc(fenetremempx)(void) {
     XvueApp::ensure();
     XVUE_QT_ASSERT_MAIN_THREAD();
-    static bool warned = false;
-    warn_once(warned, "fenetremempx_");
+    // intentional no-op per Phase 4 D-04
 }
 
 // ---- 16. mempxfenetre_ ----
+// D-04 (Phase 4): no-op — backing_ is the visible surface (Phase 2 D-04
+// single-backing collapse). Phase 03-04 empirically validated that
+// solver tracers (e.g. elas/trelas.f) produce correct displays under this.
 void proc(mempxfenetre)(void) {
     XvueApp::ensure();
     XVUE_QT_ASSERT_MAIN_THREAD();
-    static bool warned = false;
-    warn_once(warned, "mempxfenetre_");
+    // intentional no-op per Phase 4 D-04
 }
 
 // ---- 17. sauvefenetre_ ----
+// D-07, D-08 (Phase 4): save backing_ -> saved_canvas_ via file-local helper.
 void proc(sauvefenetre)(void) {
     XvueApp::ensure();
     XVUE_QT_ASSERT_MAIN_THREAD();
-    static bool warned = false;
-    warn_once(warned, "sauvefenetre_");
+    xvue_qt_save_to_slot();
 }
 
 // ---- 18. restaurefenetre_ ----
+// D-07, D-08 (Phase 4): restore saved_canvas_ -> backing_ via file-local helper.
 void proc(restaurefenetre)(void) {
     XvueApp::ensure();
     XVUE_QT_ASSERT_MAIN_THREAD();
-    static bool warned = false;
-    warn_once(warned, "restaurefenetre_");
+    xvue_qt_restore_from_slot();
 }
 
 // ---- 19. sauvemempx_ ----
+// D-07, D-08 (Phase 4): bit-identical to sauvefenetre_ (single-slot model, D-01).
 void proc(sauvemempx)(void) {
     XvueApp::ensure();
     XVUE_QT_ASSERT_MAIN_THREAD();
-    static bool warned = false;
-    warn_once(warned, "sauvemempx_");
+    xvue_qt_save_to_slot();
 }
 
 // ---- 20. restauremempx_ ----
+// D-07, D-08 (Phase 4): bit-identical to restaurefenetre_ (single-slot model, D-01).
 void proc(restauremempx)(void) {
     XvueApp::ensure();
     XVUE_QT_ASSERT_MAIN_THREAD();
-    static bool warned = false;
-    warn_once(warned, "restauremempx_");
+    xvue_qt_restore_from_slot();
 }
 
 // ---- 21. effacemempx_ ----
+// D-10, D-11 (Phase 4): same body as effacer_ — Qt has no separate
+// mempx surface (Phase 2 D-04, D-15). Two symbols kept distinct for
+// ABI preservation (D-08) but functionally identical.
 void proc(effacemempx)(void) {
     XvueApp::ensure();
     XVUE_QT_ASSERT_MAIN_THREAD();
-    static bool warned = false;
-    warn_once(warned, "effacemempx_");
+    auto& win = XvueApp::window_slot();
+    if (!win) return;
+    auto* st = win->state();
+    if (st && st->painter_ && st->painter_->isActive() && st->backing_) {
+        st->painter_->fillRect(st->backing_->rect(), st->background_);
+    }
+    if (win->canvas()) win->canvas()->update();
 }
 
 // ---- 22. effacer_ (D-15) ----
