@@ -51,9 +51,12 @@ echo "Cleaning xvue/qt/build and stale pp/pp*_qt..."
 rm -rf $MEFISTO/xvue/qt/build
 rm -f  $MEFISTO/pp/pp*_qt
 
-# Build libxvueqt.a via CMake (handoff artifact for bin/cb*_qt scripts)
-echo "Building xvue/qt/libxvueqt.a via CMake..."
-cmake -S $MEFISTO/xvue/qt -B $MEFISTO/xvue/qt/build || {
+# Build libxvueqt.a via CMake (handoff artifact for bin/cb*_qt scripts).
+# Phase 5 Wave 0 (05-01): also enable -DXVUE_QT_BUILD_TESTS=ON so the QTest
+# target xvue_qt_event_tests is built alongside libxvueqt.a. Tests run
+# headless under xvfb-run; no Fortran link stage dependency.
+echo "Building xvue/qt/libxvueqt.a via CMake (with xvue_qt_event_tests)..."
+cmake -S $MEFISTO/xvue/qt -B $MEFISTO/xvue/qt/build -DXVUE_QT_BUILD_TESTS=ON || {
     echo "CMake configure of libxvueqt.a FAILED"
     exit 1
 }
@@ -63,6 +66,17 @@ cmake --build $MEFISTO/xvue/qt/build || {
 }
 test -f $MEFISTO/xvue/qt/build/libxvueqt.a || {
     echo "libxvueqt.a missing after cmake build — FAILED"
+    exit 1
+}
+
+# Phase 5 Wave 0 (05-01): explicitly build the xvue_qt_event_tests target so
+# that a failure here surfaces loudly rather than silently skipping the tests.
+cmake --build $MEFISTO/xvue/qt/build --target xvue_qt_event_tests || {
+    echo "cbl_tout_qt: xvue_qt_event_tests build FAILED"
+    exit 1
+}
+test -x $MEFISTO/xvue/qt/build/tests/xvue_qt_event_tests || {
+    echo "cbl_tout_qt: xvue_qt_event_tests binary missing after build — FAILED"
     exit 1
 }
 
