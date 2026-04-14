@@ -20,6 +20,11 @@ XvueCanvas::XvueCanvas(XvueState* state, QWidget* parent)
     setAutoFillBackground(false);
     setAttribute(Qt::WA_OpaquePaintEvent, true);
 
+    // Phase 5 (Pitfall 4). Required for QKeyEvent delivery to the canvas;
+    // without StrongFocus, QTest::keyClick and real keyboard events bypass
+    // the event filter the Plan 02 bridge will install here.
+    setFocusPolicy(Qt::StrongFocus);
+
     // D-04: DO NOT allocate backing_ here. Qt 6 guarantees resizeEvent fires
     // before the first paintEvent on X11/Wayland (Pitfall 6). The first
     // resizeEvent after construction performs the initial allocation.
@@ -110,4 +115,14 @@ void XvueCanvas::resizeEvent(QResizeEvent* event) {
 
     // (k) re-push pen+brush through applyPen() (D-22, Pitfall 5)
     state_->applyPen();
+
+    // Phase 5 (Pitfall 10). The saved accrochage undo tile may point at a
+    // location outside the new backing extents; invalidate it so the next
+    // xvsouris2_ motion allocates a fresh 13x13 tile from the current
+    // position. mempxaccro_ (the sprite template) is resolution-independent
+    // and is NOT touched here.
+    if (state_->accroche_undo_tile_) {
+        delete state_->accroche_undo_tile_;
+        state_->accroche_undo_tile_ = nullptr;
+    }
 }

@@ -4,10 +4,12 @@
 // a subset with real assertions as the corresponding bridge behavior lands.
 #include "test_helpers.h"
 #include "xvue_qt_app.h"
+#include "xvue_qt_state.h"
 
 #include <QtTest/QtTest>
 #include <QApplication>
 #include <QCoreApplication>
+#include <QPixmap>
 
 class TestXvueQtEvent : public QObject {
     Q_OBJECT
@@ -53,6 +55,21 @@ private slots:
     // fresh process with no nested waitForEvent() calls active.
     void testBlockingDepthAccessorZero() {
         QCOMPARE(XvueApp::blockingDepth(), 0);
+    }
+
+    // Phase 5 Wave 0 Task 3 (D-08, Pitfall 10): fresh XvueState must have
+    // both accrochage pixmap pointers nullptr (they are lazily allocated).
+    void testXvueStateAccrochageFieldsNull() {
+        XvueState s;
+        QCOMPARE(s.mempxaccro_, static_cast<QPixmap*>(nullptr));
+        QCOMPARE(s.accroche_undo_tile_, static_cast<QPixmap*>(nullptr));
+    }
+
+    // Phase 5 Wave 0 Task 3 (Pitfall 4): XvueCanvas must have StrongFocus.
+    // Full canvas construction requires window/state wiring Plan 02 will
+    // handle; this stub records the intent in the matrix.
+    void testCanvasFocusPolicyStrong() {
+        QSKIP("Plan 02 validates via full canvas construction");
     }
 
     // Phase 5 Wave 0 Task 2 (D-05, Pitfall 7): AA_CompressHighFrequencyEvents

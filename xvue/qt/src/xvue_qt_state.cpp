@@ -150,6 +150,14 @@ XvueState::~XvueState() {
     delete saved_canvas_;
     saved_canvas_ = nullptr;
 
+    // Phase 5 (D-08): mirror the saved_canvas_ pattern for the two
+    // accrochage pixmaps. Both are orthogonal to painter_/backing_ so the
+    // order relative to those two does not matter.
+    delete mempxaccro_;
+    mempxaccro_ = nullptr;
+    delete accroche_undo_tile_;
+    accroche_undo_tile_ = nullptr;
+
     if (painter_) {
         if (painter_->isActive()) {
             painter_->end();

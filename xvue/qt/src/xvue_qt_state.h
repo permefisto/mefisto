@@ -37,6 +37,19 @@ struct XvueState {
     // DPR set from backing_->devicePixelRatio() at allocation time.
     QPixmap* saved_canvas_ = nullptr;
 
+    // Phase 5 (D-08, EVENT-03, EVENT-06). Accrochage snap sprite (13x13,
+    // populated by initaccrochage_ — Plan 05) and saved tile under the
+    // currently-drawn sprite (Strategy B mirrors the Phase 4 saved_canvas_
+    // save/restore pattern; see 05-RESEARCH.md §6). Raw pointers with manual
+    // lifecycle per D-04 ownership style.
+    //
+    // Lifetime: mempxaccro_ is allocated once by initaccrochage_ and lives
+    // as long as XvueState. accroche_undo_tile_ is allocated lazily on the
+    // first xvsouris2_ motion and is invalidated on canvas resize (Pitfall
+    // 10) — the next motion allocates a fresh 13x13 tile.
+    QPixmap* mempxaccro_         = nullptr;
+    QPixmap* accroche_undo_tile_ = nullptr;
+
     // Phase 2 (D-16, D-17, D-18, D-20). Rebuilt by applyPen().
     QPen     pen_;
     QBrush   brush_          = QBrush(Qt::white, Qt::SolidPattern);
