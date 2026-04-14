@@ -55,15 +55,26 @@ done
 
 # -- Pairwise compare --------------------------------------------------
 # Helper: compare_ae <label> <req> <A.png> <B.png>
+# NOTE: FAILED is intentionally a global accumulator mutated from inside
+# the function (not declared `local`). See IN-04 in 04-REVIEW.md.
 FAILED=0
 compare_ae() {
     local LABEL="$1" REQ="$2" A="$3" B="$4"
-    local AE COUNT
-    # magick compare -metric AE writes the AE count to stderr (and may also
-    # append a normalized form like "0 (0)" on some builds — ImageMagick 7).
-    # Parse only the leading integer to stay portable.
-    AE=$(magick compare -metric AE "$A" "$B" null: 2>&1 || true)
-    COUNT=$(echo "$AE" | awk '{print $1}')
+    local AE rc COUNT
+    # WR-01: magick compare -metric AE writes the AE count to stderr. We
+    # redirect stderr into $AE but DROP stdout (null: diff image). Using
+    # `|| true` previously hid the IM7 exit code — rc=1 means "images
+    # differ", rc>=2 means "magick error" (missing file, bad format, …);
+    # we must distinguish them. Also, IM7 may prepend policy/delegate
+    # warning lines, so parse only the FIRST line's leading integer.
+    AE=$(magick compare -metric AE "$A" "$B" null: 2>&1 >/dev/null)
+    rc=$?
+    if [ "$rc" -ge 2 ]; then
+        echo "FAIL  [${REQ}]  ${LABEL}  (magick error rc=${rc}: ${AE}, A=${A}, B=${B})"
+        FAILED=$((FAILED + 1))
+        return
+    fi
+    COUNT=$(printf '%s\n' "$AE" | awk 'NR==1 {print $1; exit}')
     if [ "$COUNT" = "0" ]; then
         echo "PASS  [${REQ}]  ${LABEL}  (AE=0)"
     else
