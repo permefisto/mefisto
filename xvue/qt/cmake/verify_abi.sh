@@ -14,7 +14,12 @@ set -eu
 LIB="$1"
 HDR="$2"
 
-NM_COUNT=$(nm "$LIB" | grep -c ' T [a-zA-Z_][a-zA-Z0-9_]*_$' || true)
+# Count Fortran-facing public text symbols ending in underscore, excluding
+# C++ mangled names (which start with _Z and can end with _ via suffixes like
+# S1_ that the name-mangler emits for repeated type references). Phase 5 added
+# XvueEventBridge::waitForEvent(WaitMode, int*, int*) whose mangled name
+# matches the bare [a-zA-Z_][a-zA-Z0-9_]*_$ pattern accidentally.
+NM_COUNT=$(nm "$LIB" | grep ' T [a-zA-Z_][a-zA-Z0-9_]*_$' | grep -vc ' T _Z' || true)
 HDR_COUNT=$(grep -c '^[[:space:]]*\(void\|int\|float\|double\|long\|short\|unsigned\|void[[:space:]]*\*\)[[:space:]]*proc(' "$HDR" || true)
 
 echo "verify_abi: nm count: $NM_COUNT  header count: $HDR_COUNT"

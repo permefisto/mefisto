@@ -20,6 +20,7 @@ add_library(xvueqt STATIC
     src/xvue_qt_api.cpp
     src/xvue_qt_app.cpp
     src/xvue_qt_canvas.cpp
+    src/xvue_qt_event.cpp
     src/xvue_qt_state.cpp
     src/xvue_qt_window.cpp
 )
