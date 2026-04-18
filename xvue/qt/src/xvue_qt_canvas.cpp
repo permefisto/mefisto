@@ -25,6 +25,16 @@ XvueCanvas::XvueCanvas(XvueState* state, QWidget* parent)
     // the event filter the Plan 02 bridge will install here.
     setFocusPolicy(Qt::StrongFocus);
 
+    // Phase 5 Plan 03: mouse tracking MUST be enabled so that MouseMove
+    // events are delivered to the canvas when no mouse button is held.
+    // The X11 xvsouris_ body reports motion with nbc=0 (no button) — Qt's
+    // default widget behaviour is to only deliver MouseMove while a button
+    // is pressed, which would break the xvsouris_ motion contract (and the
+    // rubber-band zoom UI). This is the Qt equivalent of the X11 mesher
+    // window having PointerMotionMask in its event mask (xvuelc.c opens the
+    // window with pointer motion events always on).
+    setMouseTracking(true);
+
     // D-04: DO NOT allocate backing_ here. Qt 6 guarantees resizeEvent fires
     // before the first paintEvent on X11/Wayland (Pitfall 6). The first
     // resizeEvent after construction performs the initial allocation.

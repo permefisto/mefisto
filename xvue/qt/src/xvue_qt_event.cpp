@@ -13,11 +13,32 @@
 #include <QCoreApplication>
 #include <QCursor>
 #include <QThread>
+#include <QTimer>
+
+#include <cstdio>
+#include <cstdlib>
 
 XvueEventBridge::XvueEventBridge(XvueCanvas* canvas, QObject* parent)
     : QObject(parent), canvas_(canvas) {}
 
 XvueEventBridge::~XvueEventBridge() = default;
+
+// Plan 03: MEFISTO_XVSOURIS_DEBUG env-var cache.
+//
+// The env var is read once via getenv on first call and cached in a static
+// local; subsequent calls are a simple bool read. Any non-empty, non-"0"
+// value enables logging — "1", "true", "yes", etc. all count as on.
+// Gated-off by default so production stderr is clean.
+bool XvueEventBridge::debug_logging_enabled() {
+    static const bool enabled = [] {
+        const char* env = std::getenv("MEFISTO_XVSOURIS_DEBUG");
+        if (env == nullptr)      return false;
+        if (env[0] == '\0')      return false;
+        if (env[0] == '0' && env[1] == '\0') return false;
+        return true;
+    }();
+    return enabled;
+}
 
 int XvueEventBridge::translateKey(QKeyEvent* ev) {
     if (!ev) return 0;
@@ -53,24 +74,45 @@ XvueEventBridge::waitForEvent(WaitMode mode, int* items, int* pmin0) {
     WaitMode    saved_mode         = mode_;
     Result      saved_pending      = pending_;
     bool        saved_quit_pending = quit_pending_;
+    int         saved_motion_count = motion_count_;  // Plan 03
     int*        saved_items        = items_;
     int*        saved_pmin0        = pmin0_;
 
     // Reset per-call state (Pitfall 9: never trust stale quit_pending_).
+    // Plan 03 also resets motion_count_ so the diagnostic counter reflects
+    // only this invocation.
     mode_         = mode;
     pending_      = Result{};
     quit_pending_ = false;
+    motion_count_ = 0;
     items_        = items;
     pmin0_        = pmin0;
 
     QEventLoop loop;
     loop_ = &loop;
-    // Plan 03 will layer motion coalescing on top of this. For Plan 02 we
-    // simply run the loop until a non-motion event sets pending_ and calls
-    // loop.quit() directly.
+    // Plan 03 layers motion coalescing via QTimer::singleShot(0, loop_,
+    // &QEventLoop::quit) inside the MouseMove filter branch so waitForEvent
+    // returns the *tail* of a motion burst — X11 XEventsQueued(QueuedAfterFlush)
+    // parity. Button/key events still quit the loop synchronously.
     loop.exec();
 
     Result result = pending_;
+
+    // Plan 03 diagnostic: when MEFISTO_XVSOURIS_DEBUG=1, log one line per
+    // waitForEvent return with fields that let Plan 06 answer Assumption A2.
+    if (debug_logging_enabled()) {
+        std::fprintf(stderr,
+                     "[xvsouris] mode=%d notypeevent=%d nbc=%d "
+                     "x=%d y=%d motion_count=%d depth=%d\n",
+                     static_cast<int>(mode),
+                     result.notypeevent,
+                     result.nbc,
+                     result.x,
+                     result.y,
+                     motion_count_,
+                     XvueApp::blockingDepth());
+        std::fflush(stderr);
+    }
 
     // Restore the outer call's state so its filter sees its own loop/pending
     // when the stack unwinds.
@@ -78,6 +120,7 @@ XvueEventBridge::waitForEvent(WaitMode mode, int* items, int* pmin0) {
     mode_         = saved_mode;
     pending_      = saved_pending;
     quit_pending_ = saved_quit_pending;
+    motion_count_ = saved_motion_count;
     items_        = saved_items;
     pmin0_        = saved_pmin0;
 
@@ -152,9 +195,33 @@ bool XvueEventBridge::eventFilter(QObject* watched, QEvent* event) {
         return true;
     }
 
-    // Motion: Plan 03.
-    case QEvent::MouseMove:
-        return false;  // pass-through until Plan 03 implements coalescing
+    // Plan 03 (D-04): mouse-motion coalescing via deferred-quit timer.
+    //
+    // Reference semantics (xvuelc.c:2248-2263): the X11 body calls
+    // XEventsQueued(QueuedAfterFlush) after each MotionNotify and only
+    // returns the event if nothing else is queued behind it. The Qt
+    // equivalent is: stash the (x, y) into pending_ on every MouseMove
+    // (Pitfall 8: fresh every branch — never stale), arm a zero-delay
+    // single-shot timer the first time (Pitfall 9: quit_pending_ was
+    // already reset at the top of waitForEvent), and eat the event. The
+    // timer enqueues a loop.quit() at the tail of the event queue, so any
+    // motion events already queued ahead of it are dispatched (updating
+    // pending_ as they go) before the timer fires. The result: loop.exec()
+    // returns with the *last* coordinate pair in the burst, zero added
+    // latency — identical to the X11 XEventsQueued(QueuedAfterFlush) path.
+    case QEvent::MouseMove: {
+        auto* me = static_cast<QMouseEvent*>(event);
+        pending_.notypeevent = -2;
+        pending_.nbc         = 0;      // X11 motion contract: no button carried
+        pending_.x           = me->pos().x();  // Pitfall 8: fresh, not stale
+        pending_.y           = me->pos().y();
+        ++motion_count_;
+        if (!quit_pending_) {
+            quit_pending_ = true;
+            QTimer::singleShot(0, loop_, &QEventLoop::quit);
+        }
+        return true;  // eat — we own the burst
+    }
 
     default:
         return false;

@@ -68,11 +68,20 @@ private:
     // D-07 defaults: Esc→27, Ret→13, Tab→9, @→64, Backspace→8.
     static int translateKey(QKeyEvent* ev);
 
+    // Plan 03: MEFISTO_XVSOURIS_DEBUG env-var cache. The lookup runs once on
+    // first call (static-local initialization is thread-safe in C++17 but the
+    // bridge is main-thread-only anyway per SHELL-07). When enabled, the
+    // diagnostic counter is written to stderr at each waitForEvent return so
+    // Plan 06 can resolve Assumption A2 (whether AA_CompressHighFrequencyEvents
+    // compresses before or after the filter).
+    static bool debug_logging_enabled();
+
     XvueCanvas* canvas_        = nullptr;
     QEventLoop* loop_          = nullptr;   // non-null only inside waitForEvent
     WaitMode    mode_          = WaitMode::Souris;
     Result      pending_;                   // stash before loop.quit()
     bool        quit_pending_  = false;     // deferred-quit timer armed flag (Plan 03)
+    int         motion_count_  = 0;         // Plan 03: motion events seen this waitForEvent
 
     // Souris2 only (Plan 05).
     int*        items_         = nullptr;
