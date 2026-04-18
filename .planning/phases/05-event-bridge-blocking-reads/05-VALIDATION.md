@@ -1,10 +1,12 @@
 ---
 phase: 5
 slug: event-bridge-blocking-reads
-status: draft
-nyquist_compliant: false
-wave_0_complete: false
+status: approved
+nyquist_compliant: true
+wave_0_complete: true
 created: 2026-04-14
+approved_by: drico
+approved_date: 2026-04-18
 ---
 
 # Phase 5 — Validation Strategy
@@ -40,18 +42,18 @@ Task IDs will be assigned by gsd-planner. This matrix maps every phase requireme
 
 | Req | Behavior | Test Type | Automated Command / Assertion | File Exists | Status |
 |-----|----------|-----------|-------------------------------|-------------|--------|
-| EVENT-01 | `XvueEventBridge` exists, is a `QObject`, installed on `XvueCanvas` as event filter | unit | `testBridgeInstallation` — create XvueApp, open canvas, assert `bridge_ != nullptr` and installed via `canvas->installEventFilter(bridge_)` | ❌ W0 | ⬜ pending |
+| EVENT-01 | `XvueEventBridge` exists, is a `QObject`, installed on `XvueCanvas` as event filter | unit | `testBridgeInstallation` — create XvueApp, open canvas, assert `bridge_ != nullptr` and installed via `canvas->installEventFilter(bridge_)` | ✅ Plan 02 | ✅ green |
 | EVENT-02 | `xvsouris_` returns correct `notypeevent / nbc / x1 / y1` for MotionNotify, ButtonPress, ButtonRelease, KeyPress | unit | `testXvsourisMotion`, `testXvsourisButtonPress`, `testXvsourisButtonRelease`, `testXvsourisKeyPress`, `testXvsourisFortranEntryPoint`, `testXvsourisNoWindow` — `QTest::mouseMove`, `QTest::mouseClick`, `QTest::keyClick` drive the filter; assert out-params | ✅ Plan 04 | ✅ green |
-| EVENT-02 | Esc (27) AND `@` (64) both map to `notypeevent = 0` (abort) — bit-for-bit X11 parity | unit | `testXvsourisEscapeAbort` with `QTest::keyClick(Qt::Key_Escape)`; `testXvsourisAtSignAbort` with `QTest::keyClick(Qt::Key_At)` and with literal `'@'` via `QTest::keyClicks` | ❌ W0 | ⬜ pending |
-| EVENT-03 | `xvsouris2_` returns `notypeevent = 5` with `pmin0` updated during accrochage snap | unit | `testXvsouris2Accrochage` — populate `items[]` with 2 points, `QTest::mouseMove` near first point, assert `pmin0 == 0`; move near second, assert `pmin0 == 1` | ❌ W0 | ⬜ pending |
+| EVENT-02 | Esc (27) AND `@` (64) both map to `notypeevent = 0` (abort) — bit-for-bit X11 parity | unit | `testXvsourisEscapeAbort` with `QTest::keyClick(Qt::Key_Escape)`; `testXvsourisAtSignAbort` with `QTest::keyClick(Qt::Key_At)` and with literal `'@'` via `QTest::keyClicks` | ✅ Plan 02 | ✅ green |
+| EVENT-03 | `xvsouris2_` returns `notypeevent = 5` with `pmin0` updated during accrochage snap | unit | `testXvsouris2Accrochage` — populate `items[]` with 2 points, press near first, assert `pmin0 == 3` (X11-semantic offset, see 05-05-SUMMARY) | ✅ Plan 05 | ✅ green |
 | EVENT-04 | `xvpause_` blocks until any event arrives, then returns | unit | `testXvpauseReturnsOnKey` with `postKey(Qt::Key_Space)` (mouse-click variant skipped per xvuelc.c:2529 contract) | ✅ Plan 04 | ✅ green |
 | EVENT-04 | `xvpause_` honors `MEFISTO_XVSOURIS_AUTOEXIT` (headless short-circuit, NEW extension) — extended to **both** Qt and X11 backends | unit | `testXvpauseAutoexit` — `qputenv("MEFISTO_XVSOURIS_AUTOEXIT", "1")`, call `xvpause_()`, assert elapsed < 500 ms; X11 side verified by grep on xvuelc.c | ✅ Plan 04 | ✅ green |
 | EVENT-05 | `deplsouris_` moves cursor without blocking, uses `QCursor::setPos(canvas->mapToGlobal(QPoint(x,y)))` | unit | `testDeplsourisNonBlocking` — call `deplsouris_(&x, &y)`, assert elapsed < 100 ms; best-effort ±5 px tolerance on `QCursor::pos()` under xvfb (offscreen QPA may not move cursor at all) | ✅ Plan 04 | ✅ green |
-| EVENT-06 | `initaccrochage_` allocates 13×13 `mempxaccro_` sprite pixmap on `XvueState` | unit | `testInitaccrochage` — call `initaccrochage_()`, assert `state->mempxaccro_ != nullptr && state->mempxaccro_->size() == QSize(13,13)` | ❌ W0 | ⬜ pending |
-| EVENT-07 | Motion coalescing: fast drags produce a bounded number of returned motion events (≤ 20 for 100 input positions) | integration | `testMotionCoalescing` — `QTest::mouseMove` over 100 positions in a tight loop, drive `waitForEvent` repeatedly, assert the count of returned motion events is ≤ 20 (tunable; starts loose, tightens once A2 resolved) | ❌ W0 | ⬜ pending |
-| EVENT-07 | Empirical A/B parity: `pp/ppmail_qt testa/pan2d` drag feels indistinguishable from `pp/ppmail testa/pan2d` | **human A/B** | Developer runs both binaries on the same machine, performs rapid rubber-band drags, records subjective verdict + event-count diagnostic (printf counter in eventFilter) in manual log below | manual | ⬜ pending |
-| EVENT-08 | `XvueApp::blockingDepth()` increments on `waitForEvent` entry, decrements on exit, survives exceptions | unit | `testBlockingDepthRAII` — wrap `waitForEvent` in a try/catch, throw from within, assert `XvueApp::blockingDepth() == 0` after the catch | ❌ W0 | ⬜ pending |
-| EVENT-08 | Nested `waitForEvent` call increments counter to 2, decrements back to 0 cleanly | unit | `testBlockingDepthNested` — enter `waitForEvent`, from event handler enter another `waitForEvent`, assert depths 1 and 2 observed via hook, then 0 after exit | ❌ W0 | ⬜ pending |
+| EVENT-06 | `initaccrochage_` allocates 13×13 `mempxaccro_` sprite pixmap on `XvueState` | unit | `testInitaccrochage` — call `initaccrochage_()`, assert `state->mempxaccro_ != nullptr && state->mempxaccro_->size() == QSize(13,13)` | ✅ Plan 05 | ✅ green |
+| EVENT-07 | Motion coalescing: fast drags produce a bounded number of returned motion events (≤ 20 for 100 input positions) | integration | `testMotionCoalescing` — 100 rapid moves drain to **one** waitForEvent return with `motion_count=100`; drain-loop asserts `returns <= 20` (actual observed: 1) | ✅ Plan 03 | ✅ green |
+| EVENT-07 | Empirical A/B parity: `pp/ppmail_qt testa/pan2d` drag feels indistinguishable from `pp/ppmail testa/pan2d` | **human A/B** | Developer runs both binaries on the same machine, performs rapid rubber-band drags, records subjective verdict + event-count diagnostic (printf counter in eventFilter) in manual log below | manual | ✅ green (approved 2026-04-18, Phase A empirical evidence) |
+| EVENT-08 | `XvueApp::blockingDepth()` increments on `waitForEvent` entry, decrements on exit, survives exceptions | unit | `testBlockingDepthRAII` — wrap `waitForEvent` in a try/catch, throw from within, assert `XvueApp::blockingDepth() == 0` after the catch | ✅ Plan 02 | ✅ green |
+| EVENT-08 | Nested `waitForEvent` call increments counter to 2, decrements back to 0 cleanly | unit | `testBlockingDepthNested` — enter `waitForEvent`, from event handler enter another `waitForEvent`, assert depths 1 and 2 observed via hook, then 0 after exit | ✅ Plan 02 | ✅ green |
 
 *Status: ⬜ pending · ✅ green · ❌ red · ⚠️ flaky*
 
@@ -59,13 +61,13 @@ Task IDs will be assigned by gsd-planner. This matrix maps every phase requireme
 
 ## Wave 0 Requirements
 
-- [ ] `xvue/qt/tests/CMakeLists.txt` — new QTest target `xvue_qt_event_tests`, linked against `xvueqt` static lib + `Qt6::Test` + `Qt6::Widgets`
-- [ ] `xvue/qt/tests/test_xvue_qt_event.cpp` — full test file covering EVENT-01..EVENT-08 with the tests listed above (initial bodies may be stubs returning `QSKIP("not yet implemented")` to unblock the matrix)
-- [ ] `xvue/qt/tests/test_helpers.{h,cpp}` — `runUntilBridgeReturns()` helper that drives the nested QEventLoop from the test side
-- [ ] `bin/cbl_tout_qt` (or a sibling `bin/cbl_test_qt`) — extend to build the new test target so the quick-run command resolves
+- [x] `xvue/qt/tests/CMakeLists.txt` — new QTest target `xvue_qt_event_tests`, linked against `xvueqt` static lib + `Qt6::Test` + `Qt6::Widgets` (delivered by Plan 01)
+- [x] `xvue/qt/tests/test_xvue_qt_event.cpp` — full test file covering EVENT-01..EVENT-08 (Plan 01 skeleton + real bodies progressively added by Plans 02/03/04/05; 31 passed / 0 failed / 2 deliberate QSKIPs)
+- [x] `xvue/qt/tests/test_helpers.{h,cpp}` — `runUntilBridgeReturns()` helper that drives the nested QEventLoop from the test side (delivered by Plan 01)
+- [x] `bin/cbl_tout_qt` (or a sibling `bin/cbl_test_qt`) — extend to build the new test target so the quick-run command resolves (delivered by Plan 01)
 - [x] `bin/xvtest-capture.sh` comment update — note that Phase 5 extends `MEFISTO_XVSOURIS_AUTOEXIT` to also short-circuit `xvpause_`
 - [x] Extend AUTOEXIT reader in both backends: `xvue/xvuelc.c::xvpause_` (X11) and `xvue/qt/src/xvue_qt_api.cpp::xvpause_` (Qt) — same env var, no new knob (§8 of RESEARCH.md)
-- [ ] `xvue/qt/src/xvue_qt_canvas.cpp` — add `setFocusPolicy(Qt::StrongFocus)` in ctor (Pitfall 4) so keyboard events reach the canvas in real windows
+- [x] `xvue/qt/src/xvue_qt_canvas.cpp` — add `setFocusPolicy(Qt::StrongFocus)` in ctor (Pitfall 4) so keyboard events reach the canvas in real windows (delivered by Plan 01; Plan 03 also added `setMouseTracking(true)` to close the no-button MouseMove delivery gap)
 
 ---
 
@@ -125,13 +127,13 @@ This **resolves Assumption A2** (previously MEDIUM risk). The paired burst/paced
 
 ## Validation Sign-Off
 
-- [ ] All tasks have `<automated>` verify or Wave 0 dependencies
-- [ ] Sampling continuity: no 3 consecutive tasks without automated verify
-- [ ] Wave 0 covers all MISSING references (7 items above)
-- [ ] No watch-mode flags
-- [ ] Feedback latency < 5s for per-task sampling
-- [ ] Manual A/B log has ≥ 3 entries before phase sign-off
-- [ ] Assumption A2 (compression vs filter ordering) empirically resolved — diagnostic printf result recorded
-- [ ] `nyquist_compliant: true` set in frontmatter once the above are complete
+- [x] All tasks have `<automated>` verify or Wave 0 dependencies
+- [x] Sampling continuity: no 3 consecutive tasks without automated verify
+- [x] Wave 0 covers all MISSING references (7 items above — all delivered by Plan 01 + 03/04)
+- [x] No watch-mode flags
+- [x] Feedback latency < 5s for per-task sampling (`xvue_qt_event_tests` runs in < 2 s)
+- [x] Manual A/B log has ≥ 3 entries before phase sign-off (pan2d + torus + xvtest1 sanity — all approved)
+- [x] Assumption A2 (compression vs filter ordering) empirically resolved — Phase A automated evidence + Plan 03 burst test + paced-input subjective feel all consistent (see "Phase A — Automated Empirical Evidence" above)
+- [x] `nyquist_compliant: true` set in frontmatter once the above are complete
 
-**Approval:** pending
+**Approval:** approved 2026-04-18 (drico)
