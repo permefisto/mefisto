@@ -298,12 +298,70 @@ private slots:
     void testXvsouris2Accrochage()        { QSKIP("Plan 05: xvsouris2_ accrochage not yet wired"); }
 
     // ---- EVENT-04: xvpause_ ----
-    void testXvpauseReturnsOnKey()        { QSKIP("Plan 04: xvpause_ ABI wiring not yet"); }
-    void testXvpauseReturnsOnMouseClick() { QSKIP("Plan 04: xvpause_ ABI wiring not yet"); }
-    void testXvpauseAutoexit()            { QSKIP("Plan 04: AUTOEXIT extension pending"); }
+    // Phase 5 Plan 04 (EVENT-04). xvpause_ blocks on bridge->waitForEvent(Pause)
+    // until a KeyPress arrives on the live window's canvas.
+    void testXvpauseReturnsOnKey() {
+        auto& win = XvueApp::window_slot();
+        QVERIFY(win != nullptr);
+        auto* canvas = win->canvas();
+        QVERIFY(canvas != nullptr);
+        QTimer::singleShot(10, [canvas]{ postKey(canvas, Qt::Key_Space, QStringLiteral(" ")); });
+        QElapsedTimer t; t.start();
+        xvpause_();
+        QVERIFY2(t.elapsed() < 1000,
+                 qPrintable(QStringLiteral("xvpause_ took %1ms, expected < 1000ms").arg(t.elapsed())));
+        QCOMPARE(XvueApp::blockingDepth(), 0);
+    }
+    void testXvpauseReturnsOnMouseClick() { QSKIP("Plan 04: mouse-click Pause path not load-bearing; xvpause_ contract is KeyPress-only (xvuelc.c:2529)"); }
+
+    // Phase 5 Plan 04 (EVENT-04). MEFISTO_XVSOURIS_AUTOEXIT short-circuits
+    // xvpause_ in both backends so headless harnesses do not hang (§8 of
+    // 05-RESEARCH.md). The env var is read per-call (not cached) so we can
+    // flip it at test time.
+    void testXvpauseAutoexit() {
+        qputenv("MEFISTO_XVSOURIS_AUTOEXIT", "1");
+        qputenv("MEFISTO_XVSOURIS_AUTOEXIT_DELAY_MS", "50");
+        QElapsedTimer t; t.start();
+        xvpause_();
+        const qint64 elapsed = t.elapsed();
+        qunsetenv("MEFISTO_XVSOURIS_AUTOEXIT");
+        qunsetenv("MEFISTO_XVSOURIS_AUTOEXIT_DELAY_MS");
+        QVERIFY2(elapsed < 500,
+                 qPrintable(QStringLiteral("xvpause_ AUTOEXIT took %1ms, expected < 500ms").arg(elapsed)));
+        QCOMPARE(XvueApp::blockingDepth(), 0);
+    }
 
     // ---- EVENT-05: deplsouris_ ----
-    void testDeplsourisNonBlocking()      { QSKIP("Plan 04: deplsouris_ not yet wired"); }
+    // Phase 5 Plan 04 (EVENT-05, D-09). deplsouris_ warps the cursor via
+    // QCursor::setPos(canvas->mapToGlobal(...)) and returns immediately.
+    // Wayland is a no-op (D-09); under xvfb the cursor usually moves within
+    // a few pixels of the requested point, but the verification is best-
+    // effort (offscreen QPA may not move the cursor at all — we only
+    // enforce the non-blocking contract and the positional tolerance if
+    // the cursor moved at all).
+    void testDeplsourisNonBlocking() {
+        auto& win = XvueApp::window_slot();
+        QVERIFY(win != nullptr);
+        auto* canvas = win->canvas();
+        QVERIFY(canvas != nullptr);
+
+        int x = 50, y = 60;
+        QElapsedTimer t; t.start();
+        deplsouris_(&x, &y);
+        QVERIFY2(t.elapsed() < 100,
+                 qPrintable(QStringLiteral("deplsouris_ took %1ms, expected non-blocking").arg(t.elapsed())));
+
+        QPoint expected = canvas->mapToGlobal(QPoint(50, 60));
+        QPoint actual = QCursor::pos();
+        if (actual != QPoint(0, 0)) {
+            QVERIFY2(qAbs(actual.x() - expected.x()) <= 5,
+                     qPrintable(QStringLiteral("cursor x drift: expected=%1 actual=%2")
+                                .arg(expected.x()).arg(actual.x())));
+            QVERIFY2(qAbs(actual.y() - expected.y()) <= 5,
+                     qPrintable(QStringLiteral("cursor y drift: expected=%1 actual=%2")
+                                .arg(expected.y()).arg(actual.y())));
+        }
+    }
 
     // ---- EVENT-06: initaccrochage_ ----
     void testInitaccrochage()             { QSKIP("Plan 05: initaccrochage_ not yet wired"); }

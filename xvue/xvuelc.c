@@ -2522,6 +2522,28 @@ void proc(xvpause)()
 12345X7..............................................................012345678*/ 
 {
   XEvent event;
+  char *autoexit;
+
+  /* Phase 5 Plan 04 (EVENT-04): headless short-circuit parity with xvsouris_.
+     When MEFISTO_XVSOURIS_AUTOEXIT is set, do not block on XNextEvent — flush
+     pending output, sleep MEFISTO_XVSOURIS_AUTOEXIT_DELAY_MS ms (default 500)
+     so any xvfermer_ capture hold has time to land, then return. Matches the
+     Qt-backend behavior at xvue/qt/src/xvue_qt_api.cpp. Same env var as
+     xvsouris_ — no new knob (§8 of 05-RESEARCH.md, D-10 preserved). */
+  autoexit = getenv("MEFISTO_XVSOURIS_AUTOEXIT");
+  if (autoexit != NULL && autoexit[0] != '\0')
+  {
+    int delay_ms = 500;
+    char *delay_env = getenv("MEFISTO_XVSOURIS_AUTOEXIT_DELAY_MS");
+    if (delay_env != NULL && delay_env[0] != '\0')
+    {
+      int d = atoi(delay_env);
+      if (d >= 0 && d <= 60000) delay_ms = d;
+    }
+    if (display_mef != NULL) XFlush(display_mef);
+    if (delay_ms > 0) usleep((useconds_t)delay_ms * 1000);
+    return;
+  }
 
   XNextEvent(display_mef, &event);
   switch(event.type)

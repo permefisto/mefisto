@@ -78,7 +78,11 @@ trap cleanup EXIT INT TERM
 #   MEFISTO_XVSOURIS_AUTOEXIT + MEFISTO_XVSOURIS_AUTOEXIT_DELAY_MS (kept
 #     small here, default 100ms) make every XVSOURIS call return a
 #     synthetic keypress quickly so the driver streams through all its
-#     drawing stages without waiting for user input.
+#     drawing stages without waiting for user input. Phase 5 (Plan 5-04)
+#     extends MEFISTO_XVSOURIS_AUTOEXIT to also short-circuit XVPAUSE in
+#     both backends (xvue/xvuelc.c::xvpause_ and xvue/qt/src/xvue_qt_api
+#     .cpp::xvpause_) so drivers that pause between stages no longer hang
+#     in CI. Same env var, no new knob — §8 of 05-RESEARCH.md.
 #
 #   MEFISTO_XVFERMER_READY_FILE + MEFISTO_XVFERMER_HOLD_MS create a
 #     deterministic capture window at the very end: xvfermer_ touches the

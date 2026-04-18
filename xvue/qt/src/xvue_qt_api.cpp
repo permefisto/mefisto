@@ -980,12 +980,28 @@ void proc(xvsouris2)(int *items, int *pmin0, int *notypeevent, int *ibutton, int
 }
 
 // ---- 39. deplsouris_ ----
+// Phase 5 Plan 04 (EVENT-05, D-09). Warp the cursor to canvas-local (x, y)
+// via QCursor::setPos(canvas->mapToGlobal(QPoint(x,y))). Non-blocking — does
+// not touch the event loop.
+//
+// Wayland caveat (D-09, Pitfall 5): QCursor::setPos is a no-op on most pure
+// Wayland compositors; X11 / XWayland is the supported session type.
+//
+// T-05-04-01 mitigation: bounds-check |x| / |y| to reject pathological
+// Fortran callers. Values outside ±32768 silently no-op so a bad caller
+// cannot warp the cursor to arbitrary screen coordinates.
 void proc(deplsouris)(int *x, int *y) {
     XvueApp::ensure();
     XVUE_QT_ASSERT_MAIN_THREAD();
-    static bool warned = false;
-    warn_once(warned, "deplsouris_");
-    (void)x; (void)y;
+    if (!x || !y) return;
+    const int xi = *x;
+    const int yi = *y;
+    if (xi < -32768 || xi > 32768 || yi < -32768 || yi > 32768) return;
+    auto& win = XvueApp::window_slot();
+    if (!win) return;
+    auto* canvas = win->canvas();
+    if (!canvas) return;
+    QCursor::setPos(canvas->mapToGlobal(QPoint(xi, yi)));
 }
 
 // ---- 40. xvvoir_ (D-02) ----
@@ -1000,11 +1016,39 @@ void proc(xvvoir)(void) {
 }
 
 // ---- 41. xvpause_ ----
+// Phase 5 Plan 04 (EVENT-04). Block until any event arrives on the canvas,
+// then return. Mirrors the xvuelc.c:2516-2531 XNextEvent/KeyPress semantics
+// but through the Plan 02 XvueEventBridge so the Fortran call remains
+// imperative while Qt runs a nested event loop underneath.
+//
+// AUTOEXIT extension: MEFISTO_XVSOURIS_AUTOEXIT short-circuits xvpause_ too
+// so bin/xvtest-capture.sh and other headless harnesses never hang on a
+// CALL XVPAUSE. Same env var as xvsouris_/xvsouris2_ (§8 of 05-RESEARCH.md,
+// D-10 preserves the var name; Plan 04 extends its scope to xvpause_).
 void proc(xvpause)(void) {
     XvueApp::ensure();
     XVUE_QT_ASSERT_MAIN_THREAD();
-    static bool warned = false;
-    warn_once(warned, "xvpause_");
+    const char* autoexit = std::getenv("MEFISTO_XVSOURIS_AUTOEXIT");
+    if (autoexit && autoexit[0] != '\0') {
+        int delay_ms = 500;
+        const char* delay_env = std::getenv("MEFISTO_XVSOURIS_AUTOEXIT_DELAY_MS");
+        if (delay_env && delay_env[0] != '\0') {
+            int d = std::atoi(delay_env);
+            if (d >= 0 && d <= 60000) delay_ms = d;
+        }
+        auto& win = XvueApp::window_slot();
+        if (win && win->canvas()) win->canvas()->update();
+        QElapsedTimer t; t.start();
+        while (t.elapsed() < delay_ms) {
+            QCoreApplication::processEvents(
+                QEventLoop::ExcludeUserInputEvents, 25);
+            usleep(5 * 1000);
+        }
+        return;
+    }
+    auto& win = XvueApp::window_slot();
+    if (!win || !win->bridge()) return;  // no window — silent no-op (xvpause has no out-params)
+    (void)win->bridge()->waitForEvent(XvueEventBridge::WaitMode::Pause);
 }
 
 // ---- 42. xvfbordrectangle_ (D-13, DRAW-04) ----
