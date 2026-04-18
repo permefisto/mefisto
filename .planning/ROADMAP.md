@@ -134,12 +134,12 @@ Plans:
   4. `XvueApp::blockingDepth()` counter correctly tracks nested `waitForEvent()` calls so subsequent phases can gate modal dialogs on it.
   5. End-to-end A/B run of all 5 baseline `testa/` cases on the Qt backend produces interactive behavior indistinguishable from X11 to the developer's eye.
 **Plans**: 6 plans
-  - [ ] 05-01-PLAN.md — Wave 0 scaffolding: Qt test infrastructure + blockingDepth counter + XvueState mempxaccro fields + canvas StrongFocus (EVENT-01, EVENT-06, EVENT-08 infra)
-  - [ ] 05-02-PLAN.md — XvueEventBridge class + BlockingDepthGuard RAII + button/key dispatch + install on canvas (EVENT-01, EVENT-08)
-  - [ ] 05-03-PLAN.md — Motion coalescing via QTimer::singleShot deferred-quit + diagnostic counter (EVENT-07)
-  - [ ] 05-04-PLAN.md — Real bodies xvsouris_/xvpause_/deplsouris_ + AUTOEXIT extension to xvpause_ both backends (EVENT-02, EVENT-04, EVENT-05)
-  - [ ] 05-05-PLAN.md — initaccrochage_ + xvsouris2_ Strategy B accrochage save/restore (EVENT-03, EVENT-06)
-  - [ ] 05-06-PLAN.md — Clean rebuild + manual A/B drag test (pan2d, torus) + VALIDATION.md sign-off + README Wayland caveat (EVENT-07 human)
+  - [x] 05-01-PLAN.md — Wave 0 scaffolding: Qt test infrastructure + blockingDepth counter + XvueState mempxaccro fields + canvas StrongFocus (EVENT-01, EVENT-06, EVENT-08 infra)
+  - [x] 05-02-PLAN.md — XvueEventBridge class + BlockingDepthGuard RAII + button/key dispatch + install on canvas (EVENT-01, EVENT-08)
+  - [x] 05-03-PLAN.md — Motion coalescing via QTimer::singleShot deferred-quit + diagnostic counter (EVENT-07)
+  - [x] 05-04-PLAN.md — Real bodies xvsouris_/xvpause_/deplsouris_ + AUTOEXIT extension to xvpause_ both backends (EVENT-02, EVENT-04, EVENT-05)
+  - [x] 05-05-PLAN.md — initaccrochage_ + xvsouris2_ Strategy B accrochage save/restore (EVENT-03, EVENT-06)
+  - [x] 05-06-PLAN.md — Clean rebuild + manual A/B drag test (pan2d, torus) + VALIDATION.md sign-off + README Wayland caveat (EVENT-07 human)
 **UI hint**: yes
 
 ### Phase 6: Level-3 UX chrome & menu surface
