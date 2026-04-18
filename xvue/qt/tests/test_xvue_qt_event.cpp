@@ -299,7 +299,103 @@ private slots:
         QVERIFY(XvueApp::window_slot() != nullptr);
     }
     // ---- EVENT-03: xvsouris2_ ----
-    void testXvsouris2Accrochage()        { QSKIP("Plan 05: xvsouris2_ accrochage not yet wired"); }
+    // Phase 5 Plan 05 Task 2 (EVENT-03). Drives the real Fortran ABI entry
+    // point through the bridge with a populated items[] array in the X11
+    // layout verified against xvue/saclav.f:61 and xvuelc.c:2397-2413:
+    //   items[0] = mots  = words per item (here 3: x, y, num)
+    //   items[1] = max   = max item capacity (unused by xvsouris2_)
+    //   items[2] = nbitem= actual item count
+    //   items[3..]      = (x, y, num) triplets
+    // *pmin0 is the OFFSET (not index) of the nearest item into items[], so
+    // for two 3-word items at (100,100,1) and (200,200,2) the valid offsets
+    // are 3 and 6. A click near (100,100) must return *pmin0 == 3.
+    void testXvsouris2Accrochage() {
+        auto& win = XvueApp::window_slot();
+        QVERIFY(win != nullptr);
+        auto* canvas = win->canvas();
+        QVERIFY(canvas != nullptr);
+
+        // Initialise the sprite so the filter has something to blit.
+        initaccrochage_();
+        QVERIFY(win->state()->mempxaccro_ != nullptr);
+
+        int items[9] = { 3, 2, 2,   100, 100, 1,   200, 200, 2 };
+        int pmin0 = -2;
+        int ntev = -99, ibtn = -99, x1 = -99, y1 = -99;
+
+        // A left button click near the first item (100, 100).
+        QTimer::singleShot(10, [canvas]{
+            postButtonPress(canvas, Qt::LeftButton, QPoint(105, 98));
+        });
+
+        xvsouris2_(items, &pmin0, &ntev, &ibtn, &x1, &y1);
+
+        // Nearest to (105, 98) is item 0 at offset 3. notypeevent=5 from
+        // the press path (X11 parity: press-in-accrochage returns 5, not 1).
+        QCOMPARE(pmin0, 3);
+        QCOMPARE(ntev, 5);
+        QCOMPARE(ibtn, 1);
+        QCOMPARE(x1, 105);
+        QCOMPARE(y1, 98);
+        QCOMPARE(XvueApp::blockingDepth(), 0);
+    }
+
+    // Plan 05 Task 2 (Rule 2 / T-05-05-01). Defensive guards: items==null
+    // and null out-param slots must not crash. The function returns with
+    // ntev=0 (no-event) and zero-filled out-params.
+    void testXvsouris2NullGuards() {
+        auto& win = XvueApp::window_slot();
+        QVERIFY(win != nullptr);
+        auto* canvas = win->canvas();
+        QVERIFY(canvas != nullptr);
+
+        initaccrochage_();
+        int items[6] = { 3, 1, 1,   50, 50, 1 };
+        int pmin0 = -2;
+
+        // Dispatch a space key so the bridge returns promptly. We don't
+        // care about the return code — only that the call does not crash
+        // even when notypeevent / ibutton / x1 / y1 are null.
+        QTimer::singleShot(10, [canvas]{
+            postKey(canvas, Qt::Key_Space, QStringLiteral(" "));
+        });
+        xvsouris2_(items, &pmin0, nullptr, nullptr, nullptr, nullptr);
+        QCOMPARE(XvueApp::blockingDepth(), 0);
+    }
+
+    // Plan 05 Task 2 (Pitfall 10 and T-05-05-02). On canvas resize the
+    // accroche_undo_tile_ is invalidated by the resizeEvent (Plan 01 Task 3
+    // installed the invalidation guard). Verify the invariant holds: after
+    // resize, the tile pointer is null and the next xvsouris2_ motion
+    // allocates a fresh tile without crashing on the stale pointer.
+    void testXvsouris2ResizeInvalidatesTile() {
+        auto& win = XvueApp::window_slot();
+        QVERIFY(win != nullptr);
+        auto* canvas = win->canvas();
+        auto* state = win->state();
+        QVERIFY(canvas != nullptr);
+        QVERIFY(state != nullptr);
+
+        initaccrochage_();
+        int items[6] = { 3, 1, 1,   80, 80, 1 };
+        int pmin0 = -2;
+        int ntev = -99, ibtn = -99, x1 = -99, y1 = -99;
+
+        // First press draws the sprite and saves a tile.
+        QTimer::singleShot(10, [canvas]{
+            postButtonPress(canvas, Qt::LeftButton, QPoint(82, 78));
+        });
+        xvsouris2_(items, &pmin0, &ntev, &ibtn, &x1, &y1);
+        QCOMPARE(pmin0, 3);
+        QVERIFY(state->accroche_undo_tile_ != nullptr);
+
+        // Now resize — Plan 01 Task 3's resizeEvent guard invalidates
+        // the tile so the next xvsouris2_ call does not use stale contents.
+        canvas->resize(canvas->size() + QSize(20, 20));
+        QCoreApplication::processEvents();
+        QVERIFY(state->accroche_undo_tile_ == nullptr);
+        QCOMPARE(XvueApp::blockingDepth(), 0);
+    }
 
     // ---- EVENT-04: xvpause_ ----
     // Phase 5 Plan 04 (EVENT-04). xvpause_ blocks on bridge->waitForEvent(Pause)

@@ -68,6 +68,13 @@ private:
     // D-07 defaults: Esc→27, Ret→13, Tab→9, @→64, Backspace→8.
     static int translateKey(QKeyEvent* ev);
 
+    // Plan 05 Task 2 (Strategy B). Erase any currently-drawn accrochage
+    // sprite and invalidate the state->accroche_undo_tile_ pointer so
+    // state is clean on abort (Esc / middle button) and on release. Safe
+    // when pmin0_ is null or *pmin0_ < 0. Uses items_ and the live window's
+    // state so it has no parameters.
+    void cleanupAccrochage();
+
     // Plan 03: MEFISTO_XVSOURIS_DEBUG env-var cache. The lookup runs once on
     // first call (static-local initialization is thread-safe in C++17 but the
     // bridge is main-thread-only anyway per SHELL-07). When enabled, the

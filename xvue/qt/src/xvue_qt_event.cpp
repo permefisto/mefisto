@@ -1,10 +1,12 @@
 // xvue/qt/src/xvue_qt_event.cpp
 // Phase 5 Plan 02 Task 2. Synchronous event-filter dispatch for button/key
-// events. Motion handling lands in Plan 03. xvsouris2_ accrochage lands in
-// Plan 05.
+// events. Motion coalescing lands in Plan 03. xvsouris2_ accrochage lands
+// in Plan 05 Task 2 (WaitMode::Souris2 branch below).
 #include "xvue_qt_event.h"
 #include "xvue_qt_canvas.h"
 #include "xvue_qt_app.h"
+#include "xvue_qt_window.h"
+#include "xvue_qt_state.h"
 
 #include <QEvent>
 #include <QEventLoop>
@@ -12,11 +14,15 @@
 #include <QMouseEvent>
 #include <QCoreApplication>
 #include <QCursor>
+#include <QPainter>
+#include <QPixmap>
+#include <QRect>
 #include <QThread>
 #include <QTimer>
 
 #include <cstdio>
 #include <cstdlib>
+#include <limits>
 
 XvueEventBridge::XvueEventBridge(XvueCanvas* canvas, QObject* parent)
     : QObject(parent), canvas_(canvas) {}
@@ -38,6 +44,102 @@ bool XvueEventBridge::debug_logging_enabled() {
         return true;
     }();
     return enabled;
+}
+
+// Phase 5 Plan 05 Task 2 (EVENT-03, Strategy B). File-local helpers for the
+// accrochage save-restore-blit dance. All three reference the fixed 13x13
+// sprite geometry from xvuelc.c:142-143 (lmempxaccro = hmempxaccro = 13)
+// and treat (cx, cy) as the ITEM's canvas-local center. The sprite is
+// blitted with its top-left corner at (cx - 6, cy - 6) so the black square
+// border is centered on the item — byte-parity with the X11 body at
+// xvuelc.c:2421-2434 (XCopyArea destination `items[pmin]-lmempxaccro/2`).
+//
+// Plan 05 invariant: every save_tile_under call is preceded either by a
+// restore_tile on the PREVIOUS (*pmin0) location (motion-to-new-item
+// case) or by a guard ensuring no tile was previously saved (*pmin0 < 0).
+// This keeps accroche_undo_tile_ in lockstep with what is actually drawn
+// on the backing, so the Rule-2/T-05-05-02 leak-on-repeated-motion threat
+// is closed by construction.
+
+// X11-parity nearest-item search. Layout verified against xvue/saclav.f:61
+// (`CALL XVSOURIS2(MCN(MNIT), ...)`) and xvuelc.c:2397-2413:
+//   items[0] = mots    (words per item, set by itemau.f:17)
+//   items[1] = maxcap  (max items stockable, set by itemau.f:20)
+//   items[2] = nbitem  (actual item count, set elsewhere in the mesher)
+//   first item pair at items[mots], items[mots+1]
+//   k-th item pair   at items[(k+1)*mots], items[(k+1)*mots+1]
+//
+// Returns the OFFSET `p` into items[] for the nearest (x, y) pair (mirrors
+// the X11 semantic where *pmin0 holds the offset, NOT the index). -1 means
+// "no item found" — empty array or nbitem==0.
+//
+// T-05-05-01 mitigation: clamp nbitem to a sane ceiling so a garbage
+// items[2] cannot walk off the end of memory.
+static int nearest_item_offset(const int* items, int cx, int cy) {
+    if (!items) return -1;
+    const int mots = items[0];
+    if (mots < 2) return -1;   // need at least x,y per item
+    int nbitem = items[2];
+    if (nbitem <= 0) return -1;
+    // T-05-05-01: clamp to 65536; saclav.f-driven counts are a few thousand.
+    if (nbitem > 65536) nbitem = 65536;
+
+    int dmin = std::numeric_limits<int>::max();
+    int pmin = -1;
+    int p    = 0;
+    for (int k = 0; k < nbitem; ++k) {
+        p += mots;
+        const int dx = items[p]     - cx;
+        const int dy = items[p + 1] - cy;
+        const int d  = dx * dx + dy * dy;
+        if (d < dmin) {
+            dmin = d;
+            pmin = p;
+        }
+    }
+    return pmin;
+}
+
+// Save a 13x13 tile of the canvas backing centered on (cx, cy) into
+// state->accroche_undo_tile_. Allocates the tile pixmap on first use and
+// reuses it on subsequent saves (its size is invariant). Safe against null
+// state/backing.
+static void save_tile_under(XvueState* state, int cx, int cy) {
+    if (!state || !state->backing_) return;
+    if (!state->accroche_undo_tile_) {
+        state->accroche_undo_tile_ = new QPixmap(13, 13);
+    }
+    // DPR must match the backing so the copyFromCanvas source aligns 1:1
+    // with the sprite destination. Backing DPR can change when the window
+    // moves between monitors (Phase 4 WR-02).
+    state->accroche_undo_tile_->setDevicePixelRatio(
+        state->backing_->devicePixelRatio());
+    // The sprite's top-left on the backing is (cx - 6, cy - 6); copy that
+    // 13x13 region out. QPainter::drawPixmap(target=(0,0), source=backing,
+    // sourceRect=...) uses LOGICAL coordinates — Qt handles DPR scaling.
+    QPainter p(state->accroche_undo_tile_);
+    p.drawPixmap(QPoint(0, 0), *state->backing_,
+                 QRect(cx - 6, cy - 6, 13, 13));
+}
+
+// Blit the saved undo tile back onto the canvas backing at (cx - 6, cy - 6),
+// erasing the sprite. Uses the long-lived painter_ so the drawing invariants
+// from Phase 2 D-05 (single active painter on backing) are preserved.
+static void restore_tile(XvueState* state, int cx, int cy) {
+    if (!state || !state->backing_ || !state->accroche_undo_tile_) return;
+    if (!state->painter_ || !state->painter_->isActive())         return;
+    state->painter_->drawPixmap(cx - 6, cy - 6, *state->accroche_undo_tile_);
+}
+
+// Blit the accrochage sprite onto the canvas backing at (cx - 6, cy - 6).
+// Must be called AFTER save_tile_under so the prior content is preserved
+// and can be restored on the next motion. No-op if mempxaccro_ is null
+// (initaccrochage_ was never called — defensive; xvsouris2_'s guard catches
+// this but the helper stays safe).
+static void draw_sprite(XvueState* state, int cx, int cy) {
+    if (!state || !state->backing_ || !state->mempxaccro_)        return;
+    if (!state->painter_ || !state->painter_->isActive())         return;
+    state->painter_->drawPixmap(cx - 6, cy - 6, *state->mempxaccro_);
 }
 
 int XvueEventBridge::translateKey(QKeyEvent* ev) {
@@ -127,6 +229,27 @@ XvueEventBridge::waitForEvent(WaitMode mode, int* items, int* pmin0) {
     return result;
 }
 
+// Plan 05 Task 2 (Strategy B). Accrochage cleanup helper: if a sprite was
+// previously drawn (*pmin0_ >= 0), restore the tile under it and invalidate
+// *pmin0_. Used on ButtonRelease and abort paths so the canvas is clean of
+// residue when the Fortran caller resumes.
+void XvueEventBridge::cleanupAccrochage() {
+    if (!items_ || !pmin0_) return;
+    if (*pmin0_ < 0)        return;
+    auto& win = XvueApp::window_slot();
+    if (!win) return;
+    auto* state = win->state();
+    if (!state || !state->accroche_undo_tile_) return;
+    const int old_cx = items_[*pmin0_];
+    const int old_cy = items_[*pmin0_ + 1];
+    restore_tile(state, old_cx, old_cy);
+    *pmin0_ = -2;
+    // Free the tile — next call's first motion will allocate a fresh 13x13.
+    delete state->accroche_undo_tile_;
+    state->accroche_undo_tile_ = nullptr;
+    if (win->canvas()) win->canvas()->update();
+}
+
 bool XvueEventBridge::eventFilter(QObject* watched, QEvent* event) {
     (void)watched;
     if (!loop_) return false;  // pass-through when not blocking
@@ -135,6 +258,62 @@ bool XvueEventBridge::eventFilter(QObject* watched, QEvent* event) {
 
     case QEvent::MouseButtonPress: {
         auto* me = static_cast<QMouseEvent*>(event);
+        // Plan 05 Task 2 (EVENT-03): Souris2 mode treats a press as the final
+        // "item picked" signal. Mirrors xvuelc.c:2383-2439 where MotionNotify
+        // and ButtonPress share the accrochage path and return notypeevent=5
+        // (or 0 on middle-button abort).
+        if (mode_ == WaitMode::Souris2) {
+            int btn = 0;
+            switch (me->button()) {
+            case Qt::LeftButton:   btn = 1; break;
+            case Qt::MiddleButton: btn = 2; break;
+            case Qt::RightButton:  btn = 3; break;
+            default:               btn = 0; break;
+            }
+            // Middle-button parity with xvsouris_: abort. saclav.f:83-86
+            // remaps btn=2 to notypeevent=-1 / nbc=64 (@ abort path).
+            if (me->button() == Qt::MiddleButton) {
+                cleanupAccrochage();
+                pending_.notypeevent = 0;
+                pending_.nbc         = 2;
+                pending_.x           = me->pos().x();
+                pending_.y           = me->pos().y();
+                loop_->quit();
+                return true;
+            }
+            // Normal path: accrochage redraw + return notypeevent=5.
+            const int cx = me->pos().x();
+            const int cy = me->pos().y();
+            auto& win = XvueApp::window_slot();
+            auto* state = win ? win->state() : nullptr;
+            const int new_offset = nearest_item_offset(items_, cx, cy);
+
+            // Erase the previously-drawn sprite if we had one and the new
+            // nearest item differs. Mirrors xvuelc.c:2415-2425.
+            if (pmin0_ && state && state->accroche_undo_tile_ &&
+                *pmin0_ >= 0 && *pmin0_ != new_offset) {
+                const int old_cx = items_[*pmin0_];
+                const int old_cy = items_[*pmin0_ + 1];
+                restore_tile(state, old_cx, old_cy);
+                *pmin0_ = -2;
+            }
+
+            // Draw the new sprite if an item is nearest.
+            if (new_offset >= 0 && state) {
+                const int icx = items_[new_offset];
+                const int icy = items_[new_offset + 1];
+                save_tile_under(state, icx, icy);
+                draw_sprite(state, icx, icy);
+                if (pmin0_) *pmin0_ = new_offset;
+                if (win->canvas()) win->canvas()->update();
+            }
+            pending_.notypeevent = 5;
+            pending_.nbc         = btn;
+            pending_.x           = cx;
+            pending_.y           = cy;
+            loop_->quit();
+            return true;
+        }
         // Plan 02: press-only path. Plan 03 refines to full-click detection.
         pending_.notypeevent = -1;
         switch (me->button()) {
@@ -157,6 +336,24 @@ bool XvueEventBridge::eventFilter(QObject* watched, QEvent* event) {
 
     case QEvent::MouseButtonRelease: {
         auto* me = static_cast<QMouseEvent*>(event);
+        // Plan 05 Task 2: Souris2 mode erases the accrochage sprite on
+        // release and returns notypeevent=1. Mirrors xvuelc.c:2442-2463.
+        if (mode_ == WaitMode::Souris2) {
+            cleanupAccrochage();
+            int btn = 0;
+            switch (me->button()) {
+            case Qt::LeftButton:   btn = 1; break;
+            case Qt::MiddleButton: btn = 2; break;
+            case Qt::RightButton:  btn = 3; break;
+            default:               btn = 0; break;
+            }
+            pending_.notypeevent = 1;
+            pending_.nbc         = btn;
+            pending_.x           = me->pos().x();
+            pending_.y           = me->pos().y();
+            loop_->quit();
+            return true;
+        }
         // Full-click path: after a ButtonPress we set notypeevent=1 on
         // release. In Plan 02 we simply emit release alone (Plan 03 will
         // sequence press->release into a single click when appropriate).
@@ -178,9 +375,17 @@ bool XvueEventBridge::eventFilter(QObject* watched, QEvent* event) {
         const int code = translateKey(ke);
         // D-06: Esc (27) and @ (64) are abort.
         if (code == 27 || code == 64) {
+            // Plan 05 Task 2: on abort in Souris2 mode we erase the
+            // sprite first so the canvas is clean when the caller resumes.
+            if (mode_ == WaitMode::Souris2) cleanupAccrochage();
             pending_.notypeevent = 0;
             pending_.nbc         = code;
         } else if (code != 0) {
+            // Plan 05 Task 2: also erase in Souris2 mode on ordinary key
+            // press. xvuelc.c:2465-2477 does not explicitly erase on
+            // keypress but saclav.f calls xvsouris2_ in a loop, so any
+            // intermediate press handler benefits from a clean canvas.
+            if (mode_ == WaitMode::Souris2) cleanupAccrochage();
             pending_.notypeevent = 2;
             pending_.nbc         = code;
         } else {
@@ -209,12 +414,60 @@ bool XvueEventBridge::eventFilter(QObject* watched, QEvent* event) {
     // pending_ as they go) before the timer fires. The result: loop.exec()
     // returns with the *last* coordinate pair in the burst, zero added
     // latency — identical to the X11 XEventsQueued(QueuedAfterFlush) path.
+    //
+    // Plan 05 Task 2: WaitMode::Souris2 overrides the motion branch. On
+    // each MouseMove we run the accrochage logic (nearest-item, erase old
+    // sprite, draw new sprite on the backing). Unlike the Souris branch
+    // we STILL arm the deferred-quit timer so fast drags across the canvas
+    // coalesce to a single return — the sprite-draw keeps the user's
+    // visual feedback smooth without causing one waitForEvent return per
+    // raw pixel of mouse movement.
     case QEvent::MouseMove: {
         auto* me = static_cast<QMouseEvent*>(event);
+        const int cx = me->pos().x();
+        const int cy = me->pos().y();
+
+        if (mode_ == WaitMode::Souris2) {
+            auto& win = XvueApp::window_slot();
+            auto* state = win ? win->state() : nullptr;
+            const int new_offset = nearest_item_offset(items_, cx, cy);
+
+            // Erase previous sprite if the nearest item changed.
+            if (pmin0_ && state && state->accroche_undo_tile_ &&
+                *pmin0_ >= 0 && *pmin0_ != new_offset) {
+                const int old_cx = items_[*pmin0_];
+                const int old_cy = items_[*pmin0_ + 1];
+                restore_tile(state, old_cx, old_cy);
+                *pmin0_ = -2;
+            }
+
+            // Draw the new sprite at the new item (if any and not already drawn).
+            if (new_offset >= 0 && state &&
+                (!pmin0_ || *pmin0_ != new_offset)) {
+                const int icx = items_[new_offset];
+                const int icy = items_[new_offset + 1];
+                save_tile_under(state, icx, icy);
+                draw_sprite(state, icx, icy);
+                if (pmin0_) *pmin0_ = new_offset;
+                if (win->canvas()) win->canvas()->update();
+            }
+
+            pending_.notypeevent = 5;
+            pending_.nbc         = 0;  // motion carries no button
+            pending_.x           = cx;
+            pending_.y           = cy;
+            ++motion_count_;
+            if (!quit_pending_) {
+                quit_pending_ = true;
+                QTimer::singleShot(0, loop_, &QEventLoop::quit);
+            }
+            return true;
+        }
+
         pending_.notypeevent = -2;
         pending_.nbc         = 0;      // X11 motion contract: no button carried
-        pending_.x           = me->pos().x();  // Pitfall 8: fresh, not stale
-        pending_.y           = me->pos().y();
+        pending_.x           = cx;      // Pitfall 8: fresh, not stale
+        pending_.y           = cy;
         ++motion_count_;
         if (!quit_pending_) {
             quit_pending_ = true;

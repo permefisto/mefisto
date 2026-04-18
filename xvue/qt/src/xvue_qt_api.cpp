@@ -995,6 +995,18 @@ void proc(xvsouris)(int *notypeevent, int *nbc, int *x1, int *y1) {
 }
 
 // ---- 38. xvsouris2_ ----
+// Phase 5 Plan 05 Task 2 (EVENT-03). Real body for the accrochage variant of
+// xvsouris_. Routes through the Plan 02 bridge with WaitMode::Souris2 so the
+// eventFilter runs the Strategy B save/restore dance: on each motion (and
+// on button press) the filter finds the nearest items[] point, erases the
+// previously-drawn sprite if any, blits the mempxaccro_ sprite at the new
+// location, and returns notypeevent=5 (or 1 on release, or 0 on Esc/@
+// abort). See xvue_qt_event.cpp for the full logic.
+//
+// AUTOEXIT: same MEFISTO_XVSOURIS_AUTOEXIT byte-for-byte contract as
+// xvsouris_ / xvpause_ (D-10) so headless capture harnesses never hang.
+// No-window guard mirrors Pitfall 11. Null-pointer guards on the Fortran
+// out-params defend against pathological callers.
 void proc(xvsouris2)(int *items, int *pmin0, int *notypeevent, int *ibutton, int *x1, int *y1) {
     XvueApp::ensure();
     XVUE_QT_ASSERT_MAIN_THREAD();
@@ -1021,9 +1033,23 @@ void proc(xvsouris2)(int *items, int *pmin0, int *notypeevent, int *ibutton, int
         (void)items; (void)pmin0;
         return;
     }
-    static bool warned = false;
-    warn_once(warned, "xvsouris2_");
-    (void)items; (void)pmin0; (void)notypeevent; (void)ibutton; (void)x1; (void)y1;
+
+    // Pitfall 11 analogue: no window → silent abandon with zero out-params.
+    auto& win = XvueApp::window_slot();
+    if (!win || !win->bridge()) {
+        if (notypeevent) *notypeevent = 0;
+        if (ibutton)     *ibutton     = 0;
+        if (x1)          *x1          = 0;
+        if (y1)          *y1          = 0;
+        return;
+    }
+
+    auto r = win->bridge()->waitForEvent(
+        XvueEventBridge::WaitMode::Souris2, items, pmin0);
+    if (notypeevent) *notypeevent = r.notypeevent;
+    if (ibutton)     *ibutton     = r.nbc;
+    if (x1)          *x1          = r.x;
+    if (y1)          *y1          = r.y;
 }
 
 // ---- 39. deplsouris_ ----
