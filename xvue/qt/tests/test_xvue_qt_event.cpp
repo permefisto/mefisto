@@ -32,6 +32,10 @@ extern "C" void xvfermer_(void);
 extern "C" void xvsouris_(int* notypeevent, int* nbc, int* x1, int* y1);
 extern "C" void xvpause_(void);
 extern "C" void deplsouris_(int* x, int* y);
+// Phase 5 Plan 05 (EVENT-03/06): accrochage entry points.
+extern "C" void initaccrochage_(void);
+extern "C" void xvsouris2_(int* items, int* pmin0, int* notypeevent,
+                           int* ibutton, int* x1, int* y1);
 
 class TestXvueQtEvent : public QObject {
     Q_OBJECT
@@ -364,7 +368,63 @@ private slots:
     }
 
     // ---- EVENT-06: initaccrochage_ ----
-    void testInitaccrochage()             { QSKIP("Plan 05: initaccrochage_ not yet wired"); }
+    // Phase 5 Plan 05 Task 1: allocates XvueState::mempxaccro_ as a 13x13 QPixmap
+    // with a 3-pixel black square border on transparent background (Strategy B
+    // from 05-RESEARCH.md §6 — the save/restore blit approach replaces the X11
+    // GXand/GXorInverted raster-op XOR trick).
+    void testInitaccrochage() {
+        auto& win = XvueApp::window_slot();
+        QVERIFY(win != nullptr);
+        auto* state = win->state();
+        QVERIFY(state != nullptr);
+
+        // Clean slate: if a previous test primed the sprite, drop it so we
+        // exercise the first-call allocation branch deterministically.
+        if (state->mempxaccro_) {
+            delete state->mempxaccro_;
+            state->mempxaccro_ = nullptr;
+        }
+
+        initaccrochage_();
+        QVERIFY(state->mempxaccro_ != nullptr);
+        QCOMPARE(state->mempxaccro_->size(), QSize(13, 13));
+
+        // Pixel sampling. The sprite is a 13x13 with a 3-pixel-thick black
+        // square border on a transparent center. Center (6,6) must be
+        // transparent (alpha=0) and the border band at (2,2) must be opaque
+        // black.
+        QImage img = state->mempxaccro_->toImage();
+        QCOMPARE(img.pixelColor(6, 6).alpha(), 0);
+        QVERIFY2(img.pixelColor(2, 2).alpha() == 255,
+                 qPrintable(QStringLiteral("border pixel (2,2) alpha=%1 (want 255)")
+                            .arg(img.pixelColor(2, 2).alpha())));
+        QVERIFY2(img.pixelColor(2, 2).red() == 0,
+                 qPrintable(QStringLiteral("border pixel (2,2) red=%1 (want 0)")
+                            .arg(img.pixelColor(2, 2).red())));
+
+        // Idempotency: calling a second time must not leak nor crash; the
+        // resulting sprite still has the right size and border content.
+        initaccrochage_();
+        QVERIFY(state->mempxaccro_ != nullptr);
+        QCOMPARE(state->mempxaccro_->size(), QSize(13, 13));
+        QImage img2 = state->mempxaccro_->toImage();
+        QCOMPARE(img2.pixelColor(6, 6).alpha(), 0);
+        QCOMPARE(img2.pixelColor(2, 2).alpha(), 255);
+    }
+
+    // Phase 5 Plan 05 Task 1 (Pitfall 11): initaccrochage_ called before
+    // xvinitgraphique_ (or after xvfermer_) must NOT crash — it is a silent
+    // no-op when there is no window / canvas / state yet.
+    void testInitaccrochageBeforeInit() {
+        xvfermer_();
+        QVERIFY(XvueApp::window_slot() == nullptr);
+        // Must not crash — silent no-op.
+        initaccrochage_();
+        // Reopen so downstream tests in the declaration order still have a
+        // live window.
+        xvinitgraphique_();
+        QVERIFY(XvueApp::window_slot() != nullptr);
+    }
 
     // ---- EVENT-07: motion coalescing ----
     // Plan 03 (D-04): 100 rapid MouseMove events → bounded number of

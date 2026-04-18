@@ -280,11 +280,58 @@ void proc(xvmmecran)(int *xmm, int *ymm) {
 }
 
 // ---- 9. initaccrochage_ ----
+// Phase 5 Plan 05 Task 1 (EVENT-06, D-08). Allocate the 13x13 accrochage
+// sprite held on XvueState::mempxaccro_. The sprite is a 3-pixel-thick black
+// square border on a transparent background. xvsouris2_ blits this sprite
+// onto the canvas at the nearest-item position during the accrochage path
+// (Strategy B from 05-RESEARCH.md §6 — save the tile under the sprite with
+// accroche_undo_tile_ on first draw, restore it before the next draw; reuses
+// the Phase 4 saved_canvas_ ownership pattern instead of trying to emulate
+// the X11 GXand/GXorInverted raster-op XOR trick).
+//
+// Pitfall 11: called before xvinitgraphique_ is tolerated silently — no
+// window / no canvas / no state -> return without touching anything.
+//
+// Idempotency: if mempxaccro_ is already populated, delete and reallocate
+// so a re-initialization does not leak the previous sprite. The sprite is
+// a small fixed 13x13 pixmap so the cost of reallocation is negligible.
 void proc(initaccrochage)(void) {
     XvueApp::ensure();
     XVUE_QT_ASSERT_MAIN_THREAD();
-    static bool warned = false;
-    warn_once(warned, "initaccrochage_");
+
+    auto& win = XvueApp::window_slot();
+    if (!win) return;                 // Pitfall 11: no window yet
+    auto* canvas = win->canvas();
+    if (!canvas) return;              // Pitfall 11: no canvas yet
+    auto* state = win->state();
+    if (!state) return;               // defensive — cannot happen today
+
+    // Idempotent: drop any previously-allocated sprite so we do not leak.
+    if (state->mempxaccro_) {
+        delete state->mempxaccro_;
+        state->mempxaccro_ = nullptr;
+    }
+
+    // Allocate the 13x13 sprite. lmempxaccro/hmempxaccro in xvuelc.c:142-143.
+    state->mempxaccro_ = new QPixmap(13, 13);
+    state->mempxaccro_->fill(Qt::transparent);
+
+    // Draw a 3-pixel-thick black square border. QPen width=3 with MiterJoin
+    // produces square corners; drawRect(QRect(1,1,11,11)) strokes a
+    // 11x11-edge rectangle centered on integer coordinates so the 3-pixel
+    // stroke lands inside the 13x13 pixmap without clipping.
+    {
+        QPainter p(state->mempxaccro_);
+        p.setRenderHint(QPainter::Antialiasing, false);  // crisp pixels
+        QPen pen(Qt::black, 3);
+        pen.setJoinStyle(Qt::MiterJoin);
+        p.setPen(pen);
+        p.setBrush(Qt::NoBrush);
+        p.drawRect(QRect(1, 1, 11, 11));
+    }
+    // accroche_undo_tile_ is LEFT nullptr — it is allocated lazily by the
+    // first xvsouris2_ motion when the filter actually needs to save a
+    // tile under the sprite. See Plan 05 Task 2.
 }
 
 // ---- 10. xvinfo_ ----
