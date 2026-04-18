@@ -18,7 +18,12 @@ Decimal phases appear between their surrounding integers in numeric order.
 - [ ] **Phase 3: Text, fonts, colormap** - Font loading, text metrics, indexed palette mirroring X11 colormap semantics
 - [ ] **Phase 4: Pixmap save/restore** - Double-buffering slots for `fenetremempx`/`sauvefenetre` rubber-band workflow
 - [ ] **Phase 5: Event bridge & blocking reads** - Nested `QEventLoop` pattern for `xvsouris`/`xvpause`; the architectural pivot
-- [ ] **Phase 6: Level-3 UX chrome** - `QMenuBar`/`QToolBar`/`QAction` menu surface + per-module lexicon audit + dock/console/dialogs
+- [ ] **Phase 6.0: Shared shell, menu bridge, dialogs, persistence** - `QMainWindow` chrome + `XvueMenuBridge` + `XvueConsoleDock` + `QSettings` + bilingual i18n + `xvue_module_init_` ABI hook + shared `{File, View, Help}` menus
+- [ ] **Phase 6.1: Mesher (mail) menu wiring** - `registerMailActions()` + `LEXICON-AUDIT-mail.md` + mesh SVG icons + `CALL XVUE_MODULE_INIT('mail')`
+- [ ] **Phase 6.2: Elasticity (elas) menu wiring** - `registerElasActions()` + `LEXICON-AUDIT-elas.md` + elas SVG icons + `CALL XVUE_MODULE_INIT('elas')`
+- [ ] **Phase 6.3: Fluid (flui) menu wiring** - `registerFluiActions()` + `LEXICON-AUDIT-flui.md` + flui SVG icons + `CALL XVUE_MODULE_INIT('flui')`
+- [ ] **Phase 6.4: Thermal (ther) menu wiring** - `registerTherActions()` + `LEXICON-AUDIT-ther.md` + ther SVG icons + `CALL XVUE_MODULE_INIT('ther')`
+- [ ] **Phase 6.5: Nonlinear (nlse) menu wiring** - `registerNlseActions()` + `LEXICON-AUDIT-nlse.md` + nlse SVG icons + `CALL XVUE_MODULE_INIT('nlse')`
 - [ ] **Phase 7: Image, GIF, PostScript export** - Qt-native PNG/JPEG/PDF, preserved verbatim PostScript emitter, ImageMagick drop
 - [ ] **Phase 8: A/B validation on testa subset** - Side-by-side X11 vs Qt on 5 canonical cases; HiDPI and `_OMP` sweeps
 - [ ] **Phase 9: Retire X11 backend** - Delete `xvuelc.c`, `bin/ccxvue`, `libX11` linker lines, ImageMagick deps (gated on A/B window close)
@@ -142,18 +147,64 @@ Plans:
   - [x] 05-06-PLAN.md — Clean rebuild + manual A/B drag test (pan2d, torus) + VALIDATION.md sign-off + README Wayland caveat (EVENT-07 human)
 **UI hint**: yes
 
-### Phase 6: Level-3 UX chrome & menu surface
-**Goal**: A full Qt `QMainWindow` shell (menu bar, toolbar, status bar, dock widgets, dialogs, HiDPI/dark-mode) dispatches user actions into the existing Fortran text-lexicon through a `QAction`-queues-command-strings pattern, without any changes to solver drivers.
+### Phase 6.0: Shared shell, menu bridge, dialogs, persistence
+**Goal**: A full Qt `QMainWindow` shell (menu bar mechanism, toolbar, status bar, dock widgets, dialogs, `QSettings` persistence, bilingual i18n, system dark-mode chrome, wheel/middle-drag/right-click canvas interactions) is in place and ready for per-module menu wiring. `XvueMenuBridge` queues lexicon commands for `xvsouris_` to drain as synthetic `notypeevent=2` events. Modal dialogs respect `XvueApp::blockingDepth()`. One new `extern "C"` entry point `xvue_module_init_` takes ABI 57→58.
 **Depends on**: Phase 5
-**Requirements**: UX-01, UX-02, UX-03, UX-04, UX-05, UX-06, UX-07, UX-08, UX-09, UX-10, UX-11, UX-12, UX-13
+**Requirements**: UX-01, UX-02, UX-03, UX-04, UX-06, UX-07, UX-08, UX-09, UX-10, UX-11, UX-12, UX-13
 **Success Criteria** (what must be TRUE):
-  1. User can click any menu item or toolbar button in `pp/ppmail_qt` and observe the same Fortran subroutine execute that the corresponding typed lexicon command would trigger — `QAction::triggered` pushes a command string into `XvueMenuBridge::pendingCommands_` which the next `xvsouris_` drains and returns as a synthetic `notypeevent=2` keyboard event.
-  2. Modal `QFileDialog`/`QDialog` entry points refuse to open with a status-bar message when `XvueApp::blockingDepth() > 0`, preventing re-entrant `QDialog::exec()` inside a nested `xvsouris_` loop.
-  3. A `.planning/phase-6/LEXICON-AUDIT.md` per module (`mail/`, `elas/`, `flui/`, `ther/`, `nlse/`) enumerates every interactive lexicon command and maps it to a `QAction` with keyboard shortcut and tooltip; every enumerated action is reachable from the menu bar or toolbar.
-  4. Window geometry, dock layout, recent-projects list, and preferences persist via `QSettings` across process restarts; the bilingual flag `$MEFISTO/td/m/anglais` correctly selects FR/EN labels across all menus, dialogs, and the About dialog (which credits Alain Perronnet / LJLL / UPMC Paris).
-  5. A console `QDockWidget` displays Fortran solver stdout in real time via a `QProcess` pipe-reader; lines matching `*** ERREUR` surface as `QMessageBox` alerts. Mouse wheel zoom, middle-drag pan, right-click context menu, live coordinate readout, and system dark-mode chrome all work on the canvas without affecting scientific colormaps.
-**Plans**: TBD (research-flag: per-module lexicon audit may split into 5 sub-phases — one per solver module — at plan time)
+  1. `pp/ppmail_qt` launches with a `QMenuBar` showing `{File, View, Help}` (no module-specific menus yet; those ship in 6.1..6.5), a `QToolBar` with shared actions, a `QStatusBar` with live coordinate readout, and a `QDockWidget` console receiving solver stdout.
+  2. `XvueMenuBridge::pushCommand(QString)` adds chars to a queue drained by `XvueEventBridge::waitForEvent` via a pre-`exec()` hook, returning each character as `notypeevent=2, nbc=<ascii>` across successive `xvsouris_` calls.
+  3. Modal `QFileDialog`/`QDialog` entry points refuse to open with a 3-second status-bar message when `XvueApp::blockingDepth() > 0`.
+  4. Window geometry, dock layout, recent-projects list (≤10 entries), and UI preferences persist via `QSettings` across process restarts; `xvueIsEnglish()` reads `$MEFISTO/td/m/anglais` file-existence and all shared chrome renders in FR or EN accordingly. About dialog credits Alain Perronnet / LJLL / UPMC Paris.
+  5. Console `QDockWidget` shows Fortran stdout via `freopen(stdout)` + `QSocketNotifier` in-process pipe; `*** ERREUR` lines surface as `QMessageBox::warning`. Canvas wheel=zoom, middle-drag=pan, right-click=context menu, live coord readout in status bar. System dark-mode via `QPalette` affects chrome only; canvas scientific colormaps untouched.
+  6. `nm xvue/qt/build/libxvueqt.a | grep '_$' | wc -l` returns 58 (was 57 through Phase 5). `xvue_module_init_` stub accepts a module-name string argument and records it in `XvueMenuBridge`. Build-time lint scripts (`verify_shortcut_modifiers.sh`, `verify_icon_source.sh`) exist and exit 0 against the 6.0 tree.
+**Plans**: TBD (~8 plans / 5 waves — scaffold / i18n+bridge / eventbridge-predrain+console+dialogs / canvas+state / window-wiring+manual-A/B)
 **UI hint**: yes
+
+### Phase 6.1: Mesher (mail) menu wiring
+**Goal**: `ppmail_qt` shows a fully-populated menu bar with mesher-specific top-level menus (`{File, Edit, Mesh, View, Help}`), toolbar buttons for the 80/20 subset of typed lexicon commands, and `CALL XVUE_MODULE_INIT('mail')` at startup. The typed lexicon continues to work unchanged for every command, GUI-surfaced or not.
+**Depends on**: Phase 6.0
+**Requirements**: UX-05 (mail slice)
+**Success Criteria** (what must be TRUE):
+  1. `.planning/phases/06.1-*/LEXICON-AUDIT-mail.md` enumerates every interactive command in `mail/` drivers with FR+EN descriptions, frequency column, and QAction flag per D-03 cutoff.
+  2. `registerMailActions(XvueMenuBridge*, QMenuBar*, QToolBar*)` wires 20–40 QActions, each connected via `QAction::triggered` → `XvueMenuBridge::pushCommand(<command-string>)`.
+  3. `prpr/ppmail.f` (or equivalent entry) contains `CALL XVUE_MODULE_INIT('mail')` before the interactive loop.
+  4. Custom mesh SVG icons live under `xvue/qt/resources/icons/mail/` and are registered in `xvue_icons.qrc`; none triggers `verify_shortcut_modifiers.sh` or `verify_icon_source.sh` failure.
+  5. A mesher-specific QTest case simulates a menu click and verifies the synthetic event reaches `xvsouris_` with the correct ASCII sequence.
+**Plans**: TBD (~2-3 plans: audit+icons / actions-registration+tests / Fortran entry hook)
+**UI hint**: no (inherits 6.0 contract)
+
+### Phase 6.2: Elasticity (elas) menu wiring
+**Goal**: `ppelas_qt` shows an elasticity-specific top-level menu bar (`{File, Solve, View, Help}`), 80/20 QAction coverage, and `CALL XVUE_MODULE_INIT('elas')`.
+**Depends on**: Phase 6.1
+**Requirements**: UX-05 (elas slice)
+**Success Criteria**: same pattern as 6.1, substituting `elas` for `mail`.
+**Plans**: TBD (~2-3 plans — same shape as 6.1)
+**UI hint**: no
+
+### Phase 6.3: Fluid (flui) menu wiring
+**Goal**: `ppflui_qt` shows a fluid-specific top-level menu bar (`{File, Fluid, View, Help}`), 80/20 QAction coverage, and `CALL XVUE_MODULE_INIT('flui')`.
+**Depends on**: Phase 6.2
+**Requirements**: UX-05 (flui slice)
+**Success Criteria**: same pattern as 6.1, substituting `flui` for `mail`.
+**Plans**: TBD (~2-3 plans — same shape as 6.1)
+**UI hint**: no
+
+### Phase 6.4: Thermal (ther) menu wiring
+**Goal**: `ppther_qt` shows a thermal-specific top-level menu bar (`{File, Thermal, View, Help}`), 80/20 QAction coverage, and `CALL XVUE_MODULE_INIT('ther')`.
+**Depends on**: Phase 6.3
+**Requirements**: UX-05 (ther slice)
+**Success Criteria**: same pattern as 6.1, substituting `ther` for `mail`.
+**Plans**: TBD (~2-3 plans — same shape as 6.1)
+**UI hint**: no
+
+### Phase 6.5: Nonlinear (nlse) menu wiring
+**Goal**: `ppnlse_qt` shows a nonlinear-specific top-level menu bar (`{File, Nonlinear, View, Help}`), 80/20 QAction coverage, and `CALL XVUE_MODULE_INIT('nlse')`.
+**Depends on**: Phase 6.4
+**Requirements**: UX-05 (nlse slice)
+**Success Criteria**: same pattern as 6.1, substituting `nlse` for `mail`.
+**Plans**: TBD (~2-3 plans — same shape as 6.1)
+**UI hint**: no
 
 ### Phase 7: Image, GIF, and PostScript export
 **Goal**: Qt-native PNG/JPEG/PDF plus a preserved-verbatim PostScript emitter and a runtime-probed animated GIF path fully replace the legacy `xvuelc.c` export code and `bin/convertepsgif` ImageMagick shell-out.
