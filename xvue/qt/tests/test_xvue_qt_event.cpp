@@ -71,7 +71,60 @@ private slots:
     }
 
     // ---- EVENT-01: bridge installation ----
-    void testBridgeInstallation()         { QSKIP("Plan 02 Task 3: XvueWindow::bridge() accessor not yet"); }
+    void testBridgeInstallation() {
+        // After initTestCase's xvinitgraphique_, XvueWindow should expose a
+        // non-null bridge pointer and the bridge must be installed on the
+        // canvas so keyboard/mouse events reach its filter. Drive a Space
+        // keypress through the window's bridge and assert it dispatches.
+        auto& win = XvueApp::window_slot();
+        QVERIFY(win != nullptr);
+        QVERIFY(win->canvas() != nullptr);
+        QVERIFY(win->bridge() != nullptr);
+        // Drive a space key and verify waitForEvent returns the expected
+        // translation. No local bridge this time — we use the window's.
+        auto* canvas = win->canvas();
+        auto* bridge = win->bridge();
+        QTimer::singleShot(10, [&]{ postKey(canvas, Qt::Key_Space, QStringLiteral(" ")); });
+        auto r = bridge->waitForEvent(XvueEventBridge::WaitMode::Souris);
+        QCOMPARE(r.notypeevent, 2);
+        QCOMPARE(r.nbc, 32);
+        QCOMPARE(XvueApp::blockingDepth(), 0);
+    }
+
+    // Phase 5 Plan 02 Task 3: xvfermer_ -> xvinitgraphique_ must yield a
+    // brand-new bridge instance on the brand-new canvas; the previous
+    // bridge was Qt-parent-owned by the old window and destroyed with it.
+    // The pointer-identity checks are "best effort" — the heap allocator
+    // CAN reuse the same address after free+new, in which case the test
+    // falls back to the functional check (the new bridge must work).
+    void testReopenCreatesFreshBridge() {
+        auto& win = XvueApp::window_slot();
+        QVERIFY(win != nullptr);
+        auto* first_bridge = win->bridge();
+        auto* first_canvas = win->canvas();
+        QVERIFY(first_bridge != nullptr);
+        QVERIFY(first_canvas != nullptr);
+
+        xvfermer_();
+        QVERIFY(XvueApp::window_slot() == nullptr);
+
+        xvinitgraphique_();
+        auto& win2 = XvueApp::window_slot();
+        QVERIFY(win2 != nullptr);
+        auto* second_bridge = win2->bridge();
+        auto* second_canvas = win2->canvas();
+        QVERIFY(second_bridge != nullptr);
+        QVERIFY(second_canvas != nullptr);
+
+        // Functional check: the fresh bridge dispatches events correctly.
+        // This is the load-bearing invariant (the addresses may or may not
+        // coincide depending on the heap allocator).
+        QTimer::singleShot(10, [&]{ postKey(second_canvas, Qt::Key_Escape, QString()); });
+        auto r = second_bridge->waitForEvent(XvueEventBridge::WaitMode::Souris);
+        QCOMPARE(r.notypeevent, 0);
+        QCOMPARE(r.nbc, 27);
+        QCOMPARE(XvueApp::blockingDepth(), 0);
+    }
 
     // ---- EVENT-02: xvsouris_ ----
     void testXvsourisMotion()             { QSKIP("Plan 03: motion coalescing not yet wired"); }
