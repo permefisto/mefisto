@@ -17,8 +17,10 @@
 #include "xvue_qt_window.h"
 #include "xvue_qt_canvas.h"
 #include "xvue_qt_state.h"
+#include "xvue_qt_event.h"
 #include <QApplication>
 #include <QCoreApplication>
+#include <QCursor>
 #include <QElapsedTimer>
 #include <QEventLoop>
 #include <QFont>
@@ -927,9 +929,22 @@ void proc(xvsouris)(int *notypeevent, int *nbc, int *x1, int *y1) {
         if (y1)          *y1          = 0;
         return;
     }
-    static bool warned = false;
-    warn_once(warned, "xvsouris_");
-    (void)notypeevent; (void)nbc; (void)x1; (void)y1;
+    // Phase 5 Plan 04 (EVENT-02): real body. Route through the Plan 02 bridge.
+    // No window open → silent abandon (Pitfall 11 analogue). Keeps
+    // prpr/xvtest1-style drivers safe when called standalone.
+    auto& win = XvueApp::window_slot();
+    if (!win || !win->bridge()) {
+        if (notypeevent) *notypeevent = 0;
+        if (nbc)         *nbc         = 0;
+        if (x1)          *x1          = 0;
+        if (y1)          *y1          = 0;
+        return;
+    }
+    auto r = win->bridge()->waitForEvent(XvueEventBridge::WaitMode::Souris);
+    if (notypeevent) *notypeevent = r.notypeevent;
+    if (nbc)         *nbc         = r.nbc;
+    if (x1)          *x1          = r.x;
+    if (y1)          *y1          = r.y;
 }
 
 // ---- 38. xvsouris2_ ----

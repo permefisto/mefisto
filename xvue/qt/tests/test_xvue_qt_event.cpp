@@ -28,6 +28,10 @@
 // without depending on the Task 3 wiring.
 extern "C" void xvinitgraphique_(void);
 extern "C" void xvfermer_(void);
+// Phase 5 Plan 04 (EVENT-02/04/05): Fortran ABI entry points under test.
+extern "C" void xvsouris_(int* notypeevent, int* nbc, int* x1, int* y1);
+extern "C" void xvpause_(void);
+extern "C" void deplsouris_(int* x, int* y);
 
 class TestXvueQtEvent : public QObject {
     Q_OBJECT
@@ -250,6 +254,46 @@ private slots:
         canvas->removeEventFilter(&bridge);
     }
 
+
+    // Phase 5 Plan 04 (EVENT-02): real Fortran ABI entry point routes through
+    // XvueApp::window_slot()->bridge()->waitForEvent(Souris). Driving a space
+    // keypress into the live window's canvas must produce notypeevent=2,
+    // nbc=32 in the Fortran out-parameters.
+    void testXvsourisFortranEntryPoint() {
+        auto& win = XvueApp::window_slot();
+        QVERIFY(win != nullptr);
+        auto* canvas = win->canvas();
+        QVERIFY(canvas != nullptr);
+        // The production bridge is already installed by XvueWindow ctor via
+        // installEventFilter — no local bridge here.
+        QTimer::singleShot(10, [canvas]{ postKey(canvas, Qt::Key_Space, QStringLiteral(" ")); });
+        int ntev = -99, nbc = -99, x1 = -99, y1 = -99;
+        xvsouris_(&ntev, &nbc, &x1, &y1);
+        QCOMPARE(ntev, 2);
+        QCOMPARE(nbc, 32);
+        QCOMPARE(XvueApp::blockingDepth(), 0);
+    }
+
+    // Phase 5 Plan 04 (EVENT-02): silent-abandon guard. With no window open
+    // the Fortran entry point must not crash; it writes notypeevent=0 and
+    // returns. Mirror of Pitfall 11 in the plan context.
+    void testXvsourisNoWindow() {
+        // Close the window to simulate "never opened" from the bridge's POV.
+        xvfermer_();
+        QVERIFY(XvueApp::window_slot() == nullptr);
+
+        int ntev = -99, nbc = -99, x1 = -99, y1 = -99;
+        xvsouris_(&ntev, &nbc, &x1, &y1);
+        QCOMPARE(ntev, 0);
+        QCOMPARE(nbc, 0);
+        QCOMPARE(x1, 0);
+        QCOMPARE(y1, 0);
+        QCOMPARE(XvueApp::blockingDepth(), 0);
+
+        // Reopen for downstream tests in the suite ordering.
+        xvinitgraphique_();
+        QVERIFY(XvueApp::window_slot() != nullptr);
+    }
     // ---- EVENT-03: xvsouris2_ ----
     void testXvsouris2Accrochage()        { QSKIP("Plan 05: xvsouris2_ accrochage not yet wired"); }
 
