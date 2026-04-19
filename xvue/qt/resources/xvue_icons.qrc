@@ -1,0 +1,7 @@
+<!DOCTYPE RCC>
+<RCC version="1.0">
+  <qresource prefix="/xvue/qt/icons">
+    <!-- 6.1..6.5 append SVG icon entries here. No PNG/JPG/BMP allowed —     -->
+    <!-- verify_icon_source.sh enforces SVG-only under resources/icons/.     -->
+  </qresource>
+</RCC>
