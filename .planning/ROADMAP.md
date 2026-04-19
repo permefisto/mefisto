@@ -160,10 +160,10 @@ Plans:
   6. `nm xvue/qt/build/libxvueqt.a | grep '_$' | wc -l` returns 58 (was 57 through Phase 5). `xvue_module_init_` stub accepts a module-name string argument and records it in `XvueMenuBridge`. Build-time lint scripts (`verify_shortcut_modifiers.sh`, `verify_icon_source.sh`) exist and exit 0 against the 6.0 tree.
 **Plans**: 7 plans
   - [x] 06.0-01-PLAN.md — Wave 0 scaffold: 9 class stub pairs + xvue_module_init_ ABI stub (57→58) + 2 lint scripts + xvue_qt_menu_tests target + empty xvue_icons.qrc
-  - [ ] 06.0-02-PLAN.md — Wave 2: fill i18n 48-row table + XvueMenuBridge queueLexicon/popChar + XvuePrefs QSettings wrapper (UX-02, UX-06, UX-07, UX-08)
+  - [x] 06.0-02-PLAN.md — Wave 2: fill i18n 48-row table + XvueMenuBridge queueLexicon/popChar + XvuePrefs QSettings wrapper (UX-02, UX-06, UX-07, UX-08)
   - [ ] 06.0-03-PLAN.md — Wave 3: XvueEventBridge::waitForEvent menu-queue pre-drain + MouseMove coord-signal emit + xvuelc.c A6 audit (UX-02, UX-03, UX-12)
-  - [ ] 06.0-04-PLAN.md — Wave 2: XvueConsoleDock pipe+QSocketNotifier + XvueErrorBatcher deferred QMessageBox + About/Preferences/RecentProjects dialog bodies (UX-04, UX-06, UX-09, UX-10, UX-11)
-  - [ ] 06.0-05-PLAN.md — Wave 2: XvueCanvas wheel/middle-drag/contextMenu/mouseCoords signal/resetView + XvueState view_transform_/has_user_content_ + empty-state paintEvent (UX-12, UX-13)
+  - [x] 06.0-04-PLAN.md — Wave 2: XvueConsoleDock pipe+QSocketNotifier + XvueErrorBatcher deferred QMessageBox + About/Preferences/RecentProjects dialog bodies (UX-04, UX-06, UX-09, UX-10, UX-11)
+  - [x] 06.0-05-PLAN.md — Wave 2: XvueCanvas wheel/middle-drag/contextMenu/mouseCoords signal/resetView + XvueState view_transform_/has_user_content_ + empty-state paintEvent (UX-12, UX-13)
   - [ ] 06.0-06-PLAN.md — Wave 4: XvueApp menuBridge accessor + applyColorSchemePreference + XvueWindow full chrome composition + 13 shared QActions + xvue_module_init_ dispatch body (UX-01, UX-04, UX-06, UX-07, UX-09, UX-13)
   - [ ] 06.0-07-PLAN.md — Wave 5: clean rebuild + 7-binary test sweep + human A/B verdict on pp/ppmail_qt + 06.0-VALIDATION.md sign-off + xvue/qt/README.md extension
 **UI hint**: yes
