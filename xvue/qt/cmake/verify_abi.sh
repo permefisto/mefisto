@@ -29,8 +29,8 @@ if [ "$NM_COUNT" != "$HDR_COUNT" ]; then
     exit 1
 fi
 
-if [ "$NM_COUNT" != "57" ]; then
-    echo "WARNING: expected 57 Fortran-facing entries (Planner Alert Option A), got $NM_COUNT" >&2
+if [ "$NM_COUNT" != "58" ]; then
+    echo "WARNING: expected 58 Fortran-facing entries (Phase 6.0 adds xvue_module_init_), got $NM_COUNT" >&2
 fi
 
 exit 0

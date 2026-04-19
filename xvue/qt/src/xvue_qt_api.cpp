@@ -1300,4 +1300,28 @@ void proc(xvsauverps)(char nomfichier[], int *length) {
     (void)nomfichier; (void)length;
 }
 
+// ---- 58. xvue_module_init_ ----
+// Phase 6.0 Plan 01 scaffold: warn-once stub. Plan 06 fills the dispatch body
+// that reads the module name and invokes registerMailActions/registerElasActions/
+// registerFluiActions/registerTherActions/registerNlseActions accordingly.
+//
+// Threat T-06.0-01-01 mitigation: clamp printed name length to 32 chars max,
+// treat name_len <= 0 as zero, never deref a null name buffer. No further
+// processing happens in Plan 01 (full validation lands in Plan 06).
+void proc(xvue_module_init)(char *name, int *name_len) {
+    XvueApp::ensure();
+    XVUE_QT_ASSERT_MAIN_THREAD();
+    static bool warned = false;
+    if (!warned) {
+        warned = true;
+        int n = (name_len ? *name_len : 0);
+        if (n < 0)  n = 0;
+        if (n > 32) n = 32;
+        std::fprintf(stderr,
+            "xvue-qt: xvue_module_init_('%.*s') called — scaffold stub; "
+            "module dispatch lands in Plan 06.\n",
+            n, (name ? name : ""));
+    }
+}
+
 } // extern "C"

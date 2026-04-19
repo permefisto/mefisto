@@ -159,6 +159,15 @@ void  proc(xvinitierps)(int *modeps);                                       // x
 void  proc(xvimprimerps)(char nomfichier[], int *length);                   // xvuelc.c:2906
 void  proc(xvsauverps)(char nomfichier[], int *length);                     // xvuelc.c:2954
 
+// -------------------------------------------------------------------
+// Phase 6.0 (UX-05 foundation) — module identity hook.
+// Called once per pp*_qt process by each module's prpr/pp*.f (in Phase 6.1..6.5)
+// BEFORE xvinitgraphique_. Takes the module name as a Fortran CHARACTER*(*)
+// so callers can pass a literal: CALL XVUE_MODULE_INIT('mail')
+// Plan 06 fills the dispatch body; Plan 01 ships a warn-once stub.
+// -------------------------------------------------------------------
+void  proc(xvue_module_init)(char *name, int *name_len);                    // Phase 6.0 entry 58
+
 } // extern "C"
 
 #endif // XVUE_QT_API_H
