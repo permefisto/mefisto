@@ -112,4 +112,27 @@ target_include_directories(xvue_qt_canvas_gestures_tests PRIVATE
     ${CMAKE_CURRENT_SOURCE_DIR}/../include
 )
 
+# ---------------------------------------------------------------------------
+# Phase 6.0 Wave 3 (Plan 03): event-bridge menu-queue pre-drain tests.
+# Distinct from xvue_qt_event_tests so a Plan 03 regression cannot
+# masquerade as a Phase 5 regression — they fail (or skip) independently.
+# ---------------------------------------------------------------------------
+add_executable(xvue_qt_event_menu_predrain_tests
+    test_xvue_qt_event_menu_predrain.cpp
+    test_helpers.cpp
+)
+target_link_libraries(xvue_qt_event_menu_predrain_tests
+    PRIVATE
+        xvueqt
+        Qt6::Test
+        Qt6::Widgets
+        Qt6::Gui
+        Qt6::Core
+)
+target_include_directories(xvue_qt_event_menu_predrain_tests PRIVATE
+    ${CMAKE_CURRENT_SOURCE_DIR}/..
+    ${CMAKE_CURRENT_SOURCE_DIR}/../src
+    ${CMAKE_CURRENT_SOURCE_DIR}/../include
+)
+
 # No install(); tests run in-place from xvue/build/tests/.
