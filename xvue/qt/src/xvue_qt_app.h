@@ -8,6 +8,7 @@
 
 class QApplication;
 class XvueWindow;
+class XvueMenuBridge;   // Phase 6.0 Plan 06: menuBridge() forwarding accessor
 
 class XvueApp {
 public:
@@ -30,6 +31,22 @@ public:
     // Main-thread-only (SHELL-07) — no atomics. Phase 6 modal dialogs query
     // this via blockingDepth() > 0 to refuse QDialog::exec() re-entry.
     static int blockingDepth();
+
+    // Phase 6.0 Plan 06 additions.
+    // Convenience accessor — forwards to window_slot()->menuBridge() with
+    // nullptr guards (returns nullptr if window_slot is empty or bridge not
+    // installed). Mirrors the blockingDepth() static style so call sites
+    // inside extern "C" entries stay consistent.
+    static XvueMenuBridge* menuBridge();
+
+    // UX-13 (D-05). Reads XvuePrefs::colorScheme() and applies the palette.
+    // Call on startup after ensure() and whenever XvuePreferencesDialog
+    // commits a new value. Idempotent. The QStyleHints::colorSchemeChanged
+    // signal connected inside ensure() invokes this when the user flips
+    // desktop dark-mode while pp*_qt is running (Qt 6.5+ feature; on DEs
+    // without a theme plugin the signal may never fire — fallback: user
+    // restarts app, applyColorSchemePreference on startup syncs).
+    static void applyColorSchemePreference();
 
     // RAII guard (declared in Plan 02's xvue_qt_event.h). Friending keeps the
     // counter strictly internal — only the guard may touch blockingDepth_.

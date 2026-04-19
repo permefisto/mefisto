@@ -14,11 +14,19 @@
 // is load-bearing; the "destroy at atexit" half is not.
 #include "xvue_qt_app.h"
 #include "xvue_qt_window.h"
+#include "xvue_qt_menu_bridge.h"   // Phase 6.0 Plan 06: menuBridge() forwarding
+#include "xvue_qt_prefs.h"          // Phase 6.0 Plan 06: colorScheme() probe
 #include <QApplication>
 #include <QCoreApplication>
+#include <QColor>
 #include <QEventLoop>
 #include <QFontDatabase>
+#include <QGuiApplication>
+#include <QPalette>
 #include <QStringLiteral>
+#include <QStyle>
+#include <QStyleHints>
+#include <Qt>
 #include <cstdio>
 #include <cstdlib>
 
@@ -61,9 +69,80 @@ void XvueApp::ensure() {
         // QApplication constructor so the dispatcher picks it up during init.
         QCoreApplication::setAttribute(Qt::AA_CompressHighFrequencyEvents);
         qapp_ = std::make_unique<QApplication>(fake_argc, fake_argv);
+
+        // Phase 6.0 Plan 06 (UX-13). Connect system theme-change signal so
+        // when the user flips desktop dark-mode while pp*_qt is running, we
+        // re-apply the palette (only if pref == "system"). Qt 6.5+ feature;
+        // on DEs without a theme plugin (XFce bare), the signal may never
+        // fire — fallback: user restarts app, applyColorSchemePreference on
+        // startup syncs.
+        if (auto* sh = QGuiApplication::styleHints()) {
+            QObject::connect(sh, &QStyleHints::colorSchemeChanged,
+                qapp_.get(), [](Qt::ColorScheme){
+                    // Only re-apply if pref is "system" — otherwise the user's
+                    // forced light/dark override stays sticky.
+                    if (XvuePrefs::colorScheme() == QStringLiteral("system")) {
+                        XvueApp::applyColorSchemePreference();
+                    }
+                });
+        }
+
         std::atexit(&XvueApp::teardown_atexit);
     });
     load_bundled_font_();
+}
+
+// Phase 6.0 Plan 06 (UX-03/D-02). Forwarding accessor — null-safe so call
+// sites inside extern "C" entries can use it before xvinitgraphique_ has
+// constructed the window slot, or after xvfermer_ has reset it.
+XvueMenuBridge* XvueApp::menuBridge() {
+    auto& win = window_slot();
+    if (!win) return nullptr;
+    return win->menuBridge();
+}
+
+// Phase 6.0 Plan 06 (UX-13, D-05). Reads XvuePrefs::colorScheme() and applies
+// the matching QPalette to QApplication. Three branches:
+//   - "dark"   -> hand-crafted dark palette per RESEARCH §8 (standard Qt dark
+//                 palette: Window=(53,53,53), white text, etc.).
+//   - "light"  -> Qt default QPalette (the constructor builds the standard
+//                 light palette).
+//   - "system" -> QApplication::style()->standardPalette() — the value the
+//                 platform style would apply on a fresh launch. On Linux,
+//                 this is what the desktop theme plugin reports.
+// Idempotent: calling this multiple times with the same pref leaves the
+// palette unchanged. Safe to call before any window exists (only QApplication
+// global palette is touched).
+void XvueApp::applyColorSchemePreference() {
+    const QString pref = XvuePrefs::colorScheme();
+    if (pref == QStringLiteral("dark")) {
+        // RESEARCH §8 standard Qt dark palette. Constants chosen to match
+        // the most common third-party "Qt dark style" implementations so
+        // existing third-party styles do not collide visually.
+        QPalette p;
+        p.setColor(QPalette::Window,          QColor(53, 53, 53));
+        p.setColor(QPalette::WindowText,      Qt::white);
+        p.setColor(QPalette::Base,            QColor(42, 42, 42));
+        p.setColor(QPalette::AlternateBase,   QColor(66, 66, 66));
+        p.setColor(QPalette::ToolTipBase,     Qt::white);
+        p.setColor(QPalette::ToolTipText,     Qt::white);
+        p.setColor(QPalette::Text,            Qt::white);
+        p.setColor(QPalette::Button,          QColor(53, 53, 53));
+        p.setColor(QPalette::ButtonText,      Qt::white);
+        p.setColor(QPalette::BrightText,      Qt::red);
+        p.setColor(QPalette::Highlight,       QColor(38, 79, 120));
+        p.setColor(QPalette::HighlightedText, Qt::black);
+        QApplication::setPalette(p);
+    } else if (pref == QStringLiteral("light")) {
+        QApplication::setPalette(QPalette());   // Qt default light palette
+    } else {
+        // "system" or anything else (Plan 02 prefs.cpp clamps unknown values
+        // to "system" on read, so the else-branch is reached only for
+        // "system").
+        if (auto* style = QApplication::style()) {
+            QApplication::setPalette(style->standardPalette());
+        }
+    }
 }
 
 QApplication* XvueApp::qapp() {
