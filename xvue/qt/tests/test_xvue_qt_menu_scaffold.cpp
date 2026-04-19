@@ -59,8 +59,13 @@ private slots:
         QString s = xvueT(MsgId::AppName);
         QVERIFY(s.isEmpty() || !s.isEmpty());
 
-        // Touch each subsystem to prove the call-sites resolve.
+        // Touch each subsystem to prove the call-sites resolve. Plan 02
+        // gives queueLexicon a real body — even an empty cmd enqueues the
+        // trailing CR (=13), so drain it before the QVERIFY.
         bridge.queueLexicon(QStringLiteral(""));
+        auto cr = bridge.popChar();
+        QVERIFY(cr.has_value());
+        QCOMPARE(static_cast<int>(*cr), 13);
         QVERIFY(!bridge.popChar().has_value());
         dock.appendLine(QStringLiteral("scaffold sanity"));
         batcher.enqueue(QStringLiteral("scaffold error"));
@@ -80,20 +85,28 @@ private slots:
         QVERIFY(true);
     }
 
-    // Sanity: XvueMenuBridge queue API resolves and behaves consistently with
-    // the Plan 01 scaffold contract. Plan 02 will FLIP these expectations:
-    //   - queueLexicon("x") will then push 2 chars ('x' + CR=13)
-    //   - popChar() will then return std::optional<char>('x')
-    // This test documents the Plan 01 baseline so reviewers can see the
-    // intentional gap.
+    // Sanity: XvueMenuBridge queue API resolves and behaves consistently
+    // with the Plan 02 contract (full queueLexicon/popChar bodies). The
+    // Plan 01 scaffold contract ("queueLexicon is a no-op") was flipped
+    // by Plan 02 — see test_xvue_qt_i18n_menu_prefs.cpp for the deeper
+    // multi-char + cap + trailing-CR test coverage. This scaffold test
+    // keeps a single-char round-trip + the §10 layer-2 sentinel check so
+    // a regression is caught even if the i18n_menu_prefs target is broken.
     void testMenuBridgeQueueBasicOps() {
         XvueMenuBridge mb;
         QCOMPARE(mb.queueSize(), 0);
         QVERIFY(!mb.popChar().has_value());
 
         mb.queueLexicon(QStringLiteral("x"));
-        // SCAFFOLD CONTRACT: queueLexicon is a no-op. Plan 02 flips to size==2.
-        QCOMPARE(mb.queueSize(), 0);
+        // PLAN 02 CONTRACT: queueLexicon pushes each char of cmd + a CR
+        // terminator. "x" → ['x', 13] (size 2).
+        QCOMPARE(mb.queueSize(), 2);
+        auto first = mb.popChar();
+        QVERIFY(first.has_value());
+        QCOMPARE(static_cast<int>(*first), static_cast<int>('x'));
+        auto cr = mb.popChar();
+        QVERIFY(cr.has_value());
+        QCOMPARE(static_cast<int>(*cr), 13);
         QVERIFY(!mb.popChar().has_value());
 
         // Sanity: the §10 layer 2 sentinel toggles correctly.
