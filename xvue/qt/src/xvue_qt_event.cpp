@@ -5,6 +5,7 @@
 #include "xvue_qt_event.h"
 #include "xvue_qt_canvas.h"
 #include "xvue_qt_app.h"
+#include "xvue_qt_menu_bridge.h"   // Phase 6.0 Plan 03: popChar pre-drain
 #include "xvue_qt_window.h"
 #include "xvue_qt_state.h"
 
@@ -189,6 +190,78 @@ XvueEventBridge::waitForEvent(WaitMode mode, int* items, int* pmin0) {
     motion_count_ = 0;
     items_        = items;
     pmin0_        = pmin0;
+
+    // Phase 6.0 Plan 03 (UX-03): menu-queue pre-drain. If a QAction handler
+    // queued a synthetic lexicon character (XvueMenuBridge::queueLexicon),
+    // return it as notypeevent=2 (KeyPress) BEFORE entering the nested
+    // QEventLoop. Drains one byte per waitForEvent call — matches Fortran
+    // SACLAV's one-char-per-read contract (xvue/saclav.f §270-333,
+    // 06.0-RESEARCH §6).
+    //
+    // GUARD: Souris mode ONLY.
+    //   - Souris2 (xvsouris2_) is the accrochage/picking path; the Fortran
+    //     caller expects mouse/key events with item-tracking state — a
+    //     synthetic menu char would corrupt the accrochage state machine.
+    //   - Pause (xvpause_) blocks on a specific key-press gate per Phase 5
+    //     D-06; menu chars must not bypass that semantic.
+    //   In both alternate modes the queued char STAYS in the queue and is
+    //   drained by the next plain xvsouris_ call (standard Souris mode).
+    //
+    // ORDERING (per Plan 03 must_haves):
+    //   XVUE_QT_ASSERT_MAIN_THREAD (in xvsouris_ wrapper)
+    //   -> BlockingDepthGuard ctor (above)
+    //   -> save-restore + per-call-state reset (above)
+    //   -> menu-queue pre-drain (THIS BLOCK)
+    //   -> QEventLoop ctor (below)
+    //   -> loop.exec() (below)
+    //
+    // NOTE: AUTOEXIT lives in the xvsouris_ wrapper (xvue_qt_api.cpp), NOT
+    // here, so the wrapper's pre-drain runs BEFORE AUTOEXIT — see the
+    // matching block at xvue_qt_api.cpp::xvsouris_. Keeping the pre-drain
+    // ALSO here is defense in depth for direct waitForEvent() callers
+    // (e.g., the Phase 5 test suite that uses XvueEventBridge directly
+    // without going through xvsouris_).
+    //
+    // WARNING: The early-return restore of saved_* below DUPLICATES the
+    // end-of-function restore block. Any future addition to per-call mutable
+    // state (e.g., a new tracking field for Souris2) MUST be mirrored in
+    // BOTH restore sites or this early-return path will leak stale state
+    // into the outer (caller's) waitForEvent frame. The duplication is
+    // localised; long-term refactor would extract a SavedWaitState helper.
+    if (mode == WaitMode::Souris) {
+        if (auto& win = XvueApp::window_slot()) {
+            if (auto* mb = win->menuBridge()) {
+                if (auto c = mb->popChar()) {
+                    pending_.notypeevent = 2;
+                    pending_.nbc         = static_cast<unsigned char>(*c);
+                    pending_.x           = canvas_
+                        ? canvas_->mapFromGlobal(QCursor::pos()).x() : 0;
+                    pending_.y           = canvas_
+                        ? canvas_->mapFromGlobal(QCursor::pos()).y() : 0;
+                    if (debug_logging_enabled()) {
+                        std::fprintf(stderr,
+                            "[xvsouris] mode=%d notypeevent=2 nbc=%d "
+                            "x=%d y=%d motion_count=0 depth=%d "
+                            "[menu-pre-drain]\n",
+                            static_cast<int>(mode),
+                            pending_.nbc, pending_.x, pending_.y,
+                            XvueApp::blockingDepth());
+                        std::fflush(stderr);
+                    }
+                    Result r = pending_;
+                    // ---- early-return restore (MIRROR of end-of-function) ----
+                    loop_         = saved_loop;
+                    mode_         = saved_mode;
+                    pending_      = saved_pending;
+                    quit_pending_ = saved_quit_pending;
+                    motion_count_ = saved_motion_count;
+                    items_        = saved_items;
+                    pmin0_        = saved_pmin0;
+                    return r;
+                }
+            }
+        }
+    }
 
     QEventLoop loop;
     loop_ = &loop;
@@ -426,6 +499,21 @@ bool XvueEventBridge::eventFilter(QObject* watched, QEvent* event) {
         auto* me = static_cast<QMouseEvent*>(event);
         const int cx = me->pos().x();
         const int cy = me->pos().y();
+
+        // Phase 6.0 Plan 03 (UX-12): emit live coord signal BEFORE the bridge
+        // consumes the event. Phase 5's filter eats MouseMove during blocking
+        // reads — without this emit, Plan 06's status-bar coord readout would
+        // freeze whenever a Fortran-side xvsouris_/xvsouris2_ is active.
+        // Friendship between XvueCanvas and XvueEventBridge (declared in
+        // xvue_qt_canvas.h) permits the cross-class emit without Qt 6.4+
+        // "calling signal from outside class" warnings. The emit fires for
+        // BOTH Souris and Souris2 modes (the canvas's coord readout is
+        // mode-agnostic). Cost: one signal dispatch per move (negligible vs
+        // motion event-dispatch overhead). Null-guarded against the
+        // canvas-less defensive path.
+        if (canvas_) {
+            emit canvas_->mouseCoords(QPoint(cx, cy));
+        }
 
         if (mode_ == WaitMode::Souris2) {
             auto& win = XvueApp::window_slot();

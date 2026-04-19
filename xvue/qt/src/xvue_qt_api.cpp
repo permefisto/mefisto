@@ -18,6 +18,7 @@
 #include "xvue_qt_canvas.h"
 #include "xvue_qt_state.h"
 #include "xvue_qt_event.h"
+#include "xvue_qt_menu_bridge.h"   // Phase 6.0 Plan 03: pre-AUTOEXIT pre-drain
 #include <QApplication>
 #include <QCoreApplication>
 #include <QCursor>
@@ -953,6 +954,38 @@ void proc(xvfacetraits)(int *ncf, int *nca, int *n, MefistoPoint *pts) {
 void proc(xvsouris)(int *notypeevent, int *nbc, int *x1, int *y1) {
     XvueApp::ensure();
     XVUE_QT_ASSERT_MAIN_THREAD();
+
+    // Phase 6.0 Plan 03 (UX-03): menu-queue pre-drain. If a QAction handler
+    // queued a synthetic lexicon character via XvueMenuBridge::queueLexicon,
+    // return it as a notypeevent=2 (KeyPress) BEFORE the AUTOEXIT short-
+    // circuit OR the bridge->waitForEvent call. Pre-drain MUST run before
+    // AUTOEXIT so menu-driven sequences win over the headless escape hatch
+    // when both are armed (Research §1 "Interaction with AUTOEXIT" — a test
+    // that queues chars wants to see those chars first; AUTOEXIT is a
+    // headless safety valve, not a behavior gate).
+    //
+    // Mirrors the matching pre-drain in XvueEventBridge::waitForEvent (which
+    // covers direct waitForEvent() callers that bypass this wrapper). Having
+    // it in BOTH places is intentional: this site beats AUTOEXIT in the
+    // production xvsouris_ path; the waitForEvent site beats nothing but
+    // covers the test-only direct-bridge path. Both check
+    // win->menuBridge() — Plan 06 wires the production bridge; Plan 03's
+    // unit tests inject one via XvueWindow::setMenuBridgeForTesting.
+    {
+        auto& win = XvueApp::window_slot();
+        if (win) {
+            if (auto* mb = win->menuBridge()) {
+                if (auto c = mb->popChar()) {
+                    if (notypeevent) *notypeevent = 2;
+                    if (nbc)         *nbc         = static_cast<unsigned char>(*c);
+                    if (x1)          *x1          = 0;
+                    if (y1)          *y1          = 0;
+                    return;
+                }
+            }
+        }
+    }
+
     const char* autoexit = std::getenv("MEFISTO_XVSOURIS_AUTOEXIT");
     if (autoexit && autoexit[0] != '\0') {
         int delay_ms = 500;
