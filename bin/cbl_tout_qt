@@ -90,6 +90,17 @@ test -x $MEFISTO/xvue/qt/build/tests/xvue_qt_menu_tests || {
     exit 1
 }
 
+# Phase 6.0 Plan 02 (06.0-02): build xvue_qt_i18n_menu_prefs_tests target —
+# i18n + menu-bridge + prefs full-body coverage (19 QTest cases).
+cmake --build $MEFISTO/xvue/qt/build --target xvue_qt_i18n_menu_prefs_tests || {
+    echo "cbl_tout_qt: xvue_qt_i18n_menu_prefs_tests build FAILED"
+    exit 1
+}
+test -x $MEFISTO/xvue/qt/build/tests/xvue_qt_i18n_menu_prefs_tests || {
+    echo "cbl_tout_qt: xvue_qt_i18n_menu_prefs_tests binary missing — FAILED"
+    exit 1
+}
+
 #  regeneration des parametres des TMS de MEFISTO
 #  A eviter lors d'une installation
 #  car les fichiers INCLUDE disparaissent et sp non compiles
