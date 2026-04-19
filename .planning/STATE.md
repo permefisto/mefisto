@@ -4,8 +4,8 @@ milestone: v1.0
 milestone_name: milestone
 status: executing
 stopped_at: Phase 6 UI-SPEC approved — 3 PASS, 3 FLAG non-blocking recommendations
-last_updated: "2026-04-19T08:13:10.927Z"
-last_activity: 2026-04-19 -- Phase 06.0 planning complete
+last_updated: "2026-04-19T08:13:58.283Z"
+last_activity: 2026-04-19 -- Phase 06.0 execution started
 progress:
   total_phases: 17
   completed_phases: 8
@@ -21,14 +21,14 @@ progress:
 See: .planning/PROJECT.md (updated 2026-04-10)
 
 **Core value:** Every MEFISTO workflow that works today through X11 keeps working through the new Qt 6 interface, with Fortran solver code unchanged.
-**Current focus:** Phase 05 — event-bridge-blocking-reads
+**Current focus:** Phase 06.0 — shared-shell-menu-bridge-dialogs
 
 ## Current Position
 
-Phase: 6
-Plan: Not started
-Status: Ready to execute
-Last activity: 2026-04-19 -- Phase 06.0 planning complete
+Phase: 06.0 (shared-shell-menu-bridge-dialogs) — EXECUTING
+Plan: 1 of 7
+Status: Executing Phase 06.0
+Last activity: 2026-04-19 -- Phase 06.0 execution started
 
 Progress: [██████████] 100% (Phase 03.1)
 
