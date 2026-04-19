@@ -164,7 +164,7 @@ Plans:
   - [x] 06.0-03-PLAN.md — Wave 3: XvueEventBridge::waitForEvent menu-queue pre-drain + MouseMove coord-signal emit + xvuelc.c A6 audit (UX-02, UX-03, UX-12)
   - [x] 06.0-04-PLAN.md — Wave 2: XvueConsoleDock pipe+QSocketNotifier + XvueErrorBatcher deferred QMessageBox + About/Preferences/RecentProjects dialog bodies (UX-04, UX-06, UX-09, UX-10, UX-11)
   - [x] 06.0-05-PLAN.md — Wave 2: XvueCanvas wheel/middle-drag/contextMenu/mouseCoords signal/resetView + XvueState view_transform_/has_user_content_ + empty-state paintEvent (UX-12, UX-13)
-  - [ ] 06.0-06-PLAN.md — Wave 4: XvueApp menuBridge accessor + applyColorSchemePreference + XvueWindow full chrome composition + 13 shared QActions + xvue_module_init_ dispatch body (UX-01, UX-04, UX-06, UX-07, UX-09, UX-13)
+  - [x] 06.0-06-PLAN.md — Wave 4: XvueApp menuBridge accessor + applyColorSchemePreference + XvueWindow full chrome composition + 13 shared QActions + xvue_module_init_ dispatch body (UX-01, UX-04, UX-06, UX-07, UX-09, UX-13)
   - [ ] 06.0-07-PLAN.md — Wave 5: clean rebuild + 7-binary test sweep + human A/B verdict on pp/ppmail_qt + 06.0-VALIDATION.md sign-off + xvue/qt/README.md extension
 **UI hint**: yes
 
