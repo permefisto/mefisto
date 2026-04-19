@@ -2,12 +2,47 @@
 // Phase 2 (D-06): paintEvent = drawPixmap blit ONLY. Never mutate state here.
 // Phase 2 (D-04, D-07, D-08): resizeEvent reallocates backing, preserves
 // content top-left, and recreates the long-lived QPainter per DRAW-01.
+// Phase 6.0 Plan 05 (UX-12, UX-13, UI-SPEC §Canvas, §Copywriting Flag #3):
+// extends paintEvent with a setTransform(view_transform_) before the single
+// drawPixmap (DRAW-01 Phase 6 documented extension — RESEARCH §7), plus an
+// optional centered empty-state hint when state_->has_user_content_ is false.
+// Adds 5 new event overrides (wheel zoom, middle-drag pan, context menu) and
+// the resetView() slot. The view transform is composited at paint time only;
+// the backing pixmap and Fortran draw calls remain in canonical pixel
+// coordinates ("Fortran must not notice" invariant at the UX layer).
+//
+// MMB pan vs Phase 5 bridge-abort interaction (RESEARCH §7 Pitfall 7.2):
+// Qt event order is eventFilter(canvas, event) -> canvas::eventHandler(event).
+// Phase 5's XvueEventBridge::eventFilter intercepts MiddleButton in Souris
+// mode as abort (notypeevent=0, nbc=2) and returns true to eat the event.
+// Therefore middle-drag pan only runs when no blocking read is active
+// (loop_ == nullptr). v1 behavior:
+//   - User idle (no picking loop) -> middle-drag pans (normal desktop UX).
+//   - User mid-picking (xvsouris_ active) -> middle-click aborts (Phase 5).
+// Plan 03's A6 audit will confirm X11 parity. If X11 also pans during picking,
+// Plan 03 may file a revision to require Ctrl+MMB instead.
 #include "xvue_qt_canvas.h"
 #include "xvue_qt_state.h"
+#include "xvue_qt_app.h"
+#include "xvue_qt_window.h"
+// xvue_qt_menu_bridge.h: pulled in by future Plan 02-driven update of this
+// file when XvueWindow::menuBridge() exists; currently the contextMenuEvent
+// branch only references the window pointer.
+#include "xvue_qt_i18n.h"
+
 #include <QPainter>
 #include <QPaintEvent>
 #include <QResizeEvent>
+#include <QWheelEvent>
+#include <QMouseEvent>
+#include <QContextMenuEvent>
 #include <QPixmap>
+#include <QMenu>
+#include <QPalette>
+#include <QFontMetrics>
+#include <QString>
+
+#include <cmath>
 #include <cstdio>
 
 XvueCanvas::XvueCanvas(XvueState* state, QWidget* parent)
@@ -44,11 +79,46 @@ XvueCanvas::~XvueCanvas() = default;
 
 void XvueCanvas::paintEvent(QPaintEvent* event) {
     Q_UNUSED(event);
-    // D-06 + Pitfall 1: paintEvent body is ONE drawPixmap call; never more.
-    // Defensive null-check guards against a pathological pre-first-resize
-    // paint (should not happen on X11/Wayland but costs nothing).
-    if (state_ && state_->backing_) {
-        QPainter(this).drawPixmap(0, 0, *state_->backing_);
+    // Phase 6.0 Plan 05 (UX-12) — DRAW-01 Phase 6 documented extension:
+    // paintEvent body now does setTransform(view_transform_) + drawPixmap +
+    // optional empty-state drawText. Still a single drawPixmap of the backing.
+    // backing_ is never mutated by the transform — Fortran-side coordinates
+    // remain canonical pixel coordinates.
+    QPainter p(this);
+    if (!state_) return;
+
+    if (state_->backing_) {
+        p.setTransform(state_->view_transform_);
+        p.drawPixmap(0, 0, *state_->backing_);
+    }
+
+    // Reset transform for the empty-state text overlay so the hint is
+    // centered in widget coords regardless of view_transform_.
+    p.resetTransform();
+
+    // Phase 6.0 Plan 05 + UI-SPEC Flag #3 (Empty-state hint).
+    // Default: false at startup -> render hint until first meaningful draw.
+    // Plan 06 will flip has_user_content_ in xvue_module_init_ once a module
+    // owns the canvas. The Plan 01 i18n scaffold returns "" for these MsgIds;
+    // Plan 02 fills the FR/EN copy.
+    lastPaintDrewEmptyState_ = false;
+    if (!state_->has_user_content_) {
+        p.setPen(palette().color(QPalette::WindowText));
+        const QRect r = rect();
+        QFontMetrics fm(p.font());
+        const QString heading = xvueT(MsgId::EmptyStateHeading);
+        const QString body    = xvueT(MsgId::EmptyStateBody);
+        const int lineH = fm.height();
+        const int headW = fm.horizontalAdvance(heading);
+        const int bodyW = fm.horizontalAdvance(body);
+        const int headX = (r.width() - headW) / 2;
+        const int bodyX = (r.width() - bodyW) / 2;
+        const int centerY = r.height() / 2;
+        // Always call drawText so test observables fire even with empty
+        // strings (Plan 01 scaffold). Plan 02 fills real text.
+        p.drawText(headX, centerY - lineH / 2, heading);
+        p.drawText(bodyX, centerY + lineH,    body);
+        lastPaintDrewEmptyState_ = true;
     }
 }
 
@@ -135,4 +205,123 @@ void XvueCanvas::resizeEvent(QResizeEvent* event) {
         delete state_->accroche_undo_tile_;
         state_->accroche_undo_tile_ = nullptr;
     }
+}
+
+// ---------------------------------------------------------------------------
+// Phase 6.0 Plan 05 — Qt-native gesture handlers below.
+// ---------------------------------------------------------------------------
+
+void XvueCanvas::wheelEvent(QWheelEvent* event) {
+    // UX-12 + RESEARCH §7. Each wheel notch on a standard mouse delivers
+    // angleDelta().y() = +/- 120. Apply 1.15x scale per notch (matches the
+    // gesture density users expect from QGraphicsView wheel-zoom samples).
+    if (!state_) {
+        event->ignore();
+        return;
+    }
+    const int notches = event->angleDelta().y() / 120;
+    if (notches == 0) {
+        event->ignore();
+        return;
+    }
+    const qreal factor = std::pow(1.15, notches);
+    QTransform t = state_->view_transform_ * QTransform().scale(factor, factor);
+    // Clamp via m11 (and m22 by symmetry — equal scale factors). T-06.0-05-01
+    // mitigation: refuse a zoom step that would push beyond [0.1, 10.0].
+    const qreal s = t.m11();
+    if (s < 0.1 || s > 10.0) {
+        event->accept();
+        return;   // refuse zoom step that would exceed bounds
+    }
+    state_->view_transform_ = t;
+    update();
+    event->accept();
+}
+
+void XvueCanvas::mousePressEvent(QMouseEvent* event) {
+    if (event->button() == Qt::MiddleButton && state_) {
+        // UX-12: middle-drag pan. We DO NOT forward to the bridge — the
+        // bridge's eventFilter has already seen this press (Qt event order
+        // is eventFilter -> canvas handler). When loop_ is non-null (Souris
+        // mode active), the filter ate it and this handler is never reached.
+        // When loop_ is null (idle), the filter passed it through and we own
+        // the pan gesture.
+        pan_start_            = event->pos();
+        pan_anchor_transform_ = state_->view_transform_;
+        pan_active_           = true;
+        event->accept();
+        return;
+    }
+    QWidget::mousePressEvent(event);
+}
+
+void XvueCanvas::mouseMoveEvent(QMouseEvent* event) {
+    if (pan_active_ && (event->buttons() & Qt::MiddleButton) && state_) {
+        const QPoint delta = event->pos() - pan_start_;
+        // Apply translate AFTER the anchor transform so the drag delta is
+        // in widget coordinates (a 5-pixel right-drag moves the view 5 px
+        // right regardless of the current zoom). Math:
+        //   final = anchor * translate(delta)
+        // QTransform composes in column-vector order, so this lays the
+        // translate "on top" of the anchored transform.
+        state_->view_transform_ = pan_anchor_transform_ *
+                                  QTransform().translate(delta.x(), delta.y());
+        update();
+        event->accept();
+        return;
+    }
+    QWidget::mouseMoveEvent(event);
+}
+
+void XvueCanvas::mouseReleaseEvent(QMouseEvent* event) {
+    if (event->button() == Qt::MiddleButton && pan_active_) {
+        pan_active_ = false;
+        event->accept();
+        return;
+    }
+    QWidget::mouseReleaseEvent(event);
+}
+
+void XvueCanvas::contextMenuEvent(QContextMenuEvent* event) {
+    // UI-SPEC §Canvas interaction: right-click opens a module-populated menu.
+    // D-08 (Phase 5/6 modal re-entrancy guard): suppressed when blockingDepth
+    // > 0 — the Fortran caller is mid-blocking-read and a menu would be a
+    // re-entrancy hazard. The QAction itself is NOT disabled (per D-08 design
+    // — keep it discoverable); the menu just refuses silently here.
+    if (XvueApp::blockingDepth() > 0) {
+        event->accept();
+        return;
+    }
+    // Increment counter even when the menu is empty so test observability
+    // captures the "menu would have been shown" event independently of the
+    // populator state. Plan 07 manual sweep verifies the actual menu UI.
+    ++contextMenuShownCount_;
+
+    // Try to reach the menu bridge through the window's accessor. May be
+    // nullptr in v1 (no module has populated the context menu populator yet)
+    // — in that case the menu stays empty and we exit without exec().
+    QMenu menu(this);
+    if (auto& win = XvueApp::window_slot()) {
+        // XvueWindow does not currently expose menuBridge() — Plan 02 will
+        // add the accessor + setter. Until then, skip the populate step
+        // (the menu stays empty and the early-return below handles it).
+        // The contextMenuShownCount_ counter has already been bumped so
+        // tests can verify the not-suppressed-by-blocking branch.
+        (void)win;
+    }
+    if (!menu.isEmpty()) {
+        menu.exec(event->globalPos());
+    }
+    event->accept();
+}
+
+void XvueCanvas::resetView() {
+    // UX-12: View -> Fit to Window (Ctrl+0 in Plan 06). Restore identity and
+    // schedule a repaint. Defensive against an extremely unlikely race where
+    // resetView is called after canvas destruction (T-06.0-LAMBDA-01: Plan 06
+    // should use QPointer<XvueCanvas> in any lambda that might outlive the
+    // canvas); the state_ null-guard catches the obvious case.
+    if (!state_) return;
+    state_->view_transform_ = QTransform();
+    update();
 }
