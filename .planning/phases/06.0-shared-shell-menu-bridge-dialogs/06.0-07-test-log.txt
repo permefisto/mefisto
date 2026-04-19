@@ -1,0 +1,266 @@
+=== Phase 6.0 Plan 07 — Full QTest regression sweep ===
+Date: 2026-04-19T21:33:57Z
+ABI symbol count: 58
+
+=== xvue_qt_event_tests ===
+********* Start testing of TestXvueQtEvent *********
+Config: Using QtTest library 6.10.2, Qt 6.10.2 (x86_64-little_endian-lp64 shared (dynamic) release build; by GCC 15.2.0), debian unknown
+PASS   : TestXvueQtEvent::initTestCase()
+PASS   : TestXvueQtEvent::testBridgeInstallation()
+PASS   : TestXvueQtEvent::testReopenCreatesFreshBridge()
+PASS   : TestXvueQtEvent::testXvsourisMotion()
+PASS   : TestXvueQtEvent::testXvsourisButtonPress()
+PASS   : TestXvueQtEvent::testXvsourisButtonRelease()
+PASS   : TestXvueQtEvent::testXvsourisKeyPress()
+PASS   : TestXvueQtEvent::testXvsourisKeyPressSpace()
+PASS   : TestXvueQtEvent::testXvsourisEscapeAbort()
+PASS   : TestXvueQtEvent::testXvsourisAtSignAbort()
+PASS   : TestXvueQtEvent::testXvsourisReturnKey()
+PASS   : TestXvueQtEvent::testXvsourisFortranEntryPoint()
+PASS   : TestXvueQtEvent::testXvsourisNoWindow()
+PASS   : TestXvueQtEvent::testXvsouris2Accrochage()
+PASS   : TestXvueQtEvent::testXvsouris2NullGuards()
+PASS   : TestXvueQtEvent::testXvsouris2ResizeInvalidatesTile()
+PASS   : TestXvueQtEvent::testXvpauseReturnsOnKey()
+SKIP   : TestXvueQtEvent::testXvpauseReturnsOnMouseClick() Plan 04: mouse-click Pause path not load-bearing; xvpause_ contract is KeyPress-only (xvuelc.c:2529)
+   Loc: [/home/drico/git/mefisto/.claude/worktrees/agent-a253b6e4/xvue/qt/tests/test_xvue_qt_event.cpp(415)]
+PASS   : TestXvueQtEvent::testXvpauseAutoexit()
+PASS   : TestXvueQtEvent::testDeplsourisNonBlocking()
+PASS   : TestXvueQtEvent::testInitaccrochage()
+PASS   : TestXvueQtEvent::testInitaccrochageBeforeInit()
+PASS   : TestXvueQtEvent::testMotionCoalescing()
+PASS   : TestXvueQtEvent::testMotionFreshPerCall()
+PASS   : TestXvueQtEvent::testQuitPendingResetAcrossCalls()
+SKIP   : TestXvueQtEvent::testDebugLoggingEnvVar() Plan 03/06: MEFISTO_XVSOURIS_DEBUG caches on first access — runtime flag tested via stderr grep in the verify block
+   Loc: [/home/drico/git/mefisto/.claude/worktrees/agent-a253b6e4/xvue/qt/tests/test_xvue_qt_event.cpp(655)]
+PASS   : TestXvueQtEvent::testBlockingDepthRAII()
+PASS   : TestXvueQtEvent::testBlockingDepthNested()
+PASS   : TestXvueQtEvent::testBlockingDepthAccessorZero()
+PASS   : TestXvueQtEvent::testXvueStateAccrochageFieldsNull()
+PASS   : TestXvueQtEvent::testCanvasFocusPolicyStrong()
+PASS   : TestXvueQtEvent::testCompressHighFrequencyEventsSet()
+PASS   : TestXvueQtEvent::cleanupTestCase()
+Totals: 31 passed, 0 failed, 2 skipped, 0 blacklisted, 505ms
+********* Finished testing of TestXvueQtEvent *********
+QThreadStorage: entry 1 destroyed before end of thread 0x5628c5c4a670
+QThreadStorage: entry 0 destroyed before end of thread 0x5628c5c4a670
+EXIT=0
+
+=== xvue_qt_menu_tests ===
+********* Start testing of TestXvueQtMenuScaffold *********
+Config: Using QtTest library 6.10.2, Qt 6.10.2 (x86_64-little_endian-lp64 shared (dynamic) release build; by GCC 15.2.0), debian unknown
+PASS   : TestXvueQtMenuScaffold::initTestCase()
+PASS   : TestXvueQtMenuScaffold::testScaffoldIsLinkable()
+xvue-qt: registerMailActions stub (Phase 6.1 adds the real body).
+PASS   : TestXvueQtMenuScaffold::testAbiContainsModuleInit()
+PASS   : TestXvueQtMenuScaffold::testMenuBridgeQueueBasicOps()
+PASS   : TestXvueQtMenuScaffold::cleanupTestCase()
+Totals: 5 passed, 0 failed, 0 skipped, 0 blacklisted, 60ms
+********* Finished testing of TestXvueQtMenuScaffold *********
+QThreadStorage: entry 1 destroyed before end of thread 0x561ec9eea670
+QThreadStorage: entry 0 destroyed before end of thread 0x561ec9eea670
+EXIT=0
+
+=== xvue_qt_i18n_menu_prefs_tests ===
+********* Start testing of TestXvueQtI18nMenuPrefs *********
+Config: Using QtTest library 6.10.2, Qt 6.10.2 (x86_64-little_endian-lp64 shared (dynamic) release build; by GCC 15.2.0), debian unknown
+PASS   : TestXvueQtI18nMenuPrefs::initTestCase()
+PASS   : TestXvueQtI18nMenuPrefs::testBilingualNonEmptyEveryEntry()
+PASS   : TestXvueQtI18nMenuPrefs::testAppNameIdentical()
+PASS   : TestXvueQtI18nMenuPrefs::testQueueMultiChar()
+PASS   : TestXvueQtI18nMenuPrefs::testQueueTrailingCR()
+PASS   : TestXvueQtI18nMenuPrefs::testQueueEmpty()
+PASS   : TestXvueQtI18nMenuPrefs::testQueueCapEnforced()
+PASS   : TestXvueQtI18nMenuPrefs::testQueueContextPopulator()
+PASS   : TestXvueQtI18nMenuPrefs::testMarkModuleRegistered()
+PASS   : TestXvueQtI18nMenuPrefs::testQSettingsRoundTripGeometry()
+PASS   : TestXvueQtI18nMenuPrefs::testQSettingsRoundTripState()
+PASS   : TestXvueQtI18nMenuPrefs::testQSettingsRoundTripConsoleVisible()
+PASS   : TestXvueQtI18nMenuPrefs::testQSettingsRoundTripColorScheme()
+PASS   : TestXvueQtI18nMenuPrefs::testRecentProjectsCap10()
+PASS   : TestXvueQtI18nMenuPrefs::testRecentProjectsDedupe()
+PASS   : TestXvueQtI18nMenuPrefs::testRecentProjectsClear()
+PASS   : TestXvueQtI18nMenuPrefs::testCorruptSettingsDefault()
+PASS   : TestXvueQtI18nMenuPrefs::testPerModuleGroupIsolation()
+PASS   : TestXvueQtI18nMenuPrefs::cleanupTestCase()
+Totals: 19 passed, 0 failed, 0 skipped, 0 blacklisted, 452ms
+********* Finished testing of TestXvueQtI18nMenuPrefs *********
+EXIT=0
+
+=== xvue_qt_event_menu_predrain_tests ===
+********* Start testing of TestXvueQtEventMenuPredrain *********
+Config: Using QtTest library 6.10.2, Qt 6.10.2 (x86_64-little_endian-lp64 shared (dynamic) release build; by GCC 15.2.0), debian unknown
+PASS   : TestXvueQtEventMenuPredrain::initTestCase()
+PASS   : TestXvueQtEventMenuPredrain::testPreDrainSingleChar()
+PASS   : TestXvueQtEventMenuPredrain::testPreDrainMultiChar()
+PASS   : TestXvueQtEventMenuPredrain::testPreDrainTrailingCR()
+PASS   : TestXvueQtEventMenuPredrain::testPreDrainPreservesDepth()
+PASS   : TestXvueQtEventMenuPredrain::testPreDrainBeforeAutoexit()
+PASS   : TestXvueQtEventMenuPredrain::testPreDrainIgnoredInSouris2Mode()
+PASS   : TestXvueQtEventMenuPredrain::testPreDrainIgnoredInPauseMode()
+PASS   : TestXvueQtEventMenuPredrain::testCoordSignalDuringSourisMode()
+PASS   : TestXvueQtEventMenuPredrain::cleanupTestCase()
+Totals: 10 passed, 0 failed, 0 skipped, 0 blacklisted, 124ms
+********* Finished testing of TestXvueQtEventMenuPredrain *********
+QThreadStorage: entry 1 destroyed before end of thread 0x561ca09ac670
+QThreadStorage: entry 0 destroyed before end of thread 0x561ca09ac670
+EXIT=0
+
+=== xvue_qt_dialogs_console_tests ===
+********* Start testing of TestXvueQtDialogsConsole *********
+Config: Using QtTest library 6.10.2, Qt 6.10.2 (x86_64-little_endian-lp64 shared (dynamic) release build; by GCC 15.2.0), debian unknown
+PASS   : TestXvueQtDialogsConsole::initTestCase()
+PASS   : TestXvueQtDialogsConsole::testConsoleDockAppendLine()
+PASS   : TestXvueQtDialogsConsole::testConsoleMaxBlockCount()
+PASS   : TestXvueQtDialogsConsole::testConsoleDockWithoutRedirectDoesntCrash()
+PASS   : TestXvueQtDialogsConsole::testConsolePartialLineBuffering()
+QWARN  : TestXvueQtDialogsConsole::testErreurBatcherSingleLine() This plugin does not support propagateSizeHints()
+PASS   : TestXvueQtDialogsConsole::testErreurBatcherSingleLine()
+QWARN  : TestXvueQtDialogsConsole::testErreurBatcherCascadeBatched() This plugin does not support propagateSizeHints()
+PASS   : TestXvueQtDialogsConsole::testErreurBatcherCascadeBatched()
+QWARN  : TestXvueQtDialogsConsole::testErreurBatcherDeferredDuringBlocking() This plugin does not support propagateSizeHints()
+PASS   : TestXvueQtDialogsConsole::testErreurBatcherDeferredDuringBlocking()
+QWARN  : TestXvueQtDialogsConsole::testAboutDialogHasCredits() This plugin does not support propagateSizeHints()
+PASS   : TestXvueQtDialogsConsole::testAboutDialogHasCredits()
+PASS   : TestXvueQtDialogsConsole::testPreferencesDialogRoundTrip()
+PASS   : TestXvueQtDialogsConsole::testPreferencesDialogCancelDiscards()
+PASS   : TestXvueQtDialogsConsole::testRecentProjectsMenuPopulation()
+PASS   : TestXvueQtDialogsConsole::testRecentProjectsEmitsOpenSignal()
+PASS   : TestXvueQtDialogsConsole::cleanupTestCase()
+Totals: 14 passed, 0 failed, 0 skipped, 0 blacklisted, 3932ms
+********* Finished testing of TestXvueQtDialogsConsole *********
+QThreadStorage: entry 1 destroyed before end of thread 0x5561ee7eca70
+QThreadStorage: entry 0 destroyed before end of thread 0x5561ee7eca70
+EXIT=0
+
+=== xvue_qt_canvas_gestures_tests ===
+********* Start testing of TestXvueQtCanvasGestures *********
+Config: Using QtTest library 6.10.2, Qt 6.10.2 (x86_64-little_endian-lp64 shared (dynamic) release build; by GCC 15.2.0), debian unknown
+PASS   : TestXvueQtCanvasGestures::initTestCase()
+FAIL!  : TestXvueQtCanvasGestures::testWheelZoomIn() 'state_.view_transform_.m11() > 1.0' returned FALSE. ()
+   Loc: [/home/drico/git/mefisto/.claude/worktrees/agent-a253b6e4/xvue/qt/tests/test_xvue_qt_canvas_gestures.cpp(120)]
+PASS   : TestXvueQtCanvasGestures::testWheelZoomOut()
+PASS   : TestXvueQtCanvasGestures::testWheelClamping()
+PASS   : TestXvueQtCanvasGestures::testMiddleDragPan()
+PASS   : TestXvueQtCanvasGestures::testMiddleDragNoFortranDispatch()
+PASS   : TestXvueQtCanvasGestures::testContextMenuSuppressedBlocking()
+PASS   : TestXvueQtCanvasGestures::testContextMenuShownWhenIdle()
+PASS   : TestXvueQtCanvasGestures::testResetViewIdentity()
+FAIL!  : TestXvueQtCanvasGestures::testEmptyStateRendersText() 'canvas_->lastPaintDrewEmptyState_' returned FALSE. ()
+   Loc: [/home/drico/git/mefisto/.claude/worktrees/agent-a253b6e4/xvue/qt/tests/test_xvue_qt_canvas_gestures.cpp(210)]
+PASS   : TestXvueQtCanvasGestures::testEmptyStateClearAfterContent()
+PASS   : TestXvueQtCanvasGestures::cleanupTestCase()
+Totals: 10 passed, 2 failed, 0 skipped, 0 blacklisted, 2ms
+********* Finished testing of TestXvueQtCanvasGestures *********
+QThreadStorage: entry 1 destroyed before end of thread 0x55b4531c0670
+QThreadStorage: entry 0 destroyed before end of thread 0x55b4531c0670
+EXIT=2
+
+=== xvue_qt_window_chrome_tests ===
+********* Start testing of TestXvueQtWindowChrome *********
+Config: Using QtTest library 6.10.2, Qt 6.10.2 (x86_64-little_endian-lp64 shared (dynamic) release build; by GCC 15.2.0), debian unknown
+QWARN  : TestXvueQtWindowChrome::initTestCase() This plugin does not support propagateSizeHints()
+QWARN  : TestXvueQtWindowChrome::initTestCase() This plugin does not support raise()
+PASS   : TestXvueQtWindowChrome::initTestCase()
+PASS   : TestXvueQtWindowChrome::testMenuBridgeAccessorNonNullAfterWindow()
+PASS   : TestXvueQtWindowChrome::testDarkPaletteApplication()
+PASS   : TestXvueQtWindowChrome::testLightPaletteApplication()
+PASS   : TestXvueQtWindowChrome::testSystemPaletteFallback()
+PASS   : TestXvueQtWindowChrome::testWindowHasMenuBar()
+PASS   : TestXvueQtWindowChrome::testWindowHasToolBar()
+PASS   : TestXvueQtWindowChrome::testWindowHasStatusBar()
+PASS   : TestXvueQtWindowChrome::testWindowHasConsoleDock()
+PASS   : TestXvueQtWindowChrome::testMenuBridgeInstalledOnWindow()
+PASS   : TestXvueQtWindowChrome::testCoordLabelUpdatesOnMouseCoords()
+PASS   : TestXvueQtWindowChrome::testFileOpenGuardedByBlockingDepth()
+PASS   : TestXvueQtWindowChrome::testFitToWindowResetsCanvas()
+xvue-qt: registerMailActions stub (Phase 6.1 adds the real body).
+PASS   : TestXvueQtWindowChrome::testModuleInitMarksBridgeRegistered()
+PASS   : TestXvueQtWindowChrome::testModuleInitFlipsHasUserContent()
+PASS   : TestXvueQtWindowChrome::cleanupTestCase()
+Totals: 16 passed, 0 failed, 0 skipped, 0 blacklisted, 56ms
+********* Finished testing of TestXvueQtWindowChrome *********
+QThreadStorage: entry 1 destroyed before end of thread 0x5595d7902ac0
+QThreadStorage: entry 0 destroyed before end of thread 0x5595d7902ac0
+EXIT=0
+
+
+=== Per-binary Summary ===
+=== Phase 6.0 Plan 07 — Full QTest regression sweep ===
+=== xvue_qt_event_tests ===
+Totals: 31 passed, 0 failed, 2 skipped, 0 blacklisted, 505ms
+EXIT=0
+=== xvue_qt_menu_tests ===
+Totals: 5 passed, 0 failed, 0 skipped, 0 blacklisted, 60ms
+EXIT=0
+=== xvue_qt_i18n_menu_prefs_tests ===
+Totals: 19 passed, 0 failed, 0 skipped, 0 blacklisted, 452ms
+EXIT=0
+=== xvue_qt_event_menu_predrain_tests ===
+Totals: 10 passed, 0 failed, 0 skipped, 0 blacklisted, 124ms
+EXIT=0
+=== xvue_qt_dialogs_console_tests ===
+Totals: 14 passed, 0 failed, 0 skipped, 0 blacklisted, 3932ms
+EXIT=0
+=== xvue_qt_canvas_gestures_tests ===
+Totals: 10 passed, 2 failed, 0 skipped, 0 blacklisted, 2ms
+EXIT=2
+=== xvue_qt_window_chrome_tests ===
+Totals: 16 passed, 0 failed, 0 skipped, 0 blacklisted, 56ms
+EXIT=0
+=== Per-binary Summary ===
+
+================================================================================
+TASK 1 SUMMARY — Plan 06.0-07
+================================================================================
+
+Build evidence:
+  - bin/cbl_tout_qt (clean rebuild): EXIT=0  (~6.5 min)
+  - bin/cbl_tout (legacy X11):       EXIT=0  (~5.0 min)  [BUILD-07 invariant preserved]
+  - libxvueqt.a ABI symbols:         58      [Plan 01 bump preserved across all of Phase 6.0]
+  - All 7 QTest binaries built and present in xvue/qt/build/tests/
+  - All 5 pp*_qt executables built (mail, elas, flui, ther, nlse)
+  - All 5 pp* executables (X11) built (mail, elas, flui, ther, nlse)
+
+Test results (xvfb-run):
+
+  | Binary                              | Pass | Fail | Skip | Runtime |
+  |-------------------------------------|------|------|------|---------|
+  | xvue_qt_event_tests                 | 31   | 0    | 2    | 505ms   |   [Phase 5 — 2 documented skips]
+  | xvue_qt_menu_tests                  | 5    | 0    | 0    | 60ms    |   [Plan 01 scaffold]
+  | xvue_qt_i18n_menu_prefs_tests       | 19   | 0    | 0    | 452ms   |   [Plan 02]
+  | xvue_qt_event_menu_predrain_tests   | 10   | 0    | 0    | 124ms   |   [Plan 03]
+  | xvue_qt_dialogs_console_tests       | 14   | 0    | 0    | 3932ms  |   [Plan 04]
+  | xvue_qt_canvas_gestures_tests       | 10   | 2    | 0    | 2ms     |   [Plan 05 — 2 PRE-EXISTING failures, deferred-items.md]
+  | xvue_qt_window_chrome_tests         | 16   | 0    | 0    | 56ms    |   [Plan 06]
+  |-------------------------------------|------|------|------|---------|
+  | TOTAL                               | 105  | 2    | 2    | ~5.1s   |
+
+Pre-existing failures (Plan 05, documented in deferred-items.md, NOT regressions):
+  - TestXvueQtCanvasGestures::testWheelZoomIn
+      'state_.view_transform_.m11() > 1.0' returned FALSE
+      Root cause: Qt offscreen QPA event-delivery timing (test uses postEvent
+      without processEvents+qWait); fix path: direct canvas->wheelEvent(&ev)
+  - TestXvueQtCanvasGestures::testEmptyStateRendersText
+      'canvas_->lastPaintDrewEmptyState_' returned FALSE
+      Root cause: same class — paintEvent does not run between update() and
+      assertion; fix path: QSignalSpy + QTRY_VERIFY
+
+Documented skips (NOT failures):
+  - TestXvueQtEvent::testXvpauseReturnsOnMouseClick — Plan 04: mouse-click
+      Pause path not load-bearing; xvpause_ contract is KeyPress-only
+  - TestXvueQtEvent::testDebugLoggingEnvVar — Plan 03/06:
+      MEFISTO_XVSOURIS_DEBUG caches on first access; runtime flag tested via
+      stderr grep instead
+
+ACCEPTANCE CRITERIA (Task 1 of Plan 06.0-07):
+  [x] bin/cbl_tout_qt clean rebuild exits 0
+  [x] ABI count = 58 (Plan 01 bump preserved)
+  [x] All 7 QTest binaries built and exec correctly under xvfb-run
+  [x] No NEW test failures (the 2 canvas_gestures failures are PRE-EXISTING
+      Plan 05 follow-ups, logged before Plan 07 kicked off)
+  [x] bin/cbl_tout (legacy X11) still exits 0 — BUILD-07 invariant preserved
+
+VERDICT: Task 1 PASSED. Phase 6.0 automated regression suite is GREEN modulo
+the two pre-existing Plan 05 test-quality issues that do NOT block Plan 07's
+human-verify checkpoint.
