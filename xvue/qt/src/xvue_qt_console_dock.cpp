@@ -28,6 +28,7 @@
 #include <QTextCursor>
 
 #include <cstdio>
+#include <cstdlib>
 #include <fcntl.h>
 #include <sys/types.h>
 #include <unistd.h>
@@ -69,6 +70,17 @@ void XvueConsoleDock::installStdoutRedirect() {
     // Idempotent guard — only redirect once per process. A second call on the
     // same dock would leak the previous pipe and confuse the notifier.
     if (readFd_ >= 0) return;
+
+    // Phase 6.0 Plan 06 test-isolation knob: when XVUE_QT_DISABLE_STDOUT_REDIRECT
+    // is set in the environment, skip the dup2 over STDOUT_FILENO. This is
+    // mandatory for QTest-driven test binaries that exercise xvue_module_init_
+    // — otherwise QtTest's reporter writes to a pipe the test never reads
+    // and the suite output disappears mid-run. Production pp*_qt invocations
+    // never set this var; the redirect is the default behavior there.
+    const char* disable = std::getenv("XVUE_QT_DISABLE_STDOUT_REDIRECT");
+    if (disable && *disable && *disable != '0') {
+        return;
+    }
 
     int fd[2];
     if (::pipe(fd) != 0) {

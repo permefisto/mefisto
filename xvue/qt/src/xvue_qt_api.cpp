@@ -19,6 +19,8 @@
 #include "xvue_qt_state.h"
 #include "xvue_qt_event.h"
 #include "xvue_qt_menu_bridge.h"   // Phase 6.0 Plan 03: pre-AUTOEXIT pre-drain
+#include "xvue_qt_console_dock.h"  // Phase 6.0 Plan 06: stdout redirect dispatch
+#include "xvue_qt_prefs.h"         // Phase 6.0 Plan 06: per-module persistence init
 #include <QApplication>
 #include <QCoreApplication>
 #include <QCursor>
@@ -38,12 +40,71 @@
 #include <QWindow>
 #include <vector>
 
+// Forward declaration so the warn-once stubs in the anonymous namespace can
+// reference XvueWindow/XvueMenuBridge by pointer. The full headers are
+// already pulled in via the includes above.
+class XvueWindow;
+class XvueMenuBridge;
+
 namespace {
 
 inline void warn_once(bool &flag, const char *name) {
     if (!flag) {
         std::fprintf(stderr, "xvue-qt: stub %s not implemented yet\n", name);
         flag = true;
+    }
+}
+
+// Phase 6.0 Plan 06: warn-once stubs for per-module action registration.
+// 6.1..6.5 each ship a stronger symbol (a real registerXxxActions in
+// xvue_qt_<module>_actions.cpp) whose presence at link time will displace
+// the stub. For pure 6.0 builds (no module .cpp), the stub no-ops and logs
+// once per module name to make the gap obvious.
+//
+// Function signature is intentionally identical to the future override:
+// `void registerXxxActions(XvueWindow*, XvueMenuBridge*)` with a `_stub_`
+// suffix so 6.1..6.5 add the suffix-less version without colliding with
+// this TU's symbols. The xvue_module_init_ dispatch body below picks the
+// stub by name match against the module string.
+bool warn_register_mail_done_ = false;
+bool warn_register_elas_done_ = false;
+bool warn_register_flui_done_ = false;
+bool warn_register_ther_done_ = false;
+bool warn_register_nlse_done_ = false;
+
+void registerMailActions_stub_(XvueWindow*, XvueMenuBridge*) {
+    if (!warn_register_mail_done_) {
+        warn_register_mail_done_ = true;
+        std::fprintf(stderr,
+            "xvue-qt: registerMailActions stub (Phase 6.1 adds the real body).\n");
+    }
+}
+void registerElasActions_stub_(XvueWindow*, XvueMenuBridge*) {
+    if (!warn_register_elas_done_) {
+        warn_register_elas_done_ = true;
+        std::fprintf(stderr,
+            "xvue-qt: registerElasActions stub (Phase 6.2 adds the real body).\n");
+    }
+}
+void registerFluiActions_stub_(XvueWindow*, XvueMenuBridge*) {
+    if (!warn_register_flui_done_) {
+        warn_register_flui_done_ = true;
+        std::fprintf(stderr,
+            "xvue-qt: registerFluiActions stub (Phase 6.3 adds the real body).\n");
+    }
+}
+void registerTherActions_stub_(XvueWindow*, XvueMenuBridge*) {
+    if (!warn_register_ther_done_) {
+        warn_register_ther_done_ = true;
+        std::fprintf(stderr,
+            "xvue-qt: registerTherActions stub (Phase 6.4 adds the real body).\n");
+    }
+}
+void registerNlseActions_stub_(XvueWindow*, XvueMenuBridge*) {
+    if (!warn_register_nlse_done_) {
+        warn_register_nlse_done_ = true;
+        std::fprintf(stderr,
+            "xvue-qt: registerNlseActions stub (Phase 6.5 adds the real body).\n");
     }
 }
 
@@ -1334,26 +1395,89 @@ void proc(xvsauverps)(char nomfichier[], int *length) {
 }
 
 // ---- 58. xvue_module_init_ ----
-// Phase 6.0 Plan 01 scaffold: warn-once stub. Plan 06 fills the dispatch body
-// that reads the module name and invokes registerMailActions/registerElasActions/
-// registerFluiActions/registerTherActions/registerNlseActions accordingly.
+// Phase 6.0 Plan 06: dispatch body replacing the Plan 01 scaffold stub.
+// Called once per pp*_qt process from prpr/pp*.f BEFORE xvinitgraphique_
+// (6.1..6.5 add the CALL XVUE_MODULE_INIT('...') lines). Pure 6.0 builds do
+// not call this — the menuBridge stays with no registered module, and the
+// shell still comes up with the {File, View, Help} shared menus only.
 //
-// Threat T-06.0-01-01 mitigation: clamp printed name length to 32 chars max,
-// treat name_len <= 0 as zero, never deref a null name buffer. No further
-// processing happens in Plan 01 (full validation lands in Plan 06).
+// T-06.0-01-01 mitigation: clamp attacker-controlled name length to [0, 32];
+// treat name_len <= 0 as zero; never deref a null name buffer. The module
+// names actually used (mail, elas, flui, ther, nlse) are all 4 chars, so 32
+// is generously above the maximum.
+//
+// Steps:
+//   1. Initialize XvuePrefs with the per-module key group.
+//   2. Apply the persisted color-scheme preference (UX-13).
+//   3. Wire the console-dock stdout redirect (UX-04). Idempotent — Plan 04's
+//      installStdoutRedirect short-circuits when readFd_ >= 0.
+//   4. Dispatch to the per-module registerXxxActions stub. 6.1..6.5 each
+//      override one stub with a stronger symbol.
+//   5. Mark the menu bridge as "module registered" sentinel.
+//   6. Flip canvas has_user_content_ true so Plan 05's empty-state hint
+//      stops rendering.
 void proc(xvue_module_init)(char *name, int *name_len) {
     XvueApp::ensure();
     XVUE_QT_ASSERT_MAIN_THREAD();
-    static bool warned = false;
-    if (!warned) {
-        warned = true;
-        int n = (name_len ? *name_len : 0);
-        if (n < 0)  n = 0;
-        if (n > 32) n = 32;
+
+    // T-06.0-01-01: clamp attacker-controlled length.
+    int n = (name_len ? *name_len : 0);
+    if (n < 0)  n = 0;
+    if (n > 32) n = 32;
+    QString mod;
+    if (n > 0 && name) {
+        mod = QString::fromLatin1(name, n).trimmed();
+    }
+
+    // 1. Initialize persistence with per-module key group. Safe even for
+    //    empty mod (XvuePrefs::initialize tolerates null-or-empty per Plan 02).
+    XvuePrefs::initialize(mod.toLocal8Bit().constData());
+
+    // 2. Apply the persisted color-scheme preference. Re-applies even if
+    //    XvueWindow::ctor already did so in case xvue_module_init_ runs after
+    //    a flag-flip via Preferences dialog.
+    XvueApp::applyColorSchemePreference();
+
+    // 3. Wire stdout redirect to the console dock. Must happen AFTER window
+    //    is built (dock owns the QSocketNotifier). Idempotent — Plan 04's
+    //    installStdoutRedirect short-circuits when readFd_ >= 0.
+    auto& win = XvueApp::window_slot();
+    if (win && win->consoleDock()) {
+        win->consoleDock()->installStdoutRedirect();
+    }
+
+    // 4. Dispatch to the module-specific registerXxxActions. Each stub is a
+    //    warn-once no-op in 6.0; 6.1..6.5 override via stronger symbol.
+    XvueWindow*     wptr = win.get();
+    XvueMenuBridge* mbptr = (win ? win->menuBridge() : nullptr);
+    if      (mod == QStringLiteral("mail"))  registerMailActions_stub_(wptr, mbptr);
+    else if (mod == QStringLiteral("elas"))  registerElasActions_stub_(wptr, mbptr);
+    else if (mod == QStringLiteral("flui"))  registerFluiActions_stub_(wptr, mbptr);
+    else if (mod == QStringLiteral("ther"))  registerTherActions_stub_(wptr, mbptr);
+    else if (mod == QStringLiteral("nlse"))  registerNlseActions_stub_(wptr, mbptr);
+    else {
         std::fprintf(stderr,
-            "xvue-qt: xvue_module_init_('%.*s') called — scaffold stub; "
-            "module dispatch lands in Plan 06.\n",
-            n, (name ? name : ""));
+            "xvue-qt: xvue_module_init_('%s'): unknown module; shell comes up "
+            "with shared menus only.\n",
+            mod.toUtf8().constData());
+    }
+
+    // 5. Sentinel: mark the module as registered so any future Layer-2 assert
+    //    in buildMenuBar (if added) does not fire. Safe to mark even on the
+    //    "unknown module" branch — the shell still works without per-module
+    //    QActions.
+    if (win && win->menuBridge()) {
+        win->menuBridge()->markModuleRegistered();
+    }
+
+    // 6. Flip canvas empty-state off: once a module is loaded, the canvas is
+    //    "live" in the user's mental model even if no drawing has happened
+    //    yet. Plan 05's paintEvent consults state->has_user_content_.
+    if (win && win->state()) {
+        win->state()->has_user_content_ = true;
+    }
+    if (win && win->canvas()) {
+        win->canvas()->update();
     }
 }
 

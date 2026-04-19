@@ -135,4 +135,28 @@ target_include_directories(xvue_qt_event_menu_predrain_tests PRIVATE
     ${CMAKE_CURRENT_SOURCE_DIR}/../include
 )
 
+# ---------------------------------------------------------------------------
+# Phase 6.0 Wave 4 (Plan 06): integration tests for the composed shell —
+# XvueApp menuBridge() + applyColorSchemePreference(), XvueWindow chrome
+# (menu bar + toolbar + status bar + console dock + 13 shared QActions),
+# and the xvue_module_init_ dispatch body.
+# ---------------------------------------------------------------------------
+add_executable(xvue_qt_window_chrome_tests
+    test_xvue_qt_window_chrome.cpp
+    test_helpers.cpp
+)
+target_link_libraries(xvue_qt_window_chrome_tests
+    PRIVATE
+        xvueqt
+        Qt6::Test
+        Qt6::Widgets
+        Qt6::Gui
+        Qt6::Core
+)
+target_include_directories(xvue_qt_window_chrome_tests PRIVATE
+    ${CMAKE_CURRENT_SOURCE_DIR}/..
+    ${CMAKE_CURRENT_SOURCE_DIR}/../src
+    ${CMAKE_CURRENT_SOURCE_DIR}/../include
+)
+
 # No install(); tests run in-place from xvue/build/tests/.
