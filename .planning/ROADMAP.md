@@ -159,7 +159,7 @@ Plans:
   5. Console `QDockWidget` shows Fortran stdout via `freopen(stdout)` + `QSocketNotifier` in-process pipe; `*** ERREUR` lines surface as `QMessageBox::warning`. Canvas wheel=zoom, middle-drag=pan, right-click=context menu, live coord readout in status bar. System dark-mode via `QPalette` affects chrome only; canvas scientific colormaps untouched.
   6. `nm xvue/qt/build/libxvueqt.a | grep '_$' | wc -l` returns 58 (was 57 through Phase 5). `xvue_module_init_` stub accepts a module-name string argument and records it in `XvueMenuBridge`. Build-time lint scripts (`verify_shortcut_modifiers.sh`, `verify_icon_source.sh`) exist and exit 0 against the 6.0 tree.
 **Plans**: 7 plans
-  - [ ] 06.0-01-PLAN.md — Wave 0 scaffold: 9 class stub pairs + xvue_module_init_ ABI stub (57→58) + 2 lint scripts + xvue_qt_menu_tests target + empty xvue_icons.qrc
+  - [x] 06.0-01-PLAN.md — Wave 0 scaffold: 9 class stub pairs + xvue_module_init_ ABI stub (57→58) + 2 lint scripts + xvue_qt_menu_tests target + empty xvue_icons.qrc
   - [ ] 06.0-02-PLAN.md — Wave 2: fill i18n 48-row table + XvueMenuBridge queueLexicon/popChar + XvuePrefs QSettings wrapper (UX-02, UX-06, UX-07, UX-08)
   - [ ] 06.0-03-PLAN.md — Wave 3: XvueEventBridge::waitForEvent menu-queue pre-drain + MouseMove coord-signal emit + xvuelc.c A6 audit (UX-02, UX-03, UX-12)
   - [ ] 06.0-04-PLAN.md — Wave 2: XvueConsoleDock pipe+QSocketNotifier + XvueErrorBatcher deferred QMessageBox + About/Preferences/RecentProjects dialog bodies (UX-04, UX-06, UX-09, UX-10, UX-11)
