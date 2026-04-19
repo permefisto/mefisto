@@ -2,6 +2,8 @@
 // Phase 1 (D-04): runtime state holder; grown additively in Phase 2.
 // Phase 2 (D-04, D-05, D-16, D-20): adds backing_, painter_, foreground_,
 // pen_, brush_, pen_style_, pen_width_base_, applyPen() + destructor.
+// Phase 6.0 Plan 05 (UX-12, UI-SPEC Flag #3): adds view_transform_ +
+// has_user_content_ at end of struct.
 // NEVER reorder existing fields — background_ stays first.
 #pragma once
 #include <QColor>
@@ -9,6 +11,7 @@
 #include <QFontMetrics>
 #include <QPen>
 #include <QBrush>
+#include <QTransform>
 #include <Qt>
 
 class QPixmap;
@@ -74,6 +77,20 @@ struct XvueState {
     static QColor  palette_cache_[kMaxPalette];
     static bool    palette_cache_dirty_[kMaxPalette];
     static bool    palette_initialized_;
+
+    // Phase 6.0 Plan 05 (UX-12). Qt-side view transform applied at paintEvent
+    // compositing time — NEVER modifies backing_. Fortran draw calls remain
+    // in canonical pixel coordinates. wheelEvent and middle-drag-pan mutate
+    // this field; resetView() restores identity. "Fortran must not notice"
+    // invariant at the UX layer.
+    QTransform view_transform_;   // default identity
+
+    // Phase 6.0 Plan 05 + UI-SPEC Flag #3. False at startup (show empty-state
+    // text); flipped true on first meaningful draw. v1 proxy: flipped by
+    // Plan 06 xvue_module_init_ dispatch (once a module is live) — Plan 05
+    // leaves the flip mechanism to downstream plans; default false means
+    // paintEvent renders the empty-state text until explicitly flipped.
+    bool has_user_content_ = false;
 
     // Ends painter_ (if active), deletes painter_, deletes backing_.
     ~XvueState();

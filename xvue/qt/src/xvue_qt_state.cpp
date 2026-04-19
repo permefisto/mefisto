@@ -116,6 +116,9 @@ static void palette_init_once()
 
 XvueState::XvueState() {
     palette_init_once();
+    // Phase 6.0 Plan 05: view_transform_ default-constructs to QTransform()
+    // identity — no explicit init needed. has_user_content_ defaults to false
+    // via the in-class initializer in xvue_qt_state.h.
 }
 
 void XvueState::applyPen() {
