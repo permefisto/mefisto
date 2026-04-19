@@ -161,7 +161,7 @@ Plans:
 **Plans**: 7 plans
   - [x] 06.0-01-PLAN.md — Wave 0 scaffold: 9 class stub pairs + xvue_module_init_ ABI stub (57→58) + 2 lint scripts + xvue_qt_menu_tests target + empty xvue_icons.qrc
   - [x] 06.0-02-PLAN.md — Wave 2: fill i18n 48-row table + XvueMenuBridge queueLexicon/popChar + XvuePrefs QSettings wrapper (UX-02, UX-06, UX-07, UX-08)
-  - [ ] 06.0-03-PLAN.md — Wave 3: XvueEventBridge::waitForEvent menu-queue pre-drain + MouseMove coord-signal emit + xvuelc.c A6 audit (UX-02, UX-03, UX-12)
+  - [x] 06.0-03-PLAN.md — Wave 3: XvueEventBridge::waitForEvent menu-queue pre-drain + MouseMove coord-signal emit + xvuelc.c A6 audit (UX-02, UX-03, UX-12)
   - [x] 06.0-04-PLAN.md — Wave 2: XvueConsoleDock pipe+QSocketNotifier + XvueErrorBatcher deferred QMessageBox + About/Preferences/RecentProjects dialog bodies (UX-04, UX-06, UX-09, UX-10, UX-11)
   - [x] 06.0-05-PLAN.md — Wave 2: XvueCanvas wheel/middle-drag/contextMenu/mouseCoords signal/resetView + XvueState view_transform_/has_user_content_ + empty-state paintEvent (UX-12, UX-13)
   - [ ] 06.0-06-PLAN.md — Wave 4: XvueApp menuBridge accessor + applyColorSchemePreference + XvueWindow full chrome composition + 13 shared QActions + xvue_module_init_ dispatch body (UX-01, UX-04, UX-06, UX-07, UX-09, UX-13)
