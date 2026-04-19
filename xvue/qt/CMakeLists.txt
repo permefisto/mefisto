@@ -23,6 +23,16 @@ add_library(xvueqt STATIC
     src/xvue_qt_event.cpp
     src/xvue_qt_state.cpp
     src/xvue_qt_window.cpp
+    # Phase 6.0 additions (scaffold: stubs; bodies fill in Plans 02-06):
+    src/xvue_qt_menu_bridge.cpp
+    src/xvue_qt_i18n.cpp
+    src/xvue_qt_prefs.cpp
+    src/xvue_qt_console_dock.cpp
+    src/xvue_qt_error_batcher.cpp
+    src/xvue_qt_about_dialog.cpp
+    src/xvue_qt_preferences.cpp
+    src/xvue_qt_recent_projects.cpp
+    src/xvue_qt_shortcut_audit.cpp
 )
 
 # Phase 3 D-01/D-02: bundle DejaVuSansMono.ttf into libxvueqt.a via Qt
@@ -33,6 +43,14 @@ qt_add_resources(xvueqt xvue_fonts
     PREFIX "/xvue/qt"
     FILES fonts/DejaVuSansMono.ttf
 )
+
+# Phase 6.0: empty icon resource — Plans 6.1..6.5 append SVG entries via the
+# qrc XML. AUTORCC picks the .qrc up because we add it to target_sources.
+# The empty-FILES form of qt_add_resources is unreliable across Qt versions;
+# the .qrc-file route is the Qt-idiomatic alternative.
+set(XVUE_ICONS_QRC ${CMAKE_CURRENT_SOURCE_DIR}/resources/xvue_icons.qrc)
+target_sources(xvueqt PRIVATE ${XVUE_ICONS_QRC})
+set_target_properties(xvueqt PROPERTIES AUTORCC ON)
 
 target_include_directories(xvueqt PUBLIC
     ${CMAKE_CURRENT_SOURCE_DIR}/include
@@ -47,7 +65,9 @@ target_link_libraries(xvueqt
 )
 
 # D-11, Pitfall 11: graphics layer MUST NOT propagate -fopenmp
-target_compile_options(xvueqt PRIVATE -fno-openmp -Wall -Wextra)
+# Phase 6.0 Pitfall 2.4: -finput-charset=UTF-8 so accented FR i18n strings
+# embedded in Plan 02's tr() table compile cleanly across host locales.
+target_compile_options(xvueqt PRIVATE -fno-openmp -Wall -Wextra -finput-charset=UTF-8)
 
 # D-12: verify_abi — fail build if symbol count in libxvueqt.a drifts from the
 # extern "C" declaration count in the public header. This is the whole-project
@@ -73,6 +93,27 @@ add_custom_target(verify_no_exec ALL
         ${CMAKE_CURRENT_SOURCE_DIR}/include
     DEPENDS xvueqt
     WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}
+    VERBATIM
+)
+
+# Phase 6.0 §10 layer 1: D-04 modifier-rule lint. Fails the build if any
+# bareword-character QKeySequence appears under xvue/qt/src.
+add_custom_target(verify_shortcut_modifiers ALL
+    COMMAND ${CMAKE_COMMAND} -E echo "verify_shortcut_modifiers: scanning..."
+    COMMAND sh ${CMAKE_CURRENT_SOURCE_DIR}/cmake/verify_shortcut_modifiers.sh
+        ${CMAKE_CURRENT_SOURCE_DIR}/src
+    DEPENDS xvueqt
+    VERBATIM
+)
+
+# Phase 6.0: SVG-only enforcement for custom icons (D-10 + UI-SPEC §Iconography).
+# Plans 6.1..6.5 will populate resources/icons/ with .svg entries — this guard
+# fails the build if a raster file ever sneaks in.
+add_custom_target(verify_icon_source ALL
+    COMMAND ${CMAKE_COMMAND} -E echo "verify_icon_source: scanning..."
+    COMMAND sh ${CMAKE_CURRENT_SOURCE_DIR}/cmake/verify_icon_source.sh
+        ${CMAKE_CURRENT_SOURCE_DIR}/resources/icons
+    DEPENDS xvueqt
     VERBATIM
 )
 

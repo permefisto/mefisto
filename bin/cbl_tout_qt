@@ -80,6 +80,16 @@ test -x $MEFISTO/xvue/qt/build/tests/xvue_qt_event_tests || {
     exit 1
 }
 
+# Phase 6.0 Plan 01 (06.0-01): build xvue_qt_menu_tests scaffold sanity target.
+cmake --build $MEFISTO/xvue/qt/build --target xvue_qt_menu_tests || {
+    echo "cbl_tout_qt: xvue_qt_menu_tests build FAILED"
+    exit 1
+}
+test -x $MEFISTO/xvue/qt/build/tests/xvue_qt_menu_tests || {
+    echo "cbl_tout_qt: xvue_qt_menu_tests binary missing after build — FAILED"
+    exit 1
+}
+
 #  regeneration des parametres des TMS de MEFISTO
 #  A eviter lors d'une installation
 #  car les fichiers INCLUDE disparaissent et sp non compiles

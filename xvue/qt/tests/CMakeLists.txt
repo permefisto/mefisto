@@ -25,4 +25,26 @@ target_include_directories(xvue_qt_event_tests PRIVATE
     ${CMAKE_CURRENT_SOURCE_DIR}/../include
 )
 
+# Phase 6.0 Plan 01 Task 1: scaffold sanity tests for the 9 new src/xvue_qt_*
+# classes + the xvue_module_init_ ABI hook (entry 58). Mirrors the
+# xvue_qt_event_tests setup so xvfb-run can exec it identically.
+add_executable(xvue_qt_menu_tests
+    test_xvue_qt_menu_scaffold.cpp
+)
+
+target_link_libraries(xvue_qt_menu_tests
+    PRIVATE
+        xvueqt
+        Qt6::Test
+        Qt6::Widgets
+        Qt6::Gui
+        Qt6::Core
+)
+
+target_include_directories(xvue_qt_menu_tests PRIVATE
+    ${CMAKE_CURRENT_SOURCE_DIR}/..
+    ${CMAKE_CURRENT_SOURCE_DIR}/../src
+    ${CMAKE_CURRENT_SOURCE_DIR}/../include
+)
+
 # No install(); tests run in-place from xvue/build/tests/.
