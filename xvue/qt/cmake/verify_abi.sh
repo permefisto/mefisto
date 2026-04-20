@@ -19,7 +19,20 @@ HDR="$2"
 # S1_ that the name-mangler emits for repeated type references). Phase 5 added
 # XvueEventBridge::waitForEvent(WaitMode, int*, int*) whose mangled name
 # matches the bare [a-zA-Z_][a-zA-Z0-9_]*_$ pattern accidentally.
-NM_COUNT=$(nm "$LIB" | grep ' T [a-zA-Z_][a-zA-Z0-9_]*_$' | grep -vc ' T _Z' || true)
+#
+# Phase 6.1 Plan 02 exclusion: register<Mod>Actions_stub_ symbols are internal
+# dispatch helpers for per-module action wiring (weak stubs in api.cpp, strong
+# override in xvue_qt_<mod>_actions.cpp). They are NOT part of the Fortran
+# ABI declared in xvue_qt_api.h — the Fortran side never calls them. When
+# Plan 02 lands xvue_qt_mail_actions.cpp, nm shows one `T register...Mail...`
+# entry inside libxvueqt.a that would otherwise bump the ABI count from
+# 58 to 59 and fail this guard. Filter them out here so the ABI invariant
+# remains exactly the header-declared Fortran entry points.
+NM_COUNT=$(nm "$LIB" \
+    | grep ' T [a-zA-Z_][a-zA-Z0-9_]*_$' \
+    | grep -v ' T _Z' \
+    | grep -vc ' T register[A-Z][a-zA-Z]*Actions_stub_$' \
+    || true)
 HDR_COUNT=$(grep -c '^[[:space:]]*\(void\|int\|float\|double\|long\|short\|unsigned\|void[[:space:]]*\*\)[[:space:]]*proc(' "$HDR" || true)
 
 echo "verify_abi: nm count: $NM_COUNT  header count: $HDR_COUNT"

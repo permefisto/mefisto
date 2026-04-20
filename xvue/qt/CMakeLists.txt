@@ -35,6 +35,14 @@ add_library(xvueqt STATIC
     src/xvue_qt_shortcut_audit.cpp
 )
 
+# Phase 6.1 Plan 02 additions: bilingual LIMTCL menu-file parser and the
+# strong-symbol override of registerMailActions_stub_ that wires ~31
+# QActions + 4 toolbar entries per LEXICON-AUDIT-mail.md.
+target_sources(xvueqt PRIVATE
+    src/xvue_qt_menu_file_parser.cpp
+    src/xvue_qt_mail_actions.cpp
+)
+
 # Phase 3 D-01/D-02: bundle DejaVuSansMono.ttf into libxvueqt.a via Qt
 # resource system. Static-lib case — see Pitfall 1 in 03-RESEARCH.md:
 # Q_INIT_RESOURCE(xvue_fonts) MUST be called at runtime from

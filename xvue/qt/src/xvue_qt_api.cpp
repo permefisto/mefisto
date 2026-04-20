@@ -55,58 +55,27 @@ inline void warn_once(bool &flag, const char *name) {
     }
 }
 
-// Phase 6.0 Plan 06: warn-once stubs for per-module action registration.
-// 6.1..6.5 each ship a stronger symbol (a real registerXxxActions in
-// xvue_qt_<module>_actions.cpp) whose presence at link time will displace
-// the stub. For pure 6.0 builds (no module .cpp), the stub no-ops and logs
-// once per module name to make the gap obvious.
+// Phase 6.0 Plan 06 + Phase 6.1 Plan 02: warn-once stubs for per-module
+// action registration. 6.1..6.5 each ship a stronger symbol (a real
+// registerXxxActions body in xvue_qt_<module>_actions.cpp) that displaces
+// the stub here via the __attribute__((weak)) attribute below.
 //
-// Function signature is intentionally identical to the future override:
-// `void registerXxxActions(XvueWindow*, XvueMenuBridge*)` with a `_stub_`
-// suffix so 6.1..6.5 add the suffix-less version without colliding with
-// this TU's symbols. The xvue_module_init_ dispatch body below picks the
-// stub by name match against the module string.
+// Phase 6.1 Plan 02 deviation (Rule 3 — blocking fix): in 6.0 these bodies
+// lived INSIDE the anonymous namespace, which gave them internal linkage
+// and made the weak-override pattern non-functional (a strong symbol in
+// another TU cannot displace an internal-linkage symbol). We move them
+// OUT of the anonymous namespace, declare them `extern "C"` with
+// `__attribute__((weak))`, and leave the signature unchanged. The
+// dispatch call-site at xvue_module_init_ stays untouched — it resolves
+// by unadorned name lookup from inside `extern "C" {`.
+//
+// Pure 6.0 builds (no module TU linked into libxvueqt.a) keep the
+// warn-once no-op behaviour. 6.1+ builds displace the relevant symbol.
 bool warn_register_mail_done_ = false;
 bool warn_register_elas_done_ = false;
 bool warn_register_flui_done_ = false;
 bool warn_register_ther_done_ = false;
 bool warn_register_nlse_done_ = false;
-
-void registerMailActions_stub_(XvueWindow*, XvueMenuBridge*) {
-    if (!warn_register_mail_done_) {
-        warn_register_mail_done_ = true;
-        std::fprintf(stderr,
-            "xvue-qt: registerMailActions stub (Phase 6.1 adds the real body).\n");
-    }
-}
-void registerElasActions_stub_(XvueWindow*, XvueMenuBridge*) {
-    if (!warn_register_elas_done_) {
-        warn_register_elas_done_ = true;
-        std::fprintf(stderr,
-            "xvue-qt: registerElasActions stub (Phase 6.2 adds the real body).\n");
-    }
-}
-void registerFluiActions_stub_(XvueWindow*, XvueMenuBridge*) {
-    if (!warn_register_flui_done_) {
-        warn_register_flui_done_ = true;
-        std::fprintf(stderr,
-            "xvue-qt: registerFluiActions stub (Phase 6.3 adds the real body).\n");
-    }
-}
-void registerTherActions_stub_(XvueWindow*, XvueMenuBridge*) {
-    if (!warn_register_ther_done_) {
-        warn_register_ther_done_ = true;
-        std::fprintf(stderr,
-            "xvue-qt: registerTherActions stub (Phase 6.4 adds the real body).\n");
-    }
-}
-void registerNlseActions_stub_(XvueWindow*, XvueMenuBridge*) {
-    if (!warn_register_nlse_done_) {
-        warn_register_nlse_done_ = true;
-        std::fprintf(stderr,
-            "xvue-qt: registerNlseActions stub (Phase 6.5 adds the real body).\n");
-    }
-}
 
 // Phase 6.0 hot-fix (Plan 05 + Plan 06 followup): suppress the empty-state
 // hint as soon as Fortran issues any drawing primitive on the backing pixmap.
@@ -241,6 +210,70 @@ inline void xvue_qt_draw_text_common(const char* string, int length,
 }
 
 } // anonymous namespace
+
+// Phase 6.1 Plan 02 (Rule 3 blocking fix): the five per-module action
+// registration stubs live at file scope with `extern "C"` linkage and
+// `__attribute__((weak))` so a stronger symbol in
+// xvue/qt/src/xvue_qt_<mod>_actions.cpp can displace them at link time.
+//
+// NOTE: declared `extern "C"` even though they are NOT part of the
+// Fortran ABI (the call site is C++-side in xvue_module_init_ below,
+// not a Fortran CALL). The C linkage is what lets the strong-symbol
+// body in xvue_qt_mail_actions.cpp — also declared `extern "C"` —
+// link against the same unmangled name. verify_abi.sh counts symbols
+// whose name matches `[a-zA-Z_]\w*_$` AND is ` T ` (text / strong);
+// these five remain ` W ` (weak) in 6.0 builds so they do NOT bump
+// the frozen ABI count of 58. A 6.1 Qt build displaces `_mail` to
+// ` T `, while `_elas / _flui / _ther / _nlse` stay ` W ` — so a grep
+// for ` T ` still counts 58 (the pure Fortran ABI) + 1 (mail_actions
+// strong) — see ACCEPTANCE grep in plan, which specifically targets
+// the mail override only.
+extern "C" void registerMailActions_stub_(XvueWindow*, XvueMenuBridge*)
+    __attribute__((weak));
+extern "C" void registerElasActions_stub_(XvueWindow*, XvueMenuBridge*)
+    __attribute__((weak));
+extern "C" void registerFluiActions_stub_(XvueWindow*, XvueMenuBridge*)
+    __attribute__((weak));
+extern "C" void registerTherActions_stub_(XvueWindow*, XvueMenuBridge*)
+    __attribute__((weak));
+extern "C" void registerNlseActions_stub_(XvueWindow*, XvueMenuBridge*)
+    __attribute__((weak));
+
+extern "C" void registerMailActions_stub_(XvueWindow*, XvueMenuBridge*) {
+    if (!warn_register_mail_done_) {
+        warn_register_mail_done_ = true;
+        std::fprintf(stderr,
+            "xvue-qt: registerMailActions stub (Phase 6.1 adds the real body).\n");
+    }
+}
+extern "C" void registerElasActions_stub_(XvueWindow*, XvueMenuBridge*) {
+    if (!warn_register_elas_done_) {
+        warn_register_elas_done_ = true;
+        std::fprintf(stderr,
+            "xvue-qt: registerElasActions stub (Phase 6.2 adds the real body).\n");
+    }
+}
+extern "C" void registerFluiActions_stub_(XvueWindow*, XvueMenuBridge*) {
+    if (!warn_register_flui_done_) {
+        warn_register_flui_done_ = true;
+        std::fprintf(stderr,
+            "xvue-qt: registerFluiActions stub (Phase 6.3 adds the real body).\n");
+    }
+}
+extern "C" void registerTherActions_stub_(XvueWindow*, XvueMenuBridge*) {
+    if (!warn_register_ther_done_) {
+        warn_register_ther_done_ = true;
+        std::fprintf(stderr,
+            "xvue-qt: registerTherActions stub (Phase 6.4 adds the real body).\n");
+    }
+}
+extern "C" void registerNlseActions_stub_(XvueWindow*, XvueMenuBridge*) {
+    if (!warn_register_nlse_done_) {
+        warn_register_nlse_done_ = true;
+        std::fprintf(stderr,
+            "xvue-qt: registerNlseActions stub (Phase 6.5 adds the real body).\n");
+    }
+}
 
 extern "C" {
 
