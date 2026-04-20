@@ -3,5 +3,16 @@
   <qresource prefix="/xvue/qt/icons">
     <!-- 6.1..6.5 append SVG icon entries here. No PNG/JPG/BMP allowed —     -->
     <!-- verify_icon_source.sh enforces SVG-only under resources/icons/.     -->
+    <!-- Phase 6.1 mail (mesher) icons — UX-05 mail slice                    -->
+    <file>icons/mail/mesh-point-add.svg</file>
+    <file>icons/mail/mesh-line-add.svg</file>
+    <file>icons/mail/mesh-surface-add.svg</file>
+    <file>icons/mail/mesh-volume-add.svg</file>
+    <file>icons/mail/mesh-object.svg</file>
+    <file>icons/mail/mesh-transform.svg</file>
+    <file>icons/mail/mesh-interpolate.svg</file>
+    <file>icons/mail/mesh-draw.svg</file>
+    <file>icons/mail/mesh-import.svg</file>
+    <file>icons/mail/mesh-export.svg</file>
   </qresource>
 </RCC>
