@@ -3,6 +3,22 @@
 Items discovered during plan execution that are out of scope for the current
 plan and tracked here for a future hotfix or follow-up plan.
 
+## Resolution summary (2026-04-20)
+
+All items from the 2026-04-19 log below are now resolved in the 2026-04-20
+post-phase hotfix batch:
+
+| Item | Status | Resolution commit |
+|------|--------|-------------------|
+| #1 `testWheelZoomIn` flake | ✅ RESOLVED | `c533ca7` — replaced `postEvent + processEvents(ExcludeUserInputEvents)` with `sendEvent` (synchronous, bypasses the user-input filter). 3/3 consecutive runs green. |
+| #2 `testEmptyStateRendersText` flake | ✅ RESOLVED | `c533ca7` — replaced `repaint()` on hidden widget with `grab()` (forces paintEvent into offscreen pixmap regardless of visibility). |
+| #3 A6 follow-up (Qt bridge MMB-abort diverges from xvuelc.c) | ✅ RESOLVED | `c1869a7` — removed both MMB-abort branches in `XvueEventBridge::eventFilter` (Souris + Souris2). Added two regression tests. |
+
+**Full suite post-fix:** 109 PASS / 0 FAIL / 2 SKIP (was 106–107 P / 1–2 F
+/ 2 S). ABI still 58. `bin/cbl_tout` and `bin/cbl_tout_qt` both green.
+
+---
+
 ## From Plan 06.0-03 execution (2026-04-19)
 
 ### Pre-existing test failures in `xvue_qt_canvas_gestures_tests` (Plan 05)
