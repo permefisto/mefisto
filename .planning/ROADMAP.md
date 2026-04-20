@@ -179,7 +179,7 @@ Plans:
   4. Custom mesh SVG icons live under `xvue/qt/resources/icons/mail/` and are registered in `xvue_icons.qrc`; none triggers `verify_shortcut_modifiers.sh` or `verify_icon_source.sh` failure.
   5. A mesher-specific QTest case simulates a menu click and verifies the synthetic event reaches `xvsouris_` with the correct ASCII sequence.
 **Plans**: 3 plans
-  - [ ] 06.1-01-PLAN.md — Full LIMTCL tree walk LEXICON-AUDIT-mail.md + tools/validate_audit_md.py + user review checkpoint to freeze frequency bucketing and top-5 toolbar
+  - [x] 06.1-01-PLAN.md — Full LIMTCL tree walk LEXICON-AUDIT-mail.md + tools/validate_audit_md.py + user review checkpoint to freeze frequency bucketing and top-5 toolbar
   - [ ] 06.1-02-PLAN.md — registerMailActions_stub_ strong-symbol body + bilingual menu-file parser (D-12) + [menu] echo (D-07) + 10 custom SVG icons + xvue_icons.qrc append + CMake wiring
   - [ ] 06.1-03-PLAN.md — xvue/xvmodi.f X11 no-op stub + prpr/ppmail.f CALL XVUE_MODULE_INIT + D-09 closeEvent/onFileQuit rewrite + 4 D-13 QTest cases + manual A/B sign-off
 **UI hint**: no (inherits 6.0 contract)
