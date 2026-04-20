@@ -343,17 +343,13 @@ bool XvueEventBridge::eventFilter(QObject* watched, QEvent* event) {
             case Qt::RightButton:  btn = 3; break;
             default:               btn = 0; break;
             }
-            // Middle-button parity with xvsouris_: abort. saclav.f:83-86
-            // remaps btn=2 to notypeevent=-1 / nbc=64 (@ abort path).
-            if (me->button() == Qt::MiddleButton) {
-                cleanupAccrochage();
-                pending_.notypeevent = 0;
-                pending_.nbc         = 2;
-                pending_.x           = me->pos().x();
-                pending_.y           = me->pos().y();
-                loop_->quit();
-                return true;
-            }
+            // 06.0-03 audit A6: the X11 reference (xvuelc.c xvsouris2_,
+            // xvuelc.c:2383-2440 and 2442-2463) treats MMB as a normal
+            // mouse button — *ibutton=2, no abort. Earlier Phase 5 Qt
+            // code aborted on MMB, which deviated from xvuelc.c. Aligned
+            // 2026-04-20 (Phase 6.0 hotfix per A6 follow-up): MMB now
+            // falls through to the accrochage path with btn=2, exactly
+            // like LMB/RMB. Esc/@ remain the only abort signals.
             // Normal path: accrochage redraw + return notypeevent=5.
             const int cx = me->pos().x();
             const int cy = me->pos().y();
@@ -388,21 +384,25 @@ bool XvueEventBridge::eventFilter(QObject* watched, QEvent* event) {
             return true;
         }
         // Plan 02: press-only path. Plan 03 refines to full-click detection.
+        // 06.0-03 audit A6 (2026-04-20): the X11 reference (xvuelc.c
+        // xvsouris_, ButtonPress at xvuelc.c:2266-2282 and ButtonRelease
+        // at xvuelc.c:2284-2295) treats MMB as a normal button —
+        // *nbc=2, *notypeevent=-1 on press, *notypeevent=1 on release.
+        // The historical MMB-abort path was explicitly removed from
+        // xvuelc.c on 2010-10-27 (the trailing comment at xvuelc.c:2290
+        // documents the removal). Earlier Phase 5 Qt code re-introduced
+        // the abort and incorrectly cited xvuelc.c:2272 as parity — that
+        // was wrong. Aligned 2026-04-20: MMB on press is now a regular
+        // mouse button. Esc/@ remain the only abort signals (D-06).
         pending_.notypeevent = -1;
         switch (me->button()) {
         case Qt::LeftButton:   pending_.nbc = 1; break;
-        case Qt::MiddleButton: pending_.nbc = 2; break;  // X11 btn2 = abort
+        case Qt::MiddleButton: pending_.nbc = 2; break;
         case Qt::RightButton:  pending_.nbc = 3; break;
         default:               pending_.nbc = 0; break;
         }
         pending_.x = me->pos().x();
         pending_.y = me->pos().y();
-        // X11 parity: middle-button historically aborts (see xvuelc.c:2272);
-        // kept for full parity even though D-06 focuses on Esc/@.
-        if (me->button() == Qt::MiddleButton) {
-            pending_.notypeevent = 0;
-            pending_.nbc         = 2;
-        }
         loop_->quit();
         return true;   // eat: Fortran caller owns this event
     }

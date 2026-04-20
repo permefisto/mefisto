@@ -179,6 +179,48 @@ private slots:
         canvas->removeEventFilter(&bridge);
     }
 
+    // 06.0-03 audit A6 (hotfix 2026-04-20): Phase 5 Qt bridge historically
+    // aborted on MMB-press during blocking reads, which deviated from the
+    // X11 reference (xvuelc.c removed the MMB-abort on 2010-10-27 per the
+    // trailing comment at xvuelc.c:2290). After the hotfix, MMB-press in
+    // Souris mode returns notypeevent=-1, nbc=2 — identical semantics to
+    // LMB/RMB press. Locks in the alignment so a future refactor cannot
+    // silently re-introduce the divergence.
+    void testXvsourisMiddleButtonPressNoAbort() {
+        auto* canvas = XvueApp::window_slot()->canvas();
+        XvueEventBridge bridge(canvas);
+        canvas->installEventFilter(&bridge);
+        QTimer::singleShot(0, [&]{ postButtonPress(canvas, Qt::MiddleButton, QPoint(11, 22)); });
+        auto r = bridge.waitForEvent(XvueEventBridge::WaitMode::Souris);
+        QCOMPARE(r.notypeevent, -1);   // press, NOT abort (would be 0)
+        QCOMPARE(r.nbc, 2);            // middle-button code
+        QCOMPARE(r.x, 11);
+        QCOMPARE(r.y, 22);
+        QCOMPARE(XvueApp::blockingDepth(), 0);
+        canvas->removeEventFilter(&bridge);
+    }
+
+    void testXvsouris2MiddleButtonPressNoAbort() {
+        auto* canvas = XvueApp::window_slot()->canvas();
+        XvueEventBridge bridge(canvas);
+        canvas->installEventFilter(&bridge);
+        // Souris2 mode requires items[] + pmin0 for accrochage. Pass an
+        // empty item list so nearest_item_offset returns -1 and no sprite
+        // is drawn — what matters here is that MMB goes through the normal
+        // path and returns notypeevent=5, ibutton=2.
+        int items[1] = {0};
+        int pmin0 = -2;
+        QTimer::singleShot(0, [&]{ postButtonPress(canvas, Qt::MiddleButton, QPoint(33, 44)); });
+        auto r = bridge.waitForEvent(XvueEventBridge::WaitMode::Souris2,
+                                     items, &pmin0);
+        QCOMPARE(r.notypeevent, 5);    // accrochage, NOT abort (would be 0)
+        QCOMPARE(r.nbc, 2);            // middle-button code
+        QCOMPARE(r.x, 33);
+        QCOMPARE(r.y, 44);
+        QCOMPARE(XvueApp::blockingDepth(), 0);
+        canvas->removeEventFilter(&bridge);
+    }
+
     void testXvsourisButtonRelease() {
         auto* canvas = XvueApp::window_slot()->canvas();
         XvueEventBridge bridge(canvas);
