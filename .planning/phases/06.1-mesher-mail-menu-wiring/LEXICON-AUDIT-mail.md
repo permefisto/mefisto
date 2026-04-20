@@ -2,7 +2,7 @@
 
 **Phase:** 06.1-mesher-mail-menu-wiring
 **Generated:** 2026-04-20
-**Status:** DRAFT (pending user review — Task 3 checkpoint)
+**Status:** FROZEN (auto-approved 2026-04-20 via --auto mode; see SUMMARY.md Checkpoint resolution)
 **Requirement:** UX-05 (mail slice) Success Criterion #1
 
 ## Scope
