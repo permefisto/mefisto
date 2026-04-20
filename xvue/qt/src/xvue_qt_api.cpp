@@ -1462,10 +1462,17 @@ void proc(xvsauverps)(char nomfichier[], int *length) {
 
 // ---- 58. xvue_module_init_ ----
 // Phase 6.0 Plan 06: dispatch body replacing the Plan 01 scaffold stub.
-// Called once per pp*_qt process from prpr/pp*.f BEFORE xvinitgraphique_
-// (6.1..6.5 add the CALL XVUE_MODULE_INIT('...') lines). Pure 6.0 builds do
-// not call this — the menuBridge stays with no registered module, and the
-// shell still comes up with the {File, View, Help} shared menus only.
+// Called once per pp*_qt process from prpr/pp*.f AFTER xvinitgraphique_
+// (6.1..6.5 add the CALL XVUE_MODULE_INIT('...') lines). Step 3 of this
+// body touches consoleDock_ via installStdoutRedirect which requires
+// XvueWindow to exist, and XvueWindow is constructed inside
+// xvinitgraphique_. Empirically confirmed by
+// test_xvue_qt_window_chrome.cpp:234 which invokes xvue_module_init_
+// AFTER xvinitgraphique_.
+//
+// Pure 6.0 builds do not call this — the menuBridge stays with no
+// registered module, and the shell still comes up with the
+// {File, View, Help} shared menus only.
 //
 // T-06.0-01-01 mitigation: clamp attacker-controlled name length to [0, 32];
 // treat name_len <= 0 as zero; never deref a null name buffer. The module

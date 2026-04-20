@@ -170,6 +170,9 @@ C        TRACE DU LOGO DE Mefisto-MAILLAGES
          ELSE
             CALL LOGO( 'Mefisto-MESHER' )
          ENDIF
+C        Phase 6.1 D-08: register Qt-side module-specific menu actions.
+C        No-op on the X11 backend (xvue/xvmodi.f stub).
+         CALL XVUE_MODULE_INIT( 'mail', 4 )
       ENDIF
 
 C     OUVERTURE DE LA MS
