@@ -37,37 +37,44 @@ class TestXvueQtCanvasGestures : public QObject {
     Q_OBJECT
 
     // ---- helpers (mirror test_xvue_qt_event.cpp's postKey / postMove pattern)
+    //
+    // Use sendEvent (synchronous) rather than postEvent + processEvents, because
+    // processEvents(ExcludeUserInputEvents) drops the wheel/mouse events the
+    // tests are trying to deliver — that was the root cause of the flake on
+    // testWheelZoomIn documented in deferred-items.md. sendEvent guarantees
+    // synchronous delivery via QCoreApplication::notify, bypassing the queue
+    // and the user-input filter, which makes assertions deterministic.
     static void postWheel(QWidget* target, int angleDeltaY) {
-        // Qt 6 QWheelEvent ctor: (pos, globalPos, pixelDelta, angleDelta,
-        //                         buttons, modifiers, phase, inverted)
-        auto* ev = new QWheelEvent(
+        QWheelEvent ev(
             QPointF(10, 10), QPointF(10, 10),
             QPoint(),          // pixelDelta — unused for wheel-step model
             QPoint(0, angleDeltaY),
             Qt::NoButton, Qt::NoModifier,
             Qt::NoScrollPhase, /*inverted*/ false);
-        QCoreApplication::postEvent(target, ev);
+        QCoreApplication::sendEvent(target, &ev);
     }
     static void postMousePress(QWidget* target, Qt::MouseButton b, QPoint p) {
-        auto* ev = new QMouseEvent(QEvent::MouseButtonPress, QPointF(p), QPointF(p),
-                                   b, b, Qt::NoModifier);
-        QCoreApplication::postEvent(target, ev);
+        QMouseEvent ev(QEvent::MouseButtonPress, QPointF(p), QPointF(p),
+                       b, b, Qt::NoModifier);
+        QCoreApplication::sendEvent(target, &ev);
     }
     static void postMouseMove(QWidget* target, Qt::MouseButtons held, QPoint p) {
-        auto* ev = new QMouseEvent(QEvent::MouseMove, QPointF(p), QPointF(p),
-                                   Qt::NoButton, held, Qt::NoModifier);
-        QCoreApplication::postEvent(target, ev);
+        QMouseEvent ev(QEvent::MouseMove, QPointF(p), QPointF(p),
+                       Qt::NoButton, held, Qt::NoModifier);
+        QCoreApplication::sendEvent(target, &ev);
     }
     static void postMouseRelease(QWidget* target, Qt::MouseButton b, QPoint p) {
-        auto* ev = new QMouseEvent(QEvent::MouseButtonRelease, QPointF(p), QPointF(p),
-                                   b, Qt::NoButton, Qt::NoModifier);
-        QCoreApplication::postEvent(target, ev);
+        QMouseEvent ev(QEvent::MouseButtonRelease, QPointF(p), QPointF(p),
+                       b, Qt::NoButton, Qt::NoModifier);
+        QCoreApplication::sendEvent(target, &ev);
     }
     static void postContextMenu(QWidget* target, QPoint p) {
-        auto* ev = new QContextMenuEvent(QContextMenuEvent::Mouse, p, p);
-        QCoreApplication::postEvent(target, ev);
+        QContextMenuEvent ev(QContextMenuEvent::Mouse, p, p);
+        QCoreApplication::sendEvent(target, &ev);
     }
     static void drainEvents() {
+        // Kept for backward compatibility — sendEvent is synchronous, but a
+        // few tests still rely on a deleteLater drain between iterations.
         QCoreApplication::processEvents(QEventLoop::ExcludeUserInputEvents);
     }
 
@@ -203,17 +210,22 @@ private slots:
     }
 
     // ---- Empty-state ----
+    //
+    // QWidget::repaint() is a no-op on hidden widgets (and the canvas here is
+    // a top-level widget that's never shown), which was the root cause of the
+    // testEmptyStateRendersText flake documented in deferred-items.md. Use
+    // QWidget::grab() instead — it forces a full paintEvent into an offscreen
+    // pixmap regardless of visibility, making the test deterministic without
+    // requiring the widget to be shown (cleaner under offscreen QPA).
     void testEmptyStateRendersText() {
         state_.has_user_content_ = false;
-        canvas_->update();
-        canvas_->repaint();   // forces synchronous paintEvent
+        (void)canvas_->grab();   // forces synchronous paintEvent on hidden widget
         QVERIFY(canvas_->lastPaintDrewEmptyState_);
     }
 
     void testEmptyStateClearAfterContent() {
         state_.has_user_content_ = true;
-        canvas_->update();
-        canvas_->repaint();
+        (void)canvas_->grab();
         QVERIFY(!canvas_->lastPaintDrewEmptyState_);
     }
 };
