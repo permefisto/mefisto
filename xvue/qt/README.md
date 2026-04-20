@@ -204,6 +204,116 @@ Supported auxiliary env vars:
 - `MEFISTO_XVSOURIS_DEBUG` will be reused for Phase 6 modal-dialog
   motion diagnostics — no new env var needed.
 
+## Phase 6.0 — Shared shell, menu bridge, dialogs, persistence
+
+Phase 6.0 adds the full Qt `QMainWindow` chrome that every `pp*_qt`
+executable shares: menu bar, toolbar, status bar, console dock, About
+dialog, Preferences dialog, Recent Projects submenu, QSettings-backed
+geometry/state persistence, and the `XvueMenuBridge` queue that routes
+`QAction::triggered` events into the Fortran text-lexicon via
+`XvueEventBridge::waitForEvent`'s pre-drain step.
+
+The phase deliberately stops short of wiring any module-specific menus
+(Mesh, Solve, etc.) — those land in 6.1..6.5, one module at a time.
+
+### Components added by 6.0
+
+| Component | File(s) | Plan |
+|-----------|---------|------|
+| Bilingual string table (UX-08) | `xvue_qt_i18n.{h,cpp}` | 02 |
+| Menu → Fortran char queue (UX-02, UX-03) | `xvue_qt_menu_bridge.{h,cpp}` | 01 (stub) → 02 (body) |
+| QSettings persistence (UX-06, UX-07) | `xvue_qt_prefs.{h,cpp}` | 01 (stub) → 02 (body) |
+| Stdout-capture console dock (UX-10, UX-11) | `xvue_qt_console_dock.{h,cpp}`, `xvue_qt_error_batcher.{h,cpp}` | 01 (stub) → 04 (body) |
+| About / Preferences / Recent Projects (UX-04, UX-06, UX-09) | `xvue_qt_about_dialog.{h,cpp}`, `xvue_qt_preferences.{h,cpp}`, `xvue_qt_recent_projects.{h,cpp}` | 01 (stub) → 04 (body) |
+| Canvas gestures + empty-state (UX-12, UI-SPEC Flag #3) | `xvue_qt_canvas.{h,cpp}`, `xvue_qt_state.{h,cpp}` additions | 05 |
+| Event-bridge pre-drain (UX-02, UX-03) | `xvue_qt_event.cpp` extension | 03 |
+| Window/App shell + module init dispatch (UX-01, UX-04, UX-13, UX-06, UX-07) | `xvue_qt_window.{h,cpp}`, `xvue_qt_app.{h,cpp}`, `xvue_qt_api.cpp` | 06 |
+
+### Menu-bridge drain flow (UX-02 / UX-03)
+
+```
+ user clicks a QAction
+         │
+         ▼
+ XvueMenuBridge::queueLexicon(cmd)
+         │   (for each QChar: pendingChars_.enqueue(ch.toLatin1()); enqueue(13))
+         ▼
+ XvueEventBridge::waitForEvent         ← pre-drain runs BEFORE QEventLoop::exec()
+         │
+         ▼
+ xvsouris_ returns one char per call   (Fortran SACLAV accumulates into KLG(LHKLG))
+         │
+         ▼
+ CR flushes the command → Fortran DONNMF parser
+```
+
+Typed-lexicon fallback (`99;`, `5;90;1;`, …) is preserved unchanged.
+D-04 modifier rule: plain alphanumeric + digits + `;` + Esc + Return
+flow to the canvas via `XvueEventBridge`; `Ctrl/Alt/Cmd+X` and F-keys
+route to QActions.
+
+### D-08 modal re-entrancy guard (UX-04)
+
+When `XvueApp::blockingDepth() > 0` (inside a nested `xvsouris_`), any
+`QDialog::exec` path refuses silently and shows a 3-second status-bar
+message:
+
+- EN: `"Finish current operation first (type 99;)"`
+- FR: `"Terminez l'opération en cours (tapez 99;)"`
+
+The QAction itself is NOT disabled — the guard lives inside
+`XvueWindow::refuseIfBlocking()` which each File/Preferences/About slot
+calls. The right-click `contextMenuEvent` on `XvueCanvas` also
+short-circuits on `blockingDepth() > 0`.
+
+### ABI contract (`xvue_module_init_`)
+
+Phase 6.0 adds one new Fortran-ABI entry: `xvue_module_init_(char* name,
+int* name_len)` — entry 58 (Phase 5 ended at 57). Its body:
+
+1. Initialises `XvuePrefs` with a per-module `QSettings` group.
+2. Applies the persisted color-scheme preference (UX-13).
+3. Wires the console-dock stdout redirect.
+4. Dispatches to a module-specific `registerXxxActions` stub (6.1..6.5
+   each ship a stronger symbol that replaces the corresponding stub).
+5. Marks the menu bridge with `markModuleRegistered()`.
+6. Flips `state->has_user_content_` true so the empty-state hint stops
+   rendering.
+
+### 6.1..6.5 integration contract
+
+Each per-module phase adds:
+
+1. A single `CALL XVUE_MODULE_INIT('<mod>')` at the top of the module's
+   Fortran main (e.g., `prpr/ppmail.f` for 6.1).
+2. A stronger symbol `registerXxxActions` that replaces the warn-once
+   stub in `xvue_qt_api.cpp`. Each implementation creates module-specific
+   `QAction`s, assigns their lexicon via `menuBridge->addMenuItem(...)`,
+   and plugs them into `XvueMenuBridge`.
+3. A `LEXICON-AUDIT.md` catalog of every typed lexicon command, with
+   the 80/20 subset wired to `QAction`s. Long-tail commands remain
+   available via the typed lexicon.
+4. A per-module manual A/B sweep against the module's `testa/` fixtures,
+   covering UX-05 (the module-specific menus) plus the 8 manual-only
+   items from `06.0-VALIDATION.md` that need real solver output (UX-10
+   stdout capture end-to-end, UX-11 `*** ERREUR` surfacing, etc.).
+
+### Pure-6.0 behavior and the `xvue_qt_mark_user_content()` hook
+
+Pure 6.0 builds run without any `CALL XVUE_MODULE_INIT` (that line is
+added by 6.1..6.5). Without a hook, the Plan 05 empty-state hint would
+sit over the live mesher canvas chrome because `has_user_content_` would
+stay `false` forever.
+
+`xvue_qt_mark_user_content()` (anonymous-namespace helper in
+`xvue_qt_api.cpp`) flips the flag on the first Fortran-side drawing
+primitive and is wired into every draw entry: `xvue_qt_draw_rect_common`,
+`xvue_qt_draw_text_common`, `xvue_qt_restore_from_slot`, `effacer`,
+`effacemempx`, `xvfond`, `xvface`, `xvtrait`, `xvtraits`, `xvfacetraits`,
+`xvbordarcellipse`, `xvarcellipse`. Idempotent: subsequent calls are a
+single branch + return. Once `xvue_module_init_` lands in 6.1..6.5, this
+hook remains harmless (the flag is already set).
+
 ## References
 
 - `.planning/phases/05-event-bridge-blocking-reads/05-CONTEXT.md` — decisions D-01..D-10
