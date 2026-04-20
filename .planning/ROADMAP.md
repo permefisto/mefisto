@@ -169,7 +169,7 @@ Plans:
 **UI hint**: yes
 
 ### Phase 6.1: Mesher (mail) menu wiring
-**Goal**: `ppmail_qt` shows a fully-populated menu bar with mesher-specific top-level menus (`{File, Edit, Mesh, View, Help}`), toolbar buttons for the 80/20 subset of typed lexicon commands, and `CALL XVUE_MODULE_INIT('mail')` at startup. The typed lexicon continues to work unchanged for every command, GUI-surfaced or not.
+**Goal**: `ppmail_qt` shows a fully-populated menu bar with mesher-specific top-level menus (`{File, Mesh, View, Help}` — Edit dropped per 06.1 D-01), toolbar buttons for the top-5 most-used leaf lexicon commands, and `CALL XVUE_MODULE_INIT('mail')` at startup. The typed lexicon continues to work unchanged for every command, GUI-surfaced or not.
 **Depends on**: Phase 6.0
 **Requirements**: UX-05 (mail slice)
 **Success Criteria** (what must be TRUE):
@@ -178,7 +178,10 @@ Plans:
   3. `prpr/ppmail.f` (or equivalent entry) contains `CALL XVUE_MODULE_INIT('mail')` before the interactive loop.
   4. Custom mesh SVG icons live under `xvue/qt/resources/icons/mail/` and are registered in `xvue_icons.qrc`; none triggers `verify_shortcut_modifiers.sh` or `verify_icon_source.sh` failure.
   5. A mesher-specific QTest case simulates a menu click and verifies the synthetic event reaches `xvsouris_` with the correct ASCII sequence.
-**Plans**: TBD (~2-3 plans: audit+icons / actions-registration+tests / Fortran entry hook)
+**Plans**: 3 plans
+  - [ ] 06.1-01-PLAN.md — Full LIMTCL tree walk LEXICON-AUDIT-mail.md + tools/validate_audit_md.py + user review checkpoint to freeze frequency bucketing and top-5 toolbar
+  - [ ] 06.1-02-PLAN.md — registerMailActions_stub_ strong-symbol body + bilingual menu-file parser (D-12) + [menu] echo (D-07) + 10 custom SVG icons + xvue_icons.qrc append + CMake wiring
+  - [ ] 06.1-03-PLAN.md — xvue/xvmodi.f X11 no-op stub + prpr/ppmail.f CALL XVUE_MODULE_INIT + D-09 closeEvent/onFileQuit rewrite + 4 D-13 QTest cases + manual A/B sign-off
 **UI hint**: no (inherits 6.0 contract)
 
 ### Phase 6.2: Elasticity (elas) menu wiring
