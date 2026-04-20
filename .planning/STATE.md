@@ -4,8 +4,8 @@ milestone: v1.0
 milestone_name: milestone
 status: executing
 stopped_at: Phase 6.1 context gathered
-last_updated: "2026-04-20T16:38:24.181Z"
-last_activity: 2026-04-20 -- Phase 6.1 planning complete
+last_updated: "2026-04-20T17:25:43.871Z"
+last_activity: 2026-04-20 -- Phase 6.1 execution started
 progress:
   total_phases: 17
   completed_phases: 9
@@ -21,14 +21,14 @@ progress:
 See: .planning/PROJECT.md (updated 2026-04-10)
 
 **Core value:** Every MEFISTO workflow that works today through X11 keeps working through the new Qt 6 interface, with Fortran solver code unchanged.
-**Current focus:** Phase 06.0 — shared-shell-menu-bridge-dialogs
+**Current focus:** Phase 6.1 — mesher-mail-menu-wiring
 
 ## Current Position
 
-Phase: 6.1
-Plan: Not started
-Status: Ready to execute
-Last activity: 2026-04-20 -- Phase 6.1 planning complete
+Phase: 6.1 (mesher-mail-menu-wiring) — EXECUTING
+Plan: 1 of 3
+Status: Executing Phase 6.1
+Last activity: 2026-04-20 -- Phase 6.1 execution started
 
 Progress: [██████████] 100% (Phase 03.1)
 
