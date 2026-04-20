@@ -108,6 +108,27 @@ void registerNlseActions_stub_(XvueWindow*, XvueMenuBridge*) {
     }
 }
 
+// Phase 6.0 hot-fix (Plan 05 + Plan 06 followup): suppress the empty-state
+// hint as soon as Fortran issues any drawing primitive on the backing pixmap.
+//
+// Background: Plan 06's xvue_module_init_ flips state->has_user_content_,
+// but pure 6.0 builds (mesher / solvers) don't yet CALL xvue_module_init_
+// (that's added in 6.1..6.5). Meanwhile the legacy mesher paints chrome
+// (POINTS & LINES menu, project header, button rasters) on the canvas
+// during startup. Without this hook, the Plan 05 empty-state hint
+// ("No project open / Choose File -> Open Project (Ctrl+O)") overlays
+// the live mesher menu — visually misleading.
+//
+// Idempotent: first Fortran draw flips the flag and triggers a single
+// repaint. Subsequent calls are a cheap branch + early return.
+inline void xvue_qt_mark_user_content(XvueWindow* win) {
+    if (!win) return;
+    auto* st = win->state();
+    if (!st || st->has_user_content_) return;
+    st->has_user_content_ = true;
+    if (win->canvas()) win->canvas()->update();
+}
+
 // File-local helper (D-13). Not part of the Fortran ABI.
 // All four xv*rectangle_ entry points route through this one implementation.
 //
@@ -135,6 +156,7 @@ inline void xvue_qt_draw_rect_common(int x, int y, int w, int h, RectMode mode) 
         // XFillRectangle: fill only, no outline.
         st->painter_->fillRect(r, st->painter_->brush());
     }
+    xvue_qt_mark_user_content(win.get());
     if (win->canvas()) win->canvas()->update();
 }
 
@@ -189,6 +211,7 @@ inline void xvue_qt_restore_from_slot() {
 
     // Restore direction uses the ACTIVE painter_ on backing_ (02/D-05).
     st->painter_->drawPixmap(0, 0, *st->saved_canvas_);
+    xvue_qt_mark_user_content(win.get());
     if (win->canvas()) win->canvas()->update();
 }
 
@@ -212,6 +235,7 @@ inline void xvue_qt_draw_text_common(const char* string, int length,
     st->painter_->drawText(x1, y1, qstr);            // baseline form (D-06)
 
     // Phase 2 D-01 epilogue: drawing primitives flush.
+    xvue_qt_mark_user_content(win.get());
     if (win->canvas()) win->canvas()->update();
     QCoreApplication::processEvents(QEventLoop::ExcludeUserInputEvents);
 }
@@ -620,6 +644,7 @@ void proc(effacemempx)(void) {
     if (st && st->painter_ && st->painter_->isActive() && st->backing_) {
         st->painter_->fillRect(st->backing_->rect(), st->background_);
     }
+    xvue_qt_mark_user_content(win.get());
     if (win->canvas()) win->canvas()->update();
 }
 
@@ -633,6 +658,7 @@ void proc(effacer)(void) {
     if (st && st->painter_ && st->painter_->isActive() && st->backing_) {
         st->painter_->fillRect(st->backing_->rect(), st->background_);
     }
+    xvue_qt_mark_user_content(win.get());
     if (win->canvas()) {
         win->canvas()->update();
     }
@@ -660,6 +686,7 @@ void proc(xvfond)(int *icolor) {
     if (st->painter_ && st->painter_->isActive() && st->backing_) {
         st->painter_->fillRect(st->backing_->rect(), st->background_);
     }
+    xvue_qt_mark_user_content(win.get());
     if (win->canvas()) {
         win->canvas()->update();
     }
@@ -867,6 +894,7 @@ void proc(xvface)(int *n, MefistoPoint *pts) {
     st->painter_->drawPolygon(poly, Qt::OddEvenFill);  // auto 1<->n close
     st->painter_->setPen(saved_pen);
 
+    xvue_qt_mark_user_content(win.get());
     if (win->canvas()) win->canvas()->update();
 }
 
@@ -906,6 +934,7 @@ void proc(xvtrait)(int *x1, int *y1, int *x2, int *y2) {
     auto* st = win->state();
     if (!st || !st->painter_ || !st->painter_->isActive()) return;
     st->painter_->drawLine(*x1, *y1, *x2, *y2);
+    xvue_qt_mark_user_content(win.get());
     if (win->canvas()) win->canvas()->update();
     // WR-02: deferred flush -- xvvoir_/xvpause_ pump the event loop.
 }
@@ -942,6 +971,7 @@ void proc(xvtraits)(int *nbpoints, MefistoPoint *points) {
         st->painter_->drawPolyline(qpts.data(),
                                    static_cast<int>(qpts.size()));
     }
+    xvue_qt_mark_user_content(win.get());
     if (win->canvas()) win->canvas()->update();
     // WR-02: deferred flush -- xvvoir_/xvpause_ pump the event loop.
 }
@@ -998,6 +1028,7 @@ void proc(xvfacetraits)(int *ncf, int *nca, int *n, MefistoPoint *pts) {
     // state without depending on an intervening state-change call.
     st->painter_->setBrush(QBrush(st->foreground_, Qt::SolidPattern));
 
+    xvue_qt_mark_user_content(win.get());
     if (win->canvas()) win->canvas()->update();
 }
 
@@ -1274,6 +1305,7 @@ void proc(xvbordarcellipse)(int *x, int *y, int *width, int *height,
 
     st->painter_->drawArc(bbox, start_16, span_16);  // outline -- matches XDrawArc
 
+    xvue_qt_mark_user_content(win.get());
     if (win->canvas()) win->canvas()->update();
     // WR-02: deferred flush -- xvvoir_/xvpause_ pump the event loop.
 }
@@ -1299,6 +1331,7 @@ void proc(xvarcellipse)(int *x, int *y, int *width, int *height,
 
     st->painter_->drawPie(bbox, start_16, span_16);  // filled wedge -- matches XFillArc
 
+    xvue_qt_mark_user_content(win.get());
     if (win->canvas()) win->canvas()->update();
     // WR-02: deferred flush -- xvvoir_/xvpause_ pump the event loop.
 }
