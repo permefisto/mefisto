@@ -159,4 +159,28 @@ target_include_directories(xvue_qt_window_chrome_tests PRIVATE
     ${CMAKE_CURRENT_SOURCE_DIR}/../include
 )
 
+# ---------------------------------------------------------------------------
+# Phase 6.1 Plan 03 (D-13): mesher menu round-trip tests.
+# 4 required cases + 1 bonus D-09 closeEvent case.
+# Pattern: QAction::trigger() (NOT postEvent) drives the production bridge;
+# xvsouris_ drains the chars via the Plan 03 pre-drain path.
+# ---------------------------------------------------------------------------
+add_executable(xvue_qt_mail_menu_tests
+    test_xvue_qt_mail_menu.cpp
+    test_helpers.cpp
+)
+target_link_libraries(xvue_qt_mail_menu_tests
+    PRIVATE
+        xvueqt
+        Qt6::Test
+        Qt6::Widgets
+        Qt6::Gui
+        Qt6::Core
+)
+target_include_directories(xvue_qt_mail_menu_tests PRIVATE
+    ${CMAKE_CURRENT_SOURCE_DIR}/..
+    ${CMAKE_CURRENT_SOURCE_DIR}/../src
+    ${CMAKE_CURRENT_SOURCE_DIR}/../include
+)
+
 # No install(); tests run in-place from xvue/build/tests/.

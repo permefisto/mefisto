@@ -41,10 +41,29 @@ int                                XvueApp::blockingDepth_ = 0;
 
 int XvueApp::blockingDepth() { return blockingDepth_; }
 
+// Phase 6.1 Plan 03 Rule 3 auto-fix: force-link the per-module
+// strong-override TUs. See xvue_qt_mail_actions.cpp for the full
+// rationale. Without these keepalive references, GNU ld stops at the
+// weak stub in xvue_qt_api.cpp.o and never pulls the mail/elas/flui/
+// ther/nlse actions TUs from libxvueqt.a. Today only mail exists;
+// 6.2..6.5 will add the other four declarations alongside.
+extern "C" int xvue_qt_mail_actions_keepalive();
+static const int g_xvue_qt_mail_actions_keepalive_ref =
+    xvue_qt_mail_actions_keepalive();
+
 void XvueApp::load_bundled_font_()
 {
     if (font_id_ >= 0) return;
     Q_INIT_RESOURCE(xvue_fonts);
+    // Phase 6.1 Plan 03 Rule 3 auto-fix: initialize the shared icons
+    // resource (see xvue_qt_icons.qrc). Plan 02 registered 10 mail SVG
+    // icons inside the existing /xvue/qt/icons prefix but never called
+    // Q_INIT_RESOURCE(xvue_icons), so the static-archive resource init
+    // never ran for pp*_qt or the test binaries — qt.svg warnings
+    // ("Cannot open file :/xvue/qt/icons/icons/mail/*.svg") followed.
+    Q_INIT_RESOURCE(xvue_icons);
+    // Silence unused-var warning for the force-link ref (g++ -Wall).
+    (void)g_xvue_qt_mail_actions_keepalive_ref;
     font_id_ = QFontDatabase::addApplicationFont(
         QStringLiteral(":/xvue/qt/fonts/DejaVuSansMono.ttf"));
     if (font_id_ < 0) {

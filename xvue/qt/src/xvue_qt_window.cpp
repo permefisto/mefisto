@@ -97,12 +97,29 @@ XvueWindow::XvueWindow(QWidget* parent)
 XvueWindow::~XvueWindow() = default;
 
 // ---- closeEvent: persist geometry/state/console-visible (UX-07) ----
+// Phase 6.1 D-09: when Fortran is blocked on xvsouris_ (blockingDepth()
+// > 0), intercept the window close by pushing "99;" through the menu
+// bridge so Fortran's LIMTCL save path (prpr/ppmail.f label 9900 ->
+// ARRET(0) -> STOP) drives the real exit. If blockingDepth() == 0 we
+// fall through to QMainWindow::closeEvent (batch mode, atexit teardown,
+// or Fortran already exited — RESEARCH Pitfall 3 "stuck window"
+// mitigation).
 void XvueWindow::closeEvent(QCloseEvent* event) {
     XvuePrefs::saveWindowGeometry(saveGeometry());
     XvuePrefs::saveWindowState(saveState());
     if (consoleDock_) {
         XvuePrefs::saveConsoleVisible(consoleDock_->isVisible());
     }
+
+    if (menuBridge_ && XvueApp::blockingDepth() > 0) {
+        if (consoleDock_) {
+            consoleDock_->appendLine(QStringLiteral("[menu] 99;"));
+        }
+        menuBridge_->queueLexicon(QStringLiteral("99;"));
+        event->ignore();
+        return;
+    }
+
     QMainWindow::closeEvent(event);
 }
 
@@ -338,19 +355,21 @@ void XvueWindow::onFileSaveAs() {
 }
 
 void XvueWindow::onFileQuit() {
-    // UI-SPEC §Destructive actions — always confirm in v1 (no dirty-state
-    // detection yet). Default = Cancel = safe. Cheap insurance for
-    // accidental Ctrl+Q.
-    auto ret = QMessageBox::question(
-        this,
-        xvueT(MsgId::QuitConfirmTitle),
-        xvueT(MsgId::QuitConfirmBody),
-        QMessageBox::Ok | QMessageBox::Cancel,
-        QMessageBox::Cancel);
-    if (ret == QMessageBox::Ok) {
-        close();   // triggers closeEvent -> saves QSettings
-        QCoreApplication::quit();
+    // Phase 6.1 D-09 silent dispatch: push "99;" through the menu bridge
+    // so Fortran's LIMTCL save path drains the typed-equivalent. Matches
+    // the typed-lexicon `99;` which is also unconfirmed — consistent
+    // click/type semantics per CONTEXT D-09. Fortran's prpr/ppmail.f
+    // label 9900 calls ARRET(0) → STOP → clean process exit; no
+    // QMessageBox::question confirm, no QCoreApplication::quit() bypass.
+    if (menuBridge_) {
+        if (consoleDock_) {
+            consoleDock_->appendLine(QStringLiteral("[menu] 99;"));
+        }
+        menuBridge_->queueLexicon(QStringLiteral("99;"));
     }
+    // Deliberately no close() / QCoreApplication::quit() — Fortran owns
+    // the exit. The saclav.f LIMTCL dispatch will pick up "99;" on its
+    // next xvsouris_ iteration and run the SAUVEGARDE path.
 }
 
 void XvueWindow::onViewPreferences() {

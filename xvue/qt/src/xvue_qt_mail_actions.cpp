@@ -122,6 +122,19 @@ void addToolbarByLexicon(QToolBar* tb, QMenu* menu, const QString& lex)
 
 } // namespace
 
+// Force-link keepalive (Phase 6.1 Plan 03 Rule 3 auto-fix). GNU ld's
+// archive-search semantics only pull an archive member when it resolves
+// an otherwise-undefined reference. The weak `registerMailActions_stub_`
+// definition in xvue_qt_api.cpp.o already resolves the dispatch-site
+// reference, so without this keepalive the linker NEVER pulls
+// xvue_qt_mail_actions.cpp.o from libxvueqt.a — the strong override
+// below would silently be excluded and the mesher would run with the
+// empty warn-once stub. XvueApp::ensure() references this symbol via
+// `xvue_qt_mail_actions_keepalive()` so the TU is always pulled.
+extern "C" int xvue_qt_mail_actions_keepalive() {
+    return 1;
+}
+
 // STRONG C-linkage symbol — displaces the weak warn-once stub in
 // xvue_qt_api.cpp per RESEARCH §Pattern 1. The dispatch at
 // xvue_module_init_ is module-name-gated (Pitfall 8 verdict), so this
