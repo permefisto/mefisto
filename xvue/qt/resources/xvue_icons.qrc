@@ -14,5 +14,13 @@
     <file>icons/mail/mesh-draw.svg</file>
     <file>icons/mail/mesh-import.svg</file>
     <file>icons/mail/mesh-export.svg</file>
+    <!-- Phase 6.2 elas (elasticity) icons — UX-05 elas slice                -->
+    <file>icons/elas/solve-static.svg</file>
+    <file>icons/elas/solve-dynamic.svg</file>
+    <file>icons/elas/solve-eigen.svg</file>
+    <file>icons/elas/draw-modes.svg</file>
+    <file>icons/elas/draw-stress.svg</file>
+    <file>icons/elas/elas-object.svg</file>
+    <file>icons/elas/elas-input.svg</file>
   </qresource>
 </RCC>
