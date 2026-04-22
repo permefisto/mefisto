@@ -189,8 +189,11 @@ Plans:
 **Depends on**: Phase 6.1
 **Requirements**: UX-05 (elas slice)
 **Success Criteria**: same pattern as 6.1, substituting `elas` for `mail`.
-**Plans**: TBD (~2-3 plans — same shape as 6.1)
-**UI hint**: no
+**Plans**: 3 plans
+  - [ ] 06.2-01-PLAN.md — LEXICON-AUDIT-elas.md full tree walk (debuelas + 12 elas-unique sub-menus + 20 shared util compressed) + user review checkpoint (reuses tools/validate_audit_md.py from 6.1)
+  - [ ] 06.2-02-PLAN.md — registerElasActions_stub_ strong body + xvue_qt_elas_actions_keepalive + 7 custom SVG icons + xvue_icons.qrc append + CMake wiring + tools/validate_audit_md.py generalized (module-aware)
+  - [ ] 06.2-03-PLAN.md — prpr/ppelas.f CALL XVUE_MODULE_INIT('elas', 4) insertion (xvue/xvmodi.f reused from 6.1) + 4+1 D-13 QTest cases + manual A/B sign-off
+**UI hint**: no (inherits 6.0 contract)
 
 ### Phase 6.3: Fluid (flui) menu wiring
 **Goal**: `ppflui_qt` shows a fluid-specific top-level menu bar (`{File, Fluid, View, Help}`), 80/20 QAction coverage, and `CALL XVUE_MODULE_INIT('flui')`.
