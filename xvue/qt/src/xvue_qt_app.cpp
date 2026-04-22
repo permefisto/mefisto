@@ -45,8 +45,11 @@ int XvueApp::blockingDepth() { return blockingDepth_; }
 // strong-override TUs. See xvue_qt_mail_actions.cpp for the full
 // rationale. Without these keepalive references, GNU ld stops at the
 // weak stub in xvue_qt_api.cpp.o and never pulls the mail/elas/flui/
-// ther/nlse actions TUs from libxvueqt.a. Today only mail exists;
-// 6.2..6.5 will add the other four declarations alongside.
+// ther/nlse actions TUs from libxvueqt.a. 6.2 adds elas; 6.3..6.5
+// will add flui/ther/nlse alongside in alphabetical order.
+extern "C" int xvue_qt_elas_actions_keepalive();
+static const int g_xvue_qt_elas_actions_keepalive_ref =
+    xvue_qt_elas_actions_keepalive();
 extern "C" int xvue_qt_mail_actions_keepalive();
 static const int g_xvue_qt_mail_actions_keepalive_ref =
     xvue_qt_mail_actions_keepalive();
@@ -62,7 +65,8 @@ void XvueApp::load_bundled_font_()
     // never ran for pp*_qt or the test binaries — qt.svg warnings
     // ("Cannot open file :/xvue/qt/icons/icons/mail/*.svg") followed.
     Q_INIT_RESOURCE(xvue_icons);
-    // Silence unused-var warning for the force-link ref (g++ -Wall).
+    // Silence unused-var warning for the force-link refs (g++ -Wall).
+    (void)g_xvue_qt_elas_actions_keepalive_ref;
     (void)g_xvue_qt_mail_actions_keepalive_ref;
     font_id_ = QFontDatabase::addApplicationFont(
         QStringLiteral(":/xvue/qt/fonts/DejaVuSansMono.ttf"));

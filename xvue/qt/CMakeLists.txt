@@ -38,8 +38,12 @@ add_library(xvueqt STATIC
 # Phase 6.1 Plan 02 additions: bilingual LIMTCL menu-file parser and the
 # strong-symbol override of registerMailActions_stub_ that wires ~31
 # QActions + 4 toolbar entries per LEXICON-AUDIT-mail.md.
+# Phase 6.2 Plan 02 addition: registerElasActions_stub_ strong body
+# (alphabetical order: elas before mail) wiring ~27 QActions + 4
+# toolbar entries per LEXICON-AUDIT-elas.md.
 target_sources(xvueqt PRIVATE
     src/xvue_qt_menu_file_parser.cpp
+    src/xvue_qt_elas_actions.cpp
     src/xvue_qt_mail_actions.cpp
 )
 
