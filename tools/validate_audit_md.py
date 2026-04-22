@@ -39,10 +39,39 @@ BOOL_OK = {"yes", "no"}
 LEX_RX = re.compile(r"^\d+;(?:\d+;)*$")
 ROW_BOUND = (80, 250)
 TOOLBAR_YES_EXACT = 5
-ICONS_DIR = (
+ICONS_ROOT = (
     Path(__file__).resolve().parent.parent
-    / "xvue" / "qt" / "resources" / "icons" / "mail"
+    / "xvue" / "qt" / "resources" / "icons"
 )
+
+
+def resolve_icon_path(audit_path, icon_filename):
+    """Resolve an SVG filename against the icons/ tree.
+
+    1. Deduce the owning module from the audit filename stem
+       (e.g. "LEXICON-AUDIT-mail" -> "mail"). Try
+       xvue/qt/resources/icons/<mod>/<filename> first.
+    2. If not present (e.g. icon was shipped by a different module's
+       phase and reused -- see 6.2 reusing mesh-draw.svg from mail/),
+       scan every module subdirectory under xvue/qt/resources/icons/
+       and return the first match.
+    3. Return the owning-module path even if missing, so the error
+       message points at where the icon SHOULD have been shipped.
+    """
+    stem = audit_path.stem  # e.g. "LEXICON-AUDIT-mail"
+    m = re.match(r"LEXICON-AUDIT-(\w+)$", stem)
+    owning_mod = m.group(1) if m else None
+    if owning_mod:
+        p = ICONS_ROOT / owning_mod / icon_filename
+        if p.exists():
+            return p
+    if ICONS_ROOT.exists():
+        for mod_dir in ICONS_ROOT.iterdir():
+            if mod_dir.is_dir():
+                p = mod_dir / icon_filename
+                if p.exists():
+                    return p
+    return ICONS_ROOT / (owning_mod or "unknown") / icon_filename
 
 
 def fail(msg):
@@ -124,7 +153,7 @@ def main():
     for i, r in enumerate(data, start=1):
         icon = r[6]
         if icon.endswith(".svg"):
-            f = ICONS_DIR / icon
+            f = resolve_icon_path(p, icon)
             if not f.exists():
                 msg = "rule 9 (svg exists) failed at row %d: %s" % (i, f)
                 if strict_icons:
