@@ -19,7 +19,7 @@ Decimal phases appear between their surrounding integers in numeric order.
 - [ ] **Phase 4: Pixmap save/restore** - Double-buffering slots for `fenetremempx`/`sauvefenetre` rubber-band workflow
 - [ ] **Phase 5: Event bridge & blocking reads** - Nested `QEventLoop` pattern for `xvsouris`/`xvpause`; the architectural pivot
 - [ ] **Phase 6.0: Shared shell, menu bridge, dialogs, persistence** - `QMainWindow` chrome + `XvueMenuBridge` + `XvueConsoleDock` + `QSettings` + bilingual i18n + `xvue_module_init_` ABI hook + shared `{File, View, Help}` menus
-- [ ] **Phase 6.1: Mesher (mail) menu wiring** - `registerMailActions()` + `LEXICON-AUDIT-mail.md` + mesh SVG icons + `CALL XVUE_MODULE_INIT('mail')`
+- [x] **Phase 6.1: Mesher (mail) menu wiring** - `registerMailActions()` + `LEXICON-AUDIT-mail.md` + mesh SVG icons + `CALL XVUE_MODULE_INIT('mail')` (completed 2026-04-22)
 - [ ] **Phase 6.2: Elasticity (elas) menu wiring** - `registerElasActions()` + `LEXICON-AUDIT-elas.md` + elas SVG icons + `CALL XVUE_MODULE_INIT('elas')`
 - [ ] **Phase 6.3: Fluid (flui) menu wiring** - `registerFluiActions()` + `LEXICON-AUDIT-flui.md` + flui SVG icons + `CALL XVUE_MODULE_INIT('flui')`
 - [ ] **Phase 6.4: Thermal (ther) menu wiring** - `registerTherActions()` + `LEXICON-AUDIT-ther.md` + ther SVG icons + `CALL XVUE_MODULE_INIT('ther')`
@@ -180,8 +180,8 @@ Plans:
   5. A mesher-specific QTest case simulates a menu click and verifies the synthetic event reaches `xvsouris_` with the correct ASCII sequence.
 **Plans**: 3 plans
   - [x] 06.1-01-PLAN.md — Full LIMTCL tree walk LEXICON-AUDIT-mail.md + tools/validate_audit_md.py + user review checkpoint to freeze frequency bucketing and top-5 toolbar
-  - [ ] 06.1-02-PLAN.md — registerMailActions_stub_ strong-symbol body + bilingual menu-file parser (D-12) + [menu] echo (D-07) + 10 custom SVG icons + xvue_icons.qrc append + CMake wiring
-  - [ ] 06.1-03-PLAN.md — xvue/xvmodi.f X11 no-op stub + prpr/ppmail.f CALL XVUE_MODULE_INIT + D-09 closeEvent/onFileQuit rewrite + 4 D-13 QTest cases + manual A/B sign-off
+  - [x] 06.1-02-PLAN.md — registerMailActions_stub_ strong-symbol body + bilingual menu-file parser (D-12) + [menu] echo (D-07) + 10 custom SVG icons + xvue_icons.qrc append + CMake wiring
+  - [x] 06.1-03-PLAN.md — xvue/xvmodi.f X11 no-op stub + prpr/ppmail.f CALL XVUE_MODULE_INIT + D-09 closeEvent/onFileQuit rewrite + 4 D-13 QTest cases + manual A/B sign-off
 **UI hint**: no (inherits 6.0 contract)
 
 ### Phase 6.2: Elasticity (elas) menu wiring
