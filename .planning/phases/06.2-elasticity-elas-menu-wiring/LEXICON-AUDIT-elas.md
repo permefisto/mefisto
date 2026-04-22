@@ -2,7 +2,7 @@
 
 **Phase:** 06.2-elasticity-elas-menu-wiring
 **Generated:** 2026-04-22
-**Status:** DRAFT (pending user review — Task 2 checkpoint)
+**Status:** FROZEN (auto-approved 2026-04-22 via --auto mode; workflow.auto_advance=true — DRAFT-proposed frequency bucketing, top-5 toolbar set {2; 3; 8; 10; 99;}, and {File, Solve, View, Help} menu taxonomy retained verbatim; user may request polish-pass edits as a follow-up after phase completes)
 **Requirement:** UX-05 (elas slice) Success Criterion #1
 
 ## Scope
