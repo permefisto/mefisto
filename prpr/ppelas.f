@@ -128,6 +128,9 @@ C     OUVERTURE DE X11-WINDOW
          CALL XVINIT
 C        TRACE DU LOGO DE MEFISTO
          CALL LOGO( 'MEFISTO-ELASTICER' )
+C        Phase 6.2 D-08: register Qt-side module-specific menu actions.
+C        No-op on the X11 backend (xvue/xvmodi.f weak stub from 6.1).
+         CALL XVUE_MODULE_INIT( 'elas', 4 )
       ENDIF
 C
 C     OUVERTURE DE LA MS
