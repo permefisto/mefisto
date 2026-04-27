@@ -9,7 +9,7 @@ Section "Validation Architecture > Schema validator":
     2. Row count within [80, 250] (widened from D-11's 100-150
        because total reachable is ~230 per RESEARCH Example 5).
     3. lexicon_path column matches regex `\\d+;(?:\\d+;)*`.
-    4. frequency column values in {high, med, low, "--"}.
+    4. frequency column values in {high, med, low}.
     5. qaction column values in {yes, no}.
     6. toolbar column values in {yes, no}.
     7. Exactly 5 rows have toolbar=yes (D-06 top-5 toolbar slice).
@@ -34,7 +34,7 @@ EXPECTED_COLS = [
     "lexicon_path", "description_fr", "description_en", "frequency",
     "qaction", "toolbar", "icon_source", "shortcut", "notes",
 ]
-FREQ_OK = {"high", "med", "low", "\u2014"}  # em-dash
+FREQ_OK = {"high", "med", "low"}
 BOOL_OK = {"yes", "no"}
 LEX_RX = re.compile(r"^\d+;(?:\d+;)*$")
 ROW_BOUND = (80, 250)
