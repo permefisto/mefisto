@@ -135,6 +135,14 @@ extern "C" void registerElasActions_stub_(XvueWindow* win,
                                           XvueMenuBridge* mb)
 {
     if (!win || !mb) return;
+    // One-shot guard: registerElasActions_stub_ must only be called once per
+    // XvueWindow lifetime. xvue_module_init_ is the sole intended call site.
+    // Without this guard a second call would add duplicate separators, QActions,
+    // and toolbar buttons because only ensureTopLevelMenu (the Solve-menu block)
+    // is itself idempotent; the File/View extensions and toolbar block are not.
+    static bool registered = false;
+    if (registered) return;
+    registered = true;
 
     // Parse bilingual labels once per sub-menu (cached internally by
     // XvueMenuFileParser -- shared across modules). Parser falls back
@@ -177,8 +185,9 @@ extern "C" void registerElasActions_stub_(XvueWindow* win,
 
     // ------------------------------------------------------------------
     // Solve menu -- NEW top-level menu per UI-SPEC "Solve / Calcul"
-    // Per-Module Conformance Contract. Uses ensureTopLevelMenu so the
-    // same register function is safe to call more than once per window.
+    // Per-Module Conformance Contract. Uses ensureTopLevelMenu, which is
+    // itself idempotent (returns an existing QMenu for the same objectName),
+    // but the outer registerElasActions_stub_ is guarded above to run once.
     // ------------------------------------------------------------------
     auto* solveMenu = ensureTopLevelMenu(mbar,
         QObject::tr("&Solve"),
