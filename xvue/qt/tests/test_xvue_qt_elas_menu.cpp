@@ -36,12 +36,14 @@
 #include "xvue_qt_app.h"
 #include "xvue_qt_event.h"        // BlockingDepthGuard
 #include "xvue_qt_menu_bridge.h"
+#include "xvue_qt_menu_file_parser.h"  // 06.2 Plan 05 testBilingualLabelsEnglish
 #include "xvue_qt_window.h"
 
 #include <QtTest/QtTest>
 #include <QAction>
 #include <QCloseEvent>
 #include <QDir>
+#include <QFile>
 #include <QMenu>
 #include <QMenuBar>
 #include <QSettings>
@@ -241,6 +243,61 @@ private slots:
         };
         QStringList actual = topLevelObjectNames.mid(0, 4);
         QCOMPARE(actual, expected);
+    }
+
+    // ---- Plan 05 Gap-2: bilingual labels render in EN under anglais flag ----
+    // 06.2-HUMAN-UAT.md gap 2 root cause: XvueMenuFileParser::loadFor
+    // only read td/m/<name>, which on a partial install can hold the
+    // FR copy regardless of the anglais flag. Plan 05 makes the
+    // parser consult td/ma/<name> first when xvueIsEnglish() returns
+    // true. This test runs against the real on-disk MEFISTO tree
+    // (the same one the production pp/ppelas_qt sees), asserts that
+    // the EN strings flow through, and codifies the contract for
+    // 6.3/6.4/6.5 fluider/thermicer/nlser.
+    //
+    // QSKIP if the test env doesn't have the bilingual td/ma/ tree
+    // — this slot deliberately does NOT mock the filesystem because
+    // mocking would not catch real-install regressions.
+    void testBilingualLabelsEnglish() {
+        const QByteArray mefisto = qgetenv("MEFISTO");
+        if (mefisto.isEmpty()) {
+            QSKIP("MEFISTO env not set — cannot probe td/ma/ tree");
+        }
+        const QString home = QString::fromLocal8Bit(mefisto);
+        if (!QFile::exists(home + QStringLiteral("/td/m/anglais"))) {
+            QSKIP("td/m/anglais flag not present — EN path not exercised");
+        }
+        if (!QFile::exists(home + QStringLiteral("/td/ma/debuelas"))) {
+            QSKIP("td/ma/debuelas missing — cannot test EN parser path");
+        }
+
+        // Drop any cached MenuFile from initTestCase so loadFor()
+        // re-resolves through the new td/ma/ path now that we've
+        // verified the on-disk preconditions hold.
+        XvueMenuFileParser::clearCacheForTesting();
+
+        const MenuFile& mf = XvueMenuFileParser::loadFor(
+            QStringLiteral("debuelas"));
+        QVERIFY2(mf.ok(),
+                 "td/ma/debuelas parsed empty — file may be malformed");
+
+        // The four canonical Solve top-level submenu codes from
+        // LEXICON-AUDIT-elas.md. Strings come verbatim from
+        // td/ma/debuelas; if Mefisto translates them differently
+        // upstream, update both the EN file and this assertion in
+        // lockstep.
+        QCOMPARE(mf.label(2),
+                 QStringLiteral("ELASTICITY INPUT DATA"));
+        QCOMPARE(mf.label(3),
+                 QStringLiteral("STEADY ELASTICITY solver"));
+        QCOMPARE(mf.label(4),
+                 QStringLiteral("UNSTEADY ELASTICITY solver d2/dt2"));
+        QCOMPARE(mf.label(6),
+                 QStringLiteral("EIGENMODES solver"));
+
+        // Defensive: clear cache so subsequent slots in this class
+        // probe afresh.
+        XvueMenuFileParser::clearCacheForTesting();
     }
 
     // ---- Bonus: D-09 closeEvent pushes 99; when Fortran is blocking ----
