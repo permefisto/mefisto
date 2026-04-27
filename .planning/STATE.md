@@ -2,16 +2,16 @@
 gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
-status: executing
-stopped_at: Plan 06.2-04 complete (gap-1 menu order + testMenuOrder regression guard); Plan 06.2-05 queued (gap-2 bilingual labels)
-last_updated: "2026-04-27T08:42:59.604Z"
-last_activity: 2026-04-27 -- Plan 06.2-04 complete
+status: completed
+stopped_at: Completed 06.2-05-PLAN.md (gap-2 bilingual labels via XvueMenuFileParser td/ma/ EN routing); Phase 6.2 complete
+last_updated: "2026-04-27T09:11:37.479Z"
+last_activity: 2026-04-27 -- Plan 06.2-05 complete (gap-2 bilingual labels via XvueMenuFileParser td/ma/ EN routing)
 progress:
   total_phases: 17
-  completed_phases: 10
+  completed_phases: 11
   total_plans: 43
-  completed_plans: 42
-  percent: 98
+  completed_plans: 43
+  percent: 100
 ---
 
 # Project State
@@ -25,12 +25,12 @@ See: .planning/PROJECT.md (updated 2026-04-10)
 
 ## Current Position
 
-Phase: 6.2
-Plan: 04 (complete) — Plan 05 queued
-Status: Plan 04 complete, ready for Plan 05 (bilingual labels gap-2)
-Last activity: 2026-04-27 -- Plan 06.2-04 complete (gap-1 menu order + testMenuOrder regression guard)
+Phase: 6.2 (complete)
+Plan: 05 (complete) — Phase 6.2 closed; Phase 6.3 (flui menu wiring) queued
+Status: Phase 6.2 complete, ready for Phase 6.3 kickoff
+Last activity: 2026-04-27 -- Plan 06.2-05 complete (gap-2 bilingual labels via XvueMenuFileParser td/ma/ EN routing)
 
-Progress: [█████████░] 98% (42/43 plans, Phase 6.2)
+Progress: [██████████] 100% (43/43 plans, Phase 6.2 complete)
 
 ## Performance Metrics
 
@@ -63,6 +63,7 @@ Progress: [█████████░] 98% (42/43 plans, Phase 6.2)
 | Phase 01 P02 | 15min | 2 tasks | 1 files |
 | Phase 01 P03 | ~60min | 3 tasks | 5 files |
 | Phase 06.2 P04 | 23m15s | 2 tasks | 5 files |
+| Phase 06.2 P05 | 23m01s | 2 tasks | 3 files |
 
 ## Accumulated Context
 
@@ -94,6 +95,10 @@ Recent decisions affecting current work:
 - [Phase 06.2-04]: Helper duplication preserved across elas/mail (per 06.2-02 patterns-established). Updated in lockstep this plan; future refactor may hoist to a shared header but is out of scope.
 - [Phase 06.2-04]: testMenuOrder regression-guard pattern codified — slot collects QMenuBar::actions() filtered on non-null QAction::menu(), takes first 4 objectNames, QCOMPARE against {File, <Module>, View, Help}. 6.3/6.4/6.5 should add the same slot to their menu test binaries.
 - [Phase 06.2-04]: 6.1 mail co-fix folded into the same plan (same root cause, same hazard inherited from 6.1) rather than split out; lockstep helper update is the explicit ask.
+- [Phase 06.2-05]: XvueMenuFileParser::loadFor() now language-aware — when xvueIsEnglish() returns true and td/ma/<name> exists, prefer the EN tree; fall back to td/m/<name> otherwise. Single-point fix benefits 6.1 mail and the upcoming 6.3/6.4/6.5 waves automatically.
+- [Phase 06.2-05]: QFile::exists() pre-check gates the td/ma/ path so missing or unreadable EN file silently falls through to td/m/<name>; preserves existing-test compatibility without errno-based branching.
+- [Phase 06.2-05]: testBilingualLabelsEnglish slot QSKIPs on missing preconditions (MEFISTO env / anglais flag / td/ma/debuelas absent) so it ports to constrained CI envs; on the live dev rig it PASSes (not SKIPs), gating real regressions.
+- [Phase 06.2-05]: xvueIsEnglish() static-local cache caveat preserved: toggling the anglais flag mid-process is not supported; testBilingualLabelsEnglish must run before any slot that consumes xvueT() (verified for elas binary).
 
 ### Roadmap Evolution
 
@@ -114,6 +119,6 @@ None yet.
 
 ## Session Continuity
 
-Last session: 2026-04-27T08:41:11Z (resumed)
-Stopped at: Plan 06.2-04 complete (gap-1 menu order + testMenuOrder regression guard); Plan 06.2-05 queued (gap-2 bilingual labels)
-Resume file: .planning/HANDOFF.json
+Last session: 2026-04-27T09:11:37.473Z
+Stopped at: Completed 06.2-05-PLAN.md (gap-2 bilingual labels via XvueMenuFileParser td/ma/ EN routing); Phase 6.2 complete
+Resume file: None

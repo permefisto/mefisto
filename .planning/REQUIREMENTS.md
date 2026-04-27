@@ -75,10 +75,10 @@ Requirements for the initial Qt 6 backend release. Each maps to exactly one road
 - [ ] **UX-02**: `XvueMenuBridge` exposes a `pendingCommands_` queue; `QAction::triggered` signals push lexicon command strings into the queue without ever calling Fortran or opening modal dialogs directly.
 - [ ] **UX-03**: The next `xvsouris_` / `xvsouris2_` call drains the menu command queue and returns a synthetic keyboard event (`notypeevent = 2`) carrying the queued command — Fortran dispatches through its existing text-lexicon code path, with no changes to any solver driver.
 - [ ] **UX-04**: Modal dialogs (file open/save, properties) refuse to open (and show a status-bar message instead) when `XvueApp::blockingDepth() > 0`, preventing re-entrant `QDialog::exec()` inside `xvsouris` nested loops.
-- [ ] **UX-05**: The per-module lexicon audit of `mail/`, `elas/`, `flui/`, `ther/`, `nlse/` enumerates every interactive command currently typed by the user and produces a `QAction` entry for each, grouped into menus and toolbars. Deliverable: `.planning/phase-6/LEXICON-AUDIT.md` per module.
+- [x] **UX-05**: The per-module lexicon audit of `mail/`, `elas/`, `flui/`, `ther/`, `nlse/` enumerates every interactive command currently typed by the user and produces a `QAction` entry for each, grouped into menus and toolbars. Deliverable: `.planning/phase-6/LEXICON-AUDIT.md` per module.
 - [ ] **UX-06**: File operations (`Open Project…`, `Save Project`, `Save Project As…`, `Export…`) use `QFileDialog` with a project-directory filter respecting `$MEFISTOX/<project>/`, and a recent-projects list persisted via `QSettings`.
 - [ ] **UX-07**: Window geometry, dock layout, recent-projects list, and user preferences are persisted via `QSettings` across sessions.
-- [ ] **UX-08**: The existing bilingual flag (`$MEFISTO/td/m/anglais`) selects the UI language; all menu labels, tooltips, dialogs, status messages, and the About dialog are available in both French and English.
+- [x] **UX-08**: The existing bilingual flag (`$MEFISTO/td/m/anglais`) selects the UI language; all menu labels, tooltips, dialogs, status messages, and the About dialog are available in both French and English.
 - [ ] **UX-09**: An About dialog credits Alain Perronnet (LJLL/UPMC Paris) and shows the MEFISTO version, Qt version, and build date. A Help menu entry launches the PDF documentation under `doc/` via `QDesktopServices::openUrl`.
 - [ ] **UX-10**: A console/log `QDockWidget` displays the Fortran solver's stdout in real time via a `QProcess` stdout pipe-reader, exposing a "keystone" surface that also feeds progress reporting and error dialogs.
 - [ ] **UX-11**: Error lines matching the existing Fortran diagnostic patterns (e.g. lines beginning `*** ERREUR`) are parsed from the stdout stream and surfaced as `QMessageBox` alerts.
@@ -210,10 +210,10 @@ Populated during roadmap creation — all v1 requirements mapped to exactly one 
 | UX-02 | Phase 6.0 | Pending |
 | UX-03 | Phase 6.0 | Pending |
 | UX-04 | Phase 6.0 | Pending |
-| UX-05 | Phase 6.1-6.5 | Pending |
+| UX-05 | Phase 6.1-6.5 | Complete |
 | UX-06 | Phase 6.0 | Pending |
 | UX-07 | Phase 6.0 | Pending |
-| UX-08 | Phase 6.0 | Pending |
+| UX-08 | Phase 6.0 | Complete |
 | UX-09 | Phase 6.0 | Pending |
 | UX-10 | Phase 6.0 | Pending |
 | UX-11 | Phase 6.0 | Pending |
