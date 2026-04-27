@@ -1,0 +1,17 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"
+     fill="none" stroke="currentColor" stroke-width="2"
+     stroke-linecap="round" stroke-linejoin="round">
+  <!-- Vector arrow grid: 4 arrows of varying direction at grid points -->
+  <!-- Top-left arrow pointing right -->
+  <path d="M3 6 h6"/>
+  <path d="M7 4 l2 2 -2 2"/>
+  <!-- Top-right arrow pointing up-right -->
+  <path d="M14 8 l5-4"/>
+  <path d="M16.5 4 h2.5 v2.5"/>
+  <!-- Bottom-left arrow pointing down-right -->
+  <path d="M3 14 l5 5"/>
+  <path d="M5.5 19 h2.5 v-2.5"/>
+  <!-- Bottom-right arrow pointing right -->
+  <path d="M14 18 h6"/>
+  <path d="M18 16 l2 2 -2 2"/>
+</svg>

@@ -22,5 +22,12 @@
     <file>icons/elas/draw-stress.svg</file>
     <file>icons/elas/elas-object.svg</file>
     <file>icons/elas/elas-input.svg</file>
+    <!-- Phase 6.3 flui (fluider) icons — UX-05 flui slice                   -->
+    <file>icons/flui/flui-object.svg</file>
+    <file>icons/flui/flui-input-physics.svg</file>
+    <file>icons/flui/flui-input-heat.svg</file>
+    <file>icons/flui/solve-stokes.svg</file>
+    <file>icons/flui/solve-navier-stokes.svg</file>
+    <file>icons/flui/draw-velocity.svg</file>
   </qresource>
 </RCC>
