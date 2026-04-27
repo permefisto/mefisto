@@ -35,6 +35,7 @@
 #include "test_helpers.h"
 #include "xvue_qt_app.h"
 #include "xvue_qt_event.h"        // BlockingDepthGuard
+#include "xvue_qt_i18n.h"         // 06.2 gap-closure: xvueClearLanguageCacheForTesting
 #include "xvue_qt_menu_bridge.h"
 #include "xvue_qt_menu_file_parser.h"  // 06.2 Plan 05 testBilingualLabelsEnglish
 #include "xvue_qt_window.h"
@@ -271,9 +272,13 @@ private slots:
             QSKIP("td/ma/debuelas missing — cannot test EN parser path");
         }
 
-        // Drop any cached MenuFile from initTestCase so loadFor()
-        // re-resolves through the new td/ma/ path now that we've
-        // verified the on-disk preconditions hold.
+        // Drop any cached MenuFile AND the language probe from initTestCase
+        // so loadFor() re-resolves both the file path and the EN/FR flag
+        // now that we've verified the on-disk preconditions hold.
+        // (WR-02 gap-closure: clearCacheForTesting alone did not reset
+        // the xvueIsEnglish() static, which could lock to false if a
+        // prior slot called it before td/m/anglais was confirmed present.)
+        xvueClearLanguageCacheForTesting();
         XvueMenuFileParser::clearCacheForTesting();
 
         const MenuFile& mf = XvueMenuFileParser::loadFor(
@@ -295,8 +300,9 @@ private slots:
         QCOMPARE(mf.label(6),
                  QStringLiteral("EIGENMODES solver"));
 
-        // Defensive: clear cache so subsequent slots in this class
-        // probe afresh.
+        // Defensive: clear both the MenuFile cache and the language probe
+        // so subsequent slots in this class probe afresh.
+        xvueClearLanguageCacheForTesting();
         XvueMenuFileParser::clearCacheForTesting();
     }
 

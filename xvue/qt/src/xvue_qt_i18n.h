@@ -28,6 +28,15 @@ enum class MsgId : int {
 // the actual probe; Plan 01 stub returns false (FR default).
 bool xvueIsEnglish();
 
+// Test-only helper — resets the cached language probe so the next call to
+// xvueIsEnglish() re-probes $MEFISTO/td/m/anglais from disk. Compiled only
+// when XVUE_QT_TESTING is defined. Must be called alongside
+// XvueMenuFileParser::clearCacheForTesting() in tests that toggle the
+// anglais flag between test slots.
+#ifdef XVUE_QT_TESTING
+void xvueClearLanguageCacheForTesting();
+#endif
+
 // Returns the localized C-string for id (UTF-8 encoded). Plan 02 fills the
 // 47-row lookup table; Plan 01 stub returns "".
 const char* tr(MsgId id);

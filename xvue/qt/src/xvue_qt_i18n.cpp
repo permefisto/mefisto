@@ -16,6 +16,9 @@
 
 #include <array>
 #include <cstdlib>
+#ifdef XVUE_QT_TESTING
+#include <optional>
+#endif
 
 namespace {
 
@@ -99,21 +102,54 @@ static_assert(kTable.size() == static_cast<size_t>(MsgId::_Count_),
 
 }  // namespace
 
-bool xvueIsEnglish() {
-    // Pitfall 2.2 — cache at first call. C++17 static-local initialization
-    // is thread-safe and lazy. Users toggle the language by creating or
-    // removing $MEFISTO/td/m/anglais then restarting the process; live
-    // toggling mid-process is not supported (mirrors Fortran-side LANGUE).
-    static const bool english = []{
-        const char* home = std::getenv("MEFISTO");
-        if (home == nullptr || home[0] == '\0') {
-            return false;  // no MEFISTO env → safe FR default.
-        }
-        QFileInfo flag(QString::fromLocal8Bit(home) + QStringLiteral("/td/m/anglais"));
-        return flag.exists();
-    }();
-    return english;
+// probe_english() — reads $MEFISTO/td/m/anglais once and returns the result.
+// Called by xvueIsEnglish(); factored out so both the production static-local
+// and the XVUE_QT_TESTING resettable path share identical probe logic.
+static bool probe_english() {
+    const char* home = std::getenv("MEFISTO");
+    if (home == nullptr || home[0] == '\0') {
+        return false;  // no MEFISTO env → safe FR default.
+    }
+    QFileInfo flag(QString::fromLocal8Bit(home) + QStringLiteral("/td/m/anglais"));
+    return flag.exists();
 }
+
+#ifdef XVUE_QT_TESTING
+// File-scope cache used by xvueIsEnglish() and xvueClearLanguageCacheForTesting()
+// in test builds. std::nullopt means "not yet evaluated"; xvueIsEnglish()
+// populates it on first call; xvueClearLanguageCacheForTesting() resets it
+// so the next call re-probes the filesystem.
+static std::optional<bool> s_englishCache;
+#endif
+
+bool xvueIsEnglish() {
+    // Pitfall 2.2 — cache at first call. Users toggle the language by
+    // creating or removing $MEFISTO/td/m/anglais then restarting; live
+    // toggling mid-process is not supported (mirrors Fortran-side LANGUE).
+    //
+    // Production: C++17 static-local bool — thread-safe, one allocation.
+    // XVUE_QT_TESTING: file-scope std::optional so
+    //   xvueClearLanguageCacheForTesting() can reset it between test slots.
+#ifdef XVUE_QT_TESTING
+    if (!s_englishCache.has_value()) {
+        s_englishCache = probe_english();
+    }
+    return *s_englishCache;
+#else
+    static const bool english = probe_english();
+    return english;
+#endif
+}
+
+#ifdef XVUE_QT_TESTING
+void xvueClearLanguageCacheForTesting() {
+    // Reset the language probe so the next xvueIsEnglish() call re-probes
+    // $MEFISTO/td/m/anglais from disk. Must be called alongside
+    // XvueMenuFileParser::clearCacheForTesting() in test slots that change
+    // the anglais flag between calls.
+    s_englishCache = std::nullopt;
+}
+#endif
 
 const char* tr(MsgId id) {
     const int ix = static_cast<int>(id);
