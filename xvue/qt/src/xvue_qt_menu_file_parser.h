@@ -52,6 +52,10 @@ public:
     static const MenuFile& loadFor(const QString& name);
 
     // Test-only helper — clears the cache so per-test state is fresh.
-    // Guarded by XVUE_QT_TESTING; not called from production paths.
+    // Compiled only when XVUE_QT_TESTING is defined (test targets only).
+    // Add target_compile_definitions(<target> PRIVATE XVUE_QT_TESTING) to
+    // any test target that includes this header and calls clearCacheForTesting.
+#ifdef XVUE_QT_TESTING
     static void clearCacheForTesting();
+#endif
 };

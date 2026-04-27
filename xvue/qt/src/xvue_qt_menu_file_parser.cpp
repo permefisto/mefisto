@@ -104,6 +104,8 @@ const MenuFile& XvueMenuFileParser::loadFor(const QString& name) {
     return *c.insert(name, mf);
 }
 
+#ifdef XVUE_QT_TESTING
 void XvueMenuFileParser::clearCacheForTesting() {
     cache().clear();
 }
+#endif

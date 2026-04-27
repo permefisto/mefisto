@@ -182,6 +182,8 @@ target_include_directories(xvue_qt_mail_menu_tests PRIVATE
     ${CMAKE_CURRENT_SOURCE_DIR}/../src
     ${CMAKE_CURRENT_SOURCE_DIR}/../include
 )
+# Enable test-only API in XvueMenuFileParser and xvue_qt_i18n.
+target_compile_definitions(xvue_qt_mail_menu_tests PRIVATE XVUE_QT_TESTING)
 
 # ---------------------------------------------------------------------------
 # Phase 6.2 Plan 03 (D-13 elas port): elasticity menu round-trip tests.
@@ -207,5 +209,7 @@ target_include_directories(xvue_qt_elas_menu_tests PRIVATE
     ${CMAKE_CURRENT_SOURCE_DIR}/../src
     ${CMAKE_CURRENT_SOURCE_DIR}/../include
 )
+# Enable test-only API in XvueMenuFileParser and xvue_qt_i18n.
+target_compile_definitions(xvue_qt_elas_menu_tests PRIVATE XVUE_QT_TESTING)
 
 # No install(); tests run in-place from xvue/build/tests/.
