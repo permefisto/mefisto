@@ -2,7 +2,7 @@
 
 **Phase:** 06.3-fluid-flui-menu-wiring
 **Generated:** 2026-04-27
-**Status:** DRAFT (pending user review — Task 2 checkpoint)
+**Status:** FROZEN (ratified by user 2026-04-27)
 **Requirement:** UX-05 (flui slice) Success Criterion #1
 
 ## Scope
