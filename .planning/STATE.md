@@ -3,15 +3,15 @@ gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
 status: executing
-stopped_at: Phase 6.1 complete — HANDOFF.json present, Phase 6.2 queued
-last_updated: "2026-04-22T08:03:12.474Z"
-last_activity: 2026-04-22 -- Phase 6.2 planning complete
+stopped_at: Plan 06.2-04 complete (gap-1 menu order + testMenuOrder regression guard); Plan 06.2-05 queued (gap-2 bilingual labels)
+last_updated: "2026-04-27T08:42:59.604Z"
+last_activity: 2026-04-27 -- Plan 06.2-04 complete
 progress:
   total_phases: 17
   completed_phases: 10
-  total_plans: 40
-  completed_plans: 38
-  percent: 95
+  total_plans: 43
+  completed_plans: 42
+  percent: 98
 ---
 
 # Project State
@@ -21,16 +21,16 @@ progress:
 See: .planning/PROJECT.md (updated 2026-04-10)
 
 **Core value:** Every MEFISTO workflow that works today through X11 keeps working through the new Qt 6 interface, with Fortran solver code unchanged.
-**Current focus:** Phase 6.1 — mesher-mail-menu-wiring
+**Current focus:** Phase 6.2 — elasticity-elas-menu-wiring (gap-closure plans)
 
 ## Current Position
 
 Phase: 6.2
-Plan: Not started
-Status: Ready to execute
-Last activity: 2026-04-22 -- Phase 6.2 planning complete
+Plan: 04 (complete) — Plan 05 queued
+Status: Plan 04 complete, ready for Plan 05 (bilingual labels gap-2)
+Last activity: 2026-04-27 -- Plan 06.2-04 complete (gap-1 menu order + testMenuOrder regression guard)
 
-Progress: [██████████] 100% (Phase 03.1)
+Progress: [█████████░] 98% (42/43 plans, Phase 6.2)
 
 ## Performance Metrics
 
@@ -62,6 +62,7 @@ Progress: [██████████] 100% (Phase 03.1)
 | Phase 01-window-shell-xvueapp-xvuewindow-xvuecanvas P01 | 19min | 3 tasks | 10 files |
 | Phase 01 P02 | 15min | 2 tasks | 1 files |
 | Phase 01 P03 | ~60min | 3 tasks | 5 files |
+| Phase 06.2 P04 | 23m15s | 2 tasks | 5 files |
 
 ## Accumulated Context
 
@@ -89,6 +90,10 @@ Recent decisions affecting current work:
 - [Phase 03.1-03]: Legacy xvtest0/xvtest1 pre-existing xvue/xvuelc.c crashes deferred to a future legacy-hardening pass (see 03.1-NOTES.md + deferred-items.md).
 - [Phase 03-04 reopen close 2026-04-14]: The 2 "MISMATCH" Qt solver traces from the 2026-04-13 first reopen were NOT real Qt rendering gaps. Root cause: Debian sid `apt upgrade` pulled `libgfortran5 = 16-20260322-1` (gcc-16 snapshot) which exposed latent UB in MEFISTO Fortran runtime. Fix: `sudo apt install libgfortran5_15.2.0-9_amd64.deb` (cached) + `apt-mark hold libgfortran5` + rebuild via `/tmp/gfortran-14-shim` PATH (gcc-15/gfortran-15 packages were also removed by the downgrade). Plus 2 long-standing batch-file bugs in `testa/nafems_le1/` (mesher missing `1;` between `5;90;`; elas missing `15;` between `1;90;`) — fixed in-place. Final D-27: 12/12 PASS, 1 DEFERRED (nlsecu).
 - [Phase 03-04 reopen close 2026-04-14]: Build-environment pinning is now an open deferred item — `libgfortran5` must stay on `15.2.0-9` until either Debian sid stabilizes gcc-16 or the latent Fortran UB sites (uninitialized `TPSINI` in `ther/thed1t.f`, FPE traps in elasticity stress paths) are properly initialized in source.
+- [Phase 06.2-04]: ensureTopLevelMenu generalized with optional `insertBefore` QMenu* anchor — when non-null, routes through QMenuBar::insertMenu(anchor->menuAction(), m). 6.3/6.4/6.5 must call ensureTopLevelMenu(..., viewMenuForAnchor) so per-module menus land between File and View.
+- [Phase 06.2-04]: Helper duplication preserved across elas/mail (per 06.2-02 patterns-established). Updated in lockstep this plan; future refactor may hoist to a shared header but is out of scope.
+- [Phase 06.2-04]: testMenuOrder regression-guard pattern codified — slot collects QMenuBar::actions() filtered on non-null QAction::menu(), takes first 4 objectNames, QCOMPARE against {File, <Module>, View, Help}. 6.3/6.4/6.5 should add the same slot to their menu test binaries.
+- [Phase 06.2-04]: 6.1 mail co-fix folded into the same plan (same root cause, same hazard inherited from 6.1) rather than split out; lockstep helper update is the explicit ask.
 
 ### Roadmap Evolution
 
@@ -109,6 +114,6 @@ None yet.
 
 ## Session Continuity
 
-Last session: 2026-04-22T07:12:04.045Z (resumed)
-Stopped at: Phase 6.1 complete — HANDOFF.json present, Phase 6.2 queued
+Last session: 2026-04-27T08:41:11Z (resumed)
+Stopped at: Plan 06.2-04 complete (gap-1 menu order + testMenuOrder regression guard); Plan 06.2-05 queued (gap-2 bilingual labels)
 Resume file: .planning/HANDOFF.json

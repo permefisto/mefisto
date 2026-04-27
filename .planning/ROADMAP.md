@@ -193,7 +193,7 @@ Plans:
   - [x] 06.2-01-PLAN.md — LEXICON-AUDIT-elas.md full tree walk (debuelas + 12 elas-unique sub-menus + 20 shared util compressed) + user review checkpoint (reuses tools/validate_audit_md.py from 6.1)
   - [x] 06.2-02-PLAN.md — registerElasActions_stub_ strong body + xvue_qt_elas_actions_keepalive + 7 custom SVG icons + xvue_icons.qrc append + CMake wiring + tools/validate_audit_md.py generalized (module-aware)
   - [x] 06.2-03-PLAN.md — prpr/ppelas.f CALL XVUE_MODULE_INIT('elas', 4) insertion (xvue/xvmodi.f reused from 6.1) + 4+1 D-13 QTest cases + manual A/B sign-off
-  - [ ] 06.2-04-PLAN.md — gap-closure: insert Solve/Mesh menus before View (gap-1 menu order) + testMenuOrder QTest slots in elas+mail + IN-01/IN-03/IN-04 cleanups
+  - [x] 06.2-04-PLAN.md — gap-closure: insert Solve/Mesh menus before View (gap-1 menu order) + testMenuOrder QTest slots in elas+mail + IN-01/IN-03/IN-04 cleanups
   - [ ] 06.2-05-PLAN.md — gap-closure: XvueMenuFileParser consults td/ma/<name> when anglais flag set (gap-2 bilingual labels) + testBilingualLabelsEnglish QTest slot
 **UI hint**: no (inherits 6.0 contract)
 
