@@ -41,9 +41,13 @@ add_library(xvueqt STATIC
 # Phase 6.2 Plan 02 addition: registerElasActions_stub_ strong body
 # (alphabetical order: elas before mail) wiring ~27 QActions + 4
 # toolbar entries per LEXICON-AUDIT-elas.md.
+# Phase 6.3 Plan 02 addition: registerFluiActions_stub_ strong body
+# (alphabetical order: elas/flui/mail) wiring all qaction=yes rows +
+# 4 toolbar entries per LEXICON-AUDIT-flui.md.
 target_sources(xvueqt PRIVATE
     src/xvue_qt_menu_file_parser.cpp
     src/xvue_qt_elas_actions.cpp
+    src/xvue_qt_flui_actions.cpp
     src/xvue_qt_mail_actions.cpp
 )
 
