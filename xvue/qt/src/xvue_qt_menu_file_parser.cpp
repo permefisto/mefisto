@@ -13,6 +13,7 @@
 // ONLY from hard-coded string literals in xvue_qt_mail_actions.cpp.
 // No user-controlled path traversal is possible.
 #include "xvue_qt_menu_file_parser.h"
+#include "xvue_qt_i18n.h"   // 06.2 Plan 05: xvueIsEnglish() probe.
 
 #include <QByteArray>
 #include <QFile>
@@ -45,7 +46,28 @@ const MenuFile& XvueMenuFileParser::loadFor(const QString& name) {
         return *c.insert(name, mf);
     }
 
-    QFile f(QString::fromLocal8Bit(mefisto) + QStringLiteral("/td/m/") + name);
+    const QString home = QString::fromLocal8Bit(mefisto);
+
+    // 06.2 Plan 05 gap-2 fix: when xvueIsEnglish() is true, prefer
+    // $MEFISTO/td/ma/<name> (the canonical EN tree) over the
+    // generic td/m/<name> (which often holds whichever language
+    // the install copied at setup time, regardless of the flag's
+    // current state).
+    //
+    // The probe is cheap because xvueIsEnglish() caches its
+    // result via static-local initialisation in xvue_qt_i18n.cpp.
+    QString chosen_path;
+    if (xvueIsEnglish()) {
+        const QString en_path = home + QStringLiteral("/td/ma/") + name;
+        if (QFile::exists(en_path)) {
+            chosen_path = en_path;
+        }
+    }
+    if (chosen_path.isEmpty()) {
+        chosen_path = home + QStringLiteral("/td/m/") + name;
+    }
+
+    QFile f(chosen_path);
     if (!f.open(QIODevice::ReadOnly | QIODevice::Text)) {
         return *c.insert(name, mf);
     }
