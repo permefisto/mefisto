@@ -160,6 +160,13 @@ extern "C" void registerElasActions_stub_(XvueWindow* win,
     // Without this guard a second call would add duplicate separators, QActions,
     // and toolbar buttons because only ensureTopLevelMenu (the Solve-menu block)
     // is itself idempotent; the File/View extensions and toolbar block are not.
+    //
+    // IN-02 note: this guard is process-scoped (static bool), which is safe
+    // under the current single-window-per-process invariant enforced by XvueApp.
+    // If Phase 6.3+ ever introduces window recycling, replace with a per-window
+    // flag (e.g. win->setProperty("elasRegistered", true)) to avoid the second
+    // window silently receiving no elas actions.
+    // registerMailActions_stub_ carries the same guard with the same assumption.
     static bool registered = false;
     if (registered) return;
     registered = true;

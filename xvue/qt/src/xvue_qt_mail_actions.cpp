@@ -163,6 +163,20 @@ extern "C" void registerMailActions_stub_(XvueWindow* win,
                                           XvueMenuBridge* mb)
 {
     if (!win || !mb) return;
+    // One-shot guard: registerMailActions_stub_ must only be called once per
+    // XvueWindow lifetime. xvue_module_init_ is the sole intended call site.
+    // Without this guard a second call would add duplicate separators, QActions,
+    // and toolbar buttons because only ensureTopLevelMenu (the Mesh-menu block)
+    // is itself idempotent; the File/View extensions and toolbar block are not.
+    //
+    // IN-02 gap-closure: aligns mail with elas (same single-window-per-process
+    // assumption). The current process model enforces exactly one XvueWindow per
+    // process lifetime. If Phase 6.3+ ever introduces window recycling, replace
+    // this static with a per-window flag (e.g. win->setProperty("mailRegistered",
+    // true)) to avoid the second-window silently receiving no mail actions.
+    static bool registered = false;
+    if (registered) return;
+    registered = true;
 
     // D-12: parse bilingual labels once per sub-menu (cached internally).
     // Explicitly load the sub-menus referenced by the QActions below.

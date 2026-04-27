@@ -139,5 +139,12 @@ install(TARGETS xvueqt
 # xvue_qt_event_tests target as part of the full Qt build.
 option(XVUE_QT_BUILD_TESTS "Build all xvue_qt QTest binaries" OFF)
 if(XVUE_QT_BUILD_TESTS)
+    # WR-01/WR-02 gap-closure: enable test-only API in the library itself
+    # (clearCacheForTesting, xvueClearLanguageCacheForTesting) so that test
+    # binaries can link against the symbols they declare via XVUE_QT_TESTING
+    # guards in xvue_qt_menu_file_parser.h and xvue_qt_i18n.h.
+    # The define is scoped to test builds only (XVUE_QT_BUILD_TESTS=ON);
+    # production builds of libxvueqt.a never include this define.
+    target_compile_definitions(xvueqt PRIVATE XVUE_QT_TESTING)
     add_subdirectory(tests)
 endif()
