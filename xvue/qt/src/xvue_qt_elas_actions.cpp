@@ -11,7 +11,7 @@
 //               which 6.2 Plan 03 rewires via queueLexicon)
 //   Solve menu : flat leaves 1;..8; at top level plus Parameters submenu
 //                (20;, 38;, 39;) and Input/Static/Unsteady/Eigen submenus
-//                expanding cl_elas / resoelst / resoelin / schedyna /
+//                expanding cl_elas / resoelst / resoelin /
 //                methreso / therelas / methvvpr leaves
 //   View menu : extend with 7; 8; 10; 71;
 //   toolbar   : top-5 = {2;, 3;, 8;, 10;, 99;} (99; via shared 6.0 actQuit_)
@@ -76,15 +76,30 @@ QAction* makeLeafAction(XvueWindow* win,
 // Helper for top-level menu creation with a stable objectName so QTest
 // cases can locate the Solve menu via `mbar->findChild<QMenu*>("Solve")`.
 // Idempotent -- repeated registration is safe.
+//
+// Plan 04 Gap-1: when `insertBefore` is non-null, route the new menu
+// through QMenuBar::insertMenu(insertBefore->menuAction(), m) so it lands
+// BEFORE that anchor menu (used to position Solve between File and View).
+// When `insertBefore` is null, fall back to addMenu (append). We construct
+// the QMenu(title, mbar) directly because addMenu(QString) creates AND
+// appends in one call — there is no addMenu overload that creates without
+// appending. The QMenu parent is `mbar` so Qt's parent-child tree handles
+// deletion just like the addMenu(QString) variant.
 QMenu* ensureTopLevelMenu(QMenuBar* mbar,
                           const QString& title,
-                          const QString& objectName)
+                          const QString& objectName,
+                          QMenu* insertBefore = nullptr)
 {
     if (auto* existing = mbar->findChild<QMenu*>(objectName)) {
         return existing;
     }
-    auto* m = mbar->addMenu(title);
+    auto* m = new QMenu(title, mbar);
     m->setObjectName(objectName);
+    if (insertBefore) {
+        mbar->insertMenu(insertBefore->menuAction(), m);
+    } else {
+        mbar->addMenu(m);
+    }
     return m;
 }
 
@@ -188,10 +203,18 @@ extern "C" void registerElasActions_stub_(XvueWindow* win,
     // Per-Module Conformance Contract. Uses ensureTopLevelMenu, which is
     // itself idempotent (returns an existing QMenu for the same objectName),
     // but the outer registerElasActions_stub_ is guarded above to run once.
+    //
+    // Plan 04 Gap-1: look up the View menu so we can insert Solve BEFORE
+    // it, yielding the {File, Solve, View, Help} sequence locked by
+    // ROADMAP Phase 6.2 goal + 06.0 Per-Module Conformance Contract.
+    // 06.0 chrome added File/View/Help in that index order; this line
+    // repositions Solve between File and View.
     // ------------------------------------------------------------------
+    auto* viewMenuForAnchor = mbar->findChild<QMenu*>(QStringLiteral("View"));
     auto* solveMenu = ensureTopLevelMenu(mbar,
         QObject::tr("&Solve"),
-        QStringLiteral("Solve"));
+        QStringLiteral("Solve"),
+        viewMenuForAnchor);
 
     // Solve > Object name (leaf 1;)
     solveMenu->addAction(makeLeafAction(win, mb,
