@@ -211,6 +211,14 @@ extern "C" void registerElasActions_stub_(XvueWindow* win,
     // repositions Solve between File and View.
     // ------------------------------------------------------------------
     auto* viewMenuForAnchor = mbar->findChild<QMenu*>(QStringLiteral("View"));
+    // WR-03 gap-closure: assert that the View anchor is present so a future
+    // chrome-init reordering fails loudly in debug builds rather than
+    // silently producing {File, Help, Solve} instead of {File, Solve, View, Help}.
+    Q_ASSERT_X(viewMenuForAnchor != nullptr,
+               "registerElasActions_stub_",
+               "View menu not found — Solve will be appended after Help "
+               "(expected {File, Solve, View, Help} order); "
+               "chrome init order may have changed.");
     auto* solveMenu = ensureTopLevelMenu(mbar,
         QObject::tr("&Solve"),
         QStringLiteral("Solve"),

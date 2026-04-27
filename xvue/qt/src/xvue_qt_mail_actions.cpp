@@ -215,6 +215,14 @@ extern "C" void registerMailActions_stub_(XvueWindow* win,
     // index order; this line repositions Mesh between File and View.
     // ------------------------------------------------------------------
     auto* viewMenuForAnchor = mbar->findChild<QMenu*>(QStringLiteral("View"));
+    // WR-03 gap-closure: assert that the View anchor is present so a future
+    // chrome-init reordering fails loudly in debug builds rather than
+    // silently producing {File, Help, Mesh} instead of {File, Mesh, View, Help}.
+    Q_ASSERT_X(viewMenuForAnchor != nullptr,
+               "registerMailActions_stub_",
+               "View menu not found — Mesh will be appended after Help "
+               "(expected {File, Mesh, View, Help} order); "
+               "chrome init order may have changed.");
     auto* meshMenu = ensureTopLevelMenu(mbar,
         debut.title().isEmpty()
             ? QStringLiteral("&Mesh")
