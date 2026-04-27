@@ -2,16 +2,16 @@
 gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
-status: executing
-stopped_at: Completed 06.2-05-PLAN.md (gap-2 bilingual labels via XvueMenuFileParser td/ma/ EN routing); Phase 6.2 complete
-last_updated: "2026-04-27T14:50:53.838Z"
-last_activity: 2026-04-27 -- Phase 06.3 planning complete
+status: Ready for Plan 02 (registerFluiActions_stub_ + QAction wiring)
+stopped_at: Completed 06.3-01-PLAN.md (flui lexicon audit, 161 rows, FROZEN)
+last_updated: "2026-04-27T21:32:18.728Z"
+last_activity: 2026-04-27 -- Phase 06.3 Plan 01 complete
 progress:
   total_phases: 17
   completed_phases: 11
   total_plans: 45
-  completed_plans: 43
-  percent: 96
+  completed_plans: 44
+  percent: 98
 ---
 
 # Project State
@@ -26,11 +26,11 @@ See: .planning/PROJECT.md (updated 2026-04-10)
 ## Current Position
 
 Phase: 6.3
-Plan: Not started
-Status: Ready to execute
-Last activity: 2026-04-27 -- Phase 06.3 planning complete
+Plan: 01 complete (LEXICON-AUDIT-flui.md FROZEN — 161 rows, 5 toolbar=yes, validator exit 0)
+Status: Ready for Plan 02 (registerFluiActions_stub_ + QAction wiring)
+Last activity: 2026-04-27 -- Phase 06.3 Plan 01 complete
 
-Progress: [██████████] 100% (43/43 plans, Phase 6.2 complete)
+Progress: [██████████] 98% (44/45 plans, Phase 6.3 in progress)
 
 ## Performance Metrics
 
@@ -65,6 +65,7 @@ Progress: [██████████] 100% (43/43 plans, Phase 6.2 complete
 | Phase 01 P03 | ~60min | 3 tasks | 5 files |
 | Phase 06.2 P04 | 23m15s | 2 tasks | 5 files |
 | Phase 06.2 P05 | 23m01s | 2 tasks | 3 files |
+| Phase 06.3 P01 | 12min | 2 tasks | 1 files |
 
 ## Accumulated Context
 
@@ -100,6 +101,9 @@ Recent decisions affecting current work:
 - [Phase 06.2-05]: QFile::exists() pre-check gates the td/ma/ path so missing or unreadable EN file silently falls through to td/m/<name>; preserves existing-test compatibility without errno-based branching.
 - [Phase 06.2-05]: testBilingualLabelsEnglish slot QSKIPs on missing preconditions (MEFISTO env / anglais flag / td/ma/debuelas absent) so it ports to constrained CI envs; on the live dev rig it PASSes (not SKIPs), gating real regressions.
 - [Phase 06.2-05]: xvueIsEnglish() static-local cache caveat preserved: toggling the anglais flag mid-process is not supported; testBilingualLabelsEnglish must run before any slot that consumes xvueT() (verified for elas binary).
+- [Phase 06.3]: Top-5 toolbar = {2;, 5;, 7;, 10;, 99;} (PHYSICAL-DATA / STEADY-STOKES / IMPLICIT-NS / DRAW-VEL+PRESS / SAVE-QUIT)
+- [Phase 06.3]: Menu taxonomy {File, Fluid, View, Help} (Fluid replaces Solve relative to 6.2)
+- [Phase 06.3]: 6 new flui SVGs queued + 1 reuse (mesh-draw.svg from 6.1); Stokes/NS icons consolidated (5;,6; share solve-stokes.svg; 7;,8;,9; share solve-navier-stokes.svg)
 
 ### Roadmap Evolution
 
@@ -120,6 +124,6 @@ None yet.
 
 ## Session Continuity
 
-Last session: 2026-04-27T09:11:37.473Z
-Stopped at: Completed 06.2-05-PLAN.md (gap-2 bilingual labels via XvueMenuFileParser td/ma/ EN routing); Phase 6.2 complete
+Last session: 2026-04-27T21:30:01.316Z
+Stopped at: Completed 06.3-01-PLAN.md (flui lexicon audit, 161 rows, FROZEN)
 Resume file: None

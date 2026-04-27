@@ -203,7 +203,7 @@ Plans:
 **Requirements**: UX-05 (flui slice)
 **Success Criteria**: same pattern as 6.1, substituting `flui` for `mail`. testMenuOrder + testBilingualLabelsEnglish codify the gates that required manual sign-off in 6.2/6.1 — Phase 6.3 is fully autonomous.
 **Plans**: 3 plans
-  - [ ] 06.3-01-PLAN.md — LEXICON-AUDIT-flui.md full tree walk (debuflui 15 codes + 20 flui-unique sub-menus fully expanded + 21 shared util compressed) + user review checkpoint
+  - [x] 06.3-01-PLAN.md — LEXICON-AUDIT-flui.md full tree walk (debuflui 15 codes + 20 flui-unique sub-menus fully expanded + 21 shared util compressed) + user review checkpoint
   - [ ] 06.3-02-PLAN.md — registerFluiActions_stub_ strong body + xvue_qt_flui_actions_keepalive + 6 custom SVG icons + xvue_icons.qrc append + CMake wiring (keepalive alphabetical: elas/flui/mail)
   - [ ] 06.3-03-PLAN.md — prpr/ppflui.f CALL XVUE_MODULE_INIT('flui', 4) insertion + 7 QTest slots (D-13 + testMenuOrder + testBilingualLabelsEnglish) — fully autonomous, no manual A/B checkpoint
 **UI hint**: no (inherits 6.0 contract)
