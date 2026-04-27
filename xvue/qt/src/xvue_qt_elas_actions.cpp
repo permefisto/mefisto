@@ -103,10 +103,15 @@ QMenu* ensureTopLevelMenu(QMenuBar* mbar,
     return m;
 }
 
-// Scan `menu` (and one level of its submenus) for a QAction whose
+// Scan `menu` (top level + one submenu level) for a QAction whose
 // `lexicon` dynamic property matches `lex`, and append it to `tb`.
 // Appends the EXISTING QAction (never clones) so menu and toolbar
 // share a single instance.
+// NOTE: depth limit is two levels (top + one submenu). Actions nested
+// more than one submenu level deep will silently not be found. All five
+// lexicons currently requested by this module are within that depth.
+// If a future caller targets a three-level-deep action, use a recursive
+// helper (see actionByLexicon in the test files for a depth-unlimited model).
 void addToolbarByLexicon(QToolBar* tb, QMenu* menu, const QString& lex)
 {
     if (!tb || !menu) return;
