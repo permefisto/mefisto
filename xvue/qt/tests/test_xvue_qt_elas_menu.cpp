@@ -208,6 +208,41 @@ private slots:
         QCOMPARE(mb->queueSize(), before);
     }
 
+    // ---- Plan 04 Gap-1: menu bar order is exactly {File, Solve, View, Help} ----
+    // 06.2-HUMAN-UAT.md gap 1 root cause: ensureTopLevelMenu used
+    // mbar->addMenu(...) which appends. Plan 04 Task 1 routes the
+    // Solve menu through QMenuBar::insertMenu(viewMenu->menuAction(),
+    // solveMenu) so it lands BETWEEN File and View. This test codifies
+    // the expected sequence so 6.3/6.4/6.5 cannot silently regress it.
+    void testMenuOrder() {
+        auto* win = XvueApp::window_slot().get();
+        QVERIFY(win != nullptr);
+        auto* mb = win->menuBar();
+        QVERIFY(mb != nullptr);
+
+        QStringList topLevelObjectNames;
+        for (QAction* a : mb->actions()) {
+            if (a->menu()) {
+                topLevelObjectNames << a->menu()->objectName();
+            }
+        }
+
+        QVERIFY2(topLevelObjectNames.size() >= 4,
+                 qPrintable(QStringLiteral(
+                     "expected at least 4 top-level menus, got %1: [%2]")
+                     .arg(topLevelObjectNames.size())
+                     .arg(topLevelObjectNames.join(QStringLiteral(", ")))));
+
+        const QStringList expected = {
+            QStringLiteral("File"),
+            QStringLiteral("Solve"),
+            QStringLiteral("View"),
+            QStringLiteral("Help"),
+        };
+        QStringList actual = topLevelObjectNames.mid(0, 4);
+        QCOMPARE(actual, expected);
+    }
+
     // ---- Bonus: D-09 closeEvent pushes 99; when Fortran is blocking ----
     // Uses the BlockingDepthGuard RAII from xvue_qt_event.h (Phase 5) to
     // emulate the nested xvsouris_ state. When depth > 0, closeEvent must
@@ -262,6 +297,13 @@ private slots:
 };
 
 int main(int argc, char* argv[]) {
+    // 06.2-REVIEW IN-04: Real argc/argv are intentionally NOT forwarded to
+    // QTest::qExec. XvueApp::ensure() (called below) constructs
+    // QApplication with a process-static fake_argv array that must outlive
+    // every QApplication API call. Forwarding the real argv would create
+    // a dangling pointer once main() returns. QTest CLI flags (-v2, -o,
+    // -testcase) are therefore unreachable from this binary by design —
+    // run with QT_QPA_PLATFORM=offscreen and accept the default verbosity.
     (void)argc; (void)argv;
     qputenv("QT_QPA_PLATFORM", "offscreen");
     // 6.1 auto-fix #3: disable XvueConsoleDock::installStdoutRedirect for the

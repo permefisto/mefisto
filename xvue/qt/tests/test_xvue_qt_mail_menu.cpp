@@ -200,6 +200,42 @@ private slots:
         QCOMPARE(mb->queueSize(), before);
     }
 
+    // ---- 6.2 Plan 04 Gap-1: menu bar order is exactly {File, Mesh, View, Help} ----
+    // 06.2-HUMAN-UAT.md gap 1 root cause (mail co-fix): ensureTopLevelMenu used
+    // mbar->addMenu(...) which appends. Plan 04 Task 1 routes the
+    // Mesh menu through QMenuBar::insertMenu(viewMenu->menuAction(),
+    // meshMenu) so it lands BETWEEN File and View. This test codifies
+    // the expected sequence so 6.3/6.4/6.5 cannot silently regress it
+    // and 6.1's pattern stays correct going forward.
+    void testMenuOrder() {
+        auto* win = XvueApp::window_slot().get();
+        QVERIFY(win != nullptr);
+        auto* mb = win->menuBar();
+        QVERIFY(mb != nullptr);
+
+        QStringList topLevelObjectNames;
+        for (QAction* a : mb->actions()) {
+            if (a->menu()) {
+                topLevelObjectNames << a->menu()->objectName();
+            }
+        }
+
+        QVERIFY2(topLevelObjectNames.size() >= 4,
+                 qPrintable(QStringLiteral(
+                     "expected at least 4 top-level menus, got %1: [%2]")
+                     .arg(topLevelObjectNames.size())
+                     .arg(topLevelObjectNames.join(QStringLiteral(", ")))));
+
+        const QStringList expected = {
+            QStringLiteral("File"),
+            QStringLiteral("Mesh"),
+            QStringLiteral("View"),
+            QStringLiteral("Help"),
+        };
+        QStringList actual = topLevelObjectNames.mid(0, 4);
+        QCOMPARE(actual, expected);
+    }
+
     // ---- Bonus: D-09 closeEvent pushes 99; when Fortran is blocking ----
     // Uses the BlockingDepthGuard RAII from xvue_qt_event.h (Phase 5) to
     // emulate the nested xvsouris_ state. When depth > 0, closeEvent must

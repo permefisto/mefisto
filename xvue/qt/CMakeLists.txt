@@ -137,7 +137,7 @@ install(TARGETS xvueqt
 # Phase 5 Wave 0 (05-01): optional test subdirectory. Gated by a flag so the
 # normal build stays unchanged; bin/cbl_tout_qt turns it ON to build the
 # xvue_qt_event_tests target as part of the full Qt build.
-option(XVUE_QT_BUILD_TESTS "Build xvue_qt QTest binaries (xvue_qt_event_tests)" OFF)
+option(XVUE_QT_BUILD_TESTS "Build all xvue_qt QTest binaries" OFF)
 if(XVUE_QT_BUILD_TESTS)
     add_subdirectory(tests)
 endif()
