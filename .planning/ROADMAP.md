@@ -205,7 +205,7 @@ Plans:
 **Plans**: 3 plans
   - [x] 06.3-01-PLAN.md — LEXICON-AUDIT-flui.md full tree walk (debuflui 15 codes + 20 flui-unique sub-menus fully expanded + 21 shared util compressed) + user review checkpoint
   - [x] 06.3-02-PLAN.md — registerFluiActions_stub_ strong body + xvue_qt_flui_actions_keepalive + 6 custom SVG icons + xvue_icons.qrc append + CMake wiring (keepalive alphabetical: elas/flui/mail)
-  - [ ] 06.3-03-PLAN.md — prpr/ppflui.f CALL XVUE_MODULE_INIT('flui', 4) insertion + 7 QTest slots (D-13 + testMenuOrder + testBilingualLabelsEnglish) — fully autonomous, no manual A/B checkpoint
+  - [x] 06.3-03-PLAN.md — prpr/ppflui.f CALL XVUE_MODULE_INIT('flui', 4) insertion + 7 QTest slots (D-13 + testMenuOrder + testBilingualLabelsEnglish) — fully autonomous, no manual A/B checkpoint
 **UI hint**: no (inherits 6.0 contract)
 
 ### Phase 6.4: Thermal (ther) menu wiring
