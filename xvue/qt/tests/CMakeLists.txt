@@ -243,4 +243,35 @@ target_include_directories(xvue_qt_flui_menu_tests PRIVATE
 # Required for testBilingualLabelsEnglish. Mirrors elas target.
 target_compile_definitions(xvue_qt_flui_menu_tests PRIVATE XVUE_QT_TESTING)
 
+# ---------------------------------------------------------------------------
+# Phase 6.4 Plan 03 (D-13 ther port): thermal menu round-trip tests.
+# 4 required cases + 1 bonus closeEvent + testMenuOrder + testBilingualLabelsEnglish.
+# Mirrors the 6.3 xvue_qt_flui_menu_tests target verbatim, substituting ther
+# for flui. testMenuOrder codifies the {File, Thermal, View, Help} gate.
+# testBilingualLabelsEnglish codifies the EN-parser gate against td/ma/debuther.
+# testHelpNoQueue allowlist: {98;} per LEXICON-AUDIT-ther row 98 (NOT {97;} --
+# that's flui's value; codifies the 6.3 Plan 03 Auto-fix Rule 1 lesson).
+# ---------------------------------------------------------------------------
+add_executable(xvue_qt_ther_menu_tests
+    test_xvue_qt_ther_menu.cpp
+    test_helpers.cpp
+)
+target_link_libraries(xvue_qt_ther_menu_tests
+    PRIVATE
+        xvueqt
+        Qt6::Test
+        Qt6::Widgets
+        Qt6::Gui
+        Qt6::Core
+)
+target_include_directories(xvue_qt_ther_menu_tests PRIVATE
+    ${CMAKE_CURRENT_SOURCE_DIR}/..
+    ${CMAKE_CURRENT_SOURCE_DIR}/../src
+    ${CMAKE_CURRENT_SOURCE_DIR}/../include
+)
+# Enable test-only API in XvueMenuFileParser (clearCacheForTesting)
+# and xvue_qt_i18n (xvueClearLanguageCacheForTesting).
+# Required for testBilingualLabelsEnglish. Mirrors elas/flui targets.
+target_compile_definitions(xvue_qt_ther_menu_tests PRIVATE XVUE_QT_TESTING)
+
 # No install(); tests run in-place from xvue/build/tests/.
