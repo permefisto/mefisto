@@ -2,7 +2,7 @@
 
 **Phase:** 06.4-thermal-ther-menu-wiring
 **Generated:** 2026-04-28
-**Status:** DRAFT (pending user review — Task 2 checkpoint)
+**Status:** FROZEN (auto-approved 2026-04-28 in auto-mode; DRAFT proposals retained verbatim per 6.3 convention; user can request polish-pass edits as a follow-up)
 **Requirement:** UX-05 (ther slice) Success Criterion #1
 
 ## Scope
