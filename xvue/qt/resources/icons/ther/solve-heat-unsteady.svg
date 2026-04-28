@@ -1,0 +1,13 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="24" height="24"
+     fill="none" stroke="currentColor" stroke-width="2"
+     stroke-linecap="round" stroke-linejoin="round">
+  <!-- Heat plate (horizontal slab) -->
+  <path d="M3 16h18"/>
+  <path d="M3 20h18"/>
+  <!-- Time-axis arrow at top of icon (transient) -->
+  <path d="M3 4h16m-1.5-1.5L19 4l-1.5 1.5"/>
+  <!-- Heat-flow arrows of increasing length (transient evolution) -->
+  <path d="M6 13V11m-1 1l1-1 1 1"/>
+  <path d="M12 13V8m-1 1l1-1 1 1"/>
+  <path d="M18 13V6m-1 1l1-1 1 1"/>
+</svg>

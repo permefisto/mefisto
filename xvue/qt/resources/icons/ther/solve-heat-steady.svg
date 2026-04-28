@@ -1,0 +1,11 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="24" height="24"
+     fill="none" stroke="currentColor" stroke-width="2"
+     stroke-linecap="round" stroke-linejoin="round">
+  <!-- Steady-state heat plate (horizontal slab) -->
+  <path d="M3 16h18"/>
+  <path d="M3 20h18"/>
+  <!-- Steady parallel heat-flow arrows (uniform direction, equal lengths) -->
+  <path d="M5 12V6m-1.5 1.5L5 6l1.5 1.5"/>
+  <path d="M12 12V6m-1.5 1.5L12 6l1.5 1.5"/>
+  <path d="M19 12V6m-1.5 1.5L19 6l1.5 1.5"/>
+</svg>

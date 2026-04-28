@@ -1,0 +1,12 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="24" height="24"
+     fill="none" stroke="currentColor" stroke-width="2"
+     stroke-linecap="round" stroke-linejoin="round">
+  <!-- 3D cube outline (object boundary) -->
+  <path d="M4 7 12 4 20 7 12 10 z"/>
+  <path d="M4 7v10l8 3"/>
+  <path d="M20 7v10l-8 3"/>
+  <!-- Heat radiation marks emanating from cube center -->
+  <path d="M12 13v3"/>
+  <path d="M9 14l-1 2"/>
+  <path d="M15 14l1 2"/>
+</svg>

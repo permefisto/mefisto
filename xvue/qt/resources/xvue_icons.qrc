@@ -29,5 +29,13 @@
     <file>icons/flui/solve-stokes.svg</file>
     <file>icons/flui/solve-navier-stokes.svg</file>
     <file>icons/flui/draw-velocity.svg</file>
+    <!-- Phase 6.4 ther (thermicer) icons — UX-05 ther slice                  -->
+    <file>icons/ther/ther-object.svg</file>
+    <file>icons/ther/ther-input-heat.svg</file>
+    <file>icons/ther/solve-heat-steady.svg</file>
+    <file>icons/ther/solve-heat-unsteady.svg</file>
+    <file>icons/ther/solve-wave.svg</file>
+    <file>icons/ther/draw-temperature.svg</file>
+    <file>icons/ther/draw-iso-surface.svg</file>
   </qresource>
 </RCC>

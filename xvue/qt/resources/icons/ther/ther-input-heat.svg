@@ -1,0 +1,13 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="24" height="24"
+     fill="none" stroke="currentColor" stroke-width="2"
+     stroke-linecap="round" stroke-linejoin="round">
+  <!-- Vertical hot/cold gradient bar (input data column) -->
+  <path d="M5 4h6v16H5z"/>
+  <!-- Bar internal scale ticks -->
+  <path d="M11 8h2"/>
+  <path d="M11 12h2"/>
+  <path d="M11 16h2"/>
+  <!-- Heat-flow arrows pointing into the bar (input direction) -->
+  <path d="M19 8l-3 0m1.5-1.5L19 8l-1.5 1.5"/>
+  <path d="M19 16l-3 0m1.5-1.5L19 16l-1.5 1.5"/>
+</svg>

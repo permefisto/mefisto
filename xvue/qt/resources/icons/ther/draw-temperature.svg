@@ -1,0 +1,9 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="24" height="24"
+     fill="none" stroke="currentColor" stroke-width="2"
+     stroke-linecap="round" stroke-linejoin="round">
+  <!-- Thermal contour map: 4 nested isotherms with varying spacing -->
+  <path d="M3 18 q3-3 6-3 q3 0 6 3 q3 3 6 0"/>
+  <path d="M3 14 q3-3 6-3 q3 0 6 3 q3 3 6 0"/>
+  <path d="M3 10 q3-3 6-3 q3 0 6 3 q3 3 6 0"/>
+  <path d="M3 6 q3-3 6-3 q3 0 6 3 q3 3 6 0"/>
+</svg>
