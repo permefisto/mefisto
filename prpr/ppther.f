@@ -137,6 +137,9 @@ C        DRAWING OF MEFISTO LOGO
          ELSE
             CALL LOGO( 'MEFISTO-HEATER' )
          ENDIF
+C        Phase 6.4 D-08: register Qt-side module-specific menu actions.
+C        No-op on the X11 backend (xvue/xvmodi.f weak stub from 6.1).
+         CALL XVUE_MODULE_INIT( 'ther', 4 )
       ENDIF
 
 cccC     INITIALISATION of PETSC   11/12/2009 Cf bin.petsc
