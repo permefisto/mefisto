@@ -145,6 +145,9 @@ C        OUVERTURE DU SERVEUR ET DE LA FENETRE X11 DE NOM Mefisto
          CALL XVINIT
 C        TRACE DU LOGO DE Mefisto
          CALL LOGO( 'Mefisto-FLUIDER' )
+C        Phase 6.3 D-08: register Qt-side module-specific menu actions.
+C        No-op on the X11 backend (xvue/xvmodi.f weak stub from 6.1).
+         CALL XVUE_MODULE_INIT( 'flui', 4 )
       ENDIF
 
 C     OUVERTURE DE LA MS
