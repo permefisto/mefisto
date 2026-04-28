@@ -2,16 +2,16 @@
 gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
-status: Ready for Plan 02 (registerFluiActions_stub_ + QAction wiring)
-stopped_at: Completed 06.3-01-PLAN.md (flui lexicon audit, 161 rows, FROZEN)
-last_updated: "2026-04-27T21:32:18.728Z"
-last_activity: 2026-04-27 -- Phase 06.3 Plan 01 complete
+status: Ready for Plan 03 (prpr/ppflui.f CALL XVUE_MODULE_INIT + flui-menu QTests)
+stopped_at: Completed 06.3-02-PLAN.md (registerFluiActions_stub_ strong body + 6 flui SVGs + force-link green)
+last_updated: "2026-04-28T06:50:00.000Z"
+last_activity: 2026-04-28 -- Phase 06.3 Plan 02 complete
 progress:
   total_phases: 17
   completed_phases: 11
   total_plans: 45
-  completed_plans: 44
-  percent: 98
+  completed_plans: 45
+  percent: 100
 ---
 
 # Project State
@@ -26,9 +26,9 @@ See: .planning/PROJECT.md (updated 2026-04-10)
 ## Current Position
 
 Phase: 6.3
-Plan: 01 complete (LEXICON-AUDIT-flui.md FROZEN — 161 rows, 5 toolbar=yes, validator exit 0)
-Status: Ready for Plan 02 (registerFluiActions_stub_ + QAction wiring)
-Last activity: 2026-04-27 -- Phase 06.3 Plan 01 complete
+Plan: 02 complete (registerFluiActions_stub_ strong body + 6 flui SVGs + force-link confirmed in pp/ppflui_qt; ABI 58 preserved; 125/0/3 Qt tests; mail+elas regression guards green)
+Status: Ready for Plan 03 (prpr/ppflui.f CALL XVUE_MODULE_INIT + flui-menu QTests)
+Last activity: 2026-04-28 -- Phase 06.3 Plan 02 complete
 
 Progress: [██████████] 98% (44/45 plans, Phase 6.3 in progress)
 
@@ -66,6 +66,7 @@ Progress: [██████████] 98% (44/45 plans, Phase 6.3 in progre
 | Phase 06.2 P04 | 23m15s | 2 tasks | 5 files |
 | Phase 06.2 P05 | 23m01s | 2 tasks | 3 files |
 | Phase 06.3 P01 | 12min | 2 tasks | 1 files |
+| Phase 06.3 P02 | ~30min | 3 tasks | 10 files |
 
 ## Accumulated Context
 
@@ -104,6 +105,9 @@ Recent decisions affecting current work:
 - [Phase 06.3]: Top-5 toolbar = {2;, 5;, 7;, 10;, 99;} (PHYSICAL-DATA / STEADY-STOKES / IMPLICIT-NS / DRAW-VEL+PRESS / SAVE-QUIT)
 - [Phase 06.3]: Menu taxonomy {File, Fluid, View, Help} (Fluid replaces Solve relative to 6.2)
 - [Phase 06.3]: 6 new flui SVGs queued + 1 reuse (mesh-draw.svg from 6.1); Stokes/NS icons consolidated (5;,6; share solve-stokes.svg; 7;,8;,9; share solve-navier-stokes.svg)
+- [Phase 06.3-02]: Strong registerFluiActions_stub_ ships clean on first build attempt — 6.1 force-link Rule 3 lesson held; nm pp/ppflui_qt | grep ' T registerFluiActions_stub_' = 1
+- [Phase 06.3-02]: Keepalive pair placed alphabetically in xvue_qt_app.cpp (elas/flui/mail); 6.4 ther will land after mail; 6.5 nlse after ther
+- [Phase 06.3-02]: Three modules now pass AUDIT_STRICT_ICONS=1 with no WARN — validator's module-aware resolver from 6.2 needed zero further edits for flui (proves the 6.2 Plan 02 generalization was correctly future-proofed)
 
 ### Roadmap Evolution
 
@@ -124,6 +128,6 @@ None yet.
 
 ## Session Continuity
 
-Last session: 2026-04-27T21:30:01.316Z
-Stopped at: Completed 06.3-01-PLAN.md (flui lexicon audit, 161 rows, FROZEN)
+Last session: 2026-04-28T06:50:00.000Z
+Stopped at: Completed 06.3-02-PLAN.md (registerFluiActions_stub_ strong body + 6 flui SVGs + force-link green; ABI 58; 125/0/3 Qt tests; mail+elas regression guards intact)
 Resume file: None
