@@ -44,11 +44,15 @@ add_library(xvueqt STATIC
 # Phase 6.3 Plan 02 addition: registerFluiActions_stub_ strong body
 # (alphabetical order: elas/flui/mail) wiring all qaction=yes rows +
 # 4 toolbar entries per LEXICON-AUDIT-flui.md.
+# Phase 6.4 Plan 02 addition: registerTherActions_stub_ strong body
+# (alphabetical order: elas/flui/mail/ther — ther LAST) wiring all 37
+# qaction=yes rows + 4 toolbar entries per LEXICON-AUDIT-ther.md.
 target_sources(xvueqt PRIVATE
     src/xvue_qt_menu_file_parser.cpp
     src/xvue_qt_elas_actions.cpp
     src/xvue_qt_flui_actions.cpp
     src/xvue_qt_mail_actions.cpp
+    src/xvue_qt_ther_actions.cpp
 )
 
 # Phase 3 D-01/D-02: bundle DejaVuSansMono.ttf into libxvueqt.a via Qt

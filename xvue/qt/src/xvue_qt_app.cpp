@@ -57,6 +57,9 @@ static const int g_xvue_qt_flui_actions_keepalive_ref =
 extern "C" int xvue_qt_mail_actions_keepalive();
 static const int g_xvue_qt_mail_actions_keepalive_ref =
     xvue_qt_mail_actions_keepalive();
+extern "C" int xvue_qt_ther_actions_keepalive();
+static const int g_xvue_qt_ther_actions_keepalive_ref =
+    xvue_qt_ther_actions_keepalive();
 
 void XvueApp::load_bundled_font_()
 {
@@ -73,6 +76,7 @@ void XvueApp::load_bundled_font_()
     (void)g_xvue_qt_elas_actions_keepalive_ref;
     (void)g_xvue_qt_flui_actions_keepalive_ref;
     (void)g_xvue_qt_mail_actions_keepalive_ref;
+    (void)g_xvue_qt_ther_actions_keepalive_ref;
     font_id_ = QFontDatabase::addApplicationFont(
         QStringLiteral(":/xvue/qt/fonts/DejaVuSansMono.ttf"));
     if (font_id_ < 0) {
