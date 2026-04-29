@@ -383,15 +383,22 @@ extern "C" void registerTherActions_stub_(XvueWindow* win,
             QStringLiteral(":/xvue/qt/icons/icons/ther/draw-temperature.svg")));
         drawTempMenu->addSeparator();
 
-        // 7;1; .. 7;4; -- tempgrad leaves (canonical drawing dispatcher)
+        // 8;1; .. 8;4; -- tempgrad leaves (canonical drawing dispatcher
+        // entered through the temperature TRTHER call at ppther.f:367,
+        // i.e. NTYPDESS=1 temperature path -- not the eigenvector 7;
+        // path which uses the same tempgrad menu but NTYPDESS=2).
+        // LEXICON-AUDIT-ther.md row 215 picks 7; as the canonical
+        // synthetic prefix for tempgrad leaves, but inside this
+        // View > Draw temperatures + flux submenu the 8; entry path
+        // is the semantically correct dispatch.
         drawTempMenu->addAction(makeLeafAction(win, mb,
-            tempgrad.label(1), QStringLiteral("7;1;")));
+            tempgrad.label(1), QStringLiteral("8;1;")));
         drawTempMenu->addAction(makeLeafAction(win, mb,
-            tempgrad.label(2), QStringLiteral("7;2;")));
+            tempgrad.label(2), QStringLiteral("8;2;")));
         drawTempMenu->addAction(makeLeafAction(win, mb,
-            tempgrad.label(3), QStringLiteral("7;3;")));
+            tempgrad.label(3), QStringLiteral("8;3;")));
         drawTempMenu->addAction(makeLeafAction(win, mb,
-            tempgrad.label(4), QStringLiteral("7;4;")));
+            tempgrad.label(4), QStringLiteral("8;4;")));
 
         // View.DrawTemperature.Tractemp submenu -- 2D-temperature canonical
         // (tractemp leaves; qaction=yes subset 1; 2;)
