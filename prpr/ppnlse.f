@@ -137,6 +137,9 @@ C        INITIALISATION DE XVUE
 C        TRACE DU LOGO DE MEFISTO
 C        DRAWING OF MEFISTO LOGO
          CALL LOGO( 'MEFISTO-NLSE' )
+C        Phase 6.5 D-08: register Qt-side module-specific menu actions.
+C        No-op on the X11 backend (xvue/xvmodi.f weak stub from 6.1).
+         CALL XVUE_MODULE_INIT( 'nlse', 4 )
       ENDIF
 C
 cccC     INITIALISATION of PETSC   11/12/2009 Cf bin.petsc
