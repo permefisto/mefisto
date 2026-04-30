@@ -45,13 +45,18 @@ add_library(xvueqt STATIC
 # (alphabetical order: elas/flui/mail) wiring all qaction=yes rows +
 # 4 toolbar entries per LEXICON-AUDIT-flui.md.
 # Phase 6.4 Plan 02 addition: registerTherActions_stub_ strong body
-# (alphabetical order: elas/flui/mail/ther — ther LAST) wiring all 37
-# qaction=yes rows + 4 toolbar entries per LEXICON-AUDIT-ther.md.
+# (alphabetical order: elas/flui/mail/ther) wiring all 37 qaction=yes
+# rows + 4 toolbar entries per LEXICON-AUDIT-ther.md.
+# Phase 6.5 Plan 02 addition: registerNlseActions_stub_ strong body
+# (alphabetical order: elas/flui/mail/nlse/ther — nlse goes BETWEEN
+# mail and ther) wiring all 19 qaction=yes nlse-leaves + 4 toolbar
+# entries per LEXICON-AUDIT-nlse.md. The per-module set is now COMPLETE.
 target_sources(xvueqt PRIVATE
     src/xvue_qt_menu_file_parser.cpp
     src/xvue_qt_elas_actions.cpp
     src/xvue_qt_flui_actions.cpp
     src/xvue_qt_mail_actions.cpp
+    src/xvue_qt_nlse_actions.cpp
     src/xvue_qt_ther_actions.cpp
 )
 
@@ -92,7 +97,7 @@ target_compile_options(xvueqt PRIVATE -fno-openmp -Wall -Wextra -finput-charset=
 # D-12: verify_abi — fail build if symbol count in libxvueqt.a drifts from the
 # extern "C" declaration count in the public header. This is the whole-project
 # ABI drift guard; it runs on every build.
-# Expected count after Option A resolution of Planner Alert: 57.
+# Expected count after Option A resolution of Planner Alert: 58.
 add_custom_target(verify_abi ALL
     COMMAND ${CMAKE_COMMAND} -E echo "verify_abi: counting ABI symbols in libxvueqt.a..."
     COMMAND sh ${CMAKE_CURRENT_SOURCE_DIR}/cmake/verify_abi.sh

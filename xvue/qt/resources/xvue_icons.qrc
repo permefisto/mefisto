@@ -37,5 +37,11 @@
     <file>icons/ther/solve-wave.svg</file>
     <file>icons/ther/draw-temperature.svg</file>
     <file>icons/ther/draw-iso-surface.svg</file>
+    <!-- Phase 6.5 nlse (nonlinear) icons - UX-05 nlse slice                  -->
+    <file>icons/nlse/nlse-object.svg</file>
+    <file>icons/nlse/nlse-input.svg</file>
+    <file>icons/nlse/solve-nlse-implicit.svg</file>
+    <file>icons/nlse/draw-nlse-modulus.svg</file>
+    <file>icons/nlse/draw-nlse-component.svg</file>
   </qresource>
 </RCC>

@@ -1,0 +1,7 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="24" height="24"
+     fill="none" stroke="currentColor" stroke-width="2"
+     stroke-linecap="round" stroke-linejoin="round">
+  <!-- abstract NLSE wave packet: bell envelope + sinusoid -->
+  <path d="M 2 12 Q 8 4 12 12 T 22 12" />
+  <path d="M 4 16 Q 7 14 9 18 T 13 14 T 17 18 T 22 14" stroke-dasharray="2 2"/>
+</svg>

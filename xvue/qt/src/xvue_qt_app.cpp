@@ -44,10 +44,10 @@ int XvueApp::blockingDepth() { return blockingDepth_; }
 // Phase 6.1 Plan 03 Rule 3 auto-fix: force-link the per-module
 // strong-override TUs. See xvue_qt_mail_actions.cpp for the full
 // rationale. Without these keepalive references, GNU ld stops at the
-// weak stub in xvue_qt_api.cpp.o and never pulls the mail/elas/flui/
-// ther/nlse actions TUs from libxvueqt.a. 6.2 added elas; 6.3 adds
-// flui (alphabetical: elas/flui/mail); 6.4..6.5 will add ther/nlse
-// after mail.
+// weak stub in xvue_qt_api.cpp.o and never pulls the per-module
+// actions TUs from libxvueqt.a. 6.2 added elas; 6.3 added flui;
+// 6.4 added ther; 6.5 adds nlse - the per-module set is now COMPLETE
+// (alphabetical: elas/flui/mail/nlse/ther).
 extern "C" int xvue_qt_elas_actions_keepalive();
 static const int g_xvue_qt_elas_actions_keepalive_ref =
     xvue_qt_elas_actions_keepalive();
@@ -57,6 +57,9 @@ static const int g_xvue_qt_flui_actions_keepalive_ref =
 extern "C" int xvue_qt_mail_actions_keepalive();
 static const int g_xvue_qt_mail_actions_keepalive_ref =
     xvue_qt_mail_actions_keepalive();
+extern "C" int xvue_qt_nlse_actions_keepalive();
+static const int g_xvue_qt_nlse_actions_keepalive_ref =
+    xvue_qt_nlse_actions_keepalive();
 extern "C" int xvue_qt_ther_actions_keepalive();
 static const int g_xvue_qt_ther_actions_keepalive_ref =
     xvue_qt_ther_actions_keepalive();
@@ -76,6 +79,7 @@ void XvueApp::load_bundled_font_()
     (void)g_xvue_qt_elas_actions_keepalive_ref;
     (void)g_xvue_qt_flui_actions_keepalive_ref;
     (void)g_xvue_qt_mail_actions_keepalive_ref;
+    (void)g_xvue_qt_nlse_actions_keepalive_ref;
     (void)g_xvue_qt_ther_actions_keepalive_ref;
     font_id_ = QFontDatabase::addApplicationFont(
         QStringLiteral(":/xvue/qt/fonts/DejaVuSansMono.ttf"));

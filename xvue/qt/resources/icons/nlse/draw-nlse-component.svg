@@ -1,0 +1,7 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="24" height="24"
+     fill="none" stroke="currentColor" stroke-width="2"
+     stroke-linecap="round" stroke-linejoin="round">
+  <!-- centered axis + sinusoidal component (Re U or Im U) -->
+  <line x1="2" y1="12" x2="22" y2="12" stroke-dasharray="1 2" />
+  <path d="M 2 12 Q 5 4 8 12 T 14 12 T 20 12" />
+</svg>

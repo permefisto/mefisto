@@ -1,0 +1,9 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="24" height="24"
+     fill="none" stroke="currentColor" stroke-width="2"
+     stroke-linecap="round" stroke-linejoin="round">
+  <!-- 'i' marker (left) + input box framing a wave -->
+  <line x1="3" y1="4" x2="3" y2="6" />
+  <line x1="3" y1="9" x2="3" y2="20" />
+  <rect x="6" y="4" width="14" height="16" rx="1" />
+  <path d="M 8 12 Q 11 8 13 12 T 18 12" />
+</svg>
