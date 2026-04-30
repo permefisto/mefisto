@@ -244,6 +244,39 @@ target_include_directories(xvue_qt_flui_menu_tests PRIVATE
 target_compile_definitions(xvue_qt_flui_menu_tests PRIVATE XVUE_QT_TESTING)
 
 # ---------------------------------------------------------------------------
+# Phase 6.5 Plan 03 (D-13 nlse port): nonlinear menu round-trip tests.
+# 4 required cases + 1 bonus closeEvent + testMenuOrder + testBilingualLabelsEnglish.
+# Mirrors the 6.4 xvue_qt_ther_menu_tests target verbatim, substituting nlse
+# for ther. testMenuOrder codifies the {File, Nonlinear, View, Help} gate.
+# testBilingualLabelsEnglish codifies the EN-parser gate against td/ma/debunlse.
+# testHelpNoQueue allowlist: {97;} per LEXICON-AUDIT-nlse row 97 (NOT {98;} --
+# that's ther's value; matches flui's; codifies the 6.3 Plan 03 Auto-fix
+# Rule 1 lesson). Placed BETWEEN mail and ther blocks alphabetically
+# (elas/flui/mail/nlse/ther) so 'mail' < 'nlse' < 'ther' in source order.
+# ---------------------------------------------------------------------------
+add_executable(xvue_qt_nlse_menu_tests
+    test_xvue_qt_nlse_menu.cpp
+    test_helpers.cpp
+)
+target_link_libraries(xvue_qt_nlse_menu_tests
+    PRIVATE
+        xvueqt
+        Qt6::Test
+        Qt6::Widgets
+        Qt6::Gui
+        Qt6::Core
+)
+target_include_directories(xvue_qt_nlse_menu_tests PRIVATE
+    ${CMAKE_CURRENT_SOURCE_DIR}/..
+    ${CMAKE_CURRENT_SOURCE_DIR}/../src
+    ${CMAKE_CURRENT_SOURCE_DIR}/../include
+)
+# Enable test-only API in XvueMenuFileParser (clearCacheForTesting)
+# and xvue_qt_i18n (xvueClearLanguageCacheForTesting).
+# Required for testBilingualLabelsEnglish. Mirrors elas/flui/ther targets.
+target_compile_definitions(xvue_qt_nlse_menu_tests PRIVATE XVUE_QT_TESTING)
+
+# ---------------------------------------------------------------------------
 # Phase 6.4 Plan 03 (D-13 ther port): thermal menu round-trip tests.
 # 4 required cases + 1 bonus closeEvent + testMenuOrder + testBilingualLabelsEnglish.
 # Mirrors the 6.3 xvue_qt_flui_menu_tests target verbatim, substituting ther
