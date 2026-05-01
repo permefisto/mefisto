@@ -222,9 +222,9 @@ Plans:
 **Requirements**: UX-05 (nlse slice)
 **Success Criteria**: same pattern as 6.1, substituting `nlse` for `mail`.
 **Plans**: 3 plans
-  - [ ] 06.5-01-PLAN.md — LEXICON-AUDIT-nlse.md full LIMTCL tree walk + domain-review frequency bucketing + Help-allowlist {97;} hand-off (no .nlse fixtures exist; pure domain-review unlike ther's gourd evidence)
-  - [ ] 06.5-02-PLAN.md — registerNlseActions_stub_ strong body + xvue_qt_nlse_actions_keepalive (alphabetical: between mail and ther) + 5 custom SVG icons + xvue_icons.qrc append + CMake wiring
-  - [ ] 06.5-03-PLAN.md — prpr/ppnlse.f CALL XVUE_MODULE_INIT('nlse', 4) insertion (after single-language LOGO, follows flui pattern NOT ther bilingual) + 7 QTest slots (4 D-13 + closeEvent + testMenuOrder + testBilingualLabelsEnglish) — fully autonomous, no manual A/B checkpoint
+  - [x] 06.5-01-PLAN.md — LEXICON-AUDIT-nlse.md full LIMTCL tree walk + domain-review frequency bucketing + Help-allowlist {97;} hand-off (no .nlse fixtures exist; pure domain-review unlike ther's gourd evidence)
+  - [x] 06.5-02-PLAN.md — registerNlseActions_stub_ strong body + xvue_qt_nlse_actions_keepalive (alphabetical: between mail and ther) + 5 custom SVG icons + xvue_icons.qrc append + CMake wiring
+  - [x] 06.5-03-PLAN.md — prpr/ppnlse.f CALL XVUE_MODULE_INIT('nlse', 4) insertion (after single-language LOGO, follows flui pattern NOT ther bilingual) + 7 QTest slots (4 D-13 + closeEvent + testMenuOrder + testBilingualLabelsEnglish) — fully autonomous, no manual A/B checkpoint
 **UI hint**: no
 
 ### Phase 7: Image, GIF, and PostScript export
