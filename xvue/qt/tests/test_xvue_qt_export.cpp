@@ -184,11 +184,15 @@ private slots:
     }
 
     // ---- Test 4: PDF page geometry (Pitfall 7) -------------------------
-    // 800x600 logical canvas at 72 dpi → /MediaBox [0 0 800 600] (or with
-    // trailing space variants). Reads the produced .pdf bytes and greps
-    // for the literal substring. Qt's QPdfWriter format: spaces between
-    // numbers are deterministic but the bracket spacing can vary, so we
-    // accept several spacing variants.
+    // 800x600 logical canvas at 72 dpi → MediaBox encodes 800 × 600 in PDF
+    // points. Reads the produced .pdf bytes and matches one of the spacing/
+    // numeric-format variants Qt's QPdfWriter is observed to emit:
+    //   /MediaBox [0 0 800 600]              (integer literals)
+    //   /MediaBox [ 0 0 800 600 ]            (integer literals, padded)
+    //   /MediaBox [0 0 800.000000 600.000000] (Qt 6.10 float-format actual)
+    // The last form is what the running Qt 6.10.2 build emits at the
+    // moment; we accept any of the three so the test survives Qt format
+    // tweaks across versions but still locks the page-geometry contract.
     void XvueExport_pdf_geometry_72dpi_logical() {
         prepareCanvas800x600();
         const QString path = tmpDir_.path() + "/geometry_800x600.pdf";
@@ -202,18 +206,18 @@ private slots:
         const QByteArray bytes = f.readAll();
         f.close();
 
-        // Accept either spacing format Qt may emit:
-        //   /MediaBox [0 0 800 600]
-        //   /MediaBox [ 0 0 800 600 ]
-        const bool tightForm  = bytes.contains("/MediaBox [0 0 800 600]");
-        const bool spacedForm = bytes.contains("/MediaBox [ 0 0 800 600 ]");
-        const bool found = tightForm || spacedForm;
+        // Accept either integer or float numeric format (Qt 6.10 emits floats).
+        const bool tightInt    = bytes.contains("/MediaBox [0 0 800 600]");
+        const bool spacedInt   = bytes.contains("/MediaBox [ 0 0 800 600 ]");
+        const bool tightFloat  = bytes.contains("/MediaBox [0 0 800.000000 600.000000]");
+        const bool spacedFloat = bytes.contains("/MediaBox [ 0 0 800.000000 600.000000 ]");
+        const bool found = tightInt || spacedInt || tightFloat || spacedFloat;
         if (!found) {
-            // Surface a leading hex-ish dump so the diagnostic is useful.
+            // Surface a leading byte-encoded dump so the diagnostic is useful.
             const int idx = bytes.indexOf("/MediaBox");
             QFAIL(qPrintable(QStringLiteral(
-                "expected /MediaBox [0 0 800 600] (any spacing); idx=%1; "
-                "first 64 bytes after MediaBox: %2")
+                "expected /MediaBox encoding 800 × 600 (any int/float form); "
+                "idx=%1; first 64 bytes after MediaBox: %2")
                 .arg(idx)
                 .arg(QString::fromLatin1(
                      bytes.mid(idx >= 0 ? idx : 0, 64).toPercentEncoding()))));

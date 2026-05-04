@@ -9,7 +9,16 @@ enum class MsgId : int {
     AppName,
     FileMenuTitle, FileOpen, FileOpenTip, FileSave, FileSaveTip,
     FileSaveAs, FileRecentSubmenu, FileRecentClear, FileRecentClearConfirmTitle,
-    FileExport, FileQuit, FileQuitTip,
+    FileExport,                                  // existing — repurposed as submenu title (Plan 04)
+    // Phase 7 Plan 04 (EXPORT-02, EXPORT-05): File → Export submenu strings.
+    // Plan 05 will add FileExportGif + FileCaptureAnimation entries; both
+    // belong AFTER the Pdf entries in alphabetical / submenu order.
+    FileExportPng,        FileExportJpeg,        FileExportPdf,
+    FileExportPngDialogTitle, FileExportJpegDialogTitle, FileExportPdfDialogTitle,
+    FileExportPngFilter,  FileExportJpegFilter,  FileExportPdfFilter,
+    ExportPngFailed,      ExportJpegFailed,      ExportPdfFailed,
+    ExportNoCanvas,
+    FileQuit, FileQuitTip,
     ViewMenuTitle, ViewToolbar, ViewConsole, ViewZoomIn, ViewZoomOut, ViewFit, ViewPreferences,
     HelpMenuTitle, HelpDocumentation, HelpAbout,
     ConsoleTitle, StatusCoordFormat, ModalRefuse, ErrorMsgBoxTitle,

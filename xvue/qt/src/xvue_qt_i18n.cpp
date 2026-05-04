@@ -47,6 +47,22 @@ constexpr std::array<Entry, static_cast<size_t>(MsgId::_Count_)> kTable = {{
     {"Effacer les projets récents ?",
      "Clear Recent Projects?"},                                         // FileRecentClearConfirmTitle
     {"E&xporter…",             "E&xport…"},                             // FileExport
+    // Phase 7 Plan 04 (EXPORT-02, EXPORT-05): File → Export submenu rows.
+    // Order MUST match the MsgId enum extension in xvue_qt_i18n.h. Plan 05
+    // will add FileExportGif + FileCaptureAnimation rows after Pdf entries.
+    {"PNG…",                   "PNG…"},                                 // FileExportPng
+    {"JPEG…",                  "JPEG…"},                                // FileExportJpeg
+    {"PDF…",                   "PDF…"},                                 // FileExportPdf
+    {"Exporter en PNG…",       "Export to PNG…"},                       // FileExportPngDialogTitle
+    {"Exporter en JPEG…",      "Export to JPEG…"},                      // FileExportJpegDialogTitle
+    {"Exporter en PDF…",       "Export to PDF…"},                       // FileExportPdfDialogTitle
+    {"Images PNG (*.png)",     "PNG images (*.png)"},                   // FileExportPngFilter
+    {"Images JPEG (*.jpg *.jpeg)", "JPEG images (*.jpg *.jpeg)"},       // FileExportJpegFilter
+    {"Documents PDF (*.pdf)",  "PDF documents (*.pdf)"},                // FileExportPdfFilter
+    {"Échec de l'export PNG",  "PNG export failed"},                    // ExportPngFailed
+    {"Échec de l'export JPEG", "JPEG export failed"},                   // ExportJpegFailed
+    {"Échec de l'export PDF",  "PDF export failed"},                    // ExportPdfFailed
+    {"Aucun dessin à exporter","No canvas to export"},                  // ExportNoCanvas
     {"&Quitter",               "&Quit"},                                // FileQuit
     {"Quitter MEFISTO (Ctrl+Q)","Quit MEFISTO (Ctrl+Q)"},                // FileQuitTip
     {"&Affichage",             "&View"},                                // ViewMenuTitle
