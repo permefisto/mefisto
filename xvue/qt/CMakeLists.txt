@@ -142,6 +142,15 @@ add_custom_target(verify_icon_source ALL
     VERBATIM
 )
 
+# Phase 7 Plan 01 (EXPORT-01): probes/ subdirectory holds standalone probe
+# binaries (e.g., qimagewriter_probe). Gated so the canonical bin/cbl_tout
+# and bin/cbl_tout_qt builds do not depend on it; bin/cb_probe_qt enables
+# the option explicitly.
+option(XVUE_QT_BUILD_PROBES "Build xvue/qt/probes/* standalone binaries" OFF)
+if(XVUE_QT_BUILD_PROBES)
+    add_subdirectory(probes)
+endif()
+
 # D-13: install target so the shell scripts can locate libxvueqt.a by a stable path
 install(TARGETS xvueqt
     ARCHIVE DESTINATION ${CMAKE_CURRENT_SOURCE_DIR}/lib
