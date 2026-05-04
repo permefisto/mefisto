@@ -172,5 +172,14 @@ if(XVUE_QT_BUILD_TESTS)
     # The define is scoped to test builds only (XVUE_QT_BUILD_TESTS=ON);
     # production builds of libxvueqt.a never include this define.
     target_compile_definitions(xvueqt PRIVATE XVUE_QT_TESTING)
+    # Phase 7 Plan 02 (EXPORT-04): enable_testing() must live in the parent
+    # CMakeLists.txt so `ctest -R xvue_qt_postscript_tests` from the build
+    # root finds tests registered via add_test() inside the tests/
+    # subdirectory. Calling enable_testing() only in tests/CMakeLists.txt
+    # registers tests in tests/CTestTestfile.cmake which the build-root
+    # CTest config never references — VALIDATION.md row 07-02-01's
+    # `ctest -R '^xvue_qt_postscript_tests$'` from xvue/qt/build/ would
+    # then report "No tests were found".
+    enable_testing()
     add_subdirectory(tests)
 endif()

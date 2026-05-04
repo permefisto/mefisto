@@ -82,8 +82,20 @@ private slots:
 
     // Test 2 — state machine, mode 100 erase reopens TEMPORAIRE.EPS and
     // resets the iTe/iFa/ity/iep/iPo/ire/iRe/iel/iEl/iFP macro counters.
-    // handleLasops(1), then handleLasops(101) — fpo_ closed/reopened;
-    // lasopsc_ ends at 1 (101-100).
+    //
+    // VERBATIM semantics from xvuelc.c:1286 — `lasopsc = lasopsc - 100`
+    // subtracts 100 from the EXISTING lasopsc_ (the file-static), NOT
+    // from the incoming lasops parameter. The legacy callers (effacer at
+    // xvuelc.c:1414, 1435) update the file-static lasopsc to (100 + old)
+    // BEFORE the recursive call, so 100+1 - 100 == 1 yields the expected
+    // "post-erase" state. From a test that calls handleLasops(101)
+    // directly without that caller-side mutation, lasopsc_ goes
+    // 1 - 100 == -99, which is the verbatim-correct outcome.
+    //
+    // What the test verifies:
+    //  - mode-100 branch was entered (lasopsc_ ended at -99, not 101)
+    //  - fpo_ was closed and reopened (TEMPORAIRE.EPS still exists)
+    //  - 100-subtract executed (sentinel: -99 == 1 - 100)
     void PsEmitter_handleLasops_mode100_reset() {
         PsEmitter pe;
         pe.handleLasops(1);
@@ -92,8 +104,8 @@ private slots:
         QVERIFY(before != nullptr);
 
         pe.handleLasops(101);
-        // After mode-100 fall-through, lasopsc_ == 101 - 100 == 1.
-        QCOMPARE(pe.lasopsc(), 1);
+        // Verbatim: lasopsc_ (was 1) - 100 == -99. NOT 101-100=1.
+        QCOMPARE(pe.lasopsc(), -99);
         // The fpo_ pointer was closed and reopened — should be non-null
         // again (file rewritten under the same name).
         QVERIFY(pe.fpoForTesting() != nullptr);
