@@ -382,6 +382,177 @@ private slots:
         // No TEMPORAIRE.EPS on disk either.
         QVERIFY(!QFile::exists("TEMPORAIRE.EPS"));
     }
+
+    // ===== Plan 06 byte-level golden tests =====
+    //
+    // The two slots below are the EXPORT-04 byte-parity gate. Each one
+    // emits a fixed sequence of primitives via PsEmitter direct calls,
+    // captures TEMPORAIRE.EPS, and byte-compares against a committed
+    // golden file produced by the X11 backend on the corresponding
+    // scene driver (xvue/qt/tests/golden/scene01_driver.f for the
+    // full-scene slot; the per-primitive slot uses tiny inline scenes
+    // whose expected bytes are inlined directly).
+    //
+    // Until xvue/qt/tests/golden/scene01.eps exists in the repository
+    // (Plan 06 Task 3 human-checkpoint procedure materializes it from
+    // the X11 backend), the full-scene slot QSKIPs cleanly with a
+    // message pointing at the bootstrap procedure.  Once the golden
+    // lands, the slot flips from QSKIP to PASS-required automatically —
+    // any drift in PsEmitter::handleLasops or per-primitive helpers
+    // fails the byte compare.
+    //
+    // The per-primitive slot is independent of the .eps golden file
+    // (its expected substrings are inlined) so it always runs.
+
+    // Test 15 — full-scene byte-level golden compare.
+    //
+    // The canonical scene mirrors xvue/qt/tests/golden/scene01_driver.f
+    // (kept in lockstep via this comment block + the .f header). If the
+    // driver changes the golden MUST be regenerated via the Plan 06
+    // Task 3 procedure documented in the .f file.
+    //
+    // The path is resolved by preferring $MEFISTO; falling back to
+    // walking up from the test cwd until xvue/qt/tests/golden/ is
+    // located. This lets developers run the test from xvue/qt/build/
+    // without exporting MEFISTO every time.
+    void PsEmitter_postscriptVerbatim_golden() {
+        QString goldenPath;
+        const QByteArray mefistoEnv = qgetenv("MEFISTO");
+        if (!mefistoEnv.isEmpty()) {
+            goldenPath = QString::fromLocal8Bit(mefistoEnv)
+                         + "/xvue/qt/tests/golden/scene01.eps";
+        }
+        if (goldenPath.isEmpty() || !QFile::exists(goldenPath)) {
+            // Walk up from cwd looking for the canonical layout. Test
+            // chdirs INTO a per-test scratch QTemporaryDir so we have
+            // to backtrack through arbitrary parents up to the repo
+            // root.
+            QDir d(origCwd_);
+            for (int i = 0; i < 16; ++i) {
+                if (d.exists("xvue/qt/tests/golden")) {
+                    goldenPath = d.absoluteFilePath(
+                        "xvue/qt/tests/golden/scene01.eps");
+                    break;
+                }
+                if (!d.cdUp()) break;
+            }
+        }
+        if (goldenPath.isEmpty() || !QFile::exists(goldenPath)) {
+            QSKIP("scene01.eps not yet bootstrapped — run Plan 06 Task 3 "
+                  "(human checkpoint) to compile scene01_driver.f against "
+                  "the X11 backend and commit the resulting TEMPORAIRE.EPS "
+                  "as xvue/qt/tests/golden/scene01.eps. After Task 3 "
+                  "commits the golden file, this slot flips from QSKIP "
+                  "to PASS-required.");
+        }
+
+        // Drive the same primitive sequence as scene01_driver.f via
+        // direct PsEmitter calls. The X11 backend's emit format strings
+        // are byte-identical to PsEmitter's (Plan 03 Format-String
+        // Parity Table) so the captured TEMPORAIRE.EPS must match the
+        // golden byte-for-byte.
+        PsEmitter pe;
+        pe.setCanvasDims(800, 600);
+        pe.setCourgbForTesting(0.0f, 0.0f, 0.0f);
+        pe.setCounbForTesting(-1.0f);
+
+        pe.handleLasops(1);
+
+        pe.epaisseur(3);
+        pe.typetrait(2);
+
+        pe.line( 10,  20,  30,  40);
+        pe.line( 50,  60,  70,  80);
+        pe.line( 90, 100, 110, 120);
+        pe.line(130, 140, 150, 160);
+        pe.line(170, 180, 190, 200);
+
+        MefistoPoint tri1[3] = {{ 10,  20}, { 30,  40}, { 50,  60}};
+        pe.face(tri1, 3);
+        MefistoPoint tri2[3] = {{ 70,  80}, { 90, 100}, {110, 120}};
+        pe.face(tri2, 3);
+
+        pe.bordarcellipse(100, 100, 50, 30, 0.0f, 360.0f);
+
+        pe.chargefonte("Courier", 12, 10, 3, false, false);
+        pe.texte("Hello PS", 8, 50, 50);
+        pe.texte("MEFISTO", 7, 100, 100);
+
+        pe.handleLasops(0);
+
+        QFile produced(QStringLiteral("TEMPORAIRE.EPS"));
+        QVERIFY(produced.open(QIODevice::ReadOnly));
+        const QByteArray actual = produced.readAll();
+        produced.close();
+
+        QFile golden(goldenPath);
+        QVERIFY(golden.open(QIODevice::ReadOnly));
+        const QByteArray expected = golden.readAll();
+        golden.close();
+
+        // Byte-for-byte. A failing diff is a hard test failure — there
+        // is no manual-eye comparison fallback. Per CONTEXT.md D-06 the
+        // legacy emit format strings are the contract.
+        QCOMPARE(actual, expected);
+    }
+
+    // Test 16 — per-primitive golden coverage (no external golden file
+    // required). A short inline scene exercises one of each helper and
+    // asserts the verbatim byte substrings from the Plan 03 Format-
+    // String Parity Table. If the full-scene Test 15 ever flags a
+    // mismatch, this finer-grained slot tells you WHICH helper drifted.
+    void PsEmitter_perPrimitive_golden() {
+        PsEmitter pe;
+        pe.setCanvasDims(800, 600);
+        pe.setCourgbForTesting(1.00f, 0.50f, 0.25f);
+        pe.setCounbForTesting(-1.0f);
+        pe.handleLasops(1);
+
+        pe.line(10, 20, 30, 40);
+        pe.epaisseur(3);
+        pe.typetrait(2);
+        MefistoPoint tri[3] = {{ 10,  20}, { 30,  40}, { 50,  60}};
+        pe.face(tri, 3);
+        pe.chargefonte("Courier", 12, 10, 3, false, false);
+
+        pe.handleLasops(0);
+
+        QFile f(QStringLiteral("TEMPORAIRE.EPS"));
+        QVERIFY(f.open(QIODevice::ReadOnly));
+        const QByteArray contents = f.readAll();
+        f.close();
+
+        // line() — xvuelc.c:1958 (counb_==-1 branch), Y-flipped.
+        QVERIFY2(contents.contains(" S\n"),
+                 QByteArray("expected ' S\\n' segment opcode: ")
+                 + contents.left(200));
+        QVERIFY2(contents.contains("1.00 0.50 0.25 0.00 S\n"),
+                 QByteArray("expected courgb+counb verbatim 'S' line: ")
+                 + contents.left(200));
+
+        // epaisseur — xvuelc.c:1895.
+        QVERIFY2(contents.contains(" 3 epais\n"),
+                 QByteArray("expected ' 3 epais\\n': ")
+                 + contents.left(200));
+
+        // typetrait — xvuelc.c:1856 (verb is 'typet', not 'typtr').
+        QVERIFY2(contents.contains(" 2 typet\n"),
+                 QByteArray("expected ' 2 typet\\n': ")
+                 + contents.left(200));
+
+        // face — xvuelc.c:1799 close-and-fill 'F' opcode.
+        QVERIFY2(contents.contains(" F\n"),
+                 QByteArray("expected ' F\\n' close-and-fill: ")
+                 + contents.left(200));
+
+        // chargefonte — xvuelc.c:1553 'charge' verb (NOT findfont/setfont).
+        QVERIFY2(contents.contains("/Courier"),
+                 QByteArray("expected '/Courier' PS family: ")
+                 + contents.left(200));
+        QVERIFY2(contents.contains("charge\n"),
+                 QByteArray("expected 'charge\\n' verb (verbatim): ")
+                 + contents.left(200));
+    }
 };
 
 int main(int argc, char* argv[]) {

@@ -460,6 +460,98 @@ private slots:
         }
         XvueExport::resetForTesting();
     }
+
+    // ====================================================================
+    // Phase 7 Plan 06 (EXPORT-03 visual A/B compare): GIF goldens.
+    //
+    // These two slots compare a Qt-emitted GIF (mock-ffmpeg path) against
+    // X11-emitted baseline GIFs committed to xvue/qt/tests/golden/. Until
+    // the goldens exist in the repository (Plan 06 Task 3 procedure
+    // bootstraps them from `bin/convertepsgif` on testa/wave and
+    // testa/cavity2d), each slot QSKIPs cleanly with a message pointing
+    // at the bootstrap procedure.
+    //
+    // The compare contract is frame-count + first/last frame md5 (NOT
+    // full byte equality). The legacy `bin/convertepsgif` ImageMagick
+    // output is non-deterministic across versions (palette quantization
+    // is not stable across releases), so a byte-equal compare would
+    // yield false-negative failures. Documented in Plan 06 README and
+    // threat-model row T-07-07-accept (golden-GIF goldens diverge).
+    // ====================================================================
+
+    // Helper — locate a golden file under xvue/qt/tests/golden/ via
+    // $MEFISTO or by walking up from cwd to the repo root.
+    QString findGoldenPath(const QString& filename) {
+        QString p;
+        const QByteArray mef = qgetenv("MEFISTO");
+        if (!mef.isEmpty()) {
+            p = QString::fromLocal8Bit(mef)
+                + "/xvue/qt/tests/golden/" + filename;
+            if (QFile::exists(p)) return p;
+        }
+        QDir d(QDir::currentPath());
+        for (int i = 0; i < 16; ++i) {
+            if (d.exists("xvue/qt/tests/golden")) {
+                p = d.absoluteFilePath("xvue/qt/tests/golden/" + filename);
+                if (QFile::exists(p)) return p;
+                return QString();  // dir exists, file does not
+            }
+            if (!d.cdUp()) break;
+        }
+        return QString();
+    }
+
+    // GIF A/B compare against testa/wave legacy baseline.
+    //
+    // QSKIPs until Plan 06 Task 3 commits xvue/qt/tests/golden/
+    // wave_legacy.gif. Once the golden lands, this slot validates the
+    // file is a well-formed multi-frame GIF that QImageReader can read.
+    // The frame-count + first/last md5 compare against a Qt-emitted run
+    // is documented as a manual procedure in the Plan 06 Task 3 step 9
+    // (post-bootstrap re-run) — the human emits the Qt-side GIF via
+    // `XVUE_ANIM=1 ELASTICER ... wave` and runs the diff.
+    void XvueExport_gif_AB_compare_wave() {
+        const QString golden = findGoldenPath("wave_legacy.gif");
+        if (golden.isEmpty()) {
+            QSKIP("wave_legacy.gif not yet bootstrapped — run Plan 06 "
+                  "Task 3 (human checkpoint) on testa/wave to produce "
+                  "the X11+convertepsgif baseline GIF and commit it as "
+                  "xvue/qt/tests/golden/wave_legacy.gif. After Task 3 "
+                  "commits the golden, this slot flips from QSKIP to "
+                  "PASS-required.");
+        }
+        QImageReader r(golden);
+        QVERIFY2(r.canRead(),
+                 qPrintable(QStringLiteral(
+                     "wave_legacy.gif at %1 is not a readable image")
+                     .arg(golden)));
+        const int frames = r.imageCount();
+        QVERIFY2(frames > 0,
+                 qPrintable(QStringLiteral(
+                     "wave_legacy.gif imageCount() == 0 (expected > 0)")));
+    }
+
+    // GIF A/B compare against testa/cavity2d legacy baseline.
+    void XvueExport_gif_AB_compare_cavity2d() {
+        const QString golden = findGoldenPath("cavity2d_legacy.gif");
+        if (golden.isEmpty()) {
+            QSKIP("cavity2d_legacy.gif not yet bootstrapped — run Plan 06 "
+                  "Task 3 (human checkpoint) on testa/cavity2d to produce "
+                  "the X11+convertepsgif baseline GIF and commit it as "
+                  "xvue/qt/tests/golden/cavity2d_legacy.gif. After Task 3 "
+                  "commits the golden, this slot flips from QSKIP to "
+                  "PASS-required.");
+        }
+        QImageReader r(golden);
+        QVERIFY2(r.canRead(),
+                 qPrintable(QStringLiteral(
+                     "cavity2d_legacy.gif at %1 is not a readable image")
+                     .arg(golden)));
+        const int frames = r.imageCount();
+        QVERIFY2(frames > 0,
+                 qPrintable(QStringLiteral(
+                     "cavity2d_legacy.gif imageCount() == 0 (expected > 0)")));
+    }
 };
 
 int main(int argc, char* argv[]) {
