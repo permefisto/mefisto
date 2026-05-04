@@ -204,6 +204,31 @@ void XvueWindow::buildMenuBar() {
     connect(actExportPdf_, &QAction::triggered,
             this,          &XvueWindow::onFileExportPdf);
 
+    // Phase 7 Plan 05 (EXPORT-03): GIF entry in the same Export submenu.
+    // Submenu order: PNG → JPEG → PDF → GIF. GIF goes last because the
+    // canvas-snapshot exports (PNG/JPEG/PDF) are ALWAYS available, while
+    // GIF requires a pending animation frame buffer (auto-snapshot capture
+    // active or already populated).
+    actExportGif_ = exportMenu_->addAction(xvueT(MsgId::FileExportGif));
+    actExportGif_->setObjectName(QStringLiteral("FileExportGif"));
+    connect(actExportGif_, &QAction::triggered,
+            this,          &XvueWindow::onFileExportGif);
+
+    fileMenu->addSeparator();
+
+    // Phase 7 Plan 05 (D-02 EXPORT-03): File → Capture Animation toggle.
+    // Lives directly under File (not inside Export submenu) because it is
+    // a state toggle, not an output action. Checked state mirrors
+    // XvueExport::isCaptureActive(); env-var XVUE_ANIM=1 has the same
+    // effect at process boot via XvueApp::ensure → checkEnvAutoStart.
+    actCaptureAnimation_ = new QAction(xvueT(MsgId::FileCaptureAnimation), this);
+    actCaptureAnimation_->setObjectName(QStringLiteral("FileCaptureAnimation"));
+    actCaptureAnimation_->setCheckable(true);
+    actCaptureAnimation_->setChecked(XvueExport::isCaptureActive());
+    connect(actCaptureAnimation_, &QAction::triggered,
+            this,                 &XvueWindow::onFileToggleCaptureAnimation);
+    fileMenu->addAction(actCaptureAnimation_);
+
     fileMenu->addSeparator();
 
     actQuit_ = new QAction(xvueT(MsgId::FileQuit), this);
@@ -391,6 +416,28 @@ void XvueWindow::onFileExportJpeg() {
 void XvueWindow::onFileExportPdf()  {
     if (refuseIfBlocking()) return;
     XvueExport::onMenuExportPdf();
+}
+
+// ---- Phase 7 Plan 05 (EXPORT-03): GIF + Capture-Animation slot bodies ----
+// onFileExportGif: prompts via QFileDialog (QSettings-remembered last_dir)
+// and assembles the in-memory frame buffer to a .gif. Refuses when a Fortran
+// blocking-read is active so we don't fire QFileDialog inside a picking loop.
+//
+// onFileToggleCaptureAnimation: flips the auto-snapshot capture state, then
+// reflects the resulting state into the QAction's checked flag so the menu
+// reads the same way as the program state. NEVER refuseIfBlocking — toggling
+// capture is harmless during a Fortran blocking read; it does not pop a
+// modal or queue any Fortran-side lexicon.
+void XvueWindow::onFileExportGif() {
+    if (refuseIfBlocking()) return;
+    XvueExport::onMenuExportGif();
+}
+
+void XvueWindow::onFileToggleCaptureAnimation() {
+    XvueExport::onMenuToggleCapture();
+    if (actCaptureAnimation_) {
+        actCaptureAnimation_->setChecked(XvueExport::isCaptureActive());
+    }
 }
 
 void XvueWindow::onFileQuit() {

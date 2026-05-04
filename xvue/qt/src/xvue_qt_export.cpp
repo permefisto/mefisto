@@ -378,7 +378,8 @@ void XvueExport::endAnimation() {
     g_capture_active = false;
     if (g_pending_frames.isEmpty()) return;
 
-    // Default output: cwd/animation.gif (D-03 legacy compat with bin/convertepsgif).
+    // Default output: cwd/animation.gif (D-03 legacy filename compat with
+    // the legacy post-processor under bin/ — see CONTEXT.md D-03).
     const QString defaultPath = QDir::current().filePath(QStringLiteral("animation.gif"));
     saveGifTo(defaultPath, /*interactive=*/false);
 }
