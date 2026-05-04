@@ -217,12 +217,13 @@ void PsEmitter::handleLasops(int lasops) {
     }
 }
 
-// Per-primitive emit helpers — bodies land in Plan 03. Empty in Plan 02.
-// Kept as no-op stubs so the libxvueqt.a links and the header signatures
-// are frozen for downstream consumers that may #include this header.
+// Per-primitive emit helpers — bodies land in Plan 03 GREEN. Empty stubs
+// here for the TDD RED phase so the test target links while the new
+// per-primitive byte-output tests fail.
 void PsEmitter::line(int, int, int, int)                                {}
 void PsEmitter::traitcouleur(int,int,int,int,float,float,float)         {}
 void PsEmitter::face(const int*, int)                                   {}
+void PsEmitter::face(const MefistoPoint*, int)                          {}
 void PsEmitter::faceisocouleur(const int*, int, float, float, float)    {}
 void PsEmitter::flpt(int, int, float)                                   {}
 void PsEmitter::ellipse(int, int, int, int, int, int)                   {}
@@ -232,3 +233,10 @@ void PsEmitter::epaisseur(int)                                           {}
 void PsEmitter::typetrait(int)                                           {}
 void PsEmitter::chargefonte(const QString&, int, int, int, bool, bool)  {}
 void PsEmitter::texte(const char*, int, int, int)                       {}
+void PsEmitter::traits(const MefistoPoint*, int)                        {}
+void PsEmitter::facetraits(const MefistoPoint*, int,
+                            float, float, float, float)                 {}
+void PsEmitter::bordrectangle(int, int, int, int)                       {}
+void PsEmitter::rectangle(int, int, int, int)                           {}
+void PsEmitter::bordarcellipse(int, int, int, int, float, float)        {}
+void PsEmitter::arcellipse(int, int, int, int, float, float)            {}

@@ -1,9 +1,9 @@
 // xvue/qt/tests/test_xvue_qt_postscript.cpp
 // Phase 7 Plan 02 (EXPORT-04): unit tests for PsEmitter::handleLasops state
-// machine + the pyFlip helper that Plan 03's per-primitive emit methods will
-// rely on. Six slots cover the full xvuelc.c:1187-1304 dispatch matrix
-// (open/close, mode-100 erase, chaine dispatch, negative-erase,
-// modepsc==0 chaine guard, Y-flip helper).
+// machine + the pyFlip helper.
+// Phase 7 Plan 03: extends with 8 per-primitive byte-output tests covering
+// line / face / epaisseur / typetrait / chargefonte (Courier + fallback) /
+// Y-flip-not-double-applied / inactive-no-emit.
 //
 // All slots run under QT_QPA_PLATFORM=offscreen via xvfb-run --auto-servernum
 // (per ctest invocation in xvue/qt/tests/CMakeLists.txt) so the QApplication
@@ -14,12 +14,14 @@
 // directory, not the project tree. The dir is restored in cleanup() so the
 // next slot starts clean.
 #include "xvue_qt_app.h"
+#include "xvue_qt_api.h"          // MefistoPoint (Plan 03 face() test)
 #include "xvue_qt_postscript.h"
 
 #include <QtTest/QtTest>
 #include <QCoreApplication>
 #include <QDir>
 #include <QEventLoop>
+#include <QFile>
 #include <QTemporaryDir>
 
 class TestXvueQtPostscript : public QObject {
@@ -164,6 +166,214 @@ private slots:
         QCOMPARE(pe.pyFlip(20), 580);
         QCOMPARE(pe.pyFlip(0), 600);
         QCOMPARE(pe.pyFlip(600), 0);
+    }
+
+    // ===== Plan 03 per-primitive byte-output tests =====
+    //
+    // Helper: read TEMPORAIRE.EPS contents AFTER the file pointer is closed
+    // (handleLasops(0) flushes + closes). Plan 03 emit helpers use buffered
+    // fprintf so callers MUST close before reading.
+    //
+    // Note: handleLasops(0) flushes the pending `concat_` buffer to fpo_
+    // before closing — so for line() where the segment-merging logic stages
+    // bytes in concat_ rather than writing them immediately, the close is
+    // what makes them visible on disk. This mirrors xvuelc.c's :1248 flush.
+
+    // Test 7 — line emit (S opcode). Asserts:
+    //   * 6-wide right-justified ints with leading spaces ("    10    580")
+    //   * Y-flipped coords (ypixels=600, y=20 -> 580; y=40 -> 560)
+    //   * trailing " S\n" segment opcode
+    // Source-of-truth format string: xvuelc.c:1954
+    //   "%6i %6i %6i %6i %3i %4.2f %4.2f %4.2f %4.2f S\n"
+    void PsEmitter_line_emits_S_with_yflip() {
+        PsEmitter pe;
+        pe.setCanvasDims(800, 600);
+        pe.setCourgbForTesting(1.00f, 0.50f, 0.25f);
+        pe.setCounbForTesting(0.75f);
+        pe.handleLasops(1);
+        pe.line(10, 20, 30, 40);
+        pe.handleLasops(0);
+
+        QFile f("TEMPORAIRE.EPS");
+        QVERIFY(f.open(QIODevice::ReadOnly));
+        const QByteArray contents = f.readAll();
+        QVERIFY2(contents.contains("    10    580    30    560"),
+                 QByteArray("expected 6-wide ints with Y-flipped 20->580 / 40->560: ")
+                 + contents.left(200));
+        QVERIFY2(contents.contains(" S\n"),
+                 QByteArray("expected trailing ' S\\n' segment opcode: ")
+                 + contents.left(200));
+        QVERIFY2(contents.contains("1.00 0.50 0.25 0.75 S\n"),
+                 QByteArray("expected courgb+counb verbatim format: ")
+                 + contents.left(200));
+    }
+
+    // Test 7b — line emit, counb_==-1 branch (xvuelc.c:1958 "0.00 S\n").
+    void PsEmitter_line_emits_S_counb_default() {
+        PsEmitter pe;
+        pe.setCanvasDims(800, 600);
+        pe.setCourgbForTesting(1.00f, 0.50f, 0.25f);
+        pe.setCounbForTesting(-1.0f);
+        pe.handleLasops(1);
+        pe.line(10, 20, 30, 40);
+        pe.handleLasops(0);
+
+        QFile f("TEMPORAIRE.EPS");
+        QVERIFY(f.open(QIODevice::ReadOnly));
+        const QByteArray contents = f.readAll();
+        QVERIFY2(contents.contains("1.00 0.50 0.25 0.00 S\n"),
+                 QByteArray("expected counb_==-1 branch '0.00 S\\n': ")
+                 + contents.left(200));
+    }
+
+    // Test 8 — epaisseur emits "%2i epais\n" verbatim from xvuelc.c:1895.
+    void PsEmitter_epaisseur_emits_2i_epais() {
+        PsEmitter pe;
+        pe.setCanvasDims(800, 600);
+        pe.handleLasops(1);
+        pe.epaisseur(3);
+        pe.handleLasops(0);
+
+        QFile f("TEMPORAIRE.EPS");
+        QVERIFY(f.open(QIODevice::ReadOnly));
+        const QByteArray contents = f.readAll();
+        QVERIFY2(contents.contains(" 3 epais\n"),
+                 QByteArray("expected ' 3 epais\\n' (2-wide int): ")
+                 + contents.left(200));
+    }
+
+    // Test 9 — typetrait emits "%2i typet\n" verbatim from xvuelc.c:1856.
+    // Plan body claimed "typtr"; xvuelc.c source emits "typet".
+    void PsEmitter_typetrait_emits_2i_typet() {
+        PsEmitter pe;
+        pe.setCanvasDims(800, 600);
+        pe.handleLasops(1);
+        pe.typetrait(2);
+        pe.handleLasops(0);
+
+        QFile f("TEMPORAIRE.EPS");
+        QVERIFY(f.open(QIODevice::ReadOnly));
+        const QByteArray contents = f.readAll();
+        QVERIFY2(contents.contains(" 2 typet\n"),
+                 QByteArray("expected ' 2 typet\\n' (xvuelc.c:1856 verbatim): ")
+                 + contents.left(200));
+    }
+
+    // Test 10 — face emit (F close-and-fill). xvuelc.c:1799 emits the
+    // polygon as "x y " coordinate pairs followed by
+    // "<n> <r> <g> <b> <a> F\n" close-and-fill. With ypixels=100,
+    // y=20->80, y=40->60, y=60->40 (Y-flipped).
+    void PsEmitter_face_emit_F_close() {
+        PsEmitter pe;
+        pe.setCanvasDims(200, 100);
+        pe.setCourgbForTesting(1.00f, 0.50f, 0.25f);
+        pe.setCounbForTesting(-1.0f);
+        pe.handleLasops(1);
+        MefistoPoint pts[3] = {{10, 20}, {30, 40}, {50, 60}};
+        pe.face(pts, 3);
+        pe.handleLasops(0);
+
+        QFile f("TEMPORAIRE.EPS");
+        QVERIFY(f.open(QIODevice::ReadOnly));
+        const QByteArray contents = f.readAll();
+        QVERIFY2(contents.contains("    10     80"),
+                 QByteArray("expected first vertex (10, 80) Y-flipped: ")
+                 + contents.left(200));
+        QVERIFY2(contents.contains(" F\n"),
+                 QByteArray("expected trailing ' F\\n' close-and-fill opcode: ")
+                 + contents.left(200));
+    }
+
+    // Test 11 — chargefonte D-08 mapping: "Courier" -> "/Courier".
+    // Output uses xvuelc.c:1553 "%d %d %s charge\n" format (NOT setfont).
+    void PsEmitter_chargefonte_courier_maps_to_PSCourier() {
+        PsEmitter pe;
+        pe.setCanvasDims(800, 600);
+        pe.handleLasops(1);
+        pe.chargefonte("Courier", 12, 10, 3, false, false);
+        pe.handleLasops(0);
+
+        QFile f("TEMPORAIRE.EPS");
+        QVERIFY(f.open(QIODevice::ReadOnly));
+        const QByteArray contents = f.readAll();
+        QVERIFY2(contents.contains("/Courier"),
+                 QByteArray("expected '/Courier' PS family name: ")
+                 + contents.left(200));
+        QVERIFY2(contents.contains("charge\n"),
+                 QByteArray("expected 'charge\\n' verb (xvuelc.c:1553 verbatim): ")
+                 + contents.left(200));
+    }
+
+    // Test 12 — chargefonte D-08 fallback: unknown family -> "/Helvetica".
+    // Per CONTEXT.md D-08, DejaVuSansMono (the bundled Phase 3 font) and any
+    // other Qt family not in the 4-entry mapping table fall through to
+    // /Helvetica with a warn-once stderr line.
+    void PsEmitter_chargefonte_unknown_falls_back_to_Helvetica() {
+        PsEmitter pe;
+        pe.setCanvasDims(800, 600);
+        pe.handleLasops(1);
+        pe.chargefonte("DejaVu Sans Mono", 12, 10, 3, false, false);
+        pe.handleLasops(0);
+
+        QFile f("TEMPORAIRE.EPS");
+        QVERIFY(f.open(QIODevice::ReadOnly));
+        const QByteArray contents = f.readAll();
+        QVERIFY2(contents.contains("/Helvetica"),
+                 QByteArray("expected '/Helvetica' fallback per D-08: ")
+                 + contents.left(200));
+        QVERIFY2(contents.contains("charge\n"),
+                 QByteArray("expected 'charge\\n' verb on fallback path too: ")
+                 + contents.left(200));
+    }
+
+    // Test 13 — Y-flip applied exactly once (Pitfall 2 / README_COORDS.md).
+    // pe.line(10, 20, 30, 40) with ypixels=600 must emit Y values 580/560,
+    // not 420/440 (would happen if the caller AND helper both flipped).
+    void PsEmitter_yflip_not_double_applied() {
+        PsEmitter pe;
+        pe.setCanvasDims(800, 600);
+        pe.setCourgbForTesting(0.0f, 0.0f, 0.0f);
+        pe.setCounbForTesting(-1.0f);
+        pe.handleLasops(1);
+        pe.line(10, 20, 30, 40);
+        pe.handleLasops(0);
+
+        QFile f("TEMPORAIRE.EPS");
+        QVERIFY(f.open(QIODevice::ReadOnly));
+        const QByteArray contents = f.readAll();
+        QVERIFY2(contents.contains("   580"),
+                 QByteArray("expected single Y-flip 20->580: ")
+                 + contents.left(200));
+        QVERIFY2(contents.contains("   560"),
+                 QByteArray("expected single Y-flip 40->560: ")
+                 + contents.left(200));
+        QVERIFY2(!contents.contains("   420"),
+                 QByteArray("FAIL: Y-flip applied twice (saw 420 = 600-20-160?): ")
+                 + contents.left(200));
+    }
+
+    // Test 14 — inactive-no-emit guard. With handleLasops never called
+    // (lasopsc_==0), every emit helper must early-return without touching
+    // fpo_ or concat_. Mirrors xvuelc.c's `if (lasopsc > 0)` gate.
+    void PsEmitter_inactive_no_emit() {
+        PsEmitter pe;
+        pe.setCanvasDims(800, 600);
+        QVERIFY(!pe.active());
+
+        // No handleLasops(1) call — fpo_ stays nullptr, lasopsc_ stays 0.
+        pe.line(0, 0, 1, 1);
+        pe.epaisseur(3);
+        pe.typetrait(1);
+        MefistoPoint pts[2] = {{0, 0}, {1, 1}};
+        pe.face(pts, 2);
+        pe.chargefonte("Courier", 12, 10, 3, false, false);
+
+        // None of those should have opened a file.
+        QVERIFY(pe.fpoForTesting() == nullptr);
+        // concat_ should still be zero-initialized.
+        QCOMPARE(pe.concatForTesting()[0], '\0');
+        // No TEMPORAIRE.EPS on disk either.
+        QVERIFY(!QFile::exists("TEMPORAIRE.EPS"));
     }
 };
 

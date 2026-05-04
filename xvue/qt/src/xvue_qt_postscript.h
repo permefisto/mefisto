@@ -14,6 +14,12 @@
 #include <cstdio>
 #include <QString>
 
+// Plan 03: pull in MefistoPoint (typedef struct {short x; short y;}) from
+// xvue_qt_api.h for the face(const MefistoPoint*, int) overload that
+// Qt-side callers in xvue_qt_api.cpp use to pass arrays without int*
+// conversion. Both face() overloads emit byte-equal PostScript bytes.
+#include "xvue_qt_api.h"
+
 class XvueApp;
 
 class PsEmitter {
@@ -30,26 +36,50 @@ public:
     // is false. Mirrors the `if (lasopsc > 0)` gate scattered through xvuelc.c.
     bool active() const { return lasopsc_ > 0; }
 
-    // ---- Per-primitive helpers — DECLARATIONS only here. Bodies in Plan 03.
-    // The signatures are frozen by Plan 02 so Plan 03 can implement them
-    // independently without churning the header.
-    void line(int x1, int y1, int x2, int y2);                  // xvuelc.c:1942-1985 (xvtrait)
+    // ---- Per-primitive helpers — Plan 02 froze these signatures, Plan 03
+    // fills the bodies. Format strings inside the .cpp bodies are byte-for-
+    // byte copies from the corresponding xvuelc.c sites.
+    //
+    // Plan 03 deviation note (Rule 3 blocking): the plan body of 07-03 lists
+    // helpers (traitcouleur, faceisocouleur, flpt, ellipse) that have NO
+    // counterpart in xvuelc.c — they are signatures inherited from the
+    // Phase 7 plan-prose enumeration but no `if(lasopsc>0) fprintf(fpo,...)`
+    // emit site exists upstream for them. Per the EXPORT-04 byte-parity
+    // contract ("Each Qt drawing primitive that has an xvuelc.c counterpart
+    // emits the SAME bytes"), helpers WITHOUT a counterpart are no-ops —
+    // they early-return without touching fpo_/concat_. Documented inline.
+    void line(int x1, int y1, int x2, int y2);                  // xvuelc.c:1942-2035 (xvtrait S/P)
     void traitcouleur(int x1, int y1, int x2, int y2,
-                      float r, float g, float b);               // xvuelc.c:~2000-2050 (xvtraitcouleur)
-    void face(const int* xy, int n);                            // xvuelc.c:2050-2150 (xvface)
+                      float r, float g, float b);               // Plan 03: no xvuelc.c counterpart — no-op
+    void face(const int* xy, int n);                            // xvuelc.c:1761-1817 (xvface F) — int* overload
+    void face(const MefistoPoint* pts, int n);                  // Plan 03 overload — Qt-side wiring uses MefistoPoint
     void faceisocouleur(const int* xy, int n,
-                        float r, float g, float b);             // xvuelc.c:2050-2150 (xvfaceisocouleur)
-    void flpt(int x, int y, float v);                           // xvuelc.c:2580-2680 (xvflpt)
+                        float r, float g, float b);             // Plan 03: no xvuelc.c counterpart — no-op
+    void flpt(int x, int y, float v);                           // Plan 03: no xvuelc.c counterpart — no-op
     void ellipse(int x, int y, int rx, int ry,
-                 int a1, int a2);                               // xvuelc.c:2680-2780 (xvellipse)
-    void fond(float r, float g, float b);                       // xvuelc.c:~2200-2260 (xvfond)
-    void clear();                                                // effacer trigger
-    void epaisseur(int pepais);                                  // xvuelc.c:1880-1900 (xvepaisseur)
-    void typetrait(int ity);                                     // xvuelc.c:~1820-1860 (xvtypetrait)
+                 int a1, int a2);                               // Plan 03: no xvuelc.c counterpart — no-op
+    void fond(float r, float g, float b);                       // xvuelc.c:1439 — xvfond emits NO PS (no-op)
+    void clear();                                                // effacer trigger — delegates to handleLasops(lasopsc_+100)
+    void epaisseur(int pepais);                                  // xvuelc.c:1895 ("%2i epais\n")
+    void typetrait(int ity);                                     // xvuelc.c:1856 ("%2i typet\n" verbatim)
     void chargefonte(const QString& family, int size_pt,
                      int ascent, int descent,
-                     bool bold, bool italic);                   // xvuelc.c:1500-1568 (xvchargefonte) — D-08 mapping
-    void texte(const char* s, int slen, int x, int y);          // xvuelc.c:~3100-3180 (xvtexte)
+                     bool bold, bool italic);                   // xvuelc.c:1553 — D-08 mapping table replaces X11 BDF parse
+    void texte(const char* s, int slen, int x, int y);          // xvuelc.c:1722-1758 (xvtexte T)
+
+    // Plan 03 byte-parity additions (Rule 2 — required to wire the actual
+    // Qt drawing primitives that DO have xvuelc.c counterparts but whose
+    // helper signatures the plan body did not enumerate):
+    void traits(const MefistoPoint* pts, int n);                // xvuelc.c:2037-2093 (xvtraits P)
+    void facetraits(const MefistoPoint* pts, int n,
+                    float fillR, float fillG, float fillB,
+                    float fillA);                               // xvuelc.c:2095-2181 (xvfacetraits FP — fill+border)
+    void bordrectangle(int x, int y, int width, int height);    // xvuelc.c:2573-2617 (xvbordrectangle r)
+    void rectangle(int x, int y, int width, int height);        // xvuelc.c:2637-2681 (xvrectangle R)
+    void bordarcellipse(int x, int y, int width, int height,
+                        float angle1, float angle2);            // xvuelc.c:2684-2743 (xvbordarcellipse el)
+    void arcellipse(int x, int y, int width, int height,
+                    float angle1, float angle2);                // xvuelc.c:2746-2806 (xvarcellipse El)
 
     // Public for unit tests + Plan 03 emit helpers. Y-flip happens here ONLY
     // (xvue/README_COORDS.md). Caller always passes canvas-Y (Y-down).
@@ -61,13 +91,19 @@ public:
     int  ypixels() const { return ypixels_; }
     void setCanvasDims(int xp, int yp) { xpixels_ = xp; ypixels_ = yp; }
 
-    // ---- Test-only accessors (Plan 02 unit tests). Read-only window onto
-    // the verbatim-ported file-statics so the GTest+QTest slots can assert
-    // state-machine transitions without making the private members public.
+    // ---- Test-only accessors. Read-only window onto the verbatim-ported
+    // file-statics so the GTest+QTest slots can assert state-machine
+    // transitions without making the private members public.
     FILE*       fpoForTesting()       const { return fpo_; }
     const char* concatForTesting()    const { return concat_; }
     char**      chaineForTesting()          { return chaine_; }
     void        setModepscForTesting(int v) { modepsc_ = v; }
+    // Plan 03: explicit test-only setters for counb_ / courgb_ so byte-output
+    // tests can assert the counb!=-1 and counb==-1 emit branches independently.
+    void        setCounbForTesting(float v) { counb_ = v; }
+    void        setCourgbForTesting(float r, float g, float b) {
+        courgb_[0] = r; courgb_[1] = g; courgb_[2] = b;
+    }
 
     // Test-only: snapshot of TEMPORAIRE.EPS path for fail-injection harness.
     static const char* kPostscriptFilename;   // = "TEMPORAIRE.EPS"
