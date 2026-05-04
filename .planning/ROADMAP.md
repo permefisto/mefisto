@@ -237,7 +237,13 @@ Plans:
   3. `xvpostscript_` is implemented in `xvue/xvue_qt_postscript.cpp` by moving the existing ~120-line hand-rolled `fprintf` emitter **verbatim** from `xvuelc.c`; diffing an exported `.ps` against the X11 backend shows byte-for-byte (or near byte-for-byte) parity on the same scene.
   4. PDF export via a new `QPrinter::PdfFormat` entry point works as an additive bonus without modifying `xvpostscript_`.
   5. No Qt-backend code path invokes ImageMagick's `convert` — verified by `grep -rn 'convert' xvue/` returning only the PDF keyword or similar.
-**Plans**: TBD (research-flag: run GIF writer probe before committing to strategy)
+**Plans**: 6 plans
+  - [ ] 07-01-PLAN.md — QImageWriter probe binary + bin/cb_probe_qt + PROBE.md kickoff (EXPORT-01)
+  - [ ] 07-02-PLAN.md — PsEmitter skeleton + xvpostscript_ body verbatim port from xvuelc.c:1187-1304 (EXPORT-04)
+  - [ ] 07-03-PLAN.md — PsEmitter per-primitive helpers + 15 emit-site wirings in xvue_qt_api.cpp (EXPORT-04)
+  - [ ] 07-04-PLAN.md — XvueExport class (PNG/JPEG/PDF) + File→Export submenu + bilingual messages (EXPORT-02, EXPORT-05)
+  - [ ] 07-05-PLAN.md — Animated GIF (probe-driven dispatch + auto-snapshot + ffmpeg fallback + frame caps) (EXPORT-03)
+  - [ ] 07-06-PLAN.md — Golden tests + EXPORT-06 grep gate + README Phase 7 section + manual A/B sign-off (EXPORT-03, EXPORT-06)
 
 ### Phase 8: A/B validation on testa subset
 **Goal**: The 5 canonical `testa/` cases run side-by-side on both backends — including HiDPI and `_OMP` sweeps — with no user-visible drift, producing a checklist that gates declaring v1 shippable.
