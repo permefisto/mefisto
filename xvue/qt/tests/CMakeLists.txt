@@ -341,4 +341,35 @@ add_test(NAME xvue_qt_postscript_tests
          COMMAND xvfb-run --auto-servernum
                  $<TARGET_FILE:xvue_qt_postscript_tests>)
 
+# ---------------------------------------------------------------------------
+# Phase 7 Plan 04 (EXPORT-02, EXPORT-05): XvueExport unit tests — PNG/JPEG
+# round-trip + JPEG quality from QSettings + PDF page-geometry 72dpi
+# (Pitfall 7 logical-vs-physical). Plan 05 grows the file with GIF
+# assembly + auto-snapshot tests.
+# ---------------------------------------------------------------------------
+add_executable(xvue_qt_export_tests
+    test_xvue_qt_export.cpp
+)
+
+target_link_libraries(xvue_qt_export_tests
+    PRIVATE
+        xvueqt
+        Qt6::Test
+        Qt6::Widgets
+        Qt6::Gui
+        Qt6::Core
+        Qt6::PrintSupport
+)
+
+target_include_directories(xvue_qt_export_tests PRIVATE
+    ${CMAKE_CURRENT_SOURCE_DIR}/..
+    ${CMAKE_CURRENT_SOURCE_DIR}/../src
+    ${CMAKE_CURRENT_SOURCE_DIR}/../include
+)
+
+# ctest registration for VALIDATION.md rows 07-04-01 and 07-04-02.
+add_test(NAME xvue_qt_export_tests
+         COMMAND xvfb-run --auto-servernum
+                 $<TARGET_FILE:xvue_qt_export_tests>)
+
 # No install(); tests run in-place from xvue/build/tests/.

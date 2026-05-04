@@ -37,6 +37,11 @@ add_library(xvueqt STATIC
     # xvpostscript_ state machine plus per-primitive emit helpers (Plan 03
     # fills bodies). Owned by XvueApp via XvueApp::psEmitter() singleton.
     src/xvue_qt_postscript.cpp
+    # Phase 7 Plan 04 (EXPORT-02, EXPORT-05): XvueExport — PNG/JPEG/PDF
+    # static helpers driven by File → Export → … menu actions. ABI stays
+    # at 58 (no new extern "C" symbols). Plan 05 will grow the file with
+    # GIF assembly + auto-snapshot beginAnimation/endAnimation.
+    src/xvue_qt_export.cpp
 )
 
 # Phase 6.1 Plan 02 additions: bilingual LIMTCL menu-file parser and the
