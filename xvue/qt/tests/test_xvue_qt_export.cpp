@@ -467,16 +467,17 @@ private slots:
     // These two slots compare a Qt-emitted GIF (mock-ffmpeg path) against
     // X11-emitted baseline GIFs committed to xvue/qt/tests/golden/. Until
     // the goldens exist in the repository (Plan 06 Task 3 procedure
-    // bootstraps them from `bin/convertepsgif` on testa/wave and
-    // testa/cavity2d), each slot QSKIPs cleanly with a message pointing
-    // at the bootstrap procedure.
+    // bootstraps them from the legacy X11 backend's GIF post-processor
+    // on testa/wave and testa/cavity2d — see Plan 06 README), each slot
+    // QSKIPs cleanly with a message pointing at the bootstrap procedure.
     //
     // The compare contract is frame-count + first/last frame md5 (NOT
-    // full byte equality). The legacy `bin/convertepsgif` ImageMagick
-    // output is non-deterministic across versions (palette quantization
-    // is not stable across releases), so a byte-equal compare would
-    // yield false-negative failures. Documented in Plan 06 README and
-    // threat-model row T-07-07-accept (golden-GIF goldens diverge).
+    // full byte equality). The legacy GIF post-processor's output is
+    // non-deterministic across versions (palette quantization is not
+    // stable across releases of the underlying tool), so a byte-equal
+    // compare would yield false-negative failures. Documented in
+    // Plan 06 README and threat-model row T-07-07-accept (golden-GIF
+    // goldens diverge).
     // ====================================================================
 
     // Helper — locate a golden file under xvue/qt/tests/golden/ via

@@ -151,6 +151,24 @@ add_custom_target(verify_icon_source ALL
     VERBATIM
 )
 
+# Phase 7 Plan 06 (EXPORT-06): grep gate — fail the build if any
+# legacy raster-tool reference appears under xvue/qt/. Per CONTEXT.md
+# D-16/D-17 the gate is scoped to xvue/qt/ ONLY (NOT xvue/) — the
+# LVIDEO pipeline (xvue/video1.f, xvue/videofin.f, xvue/videonm.f) and
+# the legacy GIF post-processor under bin/ legitimately stay alive in
+# the legacy tree until Phase 9 RETIRE-03.
+#
+# The script lives in $MEFISTO/bin/ rather than under xvue/qt/cmake/ so
+# it can also be invoked standalone (CI hook, manual sanity check) by
+# the same path used by ctest. ${CMAKE_CURRENT_SOURCE_DIR}/../../
+# resolves the repo root from xvue/qt/.
+add_custom_target(verify_no_imagemagick_in_qt ALL
+    COMMAND ${CMAKE_COMMAND} -E echo "verify_no_imagemagick_in_qt: scanning..."
+    COMMAND sh ${CMAKE_CURRENT_SOURCE_DIR}/../../bin/test_no_imagemagick_in_qt.sh
+    DEPENDS xvueqt
+    VERBATIM
+)
+
 # Phase 7 Plan 01 (EXPORT-01): probes/ subdirectory holds standalone probe
 # binaries (e.g., qimagewriter_probe). Gated so the canonical bin/cbl_tout
 # and bin/cbl_tout_qt builds do not depend on it; bin/cb_probe_qt enables

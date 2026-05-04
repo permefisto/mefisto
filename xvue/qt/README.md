@@ -314,11 +314,136 @@ primitive and is wired into every draw entry: `xvue_qt_draw_rect_common`,
 single branch + return. Once `xvue_module_init_` lands in 6.1..6.5, this
 hook remains harmless (the flag is already set).
 
+## Phase 7 — Image, GIF, and PostScript export (2026-05)
+
+This phase replaces three loosely-coupled legacy export paths with
+Qt-native ones, keeping the Fortran ABI frozen at 58 symbols.
+
+### Surfaces
+
+| Trigger | Output | Source file |
+|---------|--------|-------------|
+| File → Export → PNG…  | `<file>.png` (canvas pixel dims)             | `xvue_qt_export.cpp` (`savePngTo`) |
+| File → Export → JPEG… | `<file>.jpg` (canvas pixel dims, QSettings `export/jpeg_quality`) | `xvue_qt_export.cpp` (`saveJpegTo`) |
+| File → Export → PDF…  | `<file>.pdf` (canvas-native, 72 dpi, 1 page) | `xvue_qt_export.cpp` (`savePdfTo`) |
+| File → Export → GIF…  | `<file>.gif` from captured frames            | `xvue_qt_export.cpp` (`saveGifTo`) |
+| File → Capture Animation toggle / `XVUE_ANIM=1` | `animation.gif` in cwd | `xvue_qt_export.cpp` (`begin/endAnimation`) |
+| Fortran-driven `XVPOSTSCRIPT(1..)` | `TEMPORAIRE.EPS` in cwd | `xvue_qt_postscript.cpp` (`PsEmitter::handleLasops`) |
+
+### PsEmitter — the byte-for-byte parity contract
+
+The PostScript emitter is byte-for-byte equivalent to the X11 backend's
+output. Format strings ARE the contract (07-RESEARCH.md Pitfall 1). Any
+change to a `%6i %6i %4.2f` width specifier breaks downstream user
+pipelines (TeX inclusion, lpr filters, `gs` renders, paper figures).
+
+`xvpostscript_(int *lasops)` is a one-line dispatch into
+`XvueApp::psEmitter().handleLasops(*lasops)`. The PsEmitter class
+carries all PS state (~15 members ported verbatim from xvuelc.c
+file-statics).
+
+The byte-parity gate lives in
+`xvue/qt/tests/test_xvue_qt_postscript.cpp` slot
+`PsEmitter_postscriptVerbatim_golden` which compares the captured
+TEMPORAIRE.EPS against the committed
+`xvue/qt/tests/golden/scene01.eps`. The golden is bootstrapped from
+the X11 backend on `xvue/qt/tests/golden/scene01_driver.f`.
+
+### Y-flip — `ypixels - y` happens INSIDE PsEmitter helpers ONLY
+
+See `xvue/README_COORDS.md` for the full audit. Callers in
+`xvue_qt_api.cpp` always pass canvas-Y (Y-down). The Y-flip belongs
+inside `PsEmitter::pyFlip()` and is applied at emit time, never by
+the caller.
+
+### HiDPI export math
+
+| Format | Source | Geometry |
+|--------|--------|----------|
+| PNG | `backing_.toImage()` | Backing physical pixels (DPR-scaled, e.g. 1600×1200 for an 800×600 logical canvas at DPR=2) |
+| JPEG | `backing_.toImage()` | Same as PNG |
+| PDF | `setResolution(72) + setPageSize(QSizeF(xpixels, ypixels), Point)` | Logical canvas dims (NOT physical — Pitfall 7) |
+| GIF (ffmpeg path) | `backing_.toImage()` per frame | Backing physical pixels |
+
+Pitfall 7 (logical-vs-physical pixels): `QPdfWriter::setPageSize` takes
+LOGICAL canvas dims (`XvueCanvas::width()/height()`), NOT
+`backing_->width()/height()` which is `devicePixelRatio`-scaled. The
+PDF page aspect must match the canvas exactly with no fit-to-A4
+distortion (D-15).
+
+### Threading invariant
+
+All public methods on `PsEmitter` and `XvueExport` open with
+`XVUE_QT_ASSERT_MAIN_THREAD()`. `QImageWriter::write` and
+`QProcess::execute("ffmpeg", ...)` are called synchronously from the
+GUI thread. Async / progress-dialog deferred to v2 (07-CONTEXT.md
+Deferred Ideas).
+
+### GIF — probe-driven dispatch
+
+`PROBE.md` (committed at Plan 01 kickoff) records
+`QImageWriter::supportedImageFormats()` on the host. On Debian trixie
+/ Qt 6.10.2 the list does NOT include `gif` — the realized path is
+**ffmpeg fallback** (D-11): PNG sequence into
+`QStandardPaths::TempLocation + "/xvue-gif-XXXXXX/"` (via
+`QTemporaryDir`), then `QProcess::execute("ffmpeg", {-y, -framerate,
+..., -i, frame_%04d.png, output})`.
+
+The native `QImageWriter` GIF branch (D-10) is kept as defensive
+fast-path code in case a future Debian QtImageFormats add-on enables
+GIF write.
+
+### LVIDEO pipeline (deferral note)
+
+A second legacy GIF pipeline lives in the X11-side Fortran tree:
+`xvue/video1.f`, `xvue/videofin.f`, `xvue/videonm.f`, plus 18+ tracer
+subroutines (`flui/trvi2d.f`, `ther/trplse.f`, `ther/trisot.f`, …)
+that call `xwd` + a legacy raster-image post-processor from solver
+trace points. Per CONTEXT.md D-17 it is **OUT OF SCOPE for Phase 7**:
+the EXPORT-06 grep gate is scoped to `xvue/qt/` only.
+
+Phase 7's auto-snapshot path (D-02) is independent — it captures
+EPS-save points via `xvpostscript_`, not the LVIDEO frame-capture
+points. Solvers that depend on `LVIDEO=1` continue to produce GIFs
+through the X11 backend until Phase 9 RETIRE-03, at which point the
+LVIDEO pipeline is retired alongside `xvue/xvuelc.c` and the legacy
+GIF post-processor.
+
+### Frame caps (T-07-03 mitigation)
+
+`XvueExport::beginAnimation` opens an in-memory frame buffer. Soft
+cap warns at 100 frames; hard cap rejects the 10001st frame and
+force-ends the animation. Configurable via
+`QSettings("MEFISTO","xvue").setValue("export/anim_max_frames", N)`.
+
+### Runtime dependencies
+
+- ffmpeg (Debian: `sudo apt install ffmpeg`) — required for GIF
+  export under the realized D-11 fallback dispatch path.
+- `qt6-imageformats-plugins` — installed alongside `qt6-base-dev`.
+
+### Tests
+
+| Target | What |
+|--------|------|
+| `xvue_qt_postscript_tests` | `handleLasops` state machine, Y-flip, byte-level golden compare against `tests/golden/scene01.eps` |
+| `xvue_qt_export_tests` | PNG/JPEG round-trip, PDF page geometry, GIF dispatch (native + ffmpeg fallback), frame caps, temp-dir cleanup, GIF A/B compare against `tests/golden/{wave,cavity2d}_legacy.gif` |
+| `verify_no_imagemagick_in_qt` (CMake `ALL` target) | EXPORT-06 grep gate on `xvue/qt/` (allowlists Qt API tokens like `convertToOther`, `QPageSize`) |
+| `bin/test_no_imagemagick_in_qt.sh` | Standalone EXPORT-06 gate script (same gate, runnable outside CMake) |
+
+Manual A/B verification on `testa/wave` and `testa/cavity2d` is logged
+in `.planning/phases/07-image-gif-and-postscript-export/VALIDATION-LOG.md`.
+
+`XVUE_ANIM=1` env var auto-starts capture at process boot. Documented
+in 07-CONTEXT.md D-02.
+
 ## References
 
 - `.planning/phases/05-event-bridge-blocking-reads/05-CONTEXT.md` — decisions D-01..D-10
 - `.planning/phases/05-event-bridge-blocking-reads/05-RESEARCH.md` — Qt event-loop mechanics, assumptions log
 - `.planning/phases/05-event-bridge-blocking-reads/05-VALIDATION.md` — EVENT-01..08 status, Manual A/B log, Phase A evidence
+- `.planning/phases/07-image-gif-and-postscript-export/07-CONTEXT.md` — Phase 7 decisions D-01..D-17
+- `.planning/phases/07-image-gif-and-postscript-export/07-RESEARCH.md` — Phase 7 Validation Architecture + Common Pitfalls
 - `xvue/xvuelc.c:2183-2531` — X11 reference semantics for the four ported entry points
 - `xvue/qt/README_RESIZE.md` — sibling doc on canvas resize-preserve convention (DRAW-09)
 - `xvue/README_COORDS.md` — sibling doc on the coordinate-system convention
