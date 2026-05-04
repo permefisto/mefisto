@@ -243,7 +243,7 @@ Plans:
   - [x] 07-03-PLAN.md — PsEmitter per-primitive helpers + 15 emit-site wirings in xvue_qt_api.cpp (EXPORT-04)
   - [x] 07-04-PLAN.md — XvueExport class (PNG/JPEG/PDF) + File→Export submenu + bilingual messages (EXPORT-02, EXPORT-05)
   - [x] 07-05-PLAN.md — Animated GIF (probe-driven dispatch + auto-snapshot + ffmpeg fallback + frame caps) (EXPORT-03)
-  - [ ] 07-06-PLAN.md — Golden tests + EXPORT-06 grep gate + README Phase 7 section + manual A/B sign-off (EXPORT-03, EXPORT-06)
+  - [x] 07-06-PLAN.md — Golden tests + EXPORT-06 grep gate + README Phase 7 section + manual A/B sign-off (EXPORT-03, EXPORT-06) — autonomous portion complete; A/B sign-off deferred (see VALIDATION-LOG.md)
 
 ### Phase 8: A/B validation on testa subset
 **Goal**: The 5 canonical `testa/` cases run side-by-side on both backends — including HiDPI and `_OMP` sweeps — with no user-visible drift, producing a checklist that gates declaring v1 shippable.
