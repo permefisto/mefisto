@@ -197,7 +197,14 @@ private slots:
         QFile f("TEMPORAIRE.EPS");
         QVERIFY(f.open(QIODevice::ReadOnly));
         const QByteArray contents = f.readAll();
-        QVERIFY2(contents.contains("    10    580    30    560"),
+        // Verbatim xvuelc.c:1954 format string with values (10, 580, 30, 560, 1):
+        //   "%6i %6i %6i %6i %3i ..."
+        // -> 4sp+10 + 1sp + 3sp+580 + 1sp + 4sp+30 + 1sp + 3sp+560 + 1sp + 2sp+1 ...
+        // i.e. between '580' and '30' there are FIVE spaces (1 separator + 4
+        // padding for %6i of "30"), not four. The point of the test is to
+        // pin down byte-for-byte parity with the legacy xvuelc.c emit, so
+        // the assertion encodes the literal expected substring.
+        QVERIFY2(contents.contains("    10    580     30    560"),
                  QByteArray("expected 6-wide ints with Y-flipped 20->580 / 40->560: ")
                  + contents.left(200));
         QVERIFY2(contents.contains(" S\n"),
