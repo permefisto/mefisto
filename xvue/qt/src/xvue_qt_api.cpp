@@ -110,7 +110,8 @@ inline void xvue_qt_mark_user_content(XvueWindow* win) {
 // pen and brush colors diverge (Phase 3).
 enum class RectMode { Outline, Fill };
 
-inline void xvue_qt_draw_rect_common(int x, int y, int w, int h, RectMode mode) {
+inline void xvue_qt_draw_rect_common(int x, int y, int w, int h, RectMode mode,
+                                     bool emit_ps = true) {
     auto& win = XvueApp::window_slot();
     if (!win) return;
     auto* st = win->state();
@@ -122,9 +123,18 @@ inline void xvue_qt_draw_rect_common(int x, int y, int w, int h, RectMode mode) 
         st->painter_->setBrush(Qt::NoBrush);
         st->painter_->drawRect(r);
         st->painter_->setBrush(saved);
+        // Phase 7 Plan 03: PS "r" opcode emit only for the persistent
+        // (mempx-equivalent) variant. xvuelc.c xvfbordrectangle (line 2556)
+        // draws to fenetre_mef and emits NO PS; xvbordrectangle (line 2573)
+        // draws to mempx and DOES emit. Under Phase 2's single-backing
+        // collapse both Qt entries share this helper, so the emit_ps flag
+        // preserves the legacy PS-stream byte parity.
+        if (emit_ps) XvueApp::psEmitter().bordrectangle(x, y, w, h);
     } else {
         // XFillRectangle: fill only, no outline.
         st->painter_->fillRect(r, st->painter_->brush());
+        // Phase 7 Plan 03: PS "R" opcode emit for the persistent variant only.
+        if (emit_ps) XvueApp::psEmitter().rectangle(x, y, w, h);
     }
     xvue_qt_mark_user_content(win.get());
     if (win->canvas()) win->canvas()->update();
@@ -190,6 +200,10 @@ inline void xvue_qt_restore_from_slot() {
 // drew to DIFFERENT targets (mempx at :1658 vs fenetre_mef at :1678); the
 // collapse here is legal ONLY because Phase 2 unified the draw target.
 // If a future phase reintroduces multiple draw targets, revisit.
+//
+// Phase 7 Plan 03 (EXPORT-04): after the QPainter::drawText, dispatch into
+// PsEmitter::texte for the PostScript "T" emit. Helper internally checks
+// active() so this is a cheap no-op when no PS capture is in progress.
 inline void xvue_qt_draw_text_common(const char* string, int length,
                                      int x1, int y1) {
     if (!string || length <= 0) return;              // WR-03 null-guard
@@ -203,6 +217,10 @@ inline void xvue_qt_draw_text_common(const char* string, int length,
     QString qstr = QString::fromLatin1(string, length);
     st->painter_->setFont(st->current_font_);        // cheap no-op if unchanged
     st->painter_->drawText(x1, y1, qstr);            // baseline form (D-06)
+
+    // Phase 7 Plan 03: PostScript emit after the QPainter call. Pass canvas-Y
+    // (Y-down); the helper applies pyFlip internally per README_COORDS.md.
+    XvueApp::psEmitter().texte(string, length, x1, y1);
 
     // Phase 2 D-01 epilogue: drawing primitives flush.
     xvue_qt_mark_user_content(win.get());
@@ -705,6 +723,10 @@ void proc(effacer)(void) {
 // Phase 2 used a hardcoded {black, white} 2-entry palette (D-14). Phase 3
 // routes the color source through the real palette_cache_ the same way
 // xvcouleur_ does, while preserving the Phase 2 D-24 fillRect mechanism.
+// Phase 7 Plan 03: xvuelc.c xvfond_ (line 1439) emits NO PostScript bytes —
+// it only mutates X11 window background. PsEmitter::fond is therefore a
+// no-op; we still call it here to keep the wiring shape consistent so a
+// future plan can add a PS-side equivalent without churning callers.
 void proc(xvfond)(int *icolor) {
     XvueApp::ensure();
     XVUE_QT_ASSERT_MAIN_THREAD();
@@ -722,6 +744,10 @@ void proc(xvfond)(int *icolor) {
     if (st->painter_ && st->painter_->isActive() && st->backing_) {
         st->painter_->fillRect(st->backing_->rect(), st->background_);
     }
+    // Phase 7 Plan 03: PsEmitter::fond is a no-op (legacy emits no PS).
+    XvueApp::psEmitter().fond(
+        st->background_.redF(), st->background_.greenF(),
+        st->background_.blueF());
     xvue_qt_mark_user_content(win.get());
     if (win->canvas()) {
         win->canvas()->update();
@@ -732,6 +758,8 @@ void proc(xvfond)(int *icolor) {
 // ---- 24. xvchargefonte_ (Phase 3 D-04, TEXT-01) ----
 // Bundled DejaVu Sans Mono at XvueState::kFontSizes[*nofont]. QFont is RAII
 // (Pitfall 6) so *nofont0 (the legacy "previous font to free") is ignored.
+// Phase 7 Plan 03 (EXPORT-04): emits PS "%s %d %d %s charge\n" via D-08
+// hardcoded mapping table. DejaVu Sans Mono lands on /Helvetica fallback.
 void proc(xvchargefonte)(int *nofont0, int *nofont, int *largpx, int *hautpx) {
     XvueApp::ensure();
     XVUE_QT_ASSERT_MAIN_THREAD();
@@ -759,6 +787,19 @@ void proc(xvchargefonte)(int *nofont0, int *nofont, int *largpx, int *hautpx) {
 
     *largpx = st->current_metrics_.horizontalAdvance(QLatin1Char('0'));
     *hautpx = st->current_metrics_.height();
+
+    // Phase 7 Plan 03: PS font-load emit. Pass family + size (pt) + ascent/
+    // descent / bold / italic; the D-08 mapping table inside chargefonte()
+    // produces "/Courier" / "/Times-Roman" / "/Helvetica" / "/NewCenturySchlbk"
+    // (with optional -Bold/-Italic/-Oblique suffix), and the format string
+    // matches xvuelc.c:1553 byte-for-byte.
+    XvueApp::psEmitter().chargefonte(
+        st->current_font_.family(),
+        XvueState::kFontSizes[idx],
+        st->current_metrics_.ascent(),
+        st->current_metrics_.descent(),
+        st->current_font_.bold(),
+        st->current_font_.italic());
 }
 
 // ---- 25. xvnbpixeltexte_ (Phase 3 D-05, TEXT-02) ----
@@ -908,6 +949,8 @@ void proc(xvtexte)(char string[], int *length, int *x1, int *y1) {
 
 // ---- 30. xvface_ (D-11, DRAW-03) ----
 // Legacy: XFillPolygon -- fill only, no edge stroke (WR-01).
+// Phase 7 Plan 03 (EXPORT-04): emits the PS "F" close-and-fill opcode after
+// the QPainter call.
 void proc(xvface)(int *n, MefistoPoint *pts) {
     XvueApp::ensure();
     XVUE_QT_ASSERT_MAIN_THREAD();
@@ -930,11 +973,16 @@ void proc(xvface)(int *n, MefistoPoint *pts) {
     st->painter_->drawPolygon(poly, Qt::OddEvenFill);  // auto 1<->n close
     st->painter_->setPen(saved_pen);
 
+    // Phase 7 Plan 03: PS "F" emit. MefistoPoint overload — helper Y-flips
+    // each vertex internally per README_COORDS.md.
+    XvueApp::psEmitter().face(pts, *n);
+
     xvue_qt_mark_user_content(win.get());
     if (win->canvas()) win->canvas()->update();
 }
 
 // ---- 31. xvtypetrait_ (D-17, D-19, DRAW-06) ----
+// Phase 7 Plan 03: emits PS "%2i typet\n" after the state update.
 void proc(xvtypetrait)(int *ptype) {
     XvueApp::ensure();
     XVUE_QT_ASSERT_MAIN_THREAD();
@@ -945,9 +993,11 @@ void proc(xvtypetrait)(int *ptype) {
     if (!st) return;
     st->pen_style_ = *ptype;
     st->applyPen();   // applyPen() self-gates on painter_->isActive()
+    XvueApp::psEmitter().typetrait(*ptype);
 }
 
 // ---- 32. xvepaisseur_ (D-18, DRAW-06) ----
+// Phase 7 Plan 03: emits PS "%2i epais\n" after the state update.
 void proc(xvepaisseur)(int *pepais) {
     XvueApp::ensure();
     XVUE_QT_ASSERT_MAIN_THREAD();
@@ -958,10 +1008,37 @@ void proc(xvepaisseur)(int *pepais) {
     if (!st) return;
     st->pen_width_base_ = *pepais;
     st->applyPen();
+    XvueApp::psEmitter().epaisseur(*pepais);
 }
 
 // ---- 34. xvtrait_ (D-09, DRAW-02) ----
+// Phase 7 Plan 03: emits the PS "S" opcode after the QPainter::drawLine.
+// Helper internally checks active() so this is a no-op when no PS capture
+// is in progress. xvftrait_ does NOT emit (xvuelc.c:1905 is the
+// fenetre_mef-only variant); see xvftrait body below.
 void proc(xvtrait)(int *x1, int *y1, int *x2, int *y2) {
+    XvueApp::ensure();
+    XVUE_QT_ASSERT_MAIN_THREAD();
+    if (!x1 || !y1 || !x2 || !y2) return;   // WR-03
+    auto& win = XvueApp::window_slot();
+    if (!win) return;
+    auto* st = win->state();
+    if (!st || !st->painter_ || !st->painter_->isActive()) return;
+    st->painter_->drawLine(*x1, *y1, *x2, *y2);
+    // Phase 7 Plan 03 (EXPORT-04): PS "S" opcode emit. Pass canvas-Y;
+    // the helper applies pyFlip internally per README_COORDS.md.
+    XvueApp::psEmitter().line(*x1, *y1, *x2, *y2);
+    xvue_qt_mark_user_content(win.get());
+    if (win->canvas()) win->canvas()->update();
+    // WR-02: deferred flush -- xvvoir_/xvpause_ pump the event loop.
+}
+
+// ---- 33. xvftrait_ (D-09 -- semantically identical to xvtrait_ under
+// the single-backing model; legacy window-vs-mempx split obsolete) ----
+// Phase 7 Plan 03: xvuelc.c:1905 draws to fenetre_mef and emits NO
+// PostScript. Inline the painter call instead of routing through xvtrait_
+// so the PS-emit byte parity matches the legacy stream.
+void proc(xvftrait)(int *x1, int *y1, int *x2, int *y2) {
     XvueApp::ensure();
     XVUE_QT_ASSERT_MAIN_THREAD();
     if (!x1 || !y1 || !x2 || !y2) return;   // WR-03
@@ -972,16 +1049,11 @@ void proc(xvtrait)(int *x1, int *y1, int *x2, int *y2) {
     st->painter_->drawLine(*x1, *y1, *x2, *y2);
     xvue_qt_mark_user_content(win.get());
     if (win->canvas()) win->canvas()->update();
-    // WR-02: deferred flush -- xvvoir_/xvpause_ pump the event loop.
-}
-
-// ---- 33. xvftrait_ (D-09 -- semantically identical to xvtrait_ under
-// the single-backing model; legacy window-vs-mempx split obsolete) ----
-void proc(xvftrait)(int *x1, int *y1, int *x2, int *y2) {
-    proc(xvtrait)(x1, y1, x2, y2);
+    // Note: NO psEmitter emit — legacy xvftrait_ never wrote PS bytes.
 }
 
 // ---- 35. xvtraits_ (D-10, DRAW-02) ----
+// Phase 7 Plan 03: emits PS "P" polyline opcode after the QPainter call.
 void proc(xvtraits)(int *nbpoints, MefistoPoint *points) {
     XvueApp::ensure();
     XVUE_QT_ASSERT_MAIN_THREAD();
@@ -1007,6 +1079,9 @@ void proc(xvtraits)(int *nbpoints, MefistoPoint *points) {
         st->painter_->drawPolyline(qpts.data(),
                                    static_cast<int>(qpts.size()));
     }
+    // Phase 7 Plan 03: PS "P" emit (xvuelc.c:2037-2093). Helper handles
+    // the (n-1)-segments count + Y-flip + chunked emit internally.
+    XvueApp::psEmitter().traits(points, *nbpoints);
     xvue_qt_mark_user_content(win.get());
     if (win->canvas()) win->canvas()->update();
     // WR-02: deferred flush -- xvvoir_/xvpause_ pump the event loop.
@@ -1022,6 +1097,11 @@ static void apply_palette_foreground(XvueState* st, int icolor) {
 }
 
 // ---- 36. xvfacetraits_ (D-12, DRAW-03; 02.1/D-1: honor ncf/nca) ----
+// Phase 7 Plan 03 (EXPORT-04): emits PS "FP" fill+border opcode after the
+// QPainter calls. Per xvuelc.c:2095-2181 the outline RGB is courgb_ (post-
+// nca) and the fill RGB is courgbm (saved before the second xvcouleur
+// call). We read the ncf-resolved QColor BEFORE the apply_palette_foreground
+// pair so we have both colors at PS-emit time.
 void proc(xvfacetraits)(int *ncf, int *nca, int *n, MefistoPoint *pts) {
     XvueApp::ensure();
     XVUE_QT_ASSERT_MAIN_THREAD();
@@ -1036,6 +1116,11 @@ void proc(xvfacetraits)(int *ncf, int *nca, int *n, MefistoPoint *pts) {
     for (int i = 0; i < *n; ++i) {
         poly << QPoint(pts[i].x, pts[i].y);
     }
+
+    // Phase 7 Plan 03: capture the ncf-resolved fill color BEFORE we mutate
+    // st->foreground_ via apply_palette_foreground, so the PS "FP" emit can
+    // include both fill (ncf) and border (post-nca) RGB triplets.
+    const QColor fill_qc = palette_resolve(*ncf, 1);
 
     // 02.1/D-1: mirror xvue/xvuelc.c:2055,2064 — install ncf, fill; install
     // nca, outline. Dashed style set by xvtypetrait_ survives the outline
@@ -1063,6 +1148,15 @@ void proc(xvfacetraits)(int *ncf, int *nca, int *n, MefistoPoint *pts) {
     // directly (e.g. xvface_) observe the canonical post-ncf->nca final
     // state without depending on an intervening state-change call.
     st->painter_->setBrush(QBrush(st->foreground_, Qt::SolidPattern));
+
+    // Phase 7 Plan 03: PS "FP" emit. Pass fill RGB explicitly; the helper
+    // pulls border RGB from PsEmitter::courgb_ (which would mirror the
+    // current painter color set by xvcouleur_ — kept in sync once Plan 06
+    // golden-compares end-to-end). For Plan 03 we pass fillA = -1.0f to
+    // force the "1.00 FP" branch matching xvuelc.c:2166 default.
+    XvueApp::psEmitter().facetraits(pts, *n,
+        fill_qc.redF(), fill_qc.greenF(), fill_qc.blueF(),
+        /*fillA=*/-1.0f);
 
     xvue_qt_mark_user_content(win.get());
     if (win->canvas()) win->canvas()->update();
@@ -1286,12 +1380,17 @@ void proc(xvpause)(void) {
 }
 
 // ---- 42. xvfbordrectangle_ (D-13, DRAW-04) ----
-// Legacy: XDrawRectangle -- outline only.
+// Legacy: XDrawRectangle -- outline only on fenetre_mef.
+// Phase 7 Plan 03 (EXPORT-04): xvuelc.c:2556 draws to fenetre_mef and emits
+// NO PostScript. Under Phase 2 single-backing collapse this Qt entry shares
+// xvue_qt_draw_rect_common with xvbordrectangle, so emit_ps=false here
+// preserves legacy PS byte parity.
 void proc(xvfbordrectangle)(int *x, int *y, int *width, int *height) {
     XvueApp::ensure();
     XVUE_QT_ASSERT_MAIN_THREAD();
     if (!x || !y || !width || !height) return;   // WR-03
-    xvue_qt_draw_rect_common(*x, *y, *width, *height, RectMode::Outline);
+    xvue_qt_draw_rect_common(*x, *y, *width, *height, RectMode::Outline,
+                             /*emit_ps=*/false);
 }
 
 // ---- 43. xvbordrectangle_ (D-13, DRAW-04) ----
@@ -1304,12 +1403,15 @@ void proc(xvbordrectangle)(int *x, int *y, int *width, int *height) {
 }
 
 // ---- 44. xvfrectangle_ (D-13, DRAW-04) ----
-// Legacy: XFillRectangle -- fill only.
+// Legacy: XFillRectangle -- fill only on fenetre_mef.
+// Phase 7 Plan 03: xvuelc.c:2619 draws to fenetre_mef, emits NO PostScript.
+// emit_ps=false preserves legacy byte parity (single-backing collapse note).
 void proc(xvfrectangle)(int *x, int *y, int *width, int *height) {
     XvueApp::ensure();
     XVUE_QT_ASSERT_MAIN_THREAD();
     if (!x || !y || !width || !height) return;   // WR-03
-    xvue_qt_draw_rect_common(*x, *y, *width, *height, RectMode::Fill);
+    xvue_qt_draw_rect_common(*x, *y, *width, *height, RectMode::Fill,
+                             /*emit_ps=*/false);
 }
 
 // ---- 45. xvrectangle_ (D-13, DRAW-04) ----
@@ -1324,6 +1426,7 @@ void proc(xvrectangle)(int *x, int *y, int *width, int *height) {
 // ---- 46. xvbordarcellipse_ (D-14, RESEARCH Q1: drawArc, DRAW-05) ----
 // Legacy xvuelc.c:2554 -- uses XDrawArc, outline only, float* angles in degrees.
 // X11 x64 (1/64 deg) -> Qt x16 (1/16 deg). NOT x64.
+// Phase 7 Plan 03: emits PS "el" arc-outline opcode (xvuelc.c:2729).
 void proc(xvbordarcellipse)(int *x, int *y, int *width, int *height,
                             float *angle1, float *angle2) {
     XvueApp::ensure();
@@ -1341,6 +1444,10 @@ void proc(xvbordarcellipse)(int *x, int *y, int *width, int *height,
 
     st->painter_->drawArc(bbox, start_16, span_16);  // outline -- matches XDrawArc
 
+    // Phase 7 Plan 03: PS "el" emit. Pass canvas-Y; helper Y-flips internally.
+    XvueApp::psEmitter().bordarcellipse(*x, *y, *width, *height,
+                                         *angle1, *angle2);
+
     xvue_qt_mark_user_content(win.get());
     if (win->canvas()) win->canvas()->update();
     // WR-02: deferred flush -- xvvoir_/xvpause_ pump the event loop.
@@ -1350,6 +1457,7 @@ void proc(xvbordarcellipse)(int *x, int *y, int *width, int *height,
 // Legacy xvuelc.c:2616 -- uses XFillArc (filled pie slice to center).
 // Qt's equivalent of XFillArc is drawPie, NOT drawArc. drawArc would only
 // stroke the curve; XFillArc fills the pie wedge. See 02-RESEARCH.md Q1.
+// Phase 7 Plan 03: emits PS "El" arc-fill opcode (xvuelc.c:2791).
 void proc(xvarcellipse)(int *x, int *y, int *width, int *height,
                         float *angle1, float *angle2) {
     XvueApp::ensure();
@@ -1366,6 +1474,10 @@ void proc(xvarcellipse)(int *x, int *y, int *width, int *height,
     const int span_16  = static_cast<int>(*angle2 * 16.0f);
 
     st->painter_->drawPie(bbox, start_16, span_16);  // filled wedge -- matches XFillArc
+
+    // Phase 7 Plan 03: PS "El" emit. Pass canvas-Y; helper Y-flips internally.
+    XvueApp::psEmitter().arcellipse(*x, *y, *width, *height,
+                                     *angle1, *angle2);
 
     xvue_qt_mark_user_content(win.get());
     if (win->canvas()) win->canvas()->update();

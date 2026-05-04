@@ -29,6 +29,7 @@
 // file when XvueWindow::menuBridge() exists; currently the contextMenuEvent
 // branch only references the window pointer.
 #include "xvue_qt_i18n.h"
+#include "xvue_qt_postscript.h"   // Phase 7 Plan 03: setCanvasDims hook
 
 #include <QPainter>
 #include <QPaintEvent>
@@ -205,6 +206,13 @@ void XvueCanvas::resizeEvent(QResizeEvent* event) {
         delete state_->accroche_undo_tile_;
         state_->accroche_undo_tile_ = nullptr;
     }
+
+    // Phase 7 Plan 03 (EXPORT-04): teach PsEmitter the current canvas
+    // dimensions so its pyFlip() helper can compute ypixels-y at PS-emit
+    // time. Logical pixels (NOT device pixels) match what every Qt-side
+    // primitive passes through the painter (HiDPI scaling is owned by
+    // the QPainter, not the Fortran caller).
+    XvueApp::psEmitter().setCanvasDims(logical.width(), logical.height());
 }
 
 // ---------------------------------------------------------------------------
