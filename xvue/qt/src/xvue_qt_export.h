@@ -44,4 +44,53 @@ public:
     static void onMenuExportPng();
     static void onMenuExportJpeg();
     static void onMenuExportPdf();
+
+    // ---- Phase 7 Plan 05 (EXPORT-03) — animated GIF + auto-snapshot ----
+    //
+    // beginAnimation() activates the in-memory frame buffer. While active,
+    // PsEmitter::handleLasops(0) (the close-PS-file branch) calls
+    // captureFrame() to snapshot the current backing pixmap. Frame caps
+    // (T-07-03 mitigation): warn at kAnimFrameSoftCap=100 (status-bar
+    // message), force-end at kAnimFrameHardCap=10000.
+    //
+    // saveGifTo dispatches via probe-driven branch (D-09/D-10/D-11):
+    //   - Native QImageWriter "gif" if usingNativeGifWriter() returns true
+    //     (defensive runtime re-check beyond Plan 01 PROBE.md).
+    //   - Otherwise ffmpeg fallback via QProcess::execute with a constants-
+    //     only QStringList (T-07-04: no shell, no user-typed argv).
+    // Frame buffer = QTemporaryDir at $TMPDIR/xvue-gif-XXXXXX/. On success:
+    // RAII auto-removed. On failure: setAutoRemove(false) + path logged
+    // to console-dock (T-07-05).
+    static void beginAnimation();
+    static void endAnimation();           // flushes to default cwd/animation.gif
+    static bool isCaptureActive();
+    static void captureFrame();           // snapshot current backing into the list
+    static int  pendingFrameCount();      // for tests + telemetry
+
+    // Menu / env-var entry points.
+    static void onMenuExportGif();        // QFileDialog-prompt path
+    static void onMenuToggleCapture();    // File → Capture Animation toggle (D-02)
+    static void checkEnvAutoStart();      // called from XvueApp::ensure — reads XVUE_ANIM
+
+    // Probe-driven branch selector (D-09/D-10/D-11): true iff Qt's
+    // QImageWriter supports "gif" write at runtime. Defensive runtime
+    // re-check; PROBE.md is the kickoff snapshot.
+    static bool usingNativeGifWriter();
+
+    // GIF assembly — sync, blocking on GUI thread (D-11). outputPath is
+    // an absolute file path; interactive=true gates QMessageBox surfaces.
+    static bool saveGifTo(const QString& outputPath, bool interactive = true);
+
+    // Frame caps (T-07-03 mitigation).
+    static constexpr int kAnimFrameSoftCap = 100;
+    static constexpr int kAnimFrameHardCap = 10000;
+
+#ifdef XVUE_QT_TESTING
+    // Test-only hooks. Compiled in only when the library is built with
+    // XVUE_QT_TESTING (set by xvue/qt/CMakeLists.txt when XVUE_QT_BUILD_TESTS
+    // is ON — same gate that exposes the menu_file_parser cache reset).
+    static void resetForTesting();
+    static void setNativeGifWriterForTesting(bool v);
+    static void setFfmpegOverrideForTesting(int forced_exit_code);
+#endif
 };

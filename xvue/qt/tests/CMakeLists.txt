@@ -366,6 +366,12 @@ target_include_directories(xvue_qt_export_tests PRIVATE
     ${CMAKE_CURRENT_SOURCE_DIR}/../src
     ${CMAKE_CURRENT_SOURCE_DIR}/../include
 )
+# Phase 7 Plan 05 (EXPORT-03): expose the resetForTesting /
+# setNativeGifWriterForTesting / setFfmpegOverrideForTesting hooks so the
+# 9 new GIF tests can mock the dispatch + ffmpeg branches without going
+# through a live ffmpeg invocation. Mirrors the flui/ther/elas/nlse
+# XVUE_QT_TESTING gate above.
+target_compile_definitions(xvue_qt_export_tests PRIVATE XVUE_QT_TESTING)
 
 # ctest registration for VALIDATION.md rows 07-04-01 and 07-04-02.
 add_test(NAME xvue_qt_export_tests

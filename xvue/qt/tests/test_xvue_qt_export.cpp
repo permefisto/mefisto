@@ -312,20 +312,35 @@ private slots:
 
     // Test 5: hard cap rejects at 10000 frames ----------------------------
     // Inject 10001 captures and assert frame list stops at 10000 and
-    // capture is force-ended.
+    // capture is force-ended. Resizes the canvas to 64x48 (≈12 KiB / frame
+    // QImage at ARGB32 — total ≈120 MiB at 10000 frames) so the test does
+    // not exhaust process memory; the hard-cap branch is what we actually
+    // assert, and it does not depend on per-frame pixel content.
     void XvueExport_hardcap_rejects_at_10000() {
         XvueExport::resetForTesting();
-        prepareCanvas800x600();
+        // Shrink the canvas to keep peak memory bounded for the 10000-
+        // frame buffer. The hard-cap branch is purely a count-based gate.
+        auto& slot = XvueApp::window_slot();
+        QVERIFY(slot);
+        auto* canvas = slot->canvas();
+        QVERIFY(canvas);
+        canvas->resize(64, 48);
+        QCoreApplication::processEvents(QEventLoop::ExcludeUserInputEvents);
+
         XvueExport::setFfmpegOverrideForTesting(0);  // mock ffmpeg success on flush
         XvueExport::beginAnimation();
         for (int i = 0; i < 10001; ++i) {
             XvueExport::captureFrame();
         }
         // After hard-cap hit the captureFrame() implementation calls
-        // endAnimation() which flushes to a default cwd path. Cleanup state.
+        // endAnimation() which flushes via the mocked ffmpeg path; the
+        // PNG-sequence write step still runs. Verify the cap was enforced.
         QVERIFY(!XvueExport::isCaptureActive());
-        // Frame buffer drained by endAnimation() on hard-cap.
         QCOMPARE(XvueExport::pendingFrameCount(), 0);
+
+        // Restore canvas size for subsequent slots.
+        canvas->resize(800, 600);
+        QCoreApplication::processEvents(QEventLoop::ExcludeUserInputEvents);
         XvueExport::resetForTesting();
     }
 
