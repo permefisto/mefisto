@@ -18,6 +18,21 @@ enum class MsgId : int {
     FileExportPngFilter,  FileExportJpegFilter,  FileExportPdfFilter,
     ExportPngFailed,      ExportJpegFailed,      ExportPdfFailed,
     ExportNoCanvas,
+    // Phase 7 Plan 05 (EXPORT-03 animated GIF) bilingual entries. Order MUST
+    // match the kTable rows in xvue_qt_i18n.cpp.
+    FileExportGif,
+    FileExportGifDialogTitle,
+    FileExportGifFilter,
+    FileCaptureAnimation,    // checkable menu entry
+    AnimationStarted,
+    AnimationDone,
+    AnimationFailed,
+    AnimationEncoding,
+    AnimationNoFrames,
+    AnimationTempDirFailed,
+    AnimationFfmpegFailed,
+    AnimationFrameSoftCapWarn,
+    AnimationFrameHardCapHit,
     FileQuit, FileQuitTip,
     ViewMenuTitle, ViewToolbar, ViewConsole, ViewZoomIn, ViewZoomOut, ViewFit, ViewPreferences,
     HelpMenuTitle, HelpDocumentation, HelpAbout,

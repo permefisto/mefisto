@@ -79,11 +79,17 @@ private:
     // Phase 7 Plan 04 (EXPORT-02, EXPORT-05): File → Export → submenu slots.
     // Each delegates to XvueExport::onMenuExport{Png,Jpeg,Pdf}, which prompts
     // via QFileDialog (QSettings-remembered last_dir) and then writes the
-    // canvas backing pixmap to the user-selected path. Plan 05 will add
-    // onFileExportGif and onFileCaptureAnimation alongside these.
+    // canvas backing pixmap to the user-selected path.
     void onFileExportPng();
     void onFileExportJpeg();
     void onFileExportPdf();
+    // Phase 7 Plan 05 (EXPORT-03): GIF export + Capture-Animation toggle.
+    // onFileExportGif delegates to XvueExport::onMenuExportGif (QFileDialog
+    // prompt, fallback to animation.gif in cwd). onFileToggleCaptureAnimation
+    // flips XvueExport's capture state so PsEmitter::handleLasops(0) starts
+    // (or stops) snapshotting backing_ on each xvpostscript_(0) close.
+    void onFileExportGif();
+    void onFileToggleCaptureAnimation();
     void onFileQuit();
     void onViewPreferences();
     void onViewFit();
@@ -120,6 +126,11 @@ private:
     QAction* actExportPng_     = nullptr;
     QAction* actExportJpeg_    = nullptr;
     QAction* actExportPdf_     = nullptr;
+    // Phase 7 Plan 05 (EXPORT-03): GIF entry appended to exportMenu_; the
+    // Capture-Animation toggle lives directly under File menu (not in the
+    // Export submenu) because it is a state toggle, not an output action.
+    QAction* actExportGif_         = nullptr;
+    QAction* actCaptureAnimation_  = nullptr;
     QAction* actQuit_          = nullptr;
     QAction* actToolbarToggle_ = nullptr;
     QAction* actConsoleToggle_ = nullptr;

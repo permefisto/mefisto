@@ -63,6 +63,21 @@ constexpr std::array<Entry, static_cast<size_t>(MsgId::_Count_)> kTable = {{
     {"Échec de l'export JPEG", "JPEG export failed"},                   // ExportJpegFailed
     {"Échec de l'export PDF",  "PDF export failed"},                    // ExportPdfFailed
     {"Aucun dessin à exporter","No canvas to export"},                  // ExportNoCanvas
+    // Phase 7 Plan 05 (EXPORT-03 animated GIF) FR/EN rows. Order MUST match
+    // the MsgId enum extension in xvue_qt_i18n.h.
+    {"GIF…",                                  "GIF…"},                                            // FileExportGif
+    {"Exporter en GIF…",                      "Export to GIF…"},                                  // FileExportGifDialogTitle
+    {"Animations GIF (*.gif)",                "GIF animations (*.gif)"},                          // FileExportGifFilter
+    {"Capture d'animation",                   "Capture animation"},                               // FileCaptureAnimation
+    {"Capture d'animation activée",           "Animation capture started"},                       // AnimationStarted
+    {"GIF enregistré",                        "GIF saved"},                                        // AnimationDone
+    {"Échec de l'enregistrement GIF",         "GIF save failed"},                                  // AnimationFailed
+    {"Encodage GIF en cours…",                "Encoding GIF…"},                                    // AnimationEncoding
+    {"Aucune image capturée pour le GIF",     "No frames captured for GIF"},                       // AnimationNoFrames
+    {"Création du dossier temporaire échouée","Temp directory creation failed"},                   // AnimationTempDirFailed
+    {"ffmpeg a échoué (paquet absent ?)",     "ffmpeg failed (apt install ffmpeg?)"},              // AnimationFfmpegFailed
+    {"100 images capturées — vérifiez la mémoire", "100 frames captured — watch memory usage"},   // AnimationFrameSoftCapWarn
+    {"10000 images atteintes — animation forcée à se terminer","10000 frames reached — animation forced to end"}, // AnimationFrameHardCapHit
     {"&Quitter",               "&Quit"},                                // FileQuit
     {"Quitter MEFISTO (Ctrl+Q)","Quit MEFISTO (Ctrl+Q)"},                // FileQuitTip
     {"&Affichage",             "&View"},                                // ViewMenuTitle

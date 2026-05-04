@@ -17,6 +17,7 @@
 #include "xvue_qt_menu_bridge.h"   // Phase 6.0 Plan 06: menuBridge() forwarding
 #include "xvue_qt_prefs.h"          // Phase 6.0 Plan 06: colorScheme() probe
 #include "xvue_qt_postscript.h"     // Phase 7 Plan 02: PsEmitter ownership
+#include "xvue_qt_export.h"         // Phase 7 Plan 05 (D-02): XVUE_ANIM env-var auto-start
 #include "xvue_qt_api.h"            // XVUE_QT_ASSERT_MAIN_THREAD
 #include <QApplication>
 #include <QCoreApplication>
@@ -134,6 +135,12 @@ void XvueApp::ensure() {
         std::atexit(&XvueApp::teardown_atexit);
     });
     load_bundled_font_();
+
+    // Phase 7 Plan 05 (D-02 EXPORT-03): honor XVUE_ANIM=1 env var at process
+    // start. The check is idempotent (XvueExport::beginAnimation simply resets
+    // the frame list) so calling on every ensure() is safe even though
+    // ensure() may be invoked from many extern "C" entry points.
+    XvueExport::checkEnvAutoStart();
 }
 
 // Phase 6.0 Plan 06 (UX-03/D-02). Forwarding accessor — null-safe so call

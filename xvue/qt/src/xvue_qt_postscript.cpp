@@ -27,8 +27,9 @@
 //      the clobber in the legacy code, so PostScript output is unchanged.
 #include "xvue_qt_postscript.h"
 #include "xvue_qt_app.h"
-#include "xvue_qt_api.h"   // XVUE_QT_ASSERT_MAIN_THREAD
-#include "xvue_qt_i18n.h"  // xvueIsEnglish() — replaces xvuelc.c `langage`
+#include "xvue_qt_api.h"     // XVUE_QT_ASSERT_MAIN_THREAD
+#include "xvue_qt_export.h"  // Phase 7 Plan 05 (D-02): auto-snapshot capture hook
+#include "xvue_qt_i18n.h"    // xvueIsEnglish() — replaces xvuelc.c `langage`
 
 #include <QApplication>
 #include <QByteArray>
@@ -123,6 +124,18 @@ void PsEmitter::handleLasops(int lasops) {
         if (lasops == 0) {
             lasopsc_ = lasops;
             if (fpo_ != nullptr) {
+                // Phase 7 Plan 05 (D-02 EXPORT-03): auto-snapshot capture hook.
+                // Captures the current canvas backing into the in-memory
+                // animation frame list whenever the solver/driver emits an
+                // xvpostscript_(0) close (the existing testa/wave and
+                // testa/cavity2d save points). Zero changes to Fortran side.
+                // The ffmpeg encode happens later, on endAnimation() or
+                // onMenuExportGif() — captureFrame() is just a backing→QImage
+                // snapshot. Cheap (toImage() copies the pixmap) and
+                // synchronous on the GUI thread.
+                if (XvueExport::isCaptureActive()) {
+                    XvueExport::captureFrame();
+                }
                 std::fprintf(fpo_, "%s", concat_);
                 std::fclose(fpo_);
                 fpo_ = nullptr;
