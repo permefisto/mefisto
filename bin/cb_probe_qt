@@ -1,0 +1,71 @@
+#!/bin/bash
+# bin/cb_probe_qt — Phase 7 Plan 01 (EXPORT-01)
+# Build the QImageWriter probe binary and capture its output into PROBE.md.
+# Reference: bin/cbxvtest0_qt for the surrounding shell-script style.
+# Owner: Alain Perronnet project / xvue-qt migration.
+
+set -e
+
+if [ -z "$MEFISTO" ]; then
+    echo "Error: \$MEFISTO env var is unset; source the project profile first."
+    exit 2
+fi
+
+cd "$MEFISTO"
+
+PROBE_DIR="$MEFISTO/xvue/qt/build-probe"
+PROBE_BIN="$PROBE_DIR/probes/qimagewriter_probe"
+PROBE_MD="$MEFISTO/.planning/phases/07-image-gif-and-postscript-export/PROBE.md"
+
+# Defensive ffmpeg check (Pitfall 6).
+if ! command -v ffmpeg >/dev/null 2>&1; then
+    echo "Warning: ffmpeg not found on PATH. GIF export will fail at runtime."
+    echo "         Install via: sudo apt install ffmpeg"
+fi
+
+mkdir -p "$PROBE_DIR"
+cmake -S "$MEFISTO/xvue/qt" -B "$PROBE_DIR" -DXVUE_QT_BUILD_PROBES=ON >/dev/null
+cmake --build "$PROBE_DIR" --target qimagewriter_probe
+
+if [ ! -x "$PROBE_BIN" ]; then
+    echo "Error: probe binary did not build at $PROBE_BIN"
+    exit 1
+fi
+
+# Capture probe output + metadata into PROBE.md. Hard-coded redirect path
+# (T-07-01 mitigation: probe binary itself writes only to stdout).
+{
+    echo "# Phase 7 — QImageWriter probe (EXPORT-01)"
+    echo
+    echo "Probe run: $(date -u +%Y-%m-%dT%H:%M:%SZ)"
+    echo "Host: $(uname -srm)"
+    echo "Source: \`xvue/qt/probes/qimagewriter_probe.cpp\` (Plan 01)"
+    echo
+    echo "## Raw probe output"
+    echo
+    echo '```'
+    "$PROBE_BIN"
+    echo '```'
+    echo
+    echo "## Interpretation"
+    echo
+    echo "* If \`gif_write_supported=0\` then Phase 7 Plan 05 takes the"
+    echo "  ffmpeg fallback path (CONTEXT.md D-11)."
+    echo "* If \`gif_write_supported=1\` then Phase 7 Plan 05 takes the"
+    echo "  native QImageWriter multi-frame path (CONTEXT.md D-10)."
+    echo "* In either case Phase 7 forbids ImageMagick \`convert\` shell-outs"
+    echo "  inside \`xvue/qt/\` (CONTEXT.md D-16, EXPORT-06 grep gate)."
+    echo
+    echo "## ffmpeg availability"
+    if command -v ffmpeg >/dev/null 2>&1; then
+        echo
+        echo '```'
+        ffmpeg -version 2>&1 | head -1
+        echo '```'
+    else
+        echo
+        echo "**ffmpeg NOT installed.** Plan 05 ffmpeg-fallback path will fail at runtime."
+    fi
+} > "$PROBE_MD"
+
+echo "Wrote $PROBE_MD"

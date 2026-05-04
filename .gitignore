@@ -27,3 +27,7 @@ incl/homdir.inc
 # (MEFISTOX est externe, mais au cas où)
 *.meshbf.bak
 *.stoke*.bak
+
+# Qt CMake build directories (Phase 7 Plan 01: bin/cb_probe_qt creates build-probe/)
+xvue/qt/build/
+xvue/qt/build-probe/
