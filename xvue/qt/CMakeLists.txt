@@ -33,6 +33,10 @@ add_library(xvueqt STATIC
     src/xvue_qt_preferences.cpp
     src/xvue_qt_recent_projects.cpp
     src/xvue_qt_shortcut_audit.cpp
+    # Phase 7 Plan 02 (EXPORT-04): PsEmitter — verbatim port of xvuelc.c
+    # xvpostscript_ state machine plus per-primitive emit helpers (Plan 03
+    # fills bodies). Owned by XvueApp via XvueApp::psEmitter() singleton.
+    src/xvue_qt_postscript.cpp
 )
 
 # Phase 6.1 Plan 02 additions: bilingual LIMTCL menu-file parser and the

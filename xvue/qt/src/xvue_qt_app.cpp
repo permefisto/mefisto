@@ -16,6 +16,8 @@
 #include "xvue_qt_window.h"
 #include "xvue_qt_menu_bridge.h"   // Phase 6.0 Plan 06: menuBridge() forwarding
 #include "xvue_qt_prefs.h"          // Phase 6.0 Plan 06: colorScheme() probe
+#include "xvue_qt_postscript.h"     // Phase 7 Plan 02: PsEmitter ownership
+#include "xvue_qt_api.h"            // XVUE_QT_ASSERT_MAIN_THREAD
 #include <QApplication>
 #include <QCoreApplication>
 #include <QColor>
@@ -34,6 +36,12 @@ std::once_flag                     XvueApp::once_flag_;
 std::unique_ptr<QApplication>      XvueApp::qapp_;
 std::unique_ptr<XvueWindow>        XvueApp::window_;
 int                                XvueApp::font_id_ = -1;
+
+// Phase 7 Plan 02 (EXPORT-04): file-scope owner for the PsEmitter singleton.
+// Mirrors the qapp_ / window_ static unique_ptr shape so XvueApp::psEmitter()
+// can lazily construct on first access and teardown_atexit() can release the
+// FILE* (close TEMPORAIRE.EPS cleanly) before QApplication is leaked.
+static std::unique_ptr<PsEmitter>  ps_emitter_;
 
 // Phase 5 (D-03, EVENT-08). Static zero-init is load-bearing: any call to
 // blockingDepth() before the first RAII guard must observe 0.
@@ -137,6 +145,20 @@ XvueMenuBridge* XvueApp::menuBridge() {
     return win->menuBridge();
 }
 
+// Phase 7 Plan 02 (EXPORT-04, D-06/D-07). Lazy singleton accessor.
+// Constructs on first call; subsequent calls return the same instance for the
+// process lifetime. Mirrors XvueApp::ensure() guarantees: any extern "C"
+// dispatch (xvpostscript_) calls XvueApp::ensure() first, then this accessor
+// — ensure() establishes the QApplication so XVUE_QT_ASSERT_MAIN_THREAD has
+// a thread to compare against. Released in teardown_atexit() so the
+// destructor closes any open FILE* (TEMPORAIRE.EPS) cleanly.
+PsEmitter& XvueApp::psEmitter() {
+    XVUE_QT_ASSERT_MAIN_THREAD();
+    XvueApp::ensure();
+    if (!ps_emitter_) ps_emitter_ = std::make_unique<PsEmitter>();
+    return *ps_emitter_;
+}
+
 // Phase 6.0 Plan 06 (UX-13, D-05). Reads XvuePrefs::colorScheme() and applies
 // the matching QPalette to QApplication. Three branches:
 //   - "dark"   -> hand-crafted dark palette per RESEARCH §8 (standard Qt dark
@@ -210,6 +232,12 @@ void XvueApp::teardown_atexit() {
     if (qapp_) {
         QCoreApplication::processEvents(QEventLoop::ExcludeUserInputEvents);
     }
+    // Phase 7 Plan 02 (EXPORT-04, T-07-09). Release the PsEmitter BEFORE the
+    // QApplication is leaked: its destructor fclose()s any still-open
+    // TEMPORAIRE.EPS / TEMPORAIRE.QUA so on-disk PostScript output is not
+    // truncated. Done after window_.reset() so any close-time PsEmitter
+    // calls from window children have already drained.
+    ps_emitter_.reset();
     // Documented leak. Do not change to qapp_.reset() — see file header.
     (void)qapp_.release();
 }

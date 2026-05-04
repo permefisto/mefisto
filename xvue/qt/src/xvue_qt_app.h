@@ -9,6 +9,7 @@
 class QApplication;
 class XvueWindow;
 class XvueMenuBridge;   // Phase 6.0 Plan 06: menuBridge() forwarding accessor
+class PsEmitter;        // Phase 7 Plan 02 (EXPORT-04): psEmitter() accessor
 
 class XvueApp {
 public:
@@ -38,6 +39,12 @@ public:
     // installed). Mirrors the blockingDepth() static style so call sites
     // inside extern "C" entries stay consistent.
     static XvueMenuBridge* menuBridge();
+
+    // Phase 7 Plan 02 (EXPORT-04): PsEmitter accessor. Lazily allocated on
+    // first call (mirrors menuBridge() / window_slot() shapes). Owns the
+    // ~15 file-statics ported verbatim from xvuelc.c:170-189; the legacy
+    // xvpostscript_(*lasops) ABI entry forwards to psEmitter().handleLasops.
+    static PsEmitter& psEmitter();
 
     // UX-13 (D-05). Reads XvuePrefs::colorScheme() and applies the palette.
     // Call on startup after ensure() and whenever XvuePreferencesDialog

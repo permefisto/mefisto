@@ -307,4 +307,38 @@ target_include_directories(xvue_qt_ther_menu_tests PRIVATE
 # Required for testBilingualLabelsEnglish. Mirrors elas/flui targets.
 target_compile_definitions(xvue_qt_ther_menu_tests PRIVATE XVUE_QT_TESTING)
 
+# ---------------------------------------------------------------------------
+# Phase 7 Plan 02 (EXPORT-04): PsEmitter unit tests — handleLasops state
+# machine, Y-flip helper, dispatcher dispatch. Plan 03 grows the file
+# with per-primitive emit golden tests; Plan 06 adds full-scene golden
+# compare against an X11-emitted reference.
+# ---------------------------------------------------------------------------
+add_executable(xvue_qt_postscript_tests
+    test_xvue_qt_postscript.cpp
+)
+
+target_link_libraries(xvue_qt_postscript_tests
+    PRIVATE
+        xvueqt
+        Qt6::Test
+        Qt6::Widgets
+        Qt6::Gui
+        Qt6::Core
+)
+
+target_include_directories(xvue_qt_postscript_tests PRIVATE
+    ${CMAKE_CURRENT_SOURCE_DIR}/..
+    ${CMAKE_CURRENT_SOURCE_DIR}/../src
+    ${CMAKE_CURRENT_SOURCE_DIR}/../include
+)
+
+# Phase 7 Plan 02: ctest registration so VALIDATION.md row 07-02-01's
+# `ctest -R '^xvue_qt_postscript_tests$'` invocation finds the target.
+# xvfb-run wraps the binary because PsEmitter pulls in QApplication via
+# XvueApp::ensure(), and offscreen platform plus xvfb are belt-and-braces.
+enable_testing()
+add_test(NAME xvue_qt_postscript_tests
+         COMMAND xvfb-run --auto-servernum
+                 $<TARGET_FILE:xvue_qt_postscript_tests>)
+
 # No install(); tests run in-place from xvue/build/tests/.

@@ -21,6 +21,7 @@
 #include "xvue_qt_menu_bridge.h"   // Phase 6.0 Plan 03: pre-AUTOEXIT pre-drain
 #include "xvue_qt_console_dock.h"  // Phase 6.0 Plan 06: stdout redirect dispatch
 #include "xvue_qt_prefs.h"         // Phase 6.0 Plan 06: per-module persistence init
+#include "xvue_qt_postscript.h"    // Phase 7 Plan 02: PsEmitter dispatch
 #include <QApplication>
 #include <QCoreApplication>
 #include <QCursor>
@@ -604,13 +605,15 @@ void proc(xvcouleur)(int *icolor) {
     // D-14: no update(), no processEvents — state-change only.
 }
 
-// ---- 14. xvpostscript_ ----
+// ---- 14. xvpostscript_ — Phase 7 Plan 02 (EXPORT-04, D-05, D-06): dispatch
+//      one-liner; PsEmitter owns all real logic. ABI body changed only — the
+//      proc(xvpostscript) extern "C" symbol is unchanged so the Fortran ABI
+//      stays at 58 entry points. WR-03: null-guard *lasops dereference.
 void proc(xvpostscript)(int *lasops) {
     XvueApp::ensure();
     XVUE_QT_ASSERT_MAIN_THREAD();
-    static bool warned = false;
-    warn_once(warned, "xvpostscript_");
-    (void)lasops;
+    if (!lasops) return;                            // WR-03 null-arg guard
+    XvueApp::psEmitter().handleLasops(*lasops);
 }
 
 // ---- 15. fenetremempx_ ----
