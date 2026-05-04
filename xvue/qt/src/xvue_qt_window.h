@@ -76,6 +76,14 @@ private:
     void onFileOpen();
     void onFileSave();
     void onFileSaveAs();
+    // Phase 7 Plan 04 (EXPORT-02, EXPORT-05): File → Export → submenu slots.
+    // Each delegates to XvueExport::onMenuExport{Png,Jpeg,Pdf}, which prompts
+    // via QFileDialog (QSettings-remembered last_dir) and then writes the
+    // canvas backing pixmap to the user-selected path. Plan 05 will add
+    // onFileExportGif and onFileCaptureAnimation alongside these.
+    void onFileExportPng();
+    void onFileExportJpeg();
+    void onFileExportPdf();
     void onFileQuit();
     void onViewPreferences();
     void onViewFit();
@@ -105,7 +113,13 @@ private:
     QAction* actOpen_          = nullptr;
     QAction* actSave_          = nullptr;
     QAction* actSaveAs_        = nullptr;
-    QAction* actExport_        = nullptr;   // disabled in 6.0
+    // Phase 7 Plan 04 (EXPORT-02, EXPORT-05): replaces the 6.0 placeholder
+    // QAction* actExport_ with a real submenu + 3 child QActions. Plan 05
+    // will append GIF + Capture-Animation entries to exportMenu_.
+    QMenu*   exportMenu_       = nullptr;
+    QAction* actExportPng_     = nullptr;
+    QAction* actExportJpeg_    = nullptr;
+    QAction* actExportPdf_     = nullptr;
     QAction* actQuit_          = nullptr;
     QAction* actToolbarToggle_ = nullptr;
     QAction* actConsoleToggle_ = nullptr;

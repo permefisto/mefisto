@@ -24,6 +24,7 @@
 #include "xvue_qt_prefs.h"
 #include "xvue_qt_i18n.h"
 #include "xvue_qt_app.h"
+#include "xvue_qt_export.h"   // Phase 7 Plan 04: File → Export submenu wiring
 
 #include <QAction>
 #include <QApplication>
@@ -177,11 +178,31 @@ void XvueWindow::buildMenuBar() {
 
     fileMenu->addSeparator();
 
-    actExport_ = new QAction(xvueT(MsgId::FileExport), this);
-    actExport_->setShortcut(QKeySequence("Ctrl+E"));
-    actExport_->setIcon(style()->standardIcon(QStyle::SP_ArrowDown));
-    actExport_->setEnabled(false);  // 6.0 placeholder; Phase 7 activates
-    fileMenu->addAction(actExport_);
+    // Phase 7 Plan 04 (EXPORT-02, EXPORT-05, D-04, D-13, D-14): File → Export
+    // → submenu. Per CONTEXT.md D-04 the submenu is added once in the shared
+    // shell builder; all five pp*_qt executables inherit it automatically. Per
+    // D-13 the PDF child is raster (QPdfWriter::drawPixmap on backing_); per
+    // D-14 PDF triggering is Qt-File-menu-only (no Fortran ABI extension —
+    // ABI stays at 58). Plan 05 will append GIF + Capture-Animation entries
+    // after the PDF child.
+    exportMenu_ = fileMenu->addMenu(xvueT(MsgId::FileExport));
+    exportMenu_->setObjectName(QStringLiteral("FileExport"));
+    exportMenu_->setIcon(style()->standardIcon(QStyle::SP_ArrowDown));
+
+    actExportPng_ = exportMenu_->addAction(xvueT(MsgId::FileExportPng));
+    actExportPng_->setObjectName(QStringLiteral("FileExportPng"));
+    connect(actExportPng_, &QAction::triggered,
+            this,          &XvueWindow::onFileExportPng);
+
+    actExportJpeg_ = exportMenu_->addAction(xvueT(MsgId::FileExportJpeg));
+    actExportJpeg_->setObjectName(QStringLiteral("FileExportJpeg"));
+    connect(actExportJpeg_, &QAction::triggered,
+            this,           &XvueWindow::onFileExportJpeg);
+
+    actExportPdf_ = exportMenu_->addAction(xvueT(MsgId::FileExportPdf));
+    actExportPdf_->setObjectName(QStringLiteral("FileExportPdf"));
+    connect(actExportPdf_, &QAction::triggered,
+            this,          &XvueWindow::onFileExportPdf);
 
     fileMenu->addSeparator();
 
@@ -352,6 +373,24 @@ void XvueWindow::onFileSave() {
 void XvueWindow::onFileSaveAs() {
     if (refuseIfBlocking()) return;
     // 6.0 placeholder — same rationale as onFileSave.
+}
+
+// ---- Phase 7 Plan 04: File → Export slot bodies ----
+// Each delegates to the matching XvueExport static helper, which prompts via
+// QFileDialog (QSettings-remembered last_dir) and writes the canvas backing
+// pixmap to the user-selected path. refuseIfBlocking() gates so a Fortran-
+// blocked picking loop cannot accidentally fire a QFileDialog re-entry.
+void XvueWindow::onFileExportPng()  {
+    if (refuseIfBlocking()) return;
+    XvueExport::onMenuExportPng();
+}
+void XvueWindow::onFileExportJpeg() {
+    if (refuseIfBlocking()) return;
+    XvueExport::onMenuExportJpeg();
+}
+void XvueWindow::onFileExportPdf()  {
+    if (refuseIfBlocking()) return;
+    XvueExport::onMenuExportPdf();
 }
 
 void XvueWindow::onFileQuit() {
