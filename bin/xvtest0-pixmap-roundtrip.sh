@@ -1,7 +1,7 @@
 #!/bin/bash
 # xvtest0-pixmap-roundtrip.sh — Phase 4 pixmap save/restore round-trip test.
 #
-# Invokes pp/ppxvtest0_qt 6 times under bin/qt-capture.sh, one per scene
+# Invokes pp/ppxvtest0 6 times under bin/qt-capture.sh, one per scene
 # (P4_CTRL, P4_SAVERESTORE, P4_MEMPX_SAVERESTORE, P4_BG, P4_EFFACEMEMPX,
 #  P4_FENETREMEMPX), then runs 4 pairwise `magick compare -metric AE`
 # comparisons. Exit 0 iff all 4 pairs are pixel-identical (AE == 0).
@@ -22,8 +22,8 @@ if ! command -v magick >/dev/null 2>&1; then
     exit 2
 fi
 
-if [ ! -x pp/ppxvtest0_qt ]; then
-    echo "${SELF}: pp/ppxvtest0_qt not built — run bin/cbxvtest0_qt first" >&2
+if [ ! -x pp/ppxvtest0 ]; then
+    echo "${SELF}: pp/ppxvtest0 not built — run bin/cbxvtest0 first" >&2
     exit 2
 fi
 
@@ -43,7 +43,7 @@ for SCENE in $SCENES; do
     OUT="/tmp/${LC}.png"
     rm -f "$OUT"
     echo "== ${SELF}: capturing scene=${SCENE} -> ${OUT}"
-    if ! MEFISTO_XVTEST0_SCENE="$SCENE" bin/qt-capture.sh pp/ppxvtest0_qt "$OUT"; then
+    if ! MEFISTO_XVTEST0_SCENE="$SCENE" bin/qt-capture.sh pp/ppxvtest0 "$OUT"; then
         echo "${SELF}: FAILED to capture scene ${SCENE}" >&2
         exit 3
     fi

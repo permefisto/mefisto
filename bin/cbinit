@@ -1,7 +1,11 @@
 #!/bin/bash
 #
-# compilation et edition de liens de ppinit.f 
-# Alain Perronnet   Version LINUX 64bits    Septembre 2009
+# cbinit — compilation et edition de liens de ppinit.f (Qt 6 graphics backend)
+# Phase 9 RETIRE-02 (2026-05): Qt-only build for INITIER. Pre-Phase-9
+# this script's predecessor lived only on the legacy X11 build chain;
+# the renamed Qt build chain (bin/cbl_tout) now invokes this Qt-only
+# variant. Modelled on bin/cbmail (the Qt-only renamed mailer build).
+# Alain Perronnet  Version LINUX 64bits  Septembre 2009 — Phase 9 Qt-only
 
 cd $MEFISTO
 #Creation du repertoire pp s'il n'existe pas
@@ -15,23 +19,16 @@ then
   LANGAGE=1
   LANGUE=ANGLAISE
   echo
-  echo ===============================================================
-  echo MEFISTO-LINUX 64bits: Compilation + Link Editor of ppinit.f
-  echo ===============================================================
+  echo ========================================================================
+  echo "MEFISTO-LINUX 64bits: Compilation f+OpenMp + Link Editor of ppinit.f (Qt)"
+  echo ========================================================================
 else
   LANGAGE=0
   LANGUE=FRANCAISE
   echo
-  echo ================================================================
-  echo MEFISTO-LINUX 64bits: Compilation + Edition de liens de ppinit.f
-  echo ================================================================
-fi
-
-#  
-# compilation de xvuelc.c
-if !(test -f xvue/xvuelc.o)
-then
-  bin/ccgxvue
+  echo =============================================================================
+  echo "MEFISTO-LINUX 64bits: Compilation f+OpenMp + Edition de liens de ppinit.f (Qt)"
+  echo =============================================================================
 fi
 
 nompp=pp/ppinit
@@ -40,12 +37,12 @@ then
   rm $nompp
 fi
 
-### g77 -g -I.  prpr/ppinit.f mail/lib util/lib xvue/lib xvue/xvuelc.o \
-###     -lXt -lX11 -lXext -o $nompp
-
-echo "gfortran -m64 -Wall -mcmodel=large -fPIC -O -I. $MEFISTO/prpr/ppinit.f -o $nompp"
-gfortran -m64 -Wall -mcmodel=large -fPIC -O -I. prpr/ppinit.f \
- mail/lib util/lib xvue/lib xvue/xvuelc.o -lgfortran -L/usr/X11R6/lib64 -lX11 -o $nompp
+QT_LIBS=$(pkg-config --libs Qt6Widgets Qt6Gui Qt6Core Qt6PrintSupport)
+echo "gfortran -Wall -mcmodel=large -m64 -O -fopenmp -I. $MEFISTO/prpr/ppinit.f -o $nompp (Qt backend)"
+gfortran -Wall -mcmodel=large -m64 -O -fopenmp -I. prpr/ppinit.f \
+     mail/lib util/lib xvue/lib \
+     -Lxvue/qt/build -lxvueqt $QT_LIBS -lstdc++ \
+     -lgfortran -o $nompp
 
 if test -f ppinit.o
 then
@@ -53,21 +50,21 @@ then
 fi
 
 if test -f $nompp
-then 
+then
   chmod 755 $nompp
   ls -l $MEFISTO/pp
   echo
   if [ $LANGAGE = 0 ]
   then
-    echo "$MEFISTO/$nompp est CORRECT pour executer INITIER"
+    echo "$MEFISTO/$nompp est CORRECT pour executer INITIER (Qt)"
   else
-    echo "$MEFISTO/$nompp is CORRECT to execute INITIER"
+    echo "$MEFISTO/$nompp is CORRECT to execute INITIER (Qt)"
   fi
 else
   if [ $LANGAGE = 0 ]
   then
-    echo "$MEFISTO/$nompp est INCORRECT. INITIER est NON EXECUTABLE"
+    echo "$MEFISTO/$nompp est INCORRECT. INITIER (Qt) est NON EXECUTABLE"
   else
-    echo "$MEFISTO/$nompp is INCORRECT. INITIER is NOT EXECUTABLE"
+    echo "$MEFISTO/$nompp is INCORRECT. INITIER (Qt) is NOT EXECUTABLE"
   fi
 fi

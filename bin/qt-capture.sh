@@ -11,10 +11,13 @@
 # is the reliable headless path when xcb-cursor0 or Xvfb is not available.
 #
 # For xvtest drivers pass the binary and the PNG path only:
-#   bin/qt-capture.sh pp/ppxvtest2_qt /tmp/xvtest2_qt.png
+#   bin/qt-capture.sh pp/ppxvtest2 /tmp/xvtest2_qt.png
 #
 # For solver runs pass the project_dir and the data file too:
-#   bin/qt-capture.sh pp/ppmail_qt /tmp/pan2d_qt.png pan2d.mesh /tmp/mefistox/pan2d
+#   bin/qt-capture.sh pp/ppmail /tmp/pan2d_qt.png pan2d.mesh /tmp/mefistox/pan2d
+#
+# (Pre-Phase-9 these examples named pp/ppxvtest2_qt / pp/ppmail_qt — RETIRE-02
+# dropped the _qt suffix from pp/* binaries.)
 #
 # Requires: a built Qt target; no Xvfb or ImageMagick.
 

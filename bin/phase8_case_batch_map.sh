@@ -5,8 +5,8 @@
 #   . "$MEFISTO/bin/phase8_case_batch_map.sh"
 #
 # Each entry exports per-case:
-#   PHASE8_CASE_${CASE}_MODULE        — pp/pp${MODULE}_qt module suffix
-#   PHASE8_CASE_${CASE}_BATCH         — argv[1] passed to pp/pp${MODULE}_qt
+#   PHASE8_CASE_${CASE}_MODULE        — pp/pp${MODULE} module suffix (post-Phase-9 RETIRE-02; was pp/pp${MODULE}_qt)
+#   PHASE8_CASE_${CASE}_BATCH         — argv[1] passed to pp/pp${MODULE}
 #   PHASE8_CASE_${CASE}_PREREQ_MODULE — optional; module to run BEFORE main module
 #   PHASE8_CASE_${CASE}_PREREQ_BATCH  — optional; batch file for prereq run
 #

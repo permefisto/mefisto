@@ -119,7 +119,9 @@ for CURRENT_CASE in "${CASES[@]}"; do
     mkdir -p "$PROJDIR"
     cp -r "$MEFISTO/testa/$CURRENT_CASE/." "$PROJDIR/"
     pushd "$PROJDIR" >/dev/null
-    echo "$CURRENT_CASE" | "$MEFISTO/pp/ppinit" >/dev/null 2>&1 || true
+    # Phase 9 RETIRE-02: pp/ppinit is now Qt-linked (legacy X11 backend
+    # retired); needs QT_QPA_PLATFORM=offscreen for headless CLI use.
+    echo "$CURRENT_CASE" | env QT_QPA_PLATFORM=offscreen "$MEFISTO/pp/ppinit" >/dev/null 2>&1 || true
 
     # Optional MAILLER prereq (must run BEFORE the main module).
     if [ -n "$PREREQ_MODULE" ] && [ -n "$PREREQ_BATCH" ]; then
@@ -127,7 +129,7 @@ for CURRENT_CASE in "${CASES[@]}"; do
             MEFISTO_BATCH_X11=1 \
             MEFISTO_XVSOURIS_AUTOEXIT=1 \
             MEFISTO_XVSOURIS_AUTOEXIT_DELAY_MS=500 \
-            timeout 60 "$MEFISTO/pp/pp${PREREQ_MODULE}_qt" "$PREREQ_BATCH" \
+            timeout 60 "$MEFISTO/pp/pp${PREREQ_MODULE}" "$PREREQ_BATCH" \
             >/dev/null 2>&1 || true
     fi
 
@@ -148,7 +150,7 @@ for CURRENT_CASE in "${CASES[@]}"; do
                 MEFISTO_QT_CAPTURE_PATH="$OUT" \
                 MEFISTO_XVSOURIS_AUTOEXIT=1 \
                 MEFISTO_XVSOURIS_AUTOEXIT_DELAY_MS=500 \
-                timeout 60 "$MEFISTO/pp/pp${MODULE}_qt" "$BATCH" \
+                timeout 60 "$MEFISTO/pp/pp${MODULE}" "$BATCH" \
                 >/dev/null 2>&1 || true
             ;;
         qt-2x)
@@ -158,7 +160,7 @@ for CURRENT_CASE in "${CASES[@]}"; do
                 MEFISTO_QT_CAPTURE_PATH="$OUT" \
                 MEFISTO_XVSOURIS_AUTOEXIT=1 \
                 MEFISTO_XVSOURIS_AUTOEXIT_DELAY_MS=500 \
-                timeout 60 "$MEFISTO/pp/pp${MODULE}_qt" "$BATCH" \
+                timeout 60 "$MEFISTO/pp/pp${MODULE}" "$BATCH" \
                 >/dev/null 2>&1 || true
             ;;
         qt-omp)
@@ -168,7 +170,7 @@ for CURRENT_CASE in "${CASES[@]}"; do
                 MEFISTO_QT_CAPTURE_PATH="$OUT" \
                 MEFISTO_XVSOURIS_AUTOEXIT=1 \
                 MEFISTO_XVSOURIS_AUTOEXIT_DELAY_MS=500 \
-                timeout 60 "$MEFISTO/pp/pp${MODULE}_qt" "$BATCH" \
+                timeout 60 "$MEFISTO/pp/pp${MODULE}" "$BATCH" \
                 >/dev/null 2>&1 || true
             ;;
     esac
