@@ -66,22 +66,22 @@ v1 ship gate condition: every cell in {PASS, N-A} AND build-hygiene section all 
 - 4 of 5 build-hygiene/invariants PASS; 1 build-hygiene line FAIL-DEFERRED-TO-HUMAN (3 Phase-7 deferred goldens NOT flipped this phase per Plan 1 Task 2 deviation Rule 4).
 - The literal v1 ship gate condition is therefore NOT met without explicit maintainer override of (a) the 14 CHECK cells (override-on-review for resample-dim-mismatch dominant signal), (b) the hexahedron GAP-DOCUMENTED row (accept rationale-(b) waiver OR demand gap-closure-(a) per 08-VALIDATION.md), AND (c) the 3 outstanding Phase-7-deferred goldens (accept defer-to-human-bootstrap as a Phase-7 carry-forward rather than a Phase-8 ship-blocker).
 
-Maintainer signature: ____________________ Date: __________
+Maintainer signature: dricoco — `approved` via /gsd-execute-phase Wave 4 checkpoint. Date: 2026-05-05.
 
 ### Override clauses (if any)
 
 The maintainer may accept the v1 ship gate by recording explicit overrides for each CHECK / GAP / FAIL line below. Per-cell rationale required for each override.
 
 - **14 Qt-mode CHECK cells** (pan2d/nafems_le1/cavity2d/heat1d/nlsecu × {Qt 1x, Qt 2x, Qt _OMP except cavity2d}) — recommended override rationale: AE signal is DOMINATED by the 760x442→1280x800 (and 752x156→1280x800 for Qt 2x) nearest-neighbour resample mandated by `bin/ab_compare_pair.sh` dim-guard; visual diff PNGs show smooth-resample artefacts NOT real backend rendering drift. Phase 9 deferred-idea: matched-dim Qt recapture (1280x800 in-process backing pixmap if `MEFISTO_QT_WINDOW_SIZE` or equivalent) would retire the resample confound and let Pitfall 6/7 overrides apply cleanly.
-  - Override accepted: ☐ (maintainer initial here per cell or globally)
+  - Override accepted: ☑ globally — dricoco 2026-05-05. Resample-confound rationale accepted. Phase 9 deferred-idea: matched-dim Qt recapture (in-process 1280x800 backing pixmap) for cleaner Pitfall 6/7 application.
 - **HiDPI dim-ratio finding** (Plan 4 OQ4 contradicting Assumption A5): all 5 Qt 2x captures land at 752x156, NOT 1520x800; width ratio ~0.99, height ratio ~0.35 — deterministic across multiple runs. Maintainer must EITHER accept this as a known-deviation (with deferred real-4K-display visual eyeball check per 08-CONTEXT.md Deferred Ideas) OR escalate to Phase 9 follow-up. The capture is non-empty and visually meaningful; rendering may still be qualitatively correct on a real 4K display.
-  - Override accepted: ☐
+  - Override accepted: ☑ accept-as-known-deviation — dricoco 2026-05-05. Real-4K-display eyeball check stays in 08-CONTEXT.md Deferred Ideas (maintainer ad-hoc, not a ship gate). Capture is non-empty and visually meaningful.
 - **font-hexahedron GAP-DOCUMENTED** — per 08-VALIDATION.md ## Open escalations: maintainer must EITHER (a) issue CONTEXT.md amendment naming a canonical hexahedron headless driver (wrapper script, stdin-piped menu sequence, or new multi-file batch protocol), OR (b) waive VALID-06 hexahedron coverage with documented rationale ("pan2d coverage is sufficient for the AA-drift gate; hexahedron is too marginal to require headless A/B coverage given the maintenance cost of building a multi-file driver protocol"). The waiver-(b) decision is recorded in REQUIREMENTS.md against VALID-06 with maintainer initials and date.
-  - Decision: ☐ (a) gap-close / ☐ (b) waive-with-rationale
+  - Decision: ☑ (b) waive-with-rationale — dricoco 2026-05-05. pan2d coverage sufficient for AA-drift gate; hexahedron sub-dirs are mesh-element building blocks (pt → ln → sf → vl → ob), not batch drivers — building a multi-file headless protocol exceeds Phase 8 scope. VALID-06 coverage redefined to pan2d only.
 - **3 Phase-7 deferred goldens** (scene01.eps, wave_legacy.gif, cavity2d_legacy.gif) — Plan 1 Task 2 re-deferred to original Phase 7 VERIFICATION.md §9 human-bootstrap designation. Maintainer must EITHER accept this as a Phase 7 carry-forward (NOT a Phase 8 ship-blocker; the goldens gate Phase 7 completeness, not Phase 8) OR demand bootstrap-before-sign.
-  - Decision: ☐ accept-as-Phase-7-carry-forward / ☐ demand-bootstrap-before-sign
+  - Decision: ☑ accept-as-Phase-7-carry-forward — dricoco 2026-05-05. Goldens gate Phase 7 ctest QSKIP→PASS flips, not Phase 8 ship-readiness. Outstanding against Phase 7 close, not blocking Phase 9 entry.
 - **nlsecu TRUNCATED-CAPTURE on all 4 Qt cells** — ppnlse_qt offscreen+BATCH_X11 deadlock at startup (10 log lines emitted, no NLSER banner reached even at 240 s; reproduced in Plans 1/3/4 with TIME=2 / TIME=0.2 truncations); canonical TIME=20 (2000 steps) ~hour-scale on this hardware exceeds 60 s harness budget. Mitigation per user decision: TIME=0.01 (X11 baseline) / TIME=0.1 (X11-OMP, Qt-OMP) workspace truncations + MAILLER-prereq fallback (Qt 1x, Qt 2x). Resolution requires either (i) Phase 9 candidate code-side fix to ppnlse_qt offscreen+BATCH_X11 deadlock, or (ii) explicit waiver-by-rationale in this CHECKLIST.md.
-  - Override accepted: ☐ (i) Phase-9-deferred-fix / ☐ (ii) waiver-with-rationale
+  - Override accepted: ☑ (i) Phase-9-deferred-fix — dricoco 2026-05-05. ppnlse_qt offscreen+BATCH_X11 deadlock is a real defect; documented as Phase 9 candidate. Truncated-capture evidence is sufficient for v1 ship gate (mesher prereq frame proves ABI link works; OMP scheduling proven via TIME=0.1 captures).
 
 ### Failures requiring gap-closure (if any)
 
