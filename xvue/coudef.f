@@ -9,9 +9,6 @@ C2345X7..............................................................012
       include"./incl/mecoit.inc"
       COMMON / T3PLAN / XYZTRI(3,2), H(3), NDIV(3), NOFA3P(3), NOET3P
 C
-C     A PRIORI PAS DE VIDEO DEMANDEE
-      LVIDEO = 0
-C
 C     OPTIONS PAR DEFAUT POUR LES TRACES
 C     ----------------------------------
 C     INCLINAISON DES TEXTES DE 0.0 DEGRES

@@ -16,5 +16,4 @@ variable VISEE2D 'Define a VIEW in 2D'  entier
 ,75: 'Activate TRANSLATION ZOOM'
 ,76: 'Stop the TRANSLATION ZOOM'
 ,81: 'TIME between 2 DRAWINGS'
-,88: 'Make a VIDEO.gif'
 ,90: 'Continue the DRAWING' ) ;

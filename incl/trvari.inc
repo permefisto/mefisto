@@ -6,7 +6,7 @@ C     IDENTIFICATEURS NECESSAIRES POUR LE TRACE GRAPHIQUE AVEC LA LIBRAIRIE xvue
 
 C     -------------------------------------------------------------------------
       DOUBLE PRECISION  TEMP2TRAC, TEMPUSER
-      COMMON / TRVAPS / TEMP2TRAC, TEMPUSER, LASOPS, LVIDEO
+      COMMON / TRVAPS / TEMP2TRAC, TEMPUSER, LASOPS
 C     -------------------------------------------------------------------------
 C     TEMP2TRAC : TEMPS UTILISATEUR EN SECONDES ENTRE 2 TRACES
 C     LASOPS    : DEMANDE OU NON DE SORTIE DU TRACE DU MAILLAGE EN POSTSCRIPT
@@ -14,9 +14,6 @@ C              0     : PAS DE SORTIE POSTSCRIPT
 C            +-1     : TRACE PS SANS LES MENUS (- pour desactiver localement)
 C            +-2     : TRACE PS AVEC LES MENUS (- pour desactiver localement)
 C            >|2|    : ETAT MOMENTANE DE GESTION DES RECTANGLES
-C     LVIDEO    : DEMANDE OU NON DE SORTIE DU TRACE SUR FICHIER VIDEO.gif
-C             =0     : PAS DE SORTIE DEMANDEE de VIDEO.gif
-C            <>0     : SORTIE DEMANDEE de VIDEO.gif
 
 C     -------------------------------------------------------------------------
       COMMON / TRVAR0 / NCVISU

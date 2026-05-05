@@ -25,5 +25,4 @@ variable VISEE3D 'Define a 3D VIEW'  entier
 ,75: 'Activate TRANSLATION ORBIT ZOOM'
 ,76: 'Stop the TRANSLATION ORBIT ZOOM'
 ,81: 'TIME between 2 DRAWINGS'
-,88: 'Make a VIDEO.gif'
 ,90: 'Continue the DRAWING' ) ;
