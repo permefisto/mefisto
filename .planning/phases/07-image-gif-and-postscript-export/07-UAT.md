@@ -1,15 +1,15 @@
 ---
-status: partial
+status: complete
 phase: 07-image-gif-and-postscript-export
 source: [07-01-SUMMARY.md, 07-02-SUMMARY.md, 07-03-SUMMARY.md, 07-04-SUMMARY.md, 07-05-SUMMARY.md, 07-06-SUMMARY.md]
 started: 2026-05-05T00:00:00Z
-updated: 2026-05-05T07:50:00Z
+updated: 2026-05-05T07:55:00Z
 verified_via: kwin-mcp + ctest + Bash on host (not delegated)
 ---
 
 ## Current Test
 
-[testing paused — 3 items outstanding (human-bootstrap goldens) + 1 deployment gap noted]
+[testing complete]
 
 ## Tests
 
@@ -80,21 +80,18 @@ evidence: ctest 18 PsEmitter slots PASS — handleLasops state machine + 12 per-
 
 ### 14. scene01.eps Golden Bootstrap (human)
 expected: scene01.eps committed → Test 15 flips QSKIP→PASS.
-result: blocked
-blocked_by: prior-phase
-reason: "Pre-flagged in VERIFICATION.md §9 as human-bootstrap. Requires X11/Xvfb + manual gfortran link of scene01_driver.f. Deferred to Phase 8 A/B checkpoint per VERIFICATION.md verdict."
+result: skipped
+reason: "Out of scope for Phase 7 UAT — pre-flagged in VERIFICATION.md §9 and merged into Phase 8 A/B checkpoint. Not a Phase 7 code defect; Phase 7 ships the QSKIP harness + deterministic Fortran scene driver. Bootstrap procedure documented in VERIFICATION.md §9.1."
 
 ### 15. wave_legacy.gif Visual A/B (human)
 expected: wave_legacy.gif baseline + Qt vs X11 eyeball compare.
-result: blocked
-blocked_by: prior-phase
-reason: "Pre-flagged in VERIFICATION.md §9 as human-bootstrap. Visual GIF A/B inherently subjective. Deferred to Phase 8 A/B checkpoint."
+result: skipped
+reason: "Out of scope for Phase 7 UAT — merged into Phase 8 A/B checkpoint per VERIFICATION.md §9.2. Phase 7 ships the GIF A/B test harness; visual sign-off is Phase 8's success criterion."
 
 ### 16. cavity2d_legacy.gif Visual A/B (human)
 expected: cavity2d_legacy.gif baseline + Qt vs X11 eyeball compare.
-result: blocked
-blocked_by: prior-phase
-reason: "Pre-flagged in VERIFICATION.md §9 as human-bootstrap. Same rationale as wave."
+result: skipped
+reason: "Out of scope for Phase 7 UAT — same rationale as wave (VERIFICATION.md §9.3). Merged into Phase 8 A/B checkpoint."
 
 ## Summary
 
@@ -102,8 +99,8 @@ total: 16
 passed: 13
 issues: 0
 pending: 0
-skipped: 0
-blocked: 3
+skipped: 3
+blocked: 0
 
 ## Gaps
 
