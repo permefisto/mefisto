@@ -45,14 +45,10 @@ cat $MEFISTO/incl/homdir.inc
 echo File $MEFISTO/incl/pp.inc
 cat $MEFISTO/incl/pp.inc
 
-#
-#  Compilation C de xvuelc.c
-$MEFISTO/bin/ccxvue
-
-#  regeneration des parametres des TMS de MEFISTO 
-#  A eviter lors d'une installation 
+#  regeneration des parametres des TMS de MEFISTO
+#  A eviter lors d'une installation
 #  car les fichiers INCLUDE disparaissent et sp non compiles
-#   $MEFISTO/bin/cbpara 
+#   $MEFISTO/bin/cbpara
   
 #
 #  compilation bind et librairie des sp fortran .f de
