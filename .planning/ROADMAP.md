@@ -291,7 +291,7 @@ Phases execute in numeric order: 0 → 1 → 2 → 3 → 4 → 5 → 6 → 7 →
 | 5. Event bridge & blocking reads | 0/TBD | Not started | - |
 | 6. Level-3 UX chrome | 0/TBD | Not started | - |
 | 7. Image, GIF, PostScript export | 0/TBD | Not started | - |
-| 8. A/B validation on testa subset | 0/7 | Not started | - |
+| 8. A/B validation on testa subset | 7/7 | Complete (2026-05-05) | dricoco — v1 ship gate signed; 5 overrides accepted; Phase 9 unblocked |
 | 9. Retire X11 backend | 0/TBD | Not started (gated) | - |
 
 ## Coverage

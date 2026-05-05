@@ -3,14 +3,14 @@ gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
 status: completed
-stopped_at: Phase 7 context gathered
-last_updated: "2026-05-04T00:00:00.000Z"
-last_activity: 2026-05-04
+stopped_at: Phase 8 complete — v1 ship gate signed
+last_updated: "2026-05-05T16:00:00.000Z"
+last_activity: 2026-05-05
 progress:
   total_phases: 17
-  completed_phases: 14
-  total_plans: 51
-  completed_plans: 52
+  completed_phases: 15
+  total_plans: 58
+  completed_plans: 59
   percent: 100
 ---
 
@@ -21,14 +21,14 @@ progress:
 See: .planning/PROJECT.md (updated 2026-04-10)
 
 **Core value:** Every MEFISTO workflow that works today through X11 keeps working through the new Qt 6 interface, with Fortran solver code unchanged.
-**Current focus:** Phase 6.2 — elasticity-elas-menu-wiring (gap-closure plans)
+**Current focus:** Phase 8 complete — v1 ship gate signed; one-release-cycle A/B window open; Phase 9 retirement unblocked.
 
 ## Current Position
 
-Phase: 7
-Plan: 07-06 autonomous portion complete; A/B sign-off + golden bootstrap pending (Task 3)
-Status: Phase 7 code-complete pending human A/B verdict — see .planning/phases/07-image-gif-and-postscript-export/VALIDATION-LOG.md
-Last activity: 2026-05-04
+Phase: 8 (complete)
+Plan: 08-07 ship-gate signed (5 overrides accepted); 7/7 plans complete
+Status: Phase 8 closed 2026-05-05 — maintainer dricoco signed 08-CHECKLIST.md. v1 release-ready. Phase 9 RETIRE-01..04 entry gate satisfied (one-release-cycle A/B window now open). 3 Phase-7-deferred goldens carry forward as Phase 7 close-out (NOT a Phase 8 ship-blocker).
+Last activity: 2026-05-05
 
 Progress: [██████████] 100% (45/45 plans, Phase 6.3 complete)
 
