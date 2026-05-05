@@ -123,6 +123,7 @@ echo TOUTES les LIBRAIRIES FORTRAN de MEFISTO ont ete compilees -O -fopenmp
 # rm $MEFISTO/*~
 rm $MEFISTO/*/*.o
 
+$MEFISTO/bin/cbinit
 $MEFISTO/bin/cbmail
 $MEFISTO/bin/cbelas
 $MEFISTO/bin/cbther

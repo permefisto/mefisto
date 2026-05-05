@@ -119,7 +119,9 @@ for CURRENT_CASE in "${CASES[@]}"; do
     mkdir -p "$PROJDIR"
     cp -r "$MEFISTO/testa/$CURRENT_CASE/." "$PROJDIR/"
     pushd "$PROJDIR" >/dev/null
-    echo "$CURRENT_CASE" | "$MEFISTO/pp/ppinit" >/dev/null 2>&1 || true
+    # Phase 9 RETIRE-02: pp/ppinit is now Qt-linked (legacy X11 backend
+    # retired); needs QT_QPA_PLATFORM=offscreen for headless CLI use.
+    echo "$CURRENT_CASE" | env QT_QPA_PLATFORM=offscreen "$MEFISTO/pp/ppinit" >/dev/null 2>&1 || true
 
     # Optional MAILLER prereq (must run BEFORE the main module).
     if [ -n "$PREREQ_MODULE" ] && [ -n "$PREREQ_BATCH" ]; then
