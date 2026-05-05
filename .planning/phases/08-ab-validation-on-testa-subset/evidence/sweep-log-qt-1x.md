@@ -104,6 +104,34 @@ during the wave-merge commit so Plan 07 ingests final values, not placeholders.
 - **heat1d:** 1D thermal — small image; high AE% sensitivity to single-pixel drift expected.
 - **nlsecu:** captured frame is from MAILLER prereq, NOT NLSER. Plan 07 (and CHECKLIST.md) MUST distinguish this row as TRUNCATED-CAPTURE in the Qt 1x cell. Real NLSER A/B sign-off requires either (a) extending per-case timeout for nlsecu, (b) a code-side fix to the offscreen-Qt deadlock at `pp/ppnlse_qt` startup, or (c) explicit waiver-by-rationale in 08-CHECKLIST.md per the open-items list in `00-smoke-probes.md`.
 
+## Plan 07 ingest scaffold
+
+Plan 07 composes the CHECKLIST.md verdict matrix per D-10. Below is a
+pre-shaped row template Plan 07 can copy into `08-CHECKLIST.md` row "Qt 1x"
+once the orchestrator wave-merge re-compare populates the AE column:
+
+```markdown
+| Case        | X11 baseline | Qt 1x                                      | Qt HiDPI 2x | Qt _OMP |
+|-------------|--------------|--------------------------------------------|-------------|---------|
+| pan2d       | (Plan 02)    | <verdict> AE=<n> diff=evidence/pan2d-qt-1x-diff.png       | (Plan 04)   | (Plan 05) |
+| nafems_le1  | (Plan 02)    | <verdict> AE=<n> diff=evidence/nafems_le1-qt-1x-diff.png  | (Plan 04)   | (Plan 05) |
+| cavity2d    | (Plan 02)    | <verdict> AE=<n> diff=evidence/cavity2d-qt-1x-diff.png    | (Plan 04)   | (Plan 05) |
+| heat1d      | (Plan 02)    | <verdict> AE=<n> diff=evidence/heat1d-qt-1x-diff.png      | (Plan 04)   | (Plan 05) |
+| nlsecu      | (Plan 02)    | TRUNCATED-CAPTURE diff=evidence/nlsecu-qt-1x-diff.png     | (Plan 04)   | (Plan 05) |
+```
+
+**nlsecu cell rationale** (carry into CHECKLIST.md verbatim):
+
+> nlsecu Qt 1x is a TRUNCATED-CAPTURE because `pp/ppnlse_qt nlsecu.iexrr`
+> deadlocks at startup under `QT_QPA_PLATFORM=offscreen + MEFISTO_BATCH_X11=1`
+> per Plan 1 SUMMARY (10 log lines emitted, no NLSER banner reached even at
+> 240s; reproduced in Plan 03 with TIME=2 / TIME=0.2 truncations — same
+> deadlock signature). The committed `nlsecu-qt-1x.png` is the MAILLER prereq
+> frame, which proves the harness contract reaches `xvfermer_` for this case.
+> Resolution requires either a code-side fix to the offscreen-Qt deadlock at
+> `pp/ppnlse_qt` startup (Phase 9 candidate) or an explicit waiver-by-rationale
+> in 08-CHECKLIST.md Qt 1x cell.
+
 ## Outcome
 
 Plan 03 Qt 1x column complete: 5/5 captures (4 normal, 1 TRUNCATED-CAPTURE for nlsecu),
