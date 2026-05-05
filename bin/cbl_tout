@@ -2,8 +2,8 @@
 #
 #  COMPILATION fortran et fortran95, EDITION DE LIENS, ARCHIVAGE DE
 #  TOUTES LES BIBLIOTHEQUES ET PROGRAMMES MEFISTO sous LINUX
-#  avec OPTIONS Fortran95 + OpenMP
-#  Alain Perronnet          4 Avril 2013
+#  avec OPTIONS Fortran95 + OpenMP + Qt 6 graphics backend
+#  Alain Perronnet — Qt 6 variant
 echo
 
 # banner -w30 MEFISTO
@@ -45,14 +45,70 @@ cat $MEFISTO/incl/homdir.inc
 echo File $MEFISTO/incl/pp.inc
 cat $MEFISTO/incl/pp.inc
 
+#
+# D-10, Pitfall 18: kill stale artifacts before every Qt build
+echo "Cleaning xvue/qt/build and stale pp/pp*_qt..."
+rm -rf $MEFISTO/xvue/qt/build
+rm -f  $MEFISTO/pp/pp*_qt
+
+# Build libxvueqt.a via CMake (handoff artifact for bin/cb*_qt scripts).
+# Phase 5 Wave 0 (05-01): also enable -DXVUE_QT_BUILD_TESTS=ON so the QTest
+# target xvue_qt_event_tests is built alongside libxvueqt.a. Tests run
+# headless under xvfb-run; no Fortran link stage dependency.
+echo "Building xvue/qt/libxvueqt.a via CMake (with xvue_qt_event_tests)..."
+cmake -S $MEFISTO/xvue/qt -B $MEFISTO/xvue/qt/build -DXVUE_QT_BUILD_TESTS=ON || {
+    echo "CMake configure of libxvueqt.a FAILED"
+    exit 1
+}
+cmake --build $MEFISTO/xvue/qt/build || {
+    echo "CMake build of libxvueqt.a FAILED"
+    exit 1
+}
+test -f $MEFISTO/xvue/qt/build/libxvueqt.a || {
+    echo "libxvueqt.a missing after cmake build — FAILED"
+    exit 1
+}
+
+# Phase 5 Wave 0 (05-01): explicitly build the xvue_qt_event_tests target so
+# that a failure here surfaces loudly rather than silently skipping the tests.
+cmake --build $MEFISTO/xvue/qt/build --target xvue_qt_event_tests || {
+    echo "cbl_tout: xvue_qt_event_tests build FAILED"
+    exit 1
+}
+test -x $MEFISTO/xvue/qt/build/tests/xvue_qt_event_tests || {
+    echo "cbl_tout: xvue_qt_event_tests binary missing after build — FAILED"
+    exit 1
+}
+
+# Phase 6.0 Plan 01 (06.0-01): build xvue_qt_menu_tests scaffold sanity target.
+cmake --build $MEFISTO/xvue/qt/build --target xvue_qt_menu_tests || {
+    echo "cbl_tout: xvue_qt_menu_tests build FAILED"
+    exit 1
+}
+test -x $MEFISTO/xvue/qt/build/tests/xvue_qt_menu_tests || {
+    echo "cbl_tout: xvue_qt_menu_tests binary missing after build — FAILED"
+    exit 1
+}
+
+# Phase 6.0 Plan 02 (06.0-02): build xvue_qt_i18n_menu_prefs_tests target —
+# i18n + menu-bridge + prefs full-body coverage (19 QTest cases).
+cmake --build $MEFISTO/xvue/qt/build --target xvue_qt_i18n_menu_prefs_tests || {
+    echo "cbl_tout: xvue_qt_i18n_menu_prefs_tests build FAILED"
+    exit 1
+}
+test -x $MEFISTO/xvue/qt/build/tests/xvue_qt_i18n_menu_prefs_tests || {
+    echo "cbl_tout: xvue_qt_i18n_menu_prefs_tests binary missing — FAILED"
+    exit 1
+}
+
 #  regeneration des parametres des TMS de MEFISTO
 #  A eviter lors d'une installation
 #  car les fichiers INCLUDE disparaissent et sp non compiles
 #   $MEFISTO/bin/cbpara
-  
+
 #
 #  compilation bind et librairie des sp fortran .f de
-#  toutes les librairies FORTRAN de MEFISTO 
+#  toutes les librairies FORTRAN de MEFISTO
 echo elas | $MEFISTO/bin/cbl_tous_f
 echo flui | $MEFISTO/bin/cbl_tous_f
 echo mail | $MEFISTO/bin/cbl_tous_f
@@ -67,13 +123,11 @@ echo TOUTES les LIBRAIRIES FORTRAN de MEFISTO ont ete compilees -O -fopenmp
 # rm $MEFISTO/*~
 rm $MEFISTO/*/*.o
 
-$MEFISTO/bin/cbinit
 $MEFISTO/bin/cbmail
 $MEFISTO/bin/cbelas
 $MEFISTO/bin/cbther
 $MEFISTO/bin/cbflui
 $MEFISTO/bin/cbnlse
-$MEFISTO/bin/cbpoba
 $MEFISTO/bin/cbxvtest0
 $MEFISTO/bin/cbxvtest1
 $MEFISTO/bin/cbxvtest2
@@ -84,4 +138,4 @@ $MEFISTO/bin/cbxvtest4
 echo Le repertoire $MEFISTO/pp :
 ls -l $MEFISTO/pp
 #
-echo TOUS les MODULES EXECUTABLES sans debogueur de $MEFISTO sous LINUX sont crees
+echo TOUS les MODULES EXECUTABLES sans debogueur de $MEFISTO sous LINUX sont crees — Qt variant

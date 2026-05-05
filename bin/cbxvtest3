@@ -1,10 +1,11 @@
 #!/bin/bash
 #
-# cbxvtest3 — Phase 3 A/B driver N (legacy X11 backend)
-# compilation et edition de liens de xvtest3.f
-# Created by Phase 03.1 — mirrors bin/cbmail link pattern without mail/lib.
+# cbxvtest3_qt — Phase 1 lifecycle test driver (Qt 6 backend)
+# compilation et edition de liens de xvtest3.f (Qt 6 graphics backend)
+# Alain Perronnet   Version LINUX 64bits    Septembre 2009
 
 cd $MEFISTO
+#Creation du repertoire pp s'il n'existe pas
 if !(test -d pp)
 then
   mkdir pp
@@ -16,20 +17,15 @@ then
   LANGUE=ANGLAISE
   echo
   echo ========================================================================
-  echo "MEFISTO-LINUX 64bits: Compilation f+OpenMp + Link Editor of xvtest3.f (X11)"
+  echo "MEFISTO-LINUX 64bits: Compilation f+OpenMp + Link Editor of xvtest3.f (Qt)"
   echo ========================================================================
 else
   LANGAGE=0
   LANGUE=FRANCAISE
   echo
   echo =============================================================================
-  echo "MEFISTO-LINUX 64bits: Compilation f+OpenMp + Edition de liens de xvtest3.f (X11)"
+  echo "MEFISTO-LINUX 64bits: Compilation f+OpenMp + Edition de liens de xvtest3.f (Qt)"
   echo =============================================================================
-fi
-
-if !(test -f xvue/xvuelc.o)
-then
-  bin/ccxvue
 fi
 
 nompp=pp/ppxvtest3
@@ -38,10 +34,12 @@ then
   rm $nompp
 fi
 
-echo "gfortran -Wall -mcmodel=large -m64 -O -fopenmp -I. $MEFISTO/prpr/xvtest3.f -o $nompp"
+QT_LIBS=$(pkg-config --libs Qt6Widgets Qt6Gui Qt6Core Qt6PrintSupport)
+echo "gfortran -Wall -mcmodel=large -m64 -O -fopenmp -I. $MEFISTO/prpr/xvtest3.f -o $nompp (Qt backend)"
 gfortran -Wall -mcmodel=large -m64 -O -fopenmp -I. prpr/xvtest3.f \
-     util/lib xvue/lib xvue/xvuelc.o \
-    -lgfortran -L/usr/X11R6/lib64 -lX11 -o $nompp
+     util/lib xvue/lib \
+     -Lxvue/qt/build -lxvueqt $QT_LIBS -lstdc++ \
+     -lgfortran -o $nompp
 
 if test -f xvtest3.o
 then
@@ -55,15 +53,15 @@ then
   echo
   if [ $LANGAGE = 0 ]
   then
-    echo "$MEFISTO/$nompp est CORRECT pour executer PHASE 3 A/B TEST 3 (X11)"
+    echo "$MEFISTO/$nompp est CORRECT pour executer PHASE 3 A/B TEST 3 (Qt)"
   else
-    echo "$MEFISTO/$nompp is CORRECT to execute PHASE 3 A/B TEST 3 (X11)"
+    echo "$MEFISTO/$nompp is CORRECT to execute PHASE 3 A/B TEST 3 (Qt)"
   fi
 else
   if [ $LANGAGE = 0 ]
   then
-    echo "$MEFISTO/$nompp est INCORRECT. PHASE 3 A/B TEST 3 (X11) est NON EXECUTABLE"
+    echo "$MEFISTO/$nompp est INCORRECT. PHASE 3 A/B TEST 3 (Qt) est NON EXECUTABLE"
   else
-    echo "$MEFISTO/$nompp is INCORRECT. PHASE 3 A/B TEST 3 (X11) is NOT EXECUTABLE"
+    echo "$MEFISTO/$nompp is INCORRECT. PHASE 3 A/B TEST 3 (Qt) is NOT EXECUTABLE"
   fi
 fi

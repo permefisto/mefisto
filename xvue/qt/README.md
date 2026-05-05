@@ -1,31 +1,32 @@
 # xvue-qt — Qt 6 reimplementation of the MEFISTO X11 graphics layer
 
 `xvue/qt/` is the Qt 6 reimplementation of the Fortran-facing graphics API
-historically provided by `xvue/xvuelc.c` (Xlib + Motif). The Qt backend is
-an in-progress replacement. The 57 `extern "C"` entry points listed in
-`xvue/qt/include/xvue_qt_api.h` are byte-compatible with the X11 backend
-so Fortran callers (`mail/`, `elas/`, `flui/`, `ther/`, `nlse/`, `prpr/`)
-link identically against either backend — the choice of backend is made
-at build time by `bin/cbl_tout` (X11) vs `bin/cbl_tout_qt` (Qt).
+historically provided by `xvue/xvuelc.c` (Xlib + Motif). Phase 9 (RETIRE-01
+through RETIRE-04, 2026-05) retired the X11 backend wholesale: the C file
+`xvue/xvuelc.c` is gone, the libX11/X11R6 linker lines are stripped, and
+the dual-build distinction has been collapsed. The 57 `extern "C"` entry
+points listed in `xvue/qt/include/xvue_qt_api.h` are now produced solely
+by the Qt path; Fortran callers (`mail/`, `elas/`, `flui/`, `ther/`,
+`nlse/`, `prpr/`) link against `xvue/qt/build/libxvueqt.a` via
+`bin/cbl_tout` — the only build entry that remains.
 
-Per `CLAUDE.md`, the Qt port is an **incremental** migration goal: new
-capabilities stay isolated inside `xvue/qt/`, no Fortran call site ever
-has to change, and both backends must keep compiling until the X11
-backend is retired.
+Per `CLAUDE.md`, the Qt migration is now the production graphics layer.
+Pre-Phase-9 history (the X11 backend, the `bin/cbl_tout_qt` parallel-build
+naming, the `pp/pp*_qt` suffix) is preserved at git tag `v1.0-pre-retire`
+for archaeology / rollback.
 
 ## Build
 
 ```sh
-bin/cbl_tout_qt         # full Qt build; outputs pp/pp*_qt binaries
+bin/cbl_tout            # full Qt build; outputs pp/pp{init,mail,elas,flui,ther,nlse,xvtest0..4} (no _qt suffix as of Phase 9 RETIRE-02)
 ```
 
 Runtime requires `qt6-base-dev` (Core, Gui, Widgets, Test, PrintSupport).
-No new apt packages beyond the X11 baseline — tests link against Qt6::Test
-which ships with `qt6-base-dev`.
 
-Never run `bin/cbl_tout` and `bin/cbl_tout_qt` in parallel; they share
-`pp/` and will clobber each other's artifacts mid-link
-(see `MEMORY.md :: feedback_parallel_builds_share_pp`).
+Pre-Phase-9 the build had two parallel entry points: `bin/cbl_tout` (X11)
+and `bin/cbl_tout_qt` (Qt). Phase 9 RETIRE-02 collapsed these into a single
+`bin/cbl_tout` (Qt-only); the legacy X11 entry was deleted and the Qt entry
+was renamed via `git mv` to drop the `_qt` suffix (history preserved).
 
 ## Phase 5 — Event bridge
 
@@ -121,7 +122,7 @@ Set this environment variable to see per-`waitForEvent` event counts on
 stderr:
 
 ```sh
-MEFISTO_XVSOURIS_DEBUG=1 pp/ppmail_qt testa/pan2d 2> /tmp/qt_motion.log
+MEFISTO_XVSOURIS_DEBUG=1 pp/ppmail testa/pan2d 2> /tmp/qt_motion.log
 ```
 
 Each return emits one line:

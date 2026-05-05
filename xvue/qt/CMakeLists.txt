@@ -171,8 +171,9 @@ add_custom_target(verify_no_imagemagick_in_qt ALL
 
 # Phase 7 Plan 01 (EXPORT-01): probes/ subdirectory holds standalone probe
 # binaries (e.g., qimagewriter_probe). Gated so the canonical bin/cbl_tout
-# and bin/cbl_tout_qt builds do not depend on it; bin/cb_probe_qt enables
-# the option explicitly.
+# build (Qt-only since Phase 9 RETIRE-02 — formerly the parallel cbl_tout
+# vs cbl_tout_qt pair) does not depend on it; bin/cb_probe_qt enables the
+# option explicitly.
 option(XVUE_QT_BUILD_PROBES "Build xvue/qt/probes/* standalone binaries" OFF)
 if(XVUE_QT_BUILD_PROBES)
     add_subdirectory(probes)
@@ -184,8 +185,10 @@ install(TARGETS xvueqt
 )
 
 # Phase 5 Wave 0 (05-01): optional test subdirectory. Gated by a flag so the
-# normal build stays unchanged; bin/cbl_tout_qt turns it ON to build the
+# normal build stays unchanged; bin/cbl_tout turns it ON to build the
 # xvue_qt_event_tests target as part of the full Qt build.
+# (Pre-Phase-9 this comment named bin/cbl_tout_qt — RETIRE-02 collapsed
+# that to bin/cbl_tout.)
 option(XVUE_QT_BUILD_TESTS "Build all xvue_qt QTest binaries" OFF)
 if(XVUE_QT_BUILD_TESTS)
     # WR-01/WR-02 gap-closure: enable test-only API in the library itself

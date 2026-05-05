@@ -1,6 +1,7 @@
 #!/bin/bash
 #
-# compilation et edition de liens de ppelas.f 
+# cbelas_qt — Qt-backed clone of cbelas
+# compilation et edition de liens de ppelas.f (Qt 6 graphics backend)
 # Alain Perronnet   Version LINUX 64bits   Octobre 2012
 
 
@@ -16,23 +17,16 @@ then
   LANGAGE=1
   LANGUE=ANGLAISE
   echo
-  echo ======================================================================
-  echo MEFISTO-LINUX 64bits: Compilation f95+OpenMP + Link Editor of ppelas.f
-  echo ======================================================================
+  echo ==========================================================================
+  echo "MEFISTO-LINUX 64bits: Compilation f95+OpenMP + Link Editor of ppelas.f (Qt)"
+  echo ==========================================================================
 else
   LANGAGE=0
   LANGUE=FRANCAISE
   echo
-  echo ===========================================================================
-  echo MEFISTO-LINUX 64bits: Compilation f95+OpenMP + Edition de liens de ppelas.f
-  echo ===========================================================================
-fi
-
-#  
-# compilation de xvuelc.c
-if !(test -f xvue/xvuelc.o)
-then
-  bin/ccxvue
+  echo ===============================================================================
+  echo "MEFISTO-LINUX 64bits: Compilation f95+OpenMP + Edition de liens de ppelas.f (Qt)"
+  echo ===============================================================================
 fi
 
 nompp=pp/ppelas
@@ -41,13 +35,12 @@ then
   rm $nompp
 fi
 
-### g77 -O -I.  prpr/ppelas.f elas/lib util/lib xvue/lib xvue/xvuelc.o \
-###     -lXt -lX11 -lXext -o $nompp
-
-echo "gfortran -m64 -mcmodel=large -fPIC -O -fopenmp -I. $MEFISTO/prpr/ppelas.f -o $nompp"
+QT_LIBS=$(pkg-config --libs Qt6Widgets Qt6Gui Qt6Core Qt6PrintSupport)
+echo "gfortran -m64 -mcmodel=large -fPIC -O -fopenmp -I. $MEFISTO/prpr/ppelas.f -o $nompp (Qt backend)"
 gfortran -m64 -mcmodel=large -fPIC -O -fopenmp -I. prpr/ppelas.f elas/lib reso/lib mail/lib \
-                util/lib xvue/lib xvue/xvuelc.o \
-    -lgfortran -L/usr/X11R6/lib64 -lX11 -o $nompp
+                util/lib xvue/lib \
+                -Lxvue/qt/build -lxvueqt $QT_LIBS -lstdc++ \
+    -lgfortran -o $nompp
 
 if test -f ppelas.o
 then
@@ -55,21 +48,21 @@ then
 fi
 
 if test -f $nompp
-then 
+then
   chmod 755 $nompp
   ls -l $MEFISTO/pp
   echo
   if [ $LANGAGE = 0 ]
   then
-    echo "$MEFISTO/$nompp est CORRECT pour executer ELASTICER"
+    echo "$MEFISTO/$nompp est CORRECT pour executer ELASTICER (Qt)"
   else
-    echo "$MEFISTO/$nompp is CORRECT to execute ELASTICER"
+    echo "$MEFISTO/$nompp is CORRECT to execute ELASTICER (Qt)"
   fi
 else
   if [ $LANGAGE = 0 ]
   then
-    echo "$MEFISTO/$nompp est INCORRECT. ELASTICER est NON EXECUTABLE"
+    echo "$MEFISTO/$nompp est INCORRECT. ELASTICER (Qt) est NON EXECUTABLE"
   else
-    echo "$MEFISTO/$nompp is INCORRECT. ELASTICER is NOT EXECUTABLE"
+    echo "$MEFISTO/$nompp is INCORRECT. ELASTICER (Qt) is NOT EXECUTABLE"
   fi
 fi
