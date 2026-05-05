@@ -131,7 +131,8 @@ None yet.
 - **Phase 5** flagged for empirical validation of nested `QEventLoop` + mouse-motion coalescing during planning
 - **Phase 6** per-module lexicon audit may split into 5 sub-phases (one per solver module) during planning
 - **Phase 7** requires `QImageWriter::supportedImageFormats()` probe at phase kickoff to choose GIF strategy
-- **Phase 9** is gated on the one-release-cycle A/B window closing — process gate, not date-driven
+- **Phase 9** A/B window closure: 2026-05-06 — maintainer dricoco. Window opened 2026-05-05 (Phase 8 sign-off), closed same dev-loop session. Phase 9 EXECUTE unblocked.
+- **Qt menu bug carry-forward (post-Phase-6, observed 2026-05-06):** maintainer manually tested Qt menu and found (a) some menu items missing text labels, (b) some items non-functional including "Open Project". Not Phase 9 scope; track as Phase-9.1 cleanup or new mini-phase.
 
 ## Session Continuity
 
