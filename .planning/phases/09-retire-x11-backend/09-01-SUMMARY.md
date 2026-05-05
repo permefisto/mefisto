@@ -168,7 +168,15 @@ This publishes the rollback artifacts to GitHub. Not a blocker for Phase 9 execu
 - **Plans 9-06..9-09 carry-forward** can proceed independently. Plan 9-06 inherits the documented nlsecu deadlock disposition; Plan 9-07 inherits the v1.0-pre-retire tag for cross-tag worktree creation (per CONTEXT.md D-03 + plan 9-07 procedure).
 - **Rollback safety:** any of the 4 retirement plans (9-02..9-05) can be backed out individually (per-plan revert) or wholesale (`git reset --hard v1.0-pre-retire`) without losing this audit-baseline commit (it lives at `933bdbb` on the per-agent branch and will land on main when the worktree merges back).
 
-## Self-Check: PASSED
+## Self-Check: PASSED (re-verified post-commit)
+
+```
+created files: 09-01-AUDIT-BASELINE.md (15888 B), 09-01-SUMMARY.md (15922 B) — FOUND
+commits: 933bdbb, 6f50e4a — FOUND in git log --all
+refs: v1.0-pre-retire (tag), retire-restore-point (branch) — FOUND in parent repo, target commit EQUAL on 53bdb5b
+testa: 4/5 PNGs FOUND with non-zero size; nlsecu MISSING per documented override #5
+```
+
 
 **1. Created file exists:**
 - `.planning/phases/09-retire-x11-backend/09-01-AUDIT-BASELINE.md`: FOUND (15,888 bytes, 6 sections + verification log, 17 references to v1.0-pre-retire)
