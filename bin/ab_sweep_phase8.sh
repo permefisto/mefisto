@@ -127,7 +127,7 @@ for CURRENT_CASE in "${CASES[@]}"; do
             MEFISTO_BATCH_X11=1 \
             MEFISTO_XVSOURIS_AUTOEXIT=1 \
             MEFISTO_XVSOURIS_AUTOEXIT_DELAY_MS=500 \
-            timeout 60 "$MEFISTO/pp/pp${PREREQ_MODULE}_qt" "$PREREQ_BATCH" \
+            timeout 60 "$MEFISTO/pp/pp${PREREQ_MODULE}" "$PREREQ_BATCH" \
             >/dev/null 2>&1 || true
     fi
 
@@ -148,7 +148,7 @@ for CURRENT_CASE in "${CASES[@]}"; do
                 MEFISTO_QT_CAPTURE_PATH="$OUT" \
                 MEFISTO_XVSOURIS_AUTOEXIT=1 \
                 MEFISTO_XVSOURIS_AUTOEXIT_DELAY_MS=500 \
-                timeout 60 "$MEFISTO/pp/pp${MODULE}_qt" "$BATCH" \
+                timeout 60 "$MEFISTO/pp/pp${MODULE}" "$BATCH" \
                 >/dev/null 2>&1 || true
             ;;
         qt-2x)
@@ -158,7 +158,7 @@ for CURRENT_CASE in "${CASES[@]}"; do
                 MEFISTO_QT_CAPTURE_PATH="$OUT" \
                 MEFISTO_XVSOURIS_AUTOEXIT=1 \
                 MEFISTO_XVSOURIS_AUTOEXIT_DELAY_MS=500 \
-                timeout 60 "$MEFISTO/pp/pp${MODULE}_qt" "$BATCH" \
+                timeout 60 "$MEFISTO/pp/pp${MODULE}" "$BATCH" \
                 >/dev/null 2>&1 || true
             ;;
         qt-omp)
@@ -168,7 +168,7 @@ for CURRENT_CASE in "${CASES[@]}"; do
                 MEFISTO_QT_CAPTURE_PATH="$OUT" \
                 MEFISTO_XVSOURIS_AUTOEXIT=1 \
                 MEFISTO_XVSOURIS_AUTOEXIT_DELAY_MS=500 \
-                timeout 60 "$MEFISTO/pp/pp${MODULE}_qt" "$BATCH" \
+                timeout 60 "$MEFISTO/pp/pp${MODULE}" "$BATCH" \
                 >/dev/null 2>&1 || true
             ;;
     esac
