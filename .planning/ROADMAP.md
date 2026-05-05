@@ -255,7 +255,14 @@ Plans:
   3. All 5 cases render correctly on a HiDPI display (4K monitor or `QT_SCALE_FACTOR=2`) with no size or position drift vs X11.
   4. Color-bar spot checks on `testa/nafems_le1`, `testa/heat1d`, and `testa/cavity2d` show no user-visible drift; font-metric checks on `testa/pan2d` and `testa/hexahedron` show no clipping or overlap.
   5. `.planning/phase-8/CHECKLIST.md` is signed off as the explicit gate for declaring v1 shippable and opening the one-release-cycle A/B window.
-**Plans**: TBD
+**Plans**: 7 plans
+  - [ ] 08-01-PLAN.md — Wave 1 bootstrap: bin/cbl_tout_qt freshness (D-08, Phase 7 Gap-A) + 3 Phase-7 deferred goldens (D-06: scene01.eps + wave_legacy.gif + cavity2d_legacy.gif) + ctest QSKIP→PASS flip (D-07) + 3 sweep-harness scripts (bin/ab_compare_pair.sh, ab_capture_x11.sh, ab_sweep_phase8.sh) + 5-case AUTOEXIT smoke probes (VALID-01, VALID-02, VALID-07)
+  - [ ] 08-02-PLAN.md — Wave 2 X11 baseline column: 5 canonical cases captured under Xvfb + OMP_NUM_THREADS=1 deterministic baseline (VALID-02)
+  - [ ] 08-03-PLAN.md — Wave 2 Qt 1x column: 5 captures under QT_QPA_PLATFORM=offscreen + AE compare vs X11 baseline at fuzz=5% (VALID-01)
+  - [ ] 08-04-PLAN.md — Wave 2 Qt HiDPI 2x column: 5 captures under QT_SCALE_FACTOR=2 + downsample-then-AE-compare with dimension guard (VALID-04)
+  - [ ] 08-05-PLAN.md — Wave 2 OMP column: 4 OMP-eligible cases captured on both backends under OMP_NUM_THREADS=8 (cavity2d N-A — no FLUIDER_OMP per D-05) + main-thread guard verification (VALID-03)
+  - [ ] 08-06-PLAN.md — Wave 3 spot checks: 3 colorbar reports (nafems_le1/heat1d/cavity2d) per Pitfall 6 + 2 font reports (pan2d/hexahedron) per Pitfall 7; hexahedron captured separately as VALID-06 spot-only (NOT extending BUILD-10 baseline) (VALID-05, VALID-06)
+  - [ ] 08-07-PLAN.md — Wave 4 ship-gate: compose 08-CHECKLIST.md per-cell verdict matrix (D-10) + 08-VALIDATION.md VALID-NN coverage + maintainer sign-off checkpoint that opens the one-release-cycle A/B window (VALID-07)
 **UI hint**: yes
 
 ### Phase 9: Retire X11 backend
@@ -284,7 +291,7 @@ Phases execute in numeric order: 0 → 1 → 2 → 3 → 4 → 5 → 6 → 7 →
 | 5. Event bridge & blocking reads | 0/TBD | Not started | - |
 | 6. Level-3 UX chrome | 0/TBD | Not started | - |
 | 7. Image, GIF, PostScript export | 0/TBD | Not started | - |
-| 8. A/B validation on testa subset | 0/TBD | Not started | - |
+| 8. A/B validation on testa subset | 0/7 | Not started | - |
 | 9. Retire X11 backend | 0/TBD | Not started (gated) | - |
 
 ## Coverage
@@ -305,3 +312,4 @@ The 9-phase layout is accepted with explicit justification: each phase matches o
 
 ---
 *Roadmap created: 2026-04-10*
+*Phase 8 plans created: 2026-05-05*
