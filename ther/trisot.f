@@ -93,7 +93,6 @@ C23456---------------------------------------------------------------012
 
       CHARACTER*(*)     KNOMOB
       CHARACTER*90      KNOM
-      CHARACTER*24      NOMFGIF
       REAL              TIMES( NCAS0:NCAS1 )
       DOUBLE PRECISION  TEMPER( NTDL, NCAS0:NCAS1 )
       DOUBLE PRECISION  TMINCAS, TMAXCAS, V
@@ -113,9 +112,6 @@ C        DES TEMPERATURES A TRACER SANS LECTURE DE MOTS-CLES
       ELSE
          MODECO = MODECO0
       ENDIF
-
-C     NOM DU FICHIER VIDEO  SELON MODECO // 'isov'
-      CALL VIDEONM( MODECO, 'isov', NOMFGIF )
 
       MOREE2 = MOTVAR(6)
       MNSOLE = 0
@@ -511,20 +507,11 @@ C        TRACE LA LEGENDE DU TRACE DES ISOTHERMES
          CALL LEGISOTH( KNOMOB, NCAS, TMINC, TMAXC, NBISO, MNVISO,
      %                  MODECO )
 C
-C        MISE SUR FICHIER NomfgifBoImage.xwd puis NomfgifNoImage.jpg
-C        DE LA PIXMAP de la FENETRE X11 ACTUELLE
-         CALL VIDEO1( NOMFGIF, NCAS )
-C
 C        ATTENDRE POUR LIRE LE TRACE
          CALL ATTENDSEC( TEMP2TRAC )
 C
 C        FIN DE LA BOUCLE SUR LES CAS  ------------------------
       ENDDO
-C
-C     CONSTRUIRE le FICHIER VIDEO Nomfic.gif A PARTIR DES FICHIERS
-C     CONSTRUITS de NOMS NomfgifNoImag.jpg
-C     ------------------------------------------------------------
-      CALL VIDEOFIN( NOMFGIF )
 C
 C     RETOUR POUR UNE NOUVELLE VISEE
 C     ------------------------------
@@ -765,20 +752,11 @@ C        TRACE LA LEGENDE DU TRACE DES ISOTHERMES
          CALL LEGISOTH( KNOMOB, NCAS, TMINC, TMAXC, NBISO, MNVISO,
      %                  MODECO )
 C
-C        MISE SUR FICHIER NomfgifBoImage.xwd puis NomfgifNoImage.jpg
-C        DE LA PIXMAP de la FENETRE X11 ACTUELLE
-         CALL VIDEO1( NOMFGIF, NCAS )
-C
 C        ATTENDRE POUR LIRE LE TRACE
          CALL ATTENDSEC( TEMP2TRAC )
 C
 C        FIN DE LA BOUCLE SUR LES CAS --------------------------------
       ENDDO
-C
-C     CONSTRUIRE le FICHIER VIDEO Nomfic.gif A PARTIR DES FICHIERS
-C     CONSTRUITS de NOMS NomfgifNoImag.jpg
-C     ------------------------------------------------------------
-      CALL VIDEOFIN( NOMFGIF )
 C
 C     RETOUR POUR UNE NOUVELLE VISEE
 C     ------------------------------

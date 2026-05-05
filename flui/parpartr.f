@@ -71,7 +71,7 @@ C23456---------------------------------------------------------------012
       EQUIVALENCE    (MCN(1),RMCN(1))
 
       CHARACTER*(*)    KNOMOB
-      CHARACTER*24     KNOMFGIF, KNMSURF
+      CHARACTER*24     KNMSURF
       CHARACTER*8      KNOPART
 
       INTEGER          NUSFTR(NBSFTR), MNXYZSF(NBSFTR), MNSEFSF(NBSFTR),
@@ -129,9 +129,6 @@ C        LE NOM DE LA SURFACE K A TRACER EST AFFICHE
       ENDDO
 
       IF( NCAS0 .GE. NCAS1 .OR. NBPART .LE. 0 )RETURN
-
-C     NOM DU FICHIER VIDEO // 'path'
-      CALL VIDEONM( 5, 'path', KNOMFGIF )
 
 C     LES DONNEES SUR LES TETRAEDRES DU MAILLAGE DE L'OBJET
 C     -----------------------------------------------------
@@ -607,16 +604,8 @@ C     LE TRACE FINAL DES PARCOURS DES PARTICULES AVEC LE TITRE
 C     --------------------------------------------------------
       CALL LEGPARTI( KNOMOB, NBPART, NCAS0, 0., VITMXPAR )
 
-C     MISE SUR FICHIER KnomfgifBoImage.xwd puis KnomfgifNoImage.jpg
-C     DE LA PIXMAP de la FENETRE X11 ACTUELLE
-      CALL VIDEO1( KNOMFGIF, NCAS0 )
-
 C     ATTENDRE POUR LIRE LE TRACE
       CALL ATTENDSEC( TEMP2TRAC )
-
-C     CONSTRUIRE le FICHIER VIDEO Nomfic.gif A PARTIR DES FICHIERS
-C     CONSTRUITS de NOMS KnomfgifNoImag.jpg
-      CALL VIDEOFIN( KNOMFGIF )
 
 
 C     RETOUR POUR UNE NOUVELLE VISEE

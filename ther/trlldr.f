@@ -79,7 +79,6 @@ C
       REAL              RMCN(1)
       EQUIVALENCE      (MCN(1),RMCN(1))
       CHARACTER*(*)     KNOMOB
-      CHARACTER*24      NOMFGIF
       DOUBLE PRECISION  TEMPER(NTDL,NCAS0:NCAS1),
      %                  TMINCAS, TMAXCAS, V
       type typ_dptab
@@ -93,9 +92,6 @@ C
       DOUBLE PRECISION  DIR(3), NORMALE(3)
 
       IF( NDIM .NE. 3 ) RETURN
-C
-C     NOM DU FICHIER VIDEO  SELON MODECO // 'lldr'
-      CALL VIDEONM( MODECO, 'lldr', NOMFGIF )
 C
       MOREE2 = MOTVAR(6)
 C
@@ -530,20 +526,11 @@ C        TRACE LA LEGENDE DU TRACE DES ZONES DE COULEURS
          CALL LEGZONTH( KNOMOB, NCAS, NOPROJ, MODECO,
      %                  TMIN,   TMAX, TMINC,  TMAXC )
 C
-C        MISE SUR FICHIER NomfgifBoImage.xwd puis NomfgifNoImage.jpg
-C        DE LA PIXMAP de la FENETRE X11 ACTUELLE
-         CALL VIDEO1( NOMFGIF, NCAS )
-C
 C        ATTENDRE POUR LIRE LE TRACE
          CALL ATTENDSEC( TEMP2TRAC )
 C
 C        FIN DE LA BOUCLE SUR LES CAS
       ENDDO
-C
-C     CONSTRUIRE le FICHIER VIDEO Nomfic.gif A PARTIR DES FICHIERS
-C     CONSTRUITS de NOMS NomfgifNoImag.jpg
-C     ------------------------------------------------------------
-      CALL VIDEOFIN( NOMFGIF )
 C
 C     RETOUR POUR UNE NOUVELLE VISEE
 C     ------------------------------

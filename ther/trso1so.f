@@ -82,7 +82,6 @@ C
       EQUIVALENCE      (MCN(1),RMCN(1),DMCN(1))
       CHARACTER*(*)     KNOMOB
       CHARACTER*120     KNOM
-      CHARACTER*24      NOMFGIF
       INTEGER           NUMIOB(4),  NUMAOB(4), MNDOEL(4),  MXDOEL(4)
       INTEGER           NONOEF(27), NOOBSF(6), NOOBLA(12), NOOBPS(8)
       INTEGER           NONOFK(8)
@@ -93,9 +92,6 @@ C
       end type typ_dptab
       type( typ_dptab ),dimension(NCAS0:NCAS1) :: dptemp
 
-C     NOM DU FICHIER VIDEO  SELON MODECO // 'isos'
-      CALL VIDEONM( MODECO, 'isos', NOMFGIF )
-C
       MOREE2 = MOTVAR(6)
       SOLMIN0 = SOLMIN
       SOLMAX0 = SOLMAX
@@ -415,20 +411,11 @@ C        DEFINITION DU TITRE ET FIN DU TRACE
          TEMPS = TIMES( NCAS )
          CALL LETITR( NOPROJ, MODECO, NCAS, TEMPS, KNOM )
 C
-C        MISE SUR FICHIER NomfgifBoImage.xwd puis NomfgifNoImage.jpg
-C        DE LA PIXMAP de la FENETRE X11 ACTUELLE
-         CALL VIDEO1( NOMFGIF, NCAS )
-C
 C        ATTENDRE POUR LIRE LE TRACE
          CALL ATTENDSEC( TEMP2TRAC )
 C
 C        FIN DE LA BOUCLE SUR LES CAS
       ENDDO
-C
-C     CONSTRUIRE le FICHIER VIDEO Nomfic.gif A PARTIR DES FICHIERS
-C     CONSTRUITS de NOMS NomfgifNoImag.jpg
-C     ------------------------------------------------------------
-      CALL VIDEOFIN( NOMFGIF )
 C
 C     RETOUR POUR UNE NOUVELLE VISEE
 C     ------------------------------
