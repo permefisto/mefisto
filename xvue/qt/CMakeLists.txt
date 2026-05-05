@@ -169,6 +169,16 @@ add_custom_target(verify_no_imagemagick_in_qt ALL
     VERBATIM
 )
 
+# Phase 9 Plan 9-03 (RETIRE-02): post-retirement gate. Mirrors
+# verify_no_imagemagick_in_qt structure. Fails the build if any X11
+# linker line or path resurfaces under bin/cb* + xvue/qt/.
+add_custom_target(verify_no_x11_in_build ALL
+    COMMAND ${CMAKE_COMMAND} -E echo "verify_no_x11_in_build: scanning..."
+    COMMAND sh ${CMAKE_CURRENT_SOURCE_DIR}/../../bin/test_no_x11_in_build.sh
+    DEPENDS xvueqt
+    VERBATIM
+)
+
 # Phase 7 Plan 01 (EXPORT-01): probes/ subdirectory holds standalone probe
 # binaries (e.g., qimagewriter_probe). Gated so the canonical bin/cbl_tout
 # build (Qt-only since Phase 9 RETIRE-02 — formerly the parallel cbl_tout
