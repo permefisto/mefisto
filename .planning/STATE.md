@@ -114,6 +114,7 @@ Recent decisions affecting current work:
 - [Phase 06.3]: [Phase 06.3-03]: testMenuOrder + testBilingualLabelsEnglish replace 6.2 manual A/B checkpoint -- Phase 6.3 fully autonomous via codified QTest gates
 - [Phase 06.3]: [Phase 06.3-03]: testHelpNoQueue tightened from blanket 'no Help lexicon' to allowlist {97;} (Auto-fix Rule 1) -- per-module Help-lexicon set drawn from LEXICON-AUDIT, 6.4/6.5 inherit pattern
 - [Phase 06.3]: [Phase 06.3-03]: Pattern proven idempotent across THREE modules (mail/elas/flui); 6.4 ther + 6.5 nlse are mechanical near-copies; xvmodi.f and xvue_qt_window.cpp continue to need ZERO edits
+- [Phase 08]: Dimension 8e (VALIDATION.md pre-existence) WAIVED for Phase 8. Phase 8 deliverable IS 08-VALIDATION.md (Plan 7 output) — verification phases produce VALIDATION.md, do not consume it. Workflow rule incompatible with phase nature; user-explicit waiver 2026-05-05.
 
 ### Roadmap Evolution
 
