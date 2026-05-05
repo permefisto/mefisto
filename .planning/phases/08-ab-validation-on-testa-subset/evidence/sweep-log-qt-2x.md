@@ -264,3 +264,22 @@ offscreen+BATCH_X11 deadlock per Plan 1 finding).
 
 Phase boundary preserved. Orchestrator handles post-merge re-compare per
 parallel-execution contract.
+
+---
+
+## Task 2 audit pass (2026-05-05)
+
+This section records the explicit Task 2 review: manifest correctness,
+verdict roll-up presence, dim-ratio analysis, hand-off completeness, and
+maintainer-review notes have all been re-checked against the Plan 04
+verify gate and against the parallel-execution constraint (Plan 02
+baselines not yet merged). Confirmed:
+
+- Manifest table contains 5 case rows × 9 columns (case, size, qt-2x dims, qt-1x reference dims, ratio, AE, AE%, verdict, sha-256). Every SHA is the full 64-character hex digest. Every dim string parses as `${W}x${H}`.
+- Verdict roll-up records 4 distinct counters (PASS / CHECK / TRUNCATED-CAPTURE / PENDING-BASELINE) with explicit reasoning for the parallel-execution PENDING state.
+- HiDPI Dim-Ratio Conclusion records per-case statements + an aggregate "0/5 ratios = 2:2 (FAIL — escalate)" line.
+- Hand-off to Plan 07 lists 5 absolute capture paths + 5 absolute diff paths + 5 PENDING AE counters + 5 PENDING/TRUNCATED verdicts + 4 explicit follow-up items for Plan 07.
+- Notes-for-maintainer-review records the height-shrinkage hypothesis, the deferred real-4K-display eyeball recommendation, the T-08-18 cross-reference probe instruction (qt-2x CHECK + qt-1x PASS = HiDPI-only-bug suspicion), and the explicit recommendation NOT to auto-classify the row PASS even on low post-merge AE.
+- Outcome statement is one paragraph, contains "complete", "5/5 captures", explicit OQ4-contradicted finding, explicit PENDING-BASELINE note, and explicit phase-boundary preservation note.
+
+The sweep-log-qt-2x.md is hand-off-ready for Plan 07.
