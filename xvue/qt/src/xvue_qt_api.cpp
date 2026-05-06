@@ -348,6 +348,38 @@ void proc(xvinitgraphique)(void) {
     win->raise();
     win->activateWindow();
 
+    // Phase 9 Plan 9-06 (carry-forward #1): matched-dim Qt recapture.
+    // Per RESEARCH §Pattern 4 + §Pitfall 5: honor MEFISTO_QT_WINDOW_SIZE=WIDTHxHEIGHT
+    // env var, BUT ONLY in headless contexts (MEFISTO_BATCH_X11=1 OR
+    // QT_QPA_PLATFORM=offscreen). Interactive sessions retain default sizing.
+    // Use setMinimumSize+setMaximumSize on the canvas (NOT setFixedSize on the
+    // window) so xvfermer_ can clear the constraints and a subsequent reopen
+    // cycle does not inherit them. Constraints applied here cause the canvas
+    // backing pixmap to be allocated at the env-specified dim during the
+    // first XvueCanvas::resizeEvent triggered by win->adjustSize() / show(),
+    // and clip any subsequent xvinfo_ -> win->resize(*ix, *iy) call. T-09-06
+    // mitigation: implementation is env-var only (no new extern "C" entry —
+    // ABI count remains 58). T-09-05-A mitigation: sscanf + 0 < {w,h} < 8192
+    // bounds check; malformed silently ignored.
+    {
+        const char* batch = std::getenv("MEFISTO_BATCH_X11");
+        const bool headless_batch = batch && std::strcmp(batch, "1") == 0;
+        const char* qpa = std::getenv("QT_QPA_PLATFORM");
+        const bool offscreen = qpa && std::strcmp(qpa, "offscreen") == 0;
+        const char* qt_window_size = std::getenv("MEFISTO_QT_WINDOW_SIZE");
+        if ((headless_batch || offscreen) && qt_window_size && qt_window_size[0]) {
+            int w = 0, h = 0;
+            if (std::sscanf(qt_window_size, "%dx%d", &w, &h) == 2 &&
+                w > 0 && w < 8192 && h > 0 && h < 8192) {
+                if (win && win->canvas()) {
+                    win->canvas()->setMinimumSize(w, h);
+                    win->canvas()->setMaximumSize(w, h);
+                    win->adjustSize();
+                }
+            }
+        }
+    }
+
     // D-01 revised 2026-04-11 (debug phase-01-xvtest0-teardown-segfault):
     // the original "exactly one processEvents" rule is insufficient on X11
     // to actually realize a window (MapRequest, ConfigureNotify, Expose
@@ -906,6 +938,18 @@ void proc(xvfermer)(void) {
                     QEventLoop::ExcludeUserInputEvents, 50);
                 usleep(10 * 1000);
             }
+        }
+    }
+    // Phase 9 Plan 9-06 (carry-forward #1, Pitfall 5 mitigation 2): clear
+    // any MEFISTO_QT_WINDOW_SIZE-installed canvas size constraints before
+    // window teardown so a subsequent xvinitgraphique_ reopen on the same
+    // process does not inherit stale min/max from the previous open cycle.
+    // Safe even when no env was set (constraints default to 0,0 / MAX,MAX).
+    {
+        auto& win_close = XvueApp::window_slot();
+        if (win_close && win_close->canvas()) {
+            win_close->canvas()->setMinimumSize(0, 0);
+            win_close->canvas()->setMaximumSize(QWIDGETSIZE_MAX, QWIDGETSIZE_MAX);
         }
     }
     // D-06: destroy the window only. Do NOT touch qApp, do NOT call
