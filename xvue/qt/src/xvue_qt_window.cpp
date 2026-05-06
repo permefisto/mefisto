@@ -40,8 +40,10 @@
 #include <QMessageBox>
 #include <QStatusBar>
 #include <QStyle>
+#include <QTimer>
 #include <QToolBar>
 #include <QUrl>
+#include <cstdlib>
 
 XvueWindow::XvueWindow(QWidget* parent)
     : QMainWindow(parent)
@@ -454,29 +456,43 @@ void XvueWindow::onFileToggleCaptureAnimation() {
 }
 
 void XvueWindow::onFileQuit() {
-    // Phase 6.1 D-09 silent dispatch: push "99;" through the menu bridge
-    // so Fortran's LIMTCL save path drains the typed-equivalent. Matches
-    // the typed-lexicon `99;` which is also unconfirmed — consistent
-    // click/type semantics per CONTEXT D-09. Fortran's prpr/ppmail.f
-    // label 9900 calls ARRET(0) → STOP → clean process exit; no
-    // QMessageBox::question confirm, no QCoreApplication::quit() bypass.
+    // Phase 9.1 fix 2026-05-06: previous "queue 99;" pattern fails when
+    // Fortran is in a non-menu prompt (e.g. 'GIVE AGAIN the lower case
+    // FILE.obj NAME') — '99' is parsed as a FILENAME, not a menu code,
+    // and the user gets stuck in error loops. Even '@' escape doesn't
+    // exit a filename prompt cleanly.
     //
-    // Phase 9.1 fix 2026-05-06: when Fortran is inside a SUBMENU, the
-    // "99;" sequence is interpreted by the submenu handler (where 99 is
-    // not a save-quit code) and ignored. Prefix several '@' chars
-    // (Mefisto's "escape submenu" convention — see welcome screen
-    // "Type @ to ESCAPE a MENU or INPUT DATA") so the queued bytes
-    // climb out of any nested submenu before the 99; reaches the main
-    // menu's save-quit handler. 8 escapes covers reasonable nesting.
+    // New behavior:
+    //   1. First push "@@@@@@@@99;" so a clean main-menu state can save+quit.
+    //   2. Set up a 1s single-shot timer; if Fortran hasn't exited yet,
+    //      show a confirm dialog offering force-quit (data unsaved).
+    //
+    // The confirm dialog protects against accidental data loss while
+    // giving the user a working escape hatch when Fortran is genuinely
+    // stuck in a non-menu prompt.
     if (menuBridge_) {
         if (consoleDock_) {
             consoleDock_->appendLine(QStringLiteral("[menu] @@@@@@@@99;"));
         }
         menuBridge_->queueLexicon(QStringLiteral("@@@@@@@@99;"));
     }
-    // Deliberately no close() / QCoreApplication::quit() — Fortran owns
-    // the exit. The saclav.f LIMTCL dispatch will pick up the queued
-    // bytes on its next xvsouris_ iteration and run the SAUVEGARDE path.
+    // Schedule a follow-up: if process still alive after 1.5s, ask user.
+    QTimer::singleShot(1500, this, [this]() {
+        // If Fortran consumed 99; cleanly, the process is already exiting
+        // and this callback may not fire. If we're here, Fortran is stuck.
+        const int btn = QMessageBox::warning(
+            this,
+            xvueT(MsgId::FileQuit),
+            QStringLiteral("Mefisto is in a non-menu prompt and did not "
+                           "process the save-quit command. Force-quit now?\n\n"
+                           "WARNING: any unsaved data will be lost."),
+            QMessageBox::Yes | QMessageBox::No,
+            QMessageBox::No);
+        if (btn == QMessageBox::Yes) {
+            // Hard exit — Fortran is stuck; Qt cannot drive a clean save.
+            std::exit(0);
+        }
+    });
 }
 
 void XvueWindow::onViewPreferences() {
