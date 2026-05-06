@@ -416,11 +416,12 @@ C     a single panel with whichever routine ran last (T1OBJE-driven
 C     impquaob in the typical pan2d flow).
       NNX = 35
       NNY = 120
+C     Phase 9.1 2026-05-06: skip canvas QUALITY panel — overlaps mesh
+C     ("the table is over the drawing"). Stats stay in console via
+C     WRITE(IMPRIM,...) elsewhere. Jump past the legend/stat XVTEXTE
+C     loop to label 25 (placed after the post-loop XVTEXTE block).
+      GOTO 25
       IF( INTERA .GE. 1 ) THEN
-C
-C        Erase the panel column before drawing so impqua's prior text
-C        does not bleed through, and so successive impquaob calls do
-C        not stack on top of each other. NCOFON = background color.
          CALL XVCOULEUR( NCOFON )
          CALL XVRECTANGLE( 0, 0, 450, 500 )
 
@@ -600,6 +601,11 @@ C        RETOUR AU TRACE NORMAL POUR POSTSCRIPT
            CALL XVPOSTSCRIPT(LASOPS)
          ENDIF
       ENDIF
+C
+C     Phase 9.1 2026-05-06: GOTO 25 lands here, skipping the canvas
+C     legend/stat block above. Continues with min-quality EF coord
+C     output + outline draw below.
+ 25   CONTINUE
 C
 C     AFFICHAGE DES COORDONNEES DE L'EF DE QUALITE MINIMALE
 C     -----------------------------------------------------

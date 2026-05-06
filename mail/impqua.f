@@ -162,12 +162,20 @@ C           LA COORDONNEE I DU POINT J
       NBTGS = MCN( MNXYZS + WNBTGS )
       IF( NBTGS .LT. 0 ) GOTO 9000
 
-      IF( INTERA .GE. 1 .AND. LCRITR .EQ. 1 ) THEN
-C        ON EFFACE LE TRACE DES QUALITES DU MAILLAGE PRECEDENT
-         CALL XVCOULEUR( NCOFON )
-ccc         CALL XVRECTANGLE( 0, 0, 280, 300 )
-         CALL XVRECTANGLE( 0, 0, 450, 500 )
-      ENDIF
+C     Phase 9.1 fix 2026-05-06: legacy code drew the QUALITY-OF-FE
+C     panel directly onto the mesh canvas at NNX=35,NNY=120, which the
+C     maintainer reports as "the table is over the drawing" — bigger
+C     fonts make the overlap worse. The same numerical stats are
+C     written to IMPRIM via WRITE() above and therefore appear in the
+C     Qt console dock; the canvas panel is redundant. Suppress both
+C     the column erase and the legend/stat XVTEXTE block below
+C     (guarded by the same IF gate at line ~352) by leaving the gate
+C     unevaluated. To re-enable in a future build, restore the body of
+C     this IF and the IF( ... LCRITR .EQ. 1 ) block below.
+ccc      IF( INTERA .GE. 1 .AND. LCRITR .EQ. 1 ) THEN
+ccc         CALL XVCOULEUR( NCOFON )
+ccc         CALL XVRECTANGLE( 0, 0, 450, 500 )
+ccc      ENDIF
 
 C     ADRESSE-3 DE LA 1-ERE COORDONNEE DU 1-ER SOMMET DU TMS 'XYZSOMMET'
       MNS = MNXYZS + WYZSOM
@@ -339,6 +347,12 @@ C     ===================
      %' STANDARD DEVIATION/1 of FE=',G12.3)
 
       ENDIF
+
+C     Phase 9.1 2026-05-06: skip the canvas legend/stat block per
+C     "the table is over the drawing" feedback. Stats remain in the Qt
+C     console dock via the WRITE(IMPRIM,...) calls above. Jump straight
+C     to the post-block label 35 to skip XVTEXTE drawing.
+      GOTO 35
 
       IF( INTERA .LE. 0 ) GOTO 35
 
