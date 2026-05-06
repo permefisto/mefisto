@@ -31,16 +31,22 @@
 ! per-primitive tests in test_xvue_qt_postscript.cpp; the full-scene golden
 ! exercises the most-used ones).
 !
-! How to materialize the golden (Plan 06 Task 3 procedure):
+! How to materialize the golden (must use v1.0-pre-retire git tag — main
+! tree post-Phase-9 has X11 backend retired; xvuelc.c is gone):
+!   $ git worktree add /tmp/mefisto-pre-retire v1.0-pre-retire
+!   $ cd /tmp/mefisto-pre-retire
+!   $ MEFISTO=$PWD bin/cbl_tout                # build legacy X11 binaries
+!   $ cp $MEFISTO/xvue/qt/tests/golden/scene01_driver.f /tmp/
 !   $ cd /tmp
-!   $ cp $MEFISTO/xvue/qt/tests/golden/scene01_driver.f .
-!   $ gfortran -I$MEFISTO/incl -c scene01_driver.f
-!   $ gfortran scene01_driver.o $MEFISTO/xvue/xvuelc.o \
-!         $MEFISTO/xvue/*.o $MEFISTO/util/*.o \
+!   $ gfortran -I/tmp/mefisto-pre-retire/incl -c scene01_driver.f
+!   $ gfortran scene01_driver.o /tmp/mefisto-pre-retire/xvue/xvuelc.o \
+!         /tmp/mefisto-pre-retire/xvue/lib /tmp/mefisto-pre-retire/util/lib \
 !         -L/usr/X11R6/lib -lX11 -lXt -o scene01_x11
-!   $ ./scene01_x11        # produces TEMPORAIRE.EPS in cwd
-!   $ cp TEMPORAIRE.EPS $MEFISTO/xvue/qt/tests/golden/scene01.eps
-!   $ cd $MEFISTO && git add xvue/qt/tests/golden/scene01.eps
+!   $ MEFISTO_BATCH_X11=1 MEFISTO_XVSOURIS_AUTOEXIT=1 \
+!         xvfb-run --auto-servernum ./scene01_x11
+!   $ cp TEMPORAIRE.EPS $MEFISTO_MAIN/xvue/qt/tests/golden/scene01.eps
+!   $ cd $MEFISTO_MAIN && git add xvue/qt/tests/golden/scene01.eps
+!   $ git worktree remove /tmp/mefisto-pre-retire
 !
 ! Once committed, ctest -R '^xvue_qt_postscript_tests$' flips the
 ! PsEmitter_postscriptVerbatim_golden slot from QSKIP to PASS-required.
@@ -55,11 +61,14 @@
 
       INTEGER LASOPS
 
-!     Initialise an offscreen-equivalent X11 surface so emit calls have
-!     valid mempx + ypixels. The xvinitgraphique_ entry sets up the X11
-!     pixmap behind the scenes; for this golden producer we run headless
-!     on Xvfb (the human procedure above wraps the binary in xvfb-run).
-      CALL XVINITGRAPHIQUE()
+!     Initialise the X11 backend.
+!     XVINITGRAPHIQUE alone does NOT create the GC on X11 (per prpr/xvtest0.f
+!     comments line 17-22: window+pixmap only created by XVOUVRIR -> XVINFO ->
+!     XVINIT chain). Calling drawing primitives before XVOUVRIR SIGSEGVs at
+!     XChangeGC. XVOUVRIR opens window AND creates GC. For batch use, set
+!     MEFISTO_BATCH_X11=1 + MEFISTO_XVSOURIS_AUTOEXIT=1 in the environment
+!     before invocation so xvsouris returns immediately.
+      CALL XVOUVRIR
 
 !     Begin PostScript capture. handleLasops(1) opens TEMPORAIRE.EPS.
       LASOPS = 1
@@ -104,7 +113,12 @@
       CALL XVBORDARCELLIPSE(100, 100, 50, 30, 0.0, 360.0)
 
 !     6. Two text strings — exercises the "T" opcode and chargefonte.
-      CALL XVCHARGEFONTE('Courier', 7, 12, 10, 0)
+!     XVCHARGEFONTE legacy signature is (nofont0, nofont, largpx, hautpx) —
+!     4 INTEGERS. The earlier ('Courier', 7, 12, 10, 0) form was wrong arity
+!     (Fortran-C string passing adds a hidden length, mismatching the C decl
+!     of 4 INTs). nofont0=0 = default font slot; nofont=1 = font #1; the
+!     legacy backend resolves the actual font name via xvinfo's namefonts[].
+      CALL XVCHARGEFONTE(0, 1, 12, 10)
       CALL XVTEXTE('Hello PS', 8, 50, 50)
       CALL XVTEXTE('MEFISTO', 7, 100, 100)
 
