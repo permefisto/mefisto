@@ -3,14 +3,14 @@ gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
 status: completed
-stopped_at: Phase 8 complete — v1 ship gate signed
-last_updated: "2026-05-05T16:00:00.000Z"
-last_activity: 2026-05-05
+stopped_at: Phase 9 complete — X11 backend retired; Qt 6 single graphics backend
+last_updated: "2026-05-06T08:00:00.000Z"
+last_activity: 2026-05-06
 progress:
   total_phases: 17
-  completed_phases: 15
-  total_plans: 58
-  completed_plans: 59
+  completed_phases: 16
+  total_plans: 67
+  completed_plans: 68
   percent: 100
 ---
 
@@ -21,14 +21,14 @@ progress:
 See: .planning/PROJECT.md (updated 2026-04-10)
 
 **Core value:** Every MEFISTO workflow that works today through X11 keeps working through the new Qt 6 interface, with Fortran solver code unchanged.
-**Current focus:** Phase 8 complete — v1 ship gate signed; one-release-cycle A/B window open; Phase 9 retirement unblocked.
+**Current focus:** Milestone v1.0 X11→Qt6 migration COMPLETE. Phase 9 retirement done; xvuelc.c + libX11 + ImageMagick + LVIDEO all retired. Qt 6 is single graphics backend. Outstanding: 3 P7 goldens DEFERRED (Phase 7 design defects in scene01_driver.f + interactive testa pipelines empirically falsified by Plan 09-08 cross-tag attempt; carried forward).
 
 ## Current Position
 
-Phase: 8 (complete)
-Plan: 08-07 ship-gate signed (5 overrides accepted); 7/7 plans complete
-Status: Phase 8 closed 2026-05-05 — maintainer dricoco signed 08-CHECKLIST.md. v1 release-ready. Phase 9 RETIRE-01..04 entry gate satisfied (one-release-cycle A/B window now open). 3 Phase-7-deferred goldens carry forward as Phase 7 close-out (NOT a Phase 8 ship-blocker).
-Last activity: 2026-05-05
+Phase: 9 (complete)
+Plan: 09-09 done; 9/9 plans (1 prereq + 4 RETIRE-NN + 4 carry-forward); v1.0-pre-retire tag exists for rollback
+Status: Phase 9 closed 2026-05-06 — milestone v1.0 X11→Qt6 migration COMPLETE. xvuelc.c + ccxvue deleted (RETIRE-01); libX11 stripped from cb scripts + cb*_qt → cb* renames + pp suffix collapsed (RETIRE-02); convertepsgif + png2eps + png2jpg + LVIDEO selectively retired with non-LVIDEO drawing logic preserved (RETIRE-03); README + LISEZMOI + CLAUDE.md updated for Qt 6 single-backend reality (RETIRE-04). Carry-forwards: matched-dim Qt window-size knob shipped (Plan 09-06; Phase 8 override #1 closed); ppnlse_qt classified case-(c) long-runtime not deadlock (Plan 09-07; Phase 8 override #5 documentation-only closure); P7 goldens cross-tag attempted and DEFERRED with empirical evidence (Plan 09-08; Phase 7 source defects); harness realpath fix + verify_pp_freshness shipped (Plan 09-09). All 3 grep gates green; ABI 58/58; bin/cbl_tout exit 0; pp/* binaries fresh.
+Last activity: 2026-05-06
 
 Progress: [██████████] 100% (45/45 plans, Phase 6.3 complete)
 
@@ -132,7 +132,11 @@ None yet.
 - **Phase 6** per-module lexicon audit may split into 5 sub-phases (one per solver module) during planning
 - **Phase 7** requires `QImageWriter::supportedImageFormats()` probe at phase kickoff to choose GIF strategy
 - **Phase 9** A/B window closure: 2026-05-06 — maintainer dricoco. Window opened 2026-05-05 (Phase 8 sign-off), closed same dev-loop session. Phase 9 EXECUTE unblocked.
-- **Qt menu bug carry-forward (post-Phase-6, observed 2026-05-06):** maintainer manually tested Qt menu and found (a) some menu items missing text labels, (b) some items non-functional including "Open Project". Not Phase 9 scope; track as Phase-9.1 cleanup or new mini-phase.
+- **Qt menu UX carry-forward (root-caused 2026-05-06):** maintainer flagged "Open Project not working" + "some items missing text".
+  - Open Project root cause: by-design `refuseIfBlocking()` modal guard (xvue_qt_window.cpp:133-139, Phase 6.1 D-09). When Fortran is in interactive mode (post-launch), Open Project click only flashes status bar 3s. UX gap: action not visibly disabled.
+  - Missing-text symptom: not reproducible on ppmail_qt AT-SPI tree (all labels present). Possibly observed on ppinit (no window — tiny launcher) or transient state.
+  - Phase-9.1 candidate fix: bidirectional state binding to setEnabled(false) when blockingDepth() > 0; or QMessageBox::information instead of status-bar timeout.
+- **3 P7 deferred goldens (carry-forward; root-caused 2026-05-06 by Plan 09-08):** scene01_driver.f has 2 fundamental bugs (missing XTINIT/XVINFO init → SIGSEGV; XVCHARGEFONTE arity mismatch). testa/wave + cavity2d are interactive multi-module pipelines, not headless batch. Cross-tag attempt empirically falsified the Phase 7 §9 procedure. Phase-9.1 candidate fix: repair scene01_driver.f source + write proper headless batch wrappers for testa/wave + testa/cavity2d.
 
 ## Session Continuity
 
