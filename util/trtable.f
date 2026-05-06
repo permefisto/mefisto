@@ -157,40 +157,6 @@ C     COPIE DE MEMPX DANS FENETRE
 C     POUR VIDER LE BUFFER DE X11
       CALL XVVOIR
 
-      IF( LVIDEO .NE. 0 ) THEN
-
-C     A PARTIR DE LA PIXMAP de la FENETRE X11 ACTUELLE CREATION DU FICHIER.xwd
-      L = NUDCNB( NMFVIDEO )
-      print *
-      print *, 'xwd -xy -name Mefisto -out '//NMFVIDEO(1:L)//'.xwd',
-     %        ' EST EXECUTE'
-      CALL SYSTEM('xwd -xy -name Mefisto -out '//NMFVIDEO(1:L)//'.xwd')
-
-C     CONVERSION DU FICHIER.xwd en le FICHIER.jpg
-      LL = NUDCNB( NMPROJ )
-      print *,    'convert ' // NMFVIDEO(1:L) // '.xwd' // ' '
-     %                       // NMPROJ(1:LL)  // '_' // NMFVIDEO(1:L) //
-     %                     '.jpg  EST EXECUTE'
-      CALL SYSTEM('convert ' // NMFVIDEO(1:L) // '.xwd' // ' '
-     %                       // NMPROJ(1:LL)  // '_' // NMFVIDEO(1:L) //
-     %                     '.jpg')
-
-C     DESTRUCTION DU FICHIER .xwd
-      CALL SYSTEM( 'rm -Rf ' // NMFVIDEO(1:L) // '.xwd' )
-
-cccC        MISE SUR FICHIER NMFVIDEO.eps du TRACE
-cccC        ATTENTION PASSAGE PAR VARIABLE OBLIGATOIRE
-ccc         NMAUX = NMFVIDEO
-ccc         L = NUDCNB( NMAUX )
-ccc         CALL xvsauverps( NMAUX(1:L), L )
-cccC        CONVERSION DU FICHIER.eps EN FICHIER.jpg   NE MARCHE PAS
-ccc         print *,     'convert ' //  NMAUX(1:L)//'.eps ' //
-ccc     %                 NMAUX(1:L)//'.jpg     EST EXECUTE'
-cccc        CALL SYSTEM( 'convert ' // NMAUX(1:L)//'.eps ' //
-ccc     %                 NMAUX(1:L)//'.jpg ' )
-
-      ENDIF
-
 C     POUR ATTENDRE UN CLIC SOURIS ET  LIRE LE GRAPHIQUE
       CALL CHOIXFONTE( NPHFCO )
       CALL CLICSO

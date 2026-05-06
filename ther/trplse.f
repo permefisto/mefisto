@@ -103,7 +103,6 @@ C
 
       CHARACTER*(*)     KNOMOB
       CHARACTER*120     KNOM
-      CHARACTER*24      NOMFGIF
 
       REAL              TIMES( NCAS0:NCAS1 ),
      %                  HXMIMX(6,2), NORMALE(3), VNORMAL(3),
@@ -237,15 +236,9 @@ C     ====================================
 C        TRACE DANS LES PLANS DE SECTION
          CALL LIMTCL( 'sectplan', NMTCL )
 C
-C        NOM DU FICHIER VIDEO  SELON MODECO // 'sepl'
-         CALL VIDEONM( MODECO, 'sepl', NOMFGIF )
-C
       ELSE
 C        TRACE ORTHOGONALEMENT AUX PLANS DE SECTION
          CALL LIMTCL( 'profplan', NMTCL )
-C
-C        NOM DU FICHIER VIDEO  SELON MODECO // 'prpl'
-         CALL VIDEONM( MODECO, 'prpl', NOMFGIF )
 C
       ENDIF
 C
@@ -977,20 +970,11 @@ C
 C        TRACE DU TITRE
          CALL TRFINS( KNOM )
 C
-C        MISE SUR FICHIER NomfgifBoImage.xwd puis NomfgifNoImage.jpg
-C        DE LA PIXMAP de la FENETRE X11 ACTUELLE
-         CALL VIDEO1( NOMFGIF, NCAS )
-C
 C        ATTENDRE POUR LIRE LE TRACE
          CALL ATTENDSEC( TEMP2TRAC )
 C
 C        FIN DE LA BOUCLE SUR LES CAS
  1000 CONTINUE
-C
-C     CONSTRUIRE le FICHIER VIDEO Nomfic.gif A PARTIR DES FICHIERS
-C     CONSTRUITS de NOMS NomfgifNoImag.jpg
-C     ------------------------------------------------------------
-      CALL VIDEOFIN( NOMFGIF )
 C
 C     RETOUR POUR UNE NOUVELLE VISEE
 C     ------------------------------

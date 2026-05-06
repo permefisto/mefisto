@@ -1,1 +1,0 @@
-convert -rotate 90 zfxy0*.eps -extent 980x550 cyl53zfxy.gif

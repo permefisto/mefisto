@@ -16,5 +16,4 @@ variable VISEE2D 'Definir une VUE en 2D'  entier
 ,75: 'Activer TRANSLATION ZOOM'
 ,76: 'Arreter TRANSLATION ZOOM'
 ,81: 'Temps ENTRE 2 TRACES'
-,88: 'CONSTRUIRE un FILM VIDEO.gif'
 ,90: 'SUITE du TRACE' ) ;

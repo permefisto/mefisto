@@ -48,7 +48,6 @@ C23456---------------------------------------------------------------012
       REAL              RMCN(1)
       EQUIVALENCE      (MCN(1),RMCN(1))
       CHARACTER*(*)     KNOMOB
-      CHARACTER*24      NOMFGIF
 
       REAL              TIMES(NCAS0:NCAS1)
 
@@ -70,9 +69,6 @@ C23456---------------------------------------------------------------012
 C     VITESSE MAXIMALE des PARTICULES: VALEUR par DEFAUT
 C     MISE A JOUR DES LE SECOND CALCUL
       VTPMAX = 9.81D0 * 2D0
-
-C     NOM DU FICHIER VIDEO // 'path'
-      CALL VIDEONM( 5, 'path', NOMFGIF )
 
 C     NBCOOR = NOMBRE DE COORDONNEES DES POINTS 3D ou 6D
       NBCOOR = MCN(MNXYZP+WBCOOP )
@@ -470,16 +466,8 @@ C     LE TRACE DU TITRE FINAL
       VMAX = REAL( VTPMAX )
       CALL LEGZONTH( KNOMOB, NCAS0, 0, 5, VMIN, VMAX, VMIN, VMAX )
 
-C     MISE SUR FICHIER NomfgifBoImage.xwd puis NomfgifNoImage.jpg
-C     DE LA PIXMAP de la FENETRE X11 ACTUELLE
-      CALL VIDEO1( NOMFGIF, NCAS0 )
-
 C     ATTENDRE POUR LIRE LE TRACE
       CALL ATTENDSEC( TEMP2TRAC )
-
-C     CONSTRUIRE le FICHIER VIDEO Nomfic.gif A PARTIR DES FICHIERS
-C     CONSTRUITS de NOMS NomfgifNoImag.jpg
-      CALL VIDEOFIN( NOMFGIF )
 
 C     RETOUR POUR UNE NOUVELLE VISEE
       NBORBIT = NBORBIT + 1

@@ -49,7 +49,6 @@ C     --------------------------------
       IF( NMTCL0 .EQ. 75 ) GOTO 7500
       IF( NMTCL0 .EQ. 76 ) GOTO 7600
       IF( NMTCL0 .EQ. 81 ) GOTO 8100
-      IF( NMTCL0 .EQ. 88 ) GOTO 8800
       GOTO(  10,  10,  10,  10,  10,  10,   10,  10,  10,  10,
      %       10,  10,  10,  10,  10,  10,   10,  10, 190,  10,
      %       10,1200,1300,1400,1500,1600, 1600,1600,1600,1600,
@@ -792,10 +791,6 @@ C     TEMP2TRAC: TEMPS UTILISATEUR EN SECONDES ENTRE 2 TRACES
       CALL LIRRDP( NCVALS, D )
       IF( NCVALS .LE. 0 ) GOTO 10
       TEMP2TRAC = ABS( D )
-      GOTO 10
-C
-C     DEMANDE DE CONSTRUIRE UN FICHIER VIDEO.gif
- 8800 LVIDEO = 1
       GOTO 10
 C
 C     TRACE DEMANDE

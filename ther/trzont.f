@@ -99,7 +99,6 @@ C23456---------------------------------------------------------------012
       COMMON / UNITES / LECTEU, IMPRIM, INTERA, NUNITE(29)
 
       CHARACTER*(*)     KNOMOB
-      CHARACTER*24      NOMFGIF
       REAL              TIMES(NCAS0:NCAS1)
       DOUBLE PRECISION  TEMPER(NTDL,NCAS0:NCAS1),
      %                  TMINCAS, TMAXCAS, V
@@ -132,9 +131,6 @@ C        DES TEMPERATURES A TRACER SANS LECTURE DE MOTS-CLES
       MNXYZS = 0
       MNFBAS = 0
       MNCOPO = 0
-C
-C     NOM DU FICHIER VIDEO  SELON MODECO // 'zone'
-      CALL VIDEONM( MODECO, 'zone', NOMFGIF )
 C
 C     NOMBRE DE POINTS=NOEUDS=DL DE L'OBJET
       NBPOI  = MCN(MNPOGE+WNBPOI)
@@ -334,20 +330,11 @@ C        TRACE LA LEGENDE DU TRACE DES ZONES
          CALL LEGZONTH( KNOMOB, NCAS, NOPROJ, MODECO,
      %                  TMIN, TMAX, TMINC, TMAXC )
 C
-C        MISE SUR FICHIER NomfgifBoImage.xwd puis NomfgifNoImage.jpg
-C        DE LA PIXMAP de la FENETRE X11 ACTUELLE
-         CALL VIDEO1( NOMFGIF, NCAS )
-C
 C        ATTENDRE POUR LIRE LE TRACE
          CALL ATTENDSEC( TEMP2TRAC )
 C
 C        FIN DE LA BOUCLE SUR LES CAS  ------------------------
       ENDDO
-C
-C     CONSTRUIRE le FICHIER VIDEO Nomfic.gif A PARTIR DES FICHIERS
-C     CONSTRUITS de NOMS NomfgifNoImag.jpg
-C     ------------------------------------------------------------
-      CALL VIDEOFIN( NOMFGIF )
 C
 C     RETOUR POUR UNE NOUVELLE VISEE
 C     ------------------------------
@@ -483,20 +470,11 @@ C        TRACE LA LEGENDE DU TRACE DES ZONES DE COULEURS
          CALL LEGZONTH( KNOMOB, NCAS, NOPROJ, MODECO,
      %                  TMIN,   TMAX, TMINC,  TMAXC )
 C
-C        MISE SUR FICHIER NomfgifBoImage.xwd puis NomfgifNoImage.jpg
-C        DE LA PIXMAP de la FENETRE X11 ACTUELLE
-         CALL VIDEO1( NOMFGIF, NCAS )
-C
 C        ATTENDRE POUR LIRE LE TRACE
          CALL ATTENDSEC( TEMP2TRAC )
 C
 C        FIN DE LA BOUCLE SUR LES CAS ------------------------------
       ENDDO
-C
-C     CONSTRUIRE le FICHIER VIDEO Nomfic.gif A PARTIR DES FICHIERS
-C     CONSTRUITS de NOMS NomfgifNoImag.jpg
-C     ------------------------------------------------------------
-      CALL VIDEOFIN( NOMFGIF )
 C
 C     RETOUR POUR UNE NOUVELLE VISEE
 C     ------------------------------

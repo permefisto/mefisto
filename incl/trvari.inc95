@@ -6,7 +6,7 @@
 
 !     -------------------------------------------------------------------------
       DOUBLE PRECISION  TEMP2TRAC, TEMPUSER
-      COMMON / TRVAPS / TEMP2TRAC, TEMPUSER, LASOPS, LVIDEO
+      COMMON / TRVAPS / TEMP2TRAC, TEMPUSER, LASOPS
 !     -------------------------------------------------------------------------
 !     TEMP2TRAC : TEMPS UTILISATEUR EN SECONDES ENTRE 2 TRACES
 !     LASOPS    : DEMANDE OU NON DE SORTIE DU TRACE DU MAILLAGE EN POSTSCRIPT
@@ -14,9 +14,6 @@
 !            +-1     : TRACE PS SANS LES MENUS (- pour desactiver localement)
 !            +-2     : TRACE PS AVEC LES MENUS (- pour desactiver localement)
 !            >|2|    : ETAT MOMENTANE DE GESTION DES RECTANGLES
-!     LVIDEO    : DEMANDE OU NON DE SORTIE DU TRACE SUR FICHIER VIDEO.gif
-!             =0     : PAS DE SORTIE DEMANDEE de VIDEO.gif
-!            <>0     : SORTIE DEMANDEE de VIDEO.gif
 
 !     -------------------------------------------------------------------------
       COMMON / TRVAR0 / NCVISU

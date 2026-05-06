@@ -179,6 +179,17 @@ add_custom_target(verify_no_x11_in_build ALL
     VERBATIM
 )
 
+# Phase 9 Plan 9-04 (RETIRE-03): post-retirement gate. Mirrors verify_no_*.
+# Delegates the actual scan to bin/test_no_lvideo.sh, which fails the
+# build if any legacy LVIDEO callback or shell-out helper resurfaces in
+# active Fortran sources (xvue/, flui/, ther/, util/, prpr/).
+add_custom_target(verify_no_lvideo ALL
+    COMMAND ${CMAKE_COMMAND} -E echo "verify_no_lvideo: scanning..."
+    COMMAND sh ${CMAKE_CURRENT_SOURCE_DIR}/../../bin/test_no_lvideo.sh
+    DEPENDS xvueqt
+    VERBATIM
+)
+
 # Phase 7 Plan 01 (EXPORT-01): probes/ subdirectory holds standalone probe
 # binaries (e.g., qimagewriter_probe). Gated so the canonical bin/cbl_tout
 # build (Qt-only since Phase 9 RETIRE-02 — formerly the parallel cbl_tout

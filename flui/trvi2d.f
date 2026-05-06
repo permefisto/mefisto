@@ -46,7 +46,6 @@ C23456---------------------------------------------------------------012
       COMMON            MCN(MOTMCN)
 
       CHARACTER*(*)     KNOMOB
-      CHARACTER*24      NOMFGIF
       INTEGER           NONOEF(6)
       REAL              XYZNOE(3,NBNOEU), TIMES(NCAS0:NCAS1)
 
@@ -67,9 +66,6 @@ C     LE NOMBRE-1 DE COULEURS DISPONIBLES
 
 C     EPAISSEUR DU TRAIT DES FLECHES
       NEPFLE = 0
-
-C     NOM DU FICHIER VIDEO  SELON MODECO // 'Arow'
-      CALL VIDEONM( 13, 'Arow', NOMFGIF )
 
 C     OPTIONS DE LA VISEE POUR VOIR TOUTES LES NPAFLE FLECHES
 C     =======================================================
@@ -212,9 +208,6 @@ C        RETOUR AUX PARAMETRES INITIAUX
 C        CONSTRUCTION DU TITRE ET TRACE
          CALL LEGVIT( KNOMOB, NCAS, VITMO, VITMI, VITMA, CMVITE )
 
-C        MISE SUR FICHIER NomfgifBoImage.xwd puis NomfgifNoImage.jpg
-C        DE LA PIXMAP de la FENETRE X11 ACTUELLE
-         CALL VIDEO1( NOMFGIF, NCAS )
 C
 C        ATTENDRE POUR LIRE LE TRACE
          CALL ATTENDSEC( TEMP2TRAC )
@@ -222,9 +215,6 @@ C
 C     FIN DE LA BOUCLE SUR LES CAS
  100  CONTINUE
 
-
-C     CONSTRUCTION FINALE DU FICHIER.gif
-      CALL VIDEOFIN( NOMFGIF )
 
       VITMOY = VITMOY / ( NCAS1 - NCAS0 + 1 )
 C

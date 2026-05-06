@@ -60,7 +60,6 @@ C
       REAL              RMCN(1)
       EQUIVALENCE      (RMCN(1),MCN(1))
       CHARACTER*(*)     KNOMOB
-      CHARACTER*24      NOMFGIF
       REAL              XYZPOI(3,NBPOI), TIMES(NCAS0:NCAS1)
 
       type typ_dptab
@@ -77,9 +76,6 @@ C
       MNNBFR = 0
       MNAREF = 0
       NBCOUL = NDCOUL - N1COUL + 1
-C
-C     NOM DU FICHIER VIDEO  SELON MODECO // 'Arow'
-      CALL VIDEONM( 13, 'Arow', NOMFGIF )
 C
 C     LES COORDONNEES EXTREMES SONT CELLES DE CET OBJET
 C     -------------------------------------------------
@@ -183,19 +179,12 @@ C
 C        LE TRACE DU TITRE FINAL
          CALL LEGVIT( KNOMOB, NCAS, VITMOY, VITMIN, VITMAX, CMVITE )
 C
-C        MISE SUR FICHIER NomfgifBoImage.xwd puis NomfgifNoImage.jpg
-C        DE LA PIXMAP de la FENETRE X11 ACTUELLE
-         CALL VIDEO1( NOMFGIF, NCAS )
-C
 C        ATTENDRE POUR LIRE LE TRACE
          CALL ATTENDSEC( TEMP2TRAC )
 C
 C        FIN DE LA BOUCLE SUR LES CAS
       ENDDO
 
-
-C     CONSTRUCTION FINALE DU FICHIER.gif
-      CALL VIDEOFIN( NOMFGIF )
 C
 C     RETOUR POUR UNE NOUVELLE VISEE
 C     ------------------------------
