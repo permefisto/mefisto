@@ -42,17 +42,19 @@ C     CHANGEMENT DE POLICE DE CARACTERES POUR UNE DE 20 PIXELS DE HAUT
 C
 C     UNE LIGNE ENTRE LES 2 EST DISPONIBLE POUR AFFICHER LE TITRE du TRACE
 ccc      CALL XVCOULEUR( NCBLAN )
-      CALL XVCOULEUR( NCROUG )
-ccc      CALL SANSDBL( KTITRE, L )
       L = NUDCNB( KTITRE )
 
-C     TENTATIVE D'EFFACEMENT DE LA LIGNE
-      DO K=1,L
-         KBLANC(K:K) = ' '
-      ENDDO
-      CALL XVTEXTE( KBLANC(1:L), L, 20, 3*LHPXCA+9 )
+C     EFFACEMENT DE LA LIGNE - Phase 9.1 fix 2026-05-06: l'ancien code
+C     dessinait L espaces en NCROUG par-dessus l'ancien titre. XVTEXTE
+C     n'efface pas les pixels du glyphe precedent (les espaces ne
+C     dessinent rien). Resultat: TRFINS appele plusieurs fois avec des
+C     titres differents -> tous les titres rouges visibles superposes.
+C     Solution: rectangle plein de la couleur de fond avant le trace.
+      CALL XVCOULEUR( NCNOIR )
+      CALL XVRECTANGLE( 0, 3*LHPXCA-NPHACA-2, LAPXFE, NPHACA+8 )
 
 C     TRACE DU TITRE
+      CALL XVCOULEUR( NCROUG )
       CALL XVTEXTE( KTITRE(1:L), L, 20, 3*LHPXCA+9 )
 C
 C     COPIE DE MEMPX DANS FENETRE
