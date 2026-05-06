@@ -874,8 +874,14 @@ void proc(xvchargefonte)(int *nofont0, int *nofont, int *largpx, int *hautpx) {
     // glyph extent — which manifested as overlapping text on welcome /
     // impqua histogram / project info panels per maintainer screenshots
     // 2026-05-06).
+    // Phase 9.1 font-readability bump 2026-05-06: maintainer reports the
+    // QUALITY-panel font is 'too small, hard to read'. Bumping each size by
+    // 4-6 px to give legible glyphs at 1820x1000 windows. The BDF advert in
+    // xvinfo (5x7, 6x10, ..., 12x24) determines which kFontPixelSizes idx
+    // gets picked for a target legacy height; the actual rendered height
+    // is whatever pixelSize sets here.
     static constexpr int kFontPixelSizes[XvueState::kNbFonts] = {
-        8, 10, 13, 14, 15, 20, 20, 24, 24, 24
+        14, 18, 20, 22, 24, 26, 28, 32, 36, 40
     };
     QFont f(QStringLiteral("DejaVu Sans Mono"));
     f.setPixelSize(kFontPixelSizes[idx]);

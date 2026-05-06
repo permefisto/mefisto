@@ -38,6 +38,7 @@
 #include <QMenu>
 #include <QMenuBar>
 #include <QMessageBox>
+#include <QWheelEvent>
 #include <QStatusBar>
 #include <QStyle>
 #include <QTimer>
@@ -124,6 +125,32 @@ void XvueWindow::closeEvent(QCloseEvent* event) {
     }
 
     QMainWindow::closeEvent(event);
+}
+
+// Phase 9.1 fix 2026-05-06: forward bubbled-up wheel events to canvas zoom.
+// Qt event propagation: child widget gets the wheel first; if it does not
+// accept(), it bubbles up the parent chain. Console dock + menu bar that
+// already consume their own wheel events keep working; this only fires
+// when the wheel happens over chrome that does not consume it (toolbar,
+// status bar, gap regions). Forwards by spawning a fresh QWheelEvent at
+// the canvas-local position so existing wheelEvent zoom handler runs.
+void XvueWindow::wheelEvent(QWheelEvent* event) {
+    if (canvas_) {
+        const QPointF localPos = canvas_->mapFromGlobal(event->globalPosition());
+        QWheelEvent forwarded(localPos,
+                              event->globalPosition(),
+                              event->pixelDelta(),
+                              event->angleDelta(),
+                              event->buttons(),
+                              event->modifiers(),
+                              event->phase(),
+                              event->inverted(),
+                              event->source());
+        QCoreApplication::sendEvent(canvas_, &forwarded);
+        event->accept();
+        return;
+    }
+    QMainWindow::wheelEvent(event);
 }
 
 // ---- Modal-guard helper (D-08) ----

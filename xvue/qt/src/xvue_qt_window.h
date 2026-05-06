@@ -64,6 +64,13 @@ protected:
     // Phase 6.0 Plan 06: persists geometry/state/console-visible to XvuePrefs.
     void closeEvent(QCloseEvent* event) override;
 
+    // Phase 9.1 fix 2026-05-06: forward wheel events that bubbled up the
+    // widget tree (i.e. happened outside the canvas — e.g. over the toolbar,
+    // status bar, or empty chrome area) to the canvas zoom handler. Console
+    // dock and menu bar children that consume wheel themselves keep their
+    // behavior; this only fires when no child accepted the event.
+    void wheelEvent(QWheelEvent* event) override;
+
 private:
     // Phase 6.0 Plan 06: chrome-construction helpers, called from ctor in
     // the order menu -> toolbar -> status bar -> console dock.
