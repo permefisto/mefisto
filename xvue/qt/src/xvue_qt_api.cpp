@@ -48,6 +48,26 @@
 class XvueWindow;
 class XvueMenuBridge;
 
+// Auto-batch on non-tty: ppmail/etc. read from stdin BEFORE xvinitgraphique_
+// runs (project name, INTERA flag, ...). When launched without a controlling
+// terminal (KDE launcher / kwin-mcp / pipeline / direct exec) those reads
+// block forever and the Qt window appears alive but frozen. Detect non-tty
+// at process start and set MEFISTO_BATCH_X11=1 + MEFISTO_XVSOURIS_AUTOEXIT=1
+// (existing escape hatches from Phase 7/8) so Fortran takes the batch path.
+// The user can override by setting MEFISTO_BATCH_X11=0 explicitly before
+// launch — interactive terminal users keep stdin reads as today.
+__attribute__((constructor))
+static void xvue_qt_auto_batch_on_non_tty(void) {
+    if (!isatty(fileno(stdin))) {
+        if (getenv("MEFISTO_BATCH_X11") == nullptr) {
+            setenv("MEFISTO_BATCH_X11", "1", 0);
+        }
+        if (getenv("MEFISTO_XVSOURIS_AUTOEXIT") == nullptr) {
+            setenv("MEFISTO_XVSOURIS_AUTOEXIT", "1", 0);
+        }
+    }
+}
+
 namespace {
 
 inline void warn_once(bool &flag, const char *name) {
@@ -298,31 +318,40 @@ extern "C" void registerNlseActions_stub_(XvueWindow*, XvueMenuBridge*) {
 extern "C" {
 
 // ---- 1. languemefisto_ ----
+// Returns 1 (English) if $MEFISTO/td/m/anglais exists, 0 (French) otherwise.
+// Legacy xvuelc.c hardcoded /usr/local/mefisto; Qt port resolves $MEFISTO env.
 void proc(languemefisto)(int *langue) {
     XvueApp::ensure();
     XVUE_QT_ASSERT_MAIN_THREAD();
-    static bool warned = false;
-    warn_once(warned, "languemefisto_");
-    (void)langue;
+    if (langue == nullptr) return;
+    const char *mefisto = getenv("MEFISTO");
+    char path[1024];
+    if (mefisto != nullptr) {
+        std::snprintf(path, sizeof(path), "%s/td/m/anglais", mefisto);
+    } else {
+        std::strncpy(path, "/usr/local/mefisto/td/m/anglais", sizeof(path) - 1);
+        path[sizeof(path) - 1] = '\0';
+    }
+    FILE *fp = std::fopen(path, "r");
+    if (fp != nullptr) { *langue = 1; std::fclose(fp); }
+    else               { *langue = 0; }
 }
 
 // ---- 2. dctnmc_ (returns void*) ----
+// Allocate nboctets bytes; return pointer or NULL on failure.
 void *proc(dctnmc)(int *nboctets) {
     XvueApp::ensure();
     XVUE_QT_ASSERT_MAIN_THREAD();
-    static bool warned = false;
-    warn_once(warned, "dctnmc_");
-    (void)nboctets;
-    return nullptr;
+    if (nboctets == nullptr || *nboctets <= 0) return nullptr;
+    return std::malloc(static_cast<size_t>(*nboctets));
 }
 
 // ---- 3. dstnmc_ ----
+// Free a buffer previously allocated by dctnmc_.
 void proc(dstnmc)(void *mcoctets) {
     XvueApp::ensure();
     XVUE_QT_ASSERT_MAIN_THREAD();
-    static bool warned = false;
-    warn_once(warned, "dstnmc_");
-    (void)mcoctets;
+    std::free(mcoctets);
 }
 
 // ---- 4. nomrepmefisto_ ----
@@ -1491,39 +1520,52 @@ void proc(xvarcellipse)(int *x, int *y, int *width, int *height,
 }
 
 // ---- 48. tempscpu_ ----
+// Returns CPU time used in seconds (clock() / CLOCKS_PER_SEC).
 void proc(tempscpu)(double *tclock) {
     XvueApp::ensure();
     XVUE_QT_ASSERT_MAIN_THREAD();
-    static bool warned = false;
-    warn_once(warned, "tempscpu_");
-    (void)tclock;
+    if (tclock == nullptr) return;
+    *tclock = static_cast<double>(clock()) / static_cast<double>(CLOCKS_PER_SEC);
 }
 
 // ---- 49. secondes1970_ ----
+// Seconds since epoch + microsecond counter to disambiguate same-second calls
+// (legacy parity per xvuelc.c:2837-2838).
+static long nbs1970_counter = 0;
 void proc(secondes1970)(double *secondes) {
     XvueApp::ensure();
     XVUE_QT_ASSERT_MAIN_THREAD();
-    static bool warned = false;
-    warn_once(warned, "secondes1970_");
-    (void)secondes;
+    if (secondes == nullptr) return;
+    nbs1970_counter += 1;
+    *secondes = static_cast<double>(time(nullptr))
+              + static_cast<double>(nbs1970_counter) * 0.000001;
 }
 
 // ---- 50. secondes1969_ ----
+// Plain seconds since epoch (no microsecond disambiguation).
 void proc(secondes1969)(double *secondes) {
     XvueApp::ensure();
     XVUE_QT_ASSERT_MAIN_THREAD();
-    static bool warned = false;
-    warn_once(warned, "secondes1969_");
-    (void)secondes;
+    if (secondes == nullptr) return;
+    *secondes = static_cast<double>(time(nullptr));
 }
 
 // ---- 51. nomordinateurhote_ ----
+// Returns the hostname into host[*nbcar].
 void proc(nomordinateurhote)(char *host, int *nbcar) {
     XvueApp::ensure();
     XVUE_QT_ASSERT_MAIN_THREAD();
-    static bool warned = false;
-    warn_once(warned, "nomordinateurhote_");
-    (void)host; (void)nbcar;
+    if (host == nullptr || nbcar == nullptr) return;
+    char name[80];
+    if (gethostname(name, sizeof(name)) != 0) {
+        std::fprintf(stderr, "nomordinateurhote: gethostname failed\n");
+        *nbcar = 0;
+        return;
+    }
+    name[sizeof(name) - 1] = '\0';
+    const int len = static_cast<int>(std::strlen(name));
+    *nbcar = len;
+    std::memcpy(host, name, static_cast<size_t>(len));
 }
 
 // ---- 52. ladate_ ----
