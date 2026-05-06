@@ -4,7 +4,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## What is MEFISTO
 
-MEFISTO (MEsh and Finite element Software TO...) is a scientific computing package by Alain Perronnet (LJLL, UPMC Paris). It provides interactive 2D/3D mesh generation and finite element solvers for elasticity, fluid mechanics, thermal, nonlinear, and wave problems, with X11-based graphical visualization.
+MEFISTO (MEsh and Finite element Software TO...) is a scientific computing package by Alain Perronnet (LJLL, UPMC Paris). It provides interactive 2D/3D mesh generation and finite element solvers for elasticity, fluid mechanics, thermal, nonlinear, and wave problems, with Qt 6 graphical visualization (the legacy X11 backend was retired in Phase 9 — git tag `v1.0-pre-retire` for rollback).
 
 ## Environment variables (required)
 
@@ -17,7 +17,7 @@ export CDPATH=.:$HOME:$MEFISTO:$MEFISTOX
 
 ## Build system
 
-The build uses `gfortran` + `gcc` with X11. All compilation scripts are shell scripts located in `bin/` (or `bin.lnx64/` for the 64-bit Linux prebuilt variants).
+The build uses `gfortran` + `gcc` + `g++` with Qt 6 (CMake drives `xvue/qt/`; the rest of the build is shell scripts). All compilation scripts are shell scripts located in `bin/` (or `bin.lnx64/` for the 64-bit Linux prebuilt variants).
 
 | Command | Effect |
 |---|---|
@@ -28,7 +28,6 @@ The build uses `gfortran` + `gcc` with X11. All compilation scripts are shell sc
 | `bin/cbflui` | Compile the fluid (FLUIDER) module only |
 | `bin/cbther` | Compile the thermal (THERMICER) module only |
 | `bin/cbnlse` | Compile the nonlinear solver (NLSER) module only |
-| `bin/ccxvue` | Compile the C part of the X11 graphics layer (`xvue/xvuelc.c`) |
 
 Compiled executables land in `pp/` (e.g. `pp/ppelas`, `pp/ppflui`, `pp/ppinit`, …). The shell scripts in `bin/` (INITIER, MAILLER, ELASTICER, …) wrap these executables and set up the project context.
 
@@ -36,8 +35,11 @@ Compiled executables land in `pp/` (e.g. `pp/ppelas`, `pp/ppflui`, `pp/ppinit`, 
 
 - `gfortran` (Fortran 77/95 + OpenMP)
 - `gcc`
-- `libX11-dev` (X11 headers and libraries at `/usr/X11R6/lib`)
-- `ImageMagick` (`convert` command, for animated GIF output)
+- `g++` (C++ compiler for the Qt 6 backend in `xvue/qt/`)
+- `qt6-base-dev` (Qt 6 graphics backend headers + libraries)
+- `qt6-image-formats-plugins` (TIFF/WebP/etc. image-format plugins for `XvueExport`)
+- `ffmpeg` (animated GIF export via `XvueExport::saveGifTo`)
+- `cmake` (>= 3.16, drives `xvue/qt/` build)
 
 ## Repository structure
 
@@ -49,7 +51,7 @@ flui/       Fluid solver sources (.f)
 ther/       Thermal solver sources (.f)
 reso/       Linear solver sources (.f)
 util/       Shared utility Fortran routines
-xvue/       X11 graphical display layer (Fortran + C)
+xvue/       Qt 6 graphical display layer (Fortran wrappers + C++ in xvue/qt/)
 prpr/       Main program entry points (ppinit.f, ppmail.f, ppelas.f, …)
 pp/         Compiled executables (output of build)
 bin/        Shell scripts: launchers (INITIER, MAILLER, …) + compilation scripts (cb*)
@@ -66,7 +68,7 @@ The `incl/homdir.inc` file is **generated at build time** by `cbl_tout` — it e
 
 ## Language and module conventions
 
-All solver and utility code is **Fortran 77** (fixed-form, column 7+) with some Fortran 95 extensions for OpenMP parallel variants (`*_OMP` executables). The X11 display module (`xvue/xvuelc.c`) is the only C source. Include files in `incl/` declare the shared common blocks and parameters that connect all modules.
+All solver and utility code is **Fortran 77** (fixed-form, column 7+) with some Fortran 95 extensions for OpenMP parallel variants (`*_OMP` executables). The Qt 6 backend lives in `xvue/qt/` (C++); the legacy `xvue/xvuelc.c` C source was retired in Phase 9. Include files in `incl/` declare the shared common blocks and parameters that connect all modules.
 
 ## Programming norms
 
@@ -75,7 +77,7 @@ The project's coding norms are documented in `doc/normes.ps` (PostScript format 
 ## Active project goals
 
 - **Bug fixes**: identify and correct existing bugs without altering the overall behaviour.
-- **Qt migration (future)**: the X11/Motif graphical layer (`xvue/`) will eventually be replaced by Qt. Any refactoring should keep the graphics calls isolated in `xvue/` so the migration is incremental.
+- **Qt migration (completed in Phase 9)**: the X11/Motif graphical layer was replaced by Qt 6 (`xvue/qt/`). The legacy `xvue/xvuelc.c` is retired; `git tag v1.0-pre-retire` preserves the X11 path for rollback. The Fortran solver wrappers in `xvue/*.f` are unchanged.
 
 ## Working rules
 
@@ -101,6 +103,6 @@ After every change, verify that the affected module still compiles with its `cb*
 User projects live under `$MEFISTOX/ProjectName/`. The typical workflow is:
 
 1. `INITIER` — initialise a new project
-2. `MAILLER` — interactive mesh generation (opens X11 window)
+2. `MAILLER` — interactive mesh generation (opens a Qt 6 window)
 3. `ELASTICER` / `FLUIDER` / `THERMICER` / `NLSER` / `WAVER` — run the chosen solver
 4. To save and exit any interactive module: return to the main menu and type `99;` (**never** Ctrl-C)
