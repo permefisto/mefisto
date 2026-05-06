@@ -158,16 +158,20 @@ void XvueCanvas::resizeEvent(QResizeEvent* event) {
     }
     new_backing->setDevicePixelRatio(dpr);
 
-    // (d)(e) fill background, then blit old content top-left (DRAW-09,
-    //       README_RESIZE.md invariants 2 and 3). One scoped temp painter.
-    //       Do this BEFORE touching state_->painter_ so we can still bail.
+    // (d)(e) fill background. Phase 9.1 fix 2026-05-06: previously blitted
+    // the OLD backing at (0,0) to preserve content across resize. That caused
+    // visible ghost-stacking of size-dependent rectangles (menu, title,
+    // QUALITY panels): on window grow, Fortran-side LEMENU/LEMECRA/etc.
+    // recompute XRECT(NRMENU) = LAPXFE - 2*ECARRC - DXRECT(NRMENU) at the
+    // new (wider) LAPXFE so the next draw lands further right, while the
+    // old draw at the old XRECT remains in the blitted backing. After a
+    // few resizes the canvas shows 3-5 stacked menus/titles. Clearing
+    // without blit means resize blanks the canvas until the next full
+    // Fortran-side redraw cycle, which is the lesser evil — visible ghosts
+    // are worse than transient blank.
     {
         QPainter tmp(new_backing);
         tmp.fillRect(new_backing->rect(), state_->background_);
-        if (old_backing) {
-            // drawPixmap at (0, 0) in LOGICAL coordinates — Qt handles DPR.
-            tmp.drawPixmap(0, 0, *old_backing);
-        }
     }  // ~QPainter tmp — end() called
 
     // Only now is it safe to tear down the old painter/backing:
