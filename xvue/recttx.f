@@ -81,6 +81,18 @@ C
 C     LA COULEUR DES CARACTERES
       CALL XVCOULEUR( NKRECT( NUR ) )
 C
+C     CHARGEMENT DE LA FONTE PROPRE A CE RECTANGLE (Phase 9.1 fix 2026-05-06):
+C     LUOU init enregistre NPRECT(NUR)=NOPOCA et DYLGRC(NUR)=2*ECARLR+NPHACA
+C     pour chaque rectangle au moment de l'init. Si une autre routine appelle
+C     CHARGEFONTE entre temps, NPHACA change globalement mais DYLGRC reste
+C     fige pour ce rectangle. RECTTX dessine alors avec un caractere plus
+C     haut/bas que la grille de lignes, ce qui produit le chevauchement
+C     observe sur les panneaux QUALITY of FINITE ELEMENTS, etc. Solution:
+C     remettre la fonte du rectangle avant le trace des lignes.
+      IF( NPRECT(NUR) .GT. 0 ) THEN
+         CALL CHARGEFONTE( NPRECT(NUR) )
+      ENDIF
+C
 C     LE TRACE DES LIGNES DU TEXTE
       IF( NBLGRC(NUR) .GT. 0 ) THEN
 C

@@ -84,6 +84,14 @@ C
 C     LA COULEUR DES CARACTERES
       CALL XVCOULEUR( NKRECT( NUR ) )
 C
+C     CHARGEMENT DE LA FONTE PROPRE A CE RECTANGLE (Phase 9.1 fix 2026-05-06):
+C     Voir commentaire identique dans xvue/recttx.f. Sans ce switch, des
+C     panneaux qui ont change de fonte en cours d'execution dessinent
+C     avec une grille DYLGRC fige -> chevauchement.
+      IF( NPRECT(NUR) .GT. 0 ) THEN
+         CALL CHARGEFONTE( NPRECT(NUR) )
+      ENDIF
+C
 C     LE TRACE DES LIGNES DU TEXTE
       IF( NBLGRC(NUR) .GT. 0 ) THEN
 C
