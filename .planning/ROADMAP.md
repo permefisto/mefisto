@@ -274,7 +274,16 @@ Plans:
   2. `grep -rn 'convert' bin/ td/ testa/ testf/` returns no ImageMagick invocations; `bin/convertepsgif` is deleted or replaced.
   3. `README`, `LISEZMOI`, and install scripts list only Qt 6 runtime dependencies (`qt6-base`, `libqt6imageformats6-plugins`); `libX11-dev` and ImageMagick are removed from the dependency list.
   4. Running `bin/cbl_tout` produces a working MEFISTO build with Qt 6 as the only graphics backend and all 5 baseline `testa/` cases still pass.
-**Plans**: TBD
+**Plans**: 9 plans
+  - [ ] 09-01-PLAN.md — Wave 1 prereq: rollback safety (v1.0-pre-retire tag + retire-restore-point branch per D-08/D-09) + audit baseline (pre-retirement reference counts in 09-01-AUDIT-BASELINE.md) (process-gate per D-11)
+  - [ ] 09-02-PLAN.md — Wave 2 RETIRE-01: delete xvue/xvuelc.c + bin/ccxvue + verify_no_xvuelc grep gate (RETIRE-01)
+  - [ ] 09-03-PLAN.md — Wave 2 RETIRE-02: remove libX11 linker lines + /usr/X11R6/lib64 paths from every bin/cb* + git mv cbl_tout_qt -> cbl_tout (D-09 lockstep) + bin/test_no_x11_in_build.sh grep gate (RETIRE-02)
+  - [ ] 09-04-PLAN.md — Wave 2 RETIRE-03: delete bin/convertepsgif + xvue/video1.f + videofin.f + videonm.f + per-block LVIDEO excision in 12 tracer files + bin/test_no_lvideo.sh grep gate (RETIRE-03)
+  - [ ] 09-05-PLAN.md — Wave 2 RETIRE-04: README + LISEZMOI + bin/README + bin/LISEZMOI + CLAUDE.md doc updates (qt6-image-formats-plugins per RESEARCH §Pitfall 9; libX11-dev + ImageMagick removed; Phase 9 README section with v1.0-pre-retire rollback) (RETIRE-04)
+  - [ ] 09-06-PLAN.md — Wave 3 carry-forward #1: matched-dim Qt recapture (MEFISTO_QT_WINDOW_SIZE env hook in xvinitgraphique_; ABI 58 invariant; harness wired to 1280x800; closes Phase 8 override #1 / 14 CHECK cells)
+  - [ ] 09-07-PLAN.md — Wave 3 carry-forward #2: ppnlse_qt offscreen+BATCH_X11 diagnose-then-fix per RESEARCH §OQ3 (gdb backtrace + classify (a)/(b)/(c); fix matches case; ABI 58 invariant; closes Phase 8 override #5)
+  - [ ] 09-08-PLAN.md — Wave 3 carry-forward #3: 3 Phase-7-deferred goldens via cross-tag worktree (v1.0-pre-retire) — scene01.eps + wave_legacy.gif + cavity2d_legacy.gif; ctest 3 QSKIPs flip to PASS; Phase 7 VALIDATION-LOG.md DEFERRED -> PASS
+  - [ ] 09-09-PLAN.md — Wave 3 carry-forward #4: harness --out-dir realpath canonicalization (Phase 8 Plan 5 SUMMARY bug) + verify_pp_qt_freshness end-of-cbl_tout (Phase 8 D-09 per RESEARCH §OQ4; CMake counterpart config-gated default OFF)
 
 ## Progress
 
@@ -292,7 +301,7 @@ Phases execute in numeric order: 0 → 1 → 2 → 3 → 4 → 5 → 6 → 7 →
 | 6. Level-3 UX chrome | 0/TBD | Not started | - |
 | 7. Image, GIF, PostScript export | 0/TBD | Not started | - |
 | 8. A/B validation on testa subset | 7/7 | Complete (2026-05-05) | dricoco — v1 ship gate signed; 5 overrides accepted; Phase 9 unblocked |
-| 9. Retire X11 backend | 9/9 | Complete (2026-05-06) | dricoco — xvuelc.c + libX11 + ImageMagick + LVIDEO retired; v1.0-pre-retire tag for rollback; 3 P7 goldens deferred (P7 source defects) |
+| 9. Retire X11 backend | 0/9 | Not started (gated) | - |
 
 ## Coverage
 
