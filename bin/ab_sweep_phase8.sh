@@ -92,6 +92,16 @@ NOW_UTC=$(date -u +"%Y-%m-%d %H:%M:%S UTC")
 # Convert CSV to space-separated.
 IFS=',' read -r -a CASES <<< "$CASES_CSV"
 
+# Phase 9 Plan 9-07: nlsecu canonical TIME=20 (2000 steps) is ~hour-scale on
+# this hardware. NOT a deadlock — Plan 9-07 Task 1 diagnose classified the
+# Phase 8 "10 log lines, no NLSER banner" symptom as case (c) long-runtime
+# via gdb backtrace (Qt event loop alive in g_main_context_iteration; block
+# point is xvsouris_ wait-for-mouse only under the non-canonical stdin-redirect
+# reproducer form, never under the harness arg-form below).
+# Phase 8 mitigation retained: TIME=0.01 (X11 baseline) / TIME=0.1 (OMP)
+# workspace truncations + MAILLER-prereq fallback for Qt 1x/2x.
+# See .planning/phases/09-retire-x11-backend/evidence/ppnlse-diagnose.md.
+
 EXIT_CODE=0
 for CURRENT_CASE in "${CASES[@]}"; do
     MODULE=$(phase8_case_module "$CURRENT_CASE")

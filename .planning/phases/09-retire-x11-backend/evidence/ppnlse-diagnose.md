@@ -163,3 +163,48 @@ fallback) **remains the documented work-around** for the 60s harness budget;
 override #5's "(i) Phase-9-deferred-fix" disposition refines to "case (c)
 classified — no defect — Phase 8 mitigation retained as the canonical
 work-around for ad-hoc harness budgets shorter than ~hour-scale."
+
+## Post-fix verification
+
+**Files touched by Task 2 (case (c) documentation-only):**
+- `bin/ab_sweep_phase8.sh` — added a 9-line comment block above the
+  dispatch loop citing this diagnose document and recording the case-(c)
+  classification.
+- `.planning/phases/08-ab-validation-on-testa-subset/08-CHECKLIST.md` —
+  appended a sentence to override #5 (line 84) referencing this diagnose
+  document; preserves the existing `(i) Phase-9-deferred-fix` disposition
+  while refining its meaning to "case-(c) classified, no defect".
+- **Zero changes** to `xvue/qt/src/xvue_qt_api.cpp`, `prpr/ppnlse.f`, or
+  any other Fortran/C++ source. ABI is unaffected by construction.
+
+**Build state:**
+- `bin/cbl_tout` exit: **0** (defensive re-build per plan task 2 case (c)
+  step 3; no source code changed, so the rebuild simply confirms the
+  toolchain is healthy and the build invariants still hold).
+- `bin/cbl_tout` tail: `TOUS les MODULES EXECUTABLES sans debogueur ... sont crees — Qt variant`.
+
+**ABI invariant:**
+- `nm xvue/qt/build/libxvueqt.a | grep ' T ' | grep '_$' | wc -l` → **64**
+  (raw count, includes the 6 stub symbols documented in 09-02-SUMMARY.md
+  threat-flags section as the post-Phase-7 stable baseline).
+- `xvue/qt/cmake/verify_abi.sh xvue/qt/build/libxvueqt.a xvue/qt/include/xvue_qt_api.h` →
+  `nm count: 58  header count: 58` exit **0** (canonical ABI invariant
+  matching plan frontmatter `key_links` semantic — `verify_abi.sh` is the
+  build-gate authority; raw 64 = 58 filtered + 6 stubs, 09-02-SUMMARY notes
+  the apparent mismatch is intentional).
+
+**Reproducer post-fix (production-harness arg-form):**
+```text
+$ env QT_QPA_PLATFORM=offscreen MEFISTO_BATCH_X11=1 \
+      MEFISTO_XVSOURIS_AUTOEXIT=1 MEFISTO_XVSOURIS_AUTOEXIT_DELAY_MS=500 \
+      timeout 60 pp/ppnlse nlsecu.iexrr > /tmp/09-07-postfix-arg.log 2>&1
+$ echo "exit=$?"
+exit=0
+$ wc -l /tmp/09-07-postfix-arg.log
+17
+$ grep -c 'Mefisto-NLSER' /tmp/09-07-postfix-arg.log
+2     # banner-reached marker (lines 117/120/121 of prpr/ppnlse.f)
+```
+
+Banner reached, ABI invariant upheld, no source code change, override #5
+documented as case (c) — Phase 9 carry-forward #2 closure complete.
