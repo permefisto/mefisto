@@ -413,6 +413,14 @@ C     by the maintainer. Offset impquaob to a column further right.
       NNX = 350
       NNY = 120
       IF( INTERA .GE. 1 ) THEN
+C
+C        Phase 9.1 fix 2026-05-06: erase the impquaob column before
+C        drawing so successive calls (multi-step refinement, repeated
+C        T1OBJE) do not stack one stats table on top of another. impqua
+C        already erases its own column at (0,0,450,500) so we mirror
+C        that here for the (350..) column. NCOFON = background color.
+         CALL XVCOULEUR( NCOFON )
+         CALL XVRECTANGLE( 350, 0, 450, 500 )
 
 C        EFFACEMENT DE LA LEGENDE DE LA QUALITE SUR POSTSCRIPT
          IF ( LASOPS.NE.0 ) THEN
