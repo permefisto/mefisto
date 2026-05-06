@@ -857,8 +857,21 @@ void proc(xvchargefonte)(int *nofont0, int *nofont, int *largpx, int *hautpx) {
     if (!st) { *largpx = 0; *hautpx = 0; return; }
 
     st->current_font_size_idx_ = idx;
-    st->current_font_ = QFont(QStringLiteral("DejaVu Sans Mono"),
-                              XvueState::kFontSizes[idx]);
+    // Use setPixelSize so the BDF "WxH" prefix Fortran sees in xvinfo namefonts
+    // matches the actual Qt-rendered pixel height. kFontPixelSizes[] mirrors
+    // the BDF H values (8, 10, 13, 14, 15, 20, 20, 24, 24, 24) — Fortran's
+    // xvue/xvinit.f populates NUFOHPX[H] from those, so a request for height H
+    // pixels gets a font that actually renders at H pixels (avoids
+    // Fortran's per-line Y-advance using a smaller value than the actual
+    // glyph extent — which manifested as overlapping text on welcome /
+    // impqua histogram / project info panels per maintainer screenshots
+    // 2026-05-06).
+    static constexpr int kFontPixelSizes[XvueState::kNbFonts] = {
+        8, 10, 13, 14, 15, 20, 20, 24, 24, 24
+    };
+    QFont f(QStringLiteral("DejaVu Sans Mono"));
+    f.setPixelSize(kFontPixelSizes[idx]);
+    st->current_font_ = f;
     st->current_metrics_ = QFontMetrics(st->current_font_);
 
     if (st->painter_ && st->painter_->isActive()) {
@@ -867,6 +880,13 @@ void proc(xvchargefonte)(int *nofont0, int *nofont, int *largpx, int *hautpx) {
 
     *largpx = st->current_metrics_.horizontalAdvance(QLatin1Char('0'));
     *hautpx = st->current_metrics_.height();
+    // Floor: ensure at least 8px height so a tiny system-default rendering
+    // doesn't give Fortran 0 (which would collapse DYLGRC line spacing).
+    if (*hautpx < 8) *hautpx = 8;
+    if (*largpx < 4) *largpx = 4;
+    std::fprintf(stderr,
+                 "xvchargefonte: idx=%d pixelSize=%d -> largpx=%d hautpx=%d\n",
+                 idx, kFontPixelSizes[idx], *largpx, *hautpx);
 
     // Phase 7 Plan 03: PS font-load emit. Pass family + size (pt) + ascent/
     // descent / bold / italic; the D-08 mapping table inside chargefonte()
