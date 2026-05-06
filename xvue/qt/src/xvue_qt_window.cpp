@@ -460,15 +460,23 @@ void XvueWindow::onFileQuit() {
     // click/type semantics per CONTEXT D-09. Fortran's prpr/ppmail.f
     // label 9900 calls ARRET(0) → STOP → clean process exit; no
     // QMessageBox::question confirm, no QCoreApplication::quit() bypass.
+    //
+    // Phase 9.1 fix 2026-05-06: when Fortran is inside a SUBMENU, the
+    // "99;" sequence is interpreted by the submenu handler (where 99 is
+    // not a save-quit code) and ignored. Prefix several '@' chars
+    // (Mefisto's "escape submenu" convention — see welcome screen
+    // "Type @ to ESCAPE a MENU or INPUT DATA") so the queued bytes
+    // climb out of any nested submenu before the 99; reaches the main
+    // menu's save-quit handler. 8 escapes covers reasonable nesting.
     if (menuBridge_) {
         if (consoleDock_) {
-            consoleDock_->appendLine(QStringLiteral("[menu] 99;"));
+            consoleDock_->appendLine(QStringLiteral("[menu] @@@@@@@@99;"));
         }
-        menuBridge_->queueLexicon(QStringLiteral("99;"));
+        menuBridge_->queueLexicon(QStringLiteral("@@@@@@@@99;"));
     }
     // Deliberately no close() / QCoreApplication::quit() — Fortran owns
-    // the exit. The saclav.f LIMTCL dispatch will pick up "99;" on its
-    // next xvsouris_ iteration and run the SAUVEGARDE path.
+    // the exit. The saclav.f LIMTCL dispatch will pick up the queued
+    // bytes on its next xvsouris_ iteration and run the SAUVEGARDE path.
 }
 
 void XvueWindow::onViewPreferences() {
