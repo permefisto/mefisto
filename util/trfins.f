@@ -50,8 +50,15 @@ C     n'efface pas les pixels du glyphe precedent (les espaces ne
 C     dessinent rien). Resultat: TRFINS appele plusieurs fois avec des
 C     titres differents -> tous les titres rouges visibles superposes.
 C     Solution: rectangle plein de la couleur de fond avant le trace.
+C     Le titre est trace au baseline y = 3*LHPXCA+9 ; le glyphe s'etend
+C     au-dessus du baseline (ascent ~ NPHACA*0.8) et un peu en-dessous
+C     (descent ~ NPHACA*0.2). Effacer un rectangle suffisamment large
+C     pour couvrir le titre actuel ET les titres precedents qui pouvaient
+C     etre plus longs. 1000 pixels couvre tous les titres raisonnables;
+C     hauteur juste autour du baseline pour ne pas empieter sur TIT1LG.
       CALL XVCOULEUR( NCNOIR )
-      CALL XVRECTANGLE( 0, 3*LHPXCA-NPHACA-2, LAPXFE, NPHACA+8 )
+      CALL XVRECTANGLE( 18, 3*LHPXCA+9-NPHACA,
+     %                  1000, NPHACA+5 )
 
 C     TRACE DU TITRE
       CALL XVCOULEUR( NCROUG )
