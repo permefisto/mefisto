@@ -126,13 +126,26 @@ void XvueWindow::closeEvent(QCloseEvent* event) {
 
 // ---- Modal-guard helper (D-08) ----
 // Returns true when a blocking read is active (XvueApp::blockingDepth() > 0)
-// and shows the 3000ms refuse message; the caller uses the return to early-
-// exit the QAction handler. The QAction itself is NOT disabled — the guard
-// lives in the handler so the menu item remains clickable; the message
-// explains why nothing opened.
+// and shows a persistent refuse message + a transient QMessageBox::information
+// pop-up; the caller uses the return to early-exit the QAction handler. The
+// QAction itself is NOT disabled — the guard lives in the handler so the menu
+// item remains clickable; the message explains why nothing opened.
+//
+// Phase 9.1 UX fix (post-Phase-9 maintainer feedback 2026-05-06): the
+// previous 3-second status-bar message was too easy to miss. Now the status
+// bar message stays visible (0 = no auto-clear) AND a QMessageBox::information
+// pop-up surfaces the reason. The pop-up doesn't recurse the modal guard
+// because QMessageBox::information::exec() runs inside the existing nested
+// event loop — clicking OK closes it without a new blocking read.
 bool XvueWindow::refuseIfBlocking() {
     if (XvueApp::blockingDepth() > 0) {
-        statusBar()->showMessage(xvueT(MsgId::ModalRefuse), 3000);
+        const QString msg = xvueT(MsgId::ModalRefuse);
+        statusBar()->showMessage(msg, 0);  // persistent until next setMessage
+        // Avoid the popup if the user has explicitly dismissed it once per
+        // blocking-cycle (best-effort: counter resets when blockingDepth
+        // drops to 0 between sessions). Pragmatic UX: show every time so
+        // the user always gets visible feedback.
+        QMessageBox::information(this, xvueT(MsgId::FileMenuTitle), msg);
         return true;
     }
     return false;
