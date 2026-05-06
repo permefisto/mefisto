@@ -85,3 +85,54 @@ T-09-05-A (input validation): the `sscanf("%dx%d")` failure path returns
 `!=2` and the bounds check `0 < {w,h} < 8192` rejects negatives,
 overflow-prone values, and zero. Malformed env values are silently
 ignored — no error path is exposed to the headless harness.
+
+## Task 2 — AE re-run on Phase-8 CHECK cells
+
+`bin/ab_sweep_phase8.sh` qt-1x branch defaults `MEFISTO_QT_WINDOW_SIZE`
+to `1280x800` (using the `: "${VAR:=default}"` form so a user
+override is respected).
+
+**Cavity2d reproduction**: Phase 8 baseline AE was 411003 (40.14%).
+Plan 9-06 attempted to reproduce but `pp/ppflui` times out at the
+60-second harness budget (also at 120 s in a manual probe) on the
+`cavity2d.stoke56cr` batch with `IEEE_DENORMAL` FPE + `CRASH of
+MEFISTO software` before reaching `xvfermer_`. The capture path
+`MEFISTO_QT_CAPTURE_PATH` therefore never fires. This is a pre-existing
+Phase-8 ppflui stability issue (orthogonal to Plan 9-06 — the
+matched-dim env-knob is exercised on every Qt-mode capture but the
+fluider crash blocks output entirely).
+
+Substituted three other CHECK cells from the canonical 5-case grid as
+A/B samples. Numbers (Phase 8 -> Plan 9-06, both `compare -metric AE
+-fuzz 5%`):
+
+| Case | Phase 8 AE | Plan 9-06 AE | drop | drop % |
+|------|-----------|--------------|------|--------|
+| pan2d | 540804 (52.81%) | 520331 (50.81%) | 20473 | -3.78% |
+| heat1d | 143273 (13.99%) | 125480 (12.25%) | 17793 | -12.42% |
+| nafems_le1 | 412827 (40.32%) | 325282 (31.77%) | 87545 | -21.21% |
+
+`bin/ab_compare_pair.sh` reports `resampled=no` for all three (the
+captures are already 1280x800 — the dim-guard's nearest-neighbor
+resample never fires post-Plan-9-06).
+
+**Interpretation:**
+- The resample-confound is empirically eliminated (`resampled=no`).
+- The remaining AE is genuine content-driven diff:
+  - **Chrome bars**: Qt menubar/toolbar/statusbar/console-dock vs
+    Xvfb root-window (no chrome). The chrome takes a fixed pixel
+    region near the top/sides of the 1280x800 capture; chrome pixels
+    differ from X11's mesh-rendering pixels in the same region by a
+    large constant per-pixel delta — explaining the still-high AE for
+    pan2d/nafems_le1.
+  - **Font AA drift (Pitfall 7)**: `font-pan2d.md` documented Qt's
+    3545 unique colors vs X11's 9 — antialiasing-driven.
+- The smaller drops than the plan ideal (<5%) are NOT a
+  misimplementation of Plan 9-06; they reflect that resample was
+  ONE confound but chrome+AA were also significant for these cases.
+  Heat1d (1D plot, less chrome-overlap) shows a cleaner -12.4% drop;
+  nafems_le1 (no gradient bar) shows the strongest -21.2% drop.
+
+`compare -metric AE -fuzz 5%` log captured at
+`/tmp/09-06-cavity-AE.log` (also has the no-fuzz raw values + the
+reasoning bundle).

@@ -79,6 +79,17 @@ mkdir -p "$OUT_DIR"
 mkdir -p "$MEFISTOX"
 [ -z "$EVIDENCE_LOG" ] && EVIDENCE_LOG="${OUT_DIR}/sweep-log-${MODE}.md"
 
+# Phase 9 Plan 9-06 (carry-forward #1): Qt captures default to
+# MEFISTO_QT_WINDOW_SIZE=1280x800 to match the X11 baseline (Xvfb root-window
+# screenshot dim) and eliminate the resample-confound that dominated the 14
+# Phase-8 CHECK cells (08-CHECKLIST.md override #1). The xvinitgraphique_
+# probe (xvue/qt/src/xvue_qt_api.cpp:350-381) honors this only in headless
+# contexts (MEFISTO_BATCH_X11=1 OR QT_QPA_PLATFORM=offscreen — both set
+# below for qt-1x/qt-2x/qt-omp). Override by exporting an explicit value
+# before invocation: e.g., MEFISTO_QT_WINDOW_SIZE=800x600 ./ab_sweep_phase8.sh ...
+: "${MEFISTO_QT_WINDOW_SIZE:=1280x800}"
+export MEFISTO_QT_WINDOW_SIZE
+
 # Source the empirical case-batch map (replaces fragile glob).
 . "$MEFISTO/bin/phase8_case_batch_map.sh"
 
