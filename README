@@ -31,9 +31,8 @@ The installation needs of
 - a PC under system LINUX or equivalent;
 - a main memory of 1 giga-bytes;
 - a disk memory of 1 giga-bytes to store the software and execution files;
-- the libraries X11-WINDOW SYSTEM;
-- a graphic card which permits under X11 a definition of the display
-  1024x768 or 1280x1024 or +  with mode PseudoColor (256 colors) or TrueColor.
+- a graphic card with a definition of the display
+  1024x768 or 1280x1024 or + (the Qt 6 backend handles colour management itself).
 
 DOWNLOAD and INSTALL the SOURCE of MEFISTO
 ==========================================
@@ -57,8 +56,9 @@ At the installation level, a problem may be:
 - a no correct name (upper case, ...)
 - a DirMefisto name with a blank character
 - a not possible access to DirMefisto by incorrect access rights
-- a not installed gcc compiler or gfortran (load it)
-- a not installed X11-dev linux package (load it)
+- a not installed gcc / gfortran / g++ compiler (load them)
+- a not installed Qt 6 development package (load qt6-base-dev and
+  qt6-image-formats-plugins; cmake >= 3.16 is also required to build xvue/qt/)
 - an environment variable MEFISTO=DirMefisto/mefisto not initialized
 - an environment variable MEFISTOX=$HOME/mefistox not initialized
 - a directory DirMefisto/bin   without shell-scripts INITIER MAILLER ... to reload
@@ -78,17 +78,44 @@ export CDPATH=.:$HOME:$MEFISTO:$MEFISTOX
 Then, under Linux, the typing of commands INITIER, MAILLER, ELASTICER, FLUIDER,
 NLSER, THERMICER, cbl_tout, ...  will be found.
                    
-REMARK on X11 WINDOWS SYSTEM:
-=============================
-Mefisto necessitates an installed libX11-dev package at different levels
-- at compilation of the C subroutines
-- at execution to draw the results
-If your system does not contain it, it is necessary to load libX11-dev package
-of your linux distribution.
+REMARK on the Qt 6 GRAPHICS BACKEND:
+====================================
+Since Phase 9 (git tag v1.0-pre-retire and beyond), Mefisto's graphics layer
+is built on Qt 6. The legacy X11 backend (xvue/xvuelc.c) and the legacy
+"convert" raster-tool shell-out have been retired. The runtime + build
+dependencies are:
 
-In a same way, the package ImageMagick must be installed in order the call of
-the command "convert" permits the construction of an animated gif file to
-visualize the solution.
+- gfortran (Fortran 77/95 + OpenMP)
+- gcc and g++
+- qt6-base-dev (provides Qt6Widgets, Qt6Gui, Qt6Core, Qt6PrintSupport, Qt6Test)
+- qt6-image-formats-plugins (TIFF, WebP, ... for the Qt image-export path)
+- ffmpeg (animated GIF export via XvueExport::saveGifTo)
+- cmake (>= 3.16, drives the xvue/qt/ build)
+
+On Debian / Ubuntu, all of the above can be installed with:
+  sudo apt install gfortran gcc g++ qt6-base-dev qt6-image-formats-plugins \
+                   ffmpeg cmake
+
+Phase 9: X11 retirement (v1.0+)
+-------------------------------
+Starting at git tag v1.0-pre-retire, MEFISTO migrated from the legacy X11
+graphics backend (xvue/xvuelc.c, ~3749 lines) to a Qt 6 backend (xvue/qt/).
+The X11 path was kept alive in parallel for one release cycle for A/B
+validation (Phase 8). After the A/B window closed, Phase 9 deleted:
+
+- xvue/xvuelc.c + bin/ccxvue (the X11 backend)
+- xvue/video1.f + videofin.f + videonm.f + 12 tracer LVIDEO blocks
+  (the legacy "xwd -> convert -> .gif" animation pipeline; replaced by
+  the Phase 7 XvueExport::saveGifTo ffmpeg path)
+- bin/convertepsgif, bin/png2eps, bin/png2jpg (legacy raster-tool shell-outs)
+- legacy bin/cb* X11-linker scripts and Makefile relics
+- the X11 development library and the legacy raster-conversion tool from the
+  dependency list
+
+To rebuild from the pre-retirement code: git checkout v1.0-pre-retire.
+That tag still ships the X11 path and its original bin/cbl_tout.
+
+Single graphics backend post-Phase-9: Qt 6 via bin/cbl_tout.
 
 SOME AVAILABLE DOCUMENTATIONS:
 ==============================
