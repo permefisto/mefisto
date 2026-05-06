@@ -88,6 +88,16 @@ void XvueCanvas::paintEvent(QPaintEvent* event) {
     QPainter p(this);
     if (!state_) return;
 
+    // Phase 9.1 fix 2026-05-06: maintainer reports blurry / doubled text on
+    // canvas. Default QPainter pixmap transform uses smooth (bilinear)
+    // interpolation when view_transform_ is anything other than identity
+    // (HiDPI device-pixel-ratio, user zoom, fractional scale). Smooth
+    // interpolation on text pixels in the backing pixmap creates ghost
+    // glyphs that read as doubled / blurred. Disable so nearest-neighbour
+    // scaling preserves crisp pixel-aligned rendering.
+    p.setRenderHint(QPainter::SmoothPixmapTransform, false);
+    p.setRenderHint(QPainter::Antialiasing, false);
+
     if (state_->backing_) {
         p.setTransform(state_->view_transform_);
         p.drawPixmap(0, 0, *state_->backing_);
