@@ -120,6 +120,16 @@ C     DECLARATION DE LA PILE DES PLSVO
       ENDIF
       MCN(MNPILE) = NUO
 C
+C     Phase 9.1 fix 2026-05-07: maintainer reports the QUALITY-OF-FE
+C     panel "is over the drawing - I want it in the background not in
+C     front". Mefisto draws to a single backing pixmap so z-order is
+C     paint-order. Move the IMPQUAOB stats-panel call to run BEFORE
+C     the per-PLSV mesh draw loop below; mesh subsequently paints over
+C     the panel pixels, so user sees mesh on top + panel only in mesh-
+C     sparse regions. The legacy late call below at line ~222 is
+C     elided so we don't redraw on top of the mesh.
+      CALL IMPQUAOB( NOMOBJ, QUAMIN, NBEFMQ, IERR )
+C
 C     ********************************************************
 C     TANT QUE LA PILE DES OBJETS EST NON VIDE TRACER LES PLSV
 C     ********************************************************
@@ -218,8 +228,10 @@ C        DIMENSION DE L'ESPACE DES COORDONNEES POUR LE TMS XYZPOINT
  18      CONTINUE
       ENDIF
 
-C     TRACE ET AFFICHAGE DE LA QUALITE DU MAILLAGE DE L'OBJET
-      CALL IMPQUAOB( NOMOBJ, QUAMIN, NBEFMQ, IERR )
+C     Phase 9.1 fix 2026-05-07: legacy IMPQUAOB call here would land on
+C     top of the mesh draws above, so panel ended up in front. Moved
+C     the call to BEFORE the mesh draw loop (see line ~126); leaving
+C     a stub here documents the order change.
 
 C     TRACE DU TITRE ET FERMETURE
       LORBITE = ABS( LORBITE )
@@ -609,8 +621,9 @@ C     TRACE DES POINTS DES EF DU MAILLAGE DE L'OBJET 2D AVEC INTERPOLATION
  230     CONTINUE
       ENDIF
 
-C     TRACE ET AFFICHAGE DE LA QUALITE DU MAILLAGE DE L'OBJET
-      CALL IMPQUAOB( NOMOBJ, QUAMIN, NBEFMQ, IERR )
+C     Phase 9.1 fix 2026-05-07: 3D path equivalent of the 2D move
+C     above. Add an early IMPQUAOB call before the 3D mesh draw loop;
+C     leave this late call stubbed so panel does not end up on top.
 
 C     TRACE DU TITRE ET FERMETURE
       CALL TRFINS( NOMOBJ )
