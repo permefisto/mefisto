@@ -558,17 +558,30 @@ void proc(xvinfo)( int *ix, int *iy, int *maxfonts,
     // ctor (via XvueWindow ctor via xvinitgraphique_), so any caller that
     // reads red/green/blue immediately after xvinfo_ returns (e.g.
     // xvue/xvinit.f:143 calling XVRECUPRGBDEC) sees populated data.
+    //
+    // Phase 9.1 maintainer fix 2026-05-06: Mefisto Fortran xvue/xvinit.f at
+    // lines 222-289 recognizes ONLY X11 BDF font names of the form "WxH" to
+    // populate NUFOHPX[]. If no name matches, NUFOHPX stays all-zero, NOFONT
+    // stays 0, CHARGEFONTE(0) early-returns when current==target, NPHACA never
+    // gets set, RECTTX line-height = 2*ECARLR ≈ 8px → all multi-line text
+    // overlaps. Reported on screenshots after direct ppmail launch.
+    //
+    // Fix: report X11-BDF-compatible names whose H matches each kFontSizes[]
+    // entry's approximate pixel height at 96dpi (Hpx = pt * 96/72 = pt * 4/3,
+    // rounded). Qt port still renders the actual TrueType DejaVu Sans Mono;
+    // these strings are purely for xvinit.f's pattern-detection. The width W
+    // is informational only (RECTTX uses NPLACA from QFontMetrics, not W).
     static const char* const kListFonts[XvueState::kNbFonts] = {
-        "DejaVu Sans Mono 8pt",
-        "DejaVu Sans Mono 10pt",
-        "DejaVu Sans Mono 12pt",
-        "DejaVu Sans Mono 14pt",
-        "DejaVu Sans Mono 16pt",
-        "DejaVu Sans Mono 18pt",
-        "DejaVu Sans Mono 20pt",
-        "DejaVu Sans Mono 24pt",
-        "DejaVu Sans Mono 28pt",
-        "DejaVu Sans Mono 32pt",
+        "5x8 DejaVu Sans Mono 8pt",   //  8pt ≈ 11px  -> map to "5x8"
+        "6x10 DejaVu Sans Mono 10pt", // 10pt ≈ 13px  -> map to "6x10"
+        "6x13 DejaVu Sans Mono 12pt", // 12pt ≈ 16px  -> map to "6x13"
+        "7x14 DejaVu Sans Mono 14pt", // 14pt ≈ 19px  -> map to "7x14"
+        "9x15 DejaVu Sans Mono 16pt", // 16pt ≈ 21px  -> map to "9x15"
+        "10x20 DejaVu Sans Mono 18pt",// 18pt ≈ 24px  -> map to "10x20"
+        "10x20 DejaVu Sans Mono 20pt",// 20pt ≈ 27px  -> map to "10x20"
+        "12x24 DejaVu Sans Mono 24pt",// 24pt ≈ 32px  -> map to "12x24"
+        "12x24 DejaVu Sans Mono 28pt",// 28pt ≈ 37px  -> map to "12x24"
+        "12x24 DejaVu Sans Mono 32pt",// 32pt ≈ 43px  -> map to "12x24"
     };
 
     int nfonts = XvueState::kNbFonts;
