@@ -379,7 +379,7 @@ C        PLACEMENT DE LA LEGENDE SUR L'ECRAN
          ENDIF
          CALL XVCOULEUR( NCROUG )
          CALL XVTEXTE( KNOM(1:27), 27, NNX, NNY )
-         NNY = NNY + 16
+         NNY = NNY + NPHACA + 4
       ENDIF
 
       DO 20 N=9,-3,-1
@@ -454,7 +454,7 @@ ccc            IF( NN .LE. 0 ) KNOM(18:18) = ' '
             IF( N .EQ. 9 ) KNOM(17:17) = '='
             NBC = NUDCNB( KNOM )
             CALL XVTEXTE( KNOM(1:NBC), NBC, NNX, NNY )
-            NNY = NNY + 16
+            NNY = NNY + NPHACA + 4
          ENDIF
 
 ccc10021 FORMAT(I9,' EF',I3,' %',F5.3,'< Q <=',F5.3)
@@ -488,7 +488,7 @@ C        TRACE DE LA QUALITE MOYENNE DU MAILLAGE
          ENDIF
          NBC = NUDCNB( KNOM )
          CALL XVTEXTE( KNOM(1:NBC), NBC, NNX, NNY )
-         NNY = NNY + 16
+         NNY = NNY + NPHACA + 4
 C        TRACE DE LA QUALITE MINIMALE DU MAILLAGE
          IF( LANGAG .EQ. 0 ) THEN
             WRITE(KNOM,10023) QUAMIN
@@ -497,7 +497,7 @@ C        TRACE DE LA QUALITE MINIMALE DU MAILLAGE
          ENDIF
          NBC = NUDCNB( KNOM )
          CALL XVTEXTE( KNOM(1:NBC), NBC, NNX, NNY )
-         NNY = NNY + 16
+         NNY = NNY + NPHACA + 4
 C        TRACE DE L'ECART TYPE A 1
          IF( LANGAG .EQ. 0 ) THEN
             WRITE(KNOM,10024) ECATYP
@@ -506,7 +506,7 @@ C        TRACE DE L'ECART TYPE A 1
          ENDIF
          NBC = NUDCNB( KNOM )
          CALL XVTEXTE( KNOM(1:NBC), NBC, NNX, NNY )
-         NNY = NNY + 25
+         NNY = NNY + NPHACA + 13
 
 C        TRACE DU NOMBRE TOTAL D'EF
          IF( LANGAG .EQ. 0 ) THEN
@@ -516,7 +516,7 @@ C        TRACE DU NOMBRE TOTAL D'EF
          ENDIF
          CALL SANSDBL( KNOM, NBC )
          CALL XVTEXTE( KNOM(1:NBC), NBC, NNX, NNY )
-         NNY = NNY + 16
+         NNY = NNY + NPHACA + 4
 C        TRACE DU NOMBRE DE SOMMETS
          IF( LANGAG .EQ. 0 ) THEN
             WRITE(KNOM,10025) NBSOM
@@ -525,7 +525,7 @@ C        TRACE DU NOMBRE DE SOMMETS
          ENDIF
          CALL SANSDBL( KNOM, NBC )
          CALL XVTEXTE( KNOM(1:NBC), NBC, NNX, NNY )
-         NNY = NNY + 16
+         NNY = NNY + NPHACA + 4
 C        TRACE DU NOMBRE DE TANGENTES
          IF( LANGAG .EQ. 0 ) THEN
             WRITE(KNOM,10026) NBTGS
