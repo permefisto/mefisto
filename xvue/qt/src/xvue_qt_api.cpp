@@ -879,13 +879,14 @@ void proc(xvchargefonte)(int *nofont0, int *nofont, int *largpx, int *hautpx) {
     };
     QFont f(QStringLiteral("DejaVu Sans Mono"));
     f.setPixelSize(kFontPixelSizes[idx]);
-    // Phase 9.1 fix 2026-05-06: maintainer reports blurry text. Qt's default
-    // sub-pixel AA on TrueType at small pixelSize produces "ghost" characters
-    // that read as doubled text. Legacy X11 used pixel-perfect BDF bitmap
-    // fonts. Mimic that with NoAntialias style strategy + ForceIntegerMetrics
-    // so glyph positions snap to whole pixels and the canvas backing pixmap
-    // gets sharp pixel-aligned rendering.
-    f.setStyleStrategy(QFont::NoAntialias);
+    // Phase 9.1 font-quality tuning 2026-05-06: keep AA on glyphs (smooth
+    // edges at larger sizes) but force full hinting so small-size glyph
+    // positions snap to whole pixels - eliminates the sub-pixel ghosting
+    // that read as doubled chars on small panels. The canvas paintEvent
+    // separately disables SmoothPixmapTransform so the AA-rendered backing
+    // pixmap blits crisp to the widget.
+    f.setStyleStrategy(static_cast<QFont::StyleStrategy>(
+        QFont::PreferAntialias | QFont::PreferQuality));
     f.setHintingPreference(QFont::PreferFullHinting);
     st->current_font_ = f;
     st->current_metrics_ = QFontMetrics(st->current_font_);
