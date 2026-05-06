@@ -11,6 +11,7 @@
 #include <cstdio>
 #include <cstdlib>
 #include <cstring>
+#include <ctime>
 #include <unistd.h>
 #include "xvue_qt_api.h"
 #include "xvue_qt_app.h"
@@ -325,12 +326,17 @@ void proc(dstnmc)(void *mcoctets) {
 }
 
 // ---- 4. nomrepmefisto_ ----
+// Stash the MEFISTO root dir from Fortran so any future consumer can read it
+// back via nomrepmefisto_buffer. Mirrors legacy xvuelc.c file-scope nom_homdir.
+static char nomrepmefisto_buffer[256] = {0};
 void proc(nomrepmefisto)(char *chaine, int *size) {
     XvueApp::ensure();
     XVUE_QT_ASSERT_MAIN_THREAD();
-    static bool warned = false;
-    warn_once(warned, "nomrepmefisto_");
-    (void)chaine; (void)size;
+    if (chaine == nullptr || size == nullptr || *size < 0) return;
+    const int n = (*size < (int)(sizeof(nomrepmefisto_buffer) - 1))
+                  ? *size : (int)(sizeof(nomrepmefisto_buffer) - 1);
+    for (int i = 0; i < n; ++i) nomrepmefisto_buffer[i] = chaine[i];
+    nomrepmefisto_buffer[n] = '\0';
 }
 
 // ---- 5. xvinitgraphique_ ----
@@ -1521,31 +1527,55 @@ void proc(nomordinateurhote)(char *host, int *nbcar) {
 }
 
 // ---- 52. ladate_ ----
+// Returns current date as year (since 1900 — matches legacy struct tm), month, day.
 void proc(ladate)(int *a, int *m, int *j) {
     XvueApp::ensure();
     XVUE_QT_ASSERT_MAIN_THREAD();
-    static bool warned = false;
-    warn_once(warned, "ladate_");
-    (void)a; (void)m; (void)j;
+    if (a == nullptr || m == nullptr || j == nullptr) return;
+    time_t t = time(nullptr);
+    struct tm *pt = localtime(&t);
+    if (pt == nullptr) { *a = 0; *m = 0; *j = 0; return; }
+    *a = pt->tm_year;
+    *m = pt->tm_mon + 1;
+    *j = pt->tm_mday;
 }
 
 // ---- 53. heureminuteseconde_ ----
+// Returns current hour, minute, second, milliseconds (millis always 0 — legacy parity).
 void proc(heureminuteseconde)(int *h, int *m, int *s, int *millis) {
     XvueApp::ensure();
     XVUE_QT_ASSERT_MAIN_THREAD();
-    static bool warned = false;
-    warn_once(warned, "heureminuteseconde_");
-    (void)h; (void)m; (void)s; (void)millis;
+    if (h == nullptr || m == nullptr || s == nullptr || millis == nullptr) return;
+    time_t t = time(nullptr);
+    struct tm *pt = localtime(&t);
+    if (pt == nullptr) { *h = 0; *m = 0; *s = 0; *millis = 0; return; }
+    *h = pt->tm_hour;
+    *m = pt->tm_min;
+    *s = pt->tm_sec;
+    *millis = 0;
 }
 
 // ---- 54. valvarenv_ ----
+// Reads the named environment variable into val[*lval_admis]. lval_trouve set to
+// -1 if not found, else the value's full length (may exceed lval_admis if truncated).
+// Note: nom is expected to be CHAR(0)-terminated by the Fortran caller.
 void proc(valvarenv)( char *nom, int *lval_admis,
                       char *val, int *lval_trouve ) {
     XvueApp::ensure();
     XVUE_QT_ASSERT_MAIN_THREAD();
-    static bool warned = false;
-    warn_once(warned, "valvarenv_");
-    (void)nom; (void)lval_admis; (void)val; (void)lval_trouve;
+    if (nom == nullptr || lval_admis == nullptr ||
+        val == nullptr || lval_trouve == nullptr) return;
+    const char *ptenv = getenv(nom);
+    if (ptenv == nullptr) {
+        *lval_trouve = -1;
+        return;
+    }
+    int i = 0;
+    while (ptenv[i] != '\0') {
+        if (i < *lval_admis) val[i] = ptenv[i];
+        ++i;
+    }
+    *lval_trouve = i;
 }
 
 // ---- 55. xvinitierps_ ----
