@@ -75,6 +75,12 @@ if [ -z "${MEFISTOX:-}" ]; then
     export MEFISTOX=/tmp/mefistox-phase8
 fi
 
+# Phase 9 Plan 9-09 (carry-forward #4): canonicalize OUT_DIR BEFORE pushd
+# into PROJDIR. Without this, a relative --out-dir resolves under PROJDIR
+# after pushd, so captures silently land in the wrong directory. Phase 8
+# Plan 5 SUMMARY documented this as a deferred bug; Phase 9 cleans it.
+# `-m` flag: do NOT require existence (mkdir -p creates dir next line).
+OUT_DIR=$(realpath -m "$OUT_DIR")
 mkdir -p "$OUT_DIR"
 mkdir -p "$MEFISTOX"
 [ -z "$EVIDENCE_LOG" ] && EVIDENCE_LOG="${OUT_DIR}/sweep-log-${MODE}.md"
