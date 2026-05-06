@@ -132,10 +132,16 @@ None yet.
 - **Phase 6** per-module lexicon audit may split into 5 sub-phases (one per solver module) during planning
 - **Phase 7** requires `QImageWriter::supportedImageFormats()` probe at phase kickoff to choose GIF strategy
 - **Phase 9** A/B window closure: 2026-05-06 — maintainer dricoco. Window opened 2026-05-05 (Phase 8 sign-off), closed same dev-loop session. Phase 9 EXECUTE unblocked.
-- **Qt menu UX carry-forward (root-caused 2026-05-06):** maintainer flagged "Open Project not working" + "some items missing text".
-  - Open Project root cause: by-design `refuseIfBlocking()` modal guard (xvue_qt_window.cpp:133-139, Phase 6.1 D-09). When Fortran is in interactive mode (post-launch), Open Project click only flashes status bar 3s. UX gap: action not visibly disabled.
-  - Missing-text symptom: not reproducible on ppmail_qt AT-SPI tree (all labels present). Possibly observed on ppinit (no window — tiny launcher) or transient state.
-  - Phase-9.1 candidate fix: bidirectional state binding to setEnabled(false) when blockingDepth() > 0; or QMessageBox::information instead of status-bar timeout.
+- **Qt menu non-functional on direct pp/ppmail launch (DEEPER than initial root-cause; live-tested 2026-05-06):** maintainer flagged "Open Project not working" + "some items missing text".
+  - **REAL root cause:** Qt window opens BEFORE Fortran finishes stdin init reads. Without `bin/MAILLER` wrapper, Fortran main thread blocks on stdin read of INTERA/project-name. Qt event loop never spins. ALL menu/toolbar/keyboard events ignored. AT-SPI tree shows menu but no clicks fire.
+  - Live test results (kwin-mcp + AT-SPI on ppmail post-Phase-9): toolbar Open Project click → no dialog, no status; Ctrl+O → no dialog; F9 → no Console toggle; Alt+F4 → window stays; typing 99;Return → no Fortran progression. Fortran log stops at "WORKING DIRECTORY NAME :" + 4 unimplemented stubs (ladate_, heureminuteseconde_, valvarenv_, nomrepmefisto_).
+  - Initial root-cause `refuseIfBlocking()` (Phase 6.1 D-09) is ONLY relevant AFTER Fortran is past init — here Fortran never gets there.
+  - "Missing text" symptom: not reproducible on AT-SPI tree (all labels present). Possibly observed on ppinit (no window — tiny launcher) or before live test.
+  - **Phase-9.1 architectural fix candidates:**
+    1. Defer Qt window open until Fortran past stdin init reads
+    2. Replace stdin reads with Qt prompts — Open Project dialog as project picker BEFORE first Fortran interactive cycle
+    3. Detect non-tty context; fall back to MEFISTOX env-driven project selection
+    4. Implement the 4 unimplemented stubs (ladate_, heureminuteseconde_, valvarenv_, nomrepmefisto_) — separate concern but related
 - **3 P7 deferred goldens (carry-forward; root-caused 2026-05-06 by Plan 09-08):** scene01_driver.f has 2 fundamental bugs (missing XTINIT/XVINFO init → SIGSEGV; XVCHARGEFONTE arity mismatch). testa/wave + cavity2d are interactive multi-module pipelines, not headless batch. Cross-tag attempt empirically falsified the Phase 7 §9 procedure. Phase-9.1 candidate fix: repair scene01_driver.f source + write proper headless batch wrappers for testa/wave + testa/cavity2d.
 
 ## Session Continuity
