@@ -61,7 +61,7 @@ Au niveau de l'installation, les problemes qui peuvent survenir proviennent du f
 - soit, l'acces a ce repertoire n'est pas possible (droits d'acces Cf chmod)
 - soit, la variable d'environnement MEFISTO=RepMefisto/mefisto n'est pas initialisable ou initialisee
 - soit, la variable d'environnement MEFISTOX=$HOME/mefistox n'est pas initialisable ou initialisee
-- soit, les compilateurs gcc ou gfortran ne sont pas disponibles (à charger)
+- soit, les compilateurs gcc ou gfortran ne sont pas disponibles (ï¿½ charger)
 - soit, les paquets Qt 6 ne sont pas installes (charger qt6-base-dev et
   qt6-image-formats-plugins; cmake >= 3.16 est aussi requis pour xvue/qt/)
 - soit, le repertoire $MEFISTO/bin ne contient pas les shell-scripts INITIER MAILLER ...
@@ -81,7 +81,26 @@ export CDPATH=.:$HOME:$MEFISTO:$MEFISTOX
 
 Alors, sous Linux, les frappes des commandes INITIER, MAILLER, ELASTICER, FLUIDER,
 THERMICER, NLSER, cbl_tout, ...  seront retrouv'ees.
-                   
+
+DEMARRAGE RAPIDE (apres installation + variables d'environnement exportees) :
+=============================================================================
+  INITIER             # cree un projet ; tapez un nom de projet
+  MAILLER             # maillage : retapez le nom -> fenetre Qt s'ouvre
+  ELASTICER           # solveur elasticite
+  FLUIDER             # solveur fluide
+  THERMICER           # solveur thermique
+  NLSER               # solveur non lineaire
+  WAVER               # solveur ondes
+
+  Dans chaque module : naviguez les menus + canvas ; tapez 99; dans le
+  menu principal pour sauvegarder et sortir. JAMAIS Ctrl-C.
+
+AVANCE (lancement direct du binaire â€” mode auto-batch hors TTY) :
+  $MEFISTO/pp/pp<module> <fichier-donnees>   # cd $MEFISTOX/<projet> avant
+  Quand stdin n'est pas un TTY (session Wayland, lanceur KDE, pipeline)
+  le port Qt active automatiquement MEFISTO_BATCH_X11=1 et
+  MEFISTO_XVSOURIS_AUTOEXIT=1 ; le Fortran prend le chemin batch.
+
 REMARQUE sur le BACKEND GRAPHIQUE Qt 6 :
 ========================================
 Depuis la Phase 9 (tag git v1.0-pre-retire et au-dela), la couche graphique

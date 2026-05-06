@@ -106,3 +106,81 @@ User projects live under `$MEFISTOX/ProjectName/`. The typical workflow is:
 2. `MAILLER` — interactive mesh generation (opens a Qt 6 window)
 3. `ELASTICER` / `FLUIDER` / `THERMICER` / `NLSER` / `WAVER` — run the chosen solver
 4. To save and exit any interactive module: return to the main menu and type `99;` (**never** Ctrl-C)
+
+### Quick test recipe (for maintainers verifying a build)
+
+After `bin/cbl_tout` finishes, the smoke recipe is:
+
+```bash
+# 1. Make sure env is exported (each terminal session)
+export MEFISTO=/home/mefisto/git/mefisto
+export MEFISTOX=$HOME/mefistox
+export PATH=.:$PATH:$MEFISTO/bin
+
+# 2. Set up a project once (creates $MEFISTOX/<name>/ and seeds defaults)
+INITIER
+# Type a project name when prompted, e.g.: nafems_le1
+
+# 3. Launch the mesher interactively
+MAILLER
+# Type the same project name; the Qt window opens with menus + canvas.
+# In the canvas: click menu items, draw points/lines/surfaces, etc.
+# To save and exit: return to the main menu and type 99;
+
+# 4. Then run a solver (same project name flow)
+ELASTICER     # elasticity
+FLUIDER       # fluid
+THERMICER     # thermal
+NLSER         # nonlinear
+```
+
+### Direct binary launch (advanced — Phase 9 auto-batch)
+
+The `pp/pp<module>` binaries can be invoked directly **without** the launcher
+scripts. The Qt port detects when stdin is not a TTY (KDE launcher, Wayland
+session, pipeline, kwin-mcp) and auto-sets `MEFISTO_BATCH_X11=1` +
+`MEFISTO_XVSOURIS_AUTOEXIT=1` so Fortran takes the batch path:
+
+```bash
+cd $MEFISTOX/<project>
+$MEFISTO/pp/ppmail <data-file>      # e.g. ppmail nafems_le1.mail
+```
+
+When stdin **is** a TTY (normal terminal launch), the binary stays
+interactive and reads prompts from the user — same as the launcher scripts.
+
+To force batch mode in an interactive terminal: `MEFISTO_BATCH_X11=1
+MEFISTO_XVSOURIS_AUTOEXIT=1 $MEFISTO/pp/ppmail <data-file>`.
+
+### Test restart procedure
+
+If a launched module hangs or you need to restart cleanly:
+
+```bash
+# 1. Find any stale process
+pgrep -a 'pp(mail|elas|flui|ther|nlse)' | head
+
+# 2. Kill it
+kill <PID>          # or pkill -f 'pp(mail|elas|flui|ther|nlse)'
+
+# 3. Rebuild after source edits
+cd $MEFISTO
+bin/cbl_tout        # full rebuild; exit 0 expected
+
+# 4. Re-launch via the launcher script (recommended)
+MAILLER             # then type project name
+```
+
+### Verification gates (post-Phase-9)
+
+```bash
+cd $MEFISTO
+bash bin/test_no_x11_in_build.sh         # no libX11 in active build
+bash bin/test_no_imagemagick_in_qt.sh    # no convert under xvue/qt/
+bash bin/test_no_lvideo.sh               # no LVIDEO Fortran callbacks
+bash xvue/qt/cmake/verify_abi.sh \
+     xvue/qt/build/libxvueqt.a \
+     xvue/qt/include/xvue_qt_api.h        # nm count: 58 header count: 58
+```
+
+All four must exit 0 on a healthy tree.

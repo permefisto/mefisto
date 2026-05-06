@@ -77,7 +77,26 @@ export CDPATH=.:$HOME:$MEFISTO:$MEFISTOX
 
 Then, under Linux, the typing of commands INITIER, MAILLER, ELASTICER, FLUIDER,
 NLSER, THERMICER, cbl_tout, ...  will be found.
-                   
+
+QUICK START (after install + env vars exported):
+================================================
+  INITIER             # create a project; type a project name when prompted
+  MAILLER             # mesh: type same project name -> Qt window opens
+  ELASTICER           # elasticity solver
+  FLUIDER             # fluid solver
+  THERMICER           # thermal solver
+  NLSER               # nonlinear solver
+  WAVER               # wave solver
+
+  Inside any module: navigate menus + canvas; type 99; in the main menu
+  to save and exit. NEVER use Ctrl-C.
+
+ADVANCED (direct binary launch — auto-batch on non-tty):
+  $MEFISTO/pp/pp<module> <data-file>   # cd into $MEFISTOX/<project> first
+  When stdin is not a TTY (Wayland session, KDE launcher, pipeline) the Qt
+  port automatically sets MEFISTO_BATCH_X11=1 + MEFISTO_XVSOURIS_AUTOEXIT=1
+  so Fortran takes the non-interactive batch path.
+
 REMARK on the Qt 6 GRAPHICS BACKEND:
 ====================================
 Since Phase 9 (git tag v1.0-pre-retire and beyond), Mefisto's graphics layer
