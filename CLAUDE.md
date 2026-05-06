@@ -122,8 +122,14 @@ INITIER
 # Type a project name when prompted, e.g.: nafems_le1
 
 # 3. Launch the mesher interactively
-MAILLER
-# Type the same project name; the Qt window opens with menus + canvas.
+MAILLER nafems_le1.mesh   # arg = DATA file (with .mesh extension)
+# Prompt "Project (low case) name ?" expects PROJECT (= directory name, NO extension):
+#    nafems_le1            <-- type this, NOT nafems_le1.mesh
+# Common footgun: typing nafems_le1.mesh at the prompt makes MAILLER cd
+# into $MEFISTOX/nafems_le1.mesh/ (which doesn't exist) → "EXECUTE INITIER BEFORE"
+# error. Project name is always the directory name without any file extension.
+#
+# After the right name: Qt window opens with menus + canvas.
 # In the canvas: click menu items, draw points/lines/surfaces, etc.
 # To save and exit: return to the main menu and type 99;
 

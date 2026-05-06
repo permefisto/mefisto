@@ -95,6 +95,15 @@ DEMARRAGE RAPIDE (apres installation + variables d'environnement exportees) :
   Dans chaque module : naviguez les menus + canvas ; tapez 99; dans le
   menu principal pour sauvegarder et sortir. JAMAIS Ctrl-C.
 
+  IMPORTANT : au prompt "nom (en minuscules) du projet ?", tapez le PROJET
+  (= nom de repertoire, SANS extension) :
+      nafems_le1               (correct)
+      nafems_le1.mesh          (INCORRECT — c'est le nom du fichier de donnees)
+  Le nom de projet est toujours le repertoire sous $MEFISTOX/, jamais
+  le fichier de donnees. Quand on appelle  MAILLER nafems_le1.mesh ,
+  l'argument est le fichier de donnees passe au binaire ; le prompt
+  demande separement le nom du projet (= repertoire).
+
 AVANCE (lancement direct du binaire — mode auto-batch hors TTY) :
   $MEFISTO/pp/pp<module> <fichier-donnees>   # cd $MEFISTOX/<projet> avant
   Quand stdin n'est pas un TTY (session Wayland, lanceur KDE, pipeline)

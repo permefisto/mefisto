@@ -91,6 +91,15 @@ QUICK START (after install + env vars exported):
   Inside any module: navigate menus + canvas; type 99; in the main menu
   to save and exit. NEVER use Ctrl-C.
 
+  IMPORTANT: at the "Project (low case) name ?" prompt, type the PROJECT
+  (= directory name, NO extension):
+      nafems_le1               (correct)
+      nafems_le1.mesh          (WRONG — this is the DATA file name)
+  Project name is always the directory under $MEFISTOX/, never the data
+  file. When invoked with an argument like  MAILLER nafems_le1.mesh ,
+  the argument is the DATA file passed to the binary; the prompt still
+  asks separately for the project (= directory) name.
+
 ADVANCED (direct binary launch — auto-batch on non-tty):
   $MEFISTO/pp/pp<module> <data-file>   # cd into $MEFISTOX/<project> first
   When stdin is not a TTY (Wayland session, KDE launcher, pipeline) the Qt
