@@ -405,7 +405,12 @@ C     ===================
 
 C     TRACE DE LA LEGENDE DES QUALITES SUR ECRAN ET POSTSCRIPT
 C     --------------------------------------------------------
-      NNX =  35
+C     Phase 9.1 fix 2026-05-06: impqua.f also starts at (NNX=35, NNY=120)
+C     so when both routines fire in the same paint cycle (object stats +
+C     surface stats), they draw the red 'QUALITY of FINITE ELEMENTS'
+C     header on top of each other - the doubled-text symptom reported
+C     by the maintainer. Offset impquaob to a column further right.
+      NNX = 350
       NNY = 120
       IF( INTERA .GE. 1 ) THEN
 
