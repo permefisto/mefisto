@@ -31,10 +31,19 @@ fi
 
 LIB_MTIME=$(stat -c '%Y' "$LIB")
 EXIT=0
+# Orphaned legacy binaries not built by any current bin/cb* script.
+# Listed here so the freshness check skips them — they're frozen artifacts
+# from older builds, not Qt-port consumers of libxvueqt.a.
+SKIPLIST=" pppoba "
 for binary in "$PPDIR"/pp*; do
     [ ! -f "$binary" ] && continue
-    # Skip directories or non-binaries that may live under pp/:
     [ -d "$binary" ] && continue
+    base=$(basename "$binary")
+    case "$SKIPLIST" in
+        *" $base "*)
+            echo "SKIP: $binary (orphaned legacy; not in current cb* build)"
+            continue ;;
+    esac
     BIN_MTIME=$(stat -c '%Y' "$binary")
     if [ "$BIN_MTIME" -lt "$LIB_MTIME" ]; then
         echo "FAIL: $binary mtime ($BIN_MTIME) < libxvueqt.a mtime ($LIB_MTIME) — rebuild stale binary" >&2
