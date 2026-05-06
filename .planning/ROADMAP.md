@@ -292,7 +292,7 @@ Phases execute in numeric order: 0 → 1 → 2 → 3 → 4 → 5 → 6 → 7 →
 | 6. Level-3 UX chrome | 0/TBD | Not started | - |
 | 7. Image, GIF, PostScript export | 0/TBD | Not started | - |
 | 8. A/B validation on testa subset | 7/7 | Complete (2026-05-05) | dricoco — v1 ship gate signed; 5 overrides accepted; Phase 9 unblocked |
-| 9. Retire X11 backend | 0/TBD | Not started (gated) | - |
+| 9. Retire X11 backend | 9/9 | Complete (2026-05-06) | dricoco — xvuelc.c + libX11 + ImageMagick + LVIDEO retired; v1.0-pre-retire tag for rollback; 3 P7 goldens deferred (P7 source defects) |
 
 ## Coverage
 

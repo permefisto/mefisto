@@ -138,5 +138,19 @@ $MEFISTO/bin/cbxvtest4
 #
 echo Le repertoire $MEFISTO/pp :
 ls -l $MEFISTO/pp
+
+# Phase 9 Plan 9-09 (Phase 8 D-09 carry-forward): freshness check on
+# pp/* binaries vs xvue/qt/build/libxvueqt.a. Per RESEARCH §Open
+# Question 4: placed at end-of-cbl_tout (NOT as a CMake ALL target —
+# ALL would race the build-order between libxvueqt.a and pp/* link).
+# Failure indicates a stale pp/* binary that would silently corrupt
+# downstream test sweeps.
+echo "verify_pp_freshness: scanning..."
+sh "$MEFISTO/xvue/qt/cmake/verify_pp_freshness.sh" \
+     "$MEFISTO/xvue/qt/build/libxvueqt.a" \
+     "$MEFISTO/pp" || {
+    echo "FATAL: pp/* freshness check failed — re-run cb<modulename> for the listed STALE binaries" >&2
+    exit 1
+}
 #
 echo TOUS les MODULES EXECUTABLES sans debogueur de $MEFISTO sous LINUX sont crees — Qt variant

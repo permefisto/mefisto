@@ -75,9 +75,26 @@ if [ -z "${MEFISTOX:-}" ]; then
     export MEFISTOX=/tmp/mefistox-phase8
 fi
 
+# Phase 9 Plan 9-09 (carry-forward #4): canonicalize OUT_DIR BEFORE pushd
+# into PROJDIR. Without this, a relative --out-dir resolves under PROJDIR
+# after pushd, so captures silently land in the wrong directory. Phase 8
+# Plan 5 SUMMARY documented this as a deferred bug; Phase 9 cleans it.
+# `-m` flag: do NOT require existence (mkdir -p creates dir next line).
+OUT_DIR=$(realpath -m "$OUT_DIR")
 mkdir -p "$OUT_DIR"
 mkdir -p "$MEFISTOX"
 [ -z "$EVIDENCE_LOG" ] && EVIDENCE_LOG="${OUT_DIR}/sweep-log-${MODE}.md"
+
+# Phase 9 Plan 9-06 (carry-forward #1): Qt captures default to
+# MEFISTO_QT_WINDOW_SIZE=1280x800 to match the X11 baseline (Xvfb root-window
+# screenshot dim) and eliminate the resample-confound that dominated the 14
+# Phase-8 CHECK cells (08-CHECKLIST.md override #1). The xvinitgraphique_
+# probe (xvue/qt/src/xvue_qt_api.cpp:350-381) honors this only in headless
+# contexts (MEFISTO_BATCH_X11=1 OR QT_QPA_PLATFORM=offscreen — both set
+# below for qt-1x/qt-2x/qt-omp). Override by exporting an explicit value
+# before invocation: e.g., MEFISTO_QT_WINDOW_SIZE=800x600 ./ab_sweep_phase8.sh ...
+: "${MEFISTO_QT_WINDOW_SIZE:=1280x800}"
+export MEFISTO_QT_WINDOW_SIZE
 
 # Source the empirical case-batch map (replaces fragile glob).
 . "$MEFISTO/bin/phase8_case_batch_map.sh"
@@ -91,6 +108,16 @@ NOW_UTC=$(date -u +"%Y-%m-%d %H:%M:%S UTC")
 
 # Convert CSV to space-separated.
 IFS=',' read -r -a CASES <<< "$CASES_CSV"
+
+# Phase 9 Plan 9-07: nlsecu canonical TIME=20 (2000 steps) is ~hour-scale on
+# this hardware. NOT a deadlock — Plan 9-07 Task 1 diagnose classified the
+# Phase 8 "10 log lines, no NLSER banner" symptom as case (c) long-runtime
+# via gdb backtrace (Qt event loop alive in g_main_context_iteration; block
+# point is xvsouris_ wait-for-mouse only under the non-canonical stdin-redirect
+# reproducer form, never under the harness arg-form below).
+# Phase 8 mitigation retained: TIME=0.01 (X11 baseline) / TIME=0.1 (OMP)
+# workspace truncations + MAILLER-prereq fallback for Qt 1x/2x.
+# See .planning/phases/09-retire-x11-backend/evidence/ppnlse-diagnose.md.
 
 EXIT_CODE=0
 for CURRENT_CASE in "${CASES[@]}"; do

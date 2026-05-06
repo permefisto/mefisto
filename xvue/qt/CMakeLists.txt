@@ -190,6 +190,36 @@ add_custom_target(verify_no_lvideo ALL
     VERBATIM
 )
 
+# Phase 9 Plan 9-09 (Phase 8 D-09 carry-forward): optional pp/*
+# freshness check. Per RESEARCH §Open Question 4: NOT in the ALL chain
+# (would race build-order between libxvueqt.a and pp/* link). Primary
+# enforcement is the end-section invocation in bin/cbl_tout. This CMake
+# target is opt-in for developers who prefer build-time fast feedback —
+# invoke explicitly via `cmake --build xvue/qt/build --target verify_pp_freshness`.
+option(MEFISTO_VERIFY_PP_FRESHNESS_ALL
+       "Add verify_pp_freshness to ALL target (off by default per RESEARCH §OQ4)"
+       OFF)
+
+add_custom_target(verify_pp_freshness
+    COMMAND ${CMAKE_COMMAND} -E echo "verify_pp_freshness: scanning..."
+    COMMAND sh ${CMAKE_CURRENT_SOURCE_DIR}/cmake/verify_pp_freshness.sh
+        ${CMAKE_CURRENT_SOURCE_DIR}/build/libxvueqt.a
+        ${CMAKE_CURRENT_SOURCE_DIR}/../../pp
+    DEPENDS xvueqt
+    VERBATIM
+)
+
+if(MEFISTO_VERIFY_PP_FRESHNESS_ALL)
+    # Force inclusion in default-build target. Off-by-default per OQ4.
+    set_property(TARGET verify_pp_freshness PROPERTY EXCLUDE_FROM_ALL FALSE)
+    # And add a depends-on chain so default ALL invokes it:
+    add_custom_target(_verify_pp_freshness_all_hook ALL
+        DEPENDS verify_pp_freshness
+    )
+else()
+    set_property(TARGET verify_pp_freshness PROPERTY EXCLUDE_FROM_ALL TRUE)
+endif()
+
 # Phase 7 Plan 01 (EXPORT-01): probes/ subdirectory holds standalone probe
 # binaries (e.g., qimagewriter_probe). Gated so the canonical bin/cbl_tout
 # build (Qt-only since Phase 9 RETIRE-02 — formerly the parallel cbl_tout

@@ -193,6 +193,33 @@ Supported auxiliary env vars:
 | `MEFISTO_XVFERMER_READY_FILE`    | File to `touch` when the window is fully up (used by capture scripts).      |
 | `MEFISTO_XVFERMER_HOLD_MS`       | How long to hold the window open before `xvfermer_` returns.                |
 | `MEFISTO_XVSOURIS_DEBUG`         | `=1` enables the `[xvsouris] motion_count=...` stderr diagnostic.           |
+| `MEFISTO_QT_CAPTURE_PATH`        | Path to a PNG to write directly from the canvas backing pixmap during `xvfermer_` (in-process, no X11 needed; Phase 7). |
+| `MEFISTO_QT_WINDOW_SIZE`         | `=WxH` (e.g. `1280x800`) sizes the canvas backing pixmap to the requested dim. **Headless only** — see dedicated subsection below (Phase 9 carry-forward #1). |
+
+### `MEFISTO_QT_WINDOW_SIZE` (Phase 9 carry-forward — headless only)
+
+Optional. Format `WIDTHxHEIGHT` (e.g. `1280x800`). When set AND the
+process is headless (`MEFISTO_BATCH_X11=1` OR
+`QT_QPA_PLATFORM=offscreen`), `xvinitgraphique_` calls
+`win->canvas()->setMinimumSize` + `setMaximumSize` and triggers
+`win->adjustSize()` so the captured backing pixmap matches the
+requested dim. Used by `bin/ab_sweep_phase8.sh` qt-1x mode (defaults to
+`1280x800`) to match the X11 baseline (Xvfb root-window screenshot dim)
+and eliminate the resample-confound that dominated the 14 Phase-8
+CHECK cells (08-CHECKLIST.md override #1).
+
+Interactive sessions ignore this var (per RESEARCH §Pitfall 5
+mitigation: gate keeps the existing 1024x768 default sizing for
+non-headless contexts; the constraint use is `setMinimumSize`+
+`setMaximumSize` not `setFixedSize` so `xvfermer_` can clear them
+cleanly between reopen cycles).
+
+Bounds: `0 < {w,h} < 8192`. Malformed values silently ignored
+(`sscanf("%dx%d")` failure returns `!=2`; out-of-range fails the
+bounds check). No new Fortran ABI entry was added to support this
+knob — implementation is env-var only, ABI count remains stable
+(T-09-06 mitigation per `09-RESEARCH.md` §Anti-Pattern "Bumping ABI
+count").
 
 ## Phase 6 handoff
 
