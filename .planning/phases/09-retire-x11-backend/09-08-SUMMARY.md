@@ -191,6 +191,19 @@ bin/test_no_imagemagick_in_qt.sh && bin/test_no_x11_in_build.sh && bin/test_no_l
 # All 3 must exit 0.
 ```
 
+## Self-Check: PASSED
+
+Verified post-commit (commit `a9f4072`):
+
+- FOUND: `.planning/phases/09-retire-x11-backend/09-08-SUMMARY.md`
+- FOUND: `.planning/phases/09-retire-x11-backend/09-08-DEVIATIONS.md`
+- FOUND: `.planning/phases/07-image-gif-and-postscript-export/VALIDATION-LOG.md` (modified)
+- FOUND: commit `a9f4072` in `git log --all --oneline`
+- VALIDATION-LOG: 7 occurrences of "DEFERRED" (3 original 2026-05-04 rows + 1 new 2026-05-06 DEFERRED-CARRY-FORWARD row + 3 in prose explanations within the new row)
+- VALIDATION-LOG: 1 occurrence of "2026-05-06" timestamp (the new row)
+- T-09-03 cleanup: `/tmp/mefisto-pre-retire` worktree REMOVED; `/tmp/mefistox-pre-retire` REMOVED; `git worktree list` clean
+- Phase 9 grep gates all exit 0: `bin/test_no_imagemagick_in_qt.sh`, `bin/test_no_x11_in_build.sh`, `bin/test_no_lvideo.sh`
+
 ---
 *Phase: 09-retire-x11-backend*
 *Plan: 08*
