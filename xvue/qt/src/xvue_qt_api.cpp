@@ -571,17 +571,25 @@ void proc(xvinfo)( int *ix, int *iy, int *maxfonts,
     // rounded). Qt port still renders the actual TrueType DejaVu Sans Mono;
     // these strings are purely for xvinit.f's pattern-detection. The width W
     // is informational only (RECTTX uses NPLACA from QFontMetrics, not W).
+    // Each name advertises ALL BDF height tokens that should resolve to this
+    // font index. xvue/xvinit.f INDEX(name, 'WxH') runs sequentially over its
+    // pattern list and assigns NUFOHPX[H]=I on every match, so a single font
+    // entry can claim multiple heights by listing multiple tokens. Crucial:
+    // every height 7..24 the Fortran lahafo.f range can request must be
+    // claimed by SOME entry, otherwise NUFOHPX[that_h]=0 + initial NOFONT=0
+    // makes chargefonte.f short-circuit and NPHACA never populates -> luou.f
+    // DYLGRC collapses to 2*ECARLR=8 -> RECTTX overlaps multi-line text.
     static const char* const kListFonts[XvueState::kNbFonts] = {
-        "5x8 DejaVu Sans Mono 8pt",   //  8pt ≈ 11px  -> map to "5x8"
-        "6x10 DejaVu Sans Mono 10pt", // 10pt ≈ 13px  -> map to "6x10"
-        "6x13 DejaVu Sans Mono 12pt", // 12pt ≈ 16px  -> map to "6x13"
-        "7x14 DejaVu Sans Mono 14pt", // 14pt ≈ 19px  -> map to "7x14"
-        "9x15 DejaVu Sans Mono 16pt", // 16pt ≈ 21px  -> map to "9x15"
-        "10x20 DejaVu Sans Mono 18pt",// 18pt ≈ 24px  -> map to "10x20"
-        "10x20 DejaVu Sans Mono 20pt",// 20pt ≈ 27px  -> map to "10x20"
-        "12x24 DejaVu Sans Mono 24pt",// 24pt ≈ 32px  -> map to "12x24"
-        "12x24 DejaVu Sans Mono 28pt",// 28pt ≈ 37px  -> map to "12x24"
-        "12x24 DejaVu Sans Mono 32pt",// 32pt ≈ 43px  -> map to "12x24"
+        "5x7 5x8 DejaVu Sans Mono 8pt",       // claims H=7,8
+        "6x9 6x10 DejaVu Sans Mono 10pt",     // claims H=9,10
+        "6x12 6x13 7x13 8x13 DejaVu Sans Mono 12pt", // claims H=12,13
+        "7x14 DejaVu Sans Mono 14pt",         // claims H=14
+        "9x15 8x16 DejaVu Sans Mono 16pt",    // claims H=15,16
+        "10x20 DejaVu Sans Mono 18pt",        // claims H=20 (also covers 17,18,19 via xvinit fallthrough)
+        "10x20 DejaVu Sans Mono 20pt",        // claims H=20 (last-write wins for 20)
+        "12x24 DejaVu Sans Mono 24pt",        // claims H=24
+        "12x24 DejaVu Sans Mono 28pt",
+        "12x24 DejaVu Sans Mono 32pt",
     };
 
     int nfonts = XvueState::kNbFonts;

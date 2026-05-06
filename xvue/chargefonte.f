@@ -17,7 +17,11 @@ C
       IF( INTERA .LE. 0 ) RETURN
 C
 C     SI C'EST DEJA LA FONTE CHARGEE ALORS PAS DE NOUVEAU CHARGEMENT
-      IF( NUFONT .EQ. NOFONT ) RETURN
+C     SAUF si NPHACA est encore 0 (cas du tout premier appel apres
+C     init Qt / xvue : il faut peupler NPHACA via XVCHARGEFONTE meme
+C     si NUFONT==NOFONT, sinon luou.f calcule DYLGRC=8 et le texte
+C     multi-ligne se chevauche - reporte par le mainteneur 2026-05-06).
+      IF( NUFONT .EQ. NOFONT .AND. NPHACA .GT. 0 ) RETURN
 C
       IF( NUFONT .LT. 0 .OR. NUFONT .GT. NBFONT ) THEN
          WRITE(IMPRIM,*)'ERREUR CHARGEFONTE NUFONT=',NUFONT,' INCORRECT'
