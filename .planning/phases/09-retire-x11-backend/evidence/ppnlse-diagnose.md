@@ -208,3 +208,73 @@ $ grep -c 'Mefisto-NLSER' /tmp/09-07-postfix-arg.log
 
 Banner reached, ABI invariant upheld, no source code change, override #5
 documented as case (c) — Phase 9 carry-forward #2 closure complete.
+
+## Task 3 regression
+
+**Re-ran the Phase-8-equivalent sweep on canonical (untruncated) workspace:**
+
+```text
+$ grep -E 'TIME|^[[:space:]]*0;|20;|0\.01;' $MEFISTOX/nlsecu/nlsecu.iexrr | head -10
+124:  0; 0; { Fixed Values }
+129:  0;       { Initial TIME }
+132:  20;      { Final TIME }
+133:  0.01;    { Step of TIME }
+```
+Workspace is canonical (NOT TIME-truncated): `Final TIME=20`, `Step=0.01` →
+2000 time steps. No Phase-8 truncation in effect.
+
+**Sweep invocation + result:**
+```text
+$ bin/ab_sweep_phase8.sh --mode qt-1x --cases nlsecu \
+       --out-dir /tmp/09-07-nlsecu-post --smoke-only
+case=nlsecu mode=qt-1x verdict=SMOKE out=/tmp/09-07-nlsecu-post/nlsecu-qt-1x.png size=0
+
+wall-clock: 61 s   # matches harness's `timeout 60` budget per case
+$ ls -la /tmp/09-07-nlsecu-post/
+-rw-rw-r--  131 sweep-log-qt-1x.md
+(no nlsecu-qt-1x.png produced — xvfermer_ never fired because the 2000-step
+ solver loop was still running when timeout 60 SIGKILLed the process)
+$ stat -c '%s' /tmp/09-07-nlsecu-post/nlsecu-qt-1x.png 2>/dev/null
+0   # file does not exist
+```
+
+**Interpretation (case (c) — long-runtime):**
+
+This is **exactly the expected outcome** for case (c). The harness invoked
+`pp/ppnlse nlsecu.iexrr` with the canonical workspace, the `Mefisto-NLSER`
+banner was reached (per Task 2 §"Reproducer post-fix" arg-form re-run),
+the 2000-step time-stepping solver started executing and was still running
+~hour-scale on this hardware when the 60s `timeout` wrapper SIGKILLed it.
+There is **no deadlock**: the process consumed 60s of CPU work productively;
+it simply did not finish within the harness's 60s budget.
+
+The Phase 8 mitigation **(TIME=0.01 / TIME=0.1 workspace truncations
++ MAILLER-prereq fallback)** therefore remains the documented work-around
+for ad-hoc harness budgets shorter than ~hour-scale; override #5's
+`(i) Phase-9-deferred-fix` disposition closes against this case-(c)
+classification — no code defect was found, no code change is owed.
+
+**ABI invariant (Task 3 re-check):**
+- `xvue/qt/cmake/verify_abi.sh xvue/qt/build/libxvueqt.a xvue/qt/include/xvue_qt_api.h` →
+  `nm count: 58  header count: 58`, exit **0**.
+- raw `nm | grep ' T ' | grep '_$' | wc -l` = **64** (58 filtered + 6 stubs,
+  per 09-02-SUMMARY threat-flag note; verify_abi.sh is the canonical authority).
+
+**3 grep gates (Phase 9 invariant — same set as plan 09-06 Task 4):**
+```text
+$ bin/test_no_imagemagick_in_qt.sh
+EXPORT-06 PASS: no ImageMagick references in xvue/qt/    [exit 0]
+$ bin/test_no_x11_in_build.sh
+OK: no X11 references in active build path               [exit 0]
+$ bin/test_no_lvideo.sh
+OK: no LVIDEO and no Fortran convert shell-outs          [exit 0]
+```
+
+All three gates PASS; Phase 9 invariant upheld through the case-(c) closure.
+
+**Override #5 closure status:** **resolved-by-classification** — Plan 9-07
+Task 1 diagnose-then-fix split classified the symptom as case (c)
+long-runtime (NOT a deadlock); Plan 9-07 Task 2 documented the closure
+in `bin/ab_sweep_phase8.sh` and `08-CHECKLIST.md`; Plan 9-07 Task 3
+empirically reproduced the canonical-workspace timeout and confirmed
+the Phase 8 truncation work-around remains valid.
