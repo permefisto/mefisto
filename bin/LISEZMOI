@@ -35,9 +35,9 @@ Pour installer ce logiciel, il est necessaire de disposer au MINIMUM de
 - un ordinateur sous systeme UNIX ou LINUX ou equivalent ...;
 - une memoire centrale d'au moins 1 giga-octets;
 - une memoire libre sur disque de 1 giga-octets pour le logiciel et pour les executions;
-- les librairies du X11-WINDOW SYSTEM;
-- une carte graphique qui permette sous X11 une definition de l'ecran graphique
-  1024x768 ou mieux 1280x1024, ou +, en mode PseudoColor avec 256 couleurs ou TrueColor.
+- une carte graphique qui permette une definition de l'ecran graphique
+  1024x768 ou mieux 1280x1024, ou + (la gestion des couleurs est assuree par
+  le backend Qt 6).
 
 
 TELECHARGER ET INSTALLER LES SOURCES DU LOGICIEL MEFISTO
@@ -64,7 +64,8 @@ Au niveau de l'installation, les problemes qui peuvent survenir proviennent du f
 - soit, la variable d'environnement MEFISTO=RepMefisto/mefisto n'est pas initialisable ou initialisee
 - soit, la variable d'environnement MEFISTOX=$HOME/mefistox n'est pas initialisable ou initialisee
 - soit, les compilateurs gcc ou  gfortran ne sont pas disponibles (à charger)
-- soit, les fichiers X11 system developpement ne sont pas installés (charger le paquet X11-dev de Linux)
+- soit, les paquets Qt 6 ne sont pas installes (charger qt6-base-dev et
+  qt6-image-formats-plugins; cmake >= 3.16 est aussi requis pour xvue/qt/)
 - soit, le repertoire $MEFISTO/bin ne contient pas les shell-scripts INITIER MAILLER ...
 - soit, ...?
 
@@ -84,14 +85,26 @@ export CDPATH=.:$HOME:$MEFISTO:$MEFISTOX
 Alors, sous Linux, les frappes des commandes INITIER, MAILLER, ELASTICER, FLUIDER,
 THERMICER, NLSER, cbl_tout, ...  seront retrouv'ees.
                    
-REMARQUE sur l'emploi du systeme X11:
-=====================================
-Mefisto necessite qu'un serveur X11 WINDOWS SYSTEM soit actif et bien installé.
-Notamment, lors des compilations certains fichiers d'en-tete sont nécessaires.
-Pour cela il est parfois nécessaire de charger le paquet libX11-dev par la commande
-sudo apt-get install libX11-dev.
-De meme, le paquet ImageMagick doit etre installe pour que la commande "convert"
-permette la construction d'un fichier gif anime pour mieux visualiser la solution.
+REMARQUE sur le BACKEND GRAPHIQUE Qt 6 :
+========================================
+Depuis la Phase 9 (tag git v1.0-pre-retire et au-dela), la couche graphique
+de Mefisto est construite sur Qt 6. L'ancien backend X11 (xvue/xvuelc.c) et
+l'appel a la commande "convert" du convertisseur raster historique ont ete
+retires. Les dependances de compilation et d'execution sont :
+
+- gfortran (Fortran 77/95 + OpenMP)
+- gcc et g++
+- qt6-base-dev (fournit Qt6Widgets, Qt6Gui, Qt6Core, Qt6PrintSupport, Qt6Test)
+- qt6-image-formats-plugins (TIFF, WebP, ... pour l'export d'images Qt)
+- ffmpeg (export GIF anime via XvueExport::saveGifTo)
+- cmake (>= 3.16, pilote la compilation de xvue/qt/)
+
+Sous Debian / Ubuntu, l'ensemble s'installe par :
+  sudo apt install gfortran gcc g++ qt6-base-dev qt6-image-formats-plugins \
+                   ffmpeg cmake
+
+(Pour le catalogue canonique de la suppression Phase 9 et le tag de retour
+v1.0-pre-retire, voir le fichier LISEZMOI a la racine du depot.)
 
 QUELQUES DOCUMENTATIONS DISPONIBLES:
 ====================================
