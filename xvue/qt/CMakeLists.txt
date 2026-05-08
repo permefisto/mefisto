@@ -103,6 +103,17 @@ target_link_libraries(xvueqt
 # embedded in Plan 02's tr() table compile cleanly across host locales.
 target_compile_options(xvueqt PRIVATE -fno-openmp -Wall -Wextra -finput-charset=UTF-8)
 
+# 2026-05-08: silence false-positive -Wdangling-reference from gcc 13/14 on
+# `const MenuFile& foo = XvueMenuFileParser::loadFor(...)` bindings in the
+# *_actions.cpp files. loadFor returns a reference into the parser's static
+# cache; gcc's heuristic does not see the cache and assumes a temporary.
+# Only apply if the compiler accepts the flag (older gcc / clang lack it).
+include(CheckCXXCompilerFlag)
+check_cxx_compiler_flag("-Wno-dangling-reference" XVUE_HAS_NO_DANGLING_REF)
+if(XVUE_HAS_NO_DANGLING_REF)
+    target_compile_options(xvueqt PRIVATE -Wno-dangling-reference)
+endif()
+
 # D-12: verify_abi — fail build if symbol count in libxvueqt.a drifts from the
 # extern "C" declaration count in the public header. This is the whole-project
 # ABI drift guard; it runs on every build.
