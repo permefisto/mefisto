@@ -118,19 +118,20 @@ void XvueApp::ensure() {
         // Phase 6.0 Plan 06 (UX-13). Connect system theme-change signal so
         // when the user flips desktop dark-mode while pp*_qt is running, we
         // re-apply the palette (only if pref == "system"). Qt 6.5+ feature;
-        // on DEs without a theme plugin (XFce bare), the signal may never
-        // fire — fallback: user restarts app, applyColorSchemePreference on
-        // startup syncs.
+        // QStyleHints::colorSchemeChanged + Qt::ColorScheme were introduced
+        // in 6.5. Older Qt 6 (Debian bookworm ships 6.4.x) lacks them — guard
+        // by version so the build works on both. On Qt < 6.5 the user must
+        // restart the app to re-sync the palette after a desktop theme flip.
+#if QT_VERSION >= QT_VERSION_CHECK(6, 5, 0)
         if (auto* sh = QGuiApplication::styleHints()) {
             QObject::connect(sh, &QStyleHints::colorSchemeChanged,
                 qapp_.get(), [](Qt::ColorScheme){
-                    // Only re-apply if pref is "system" — otherwise the user's
-                    // forced light/dark override stays sticky.
                     if (XvuePrefs::colorScheme() == QStringLiteral("system")) {
                         XvueApp::applyColorSchemePreference();
                     }
                 });
         }
+#endif
 
         std::atexit(&XvueApp::teardown_atexit);
     });
